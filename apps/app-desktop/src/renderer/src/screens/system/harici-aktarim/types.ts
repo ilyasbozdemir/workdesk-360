@@ -186,6 +186,7 @@ export interface SyncOptions {
   overwriteOffers: boolean
   overwriteCommissions: boolean
   createNewIfNotFound: boolean
+  syncIhtiyacRaporu?: boolean
 }
 
 export interface SyncResult {
@@ -196,5 +197,6 @@ export interface SyncResult {
   materialsCount: number
   offersCount: number
   commissionsCount: number
+  ihtiyacRaporuInfo?: string
   message: string
 }

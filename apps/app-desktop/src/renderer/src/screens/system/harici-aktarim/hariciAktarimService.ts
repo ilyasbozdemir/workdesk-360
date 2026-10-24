@@ -831,6 +831,21 @@ export async function executeDossierEzmeSync(
       }
     }
 
+    // 7. İHTİYAÇ RAPORU ENTEGRASYONU (Ortak malzeme varsa aynı rapora bağla / yoksa yeni rapor oluştur)
+    let ihtiyacRaporuInfo: string | undefined
+    if (options.syncIhtiyacRaporu !== false && (finalDosyaId ?? 0) > 0) {
+      const irResult = await syncDossierWithIhtiyacRaporu(
+        ipc,
+        finalDosyaId!,
+        data,
+        calculatedYaklasikMaliyet
+      )
+      if (irResult.message) {
+        ihtiyacRaporuInfo = irResult.message
+        updatedFields.push(irResult.message)
+      }
+    }
+
     return {
       success: true,
       dosyaId: finalDosyaId ?? 0,
@@ -839,8 +854,295 @@ export async function executeDossierEzmeSync(
       materialsCount,
       offersCount,
       commissionsCount,
+      ihtiyacRaporuInfo,
       message: isNew
         ? `Dosya başarıyla sisteme aktarıldı (ID: ${finalDosyaId}).`
         : `Hedef dosya (ID: ${finalDosyaId}) gelen verilerle başarıyla güncellendi (ezildi).`
     }
   }
+
+/**
+ * Dosya aktarımı sırasında İhtiyaç Raporu entegrasyonu:
+ * 1. Ortak malzeme eşleşmesi: İhtiyaç raporlarındaki kalem adları ile gelen malzeme adları karşılaştırılır.
+ * 2. Eşleşen ortak malzeme varsa, dosya DOĞRUDAN O RAPORA BAĞLANIR ve raporda eksik olan kalemler eklenir.
+ * 3. Hiçbir raporda ortak malzeme yoksa, bu dosya için yeni bir İhtiyaç Raporu açılarak kalemler işlenir.
+ */
+export async function syncDossierWithIhtiyacRaporu(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ipc: any,
+  dosyaId: number,
+  data: DogrudanTeminDosyasi,
+  calculatedYaklasikMaliyet: number
+): Promise<{
+  action: 'linked_existing' | 'created_new' | 'none'
+  raporNo?: string
+  raporId?: number
+  message?: string
+}> {
+  try {
+    if (!ipc) return { action: 'none' }
+
+    // 1. Tabloların varlığını garantiye al
+    await ipc.invoke(
+      'db:run',
+      `CREATE TABLE IF NOT EXISTS DATA_IhtiyacRaporu (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        rapor_no TEXT NOT NULL UNIQUE,
+        baslik TEXT NOT NULL,
+        gerekce TEXT,
+        birim_id INTEGER,
+        birim_adi TEXT,
+        talep_eden_personel_id INTEGER,
+        talep_eden_personel TEXT,
+        talep_eden_unvan TEXT,
+        durum TEXT DEFAULT 'taslak',
+        temin_dosya_id INTEGER,
+        tarih DATE DEFAULT CURRENT_DATE,
+        onay_tarihi DATE,
+        tahmini_butce REAL DEFAULT 0,
+        notlar TEXT,
+        evrak_sayisi TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`
+    )
+
+    await ipc.invoke(
+      'db:run',
+      `CREATE TABLE IF NOT EXISTS DATA_IhtiyacRaporuKalem (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        rapor_id INTEGER NOT NULL,
+        sira_no INTEGER,
+        kalem_adi TEXT NOT NULL,
+        tipi TEXT DEFAULT 'Mal',
+        birim TEXT DEFAULT 'Adet',
+        miktar REAL NOT NULL DEFAULT 1,
+        kdv_orani REAL DEFAULT 20,
+        tasinir_kodu TEXT,
+        okas_kodu TEXT,
+        poz_no TEXT,
+        aciklama TEXT,
+        tahmini_birim_fiyat REAL DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`
+    )
+
+    const incomingMaterials = data.malzemeler || []
+    if (incomingMaterials.length === 0) {
+      return { action: 'none' }
+    }
+
+    const materialNames = incomingMaterials
+      .map((m) => m.malzemeAdi && m.malzemeAdi.trim())
+      .filter(Boolean) as string[]
+
+    let matchedRapor: {
+      id: number
+      rapor_no: string
+      baslik: string
+      temin_dosya_id: number | null
+    } | null = null
+
+    // 2. Mevcut dosya daha önce bir İhtiyaç Raporuna bağlanmış mı kontrol et
+    if (dosyaId) {
+      const linkedRes = await ipc.invoke(
+        'db:query',
+        `SELECT id, rapor_no, baslik, temin_dosya_id FROM DATA_IhtiyacRaporu WHERE temin_dosya_id = ? LIMIT 1`,
+        [dosyaId]
+      )
+      const linkedRows = Array.isArray(linkedRes) ? linkedRes : linkedRes?.data || []
+      if (linkedRows.length > 0) {
+        matchedRapor = linkedRows[0]
+      }
+    }
+
+    // 3. Ortak malzeme eşleşmesi: Herhangi bir ihtiyaç raporundaki kalem adı ile gelen kalem adı uyuşuyor mu?
+    if (!matchedRapor && materialNames.length > 0) {
+      const placeholders = materialNames.map(() => '?').join(', ')
+      const commonRes = await ipc.invoke(
+        'db:query',
+        `SELECT r.id, r.rapor_no, r.baslik, r.temin_dosya_id, COUNT(k.id) as ortak_sayisi
+         FROM DATA_IhtiyacRaporu r
+         JOIN DATA_IhtiyacRaporuKalem k ON k.rapor_id = r.id
+         WHERE LOWER(TRIM(k.kalem_adi)) IN (${placeholders})
+         GROUP BY r.id
+         ORDER BY ortak_sayisi DESC, r.id DESC
+         LIMIT 1`,
+        materialNames.map((n) => n.toLowerCase())
+      )
+      const commonRows = Array.isArray(commonRes) ? commonRes : commonRes?.data || []
+      if (commonRows.length > 0) {
+        matchedRapor = commonRows[0]
+      }
+    }
+
+    const turCode = normalizeTur(data.dosyaBilgileri.alimTuru)
+    const itemType = turCode === 'mal' ? 'Mal' : turCode === 'hizmet' ? 'Hizmet' : 'Yapım'
+
+    // 4. Eğer ORTAK BİR MALZEME bulunduysa (veya dosya zaten bağlıysa): AYNI RAPORA BAĞLA!
+    if (matchedRapor) {
+      // Dosyayı bu rapora bağla ve durumunu güncelle
+      await ipc.invoke(
+        'db:run',
+        `UPDATE DATA_IhtiyacRaporu
+         SET temin_dosya_id = ?, durum = 'dosyaya_aktarildi', updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [dosyaId, matchedRapor.id]
+      )
+
+      // Mevcut kalemleri çek ve eksik olanları ekle
+      const existingItemsRes = await ipc.invoke(
+        'db:query',
+        `SELECT LOWER(TRIM(kalem_adi)) as ad FROM DATA_IhtiyacRaporuKalem WHERE rapor_id = ?`,
+        [matchedRapor.id]
+      )
+      const existingRows = Array.isArray(existingItemsRes)
+        ? existingItemsRes
+        : existingItemsRes?.data || []
+      const existingNameSet = new Set(existingRows.map((r: any) => String(r.ad).toLowerCase()))
+
+      const maxSiraRes = await ipc.invoke(
+        'db:query',
+        `SELECT COALESCE(MAX(sira_no), 0) as max_sira FROM DATA_IhtiyacRaporuKalem WHERE rapor_id = ?`,
+        [matchedRapor.id]
+      )
+      const maxRows = Array.isArray(maxSiraRes) ? maxSiraRes : maxSiraRes?.data || []
+      let currentSira = Number(maxRows[0]?.max_sira || 0)
+
+      for (const m of incomingMaterials) {
+        const cleanName = (m.malzemeAdi || '').trim().toLowerCase()
+        if (!existingNameSet.has(cleanName)) {
+          currentSira++
+          await ipc.invoke(
+            'db:run',
+            `INSERT INTO DATA_IhtiyacRaporuKalem (
+              rapor_id, sira_no, kalem_adi, tipi, birim, miktar, kdv_orani,
+              tasinir_kodu, okas_kodu, aciklama, tahmini_birim_fiyat
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              matchedRapor.id,
+              currentSira,
+              m.malzemeAdi.trim(),
+              itemType,
+              m.birimi || 'Adet',
+              m.miktar ?? 1,
+              m.kdvOrani ?? 20,
+              m.tasinirKodu || null,
+              m.okasKodu || null,
+              m.ozelligi || m.fiyatKaynagi || null,
+              m.birimFiyat ?? 0
+            ]
+          )
+          existingNameSet.add(cleanName)
+        }
+      }
+
+      // Rapor bütçesini güncelle
+      await ipc.invoke(
+        'db:run',
+        `UPDATE DATA_IhtiyacRaporu
+         SET tahmini_butce = (
+           SELECT COALESCE(SUM(miktar * tahmini_birim_fiyat), 0)
+           FROM DATA_IhtiyacRaporuKalem
+           WHERE rapor_id = ?
+         ), updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [matchedRapor.id, matchedRapor.id]
+      )
+
+      return {
+        action: 'linked_existing',
+        raporNo: matchedRapor.rapor_no,
+        raporId: matchedRapor.id,
+        message: `Ortak malzeme tespit edildi: Dosya mevcut ${matchedRapor.rapor_no} nolu İhtiyaç Raporuna bağlandı.`
+      }
+    }
+
+    // 5. Ortak malzeme bulunamadıysa: DOSYA İÇİN YENİ BİR İHTİYAÇ RAPORU OLUŞTUR
+    const info = data.dosyaBilgileri
+    const year = info.butceYili || new Date().getFullYear()
+    const cleanNo = (info.dosyaNo || info.dogrudanTeminNumarasi || String(dosyaId)).replace(
+      /[^a-zA-Z0-9_-]/g,
+      ''
+    )
+    const baseRaporNo = `IR-${year}/${cleanNo || '001'}`
+    let raporNo = baseRaporNo
+
+    const checkRes = await ipc.invoke(
+      'db:query',
+      'SELECT id FROM DATA_IhtiyacRaporu WHERE rapor_no = ? LIMIT 1',
+      [raporNo]
+    )
+    const existing = Array.isArray(checkRes) ? checkRes : checkRes?.data || []
+    if (existing.length > 0) {
+      raporNo = `${baseRaporNo}-${Date.now().toString().slice(-4)}`
+    }
+
+    const insertRaporRes = await ipc.invoke(
+      'db:run',
+      `INSERT INTO DATA_IhtiyacRaporu (
+        rapor_no, baslik, gerekce, birim_adi, durum, temin_dosya_id, tarih, tahmini_butce
+      ) VALUES (?, ?, ?, ?, 'dosyaya_aktarildi', ?, ?, ?)`,
+      [
+        raporNo,
+        info.isinAdi || 'Doğrudan Temin Alımı',
+        info.aciklama || 'Harici aktarım ile oluşturulan doğrudan temin dosyası ihtiyaç listesi.',
+        info.ihalesiYapilacakBirim || null,
+        dosyaId,
+        info.dosyaAcilisTarihi || new Date().toISOString().slice(0, 10),
+        calculatedYaklasikMaliyet
+      ]
+    )
+
+    let newRaporId = Number(insertRaporRes?.lastInsertRowid || 0)
+    if (!newRaporId) {
+      const fetchIdRes = await ipc.invoke(
+        'db:query',
+        'SELECT id FROM DATA_IhtiyacRaporu WHERE rapor_no = ? LIMIT 1',
+        [raporNo]
+      )
+      const fetchRows = Array.isArray(fetchIdRes) ? fetchIdRes : fetchIdRes?.data || []
+      newRaporId = Number(fetchRows[0]?.id || 0)
+    }
+
+    if (newRaporId > 0) {
+      for (let i = 0; i < incomingMaterials.length; i++) {
+        const m = incomingMaterials[i]
+        await ipc.invoke(
+          'db:run',
+          `INSERT INTO DATA_IhtiyacRaporuKalem (
+            rapor_id, sira_no, kalem_adi, tipi, birim, miktar, kdv_orani,
+            tasinir_kodu, okas_kodu, aciklama, tahmini_birim_fiyat
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            newRaporId,
+            m.siraNo || i + 1,
+            (m.malzemeAdi || '').trim(),
+            itemType,
+            m.birimi || 'Adet',
+            m.miktar ?? 1,
+            m.kdvOrani ?? 20,
+            m.tasinirKodu || null,
+            m.okasKodu || null,
+            m.ozelligi || m.fiyatKaynagi || null,
+            m.birimFiyat ?? 0
+          ]
+        )
+      }
+    }
+
+    return {
+      action: 'created_new',
+      raporNo,
+      raporId: newRaporId,
+      message: `Dosya için yeni ${raporNo} nolu İhtiyaç Raporu oluşturuldu ve ${incomingMaterials.length} malzeme işlendi.`
+    }
+  } catch (err) {
+    console.warn('İhtiyaç raporu senkronizasyonu sırasında uyarı:', err)
+    return {
+      action: 'none',
+      message: `İhtiyaç raporu senkronizasyon uyarısı: ${err instanceof Error ? err.message : String(err)}`
+    }
+  }
+}
