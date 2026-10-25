@@ -1,10 +1,10 @@
 /**
- * TEMİN 360 — Dosya Formatları Standardizasyonu
- * Standart ve tek aktif proje dosyası uzantısı: .temin
+ * İHALE 360 — Dosya Formatları Standardizasyonu
+ * Standart ve aktif proje dosyası uzantısı: .ihale (ve .ihale360)
  */
 
 export interface FileFormat {
-  /** Uzantı (nokta olmadan, örn: 'temin') */
+  /** Uzantı (nokta olmadan, örn: 'ihale') */
   ext: string
   /** Kullanıcıya gösterilecek açıklama */
   label: string
@@ -15,45 +15,50 @@ export interface FileFormat {
 }
 
 /** Tek aktif standart dosya formatı */
-export const PRIMARY_EXTENSION = 'temin'
+export const PRIMARY_EXTENSION = 'ihale'
 
 export const SUPPORTED_FORMATS: FileFormat[] = [
   {
     ext: PRIMARY_EXTENSION,
-    label: 'TEMİN 360 Proje Dosyası',
-    dialogName: 'TEMİN 360 Proje Dosyası (*.temin)',
+    label: 'İHALE 360 Proje Dosyası',
+    dialogName: 'İHALE 360 Proje Dosyası (*.ihale)',
     isDefault: true
+  },
+  {
+    ext: 'ihale360',
+    label: 'İHALE 360 Proje Dosyası (Alternatif)',
+    dialogName: 'İHALE 360 Proje Dosyası (*.ihale360)'
   }
 ]
 
-/** Tüm aktif desteklenen uzantılar: Sadece ['temin'] */
+/** Tüm aktif desteklenen uzantılar */
 export const allExtensions = SUPPORTED_FORMATS.map((f) => f.ext)
 
 /** Varsayılan uzantı (yeni dosya oluştururken kullanılır) */
 export const defaultFormat = SUPPORTED_FORMATS[0]
 
-/** Electron dialog filter listesi — sadece standart aktif formatı gösterir */
+/** Electron dialog filter listesi — tüm desteklenen formatları gösterir */
 export const allFormatsFilter = {
-  name: 'TEMİN 360 Proje Dosyası (*.temin)',
-  extensions: [PRIMARY_EXTENSION]
+  name: 'İHALE 360 Proje Dosyası (*.ihale, *.ihale360)',
+  extensions: allExtensions
 }
 
-/** Her format için ayrı ayrı dialog filter listesi (Sadece standart format) */
+/** Her format için ayrı ayrı dialog filter listesi */
 export const perFormatFilters = SUPPORTED_FORMATS.map((f) => ({
   name: f.dialogName,
   extensions: [f.ext]
 }))
 
 /**
- * Dosya adından proje uzantısını (.temin) temizler
+ * Dosya adından proje uzantısını (.ihale veya .ihale360) temizler
  */
 export function stripProjectExtension(fileName: string): string {
   if (!fileName) return ''
-  return fileName.replace(/\.temin$/i, '')
+  return fileName.replace(/\.(ihale|ihale360)$/i, '')
 }
 
 /**
- * Dosya yolunun geçerli bir TEMİN 360 proje dosyası (.temin) olup olmadığını doğrular
+ * Dosya yolunun geçerli bir İHALE 360 proje dosyası olup olmadığını doğrular
  */
 export function isSupportedFile(filePath: string): boolean {
   if (!filePath || typeof filePath !== 'string') return false
@@ -64,5 +69,5 @@ export function isSupportedFile(filePath: string): boolean {
   if (cleanPath.startsWith('-')) return false
   const lower = cleanPath.toLowerCase()
 
-  return lower.endsWith('.' + PRIMARY_EXTENSION)
+  return allExtensions.some((ext) => lower.endsWith('.' + ext))
 }

@@ -58,12 +58,15 @@ jobs:
           pnpm --filter temin360-desktop typecheck:web
           pnpm --filter ihale360-desktop typecheck:node
           pnpm --filter ihale360-desktop typecheck:web
+          pnpm --filter devlet-ihale-2886-desktop typecheck:node
+          pnpm --filter devlet-ihale-2886-desktop typecheck:web
 
       - name: Pre-release Unit & Integration Tests
         run: |
           pnpm --filter @temin360/document-templates test
           pnpm --filter temin360-desktop test
           pnpm --filter ihale360-desktop test
+          pnpm --filter devlet-ihale-2886-desktop test
 
       - name: Build and Package Temin 360 Desktop
         working-directory: apps/temin360-desktop
