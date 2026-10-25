@@ -87,20 +87,13 @@ test.describe('E2E: Kullanıcı Arayüzü Üzerinden Gerçek Dosya Açma ve Etki
   test('3. Dosya açıldıktan sonra gerçek arayüz etkileşimi test edilmeli', async () => {
     const { page } = appInstance
 
-    // Gerçek arayüz etkileşimi 1: Süreç Modu Değiştirme Butonuna tıklama (DT -> 4734 İhale)
-    const modeBadge = page.locator('button[title*="Süreç rejimini değiştirmek için"]')
+    // Gerçek arayüz etkileşimi 1: Sabit Doğrudan Temin (Md. 22) rozetinin varlığı ve doğruluğu
+    const modeBadge = page.locator('div[title*="Doğrudan Temin Kapsamı"]')
     await expect(modeBadge).toBeVisible({ timeout: 10000 })
 
-    const initialText = await modeBadge.innerText()
-    console.log('Başlangıç modu:', initialText)
-
-    // Tıklayarak modu değiştir
-    await modeBadge.click()
-
-    // Mod rozetinin güncellendiğini doğrula
-    await expect(modeBadge).not.toHaveText(initialText, { timeout: 5000 })
-    const updatedText = await modeBadge.innerText()
-    console.log('Tıklama sonrası güncellenen mod:', updatedText)
+    const modeText = await modeBadge.innerText()
+    console.log('Aktif süreç modu:', modeText)
+    expect(modeText.includes('Doğrudan Temin') || modeText.includes('DT')).toBe(true)
 
     // Ekran görüntüsü al
     await takeE2EScreenshot(page, '03-mode-switched-interaction.png')
