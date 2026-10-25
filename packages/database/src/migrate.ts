@@ -11,12 +11,45 @@ export interface SchemaChange {
   raw_sql?: string[]
 }
 
+export interface DesktopAppVersionMap {
+  'temin360-desktop'?: string
+  'ihale360-desktop'?: string
+  'devlet-ihale-2886-desktop'?: string
+  'app-desktop'?: string
+  [key: string]: string | undefined
+}
+
 export interface AppVersionManifest {
   app: string
+  suite?: string
+  apps?: DesktopAppVersionMap
   schema_min: number
   schema_max: number
   release_date: string
   changes: SchemaChange[]
+}
+
+/**
+ * Desteklenen tüm masaüstü uygulamalarının aktif sürümlerini döndürür
+ */
+export function getDesktopAppVersions(): DesktopAppVersionMap {
+  const current = getCurrentAppManifest()
+  return (
+    current.apps || {
+      'temin360-desktop': '1.0.0-rc.7',
+      'ihale360-desktop': '1.0.0-beta.1',
+      'devlet-ihale-2886-desktop': '1.0.0-beta.1',
+      'app-desktop': '1.0.0-rc.7'
+    }
+  )
+}
+
+/**
+ * Belirli bir masaüstü uygulaması için şema manifestindeki sürümü döndürür
+ */
+export function getDesktopAppVersion(appName: string): string | undefined {
+  const versions = getDesktopAppVersions()
+  return versions[appName]
 }
 
 export function getMaxSchemaVersion(): number {
