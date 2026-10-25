@@ -9,7 +9,6 @@
  *  1. temin360-desktop: 1.0.0-rc.7 (Doğrudan Temin ve Harcama Masası - RC)
  *  2. ihale360-desktop: 1.0.0-beta.1 (4734 Sayılı KİK Kamu İhalesi Masası - Beta)
  *  3. devlet-ihale-2886-desktop: 1.0.0-beta.1 (2886 Sayılı Devlet İhale Kanunu Masası - Beta)
- *  4. app-desktop: 1.0.0-rc.7 (Eski miras çekirdek)
  */
 export default {
   app: "1.0.0-beta.current",
@@ -17,8 +16,7 @@ export default {
   apps: {
     "temin360-desktop": "1.0.0-rc.7",
     "ihale360-desktop": "1.0.0-beta.1",
-    "devlet-ihale-2886-desktop": "1.0.0-beta.1",
-    "app-desktop": "1.0.0-rc.7"
+    "devlet-ihale-2886-desktop": "1.0.0-beta.1"
   },
   schema_min: 1,
   schema_max: 46,

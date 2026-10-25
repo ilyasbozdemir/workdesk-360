@@ -263,7 +263,9 @@ function main() {
   console.log(`[+] Yüklenen Tablo Sayısı: ${Object.keys(schema).length}`)
 
   const targetDirs = [
-    path.join(rootDir, 'apps', 'app-desktop', 'src'),
+    path.join(rootDir, 'apps', 'temin360-desktop', 'src'),
+    path.join(rootDir, 'apps', 'ihale360-desktop', 'src'),
+    path.join(rootDir, 'apps', 'devlet-ihale-2886-desktop', 'src'),
     path.join(rootDir, 'packages', 'document-templates', 'src'),
     path.join(rootDir, 'packages', 'database', 'src')
   ]

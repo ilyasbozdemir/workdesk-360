@@ -1,6 +1,0 @@
-export * from './LockScreenHeader'
-export * from './LockScreenLogo'
-export * from './LockScreenLoginForm'
-export * from './LockScreenSendCode'
-export * from './LockScreenVerifyCode'
-export * from './LockScreenResetPassword'

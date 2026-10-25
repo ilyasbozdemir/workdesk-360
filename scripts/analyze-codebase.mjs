@@ -43,7 +43,9 @@ function getFiles(dir, exts = ['.ts', '.tsx', '.js', '.jsx']) {
 }
 
 const targetDirs = [
-  'apps/app-desktop/src',
+  'apps/temin360-desktop/src',
+  'apps/ihale360-desktop/src',
+  'apps/devlet-ihale-2886-desktop/src',
   'packages/document-templates/src',
   'packages/database/src'
 ]

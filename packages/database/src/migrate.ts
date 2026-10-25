@@ -15,7 +15,6 @@ export interface DesktopAppVersionMap {
   'temin360-desktop'?: string
   'ihale360-desktop'?: string
   'devlet-ihale-2886-desktop'?: string
-  'app-desktop'?: string
   [key: string]: string | undefined
 }
 
@@ -38,8 +37,7 @@ export function getDesktopAppVersions(): DesktopAppVersionMap {
     current.apps || {
       'temin360-desktop': '1.0.0-rc.7',
       'ihale360-desktop': '1.0.0-beta.1',
-      'devlet-ihale-2886-desktop': '1.0.0-beta.1',
-      'app-desktop': '1.0.0-rc.7'
+      'devlet-ihale-2886-desktop': '1.0.0-beta.1'
     }
   )
 }

@@ -52,8 +52,6 @@
     "test:workspace": "pnpm --filter app-workspace test",
     "test:ecosystem": "pnpm --filter @worksuite-360/contracts test",
     "test:contracts": "pnpm --filter @worksuite-360/contracts test",
-    "test:aktarim": "pnpm --filter @workdesk/veri-aktarim-araci typecheck",
-    "build:aktarim": "pnpm --filter @workdesk/veri-aktarim-araci build",
     "test:e2e": "pnpm --filter temin360-desktop test:e2e",
     "format": "pnpm --filter temin360-desktop format",
     "lint": "pnpm --filter temin360-desktop lint && pnpm --filter app-web lint",

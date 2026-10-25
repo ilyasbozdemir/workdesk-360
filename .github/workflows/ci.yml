@@ -42,7 +42,6 @@ jobs:
       - name: Typecheck Apps & Packages
         run: |
           pnpm --filter @temin360/document-templates typecheck
-          pnpm --filter @workdesk/veri-aktarim-araci typecheck
           pnpm --filter temin360-desktop typecheck:node
           pnpm --filter temin360-desktop typecheck:web
           pnpm --filter ihale360-desktop typecheck:node
@@ -61,7 +60,6 @@ jobs:
 
       - name: Build All Core Apps
         run: |
-          pnpm --filter @workdesk/veri-aktarim-araci build
           pnpm --filter temin360-desktop build
           pnpm --filter ihale360-desktop build
           pnpm --filter devlet-ihale-2886-desktop build
