@@ -1,0 +1,695 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "DT Dosyalar (Doğrudan Temin) – kök model",
+    "type": "object",
+    "required": [
+        "files",
+        "cur",
+        "defs",
+        "kurum",
+        "mockTemizlendi",
+        "firmalar",
+        "winV2",
+        "katalog"
+    ],
+    "properties": {
+        "files": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Dosya"
+            }
+        },
+        "cur": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "files[] içinde aktif dosyanın indeksi"
+        },
+        "defs": {
+            "type": "object",
+            "required": [
+                "f",
+                "yak",
+                "muay"
+            ],
+            "properties": {
+                "f": {
+                    "type": "object",
+                    "description": "Yeni dosya için varsayılan f alanları",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "yak": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PersonelSatiri"
+                    }
+                },
+                "muay": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PersonelSatiri"
+                    }
+                }
+            }
+        },
+        "kurum": {
+            "type": "object",
+            "required": [
+                "kurumAdi"
+            ],
+            "properties": {
+                "kurumAdi": {
+                    "type": "string"
+                }
+            }
+        },
+        "mockTemizlendi": {
+            "type": "boolean"
+        },
+        "firmalar": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Firma"
+            }
+        },
+        "winV2": {
+            "type": "boolean"
+        },
+        "katalog": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/KatalogKalemi"
+            }
+        }
+    },
+    "$defs": {
+        "Firma": {
+            "type": "object",
+            "required": [
+                "id",
+                "no",
+                "unvan",
+                "ilet",
+                "yer"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "no": {
+                    "type": "string",
+                    "description": "Firma/cari kodu"
+                },
+                "unvan": {
+                    "type": "string"
+                },
+                "ilet": {
+                    "type": "string",
+                    "description": "telefon veya e-posta, serbest metin"
+                },
+                "yer": {
+                    "type": "string"
+                }
+            }
+        },
+        "KatalogKalemi": {
+            "type": "object",
+            "required": [
+                "id",
+                "kod",
+                "tasinir",
+                "okas",
+                "ad"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "kod": {
+                    "type": "string",
+                    "description": "barkod/stok kodu"
+                },
+                "tasinir": {
+                    "type": "string",
+                    "description": "taşınır kodu veya serbest ad"
+                },
+                "okas": {
+                    "type": "string",
+                    "description": "OKAS/CPV kodu, boş olabilir"
+                },
+                "ad": {
+                    "type": "string"
+                }
+            }
+        },
+        "PersonelSatiri": {
+            "type": "array",
+            "description": "[boş, rol/görev, ad soyad, boş]",
+            "prefixItems": [
+                {
+                    "type": "string",
+                    "description": "(boş)"
+                },
+                {
+                    "type": "string",
+                    "description": "rol"
+                },
+                {
+                    "type": "string",
+                    "description": "adSoyad"
+                },
+                {
+                    "type": "string",
+                    "description": "(boş)"
+                }
+            ],
+            "minItems": 4,
+            "maxItems": 4,
+            "items": false
+        },
+        "Dosya": {
+            "type": "object",
+            "required": [
+                "id",
+                "f",
+                "mat",
+                "win",
+                "con",
+                "yak",
+                "muay",
+                "kab",
+                "ek",
+                "tek",
+                "sablon"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "f": {
+                    "type": "object",
+                    "required": [
+                        "İhalesi Yapılacak Birim",
+                        "İhale Tipi",
+                        "Bütçe",
+                        "KDV",
+                        "Sunulacak Makam",
+                        "İhtiyaç Yeri",
+                        "Hesaplama Esası",
+                        "Hesaplamada",
+                        "Alım Türü",
+                        "Dosya Açılış Tarihi"
+                    ],
+                    "properties": {
+                        "İhalesi Yapılacak Birim": {
+                            "type": "string"
+                        },
+                        "İhale Tipi": {
+                            "type": "string"
+                        },
+                        "Bütçe": {
+                            "type": "string"
+                        },
+                        "KDV": {
+                            "type": "string"
+                        },
+                        "Sunulacak Makam": {
+                            "type": "string"
+                        },
+                        "İhtiyaç Yeri": {
+                            "type": "string"
+                        },
+                        "Hesaplama Esası": {
+                            "type": "string"
+                        },
+                        "Hesaplamada": {
+                            "type": "string"
+                        },
+                        "Alım Türü": {
+                            "type": "string"
+                        },
+                        "Dosya Açılış Tarihi": {
+                            "type": "string",
+                            "description": "Tarih (YYYY-MM-DD) veya boş",
+                            "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"
+                        },
+                        "İşin Adı / Tanımı": {
+                            "type": "string"
+                        },
+                        "Açıklama": {
+                            "type": "string"
+                        },
+                        "Dosya No": {
+                            "type": "string"
+                        },
+                        "Doğrudan Temin Numarası": {
+                            "type": "string"
+                        },
+                        "Bütçe Yılı": {
+                            "type": "string",
+                            "pattern": "^(\\d{4})?$"
+                        },
+                        "Antet Ek Satır": {
+                            "type": "string"
+                        },
+                        "Talep Tarih/Sayısı": {
+                            "type": "string"
+                        },
+                        "Kurumsal Kod": {
+                            "type": "string"
+                        },
+                        "Fonksiyonel Kod": {
+                            "type": "string"
+                        },
+                        "Finansal Kod": {
+                            "type": "string"
+                        },
+                        "Madde": {
+                            "type": "string"
+                        },
+                        "Teklif ve Sözleşme Türü": {
+                            "type": "string"
+                        },
+                        "Alt yüklenici olacak mı": {
+                            "type": "string"
+                        },
+                        "Kısmi teklif verilecek mi": {
+                            "type": "string"
+                        },
+                        "Fiyat Farkı Dayanağı": {
+                            "type": "string"
+                        },
+                        "Yatırım Proje Numarası": {
+                            "type": "string"
+                        },
+                        "Avans Verilecek mi": {
+                            "type": "string"
+                        },
+                        "Yaklaşık Maliyet": {
+                            "type": "string"
+                        },
+                        "Tıbbi Cihaz Alımı mı": {
+                            "type": "string"
+                        },
+                        "İrtibat Yetkilisi": {
+                            "type": "string"
+                        },
+                        "İhale Aşaması": {
+                            "type": "string",
+                            "enum": [
+                                "Yaklaşık Mal. Hesap Cetveli",
+                                "Teklif Mektubu",
+                                "Muayene ve Kabul Tutanağı",
+                                "Ödeme Yazısı"
+                            ]
+                        },
+                        "İhale Tarihi": {
+                            "type": "string",
+                            "description": "Tarih (YYYY-MM-DD) veya boş",
+                            "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"
+                        },
+                        "Tahmini Bitiş Tarihi": {
+                            "type": "string",
+                            "description": "Tarih (YYYY-MM-DD) veya boş",
+                            "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"
+                        },
+                        "Son Teklif Verme Tarih/Saati": {
+                            "type": "string",
+                            "description": "YYYY-MM-DDTHH:mm veya boş",
+                            "pattern": "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2})?$"
+                        }
+                    },
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "mat": {
+                    "type": "array",
+                    "description": "Malzeme/iş kalemleri (pozisyonel)",
+                    "items": {
+                        "$ref": "#/$defs/MatSatiri"
+                    }
+                },
+                "win": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "description": "[firmaNo, unvan, telefon, yer]",
+                        "prefixItems": [
+                            {
+                                "type": "string",
+                                "description": "firmaNo"
+                            },
+                            {
+                                "type": "string",
+                                "description": "unvan"
+                            },
+                            {
+                                "type": "string",
+                                "description": "telefon"
+                            },
+                            {
+                                "type": "string",
+                                "description": "yer"
+                            }
+                        ],
+                        "minItems": 4,
+                        "maxItems": 4,
+                        "items": false
+                    }
+                },
+                "con": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "description": "[unvan, (hep boş)]",
+                        "prefixItems": [
+                            {
+                                "type": "string",
+                                "description": "unvan"
+                            },
+                            {
+                                "type": "string",
+                                "description": "(boş)"
+                            }
+                        ],
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "items": false
+                    }
+                },
+                "yak": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PersonelSatiri"
+                    }
+                },
+                "muay": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/PersonelSatiri"
+                    }
+                },
+                "kab": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Kabul"
+                    }
+                },
+                "ek": {
+                    "type": "array",
+                    "description": "Veride hep boş; öğe tipi bilinmiyor"
+                },
+                "tek": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Teklif"
+                    }
+                },
+                "sablon": {
+                    "type": "object",
+                    "properties": {
+                        "antetEk": {
+                            "type": "string"
+                        },
+                        "hazirlayanPersonelUnvan": {
+                            "type": "string"
+                        },
+                        "hazirlayanPersonelAdi": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "kfirma": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Kabuldeki firma unvanları (opsiyonel)"
+                },
+                "kfirmaBilgi": {
+                    "type": "object",
+                    "description": "Anahtar: unvan küçük harf",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "kod": {
+                                "type": "string"
+                            },
+                            "unvan": {
+                                "type": "string"
+                            },
+                            "ilgili": {
+                                "type": "string"
+                            },
+                            "semt": {
+                                "type": "string"
+                            },
+                            "tel": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "MatSatiri": {
+            "type": "array",
+            "description": "[sıra(boş), kod, ad, açıklama, birim, kdvOranı, miktar, birimFiyat, kazananFirma, taşınırKodu?, okas?]",
+            "prefixItems": [
+                {
+                    "type": "string",
+                    "description": "sıra(boş)"
+                },
+                {
+                    "type": "string",
+                    "description": "kod"
+                },
+                {
+                    "type": "string",
+                    "description": "ad"
+                },
+                {
+                    "type": "string",
+                    "description": "açıklama"
+                },
+                {
+                    "type": "string",
+                    "description": "birim"
+                },
+                {
+                    "type": "string",
+                    "description": "kdvOrani"
+                },
+                {
+                    "type": "string",
+                    "description": "miktar"
+                },
+                {
+                    "type": "string",
+                    "description": "birimFiyat"
+                },
+                {
+                    "type": "string",
+                    "description": "kazananFirma"
+                },
+                {
+                    "type": "string",
+                    "description": "tasinirKodu"
+                },
+                {
+                    "type": "string",
+                    "description": "okas"
+                }
+            ],
+            "minItems": 9,
+            "maxItems": 11
+        },
+        "Kabul": {
+            "type": "object",
+            "required": [
+                "id",
+                "h",
+                "m"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "h": {
+                    "type": "object",
+                    "required": [
+                        "Kabul Tarihi"
+                    ],
+                    "properties": {
+                        "Kabul Tarihi": {
+                            "type": "string",
+                            "description": "Tarih (YYYY-MM-DD) veya boş",
+                            "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"
+                        },
+                        "Firma": {
+                            "type": "string"
+                        },
+                        "Sayı": {
+                            "type": "string"
+                        },
+                        "Teslim Alan": {
+                            "type": "string"
+                        },
+                        "Teslim Yeri": {
+                            "type": "string"
+                        },
+                        "Fatura Tarihi": {
+                            "type": "string",
+                            "description": "Tarih (YYYY-MM-DD) veya boş",
+                            "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"
+                        },
+                        "Fatura No": {
+                            "type": "string"
+                        },
+                        "Not": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "m": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "description": "[boş, ad, açıklama, birim, miktar, kabulMiktar, hesapMiktar]",
+                        "prefixItems": [
+                            {
+                                "type": "string",
+                                "description": "(boş)"
+                            },
+                            {
+                                "type": "string",
+                                "description": "ad"
+                            },
+                            {
+                                "type": "string",
+                                "description": "aciklama"
+                            },
+                            {
+                                "type": "string",
+                                "description": "birim"
+                            },
+                            {
+                                "type": "string",
+                                "description": "miktar"
+                            },
+                            {
+                                "type": "string",
+                                "description": "kabulMiktar"
+                            },
+                            {
+                                "type": "string",
+                                "description": "hesapMiktar"
+                            }
+                        ],
+                        "minItems": 7,
+                        "maxItems": 7,
+                        "items": false
+                    }
+                }
+            }
+        },
+        "Teklif": {
+            "type": "object",
+            "required": [
+                "id",
+                "dosyaId",
+                "firma",
+                "firmaNo",
+                "iletisim",
+                "yer",
+                "firmaId",
+                "vergiNo",
+                "yetkili",
+                "istekTarihi",
+                "sekil",
+                "durum",
+                "teklifTarihi",
+                "tutar",
+                "kdv",
+                "gecerlilik",
+                "not",
+                "kalemler"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "dosyaId": {
+                    "type": "string",
+                    "description": "Dosya.id referansı"
+                },
+                "firma": {
+                    "type": "string"
+                },
+                "firmaNo": {
+                    "type": "string"
+                },
+                "iletisim": {
+                    "type": "string"
+                },
+                "yer": {
+                    "type": "string"
+                },
+                "firmaId": {
+                    "type": "string",
+                    "description": "Firma.id referansı; serbest firmada boş/uyumsuz olabilir"
+                },
+                "vergiNo": {
+                    "type": "string"
+                },
+                "yetkili": {
+                    "type": "string"
+                },
+                "istekTarihi": {
+                    "type": "string",
+                    "description": "Tarih (YYYY-MM-DD) veya boş",
+                    "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"
+                },
+                "sekil": {
+                    "type": "string"
+                },
+                "durum": {
+                    "type": "string",
+                    "enum": [
+                        "Teklif Geldi",
+                        "Kabul Edildi"
+                    ]
+                },
+                "teklifTarihi": {
+                    "type": "string",
+                    "description": "Tarih (YYYY-MM-DD) veya boş",
+                    "pattern": "^(\\d{4}-\\d{2}-\\d{2})?$"
+                },
+                "tutar": {
+                    "type": "string"
+                },
+                "kdv": {
+                    "type": "string"
+                },
+                "gecerlilik": {
+                    "type": "string"
+                },
+                "not": {
+                    "type": "string"
+                },
+                "kalemler": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "birim fiyat"
+                    },
+                    "description": "mat[] ile aynı sırada birim fiyatlar"
+                }
+            }
+        }
+    }
+}
