@@ -1,0 +1,8 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["dosyalar.json"],
+      "url": "./dosyalar.schema.json"
+    }
+  ]
+}

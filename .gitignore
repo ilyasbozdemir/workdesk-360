@@ -29,3 +29,8 @@ islem*.md
 YapimIhalesiBirimFiyatli.ods
 # TypeScript incremental build output
 *.tsbuildinfo
+
+
+dosyalar.json
+*.local.json
+yedek/
