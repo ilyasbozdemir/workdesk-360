@@ -215,4 +215,95 @@ describe('Gerçek uygulama şeması (@dt/database initializeDatabase) ile harici
       expect(row.unvan).toBe(kazanan.firma.trim())
     }
   })
+
+  it('eski sistem verisi aktarımı: Dosya No 183259 kaynak_kayit_id olur, temin_no olarak atanmaz', async () => {
+    const rawLegacyJson = JSON.stringify({
+      id: 'dt-legacy-99',
+      f: {
+        'Dosya No': '183259',
+        'Doğrudan Temin Numarası': '1',
+        'İşin Adı / Tanımı': 'Eski Sistemden Aktarılan Test Alımı',
+        'Harcama Birimi': 'Bilgi İşlem',
+        'Bütçe Yılı': '2026'
+      },
+      mat: [
+        ['1', 'MLZ-01', 'Toner', 'Özellik', 'Adet', '20', '5', '100', 'Piyasa']
+      ]
+    })
+
+    const parsed = parseDogrudanTeminJson(rawLegacyJson)
+    expect(parsed.success).toBe(true)
+
+    const res = await executeDossierEzmeSync(null, parsed.data!, {
+      ...ALL_OPTIONS,
+      createNewIfNotFound: true,
+      lockImported: true,
+      isLegacyMigration: true,
+      legacyIdField: 'dosyaNo',
+      kayitKaynagi: 'eski_sistem'
+    })
+
+    expect(res.success).toBe(true)
+    const dossier = db
+      .prepare(
+        'SELECT id, temin_no, kaynak_kayit_id, kayit_kaynagi, is_locked, lock_reason FROM DATA_TeminDosyasi WHERE id = ?'
+      )
+      .get(res.dosyaId) as any
+
+    expect(dossier).toBeDefined()
+    // ASLA 183259 temin_no olmamalı!
+    expect(dossier.temin_no).not.toBe('183259')
+    expect(dossier.temin_no).toBe('1') // Doğrudan Temin Numarası 1 olduğu için 1 verildi
+    expect(dossier.kaynak_kayit_id).toBe('183259')
+    expect(dossier.kayit_kaynagi).toBe('eski_sistem')
+    expect(dossier.is_locked).toBe(1)
+
+    // Malzemeler kaydedildi mi?
+    const items = db
+      .prepare('SELECT * FROM DATA_TeminKalem WHERE temin_dosya_id = ?')
+      .all(res.dosyaId)
+    expect(items.length).toBe(1)
+  })
+
+  it('eski sistemde DT Numarası yoksa veya portal no ise, mevcut max temin_no üzerinden devam eder', async () => {
+    // Önce 2026 yılında temin_no = "12" olan bir dosya bulunsun
+    db.prepare(`
+      INSERT INTO DATA_TeminDosyasi (temin_no, konu, butce_yili, is_deleted)
+      VALUES ('12', 'Mevcut Son Dosya', '2026', 0)
+    `).run()
+
+    const rawLegacyNoDt = JSON.stringify({
+      id: 'dt-legacy-100',
+      f: {
+        'Dosya No': '183260',
+        'İşin Adı / Tanımı': 'Sıra Numarasız Eski Dosya',
+        'Bütçe Yılı': '2026'
+      },
+      mat: [
+        ['1', 'MLZ-02', 'Klavye', 'Özellik', 'Adet', '20', '2', '50', 'Piyasa']
+      ]
+    })
+
+    const parsed = parseDogrudanTeminJson(rawLegacyNoDt)
+    expect(parsed.success).toBe(true)
+    const res = await executeDossierEzmeSync(null, parsed.data!, {
+      ...ALL_OPTIONS,
+      createNewIfNotFound: true,
+      isLegacyMigration: true,
+      legacyIdField: 'dosyaNo',
+      kayitKaynagi: 'eski_sistem'
+    })
+
+    expect(res.success).toBe(true)
+    const dossier = db
+      .prepare(
+        'SELECT temin_no, kaynak_kayit_id, kayit_kaynagi FROM DATA_TeminDosyasi WHERE id = ?'
+      )
+      .get(res.dosyaId) as any
+
+    // 12'den sonra 2026/13 olmalı; asla 183260 olmamalı!
+    expect(dossier.temin_no).toBe('2026/13')
+    expect(dossier.kaynak_kayit_id).toBe('183260')
+    expect(dossier.kayit_kaynagi).toBe('eski_sistem')
+  })
 })

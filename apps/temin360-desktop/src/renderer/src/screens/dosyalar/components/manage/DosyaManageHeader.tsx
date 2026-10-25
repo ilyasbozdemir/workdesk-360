@@ -99,6 +99,14 @@ export const DosyaManageHeader: React.FC<DosyaManageHeaderProps> = ({
             >
               {isEdit ? 'Düzenleme Modu' : 'Oluşturma Modu'}
             </span>
+            {formData?.kaynak_kayit_id && (
+              <span
+                className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-800/40"
+                title={`Eski Sistem Dosya Numarası: ${formData.kaynak_kayit_id}`}
+              >
+                Eski No: #{formData.kaynak_kayit_id}
+              </span>
+            )}
           </div>
           <p className="text-[10px] text-slate-400 dark:text-slate-500 hidden md:flex items-center gap-1 truncate mt-0.5">
             <span className="font-semibold text-slate-600 dark:text-slate-400">{dosyaTitle}</span>

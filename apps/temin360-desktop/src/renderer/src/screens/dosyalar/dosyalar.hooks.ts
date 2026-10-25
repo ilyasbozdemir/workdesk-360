@@ -75,6 +75,11 @@ export interface TeminDosyasi {
   ordered_docs?: string | null
   starred_docs?: string | null
   skipped_docs?: string | null
+  kayit_kaynagi?: string | null
+  aktarim_grubu_id?: string | null
+  kaynak_kayit_id?: string | null
+  is_locked?: number | null
+  lock_reason?: string | null
   created_at: string
   updated_at: string
   birim_adi?: string | null

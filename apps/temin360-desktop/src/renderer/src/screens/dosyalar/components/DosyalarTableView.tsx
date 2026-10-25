@@ -137,7 +137,17 @@ export function DosyalarTableView({
                                 )}
                               />
                             </button>
-                            <span>{getDosyaNoLabel(dosya)}</span>
+                            <div className="flex flex-col">
+                              <span>{getDosyaNoLabel(dosya)}</span>
+                              {dosya.kaynak_kayit_id && (
+                                <span
+                                  className="text-[10px] text-indigo-600 dark:text-indigo-400 font-sans font-medium"
+                                  title={`Eski Sistem Dosya No: ${dosya.kaynak_kayit_id}`}
+                                >
+                                  Eski No: #{dosya.kaynak_kayit_id}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td

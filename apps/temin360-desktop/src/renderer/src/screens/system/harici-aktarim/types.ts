@@ -8,6 +8,7 @@ export interface DosyaBilgileri {
   butceYili?: string // Örn: "2025"
   butce?: 'Genel Bütçe' | 'Döner Sermaye' | 'Diğer' | string
   dogrudanTeminNumarasi?: string
+  ekapNo?: string
   ihaleTarihi?: string
   ihaleAsamasi?: string
   isinAdi?: string
@@ -193,9 +194,11 @@ export interface SyncOptions {
   syncIhtiyacRaporu?: boolean
   lockImported?: boolean
   lockReason?: string
-  kayitKaynagi?: 'içe_aktarim' | 'eski_sistem' | 'yeni'
+  kayitKaynagi?: 'içe_aktarim' | 'eski_sistem' | 'yeni' | string
   aktarimGrubuId?: string
   forceUnlockOverwrite?: boolean
+  isLegacyMigration?: boolean
+  legacyIdField?: 'dosyaNo' | 'id'
 }
 
 export interface SyncResult {

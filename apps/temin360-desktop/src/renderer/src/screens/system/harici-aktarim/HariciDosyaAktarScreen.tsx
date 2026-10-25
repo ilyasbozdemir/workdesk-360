@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle,
+  Archive,
   ArrowRight,
   Building2,
   CheckCircle2,
@@ -68,7 +69,9 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
     createNewIfNotFound: false,
     lockImported: true,
     lockReason: "Eski Sistemden Aktarıldı (İmzalı/Korumalı Arşiv)",
-    kayitKaynagi: "içe_aktarim",
+    kayitKaynagi: "eski_sistem",
+    isLegacyMigration: true,
+    legacyIdField: "dosyaNo",
     forceUnlockOverwrite: false,
   });
 
@@ -800,7 +803,8 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                               setOptions((p) => ({
                                 ...p,
                                 lockImported: e.target.checked,
-                              }))}
+                              }))
+                            }
                             className="rounded text-blue-600 focus:ring-blue-500"
                           />
                           <span className="flex items-center gap-1.5">
@@ -812,6 +816,33 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                         </label>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 pl-5">
                           Aktarılan dosya, kullanıcı açıkça düzeltme yapmadığı sürece yeni sistemin taslak kurallarına veya onay zorlamalarına sokulmaz; eski imza ve içerik bütünlüğü kilitli tutulur.
+                        </p>
+                      </div>
+
+                      {/* Eski Sistem / Geçmiş Veri Aktarımı Seçeneği */}
+                      <div className="mt-2.5 p-2.5 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/80 flex flex-col gap-1.5">
+                        <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-indigo-900 dark:text-indigo-200">
+                          <input
+                            type="checkbox"
+                            checked={options.isLegacyMigration !== false}
+                            onChange={(e) =>
+                              setOptions((p) => ({
+                                ...p,
+                                isLegacyMigration: e.target.checked,
+                                kayitKaynagi: e.target.checked ? "eski_sistem" : "içe_aktarim",
+                              }))
+                            }
+                            className="rounded text-indigo-600 focus:ring-indigo-500"
+                          />
+                          <span className="flex items-center gap-1.5">
+                            <Archive size={13} className="text-indigo-600 dark:text-indigo-400" />
+                            <span>
+                              Eski Sistem / Geçmiş Veri Aktarıyorum (Güvenli ID Koruma)
+                            </span>
+                          </span>
+                        </label>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 pl-5 leading-relaxed">
+                          Gelen verideki <strong>&quot;Dosya No&quot;</strong> (örn. 183259) portal takip numarasıdır ve asla doğrudan temin sıra numarası yapılmaz; <code>kaynak_kayit_id</code> olarak saklanır. Doğrudan temin sıra numarası varsa DT No (örn. 1) veya sıradaki max sıra numarasından atanır.
                         </p>
                       </div>
                     </div>
@@ -871,27 +902,41 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 text-xs">
                       <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
                         <span className="text-[10px] text-slate-500 block">
-                          Asıl Dosya No
+                          Asıl Dosya No (Kaynak ID)
                         </span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                          {parsedData.dosyaBilgileri.dosyaNo || "-"}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {parsedData.dosyaBilgileri.dosyaNo || "-"}
+                          </span>
+                          {options.isLegacyMigration && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold">
+                              Eski Kayıt ID
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
                         <span className="text-[10px] text-slate-500 block">
                           Doğrudan Temin No
                         </span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                          {parsedData.dosyaBilgileri.dogrudanTeminNumarasi ||
-                            "-"}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
+                            {parsedData.dosyaBilgileri.dogrudanTeminNumarasi ||
+                              (options.isLegacyMigration ? "Sıradan Atanacak" : "-")}
+                          </span>
+                          {options.isLegacyMigration && !parsedData.dosyaBilgileri.dogrudanTeminNumarasi && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-medium">
+                              Max + 1
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60">
                         <span className="text-[10px] text-slate-500 block">
-                          Harici ID
+                          Harici ID / EKAP No
                         </span>
                         <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block">
-                          {parsedData.id || "-"}
+                          {parsedData.dosyaBilgileri.ekapNo || parsedData.id || "-"}
                         </span>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 col-span-2">

@@ -310,7 +310,11 @@ export function useYeniDosyaScreen(): UseYeniDosyaScreenReturn {
       const parts = raw.split(/[/_ -]+/)
       for (let i = parts.length - 1; i >= 0; i--) {
         const num = parseInt(parts[i], 10)
-        if (!isNaN(num) && num !== year && num > 0) {
+        // 100.000 üzerindeki harici portal / sistem numaralarını ve kaynak_kayit_id eşleşmelerini sıra no sayma
+        if (!isNaN(num) && num !== year && num > 0 && num < 100000) {
+          if (d.kaynak_kayit_id && String(num) === String(d.kaynak_kayit_id)) {
+            continue
+          }
           if (num > maxSeq) {
             maxSeq = num
           }

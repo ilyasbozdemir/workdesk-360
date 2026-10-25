@@ -52,10 +52,18 @@ export function normalizeSingleDossier(raw: any, index = 0): DogrudanTeminDosyas
       'aciklama'
     ) || undefined
 
-  const dosyaNo =
-    getVal('Dosya No', 'dosyaNo', 'dosya_no') ||
-    getVal('Doğrudan Temin Numarası', 'dogrudanTeminNumarasi') ||
-    (raw.id ? String(raw.id) : undefined)
+  const rawDosyaNo =
+    getVal('Dosya No', 'dosyaNo', 'dosya_no') || (raw.id ? String(raw.id) : undefined)
+  const rawDtNo =
+    getVal('Doğrudan Temin Numarası', 'dogrudanTeminNumarasi', 'teminNo', 'temin_no')
+
+  // dosyaNo: Harici sistemdeki takip numarası / kayıt kimliği (Örn: "183259")
+  const dosyaNo = rawDosyaNo || rawDtNo
+
+  // dogrudanTeminNumarasi: Asıl doğrudan temin sıra numarası (Örn: "1", "2")
+  // ASLA Dosya No (örn: 183259 gibi portal takip numarası) doğrudan temin numarası yapılmaz!
+  const dogrudanTeminNumarasi =
+    rawDtNo || (rawDosyaNo && !/^\d{5,}$/.test(rawDosyaNo) ? rawDosyaNo : undefined)
 
   const dosyaBilgileri: DosyaBilgileri = {
     dosyaNo,
@@ -64,7 +72,7 @@ export function normalizeSingleDossier(raw: any, index = 0): DogrudanTeminDosyas
       getVal('Dosya Açılış Tarihi', 'dosyaAcilisTarihi', 'dosya_acilis_tarihi') || undefined,
     butceYili: getVal('Bütçe Yılı', 'butceYili', 'butce_yili') || String(new Date().getFullYear()),
     butce: getVal('Bütçe', 'butce') || 'Genel Bütçe',
-    dogrudanTeminNumarasi: getVal('Doğrudan Temin Numarası', 'dogrudanTeminNumarasi') || dosyaNo,
+    dogrudanTeminNumarasi,
     ihaleTarihi: getVal('İhale Tarihi', 'ihaleTarihi') || undefined,
     ihaleAsamasi: getVal('İhale Aşaması', 'ihaleAsamasi') || 'Teklif Toplama',
     aciklama: getVal('Açıklama', 'aciklama') || undefined,
@@ -340,15 +348,17 @@ export function findMatchingDossier(
   const dtNo = data.dosyaBilgileri.dogrudanTeminNumarasi?.trim()
   const hariciId = data.id?.trim()
 
-  // 1. Asıl dosya numarasına göre birebir eşleşme
+  // 1. kaynak_kayit_id üzerinden eşleşme (Eski sistem Dosya No: 183259)
   if (dosyaNo) {
-    const match = dossiers.find(
-      (d) => d.temin_no && d.temin_no.trim().toLowerCase() === dosyaNo.toLowerCase()
-    )
+    const match = dossiers.find((d) => d.kaynak_kayit_id && d.kaynak_kayit_id.trim() === dosyaNo)
+    if (match) return match
+  }
+  if (hariciId) {
+    const match = dossiers.find((d) => d.kaynak_kayit_id && d.kaynak_kayit_id.trim() === hariciId)
     if (match) return match
   }
 
-  // 2. Doğrudan temin numarasına göre eşleşme
+  // 2. Doğrudan temin numarasına göre eşleşme (Örn: "1", "2026/1")
   if (dtNo) {
     const match = dossiers.find(
       (d) =>
@@ -358,7 +368,15 @@ export function findMatchingDossier(
     if (match) return match
   }
 
-  // 3. Harici ID'ye göre eşleşme (ekap_no)
+  // 3. Asıl dosya numarasına göre birebir eşleşme (Büyük harici portal ID'leri hariç)
+  if (dosyaNo && !/^\d{5,}$/.test(dosyaNo)) {
+    const match = dossiers.find(
+      (d) => d.temin_no && d.temin_no.trim().toLowerCase() === dosyaNo.toLowerCase()
+    )
+    if (match) return match
+  }
+
+  // 4. Harici ID'ye göre eşleşme (ekap_no)
   if (hariciId) {
     const match = dossiers.find((d) => d.ekap_no && d.ekap_no.trim() === hariciId)
     if (match) return match
@@ -462,6 +480,53 @@ export async function executeDossierEzmeSync(
   let finalDosyaId = targetId
   const isNew = finalDosyaId === null
 
+  // 1. temin_no ve kaynak_kayit_id çözümleme:
+  // KURAL: 'Dosya No' (örn: 183259 gibi portal takip numarası) ASLA temin_no olamaz!
+  // 'Doğrudan Temin Numarası' (örn: 1, 2) temin_no olur.
+  // 'Dosya No' (183259) ise kaynak_kayit_id alanına aktarılır.
+  let resolvedTeminNo = info.dogrudanTeminNumarasi?.trim()
+  if (!resolvedTeminNo || /^\d{5,}$/.test(resolvedTeminNo)) {
+    // Eğer doğrudan temin numarası yoksa veya 5+ haneli portal numarasıysa,
+    // o bütçe yılındaki EN BÜYÜK sıra numarasını bul ve sıradan devam et!
+    try {
+      const rows = await ipc.invoke(
+        'db:query',
+        'SELECT temin_no, kaynak_kayit_id FROM DATA_TeminDosyasi WHERE is_deleted = 0 AND butce_yili = ?',
+        [butceYiliInt]
+      )
+      const list = Array.isArray(rows) ? rows : rows?.data || []
+      let maxSeq = 0
+      list.forEach((r: any) => {
+        const raw = (r.temin_no || '').trim()
+        if (!raw) return
+        const parts = raw.split(/[/_ -]+/)
+        for (let i = parts.length - 1; i >= 0; i--) {
+          const num = parseInt(parts[i], 10)
+          if (!isNaN(num) && num !== butceYiliInt && num > 0 && num < 100000) {
+            if (r.kaynak_kayit_id && String(num) === String(r.kaynak_kayit_id)) continue
+            if (num > maxSeq) {
+              maxSeq = num
+            }
+            break
+          }
+        }
+      })
+      resolvedTeminNo = `${butceYiliInt}/${maxSeq + 1}`
+    } catch (err) {
+      console.warn('Otomatik temin_no hesaplanırken hata:', err)
+      resolvedTeminNo = `${butceYiliInt}/1`
+    }
+  }
+
+  // kaynak_kayit_id: Eski sistem Dosya No (örn: 183259) veya veri ID'si
+  const resolvedKaynakKayitId = info.dosyaNo || (data.id ? String(data.id) : null)
+
+  // kayit_kaynagi: Eski verileri aktarma seçeneği aktifse veya 'eski_sistem' ise
+  const resolvedKayitKaynagi =
+    options.isLegacyMigration || options.kayitKaynagi === 'eski_sistem'
+      ? 'eski_sistem'
+      : (options.kayitKaynagi || 'içe_aktarim')
+
   // Eşzamanlı çakışmaları önlemek için ID üretimini doğrudan SQLite'a bırakıyoruz.
   // Yeni dosya ise child tablolarda '$ROOT_ID' belirteci kullanılarak ilk INSERT'ün rowid'si bağlanır.
   const targetDosyaParam: number | { __txRef: 'ROOT_ID' } = isNew
@@ -472,127 +537,127 @@ export async function executeDossierEzmeSync(
   const txQueries: Array<{ sql: string; params?: unknown[] }> = []
 
   // 2. Yeni Dosya ise Header Kaydını Transaction'ın 1. Sorgusu Olarak Ekle (id AUTOINCREMENT'e bırakılır)
-    if (isNew) {
-      txQueries.push({
-        sql: `INSERT INTO DATA_TeminDosyasi (
-          temin_no, ekap_no, konu, isin_aciklamasi, dosya_acilis_tarihi, butce_yili, butce_tipi,
-          birim, sunulacak_makam, ihtiyac_yeri, ihale_sekli, ihale_tipi, tur,
-          teklif_sozlesme_turu, alt_yuklenici_olacak_mi, kismi_teklif_verilecek_mi,
-          yatirim_proje_no, avans_verilecek_mi, yaklasik_maliyet_hesaplamasi,
-          kdv, hesaplama_esasi, komisyon_takdiri, tibbi_cihaz_alimi_mi, son_teklif_verme_tarihi,
-          teslim_tarihi, fonksiyonel_kod, e_butce, finansman_kodu, notlar, durum_asama_id, is_deleted,
-          kayit_kaynagi, aktarim_grubu_id, kaynak_kayit_id, is_locked, lock_reason
-        ) VALUES (
-          ?, ?, ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, ?,
-          ?, ?, ?,
-          ?, ?, ?,
-          ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, 1, 0,
-          ?, ?, ?, ?, ?
-        )`,
-        params: [
-          info.dosyaNo || info.dogrudanTeminNumarasi || 'YENİ-DT',
-          info.dogrudanTeminNumarasi || data.id || null,
-          info.isinAdi || 'Doğrudan Temin Alımı',
-          info.aciklama || null,
-          info.dosyaAcilisTarihi || new Date().toISOString().slice(0, 10),
-          butceYiliInt,
-          info.butce || 'Genel Bütçe',
-          info.ihalesiYapilacakBirim || null,
-          info.sunulacakMakam || null,
-          info.ihtiyacYeri || null,
-          info.madde || '22/d*',
-          'Doğrudan Temin',
-          turCode,
-          info.teklifSozlesmeTuru || 'Birim Fiyat',
-          altYukleniciInt,
-          kismiTeklifInt,
-          info.yatirimProjeNo || null,
-          avansInt,
-          info.yaklasikMaliyetDurumu || 'Burada Hesaplanacak',
-          info.kdv || 'Hariç',
-          info.hesaplamaEsasi || 'En düşük fiyat esasına göre',
-          info.hesaplamada || 'Sadece araştırma fiyatları dikkate alınacak',
-          tibbiCihazInt,
-          info.sonTeklifVermeTarihSaati || null,
-          info.tahminiBitisTarihi || null,
-          info.fonksiyonelKod || null,
-          info.kurumsalKod || null,
-          info.finansalKod || null,
-          `[Harici Entegrasyon ID: ${data.id || 'N/A'}] ${info.talepTarihSayisi ? 'Talep No: ' + info.talepTarihSayisi : ''}`,
-          options.kayitKaynagi || 'içe_aktarim',
-          options.aktarimGrubuId || null,
-          data.id || info.dosyaNo || null,
-          options.lockImported ? 1 : 0,
-          options.lockImported
-            ? options.lockReason || 'Eski sistemden aktarıldı (İmzalı dosya / salt okunur)'
-            : null
-        ]
-      })
-      updatedFields.push('Yeni Dosya Kaydı Oluşturuldu')
-    } else if (options.overwriteGeneralInfo) {
-      // 3. Mevcut Dosya Güncelleniyorsa Header Güncellemesini Transaction'a Ekle
-      txQueries.push({
-        sql: `UPDATE DATA_TeminDosyasi SET
-          temin_no = ?, ekap_no = ?, konu = ?, isin_aciklamasi = ?, dosya_acilis_tarihi = ?,
-          butce_yili = ?, butce_tipi = ?, birim = ?, sunulacak_makam = ?, ihtiyac_yeri = ?,
-          ihale_sekli = ?, ihale_tipi = ?, tur = ?, teklif_sozlesme_turu = ?,
-          alt_yuklenici_olacak_mi = ?, kismi_teklif_verilecek_mi = ?, yatirim_proje_no = ?,
-          avans_verilecek_mi = ?, yaklasik_maliyet_hesaplamasi = ?, kdv = ?,
-          hesaplama_esasi = ?, komisyon_takdiri = ?, tibbi_cihaz_alimi_mi = ?,
-          son_teklif_verme_tarihi = ?, teslim_tarihi = ?, fonksiyonel_kod = ?,
-          e_butce = ?, finansman_kodu = ?, notlar = ?,
-          kayit_kaynagi = COALESCE(kayit_kaynagi, ?),
-          aktarim_grubu_id = COALESCE(aktarim_grubu_id, ?),
-          kaynak_kayit_id = COALESCE(kaynak_kayit_id, ?),
-          is_locked = CASE WHEN ? = 1 THEN 1 ELSE is_locked END,
-          lock_reason = CASE WHEN ? = 1 THEN ? ELSE lock_reason END,
-          updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        params: [
-          info.dosyaNo || info.dogrudanTeminNumarasi,
-          info.dogrudanTeminNumarasi || data.id || null,
-          info.isinAdi,
-          info.aciklama || null,
-          info.dosyaAcilisTarihi || null,
-          butceYiliInt,
-          info.butce || 'Genel Bütçe',
-          info.ihalesiYapilacakBirim || null,
-          info.sunulacakMakam || null,
-          info.ihtiyacYeri || null,
-          info.madde || '22/d*',
-          'Doğrudan Temin',
-          turCode,
-          info.teklifSozlesmeTuru || 'Birim Fiyat',
-          altYukleniciInt,
-          kismiTeklifInt,
-          info.yatirimProjeNo || null,
-          avansInt,
-          info.yaklasikMaliyetDurumu || 'Burada Hesaplanacak',
-          info.kdv || 'Hariç',
-          info.hesaplamaEsasi || 'En düşük fiyat esasına göre',
-          info.hesaplamada || 'Sadece araştırma fiyatları dikkate alınacak',
-          tibbiCihazInt,
-          info.sonTeklifVermeTarihSaati || null,
-          info.tahminiBitisTarihi || null,
-          info.fonksiyonelKod || null,
-          info.kurumsalKod || null,
-          info.finansalKod || null,
-          `[Harici Entegrasyon ID: ${data.id || 'N/A'}] ${info.talepTarihSayisi ? 'Talep No: ' + info.talepTarihSayisi : ''}`,
-          options.kayitKaynagi || 'içe_aktarim',
-          options.aktarimGrubuId || null,
-          data.id || null,
-          options.lockImported ? 1 : 0,
-          options.lockImported ? 1 : 0,
-          options.lockImported
-            ? options.lockReason || 'Eski sistemden aktarıldı (İmzalı dosya / salt okunur)'
-            : null,
-          finalDosyaId
-        ]
-      })
-      updatedFields.push('Dosya Genel Bilgileri ve İdari Parametreler')
-    }
+  if (isNew) {
+    txQueries.push({
+      sql: `INSERT INTO DATA_TeminDosyasi (
+        temin_no, ekap_no, konu, isin_aciklamasi, dosya_acilis_tarihi, butce_yili, butce_tipi,
+        birim, sunulacak_makam, ihtiyac_yeri, ihale_sekli, ihale_tipi, tur,
+        teklif_sozlesme_turu, alt_yuklenici_olacak_mi, kismi_teklif_verilecek_mi,
+        yatirim_proje_no, avans_verilecek_mi, yaklasik_maliyet_hesaplamasi,
+        kdv, hesaplama_esasi, komisyon_takdiri, tibbi_cihaz_alimi_mi, son_teklif_verme_tarihi,
+        teslim_tarihi, fonksiyonel_kod, e_butce, finansman_kodu, notlar, durum_asama_id, is_deleted,
+        kayit_kaynagi, aktarim_grubu_id, kaynak_kayit_id, is_locked, lock_reason
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?,
+        ?, ?, ?,
+        ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, 1, 0,
+        ?, ?, ?, ?, ?
+      )`,
+      params: [
+        resolvedTeminNo,
+        info.ekapNo || null,
+        info.isinAdi || 'Doğrudan Temin Alımı',
+        info.aciklama || null,
+        info.dosyaAcilisTarihi || new Date().toISOString().slice(0, 10),
+        butceYiliInt,
+        info.butce || 'Genel Bütçe',
+        info.ihalesiYapilacakBirim || null,
+        info.sunulacakMakam || null,
+        info.ihtiyacYeri || null,
+        info.madde || '22/d*',
+        'Doğrudan Temin',
+        turCode,
+        info.teklifSozlesmeTuru || 'Birim Fiyat',
+        altYukleniciInt,
+        kismiTeklifInt,
+        info.yatirimProjeNo || null,
+        avansInt,
+        info.yaklasikMaliyetDurumu || 'Burada Hesaplanacak',
+        info.kdv || 'Hariç',
+        info.hesaplamaEsasi || 'En düşük fiyat esasına göre',
+        info.hesaplamada || 'Sadece araştırma fiyatları dikkate alınacak',
+        tibbiCihazInt,
+        info.sonTeklifVermeTarihSaati || null,
+        info.tahminiBitisTarihi || null,
+        info.fonksiyonelKod || null,
+        info.kurumsalKod || null,
+        info.finansalKod || null,
+        `[Harici Entegrasyon ID: ${data.id || info.dosyaNo || 'N/A'}] ${info.talepTarihSayisi ? 'Talep No: ' + info.talepTarihSayisi : ''}`,
+        resolvedKayitKaynagi,
+        options.aktarimGrubuId || null,
+        resolvedKaynakKayitId,
+        options.lockImported ? 1 : 0,
+        options.lockImported
+          ? options.lockReason || 'Eski sistemden aktarıldı (İmzalı dosya / salt okunur)'
+          : null
+      ]
+    })
+    updatedFields.push('Yeni Dosya Kaydı Oluşturuldu')
+  } else if (options.overwriteGeneralInfo) {
+    // 3. Mevcut Dosya Güncelleniyorsa Header Güncellemesini Transaction'a Ekle
+    txQueries.push({
+      sql: `UPDATE DATA_TeminDosyasi SET
+        temin_no = ?, ekap_no = ?, konu = ?, isin_aciklamasi = ?, dosya_acilis_tarihi = ?,
+        butce_yili = ?, butce_tipi = ?, birim = ?, sunulacak_makam = ?, ihtiyac_yeri = ?,
+        ihale_sekli = ?, ihale_tipi = ?, tur = ?, teklif_sozlesme_turu = ?,
+        alt_yuklenici_olacak_mi = ?, kismi_teklif_verilecek_mi = ?, yatirim_proje_no = ?,
+        avans_verilecek_mi = ?, yaklasik_maliyet_hesaplamasi = ?, kdv = ?,
+        hesaplama_esasi = ?, komisyon_takdiri = ?, tibbi_cihaz_alimi_mi = ?,
+        son_teklif_verme_tarihi = ?, teslim_tarihi = ?, fonksiyonel_kod = ?,
+        e_butce = ?, finansman_kodu = ?, notlar = ?,
+        kayit_kaynagi = COALESCE(kayit_kaynagi, ?),
+        aktarim_grubu_id = COALESCE(aktarim_grubu_id, ?),
+        kaynak_kayit_id = COALESCE(kaynak_kayit_id, ?),
+        is_locked = CASE WHEN ? = 1 THEN 1 ELSE is_locked END,
+        lock_reason = CASE WHEN ? = 1 THEN ? ELSE lock_reason END,
+        updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      params: [
+        resolvedTeminNo,
+        info.ekapNo || null,
+        info.isinAdi,
+        info.aciklama || null,
+        info.dosyaAcilisTarihi || null,
+        butceYiliInt,
+        info.butce || 'Genel Bütçe',
+        info.ihalesiYapilacakBirim || null,
+        info.sunulacakMakam || null,
+        info.ihtiyacYeri || null,
+        info.madde || '22/d*',
+        'Doğrudan Temin',
+        turCode,
+        info.teklifSozlesmeTuru || 'Birim Fiyat',
+        altYukleniciInt,
+        kismiTeklifInt,
+        info.yatirimProjeNo || null,
+        avansInt,
+        info.yaklasikMaliyetDurumu || 'Burada Hesaplanacak',
+        info.kdv || 'Hariç',
+        info.hesaplamaEsasi || 'En düşük fiyat esasına göre',
+        info.hesaplamada || 'Sadece araştırma fiyatları dikkate alınacak',
+        tibbiCihazInt,
+        info.sonTeklifVermeTarihSaati || null,
+        info.tahminiBitisTarihi || null,
+        info.fonksiyonelKod || null,
+        info.kurumsalKod || null,
+        info.finansalKod || null,
+        `[Harici Entegrasyon ID: ${data.id || info.dosyaNo || 'N/A'}] ${info.talepTarihSayisi ? 'Talep No: ' + info.talepTarihSayisi : ''}`,
+        resolvedKayitKaynagi,
+        options.aktarimGrubuId || null,
+        resolvedKaynakKayitId,
+        options.lockImported ? 1 : 0,
+        options.lockImported ? 1 : 0,
+        options.lockImported
+          ? options.lockReason || 'Eski sistemden aktarıldı (İmzalı dosya / salt okunur)'
+          : null,
+        finalDosyaId
+      ]
+    })
+    updatedFields.push('Dosya Genel Bilgileri ve İdari Parametreler')
+  }
 
     // 3. MALZEMELERİN İŞLENMESİ (Açık Politika: undefined ise koru, array ise değiştir/temizle)
     let materialsCount = 0
