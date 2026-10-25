@@ -1,6 +1,6 @@
 /* eslint-disable */
 import Database from 'better-sqlite3'
-import { manifests } from './schema-manifest/index'
+import { manifests, appManifests } from './schema-manifest/index'
 
 export interface SchemaChange {
   schema: number
@@ -20,6 +20,9 @@ export interface DesktopAppVersionMap {
 
 export interface AppVersionManifest {
   app: string
+  target?: string
+  target_scope?: string
+  version?: string
   suite?: string
   apps?: DesktopAppVersionMap
   schema_min: number
@@ -48,6 +51,34 @@ export function getDesktopAppVersions(): DesktopAppVersionMap {
 export function getDesktopAppVersion(appName: string): string | undefined {
   const versions = getDesktopAppVersions()
   return versions[appName]
+}
+
+/**
+ * Belirli bir uygulama için özel şema manifestini döndürür.
+ * (temin360-desktop, ihale360-desktop, devlet-ihale-2886-desktop)
+ */
+export function getAppManifest(appName: string): AppVersionManifest {
+  if (appManifests && appManifests[appName]) {
+    return appManifests[appName]
+  }
+  if (appName.includes('temin') && appManifests['temin360-desktop']) {
+    return appManifests['temin360-desktop']
+  }
+  if (appName.includes('ihale360') && appManifests['ihale360-desktop']) {
+    return appManifests['ihale360-desktop']
+  }
+  if (appName.includes('2886') && appManifests['devlet-ihale-2886-desktop']) {
+    return appManifests['devlet-ihale-2886-desktop']
+  }
+  return getCurrentAppManifest()
+}
+
+/**
+ * Belirli bir uygulama için geçerli azami şema sürümünü döndürür
+ */
+export function getAppSchemaMax(appName: string): number {
+  const manifest = getAppManifest(appName)
+  return manifest?.schema_max || getMaxSchemaVersion()
 }
 
 export function getMaxSchemaVersion(): number {

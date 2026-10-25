@@ -702,7 +702,13 @@ export { DATA_KutuphaneBelgeSurum } from './tables/DATA_KutuphaneBelgeSurum'
 export { DATA_KutuphaneYerTutucu } from './tables/DATA_KutuphaneYerTutucu'
 export { DATA_IhtiyacRaporu } from './tables/DATA_IhtiyacRaporu'
 export { DATA_IhtiyacRaporuKalem } from './tables/DATA_IhtiyacRaporuKalem'
-export { manifests } from './schema-manifest/index'
+export {
+  manifests,
+  appManifests,
+  temin360Manifest,
+  ihale360Manifest,
+  devletIhale2886Manifest
+} from './schema-manifest/index'
 export { defineTable } from './BaseTable'
 export { auditColumns, auditColumnsNoRef } from './audit'
 export * from './migrate'

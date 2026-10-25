@@ -1,0 +1,30 @@
+/* eslint-disable */
+/**
+ * DEVLET İHALE 2886 (2886 Sayılı Devlet İhale Kanunu) Şema Manifesti
+ */
+export const devletIhale2886Manifest = {
+  app: "devlet-ihale-2886-desktop",
+  target: "devlet-ihale-2886-desktop",
+  target_scope: "devlet_ihale_2886",
+  version: "1.0.0-beta.1",
+  suite: "workdesk-360",
+  schema_min: 1,
+  schema_max: 46,
+  release_date: "2026-10-25",
+  changes: [
+    {
+      schema: 46,
+      type: "suite_parity",
+      description: "2886 Devlet İhale Kanunu (Satış, Kiralama, Trampa) v46 şema paritesi ve gelir süreç takip desteği.",
+      columns_added: [
+        { table: "DATA_TeminDosyasi", column: "is_locked" },
+        { table: "DATA_TeminDosyasi", column: "lock_reason" },
+        { table: "DATA_TeminDosyasi", column: "kayit_kaynagi" },
+        { table: "DATA_TeminDosyasi", column: "aktarim_grubu_id" },
+        { table: "DATA_TeminDosyasi", column: "kaynak_kayit_id" }
+      ]
+    }
+  ]
+};
+
+export default devletIhale2886Manifest;
