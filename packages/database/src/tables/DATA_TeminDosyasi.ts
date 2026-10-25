@@ -279,6 +279,17 @@ export const DATA_TeminDosyasi = {
       description: "Eski sistemdeki özgün kayıt ID'si (ör. 196633)",
     },
     {
+      name: "is_locked",
+      type: "INTEGER",
+      default: 0,
+      description: "Dosya Kilitli mi? (1: Kilitli/İmzalı/Değiştirilemez, 0: Düzenlenebilir)",
+    },
+    {
+      name: "lock_reason",
+      type: "TEXT",
+      description: "Kilitleme nedeni (eski_aktarim_imzali, ekap_gonderildi, manuel_kilit vb.)",
+    },
+    {
       name: "created_at",
       type: "DATETIME",
       default: "CURRENT_TIMESTAMP",

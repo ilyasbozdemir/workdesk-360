@@ -56,6 +56,11 @@ describe('Gerçek SQLite Motoru: Harici Dosya Aktarım & Atomik Rollback Doğrul
         firma_id INTEGER,
         durum_asama_id INTEGER DEFAULT 1,
         is_deleted INTEGER DEFAULT 0,
+        kayit_kaynagi TEXT DEFAULT 'yeni',
+        aktarim_grubu_id TEXT,
+        kaynak_kayit_id TEXT,
+        is_locked INTEGER DEFAULT 0,
+        lock_reason TEXT,
         updated_at TEXT
       );
 

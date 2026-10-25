@@ -178,6 +178,10 @@ export interface ExistingDossierSummary {
   durum_asama_id?: number
   yaklasik_maliyet?: number
   created_at?: string
+  kayit_kaynagi?: string
+  kaynak_kayit_id?: string
+  is_locked?: number
+  lock_reason?: string
 }
 
 export interface SyncOptions {
@@ -187,6 +191,11 @@ export interface SyncOptions {
   overwriteCommissions: boolean
   createNewIfNotFound: boolean
   syncIhtiyacRaporu?: boolean
+  lockImported?: boolean
+  lockReason?: string
+  kayitKaynagi?: 'içe_aktarim' | 'eski_sistem' | 'yeni'
+  aktarimGrubuId?: string
+  forceUnlockOverwrite?: boolean
 }
 
 export interface SyncResult {
@@ -200,3 +209,22 @@ export interface SyncResult {
   ihtiyacRaporuInfo?: string
   message: string
 }
+
+export interface BatchItemResult {
+  index: number
+  dosyaNo?: string
+  isinAdi?: string
+  status: 'created' | 'updated' | 'skipped_locked' | 'failed'
+  dosyaId?: number
+  error?: string
+}
+
+export interface BatchSyncResult {
+  total: number
+  successCount: number
+  failedCount: number
+  lockedSkippedCount: number
+  aktarimGrubuId: string
+  details: BatchItemResult[]
+}
+

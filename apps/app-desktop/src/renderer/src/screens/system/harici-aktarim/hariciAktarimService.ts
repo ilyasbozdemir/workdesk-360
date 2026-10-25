@@ -1,5 +1,7 @@
 import { validateDogrudanTeminPayload } from './hariciAktarimSchema'
 import {
+  BatchItemResult,
+  BatchSyncResult,
   DogrudanTeminDosyasi,
   DosyaBilgileri,
   ExistingDossierSummary,
@@ -373,7 +375,8 @@ export async function fetchExistingDossiers(): Promise<ExistingDossierSummary[]>
     }
     const res = await window.electron.ipcRenderer.invoke(
       'db:query',
-      `SELECT id, temin_no, ekap_no, konu, butce_yili, durum_asama_id, yaklasik_maliyet, created_at
+      `SELECT id, temin_no, ekap_no, konu, butce_yili, durum_asama_id, yaklasik_maliyet, created_at,
+              kayit_kaynagi, kaynak_kayit_id, is_locked, lock_reason
        FROM DATA_TeminDosyasi
        WHERE is_deleted = 0
        ORDER BY id DESC
@@ -398,7 +401,8 @@ export async function searchDossiers(query: string): Promise<ExistingDossierSumm
     const pattern = `%${query.trim()}%`
     const res = await window.electron.ipcRenderer.invoke(
       'db:query',
-      `SELECT id, temin_no, ekap_no, konu, butce_yili, durum_asama_id, yaklasik_maliyet, created_at
+      `SELECT id, temin_no, ekap_no, konu, butce_yili, durum_asama_id, yaklasik_maliyet, created_at,
+              kayit_kaynagi, kaynak_kayit_id, is_locked, lock_reason
        FROM DATA_TeminDosyasi
        WHERE is_deleted = 0 AND (temin_no LIKE ? OR ekap_no LIKE ? OR konu LIKE ?)
        ORDER BY id DESC
@@ -424,6 +428,23 @@ export async function executeDossierEzmeSync(
   const ipc = window.electron?.ipcRenderer
   if (!ipc) {
     throw new Error('Electron veritabanı köprüsüne erişilemedi.')
+  }
+
+  // Hedef dosya kilit kontrolü: Eğer dosya kilitli/imzalı ise üzerine yazmayı engelle!
+  if (targetId !== null) {
+    const lockCheck = await ipc.invoke(
+      'db:query',
+      'SELECT is_locked, lock_reason, temin_no, kayit_kaynagi FROM DATA_TeminDosyasi WHERE id = ?',
+      [targetId]
+    )
+    const targetRow = Array.isArray(lockCheck) ? lockCheck[0] : (lockCheck as any)?.data?.[0]
+    if (targetRow && (targetRow.is_locked === 1 || targetRow.is_locked === true)) {
+      if (!options.forceUnlockOverwrite) {
+        throw new Error(
+          `[KİLİTLİ DOSYA]: "${targetRow.temin_no || targetId}" numaralı dosya kilitlidir (${targetRow.lock_reason || 'İmzalı/Onaylı'}), üzerine doğrudan yazılamaz! Lütfen önce kilidi açın veya "Yeni Dosya Olarak Ekle" seçeneğini kullanın.`
+        )
+      }
+    }
   }
 
   if (targetId === null && options.createNewIfNotFound === false) {
@@ -460,14 +481,16 @@ export async function executeDossierEzmeSync(
           teklif_sozlesme_turu, alt_yuklenici_olacak_mi, kismi_teklif_verilecek_mi,
           yatirim_proje_no, avans_verilecek_mi, yaklasik_maliyet_hesaplamasi,
           kdv, hesaplama_esasi, komisyon_takdiri, tibbi_cihaz_alimi_mi, son_teklif_verme_tarihi,
-          teslim_tarihi, fonksiyonel_kod, e_butce, finansman_kodu, notlar, durum_asama_id, is_deleted
+          teslim_tarihi, fonksiyonel_kod, e_butce, finansman_kodu, notlar, durum_asama_id, is_deleted,
+          kayit_kaynagi, aktarim_grubu_id, kaynak_kayit_id, is_locked, lock_reason
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?,
           ?, ?, ?,
           ?, ?, ?,
           ?, ?, ?, ?, ?,
-          ?, ?, ?, ?, ?, 1, 0
+          ?, ?, ?, ?, ?, 1, 0,
+          ?, ?, ?, ?, ?
         )`,
         params: [
           info.dosyaNo || info.dogrudanTeminNumarasi || 'YENİ-DT',
@@ -498,7 +521,14 @@ export async function executeDossierEzmeSync(
           info.fonksiyonelKod || null,
           info.kurumsalKod || null,
           info.finansalKod || null,
-          `[Harici Entegrasyon ID: ${data.id || 'N/A'}] ${info.talepTarihSayisi ? 'Talep No: ' + info.talepTarihSayisi : ''}`
+          `[Harici Entegrasyon ID: ${data.id || 'N/A'}] ${info.talepTarihSayisi ? 'Talep No: ' + info.talepTarihSayisi : ''}`,
+          options.kayitKaynagi || 'içe_aktarim',
+          options.aktarimGrubuId || null,
+          data.id || info.dosyaNo || null,
+          options.lockImported ? 1 : 0,
+          options.lockImported
+            ? options.lockReason || 'Eski sistemden aktarıldı (İmzalı dosya / salt okunur)'
+            : null
         ]
       })
       updatedFields.push('Yeni Dosya Kaydı Oluşturuldu')
@@ -513,7 +543,13 @@ export async function executeDossierEzmeSync(
           avans_verilecek_mi = ?, yaklasik_maliyet_hesaplamasi = ?, kdv = ?,
           hesaplama_esasi = ?, komisyon_takdiri = ?, tibbi_cihaz_alimi_mi = ?,
           son_teklif_verme_tarihi = ?, teslim_tarihi = ?, fonksiyonel_kod = ?,
-          e_butce = ?, finansman_kodu = ?, notlar = ?, updated_at = CURRENT_TIMESTAMP
+          e_butce = ?, finansman_kodu = ?, notlar = ?,
+          kayit_kaynagi = COALESCE(kayit_kaynagi, ?),
+          aktarim_grubu_id = COALESCE(aktarim_grubu_id, ?),
+          kaynak_kayit_id = COALESCE(kaynak_kayit_id, ?),
+          is_locked = CASE WHEN ? = 1 THEN 1 ELSE is_locked END,
+          lock_reason = CASE WHEN ? = 1 THEN ? ELSE lock_reason END,
+          updated_at = CURRENT_TIMESTAMP
          WHERE id = ?`,
         params: [
           info.dosyaNo || info.dogrudanTeminNumarasi,
@@ -545,6 +581,13 @@ export async function executeDossierEzmeSync(
           info.kurumsalKod || null,
           info.finansalKod || null,
           `[Harici Entegrasyon ID: ${data.id || 'N/A'}] ${info.talepTarihSayisi ? 'Talep No: ' + info.talepTarihSayisi : ''}`,
+          options.kayitKaynagi || 'içe_aktarim',
+          options.aktarimGrubuId || null,
+          data.id || null,
+          options.lockImported ? 1 : 0,
+          options.lockImported
+            ? options.lockReason || 'Eski sistemden aktarıldı (İmzalı dosya / salt okunur)'
+            : null,
           finalDosyaId
         ]
       })
@@ -1146,3 +1189,110 @@ export async function syncDossierWithIhtiyacRaporu(
     }
   }
 }
+
+/**
+ * Dosya kilidini açar veya kilitler (imzalı eski dosyaların ezilmesini önleme)
+ */
+export async function toggleDossierLock(
+  dosyaId: number,
+  isLocked: boolean,
+  reason?: string
+): Promise<boolean> {
+  const ipc = window.electron?.ipcRenderer
+  if (!ipc) return false
+  await ipc.invoke(
+    'db:query',
+    'UPDATE DATA_TeminDosyasi SET is_locked = ?, lock_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+    [isLocked ? 1 : 0, isLocked ? reason || 'Kullanıcı tarafından kilitlendi' : null, dosyaId]
+  )
+  return true
+}
+
+/**
+ * Toplu İçe Aktarım Fonksiyonu: Birden fazla dosyayı tek işlemde veya grup olarak aktarır
+ */
+export async function executeBatchDossierSync(
+  files: DogrudanTeminDosyasi[],
+  existingDossiers: ExistingDossierSummary[],
+  options: SyncOptions,
+  onProgress?: (current: number, total: number, currentItem: DogrudanTeminDosyasi) => void
+): Promise<BatchSyncResult> {
+  const aktarimGrubuId =
+    options.aktarimGrubuId ||
+    `akt_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${Math.random().toString(36).substring(2, 7)}`
+
+  const result: BatchSyncResult = {
+    total: files.length,
+    successCount: 0,
+    failedCount: 0,
+    lockedSkippedCount: 0,
+    aktarimGrubuId,
+    details: []
+  }
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    if (onProgress) {
+      onProgress(i + 1, files.length, file)
+    }
+
+    try {
+      const match = findMatchingDossier(existingDossiers, file)
+
+      if (match && (match.is_locked === 1 || match.is_locked === true) && !options.forceUnlockOverwrite) {
+        if (options.createNewIfNotFound) {
+          // Kilitli dosyanın üzerine yazmak yerine yeni kopya oluştur
+          const syncRes = await executeDossierEzmeSync(null, file, {
+            ...options,
+            aktarimGrubuId,
+            createNewIfNotFound: true
+          })
+          result.successCount++
+          result.details.push({
+            index: i + 1,
+            dosyaNo: file.dosyaBilgileri.dosyaNo,
+            isinAdi: file.dosyaBilgileri.isinAdi,
+            status: 'created',
+            dosyaId: syncRes.dosyaId
+          })
+        } else {
+          result.lockedSkippedCount++
+          result.details.push({
+            index: i + 1,
+            dosyaNo: file.dosyaBilgileri.dosyaNo,
+            isinAdi: file.dosyaBilgileri.isinAdi,
+            status: 'skipped_locked',
+            dosyaId: match.id,
+            error: `Dosya #${match.id} (${match.temin_no || 'No Yok'}) kilitli/imzalı olduğu için ezilmedi.`
+          })
+        }
+      } else {
+        const targetId = match ? match.id : null
+        const syncRes = await executeDossierEzmeSync(targetId, file, {
+          ...options,
+          aktarimGrubuId
+        })
+        result.successCount++
+        result.details.push({
+          index: i + 1,
+          dosyaNo: file.dosyaBilgileri.dosyaNo,
+          isinAdi: file.dosyaBilgileri.isinAdi,
+          status: syncRes.isNew ? 'created' : 'updated',
+          dosyaId: syncRes.dosyaId
+        })
+      }
+    } catch (err) {
+      result.failedCount++
+      result.details.push({
+        index: i + 1,
+        dosyaNo: file.dosyaBilgileri.dosyaNo,
+        isinAdi: file.dosyaBilgileri.isinAdi,
+        status: 'failed',
+        error: err instanceof Error ? err.message : String(err)
+      })
+    }
+  }
+
+  return result
+}
+

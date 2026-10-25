@@ -9,20 +9,26 @@ import {
   FileCheck2,
   FileCode2,
   FolderOpen,
+  Layers,
+  Lock,
   Package,
   RefreshCw,
+  ShieldAlert,
   SlidersHorizontal,
   Sparkles,
   UploadCloud,
   Users,
+  X,
 } from "lucide-react";
 import {
+  executeBatchDossierSync,
   executeDossierEzmeSync,
   fetchExistingDossiers,
   findMatchingDossier,
   parseDogrudanTeminJson,
 } from "./hariciAktarimService";
 import {
+  BatchSyncResult,
   DogrudanTeminDosyasi,
   ExistingDossierSummary,
   SyncOptions,
@@ -33,9 +39,15 @@ import { APP_ROUTES } from "../../../constants/routeConstants";
 
 type ActiveTab = "genel" | "malzemeler" | "teklifler" | "komisyonlar";
 
+import * as XLSX from "xlsx";
+import JSZip from "jszip";
+import { onizlemeHesapla, tahminEtEslesme } from "./dtExcelService";
+
 export default function HariciDosyaAktarScreen(): React.JSX.Element {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const zipInputRef = useRef<HTMLInputElement>(null);
+  const excelInputRef = useRef<HTMLInputElement>(null);
 
   const [rawJson, setRawJson] = useState("");
   const [activeFileIndex, setActiveFileIndex] = useState(0);
@@ -53,7 +65,19 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
     overwriteOffers: true,
     overwriteCommissions: true,
     createNewIfNotFound: false,
+    lockImported: true,
+    lockReason: "Eski Sistemden Aktarıldı (İmzalı/Korumalı Arşiv)",
+    kayitKaynagi: "içe_aktarim",
+    forceUnlockOverwrite: false,
   });
+
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{
+    current: number;
+    total: number;
+    title: string;
+  } | null>(null);
+  const [batchResult, setBatchResult] = useState<BatchSyncResult | null>(null);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -91,7 +115,11 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
   // Etkin hedef dosya kimliği
   const effectiveTargetId = useMemo(() => {
     if (selectedTargetId !== null) return selectedTargetId;
-    if (autoMatch) return autoMatch.id;
+    if (autoMatch) {
+      // Eğer eşleşen dosya kilitliyse, ezmeyi önlemek için varsayılan olarak yeni dosya aç
+      if (autoMatch.is_locked === 1) return "new";
+      return autoMatch.id;
+    }
     if (parsedData) return "new";
     return null;
   }, [selectedTargetId, autoMatch, parsedData]);
@@ -108,6 +136,127 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
       setErrorMsg(null);
     };
     reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const handleZipUpload = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErrorMsg(null);
+    try {
+      const zip = await JSZip.loadAsync(file);
+      // manifest veya liste veya dosyalar ara
+      const manifestFile = zip.file("data/manifest.json") || zip.file("manifest.json");
+      if (manifestFile) {
+        // Statik API data.zip formatı
+        const manifestStr = await manifestFile.async("string");
+        const manifest = JSON.parse(manifestStr);
+        if (manifest.schemaVersion && manifest.schemaVersion !== 1) {
+          throw new Error(`Desteklenmeyen schemaVersion: ${manifest.schemaVersion}`);
+        }
+        // dosyalar/*.json topla
+        const fileEntries = Object.keys(zip.files).filter(
+          (k) => k.includes("dosyalar/") && k.endsWith(".json") && !k.endsWith("liste.json")
+        );
+        const files: any[] = [];
+        for (const entry of fileEntries) {
+          const content = await zip.files[entry].async("string");
+          try {
+            files.push(JSON.parse(content));
+          } catch {}
+        }
+        setRawJson(JSON.stringify({ files }, null, 2));
+      } else {
+        // Direkt JSON içeren zip
+        const jsonFiles = Object.keys(zip.files).filter((k) => k.endsWith(".json"));
+        if (jsonFiles.length > 0) {
+          const firstJson = await zip.files[jsonFiles[0]].async("string");
+          setRawJson(firstJson);
+        } else {
+          throw new Error("Zip içinde JSON dosyası bulunamadı.");
+        }
+      }
+      setActiveFileIndex(0);
+      setSyncResult(null);
+    } catch (err: unknown) {
+      setErrorMsg(`Zip okunamadı: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    e.target.value = "";
+  };
+
+  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErrorMsg(null);
+    const reader = new FileReader();
+    reader.onload = (event): void => {
+      try {
+        const data = new Uint8Array(event.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[firstSheetName];
+        const rows: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        if (rows.length < 2) {
+          throw new Error("Excel dosyasında yeterli veri satırı bulunamadı.");
+        }
+        const headers = (rows[0] as string[]).map(String);
+        const mapping = tahminEtEslesme(headers, "malzeme");
+        const parsed = onizlemeHesapla(rows, 0, mapping, "malzeme");
+        
+        // Malzeme listesini DT JSON formatına çevir
+        const mat = parsed.onizleme.map((item, idx) => [
+          String(idx + 1),
+          item.veri.kod || "",
+          item.veri.ad || "",
+          item.veri.aciklama || "",
+          item.veri.birim || "Adet",
+          item.veri.kdvOrani || "20",
+          item.veri.miktar || "1",
+          item.veri.birimFiyat || "",
+          item.veri.kazananFirma || "",
+          item.veri.tasinirKodu || "",
+          item.veri.okas || ""
+        ]);
+
+        const dtObj = {
+          files: [
+            {
+              f: {
+                "İhalesi Yapılacak Birim": "Fen İşleri Müdürlüğü",
+                "İhale Tipi": "Doğrudan Temin",
+                "Bütçe": "Genel Bütçe",
+                "KDV": "Hariç",
+                "Sunulacak Makam": "Başkanlık Makamı",
+                "İhtiyaç Yeri": "Belediye Deposu",
+                "Hesaplama Esası": "En düşük fiyat esasına göre",
+                "Hesaplamada": "Sadece araştırma fiyatları dikkate alınacak",
+                "Alım Türü": "Mal Alımı",
+                "Dosya Açılış Tarihi": new Date().toISOString().slice(0, 10),
+                "İşin Adı / Tanımı": file.name.replace(/\.[^/.]+$/, ""),
+                "Dosya No": "EXCEL-" + Math.floor(Math.random() * 9000 + 1000),
+                "Doğrudan Temin Numarası": "1",
+                "Bütçe Yılı": String(new Date().getFullYear())
+              },
+              mat,
+              tek: [],
+              win: [],
+              con: [],
+              yak: [],
+              muay: [],
+              kab: []
+            }
+          ]
+        };
+
+        setRawJson(JSON.stringify(dtObj, null, 2));
+        setActiveFileIndex(0);
+        setSyncResult(null);
+      } catch (err: unknown) {
+        setErrorMsg(`Excel okuma hatası: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";
   };
 
   const handleFillSample = (): void => {
@@ -122,6 +271,8 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
     ? existingDossiers.find((d) => d.id === effectiveTargetId) || null
     : null;
 
+  const isTargetLocked = Boolean(targetDossier?.is_locked === 1);
+
   const handleExecuteSync = async (): Promise<void> => {
     if (!parsedData) return;
     setShowConfirm(false);
@@ -132,7 +283,6 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
     try {
       const isNewTarget = effectiveTargetId === "new";
       const targetId = isNewTarget ? null : effectiveTargetId;
-      // Yeni dosya seçildiyse oluşturma izni açıkça verilir; mevcut dosyada kapalı kalır.
       const res = await executeDossierEzmeSync(targetId, parsedData, {
         ...options,
         createNewIfNotFound: isNewTarget,
@@ -148,6 +298,44 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
     }
   };
 
+  const handleExecuteBatchSync = async (): Promise<void> => {
+    if (!parseResult?.files || parseResult.files.length === 0) return;
+    setIsProcessing(true);
+    setErrorMsg(null);
+    setBatchResult(null);
+
+    try {
+      const res = await executeBatchDossierSync(
+        parseResult.files,
+        existingDossiers,
+        {
+          ...options,
+          createNewIfNotFound: true,
+        },
+        (current, total, item) => {
+          setBatchProgress({
+            current,
+            total,
+            title:
+              item.dosyaBilgileri.isinAdi ||
+              item.dosyaBilgileri.dosyaNo ||
+              `Dosya ${current}`,
+          });
+        }
+      );
+      setBatchResult(res);
+      const refreshed = await fetchExistingDossiers();
+      setExistingDossiers(Array.isArray(refreshed) ? refreshed : []);
+    } catch (err: unknown) {
+      setErrorMsg(
+        `Toplu aktarım hatası: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setIsProcessing(false);
+      setBatchProgress(null);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 p-6 max-w-7xl mx-auto w-full animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Üst Başlık & Açıklama */}
@@ -159,28 +347,26 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-50 flex items-center gap-2">
-                Harici Dosya Entegrasyonu &amp; Ezme (JSON Sync)
+                Harici Dosya Entegrasyonu &amp; Ezme (JSON / Excel / Zip)
                 <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-semibold">
-                  API &amp; Dosya No Eşleme
+                  dosyalar.schema.json Tam Uyumlu
                 </span>
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Harici servislerden gelen Doğrudan Temin JSON verilerini asıl
-                dosya no, DT no veya harici ID ile eşleştirip mevcut dosyayı
-                üzerine yazarak (ezerek) güncelleyin.
+                Doğrudan Temin kök modelindeki (files, mat, win, kab, tek) JSON, data.zip veya Excel/CSV dosyalarını yükleyip mevcut dosyalarla eşleyin.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={downloadSampleJsonTemplate}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 transition-all shadow-xs"
             title="Standart Doğrudan Temin JSON Şablonunu İndir"
           >
             <Download size={14} />
-            Örnek JSON İndir
+            Örnek JSON
           </button>
 
           <button
@@ -188,22 +374,56 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all"
           >
             <Sparkles size={14} className="text-amber-500" />
-            Örnek JSON&apos;ı Doldur
+            Örnek Doldur
           </button>
 
+          {/* Gizli Inputlar */}
           <input
             ref={fileInputRef}
             type="file"
-            accept=".json"
+            accept=".json,application/json"
             className="hidden"
             onChange={handleFileUpload}
           />
+          <input
+            ref={zipInputRef}
+            type="file"
+            accept=".zip,application/zip"
+            className="hidden"
+            onChange={handleZipUpload}
+          />
+          <input
+            ref={excelInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={handleExcelUpload}
+          />
+
           <button
             onClick={() => fileInputRef.current?.click()}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex items-center gap-1.5 transition-all"
           >
             <UploadCloud size={14} />
-            JSON Dosyası Yükle
+            JSON Yükle
+          </button>
+
+          <button
+            onClick={() => zipInputRef.current?.click()}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-xs flex items-center gap-1.5 transition-all"
+            title="data.zip veya yedek zip yükle"
+          >
+            <Package size={14} />
+            data.zip
+          </button>
+
+          <button
+            onClick={() => excelInputRef.current?.click()}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center gap-1.5 transition-all"
+            title="Excel (.xlsx, .xls) veya CSV yükle"
+          >
+            <Building2 size={14} />
+            Excel/CSV
           </button>
         </div>
       </div>
@@ -287,6 +507,19 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                   ))}
                 </select>
               </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setBatchResult(null);
+                  setBatchModalOpen(true);
+                }}
+                disabled={isProcessing}
+                className="w-full mt-1 py-2 px-3 rounded-lg bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Layers size={14} />
+                Tümünü Toplu Aktar ({parseResult.files.length} Dosyayı Senkronize Et)
+              </button>
             </div>
           )}
 
@@ -324,8 +557,21 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                       Hedef Dosya Seçimi ve Ezme Stratejisi
                     </h3>
                     {autoMatch && (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                        🎯 Otomatik Eşleşti
+                      <span
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                          autoMatch.is_locked
+                            ? "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+                            : "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                        }`}
+                      >
+                        {autoMatch.is_locked ? (
+                          <>
+                            <Lock size={12} className="text-amber-600 dark:text-amber-400" />
+                            <span>Eşleşen Dosya Kilitli (İmzalı)</span>
+                          </>
+                        ) : (
+                          <span>🎯 Otomatik Eşleşti</span>
+                        )}
                       </span>
                     )}
                   </div>
@@ -346,8 +592,11 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                           className="mt-0.5 text-blue-600 focus:ring-blue-500"
                         />
                         <div>
-                          <span className="text-xs font-bold block text-slate-800 dark:text-slate-200">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                             Mevcut Dosyayı Ez / Güncelle
+                            {autoMatch?.is_locked === 1 && (
+                              <Lock size={12} className="text-amber-500" />
+                            )}
                           </span>
                           <span className="text-[11px] text-slate-500 dark:text-slate-400">
                             Seçilen dosyanın parametre ve kalemleri bu verilerle
@@ -377,7 +626,7 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                     </div>
 
                     {effectiveTargetId !== "new" && (
-                      <div className="flex flex-col gap-1.5 mt-1">
+                      <div className="flex flex-col gap-2 mt-1">
                         <label className="text-xs font-medium text-slate-600 dark:text-slate-300">
                           Eşlenecek / Ezilecek Hedef Dosya:
                         </label>
@@ -391,12 +640,46 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                         >
                           {existingDossiers.map((d) => (
                             <option key={d.id} value={d.id}>
-                              [ID: {d.id}] — {d.temin_no || "No Yok"} — {d.konu}
-                              {" "}
+                              {d.is_locked ? "🔒 [KİLİTLİ] " : ""}[ID: {d.id}] — {d.temin_no || "No Yok"} — {d.konu}{" "}
                               ({d.butce_yili || "Bütçe Yok"})
                             </option>
                           ))}
                         </select>
+
+                        {isTargetLocked && (
+                          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 flex flex-col gap-2 animate-in fade-in">
+                            <div className="flex items-start gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                              <ShieldAlert
+                                size={16}
+                                className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400"
+                              />
+                              <div>
+                                <span>Hedef Dosya Korumalı / Kilitli: </span>
+                                <span className="font-normal">
+                                  {targetDossier?.lock_reason || "İmzalı / Resmi Arşiv"}
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-[11px] text-amber-700 dark:text-amber-400/90 leading-tight">
+                              Bu dosya daha önce imzalanmış veya onaylanmış olduğu için kilitlidir. Orijinal verileri korumak adına üzerine yazma işlemi varsayılan olarak engellenmiştir.
+                            </p>
+                            <label className="flex items-center gap-2 mt-1 cursor-pointer text-xs font-semibold text-rose-700 dark:text-rose-400">
+                              <input
+                                type="checkbox"
+                                checked={options.forceUnlockOverwrite || false}
+                                onChange={(e) =>
+                                  setOptions((p) => ({
+                                    ...p,
+                                    forceUnlockOverwrite: e.target.checked,
+                                  }))}
+                                className="rounded text-rose-600 focus:ring-rose-500"
+                              />
+                              <span>
+                                🔓 Kilidi Kaldır ve Üzerine Yazmayı Onayla (Kritik İşlem)
+                              </span>
+                            </label>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -464,6 +747,31 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                           />
                           <span>Komisyon Heyetleri</span>
                         </label>
+                      </div>
+
+                      {/* Kayıt Kaynağı & Kilit Güvenliği */}
+                      <div className="mt-3 p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col gap-1.5">
+                        <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-800 dark:text-slate-200">
+                          <input
+                            type="checkbox"
+                            checked={options.lockImported !== false}
+                            onChange={(e) =>
+                              setOptions((p) => ({
+                                ...p,
+                                lockImported: e.target.checked,
+                              }))}
+                            className="rounded text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="flex items-center gap-1.5">
+                            <Lock size={13} className="text-amber-500" />
+                            <span>
+                              Aktarılan dosyayı kilitli / salt-okunur arşiv olarak koru
+                            </span>
+                          </span>
+                        </label>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 pl-5">
+                          Aktarılan dosya, kullanıcı açıkça düzeltme yapmadığı sürece yeni sistemin taslak kurallarına veya onay zorlamalarına sokulmaz; eski imza ve içerik bütünlüğü kilitli tutulur.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -833,27 +1141,34 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                 {/* Ana İşlem Butonu */}
                 <button
                   onClick={() => setShowConfirm(true)}
-                  disabled={isProcessing || showConfirm}
+                  disabled={
+                    isProcessing ||
+                    showConfirm ||
+                    (effectiveTargetId !== "new" && isTargetLocked && !options.forceUnlockOverwrite)
+                  }
                   className="w-full py-3 rounded-xl font-bold text-sm bg-linear-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
-                  {isProcessing
-                    ? (
-                      <>
-                        <RefreshCw size={16} className="animate-spin" />
-                        <span>Veriler Eşleniyor ve Dosya Eziliyor...</span>
-                      </>
-                    )
-                    : (
-                      <>
-                        <FileCheck2 size={18} />
-                        <span>
-                          {effectiveTargetId === "new"
-                            ? "Verileri Sisteme Yeni Dosya Olarak Ekle"
-                            : `Verileri Eşle ve Hedef Dosyayı (${effectiveTargetId}) Ez / Güncelle`}
-                        </span>
-                        <ArrowRight size={16} />
-                      </>
-                    )}
+                  {isProcessing ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      <span>Veriler Eşleniyor ve Dosya Eziliyor...</span>
+                    </>
+                  ) : effectiveTargetId !== "new" && isTargetLocked && !options.forceUnlockOverwrite ? (
+                    <>
+                      <Lock size={18} className="text-amber-300" />
+                      <span>Hedef Dosya Kilitli (Ezme İşlemi Engellendi)</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileCheck2 size={18} />
+                      <span>
+                        {effectiveTargetId === "new"
+                          ? "Verileri Sisteme Yeni Dosya Olarak Ekle"
+                          : `Verileri Eşle ve Hedef Dosyayı (${effectiveTargetId}) Ez / Güncelle`}
+                      </span>
+                      <ArrowRight size={16} />
+                    </>
+                  )}
                 </button>
               </>
             )
@@ -876,6 +1191,201 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
             )}
         </div>
       </div>
+
+      {/* Toplu İçe Aktarım Modalı */}
+      {batchModalOpen && parseResult?.files && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 flex flex-col gap-4 max-h-[85vh] overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                  <Layers size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Toplu İçe Aktarım &amp; Senkronizasyon
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Toplam {parseResult.files.length} doğrudan temin dosyası işlenecek.
+                  </p>
+                </div>
+              </div>
+              {!isProcessing && (
+                <button
+                  onClick={() => setBatchModalOpen(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+
+            {/* İlerleme Çubuğu */}
+            {isProcessing && batchProgress && (
+              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex flex-col gap-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-blue-900 dark:text-blue-200">
+                  <span className="flex items-center gap-2">
+                    <RefreshCw size={14} className="animate-spin text-blue-600" />
+                    İşleniyor: {batchProgress.title}
+                  </span>
+                  <span>
+                    {batchProgress.current} / {batchProgress.total} (%
+                    {Math.round((batchProgress.current / batchProgress.total) * 100)})
+                  </span>
+                </div>
+                <div className="w-full bg-blue-200 dark:bg-blue-900 h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-blue-600 h-full transition-all duration-200"
+                    style={{
+                      width: `${(batchProgress.current / batchProgress.total) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Sonuç Özeti */}
+            {batchResult && (
+              <div className="flex flex-col gap-3 overflow-y-auto max-h-[50vh] pr-1">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center">
+                    <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+                      {batchResult.successCount}
+                    </div>
+                    <div className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-400">
+                      Başarılı Aktarıldı
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-center">
+                    <div className="text-xl font-bold text-amber-700 dark:text-amber-300">
+                      {batchResult.lockedSkippedCount}
+                    </div>
+                    <div className="text-[11px] font-semibold text-amber-800 dark:text-amber-400">
+                      Kilitli Korunan
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-center">
+                    <div className="text-xl font-bold text-rose-700 dark:text-rose-400">
+                      {batchResult.failedCount}
+                    </div>
+                    <div className="text-[11px] font-semibold text-rose-800 dark:text-rose-400">
+                      Hatalı
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-xs text-slate-500 font-mono bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
+                  Aktarım Grubu ID: <strong>{batchResult.aktarimGrubuId}</strong>
+                </div>
+
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Dosya Detayları:
+                  </span>
+                  <div className="space-y-1.5">
+                    {batchResult.details.map((d) => (
+                      <div
+                        key={d.index}
+                        className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[11px] text-slate-400">
+                            #{d.index}
+                          </span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200">
+                            {d.dosyaNo || "No Yok"} — {d.isinAdi}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                            d.status === "created"
+                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                              : d.status === "updated"
+                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+                              : d.status === "skipped_locked"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                              : "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300"
+                          }`}
+                        >
+                          {d.status === "created"
+                            ? "Yeni Eklendi"
+                            : d.status === "updated"
+                            ? "Güncellendi"
+                            : d.status === "skipped_locked"
+                            ? "Kilitli Korundu"
+                            : "Hata"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Ön Bilgilendirme (Henüz Başlamadıysa) */}
+            {!isProcessing && !batchResult && (
+              <div className="flex flex-col gap-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                  <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <ShieldAlert size={16} className="text-blue-500" />
+                    Toplu Aktarım Kuralları ve Güvenlik
+                  </span>
+                  <ul className="list-disc pl-5 space-y-1 text-slate-600 dark:text-slate-400 text-[11px]">
+                    <li>
+                      Tüm dosyalar için ortak bir benzersiz <strong>Aktarım Grubu ID</strong> oluşturulacaktır.
+                    </li>
+                    <li>
+                      Mevcut sistemde eşleşen ve <strong>kilitli/imzalı</strong> olan dosyalar asla ezilmeyecek, veri kaybını önlemek için bağımsız yeni kayıt olarak eklenecektir.
+                    </li>
+                    <li>
+                      Yeni aktarılan dosyalar <strong>kayıt kaynağı: içe_aktarim</strong> ve <strong>kilitli/korumalı</strong> olarak kaydedilir; form kurallarına zorlanmaz.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Alt Butonlar */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+              {batchResult ? (
+                <button
+                  onClick={() => setBatchModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Tamamla ve Kapat
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setBatchModalOpen(false)}
+                    disabled={isProcessing}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                  >
+                    Vazgeç
+                  </button>
+                  <button
+                    onClick={handleExecuteBatchSync}
+                    disabled={isProcessing}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex items-center gap-1.5"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        Aktarım Sürüyor...
+                      </>
+                    ) : (
+                      <>
+                        <Layers size={14} />
+                        Toplu Aktarımı Başlat
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

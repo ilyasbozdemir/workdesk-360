@@ -88,6 +88,7 @@
     "html-docx-js": "^0.3.1",
     "http-errors": "^2.0.1",
     "js-yaml": "^4.1.1",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.16.0",
     "mammoth": "^1.12.0",
     "math-intrinsics": "^1.1.0",
