@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Veri Aktarım ve Dönüştürme Aracı | Workdesk 360</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/xlsx.full.min.js"></script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Üst Bar -->
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-linear-to-tr from-brand-600 to-indigo-500 text-white flex items-center justify-center shadow-md">
+          <i class="fa-solid fa-arrows-split-up-and-left text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-extrabold tracking-tight">Veri Aktarım & Dönüştürme Aracı</h1>
+            <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-bold">TypeScript Core</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Doğrudan Temin kök şeması (dosyalar.schema.json), Excel, CSV ve Data.zip dönüştürücü</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="themeToggle" class="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i class="fa-solid fa-moon dark:hidden"></i>
+          <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+        </button>
+        <button id="btnOrnekYukle" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-wand-magic-sparkles text-brand-500"></i>
+          Örnek Veri Yükle
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Ana İçerik -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+    <!-- Giriş ve Yükleme Kartı -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- 1. Yükleme -->
+      <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold text-sm">1</div>
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white">Kaynak Dosyayı Seçin</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Eski sistem DT yedeği (.json), Statik API arşivi (.zip) veya malzeme Excel/CSV tablosunu yükleyin.
+          </p>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60">
+          <label class="w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-brand-300 dark:border-brand-700 hover:border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition">
+            <i class="fa-solid fa-cloud-arrow-up text-base"></i>
+            <span>Dosya Seç veya Sürükle</span>
+            <input type="file" id="fileInput" accept=".json,.zip,.xlsx,.xls,.csv" class="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <!-- 2. Önizleme Özeti -->
+      <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">2</div>
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white">Şema ve Sağlık Doğrulaması</h2>
+          <div id="statBox" class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+            <p>Henüz dosya yüklenmedi.</p>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs font-semibold">
+          <span id="badgeDurum" class="text-slate-400 font-mono">Beklemede</span>
+          <span id="badgeDosyaSayisi" class="text-slate-500 font-mono">0 Dosya</span>
+        </div>
+      </div>
+
+      <!-- 3. Dönüştürme ve Çıktı -->
+      <div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div class="space-y-2">
+          <div class="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-sm">3</div>
+          <h2 class="text-sm font-bold text-slate-900 dark:text-white">Dışa Aktar / Çıktı Al</h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Verileri ayrıştırılmış <strong>data.zip</strong> formatında veya tek parça doğrudan temin JSON olarak indirin.
+          </p>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/60 flex gap-2">
+          <button id="btnZipIndir" disabled class="flex-1 py-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-file-zipper"></i>
+            data.zip İndir
+          </button>
+          <button id="btnJsonKopyala" disabled class="py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 text-xs font-bold transition cursor-pointer" title="JSON Kopyala">
+            <i class="fa-solid fa-copy"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sonuç ve Dosya Listesi Tablosu -->
+    <div id="sonucAlani" class="hidden space-y-4">
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-extrabold flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-brand-500"></i>
+            Ayrıştırılan Doğrudan Temin Dosyaları
+          </h3>
+          <span id="txtRaporOzet" class="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800"></span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-500 font-semibold">
+                <th class="py-2.5 px-3">#</th>
+                <th class="py-2.5 px-3">Dosya No</th>
+                <th class="py-2.5 px-3">İşin Adı / Tanımı</th>
+                <th class="py-2.5 px-3">Bütçe Yılı</th>
+                <th class="py-2.5 px-3">Kalem</th>
+                <th class="py-2.5 px-3">Teklif</th>
+                <th class="py-2.5 px-3">Kabul</th>
+              </tr>
+            </thead>
+            <tbody id="tblDosyalar" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sağlık Raporu Uyarısı -->
+      <div id="raporKutusu" class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs space-y-2">
+        <h4 class="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          Şema & Veri Sağlık Raporu
+        </h4>
+        <ul id="raporListesi" class="list-disc list-inside text-amber-700 dark:text-amber-400 space-y-1"></ul>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-400">
+    Workdesk 360 &copy; 2026 — Veri Ayrıştırma ve Dönüştürme Motoru
+  </footer>
+
+  <script type="module">
+    import { ayir, saglik } from './dist/engine.js';
+    import { autoMapColumns, mapRowsToMaterials } from './dist/aktar-excel.js';
+
+    let aktifVeri = null;
+
+    // Tema Değiştirme
+    const themeBtn = document.getElementById('themeToggle');
+    themeBtn.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
+    // Örnek Veri
+    document.getElementById('btnOrnekYukle').addEventListener('click', async () => {
+      try {
+        const res = await fetch('../dosyalar.schema.json');
+        // Minimal örnek veri oluşturalım
+        const ornek = {
+          files: [
+            {
+              id: 'dt_183259',
+              f: {
+                'Dosya No': '183259',
+                'İşin Adı / Tanımı': 'Tıbbi Cihaz Kalibrasyon ve Bakım Hizmeti Alımı',
+                'Bütçe Yılı': '2026',
+                'İhale Aşaması': 'Teklif Aşamasında',
+                'Dosya Açılış Tarihi': '2026-01-15'
+              },
+              mat: [
+                ['1', 'KAL-01', 'Defibrilatör Kalibrasyonu', 'Yıllık periyodik kontrol', 'Adet', '20', '5', '1250', 'BioMedikal A.Ş.']
+              ],
+              win: [['', '1', 'BioMedikal A.Ş.', '0312 444 00 00', 'Ankara']],
+              con: [['BioMedikal A.Ş.', ''], ['Medikal Sistemler Ltd.', '']],
+              yak: [['', 'Üye', 'Dr. Ahmet Yılmaz', '']],
+              muay: [['', 'Başkan', 'Uzm. Mehmet Kaya', '']],
+              kab: [],
+              tek: [
+                { dosyaId: 'dt_183259', firma: 'BioMedikal A.Ş.', kalemler: [1250] }
+              ]
+            }
+          ],
+          cur: 0,
+          defs: { f: {}, yak: [], muay: [] },
+          kurum: { kurumAdi: 'Ankara Şehir Hastanesi' },
+          firmalar: [{ id: 'f1', no: '1', unvan: 'BioMedikal A.Ş.', ilet: '0312 444 00 00', yer: 'Ankara' }],
+          katalog: []
+        };
+        islemeAl(ornek);
+      } catch (err) {
+        alert('Örnek yüklenemedi: ' + err.message);
+      }
+    });
+
+    // Dosya Yükleme
+    const fileInput = document.getElementById('fileInput');
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const name = file.name.toLowerCase();
+      if (name.endsWith('.json')) {
+        const text = await file.text();
+        try {
+          const json = JSON.parse(text);
+          islemeAl(json);
+        } catch (err) {
+          alert('Geçersiz JSON dosyası: ' + err.message);
+        }
+      } else if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')) {
+        const buffer = await file.arrayBuffer();
+        const wb = XLSX.read(buffer, { type: 'array' });
+        const firstSheet = wb.SheetNames[0];
+        const sheet = wb.Sheets[firstSheet];
+        const rows = XLSX.utils.sheet_to_json(sheet);
+        if (rows.length === 0) {
+          alert('Excel sayfası boş!');
+          return;
+        }
+        const headers = Object.keys(rows[0]);
+        const mapping = autoMapColumns(headers);
+        const materials = mapRowsToMaterials(rows, mapping);
+
+        // Tek bir doğrudan temin dosyası şeklinde paketleyelim
+        const sentetik = {
+          files: [
+            {
+              id: 'dt_excel_' + Date.now(),
+              f: {
+                'Dosya No': file.name.replace(/\.[^/.]+$/, ''),
+                'İşin Adı / Tanımı': file.name.replace(/\.[^/.]+$/, '') + ' (Excel Aktarımı)',
+                'Bütçe Yılı': String(new Date().getFullYear()),
+                'İhale Aşaması': 'Hazırlık'
+              },
+              mat: materials.map(m => [m.sira, m.kod, m.ad, m.aciklama, m.birim, m.kdvOrani, m.miktar, m.birimFiyat, m.kazananFirma]),
+              win: [],
+              con: [],
+              yak: [],
+              muay: [],
+              kab: [],
+              tek: []
+            }
+          ],
+          cur: 0,
+          defs: { f: {}, yak: [], muay: [] },
+          kurum: { kurumAdi: 'İçe Aktarılan Kurum' },
+          firmalar: [],
+          katalog: []
+        };
+        islemeAl(sentetik);
+      } else if (name.endsWith('.zip')) {
+        alert('data.zip içeriği okunuyor...');
+        const zip = await JSZip.loadAsync(file);
+        // manifest.json ara
+        const manifestFile = zip.file('manifest.json') || zip.file('data/manifest.json');
+        if (manifestFile) {
+          alert('Statik API zip paketi tespit edildi!');
+        } else {
+          alert('ZIP arşivinde manifest.json bulunamadı.');
+        }
+      }
+    });
+
+    function islemeAl(dtYedek) {
+      aktifVeri = dtYedek;
+      const sonuc = ayir(dtYedek);
+
+      document.getElementById('badgeDurum').textContent = '✅ Doğrulandı';
+      document.getElementById('badgeDurum').className = 'text-emerald-600 font-bold';
+      document.getElementById('badgeDosyaSayisi').textContent = sonuc.liste.length + ' Dosya';
+
+      document.getElementById('statBox').innerHTML = `
+        <p><strong>Kurum:</strong> ${sonuc.genel.kurum.kurumAdi || 'Belirtilmedi'}</p>
+        <p><strong>Toplam Dosya:</strong> ${sonuc.liste.length} adet</p>
+        <p><strong>Firma Sayısı:</strong> ${sonuc.genel.firmalar.length} kayıtlı firma</p>
+      `;
+
+      // Tabloyu doldur
+      const tbody = document.getElementById('tblDosyalar');
+      tbody.innerHTML = '';
+      sonuc.liste.forEach((d, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-slate-400">${idx + 1}</td>
+          <td class="py-2.5 px-3 font-bold text-brand-600 dark:text-brand-400">${d.dosyaNo || d.id}</td>
+          <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 font-sans">${d.isinAdi}</td>
+          <td class="py-2.5 px-3">${d.butceYili || '-'}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">${d.malzeme} kalem</span></td>
+          <td class="py-2.5 px-3">${d.teklif}</td>
+          <td class="py-2.5 px-3">${d.kabul}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Sağlık raporu
+      const raporUl = document.getElementById('raporListesi');
+      raporUl.innerHTML = '';
+      if (sonuc.rapor.length === 0) {
+        document.getElementById('raporKutusu').className = 'p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300';
+        document.getElementById('raporKutusu').innerHTML = '<div class="flex items-center gap-2"><i class="fa-solid fa-circle-check"></i> <strong>Kusursuz Veri:</strong> Şemada hiçbir hata veya eksik tespit edilmedi.</div>';
+      } else {
+        sonuc.rapor.forEach(r => {
+          const li = document.createElement('li');
+          li.textContent = `[${r.seviye.toUpperCase()}] ${r.mesaj}`;
+          raporUl.appendChild(li);
+        });
+      }
+
+      document.getElementById('txtRaporOzet').textContent = `${sonuc.liste.length} Doğrudan Temin Dosyası Hazır`;
+      document.getElementById('sonucAlani').classList.remove('hidden');
+      document.getElementById('btnZipIndir').disabled = false;
+      document.getElementById('btnJsonKopyala').disabled = false;
+    }
+
+    // ZIP İndir
+    document.getElementById('btnZipIndir').addEventListener('click', async () => {
+      if (!aktifVeri) return;
+      const zip = new JSZip();
+      const sonuc = ayir(aktifVeri);
+
+      zip.file('manifest.json', JSON.stringify(sonuc.manifest, null, 2));
+      zip.file('genel/kurum.json', JSON.stringify(sonuc.genel.kurum, null, 2));
+      zip.file('genel/firmalar.json', JSON.stringify(sonuc.genel.firmalar, null, 2));
+      zip.file('genel/katalog.json', JSON.stringify(sonuc.genel.katalog, null, 2));
+      zip.file('dosyalar/liste.json', JSON.stringify(sonuc.liste, null, 2));
+
+      sonuc.dosyalar.forEach(d => {
+        zip.file(`dosyalar/${d.id}.json`, JSON.stringify(d, null, 2));
+      });
+
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `data_${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // JSON Kopyala
+    document.getElementById('btnJsonKopyala').addEventListener('click', () => {
+      if (!aktifVeri) return;
+      navigator.clipboard.writeText(JSON.stringify(aktifVeri, null, 2));
+      alert('Doğrudan Temin JSON yedeği panoya kopyalandı!');
+    });
+  </script>
+</body>
+</html>

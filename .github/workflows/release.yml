@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "v*"
+      - "temin360-v*"
+      - "workdesk-v*"
 
 permissions:
   contents: write
@@ -32,7 +34,10 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
+          RAW_TAG=${GITHUB_REF_NAME}
+          # Strip prefix if any (e.g. temin360-v1.0.0 -> 1.0.0, v1.0.0 -> 1.0.0)
+          VERSION=$(echo "$RAW_TAG" | sed -E 's/^.*v//')
+          echo "Building release for version: $VERSION (from tag: $RAW_TAG)"
           cd apps/app-desktop
           npm pkg set version=$VERSION
 

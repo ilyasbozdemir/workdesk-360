@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - main
+      - 'module/**'
+      - 'release/**'
   pull_request:
     branches:
       - main
+      - 'module/**'
 
 jobs:
   validate:
