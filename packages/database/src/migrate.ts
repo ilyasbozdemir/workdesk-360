@@ -107,32 +107,66 @@ export interface PendingMigrationInfo {
   description: string
 }
 
-export function getPendingMigrations(fromVersion: number): PendingMigrationInfo[] {
-  const maxSchema = getMaxSchemaVersion()
-  const pending: PendingMigrationInfo[] = []
-  if (fromVersion >= maxSchema) return pending
+export interface MigrationOptions {
+  appId?: string
+  targetSchemaMax?: number
+}
 
-  const allChanges: SchemaChange[] = []
+/**
+ * Belirli bir uygulama ve sürüm aralığı için şema değişikliklerini çözer.
+ * Hem ortak suite manifestolarını (tarihsel v1..v45) hem de uygulamaya özel
+ * manifest değişikliklerini (v46+) birleştirir.
+ */
+export function resolveMigrationChanges(
+  fromVersion: number,
+  options?: MigrationOptions | string
+): { maxSchema: number; pendingChanges: SchemaChange[]; appManifest?: AppVersionManifest } {
+  const appId = typeof options === 'string' ? options : options?.appId
+  const explicitMax = typeof options === 'object' ? options?.targetSchemaMax : undefined
+
+  let appManifest: AppVersionManifest | undefined = undefined
+  let maxSchema = explicitMax || getMaxSchemaVersion()
+
+  if (appId) {
+    appManifest = getAppManifest(appId)
+    if (!explicitMax && appManifest?.schema_max) {
+      maxSchema = appManifest.schema_max
+    }
+  }
+
+  const changeMap = new Map<number, SchemaChange>()
+
+  // 1. Ortak / Temel Suite Manifestoları (tarihsel v1..v45)
   for (const v of manifests) {
     if (v.changes) {
       for (const change of v.changes) {
-        if (!allChanges.find((c) => c.schema === change.schema)) {
-          allChanges.push(change)
-        }
+        changeMap.set(change.schema, change)
       }
     }
   }
-  allChanges.sort((a, b) => a.schema - b.schema)
 
-  for (const change of allChanges) {
-    if (change.schema > fromVersion && change.schema <= maxSchema) {
-      pending.push({
-        schema: change.schema,
-        description: change.description
-      })
+  // 2. Uygulama Bazlı Manifest Değişiklikleri (varsa v46+ veya uygulamaya özel override'lar)
+  if (appManifest?.changes) {
+    for (const change of appManifest.changes) {
+      changeMap.set(change.schema, change)
     }
   }
-  return pending
+
+  const allChanges = Array.from(changeMap.values()).sort((a, b) => a.schema - b.schema)
+  const pendingChanges = allChanges.filter((c) => c.schema > fromVersion && c.schema <= maxSchema)
+
+  return { maxSchema, pendingChanges, appManifest }
+}
+
+export function getPendingMigrations(
+  fromVersion: number,
+  options?: MigrationOptions | string
+): PendingMigrationInfo[] {
+  const { pendingChanges } = resolveMigrationChanges(fromVersion, options)
+  return pendingChanges.map((c) => ({
+    schema: c.schema,
+    description: c.description
+  }))
 }
 
 function formatSqlDefault(defaultVal: any): string {
@@ -154,27 +188,17 @@ function formatSqlDefault(defaultVal: any): string {
   return String(defaultVal)
 }
 
-export function runMigrations(db: Database.Database, fromVersion: number, dbSchemaDef: any): void {
-  const MAX_SCHEMA = getMaxSchemaVersion()
-  if (fromVersion >= MAX_SCHEMA) return
+export function runMigrations(
+  db: Database.Database,
+  fromVersion: number,
+  dbSchemaDef: any,
+  options?: MigrationOptions | string
+): void {
+  const { maxSchema, pendingChanges, appManifest } = resolveMigrationChanges(fromVersion, options)
+  if (fromVersion >= maxSchema || pendingChanges.length === 0) return
 
-  const allChanges: SchemaChange[] = []
-  for (const v of manifests) {
-    if (v.changes) {
-      for (const change of v.changes) {
-        if (!allChanges.find((c) => c.schema === change.schema)) {
-          allChanges.push(change)
-        }
-      }
-    }
-  }
-  allChanges.sort((a, b) => a.schema - b.schema)
-
-  const pendingChanges = allChanges.filter((c) => c.schema > fromVersion && c.schema <= MAX_SCHEMA)
-
-  if (pendingChanges.length === 0) return
-
-  console.log(`v${fromVersion} sürümünden v${MAX_SCHEMA} sürümüne veritabanı göçü başlatılıyor...`)
+  const appLabel = appManifest?.app ? ` [${appManifest.app}]` : ''
+  console.log(`v${fromVersion} sürümünden v${maxSchema}${appLabel} sürümüne veritabanı göçü başlatılıyor...`)
 
   db.exec('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);')
   db.exec('CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);')
@@ -307,6 +331,14 @@ export function runMigrations(db: Database.Database, fromVersion: number, dbSche
           `[Sürüm ${change.schema} - ${change.description}] adımı sırasında hata oluştu: ${error.message}`
         )
       }
+    }
+
+    if (appManifest?.app) {
+      try {
+        db.prepare(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('appId', ?);"
+        ).run(appManifest.app)
+      } catch {}
     }
   })
 

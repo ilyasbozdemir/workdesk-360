@@ -179,6 +179,8 @@ function isTestFile(filePath) {
 
 /**
  * Counts lines and metrics for a single file.
+ * NOTE: 'code' represents nonBlank lines (non-empty lines including comments/docstrings),
+ * matching standard nonBlankLines measurement.
  * @param {string} fullPath
  */
 function countFile(fullPath) {
@@ -193,7 +195,7 @@ function countFile(fullPath) {
   const isTest = isTestFile(fullPath)
   return {
     lines: total,
-    code: nonBlank,
+    code: nonBlank, // nonBlankLines (boş olmayan satırlar)
     blank,
     isTest
   }

@@ -5,7 +5,7 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import { initializeDatabase } from '../index'
-import { runMigrations, CURRENT_SCHEMA_VERSION, getPendingMigrations, schema } from '@dt/database'
+import { runMigrations, getPendingMigrations, schema, getAppSchemaMax } from '@dt/database'
 import tasinirKodlariSeed from '../seed/tasinir_kodlari.json'
 import { allExtensions, defaultFormat } from '../../config/fileFormats'
 import {
@@ -375,10 +375,13 @@ export class DtmWorkspace {
       }
       const meta = normalizeMeta(rawMeta, projectDifferentiator)
       const fromVersion = meta.schema_version || 1
+      const targetSchemaMax = getAppSchemaMax('devlet-ihale-2886-desktop')
 
-      if (fromVersion < CURRENT_SCHEMA_VERSION) {
+      if (fromVersion < targetSchemaMax) {
         if (!allowMigration) {
-          const pendingUpdates = getPendingMigrations(fromVersion)
+          const pendingUpdates = getPendingMigrations(fromVersion, {
+            appId: 'devlet-ihale-2886-desktop'
+          })
           if (pendingUpdates.length > 0) {
             const payload = JSON.stringify({
               requiresMigration: true,
@@ -393,9 +396,9 @@ export class DtmWorkspace {
         this.db = new Database(dbPath)
         const previousUserMutationAt = meta.last_user_mutation_at
         const previousUpdatedAt = meta.updated_at
-        runMigrations(this.db, fromVersion, schema)
+        runMigrations(this.db, fromVersion, schema, { appId: 'devlet-ihale-2886-desktop' })
         ensureSchemaIntegrity(this.db)
-        meta.schema_version = CURRENT_SCHEMA_VERSION
+        meta.schema_version = targetSchemaMax
         // Schema migration does NOT alter user mutation or user updated_at timestamp!
         meta.updated_at = previousUpdatedAt || new Date().toISOString()
         meta.last_user_mutation_at = previousUserMutationAt
@@ -494,7 +497,7 @@ export class DtmWorkspace {
         app_version: app.getVersion(),
         created_at: new Date().toISOString().split('T')[0],
         institution: institutionName,
-        schema_version: CURRENT_SCHEMA_VERSION,
+        schema_version: getAppSchemaMax('devlet-ihale-2886-desktop'),
         platform: process.platform,
         file_version: 1,
         active_db_file: 'database.sqlite',

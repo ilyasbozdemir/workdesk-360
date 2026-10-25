@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import { schema } from '../index'
-import { runMigrations, CURRENT_SCHEMA_VERSION } from '@dt/database'
+import { runMigrations, getAppSchemaMax } from '@dt/database'
 import { seedUnitConversions } from './conversionsSeed'
 import { seedDefaultCommissions } from './commissionsSeed'
 
@@ -82,13 +82,14 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
       | { value?: string }
       | undefined
     const currentDbVer = row?.value ? parseInt(row.value, 10) || 1 : 1
-    if (currentDbVer < CURRENT_SCHEMA_VERSION) {
+    const targetSchemaMax = getAppSchemaMax('temin360-desktop')
+    if (currentDbVer < targetSchemaMax) {
       console.log(
-        `[Schema Self-Healing] Migrating from v${currentDbVer} to v${CURRENT_SCHEMA_VERSION}`
+        `[Schema Self-Healing] Migrating from v${currentDbVer} to v${targetSchemaMax} (temin360-desktop)`
       )
-      runMigrations(db, currentDbVer, schema)
+      runMigrations(db, currentDbVer, schema, { appId: 'temin360-desktop' })
       db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('dbSchemaVersion', ?)").run(
-        CURRENT_SCHEMA_VERSION.toString()
+        targetSchemaMax.toString()
       )
     }
   } catch (err: any) {
