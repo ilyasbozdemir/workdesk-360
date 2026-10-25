@@ -13,14 +13,15 @@ export class LuzumMuzekkeresiResolver implements DocumentDataResolver<LuzumMuzek
     // 1. Dosya Detayı
     let dosyaRow: any = null
     if (dosyaId) {
-      const rows = await queryExecutor(
-        `SELECT id, temin_no, konu, tarih, aciklama, madde_no, sunulacak_makam, birim_id,
-                olur_baslik, olur_yazisi, teslim_tarihi
-         FROM DATA_TeminDosyasi WHERE id = ?`,
-        [dosyaId]
-      )
+      const rows = await queryExecutor('SELECT * FROM DATA_TeminDosyasi WHERE id = ?', [dosyaId])
       if (rows && rows[0]) {
-        dosyaRow = rows[0]
+        const r = rows[0]
+        dosyaRow = {
+          ...r,
+          tarih: r.dosya_acilis_tarihi || r.temin_tarihi,
+          aciklama: r.isin_aciklamasi || r.konu,
+          madde_no: r.ihale_sekli || '22/d'
+        }
       }
     }
 
