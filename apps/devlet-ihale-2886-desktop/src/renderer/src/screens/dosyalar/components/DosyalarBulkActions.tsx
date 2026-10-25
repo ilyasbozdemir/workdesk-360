@@ -36,30 +36,24 @@ export function DosyalarBulkActions({
             })
 
             if (hasDeletedFiles) {
-              if (import.meta.env.DEV) {
-                if (
-                  confirm(
-                    `Seçili dosyalar arasında zaten "İptal Edilmiş" dosyalar var. Bu dosyaları KALICI OLARAK SİLMEK istediğinize emin misiniz? (DEV MODE)\n\n(Aktif dosyalar normal şekilde iptal edilecektir.)`
-                  )
-                ) {
-                  if (handleBulkHardDelete && handleBulkDelete) {
-                    const hardDeleteIds = selectedDosyaIds.filter(
-                      (id) => dosyalar.find((d) => d.id === id)?.is_deleted === 1
-                    )
-                    const softDeleteIds = selectedDosyaIds.filter(
-                      (id) => dosyalar.find((d) => d.id === id)?.is_deleted !== 1
-                    )
-
-                    if (hardDeleteIds.length > 0) await handleBulkHardDelete(hardDeleteIds)
-                    if (softDeleteIds.length > 0) await handleBulkDelete(softDeleteIds)
-
-                    setSelectedDosyaIds([])
-                  }
-                }
-              } else {
-                alert(
-                  'Seçili dosyalar arasında zaten iptal edilmiş dosyalar bulunuyor. Paketlenmiş sürümde iptal edilmiş dosyalar kalıcı olarak silinemez. Lütfen seçiminizi güncelleyip tekrar deneyiniz.'
+              if (
+                confirm(
+                  `Seçili dosyalar arasında zaten "İptal Edilmiş" dosyalar var. Bu dosyaları KALICI OLARAK SİLMEK istediğinize emin misiniz?\n\n(Aktif dosyalar normal şekilde iptal edilecektir.)`
                 )
+              ) {
+                if (handleBulkHardDelete && handleBulkDelete) {
+                  const hardDeleteIds = selectedDosyaIds.filter(
+                    (id) => dosyalar.find((d) => d.id === id)?.is_deleted === 1
+                  )
+                  const softDeleteIds = selectedDosyaIds.filter(
+                    (id) => dosyalar.find((d) => d.id === id)?.is_deleted !== 1
+                  )
+
+                  if (hardDeleteIds.length > 0) await handleBulkHardDelete(hardDeleteIds)
+                  if (softDeleteIds.length > 0) await handleBulkDelete(softDeleteIds)
+
+                  setSelectedDosyaIds([])
+                }
               }
             } else {
               if (

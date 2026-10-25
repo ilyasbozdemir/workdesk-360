@@ -210,17 +210,17 @@ export function DosyaActionMenu({
               </>
             )}
 
-            {import.meta.env.DEV && (
+            {handleHardDelete && (
               <>
                 <div className="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2" />
                 <button
                   onClick={() => {
                     setOpenMenuId(null)
-                    handleHardDelete && handleHardDelete(dosya.id)
+                    handleHardDelete(dosya.id)
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
+                  className="w-full text-left px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2 cursor-pointer"
                 >
-                  <AlertCircle size={13} /> Kalıcı Sil (Dev Mode)
+                  <AlertCircle size={13} /> Kalıcı Olarak Sil
                 </button>
               </>
             )}

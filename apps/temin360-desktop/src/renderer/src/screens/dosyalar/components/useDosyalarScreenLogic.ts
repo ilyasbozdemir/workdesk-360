@@ -129,7 +129,7 @@ export function useDosyalarScreenLogic() {
   const handleHardDelete = async (id: number): Promise<void> => {
     if (
       confirm(
-        'DİKKAT (Geliştirici Modu Özel): Bu dosyayı veritabanından KALICI OLARAK SİLMEK (Hard Delete) istediğinize emin misiniz? Bu işlem geri alınamaz!'
+        'DİKKAT: Bu dosyayı veritabanından KALICI OLARAK SİLMEK istediğinize emin misiniz? Bu işlem geri alınamaz!'
       )
     ) {
       try {
