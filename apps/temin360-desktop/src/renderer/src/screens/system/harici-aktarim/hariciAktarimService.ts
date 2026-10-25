@@ -379,7 +379,7 @@ export async function fetchExistingDossiers(): Promise<ExistingDossierSummary[]>
        FROM DATA_TeminDosyasi
        WHERE is_deleted = 0
        ORDER BY id DESC
-       LIMIT 200`
+       LIMIT 1000`
     )
     if (Array.isArray(res)) return res as ExistingDossierSummary[]
     if (res && Array.isArray((res as { data?: unknown }).data)) {

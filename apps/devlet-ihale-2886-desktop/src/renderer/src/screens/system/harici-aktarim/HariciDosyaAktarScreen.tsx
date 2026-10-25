@@ -36,6 +36,7 @@ import {
 } from "./types";
 import { downloadSampleJsonTemplate, SAMPLE_DOGRUDA_TEMIN_JSON } from "./sampleData";
 import { APP_ROUTES } from "../../../constants/routeConstants";
+import { emitAppEvent } from "../../../utils/appEvents";
 
 type ActiveTab = "genel" | "malzemeler" | "teklifler" | "komisyonlar";
 
@@ -288,6 +289,16 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
         createNewIfNotFound: isNewTarget,
       });
       setSyncResult(res);
+
+      // Çalışma dosyasını diske kaydet ve uygulama geneline event fırlat
+      if (window.electron?.ipcRenderer) {
+        await window.electron.ipcRenderer.invoke("workspace:save");
+      }
+      emitAppEvent(isNewTarget ? "dossier:created" : "dossier:updated", {
+        dosyaId: res.dosyaId,
+      });
+      emitAppEvent("workspace:refreshed");
+
       const refreshed = await fetchExistingDossiers();
       setExistingDossiers(Array.isArray(refreshed) ? refreshed : []);
     } catch (err: unknown) {
@@ -324,6 +335,14 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
         }
       );
       setBatchResult(res);
+
+      // Çalışma dosyasını diske kaydet ve tüm ekranların listesini (React Query) yenile
+      if (window.electron?.ipcRenderer) {
+        await window.electron.ipcRenderer.invoke("workspace:save");
+      }
+      emitAppEvent("dossier:created", { count: res.successCount });
+      emitAppEvent("workspace:refreshed");
+
       const refreshed = await fetchExistingDossiers();
       setExistingDossiers(Array.isArray(refreshed) ? refreshed : []);
     } catch (err: unknown) {
@@ -333,6 +352,27 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
     } finally {
       setIsProcessing(false);
       setBatchProgress(null);
+    }
+  };
+
+  const handleFinishAndCloseBatch = async (navigateTarget?: string): Promise<void> => {
+    try {
+      if (window.electron?.ipcRenderer) {
+        await window.electron.ipcRenderer.invoke("workspace:save");
+      }
+      emitAppEvent("dossier:created", {
+        count: batchResult?.successCount || 0,
+      });
+      emitAppEvent("workspace:refreshed");
+      const refreshed = await fetchExistingDossiers();
+      setExistingDossiers(Array.isArray(refreshed) ? refreshed : []);
+    } catch (err) {
+      console.error("Toplu aktarım tamamlama hatası:", err);
+    } finally {
+      setBatchModalOpen(false);
+      if (navigateTarget) {
+        navigate({ to: navigateTarget } as never);
+      }
     }
   };
 
@@ -1213,7 +1253,7 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
               </div>
               {!isProcessing && (
                 <button
-                  onClick={() => setBatchModalOpen(false)}
+                  onClick={() => handleFinishAndCloseBatch()}
                   className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <X size={18} />
@@ -1287,35 +1327,42 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
                     {batchResult.details.map((d) => (
                       <div
                         key={d.index}
-                        className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs"
+                        className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 flex flex-col gap-1 text-xs"
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[11px] text-slate-400">
-                            #{d.index}
-                          </span>
-                          <span className="font-medium text-slate-800 dark:text-slate-200">
-                            {d.dosyaNo || "No Yok"} — {d.isinAdi}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[11px] text-slate-400">
+                              #{d.index}
+                            </span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">
+                              {d.dosyaNo || "No Yok"} — {d.isinAdi}
+                            </span>
+                          </div>
+                          <span
+                            className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                              d.status === "created"
+                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                : d.status === "updated"
+                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+                                : d.status === "skipped_locked"
+                                ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                : "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300"
+                            }`}
+                          >
+                            {d.status === "created"
+                              ? "Yeni Eklendi"
+                              : d.status === "updated"
+                              ? "Güncellendi"
+                              : d.status === "skipped_locked"
+                              ? "Kilitli Korundu"
+                              : "Hata"}
                           </span>
                         </div>
-                        <span
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                            d.status === "created"
-                              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-                              : d.status === "updated"
-                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
-                              : d.status === "skipped_locked"
-                              ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-                              : "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300"
-                          }`}
-                        >
-                          {d.status === "created"
-                            ? "Yeni Eklendi"
-                            : d.status === "updated"
-                            ? "Güncellendi"
-                            : d.status === "skipped_locked"
-                            ? "Kilitli Korundu"
-                            : "Hata"}
-                        </span>
+                        {d.error && (
+                          <div className="text-[11px] text-rose-600 dark:text-rose-400 font-mono pl-6">
+                            ⚠️ Hata Detayı: {d.error}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1347,14 +1394,33 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
             )}
 
             {/* Alt Butonlar */}
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
               {batchResult ? (
-                <button
-                  onClick={() => setBatchModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Tamamla ve Kapat
-                </button>
+                <div className="flex items-center justify-between w-full gap-3 flex-wrap">
+                  <div className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-medium">
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                    <span>
+                      <strong>{batchResult.successCount}</strong> dosya veritabanına ve dizine kaydedildi.
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleFinishAndCloseBatch()}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer"
+                    >
+                      Tamamla ve Burada Kal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleFinishAndCloseBatch(APP_ROUTES.DOSYALAR)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <FolderOpen size={15} />
+                      Dosyalar Dizini'ne Git ({batchResult.successCount})
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <button
