@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   FileCheck2,
   Layers,
-  Mic,
   Puzzle,
   Store
 } from 'lucide-react'
@@ -87,7 +86,7 @@ export const ModulMagazasiHeader: React.FC<ModulMagazasiHeaderProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5 mb-2">
-            <span className="font-bold text-slate-800 dark:text-slate-200">temin360</span>
+            <span className="font-bold text-slate-800 dark:text-slate-200">workdesk-360</span>
             <span>/</span>
             <span>Modül Mağazası</span>
           </div>

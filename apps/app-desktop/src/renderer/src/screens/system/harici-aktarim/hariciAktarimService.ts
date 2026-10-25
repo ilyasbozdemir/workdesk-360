@@ -1,6 +1,5 @@
 import { validateDogrudanTeminPayload } from './hariciAktarimSchema'
-import {
-  BatchItemResult,
+import type {
   BatchSyncResult,
   DogrudanTeminDosyasi,
   DosyaBilgileri,
@@ -584,6 +583,7 @@ export async function executeDossierEzmeSync(
           options.kayitKaynagi || 'içe_aktarim',
           options.aktarimGrubuId || null,
           data.id || null,
+          options.lockImported ? 1 : 0,
           options.lockImported ? 1 : 0,
           options.lockImported
             ? options.lockReason || 'Eski sistemden aktarıldı (İmzalı dosya / salt okunur)'
@@ -1239,7 +1239,7 @@ export async function executeBatchDossierSync(
     try {
       const match = findMatchingDossier(existingDossiers, file)
 
-      if (match && (match.is_locked === 1 || match.is_locked === true) && !options.forceUnlockOverwrite) {
+      if (match && Boolean(match.is_locked) && !options.forceUnlockOverwrite) {
         if (options.createNewIfNotFound) {
           // Kilitli dosyanın üzerine yazmak yerine yeni kopya oluştur
           const syncRes = await executeDossierEzmeSync(null, file, {

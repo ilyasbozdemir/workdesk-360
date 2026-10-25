@@ -5,7 +5,27 @@
 export default {
   app: "1.0.0-beta.256",
   schema_min: 1,
-  schema_max: 45,
-  release_date: "2026-10-17",
-  changes: []
+  schema_max: 46,
+  release_date: "2026-10-18",
+  changes: [
+    {
+      schema: 46,
+      type: "update",
+      description: "DATA_TeminDosyasi tablosuna kilit ve harici aktarım takip kolonları eklendi (is_locked, lock_reason, kayit_kaynagi, aktarim_grubu_id, kaynak_kayit_id).",
+      columns_added: [
+        { table: "DATA_TeminDosyasi", column: "is_locked" },
+        { table: "DATA_TeminDosyasi", column: "lock_reason" },
+        { table: "DATA_TeminDosyasi", column: "kayit_kaynagi" },
+        { table: "DATA_TeminDosyasi", column: "aktarim_grubu_id" },
+        { table: "DATA_TeminDosyasi", column: "kaynak_kayit_id" }
+      ],
+      raw_sql: [
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN is_locked INTEGER DEFAULT 0;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN lock_reason TEXT DEFAULT NULL;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kayit_kaynagi TEXT DEFAULT 'yeni';",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN aktarim_grubu_id TEXT DEFAULT NULL;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kaynak_kayit_id TEXT DEFAULT NULL;"
+      ]
+    }
+  ]
 };
