@@ -1,0 +1,56 @@
+name: CI (Temin 360 - Doğrudan Temin)
+
+on:
+  push:
+    branches:
+      - 'module/temin360'
+      - 'module/temin**'
+    paths:
+      - 'apps/temin360-desktop/**'
+      - 'packages/database/**'
+      - 'packages/document-templates/**'
+  pull_request:
+    branches:
+      - 'module/temin360'
+    paths:
+      - 'apps/temin360-desktop/**'
+      - 'packages/database/**'
+      - 'packages/document-templates/**'
+
+jobs:
+  test-temin360:
+    name: Temin 360 Typecheck & Unit Tests
+    runs-on: windows-2022
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          npm_config_msvs_version: "2022"
+
+      - name: Build Database Package
+        run: pnpm --filter @dt/database build
+
+      - name: Typecheck Temin 360
+        run: |
+          pnpm --filter temin360-desktop typecheck:node
+          pnpm --filter temin360-desktop typecheck:web
+
+      - name: Run Temin 360 Tests
+        run: pnpm --filter temin360-desktop test
+
+      - name: Build Temin 360
+        run: pnpm --filter temin360-desktop build

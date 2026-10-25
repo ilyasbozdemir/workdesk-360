@@ -1,0 +1,20 @@
+{
+  "dilekceTarihi": "22/10/2026",
+  "kurumAdi": "ÖRNEK KAMU KURUMU BAŞKANLIĞI",
+  "birimAdi": "Destek Hizmetleri Dairesi Başkanlığı",
+  "yukleniciFirma": "ABC BİLİŞİM TEKNOLOJİLERİ SAN. VE TİC. A.Ş.",
+  "yukleniciVergiNo": "1234567890",
+  "yukleniciVergiDairesi": "Çankaya Vergi Dairesi",
+  "yukleniciTelefon": "0312 444 55 66",
+  "yukleniciAdresi": "Atatürk Bulvarı Yenilik İş Merkezi No:45 Kat:3 Çankaya / ANKARA",
+  "dosyaKonusu": "Destek Hizmetleri Kapsamında Çatı Yapımı Malzeme Alımı İşi",
+  "dosyaTarihi": "12/10/2026",
+  "kabulTarihi": "20/10/2026",
+  "teminatTutari": "1.116,00",
+  "bankaAdi": "T.C. Ziraat Bankası",
+  "subeAdi": "Ankara Kamu Girişimci Şubesi",
+  "subeKodu": "1532",
+  "iban": "TR99 0001 0015 3288 7766 5501 02",
+  "hesapSahibi": "ABC BİLİŞİM TEKNOLOJİLERİ SAN. VE TİC. A.Ş.",
+  "ekler": ["Muayene ve Kabul Tutanağı Sureti", "SGK Borcu Yoktur Belgesi"]
+}

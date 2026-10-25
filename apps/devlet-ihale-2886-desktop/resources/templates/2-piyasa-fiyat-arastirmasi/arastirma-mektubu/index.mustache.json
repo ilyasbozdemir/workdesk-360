@@ -1,0 +1,62 @@
+﻿{
+  "detsisNo": "",
+  "dosyaNumarasi": {
+    "yili": "2026",
+    "sayisi": "123"
+  },
+  "dosyaKonusu": "Fiyat Araştırması",
+  "dosyaTarihi": "20.06.2026",
+  "antetSatirlari": [
+    "T.C.",
+    "SAĞLIK BAKANLIĞI",
+    "Ankara İl Sağlık Müdürlüğü",
+    "Destek Hizmetleri Başkanlığı"
+  ],
+  "solLogo": "https://raw.githubusercontent.com/ilyasbozdemir/workdesk-360/main/public/icon.png",
+  "sagLogo": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Logo_of_100th_years_of_the_Republic_of_T%C3%BCrkiye.svg",
+  "sayinIlgili": "Sayın İlgili,",
+  "aciklamaMetni": "Aşağıda cins ve miktarları belirtilen mal/hizmet kalemlerinin yaklaşık maliyet tespiti için piyasa araştırması yapılmaktadır, birim fiyatlarını KDV hariç bildirmenizi rica ederim/ederiz.",
+  "gorevlendirilenler": [
+    {
+      "adSoyad": "Ahmet Yılmaz",
+      "unvan": "Mühendis",
+      "komisyonGorevi": "Komisyon Başkanı"
+    },
+    {
+      "adSoyad": "Mehmet Karaca",
+      "unvan": "Teknisyen",
+      "komisyonGorevi": "Komisyon Üyesi"
+    },
+    {
+      "adSoyad": "Ayşe Demir",
+      "unvan": "Memur",
+      "komisyonGorevi": "Komisyon Üyesi"
+    }
+  ],
+  "ihtiyacKalemleri": [
+    {
+      "siraNo": 1,
+      "malzemeAdi": "A4 Fotokopi Kağıdı",
+      "ozelligi": "80 gr/m2 Beyaz",
+      "birimi": "Kutu",
+      "miktar": 50
+    },
+    {
+      "siraNo": 2,
+      "malzemeAdi": "Tükenmez Kalem",
+      "ozelligi": "Mavi Renk",
+      "birimi": "Adet",
+      "miktar": 100
+    }
+  ],
+  "kurumIci": false,
+  "kurumAdres": "Mustafa Kemal Mah. Dumlupınar Blv. No:1 Çankaya/Ankara",
+  "kurumTelefon": "0312 555 44 33",
+  "kurumWeb": "www.saglik.gov.tr",
+  "kurumEposta": "ankara.destek@saglik.gov.tr",
+  "kurumKep": "saglikbakanligi@hs01.kep.tr",
+  "hazirlayanPersonelAdi": "Ayşe Demir",
+  "hazirlayanPersonelUnvan": "V.H.K.İ.",
+  "hazirlayanTelefon": "0312 555 44 33",
+  "hazirlayanEposta": "hazirlayan@kurum.gov.tr"
+}

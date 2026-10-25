@@ -1,0 +1,38 @@
+{
+  "dosyaKonusu": "Destek Hizmetleri Kapsamında Çatı Yapımı Malzeme Alımı İşi",
+  "yukleniciFirma": "ABC BİLİŞİM TEKNOLOJİLERİ SAN. VE TİC. A.Ş.",
+  "sozlesmeTarihi": "12/10/2026",
+  "genelToplam": "18.600,00",
+  "sozlesmeBedeli": "18.600,00",
+  "sozlesmeSuresi": "10 (on)",
+  "sozlesmeBitisTarihi": "22/10/2026",
+  "sureUzatimlari": "",
+  "sureUzatimliBitisTarihi": "",
+  "isinBitirildigiTarih": "20/10/2026",
+  "kurumAdi": "Örnek Belediye Başkanlığı",
+  "ancakMetni": "",
+  "bitimTarihi": "20/10/2026",
+  "nushaSayisi": "3",
+  "duzenlemeTarihi": "20/10/2026",
+  "dosyaTarihi": "20/10/2026",
+  "onayTarihi": "20/10/2026",
+  "baskanAdi": "Aylin Kaya",
+  "baskanUnvan": "Belediye Başkanı",
+  "muayeneKomisyonu": [
+    {
+      "gorevi": "Komisyon Başkanı",
+      "adSoyad": "Ahmet Yılmaz",
+      "unvan": "Memur"
+    },
+    {
+      "gorevi": "Komisyon Üyesi",
+      "adSoyad": "Mehmet Karaca",
+      "unvan": "Memur"
+    },
+    {
+      "gorevi": "Komisyon Üyesi",
+      "adSoyad": "Selin Tunç",
+      "unvan": "Bld.Personeli"
+    }
+  ]
+}

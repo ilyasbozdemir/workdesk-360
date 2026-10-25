@@ -1,0 +1,6 @@
+app: 1.0.0-rc.7
+schema_min: 1
+schema_max: 46
+release_date: "2026-10-25"
+changes:
+  - "DATA_TeminDosyasi tablosuna kilit ve harici aktarım takip kolonları eklendi (is_locked, lock_reason, kayit_kaynagi, aktarim_grubu_id, kaynak_kayit_id)."

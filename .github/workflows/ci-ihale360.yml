@@ -1,0 +1,56 @@
+name: CI (İhale 360 - Açık & Pazarlık İhale)
+
+on:
+  push:
+    branches:
+      - 'module/ihale360'
+      - 'module/ihale**'
+    paths:
+      - 'apps/ihale360-desktop/**'
+      - 'packages/database/**'
+      - 'packages/document-templates/**'
+  pull_request:
+    branches:
+      - 'module/ihale360'
+    paths:
+      - 'apps/ihale360-desktop/**'
+      - 'packages/database/**'
+      - 'packages/document-templates/**'
+
+jobs:
+  test-ihale360:
+    name: İhale 360 Typecheck & Unit Tests
+    runs-on: windows-2022
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          npm_config_msvs_version: "2022"
+
+      - name: Build Database Package
+        run: pnpm --filter @dt/database build
+
+      - name: Typecheck İhale 360
+        run: |
+          pnpm --filter ihale360-desktop typecheck:node
+          pnpm --filter ihale360-desktop typecheck:web
+
+      - name: Run İhale 360 Tests
+        run: pnpm --filter ihale360-desktop test
+
+      - name: Build İhale 360
+        run: pnpm --filter ihale360-desktop build

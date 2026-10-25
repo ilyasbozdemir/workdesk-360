@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ödenek Durumu Cevap Yazısı</title>
+  </head>
+  <body>
+    <div class="document">
+      <div class="header">
+        {{#antetSatirlari}}
+        <div>{{.}}</div>
+        {{/antetSatirlari}}
+      </div>
+
+      <div class="meta">
+        <p><strong>Sayı:</strong> {{evrakSayisi}}</p>
+        <p><strong>Konu:</strong> Ödenek Durumu Hakkında</p>
+        <p><strong>Tarih:</strong> {{tarih}}</p>
+      </div>
+
+      <div class="recipient">
+        <strong>{{muhatapBirim}}</strong>
+      </div>
+
+      <p>
+        <strong>İlgi:</strong> {{ilgiTarih}} tarihli ve {{ilgiSayisi}} sayılı yazınız.
+      </p>
+
+      <p class="body-text">
+        İlgi yazınızda belirtilen “{{isAdi}}” işine ilişkin bütçe tertibi ve
+        kullanılabilir ödenek durumunun bildirilmesi talep edilmektedir.
+      </p>
+
+      <p class="body-text">
+        Müdürlüğümüz kayıtları üzerinde yapılan inceleme sonucunda, söz konusu
+        işe ilişkin bütçe bilgileri aşağıda belirtilmiştir.
+      </p>
+
+      <table>
+        <tbody>
+          <tr>
+            <td><strong>Bütçe Yılı</strong></td>
+            <td>{{butceYili}}</td>
+          </tr>
+          <tr>
+            <td><strong>Bütçe Tertibi</strong></td>
+            <td>
+              {{#butceTertibi}}
+              {{.}}
+              {{/butceTertibi}}
+              {{^butceTertibi}}
+              -
+              {{/butceTertibi}}
+            </td>
+          </tr>
+          <tr>
+            <td><strong>Toplam Ödenek</strong></td>
+            <td>{{toplamOdenek}} TL</td>
+          </tr>
+          <tr>
+            <td><strong>Harcanan / Ayrılmış Ödenek</strong></td>
+            <td>{{kullanilanOdenek}} TL</td>
+          </tr>
+          <tr>
+            <td><strong>Kullanılabilir Ödenek</strong></td>
+            <td>{{kullanilabilirOdenek}} TL</td>
+          </tr>
+          <tr>
+            <td><strong>Yaklaşık Maliyet</strong></td>
+            <td>{{yaklasikMaliyet}} TL</td>
+          </tr>
+          <tr>
+            <td><strong>Ödenek Durumu</strong></td>
+            <td>{{odenekDurumu}}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="body-text">
+        Bilgilerinize arz ederim.
+      </p>
+
+      <div class="signature">
+        <strong>{{yetkiliAdi}}</strong><br />
+        {{yetkiliUnvan}}<br />
+        Mali Hizmetler Müdürü
+      </div>
+    </div>
+  </body>
+</html>

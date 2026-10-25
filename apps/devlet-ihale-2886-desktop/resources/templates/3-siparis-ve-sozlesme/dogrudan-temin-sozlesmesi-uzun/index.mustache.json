@@ -1,0 +1,74 @@
+{
+  "kurumAdi": "ÖRNEK KAMU KURUMU BAŞKANLIĞI",
+  "isinAdi": "Destek Hizmetleri Kapsamında Çatı Yapımı Malzeme Alımı İşi",
+  "yukleniciFirma": "ABC İNŞAAT TİCARET VE SANAYİ A.Ş.",
+  "idareAdresi": "Örnek Mahallesi Atatürk Caddesi No:1",
+  "idareTelefon": "(0212) 555 00 00",
+  "idareFaks": "(0212) 555 00 01",
+  "idareEposta": "destek@kamukurumu.gov.tr",
+  "yukleniciAdresi": "Sanayi Mahallesi Teknoloji Bulvarı No:12 Kat:2",
+  "yukleniciIlce": "Çankaya",
+  "yukleniciIl": "ANKARA",
+  "yukleniciTelefon": "0532 111 00 00",
+  "yukleniciFaks": "0312 111 00 01",
+  "yukleniciEposta": "info@yuklenicifirma.com",
+  "kalemSayisi": "5",
+  "nitelikAciklama": "İşin niteliği, teknik şartnameye ve idarece onaylanan standartlara uygun mal alımıdır.",
+  "genelToplam": "340.153,00",
+  "sozlesmeSuresi": "10 (on) takvim günü",
+  "digerGiderler": "Sözleşmenin uygulanmasına ilişkin her türlü vergi, resim, harç ve diğer ulaşım-sigorta giderleri yükleniciye aittir.",
+  "malTeslimYeri": "İdarenin merkez deposudur.",
+  "iseBaslamaTarihi": "Sözleşmenin imzalandığı tarihi takip eden gün işe başlanacaktır.",
+  "teslimProgrami": "İşin teslimi, işe başlama tarihinden itibaren 10 gün içinde tek seferde yapılacaktır.",
+  "iadeSartlari": "Sözleşme konusu malın kabulü eksiksiz yapıldıktan sonra teminat iade edilecektir.",
+  "odemeYeri": "Destek Hizmetleri Dairesi Muhasebe Birimi",
+  "odemeSartlari": "Malın eksiksiz teslimine müteakip düzenlenecek fatura ve kabul tutanağına istinaden 30 gün içinde ödeme yapılacaktır.",
+  "avansSartlari": "Bu iş için avans verilmeyecektir.",
+  "fiyatFarki": "Fiyat Farkı Ödenmeyecek.",
+  "gecikmeCezaOrani": "0,03 (binde üç)",
+  "sureUzatimi": "Süre uzatımı verilebilecek haller 4735 Sayılı Kanunun 10. maddesi kapsamında idarece değerlendirilecektir.",
+  "yukleniciYukumlulukleri": "Yüklenici, işi teknik şartnameye ve sözleşme hükümlerine tam ve eksiksiz uymakla yükümlüdür.",
+  "muayene": "Kabul işlemleri, Muayene ve Kabul Komisyonu tarafından fiziki muayene yapılarak gerçekleştirilecektir.",
+  "digerHususlar": "Ek diğer husus bulunmamaktadır.",
+  "kurumIlce": "Çankaya",
+  "sozlesmeTarihi": "20/10/2026",
+  "baskanAdi": "Mustafa Yılmaz",
+  "baskanUnvan": "Daire Başkanı (Harcama Yetkilisi)",
+  "ihtiyacKalemleri": [
+    {
+      "siraNo": 1,
+      "malzemeAdi": "100X200X5 MM profil",
+      "ozelligi": "",
+      "birimi": "Adet",
+      "miktar": "27"
+    },
+    {
+      "siraNo": 2,
+      "malzemeAdi": "SANDAVİÇ PANEL",
+      "ozelligi": "",
+      "birimi": "Metre",
+      "miktar": "443"
+    },
+    {
+      "siraNo": 3,
+      "malzemeAdi": "50x100x3 mm boyalı profil",
+      "ozelligi": "",
+      "birimi": "Ton",
+      "miktar": "12"
+    },
+    {
+      "siraNo": 4,
+      "malzemeAdi": "40x60x3 mm boyalı profil",
+      "ozelligi": "",
+      "birimi": "Kilogram",
+      "miktar": "30"
+    },
+    {
+      "siraNo": 5,
+      "malzemeAdi": "100x100x4 mm profil",
+      "ozelligi": "",
+      "birimi": "Paket",
+      "miktar": "13"
+    }
+  ]
+}

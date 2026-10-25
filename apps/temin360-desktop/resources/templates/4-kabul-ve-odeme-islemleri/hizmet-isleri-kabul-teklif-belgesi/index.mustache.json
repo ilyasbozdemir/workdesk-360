@@ -1,0 +1,34 @@
+{
+  "dosyaKonusu": "Destek Hizmetleri Kapsamında Çatı Yapımı Malzeme Alımı İşi",
+  "yukleniciFirma": "ABC BİLİŞİM TEKNOLOJİLERİ SAN. VE TİC. A.Ş.",
+  "sozlesmeTarihi": "12/10/2026",
+  "genelToplam": "18.600,00",
+  "sozlesmeBedeli": "18.600,00",
+  "sozlesmeSuresi": "10 (on)",
+  "sozlesmeBitisTarihi": "22/10/2026",
+  "sureUzatimlari": "0 (sıfır)",
+  "sureUzatimliBitisTarihi": "22/10/2026",
+  "isinBitirildigiTarih": "20/10/2026",
+  "dilekceTarihi": "20/10/2026",
+  "baskanAdi": "Aylin Kaya",
+  "baskanUnvan": "Belediye Başkanı",
+  "onIncelemeTarihi": "20/10/2026",
+  "dosyaTarihi": "20/10/2026",
+  "muayeneKomisyonu": [
+    {
+      "gorevi": "Komisyon Başkanı",
+      "adSoyad": "Ahmet Yılmaz",
+      "unvan": "Memur"
+    },
+    {
+      "gorevi": "Komisyon Üyesi",
+      "adSoyad": "Mehmet Karaca",
+      "unvan": "Memur"
+    },
+    {
+      "gorevi": "Komisyon Üyesi",
+      "adSoyad": "Selin Tunç",
+      "unvan": "Bld.Personeli"
+    }
+  ]
+}

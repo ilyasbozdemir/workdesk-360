@@ -1,0 +1,18 @@
+{
+  "dilekceTarihi": "22/10/2026",
+  "kurumAdi": "ÖRNEK KAMU KURUMU BAŞKANLIĞI",
+  "birimAdi": "Destek Hizmetleri Dairesi Başkanlığı",
+  "yukleniciFirma": "ABC BİLİŞİM TEKNOLOJİLERİ SAN. VE TİC. A.Ş.",
+  "yukleniciVergiNo": "1234567890",
+  "yukleniciVergiDairesi": "Çankaya Vergi Dairesi",
+  "yukleniciTelefon": "0312 444 55 66",
+  "yukleniciAdresi": "Atatürk Bulvarı Yenilik İş Merkezi No:45 Kat:3 Çankaya / ANKARA",
+  "dosyaKonusu": "Destek Hizmetleri Kapsamında Çatı Yapımı Malzeme Alımı İşi",
+  "dosyaTarihi": "12/10/2026",
+  "teslimTarihi": "18/10/2026",
+  "kabulTarihi": "20/10/2026",
+  "ekSureGun": "15",
+  "gerekce": "Bölgede meydana gelen yoğun yağış ve elverişsiz hava koşulları nedeniyle açık alanda yürütülen çatı yapım faaliyetlerine ara verilmek zorunda kalınmıştır.",
+  "isMal": true,
+  "ekler": ["Meteoroloji Genel Müdürlüğü Hava Raporu", "Şantiye Günlük Defteri Nüshası"]
+}

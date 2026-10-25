@@ -1,0 +1,39 @@
+﻿{
+  "antetSatirlari": [
+    "T.C.",
+    "ADIYAMAN VALİLİĞİ",
+    "İL MİLLİ EĞİTİM MÜDÜRLÜĞÜ",
+    "Birsen Esensoy İlkokulu Müdürlüğü"
+  ],
+  "solLogo": "https://raw.githubusercontent.com/ilyasbozdemir/workdesk-360/main/public/icon.png",
+  "sagLogo": "",
+  "kurumUstBirim": "ADIYAMAN VALİLİĞİ",
+  "kurumBirim": "İL MİLLİ EĞİTİM MÜDÜRLÜĞÜ",
+  "kurumAdi": "Birsen Esensoy İlkokulu Müdürlüğü",
+  "sonTeklifTarihi": "15/08/2022",
+  "sonTeklifSaati": "10:00",
+  "baskanAdi": "Bahri ALKAYIŞ",
+  "baskanUnvan": "Okul Müdürü",
+  "kurumAdres": "Destek Hizmetleri Müdürlüğü 02100 Adıyaman",
+  "kurumTelefon": "0416 225 04 83-86",
+  "kurumFax": "0416 225 04 91",
+  "ihtiyacKalemleri": [
+    {
+      "siraNo": 1,
+      "malzemeAdi": "A4 Fotokopi Kağıdı 500'lü - 5'li Paket En az 80 gr",
+      "ozelligi": "",
+      "birimi": "Koli",
+      "miktar": 1,
+      "birimFiyati": ""
+    },
+    {
+      "siraNo": 2,
+      "malzemeAdi": "Tükenmez Kalem",
+      "ozelligi": "",
+      "birimi": "Adet",
+      "miktar": 1,
+      "birimFiyati": ""
+    }
+  ],
+  "teklifTarihi": "..../..../20...."
+}

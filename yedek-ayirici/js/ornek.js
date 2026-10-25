@@ -1,9 +1,0 @@
-var ORNEK={files:[{id:'d-001',f:{'İhalesi Yapılacak Birim':'Örnek Birim','İhale Tipi':'Doğrudan Temin','Bütçe':'Genel Bütçe','KDV':'Hariç','Sunulacak Makam':'Müdürlük Makamı','İhtiyaç Yeri':'Depo','Hesaplama Esası':'Birim Fiyat','Hesaplamada':'KDV Hariç','Alım Türü':'Mal Alımı','Dosya Açılış Tarihi':'2026-10-20','İşin Adı / Tanımı':'Kırtasiye malzemesi alımı','Dosya No':'D-001','Doğrudan Temin Numarası':'2026/145','Bütçe Yılı':'2026','İhale Aşaması':'Teklif Mektubu','Son Teklif Verme Tarih/Saati':'2026-10-30T16:00'},
-  mat:[['','M01','A4 kağıt','80 gr','Paket','20','50','210','Örnek Kırtasiye Ltd.','',''],['','M02','Dosya','Telli','Adet','20','200','12.5','Örnek Kırtasiye Ltd.','','']],
-  win:[['F-1','Örnek Kırtasiye Ltd.','0000 000 00 00','Örnek Mah.']],con:[['Örnek Kırtasiye Ltd.','']],
-  yak:[['','Başkan','Örnek Kişi 1','']],muay:[['','Üye','Örnek Kişi 2','']],
-  kab:[{id:'k-1',h:{'Kabul Tarihi':'2026-11-05','Firma':'Örnek Kırtasiye Ltd.'},m:[['','A4 kağıt','80 gr','Paket','50','50','50']]}],
-  ek:[],tek:[{id:'t-1',dosyaId:'d-001',firma:'Örnek Kırtasiye Ltd.',firmaNo:'F-1',iletisim:'',yer:'',firmaId:'f-1',vergiNo:'0000000000',yetkili:'Örnek Yetkili',istekTarihi:'2026-10-21',sekil:'E-posta',durum:'Kabul Edildi',teklifTarihi:'2026-10-25',tutar:'12.500',kdv:'20',gecerlilik:'30 gün',not:'',kalemler:['210','12.5']},
-  {id:'t-2',dosyaId:'d-001',firma:'Deneme Büro A.Ş.',firmaNo:'',iletisim:'',yer:'',firmaId:'',vergiNo:'',yetkili:'',istekTarihi:'',sekil:'',durum:'Teklif Geldi',teklifTarihi:'',tutar:'',kdv:'',gecerlilik:'',not:'',kalemler:['215']}],
-  sablon:{}}],cur:0,defs:{f:{},yak:[],muay:[]},kurum:{kurumAdi:'Örnek Kurum'},mockTemizlendi:true,
-  firmalar:[{id:'f-1',no:'F-1',unvan:'Örnek Kırtasiye Ltd.',ilet:'0000 000 00 00',yer:'Örnek Mah.'}],winV2:true,katalog:[{id:'k1',kod:'M01',tasinir:'Kırtasiye',okas:'',ad:'A4 kağıt'}]};

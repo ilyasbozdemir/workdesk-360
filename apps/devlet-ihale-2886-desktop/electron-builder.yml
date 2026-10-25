@@ -1,0 +1,67 @@
+appId: dev.ilyasbozdemir.devlet-ihale-2886
+productName: DEVLET İHALE 2886
+fileAssociations:
+  - ext: ihale2886
+    name: Devlet İhale 2886 Proje Dosyası
+    description: 2886 Sayılı Devlet İhale Kanunu Proje Dosyası (*.ihale2886)
+    role: Editor
+    icon: icon.ico
+directories:
+  buildResources: build
+  output: dist-local
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+asarUnpack:
+  - resources/**
+extraResources:
+  - from: resources/
+    to: .
+    filter:
+      - '**/*'
+
+win:
+  executableName: DEVLETIHALE2886
+  icon: resources/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: DEVLET İHALE 2886
+  uninstallDisplayName: DEVLET İHALE 2886
+  createDesktopShortcut: always
+  include: build/installer.nsh
+mac:
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    - NSCameraUsageDescription: Application requests access to the device's camera.
+    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  notarize: false
+dmg:
+  artifactName: ${name}-${version}.${ext}
+linux:
+  target:
+    - AppImage
+    - snap
+    - deb
+  maintainer: electronjs.org
+  category: Utility
+appImage:
+  artifactName: ${name}-${version}.${ext}
+npmRebuild: true
+publish:
+  provider: github
+  owner: ilyasbozdemir
+  repo: workdesk-360
+  updaterCacheDirName: workdesk-360-updater

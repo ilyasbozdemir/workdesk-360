@@ -1,10 +1,9 @@
-name: Build and Release
+name: Build and Release (Workdesk 360 Monorepo - Genel)
 
 on:
   push:
     tags:
       - "v*"
-      - "temin360-v*"
       - "workdesk-v*"
 
 permissions:
@@ -12,6 +11,7 @@ permissions:
 
 jobs:
   release:
+    name: Build & Release Desktop Apps Suite
     runs-on: windows-2022
     steps:
       - name: Check out Git repository
@@ -35,45 +35,54 @@ jobs:
         shell: bash
         run: |
           RAW_TAG=${GITHUB_REF_NAME}
-          # Strip prefix if any (e.g. temin360-v1.0.0 -> 1.0.0, v1.0.0 -> 1.0.0)
           VERSION=$(echo "$RAW_TAG" | sed -E 's/^.*v//')
-          echo "Building release for version: $VERSION (from tag: $RAW_TAG)"
-          cd apps/app-desktop
-          npm pkg set version=$VERSION
+          echo "Building suite release for version: $VERSION (from tag: $RAW_TAG)"
+          cd apps/temin360-desktop && npm pkg set version=$VERSION
+          cd ../ihale360-desktop && npm pkg set version=$VERSION
+          cd ../devlet-ihale-2886-desktop && npm pkg set version=$VERSION
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         env:
           npm_config_msvs_version: "2022"
 
-      - name: Verify ee-first
-        shell: cmd
+      - name: Build Database & Core Packages
         run: |
-          cd apps/app-desktop
-          pnpm ls ee-first
-          if exist node_modules\ee-first (
-            echo FOUND
-          ) else (
-            echo MISSING
-            exit 1
-          )
-
-      - name: Build Database Package
-        run: pnpm --filter @dt/database build
+          pnpm --filter @dt/database build
+          pnpm --filter @workdesk/veri-aktarim-araci build
 
       - name: Pre-release Integrity & Schema Checks
         run: |
           pnpm check:schema
-          pnpm --filter app-desktop typecheck:node
-          pnpm --filter app-desktop typecheck:web
+          pnpm --filter temin360-desktop typecheck:node
+          pnpm --filter temin360-desktop typecheck:web
+          pnpm --filter ihale360-desktop typecheck:node
+          pnpm --filter ihale360-desktop typecheck:web
 
       - name: Pre-release Unit & Integration Tests
         run: |
           pnpm --filter @temin360/document-templates test
-          pnpm --filter app-desktop test
+          pnpm --filter temin360-desktop test
+          pnpm --filter ihale360-desktop test
 
-      - name: Build and Package
-        working-directory: apps/app-desktop
+      - name: Build and Package Temin 360 Desktop
+        working-directory: apps/temin360-desktop
+        run: pnpm build && npx electron-builder --win --x64 -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_MIRROR: "https://cdn.npmmirror.com/binaries/electron/"
+          ELECTRON_BUILDER_BINARIES_MIRROR: "https://cdn.npmmirror.com/binaries/electron-builder-binaries/"
+
+      - name: Build and Package İhale 360 Desktop
+        working-directory: apps/ihale360-desktop
+        run: pnpm build && npx electron-builder --win --x64 -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_MIRROR: "https://cdn.npmmirror.com/binaries/electron/"
+          ELECTRON_BUILDER_BINARIES_MIRROR: "https://cdn.npmmirror.com/binaries/electron-builder-binaries/"
+
+      - name: Build and Package Devlet İhale 2886 Desktop
+        working-directory: apps/devlet-ihale-2886-desktop
         run: pnpm build && npx electron-builder --win --x64 -p never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,35 +90,43 @@ jobs:
           ELECTRON_BUILDER_BINARIES_MIRROR: "https://cdn.npmmirror.com/binaries/electron-builder-binaries/"
 
       - name: Prepare Release Notes
+        id: prep
         shell: bash
         run: |
-          if [[ "${{ github.ref_name }}" == *"rc"* ]]; then
-            echo "RELEASE_NAME=TEMİN 360 ${{ github.ref_name }} (Sürüm Adayı)" >> $GITHUB_ENV
-            echo "IS_PRERELEASE=true" >> $GITHUB_ENV
-            echo "MAKE_LATEST=false" >> $GITHUB_ENV
-          elif [[ "${{ github.ref_name }}" == *"beta"* || "${{ github.ref_name }}" == *"alpha"* ]]; then
-            echo "RELEASE_NAME=TEMİN 360 ${{ github.ref_name }} (Erken Erişim)" >> $GITHUB_ENV
-            echo "IS_PRERELEASE=true" >> $GITHUB_ENV
-            echo "MAKE_LATEST=false" >> $GITHUB_ENV
+          RAW_TAG=${{ github.ref_name }}
+          if [[ "$RAW_TAG" == *"rc"* ]]; then
+            echo "release_name=WORKDESK 360 $RAW_TAG (Sürüm Adayı)" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "make_latest=false" >> $GITHUB_OUTPUT
+          elif [[ "$RAW_TAG" == *"beta"* || "$RAW_TAG" == *"alpha"* ]]; then
+            echo "release_name=WORKDESK 360 $RAW_TAG (Erken Erişim)" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "make_latest=false" >> $GITHUB_OUTPUT
           else
-            echo "RELEASE_NAME=TEMİN 360 ${{ github.ref_name }}" >> $GITHUB_ENV
-            echo "IS_PRERELEASE=false" >> $GITHUB_ENV
-            echo "MAKE_LATEST=true" >> $GITHUB_ENV
+            echo "release_name=WORKDESK 360 $RAW_TAG" >> $GITHUB_OUTPUT
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "make_latest=true" >> $GITHUB_OUTPUT
           fi
-          node apps/app-desktop/scripts/generate-release-notes.js "${{ github.ref_name }}" release_notes.md
+          node apps/temin360-desktop/scripts/generate-release-notes.js "$RAW_TAG" release_notes.md
 
       - name: Release Files
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            apps/app-desktop/dist-local/*.exe
-            apps/app-desktop/dist-local/*.exe.blockmap
-            apps/app-desktop/dist-local/*.yml
+            apps/temin360-desktop/dist-local/*.exe
+            apps/temin360-desktop/dist-local/*.exe.blockmap
+            apps/temin360-desktop/dist-local/*.yml
+            apps/ihale360-desktop/dist-local/*.exe
+            apps/ihale360-desktop/dist-local/*.exe.blockmap
+            apps/ihale360-desktop/dist-local/*.yml
+            apps/devlet-ihale-2886-desktop/dist-local/*.exe
+            apps/devlet-ihale-2886-desktop/dist-local/*.exe.blockmap
+            apps/devlet-ihale-2886-desktop/dist-local/*.yml
           draft: false
-          prerelease: ${{ env.IS_PRERELEASE == 'true' }}
-          make_latest: ${{ env.MAKE_LATEST }}
-          name: ${{ env.RELEASE_NAME }}
+          prerelease: ${{ steps.prep.outputs.is_prerelease == 'true' }}
+          make_latest: ${{ steps.prep.outputs.make_latest }}
+          name: ${{ steps.prep.outputs.release_name }}
           body_path: release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

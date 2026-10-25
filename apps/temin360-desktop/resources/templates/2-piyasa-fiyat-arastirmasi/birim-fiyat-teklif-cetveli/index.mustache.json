@@ -1,0 +1,49 @@
+﻿{
+  "detsisNo": "",
+  "dosyaNumarasi": {
+    "yili": "2026",
+    "sayisi": "123"
+  },
+  "dosyaKonusu": "Birim Fiyat Teklif Cetveli",
+  "dosyaTarihi": "20.06.2026",
+  "aciklama": "1.Teklifimize Damga Vergisi, Resim Harç, Pul ve Ulaştırma Giderleri dahildir.\n2.Teklifimiz 10.06.2026 16:00 tarihine kadar geçerlidir.\n3.İhale konusu iş için sermayesinin %50 sinden fazlasına sahip olduğumuz başka bir tüzel kişinin bu işe ayrı bir teklif vermediğini beyan ediyoruz.\n4.Aldığınız herhangi bir teklifi veya en düşük teklifi seçmek zorunda olmadığınızı kabul ediyoruz.\n5.İhale konusu işle ilgili olmak üzere idarenizce yapılacak/yaptırılacak diğer işlerde idarenizin çıkarlarına aykırı düşecek hiçbir eylem ve oluşum içerisinde olmayacağımızı taahhüt ediyoruz.\n6.Bu alıma ilişkin malzeme kalemlerine kısmi teklif verilmiştir.\n7.4734 Sayılı Kamu İhale Kanununun 4.maddesindeki \"Yerli İstekli\" tanımı gereğince yerli istekli durumundayız.\n8.İhale konusu işin tamamını Teklif Mektubumuzun ekindeki Birim Fiyat Teklif Cetvelinde belirtilen her bir iş kalemi için teklif ettiğimiz birim fiyatları üzerinden KDV HARİÇ toplam (rakamla) 15.000 TL (yazı ile) On Beş Bin Türk Lirası bedel karşılığında kabul ve taahhüt ederiz.",
+  "antetSatirlari": [
+    "T.C.",
+    "SAĞLIK BAKANLIĞI",
+    "Ankara İl Sağlık Müdürlüğü",
+    "Destek Hizmetleri Başkanlığı"
+  ],
+  "solLogo": "https://raw.githubusercontent.com/ilyasbozdemir/workdesk-360/main/public/icon.png",
+  "sagLogo": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Logo_of_100th_years_of_the_Republic_of_T%C3%BCrkiye.svg",
+  "idareAdi": "Ankara İl Sağlık Müdürlüğü",
+  "dogrudanTeminNo": "2026/DT-45",
+  "isinAdi": "Tıbbi Cihaz ve Laboratuvar Malzemeleri Alımı",
+  "sonTeklifVermeTarihi": "10.06.2026",
+  "sonTeklifVermeSaati": "16:00",
+  "taahhutMetni": "Yukarıda belirtilen ve idarenizce satın alınacak olan malların / hizmetlerin cinsi, özellikleri, miktarı ve diğer şartlarını okudum. KDV hariç yukarıda yazılı toplam bedelle vermeyi kabul ve taahhüt ediyorum.",
+  "ihtiyacKalemleri": [
+    {
+      "siraNo": 1,
+      "malzemeAdi": "A4 Fotokopi Kağıdı",
+      "ozelligi": "80 gr/m2 Beyaz",
+      "birimi": "Kutu",
+      "miktar": 50
+    },
+    {
+      "siraNo": 2,
+      "malzemeAdi": "Tükenmez Kalem",
+      "ozelligi": "Mavi Renk",
+      "birimi": "Adet",
+      "miktar": 100
+    }
+  ],
+  "kurumIci": false,
+  "kurumAdres": "Mustafa Kemal Mah. Dumlupınar Blv. No:1 Çankaya/Ankara",
+  "kurumTelefon": "0312 555 44 33",
+  "kurumWeb": "www.saglik.gov.tr",
+  "kurumEposta": "ankara.destek@saglik.gov.tr",
+  "kurumKep": "saglikbakanligi@hs01.kep.tr",
+  "hazirlayanPersonelAdi": "Ayşe Demir",
+  "hazirlayanPersonelUnvan": "V.H.K.İ.",
+  "hazirlayanTelefon": "0312 555 44 33"
+}

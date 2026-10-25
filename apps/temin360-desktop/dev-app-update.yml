@@ -1,0 +1,8 @@
+provider: github
+owner: ilyasbozdemir
+repo: hakim-pro-app
+updaterCacheDirName: hakim-pro-app-updater
+# İleride gizli (private) repo'ya geçilirse aşağıdaki ayarları açabilirsiniz:
+# private: true
+# token: "YOUR_GITHUB_TOKEN" # veya sistem ortam değişkenlerinden (GH_TOKEN) otomatik alınır.
+

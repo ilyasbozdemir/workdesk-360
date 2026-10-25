@@ -1,0 +1,45 @@
+{
+  "kurumUst": "T.C.",
+  "kurumAdi": "ÖRNEK BELEDİYE BAŞKANLIĞI",
+  "mudurluk": "Destek Hizmetleri Müdürlüğü",
+  "idareAdi": "ÖRNEK BELEDİYE BAŞKANLIĞI",
+  "vmakamina": "ÖRNEK BELEDİYE BAŞKANLIĞI MAKAMINALARA",
+  "tarih": "06/05/2026",
+  "dosyaTarihi": "06/05/2026",
+  "evrakSayisi": "56383307.7",
+  "isAdi": "Belediyemiz Hizmet Binası Çatı Onarım İşi İçin Malzeme Alımı",
+  "isinAciklamasi": "Hizmet Binası Çatı Onarımı İçin Gerekli Kereste ve Sac Alımı",
+  "teminSekli": "4734 sayılı Kanun'un 22/d maddesi gereğince Doğrudan Temin",
+  "alimTuru": "Mal Alımı",
+  "yaklasikMaliyet": "340.153,00",
+  "teklifler": [
+    {
+      "unvan": "A Ticaret Ltd. Şti.",
+      "fiyat": "340.153,00",
+      "uygunMu": "Evet",
+      "aciklama": "Teklif Uygundur"
+    },
+    {
+      "unvan": "B Mühendislik A.Ş.",
+      "fiyat": "387.300,00",
+      "uygunMu": "Evet",
+      "aciklama": "Teklif Uygundur"
+    }
+  ],
+  "uygunGorulenler": [
+    {
+      "unvan": "A Ticaret Ltd. Şti.",
+      "adres": "Merkez Mah. Atatürk Cad. No:1/A",
+      "fiyat": "340.153,00"
+    }
+  ],
+  "vonayasunustarihi": "06/05/2026",
+  "hazirlayanPersonelAdi": "Adı SOYADI",
+  "hazirlayanPersonelUnvan": "Bld. Personeli",
+  "vonaytarihi": "06/05/2026",
+  "onaylayanPersonelAdi": "Adı SOYADI",
+  "onaylayanPersonelUnvan": "Belediye Başkanı",
+  "baskanAdi": "Adı SOYADI",
+  "baskanUnvan": "Belediye Başkanı",
+  "ekler": ["Komisyon Listesi", "Lüzum Müzekkeresi", "Yaklaşık Maliyet Cetveli"]
+}

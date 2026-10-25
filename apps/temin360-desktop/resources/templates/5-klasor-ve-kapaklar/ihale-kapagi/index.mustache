@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>İhale Kapağı</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 1.5cm;
+    }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      color: #000;
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    .page-container {
+      max-width: 21cm;
+      min-height: 29.7cm;
+      margin: 20px auto;
+      padding: 1.5cm 1.5cm 2cm 1.5cm;
+      background: white;
+      box-sizing: border-box;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    @media print {
+      body {
+        background-color: white;
+      }
+      .page-container {
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        max-width: none;
+        min-height: 0;
+      }
+    }
+    .logo-container {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .logo-img {
+      max-width: 90px;
+      max-height: 90px;
+      object-fit: contain;
+    }
+    .antet-text {
+      text-align: center;
+      font-weight: bold;
+      font-size: 13pt;
+      line-height: 1.4;
+      margin-bottom: 40px;
+    }
+    .antet-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0;
+      margin-bottom: 40px;
+    }
+    .antet-table td {
+      vertical-align: middle;
+    }
+    .cover-title-container {
+      text-align: center;
+      margin: 60px 0;
+    }
+    .cover-title {
+      font-size: 26pt;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .cover-subtitle {
+      font-size: 18pt;
+      font-weight: bold;
+      color: #333;
+    }
+    .details-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 40px auto;
+      max-width: 90%;
+    }
+    .details-table td {
+      border: 1px solid #000;
+      padding: 12px 15px;
+      font-size: 12pt;
+      vertical-align: middle;
+    }
+    .details-table td.label {
+      width: 35%;
+      font-weight: bold;
+      background-color: #f9f9f9;
+    }
+    .details-table td.value {
+      width: 65%;
+      font-weight: 500;
+    }
+    .footer-info {
+      text-align: center;
+      margin-top: auto;
+      padding-top: 50px;
+      font-size: 11pt;
+      border-top: 1px dashed #ccc;
+    }
+    .footer-year {
+      font-size: 14pt;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <div>
+      <!-- CENTERED TOP LOGO LAYOUT (when ustLogo exists) -->
+      {{#ustLogo}}
+      <div class="logo-container">
+        <img src="{{ustLogo}}" alt="Logo" class="logo-img" />
+      </div>
+
+      <div class="antet-text">
+        {{#antetSatirlari}}
+        <div>{{.}}</div>
+        {{/antetSatirlari}}
+      </div>
+      {{/ustLogo}}
+
+      <!-- DEFAULT LAYOUTS (when ustLogo does not exist) -->
+      {{^ustLogo}}
+        <!-- DOUBLE LOGO LAYOUT (when sagLogo exists) -->
+        {{#sagLogo}}
+        <table class="antet-table">
+          <tr>
+            <td style="width: 90px; text-align: left; vertical-align: top; padding-top: 0;">
+              {{#solLogo}}
+              <img src="{{solLogo}}" alt="Sol Logo" class="logo-img" />
+              {{/solLogo}}
+            </td>
+            
+            <td class="antet-text" style="vertical-align: top; padding-top: 0; margin-bottom: 0;">
+              {{#antetSatirlari}}
+              <div>{{.}}</div>
+              {{/antetSatirlari}}
+            </td>
+
+            <td style="width: 90px; text-align: right; vertical-align: top; padding-top: 0;">
+              <img src="{{sagLogo}}" alt="Sağ Logo" class="logo-img" />
+            </td>
+          </tr>
+        </table>
+        {{/sagLogo}}
+
+        <!-- SINGLE CENTERED LOGO LAYOUT (when sagLogo does not exist) -->
+        {{^sagLogo}}
+        {{#solLogo}}
+        <div class="logo-container">
+          <img src="{{solLogo}}" alt="Logo" class="logo-img" />
+        </div>
+        {{/solLogo}}
+
+        <div class="antet-text">
+          {{#antetSatirlari}}
+          <div>{{.}}</div>
+          {{/antetSatirlari}}
+        </div>
+        {{/sagLogo}}
+      {{/ustLogo}}
+
+      <!-- TITLE -->
+      <div class="cover-title-container">
+        <div class="cover-title">DOĞRUDAN TEMİN DOSYASI</div>
+        <div class="cover-subtitle">(İHALE / ALIM KLASÖRÜ)</div>
+      </div>
+
+      <!-- DETAILS TABLE -->
+      <table class="details-table">
+        {{#kapakDetaylari}}
+        <tr>
+          <td class="label">{{label}}</td>
+          <td class="value"{{#isBold}} style="font-weight: bold;"{{/isBold}}>
+            {{#lines}}
+            <div>{{.}}</div>
+            {{/lines}}
+          </td>
+        </tr>
+        {{/kapakDetaylari}}
+      </table>
+    </div>
+
+    <!-- FOOTER INFO -->
+    <div class="footer-info">
+      <div class="footer-year">{{tarih}}</div>
+    </div>
+  </div>
+</body>
+</html>

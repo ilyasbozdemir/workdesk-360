@@ -1,0 +1,5 @@
+export * from './DosyaKomisyonCard'
+export * from './DosyaKomisyonlariTab'
+export * from './KurumsalSablonTab'
+export * from './GlobalRevizyonCizelgesiTab'
+export * from './KadroKopyalaModal'

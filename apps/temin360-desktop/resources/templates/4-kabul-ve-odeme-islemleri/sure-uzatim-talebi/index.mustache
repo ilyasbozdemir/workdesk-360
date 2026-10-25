@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Süre Uzatım Talep Dilekçesi</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 2cm;
+      }
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        color: #000;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background-color: #fff;
+      }
+      .page-container {
+        max-width: 21cm;
+        box-sizing: border-box;
+        margin: 0 auto;
+        padding: 0.5cm;
+      }
+      .date-block {
+        text-align: right;
+        margin-bottom: 30px;
+        font-size: 12pt;
+      }
+      .recipient-block {
+        text-align: center;
+        margin-bottom: 40px;
+        line-height: 1.5;
+      }
+      .recipient-title {
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12pt;
+      }
+      .recipient-sub {
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 11pt;
+        margin-top: 5px;
+      }
+      .petition-body {
+        text-align: justify;
+        text-indent: 1.5cm;
+        margin-bottom: 40px;
+        font-size: 12pt;
+      }
+      .signature-block {
+        width: 100%;
+        margin-bottom: 50px;
+      }
+      .signature-box {
+        float: right;
+        width: 300px;
+        text-align: center;
+        line-height: 1.4;
+      }
+      .signature-name {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 5px;
+      }
+      .signature-title {
+        font-size: 10.5pt;
+        color: #333;
+      }
+      .clearfix::after {
+        content: '';
+        clear: both;
+        display: table;
+      }
+      .detail-title {
+        font-weight: bold;
+        font-size: 11pt;
+        margin-bottom: 8px;
+        text-decoration: underline;
+      }
+      .detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 40px;
+        font-size: 11pt;
+      }
+      .detail-table td {
+        padding: 6px 10px;
+        border: 1px solid #c0c0c0;
+      }
+      .detail-table td.label {
+        font-weight: bold;
+        width: 160px;
+        background-color: #f9f9f9;
+      }
+      .contact-block {
+        font-size: 10.5pt;
+        line-height: 1.5;
+        margin-bottom: 30px;
+        border-top: 1px dashed #d0d0d0;
+        padding-top: 15px;
+      }
+      .contact-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .attachments-block {
+        font-size: 10.5pt;
+        line-height: 1.5;
+      }
+      .attachments-title {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .attachments-list {
+        margin: 0;
+        padding-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-container">
+      <!-- TARIH -->
+      <div class="date-block">
+        {{#dilekceTarihi}}{{dilekceTarihi}}{{/dilekceTarihi}}{{^dilekceTarihi}}{{tarih}}{{/dilekceTarihi}}
+      </div>
+
+      <!-- MAKAMA HİTAP -->
+      <div class="recipient-block">
+        <div class="recipient-title">T.C.</div>
+        <div class="recipient-title">{{kurumAdi}}</div>
+        {{#birimAdi}}
+        <div class="recipient-sub">{{birimAdi}}</div>
+        {{/birimAdi}} {{^birimAdi}}
+        <div class="recipient-sub">Destek Hizmetleri Müdürlüğüne</div>
+        {{/birimAdi}}
+      </div>
+
+      <!-- DİLEKÇE METNİ -->
+      <div class="petition-body">
+        Kurumunuzca 4734 sayılı Kamu İhale Kanunu’nun 22/d maddesi kapsamında gerçekleştirilen
+        <b
+          >{{#dosyaTarihi}}{{dosyaTarihi}}{{/dosyaTarihi}}{{^dosyaTarihi}}..../..../20....{{/dosyaTarihi}}</b
+        >
+        tarihli <b>"{{dosyaKonusu}}"</b> işine ait taahhüt ettiğimiz; {{#isMal}}malzemelerin teslimi
+        sürecinde, aşağıda belirtilen gerekçe(ler) nedeniyle teslimatımız gecikmiştir.{{/isMal}}
+        {{#isHizmet}}hizmetlerin ifası sürecinde, aşağıda belirtilen gerekçe(ler) nedeniyle iş
+        sürecimiz gecikmiştir.{{/isHizmet}} {{#isYapim}}yapım işlerinin tamamlanması sürecinde,
+        aşağıda belirtilen gerekçe(ler) nedeniyle yapım sürecimiz gecikmiştir.{{/isYapim}}
+        {{^isMal}}{{^isHizmet}}{{^isYapim}}iş kalemlerinin teslimi/ifası sürecinde, aşağıda
+        belirtilen gerekçe(ler) nedeniyle gecikmeler meydana
+        gelmiştir.{{/isYapim}}{{/isHizmet}}{{/isMal}} Bu doğrultuda, taahhütlerimizin eksiksiz ve
+        şartnamelere uygun şekilde tamamlanabilmesi amacıyla firmamıza
+        <b>{{#ekSureGun}}{{ekSureGun}}{{/ekSureGun}}{{^ekSureGun}}....{{/ekSureGun}}</b> takvim günü
+        ek süre verilmesi hususunda gereğini arz ederim.
+      </div>
+
+      <!-- GEREKÇE DETAYI -->
+      <div class="detail-title">Süre Uzatımı Talebine İlişkin Bilgiler:</div>
+      <table class="detail-table">
+        <tr>
+          <td class="label">Talep Edilen Ek Süre</td>
+          <td><b>{{ekSureGun}} Gün</b></td>
+        </tr>
+        <tr>
+          <td class="label">Süre Uzatımı Gerekçesi</td>
+          <td>{{gerekce}}</td>
+        </tr>
+      </table>
+
+      <!-- İMZA BLOK -->
+      <div class="signature-block clearfix">
+        <div class="signature-box">
+          <span class="signature-name">{{yukleniciFirma}}</span>
+          <span class="signature-title">Yetkili İmza / Kaşe</span>
+          <br /><br /><br />
+        </div>
+      </div>
+
+      <!-- İLETİŞİM BİLGİLERİ -->
+      <div class="contact-block">
+        <div class="contact-title">Yüklenici İletişim Bilgileri:</div>
+        <div><b>Adres:</b> {{yukleniciAdresi}}</div>
+        <div><b>Telefon:</b> {{yukleniciTelefon}}</div>
+        <div><b>Vergi Dairesi / No:</b> {{yukleniciVergiDairesi}} / {{yukleniciVergiNo}}</div>
+      </div>
+
+      <!-- EKLER -->
+      {{#ekler.length}}
+      <div class="attachments-block">
+        <div class="attachments-title">Ekler:</div>
+        <ul class="attachments-list">
+          {{#ekler}}
+          <li>{{.}}</li>
+          {{/ekler}}
+        </ul>
+      </div>
+      {{/ekler.length}}
+    </div>
+  </body>
+</html>

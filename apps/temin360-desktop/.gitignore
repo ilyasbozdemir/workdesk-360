@@ -1,0 +1,137 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+dist-local/
+temp_test/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage & Test outputs
+lib-cov
+coverage
+*.lcov
+.nyc_output
+test-results/
+e2e-report/
+e2e-screenshots/*.png
+
+# Tool caches
+.grunt
+bower_components
+.lock-wscript
+web_modules/
+.npm
+.eslintcache
+.stylelintcache
+.node_repl_history
+.yarn-integrity
+
+# TypeScript
+*.tsbuildinfo
+
+# Build outputs
+dist
+out
+electronjs-out
+dist-electron/
+dist-release/
+app.asar
+release
+build/Release
+
+# Package outputs
+*.tgz
+jspm_packages/
+
+# Framework caches
+.cache
+.parcel-cache
+.next
+.nuxt
+.output
+.vuepress/dist
+.temp
+.svelte-kit/
+**/.vitepress/dist
+**/.vitepress/cache
+.docusaurus
+.serverless/
+.fusebox/
+.firebase/
+.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.*
+.env.local
+.env.*.local
+!.env.example
+
+# Database and Data
+*.db
+*.db-journal
+*.sqlite
+/data/
+!src/**/data/
+*.xlsx
+*.xls
+*.csv
+
+# Binaries
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+
+# IDEs and Editors
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Electron
+.electron-builder
+
+# yarn v3
+.pnpm-store
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# DynamoDB Local
+.dynamodb/
+
+# TernJS
+.tern-port
+
+# Geo/Config files
+*.geojson
+*.kml
+*.xml
+
+# Resources
+/resources/netcad/

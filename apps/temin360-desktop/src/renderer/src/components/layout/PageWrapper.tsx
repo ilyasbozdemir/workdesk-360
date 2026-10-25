@@ -1,0 +1,204 @@
+import React, { useEffect } from 'react'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
+import { Header } from './Header'
+import { ActiveFileSidebar } from './ActiveFileSidebar'
+import { ActiveFileShortcuts } from './ActiveFileShortcuts'
+import { Footer } from './Footer'
+import { TabsBar } from './TabsBar'
+import { useWorkspaceStore } from '../../store/workspaceStore'
+import { useSettingsStore } from '../../store/settingsStore'
+import { normalizePath, useTabStore } from '../../store/tabStore'
+import LauncherScreen from '../../screens/launcher/index.screen'
+import LockScreen from './LockScreen'
+import { routeComponents } from './routeComponents'
+import { FindInPage } from './FindInPage'
+import { APP_ROUTES } from '../../constants/routeConstants'
+import { WorkspaceCloseModal } from './WorkspaceCloseModal'
+import { ShutdownOverlay } from './ShutdownOverlay'
+import { GlobalDocumentPreviewHost } from './GlobalDocumentPreviewHost'
+
+const DisclaimerModal = React.lazy(() =>
+  import('../modals/DisclaimerModal').then((m) => ({ default: m.DisclaimerModal }))
+)
+const GoogleDriveModal = React.lazy(() =>
+  import('../ui/GoogleDriveModal').then((m) => ({ default: m.GoogleDriveModal }))
+)
+const SayiyiYaziyaCevirModal = React.lazy(() =>
+  import('../modals/SayiyiYaziyaCevirModal').then((m) => ({ default: m.SayiyiYaziyaCevirModal }))
+)
+const HesapAraclariModal = React.lazy(() =>
+  import('../modals/HesapAraclariModal').then((m) => ({ default: m.HesapAraclariModal }))
+)
+
+import { useDocumentTitle } from './hooks/useDocumentTitle'
+import { useGlobalInteractivityGuard } from './hooks/useGlobalInteractivityGuard'
+import { useSayiyiYaziyaCevirModal } from './hooks/useSayiyiYaziyaCevirModal'
+import { useHesapAraclariModal } from './hooks/useHesapAraclariModal'
+import { useInactiveTabCleaner } from './hooks/useInactiveTabCleaner'
+import { useWorkspaceCloseHandler } from './hooks/useWorkspaceCloseHandler'
+import { useWorkspaceLifecycle } from './hooks/useWorkspaceLifecycle'
+import { DetachedWindowLayout } from './components/DetachedWindowLayout'
+
+export function PageWrapper(): React.ReactNode {
+  const routerState = useRouterState()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  const searchParams = new URLSearchParams(window.location.search)
+  const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '')
+  const isWindowMode = searchParams.get('mode') === 'window' || hashParams.get('mode') === 'window'
+  const isDosyaWindowMode =
+    searchParams.get('mode') === 'dosya_window' || hashParams.get('mode') === 'dosya_window'
+  const isAnyWindowMode = isWindowMode || isDosyaWindowMode
+
+  const { isSayiModalOpen, sayiInitialVal, setIsSayiModalOpen } = useSayiyiYaziyaCevirModal()
+  const { isHesapModalOpen, setIsHesapModalOpen } = useHesapAraclariModal()
+
+  const {
+    activeFilePath,
+    isAuthenticated,
+    loadActiveMeta,
+    activeDosyaId,
+    setActiveDosyaId,
+    closeWorkspace,
+    fileName
+  } = useWorkspaceStore()
+  const { unifiedStepperMode, loadSettings } = useSettingsStore()
+
+  const { tabs, activeTabPath, addTab, clearTabs, clearDosyaTabs } = useTabStore()
+
+  useDocumentTitle(routerState.location.pathname)
+  useGlobalInteractivityGuard(`${routerState.location.href}::${activeTabPath || ''}`)
+
+  useEffect(() => {
+    const idParam = searchParams.get('id')
+    if (idParam) {
+      const id = parseInt(idParam, 10)
+      if (!isNaN(id) && activeDosyaId !== id) {
+        setActiveDosyaId(id)
+      }
+    }
+  }, [window.location.search, setActiveDosyaId, activeDosyaId])
+
+  const {
+    isCloseModalOpen,
+    setIsCloseModalOpen,
+    isGDriveModalOpen,
+    setIsGDriveModalOpen,
+    isShuttingDown,
+    shutdownStatusText,
+    shutdownSteps,
+    handleConfirmClose
+  } = useWorkspaceCloseHandler(closeWorkspace, queryClient)
+
+  const { expiredPaths } = useInactiveTabCleaner(tabs, activeTabPath)
+
+  useWorkspaceLifecycle(isAnyWindowMode, navigate, queryClient)
+
+  useEffect(() => {
+    if (activeFilePath && isAuthenticated) {
+      loadSettings()
+      loadActiveMeta()
+    }
+  }, [activeFilePath, isAuthenticated, loadSettings, loadActiveMeta])
+
+  useEffect(() => {
+    if (isAnyWindowMode) return
+    if (activeFilePath && isAuthenticated) {
+      addTab(routerState.location.href)
+    }
+  }, [routerState.location.href, activeFilePath, isAuthenticated, addTab, isAnyWindowMode])
+
+  useEffect(() => {
+    if (isAnyWindowMode) return
+    if (!activeFilePath || !isAuthenticated) {
+      clearTabs()
+    }
+  }, [activeFilePath, isAuthenticated, clearTabs, isAnyWindowMode])
+
+  useEffect(() => {
+    if (isAnyWindowMode) return
+    if (activeDosyaId === null) {
+      clearDosyaTabs()
+    }
+  }, [activeDosyaId, clearDosyaTabs, isAnyWindowMode])
+
+  if (isAnyWindowMode) {
+    return <DetachedWindowLayout isDosyaWindowMode={isDosyaWindowMode} routerState={routerState} />
+  }
+
+  if (!activeFilePath) {
+    return <LauncherScreen />
+  }
+
+  if (!isAuthenticated) {
+    return <LockScreen />
+  }
+
+  return (
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
+      <DisclaimerModal />
+      <SayiyiYaziyaCevirModal
+        isOpen={isSayiModalOpen}
+        onClose={() => setIsSayiModalOpen(false)}
+        initialValue={sayiInitialVal}
+      />
+      <HesapAraclariModal
+        isOpen={isHesapModalOpen}
+        onClose={() => setIsHesapModalOpen(false)}
+        onOpenSayiYaziModal={() => setIsSayiModalOpen(true)}
+      />
+      <FindInPage />
+      <GlobalDocumentPreviewHost />
+      <div className="flex flex-col flex-1 min-w-0 min-h-0 h-full overflow-hidden">
+        <Header />
+        <TabsBar />
+        <div className="flex flex-1 min-h-0 overflow-hidden relative">
+          {activeDosyaId && <ActiveFileShortcuts />}
+          <main className="flex-1 min-h-0 relative overflow-hidden">
+            {tabs.map((tab) => {
+              const isActive = tab.path === activeTabPath
+              const isExpired = expiredPaths[tab.path]
+
+              if (isExpired) return null
+
+              const cleanPath = normalizePath(tab.path).split('?')[0]
+              const Component = routeComponents[cleanPath]
+              if (!Component) return null
+
+              return (
+                <div
+                  key={tab.path}
+                  style={{ display: isActive ? 'block' : 'none' }}
+                  className={
+                    cleanPath === APP_ROUTES.BELGE_ONIZLEME
+                      ? 'h-full w-full absolute inset-0 p-0 overflow-hidden'
+                      : 'h-full w-full absolute inset-0 p-6 overflow-auto'
+                  }
+                >
+                  <Component />
+                </div>
+              )
+            })}
+          </main>
+        </div>
+        <Footer />
+      </div>
+
+      <WorkspaceCloseModal
+        isOpen={isCloseModalOpen}
+        onClose={() => setIsCloseModalOpen(false)}
+        fileName={fileName}
+        onConfirm={handleConfirmClose}
+      />
+      <GoogleDriveModal isOpen={isGDriveModalOpen} onClose={() => setIsGDriveModalOpen(false)} />
+      <ShutdownOverlay
+        isOpen={isShuttingDown}
+        fileName={fileName}
+        statusText={shutdownStatusText}
+        steps={shutdownSteps}
+      />
+    </div>
+  )
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "title": "TEMİN 360 v1.0.0-rc.1 Sürüm Adayı Yayında",
+    "content": "Monorepo mimarisi, DTM çalışma alanı güvenliği ve geliştirilmiş kamu ihale belge motoruyla sürüm adayı hazırlandı.",
+    "date": "18 Ekim 2026",
+    "type": "success"
+  },
+  {
+    "id": 2,
+    "title": "4734 (22/d) ve 2886 İhale Süreç Ayrımı",
+    "content": "Doğrudan temin ve ihale evrakları mevzuata uygun şekilde gruplandırıldı; yaklaşık maliyet ve piyasa araştırması akışları optimize edildi.",
+    "date": "15 Ekim 2026",
+    "type": "info"
+  },
+  {
+    "id": 3,
+    "title": "Dinamik A4 Belge Önizleme & PDF Motoru",
+    "content": "Belge şablonlarında yetim başlık/imza koruması (orphan prevention) ve otomatik sayfalama motoru devreye alındı.",
+    "date": "10 Ekim 2026",
+    "type": "info"
+  },
+  {
+    "id": 4,
+    "title": "KİK 2026 Limitleri & Bütçe Entegrasyonu",
+    "content": "4 Düzey Analitik Bütçe Sınıflandırması ve doğrudan temin parasal limit kontrolleri aktif olarak takip edilmektedir.",
+    "date": "01 Ekim 2026",
+    "type": "warning"
+  }
+]

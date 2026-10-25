@@ -371,10 +371,11 @@ export default function HariciDosyaAktarScreen(): React.JSX.Element {
 
           <button
             onClick={handleFillSample}
+            aria-label="Örnek JSON'ı Doldur"
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 transition-all"
           >
             <Sparkles size={14} className="text-amber-500" />
-            Örnek Doldur
+            Örnek JSON'ı Doldur
           </button>
 
           {/* Gizli Inputlar */}

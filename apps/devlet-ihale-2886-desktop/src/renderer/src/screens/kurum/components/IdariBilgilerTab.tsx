@@ -1,0 +1,617 @@
+import React, { useState } from 'react'
+import { Building2, Check, CheckCircle2, Plus, Sparkles, X } from 'lucide-react'
+import { Input } from '../../../components/ui/Input'
+import { Button } from '../../../components/ui/Button'
+import { DetsisBadge, DetsisVerificationState } from '../../../components/ui/DetsisBadge'
+import { DetsisSearchModal } from '../../../components/ui/DetsisSearchModal'
+import { getSubInstitutionOptions, INSTITUTION_MAP } from '../../../utils/kurumHelper'
+import { useSettingsStore } from '../../../store/settingsStore'
+import { KurumTabProps } from '../types'
+
+export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
+  data,
+  onChange,
+  institutionLetterhead,
+  setInstitutionLetterhead,
+  parentInstitutionLines,
+  setParentInstitutionLines
+}) => {
+  const { defaultKurumIci, setDefaultKurumIci } = useSettingsStore()
+  const [isDetsisSearchOpen, setIsDetsisSearchOpen] = useState(false)
+
+  const handleInstitutionTypeChange = (type: string): void => {
+    onChange('kurum_tipi', type)
+    if (type === 'belediye') {
+      onChange('finansman_kodu', '5')
+    } else if (type === 'genel_butce') {
+      onChange('finansman_kodu', '1')
+    } else if (type === 'ozel_butce') {
+      onChange('finansman_kodu', '2')
+    } else if (type === 'duzenleyici') {
+      onChange('finansman_kodu', '3')
+    } else if (type === 'sosyal_guvenlik') {
+      onChange('finansman_kodu', '4')
+    }
+  }
+
+  const handleApplyDetsisData = (detsisInfo: DetsisVerificationState): void => {
+    if (!detsisInfo) return
+    if (detsisInfo.birimAdi) onChange('kurum_adi', detsisInfo.birimAdi)
+    if (detsisInfo.kurumHiyerarsisi) {
+      onChange('ust_kurum_adi', detsisInfo.kurumHiyerarsisi)
+      const hierarchyParts = detsisInfo.kurumHiyerarsisi
+        .split('>')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      if (hierarchyParts.length > 0) {
+        setInstitutionLetterhead(['T.C.', ...hierarchyParts])
+      }
+    }
+    if (detsisInfo.detsisNo) {
+      onChange('detsis_kodu', detsisInfo.detsisNo)
+      onChange('dtvt_kodu', detsisInfo.detsisNo)
+    }
+    if (detsisInfo.ilAdi) onChange('il', detsisInfo.ilAdi)
+    if (detsisInfo.ilceAdi) onChange('ilce', detsisInfo.ilceAdi)
+    if (detsisInfo.logoByteArray) {
+      onChange('logo_kurum', detsisInfo.logoByteArray)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+        <h2 className="text-lg font-bold text-slate-850 dark:text-slate-100">
+          İdari Kurum Bilgileri
+        </h2>
+        <p className="text-xs text-slate-500">
+          Çıktılarda ve sistem genelinde kullanılan idari başlıklar.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="md:col-span-2">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              Kurum Adı
+            </label>
+            <DetsisBadge
+              detsisNo={data.detsis_kodu}
+              showSearchButton={true}
+              searchTitle="DETSİS'te Resmi Kurum Ara"
+              onApplyData={handleApplyDetsisData}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={data.kurum_adi || ''}
+              onChange={(e) => onChange('kurum_adi', e.target.value)}
+              placeholder="Kurum Adı (Örn: Çankaya Kaymakamlığı veya İçişleri Bakanlığı)"
+              className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs flex-1"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDetsisSearchOpen(true)}
+              className="border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold shrink-0 cursor-pointer shadow-sm"
+              title="DETSİS Veritabanında Arayarak Bilgileri ve Logoyu Otomatik Çek"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>DETSİS&apos;te Ara</span>
+            </Button>
+          </div>
+        </div>
+
+        <DetsisSearchModal
+          isOpen={isDetsisSearchOpen}
+          onClose={() => setIsDetsisSearchOpen(false)}
+          initialQuery={data.kurum_adi || ''}
+          onSelect={handleApplyDetsisData}
+          title="DETSİS'te Resmi Kurum / Bakanlık Ara"
+        />
+
+        <div className="md:col-span-2">
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1.5">
+            Kurum Anteti
+            <span className="text-[9px] font-normal text-slate-400">
+              (Örn: T.C. / X Kurumu / Y Müdürlüğü)
+            </span>
+          </label>
+          <div className="space-y-2">
+            {institutionLetterhead.map((line, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input
+                  value={line}
+                  onChange={(e) => {
+                    const newArr = [...institutionLetterhead]
+                    newArr[idx] = e.target.value
+                    setInstitutionLetterhead(newArr)
+                  }}
+                  placeholder={`Antet ${idx + 1}. Satır`}
+                  className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs flex-1"
+                />
+                {institutionLetterhead.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newArr = institutionLetterhead.filter((_, i) => i !== idx)
+                      setInstitutionLetterhead(newArr)
+                    }}
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors shrink-0"
+                    title="Satırı Sil"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setInstitutionLetterhead([...institutionLetterhead, ''])}
+              className="mt-2 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/40 flex items-center gap-1.5 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Yeni Satır Ekle
+            </button>
+          </div>
+        </div>
+
+        {/* Kurum Başkanı & En Üst Yönetici */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            Kurum En Üst Yöneticisi / Başkanı (Seçimle / Atamayla Gelen)
+          </label>
+          <Input
+            value={data.kurum_baskani || ''}
+            onChange={(e) => onChange('kurum_baskani', e.target.value)}
+            placeholder="Örn: Ahmet YILMAZ"
+            className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
+          />
+          <span className="text-[10px] text-slate-400 mt-0.5 block">
+            Belediye Başkanı, Kaymakam, Rektör, Genel Müdür vb.
+          </span>
+        </div>
+
+        {/* Kurum Başkanı Unvanı */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            Üst Yönetici Unvanı (Resmi Yazışmalardaki)
+          </label>
+          <Input
+            value={data.baskan_unvani || ''}
+            onChange={(e) => onChange('baskan_unvani', e.target.value)}
+            placeholder="Örn: Belediye Başkanı, İlçe Kaymakamı, Rektör"
+            className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
+          />
+        </div>
+
+        {/* Varsayılan Harcama Yetkilisi */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            Varsayılan Harcama Yetkilisi (Ad Soyad / Unvan)
+          </label>
+          <Input
+            value={data.harcama_yetkilisi || ''}
+            onChange={(e) => onChange('harcama_yetkilisi', e.target.value)}
+            placeholder="Örn: Harcama Yetkilisi Adı Soyadı veya Makam Unvanı"
+            className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
+          />
+          <span className="text-[10px] text-slate-400 mt-0.5 block">
+            Onay belgelerinde ve harcama talimatlarında en üst seviye imza yetkilisi.
+          </span>
+        </div>
+
+        {/* Sunulacak Muhatap Seçimi (Kurum veya Makam) */}
+        <div className="md:col-span-2 space-y-3 p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800">
+          <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/80 pb-2">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              Sunulacak Muhatap Başlığı (Onay ve Müzekkere Hitap Başlığı)
+            </span>
+            <span className="text-[10px] text-slate-400">
+              Yanındaki tiki işaretleyerek belgelere basılacak varsayılan muhatabı seçebilirsiniz
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Sunulacak Kurum Adı (Muhatap) */}
+            <div
+              className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                data.sunulacak_makam_secimi === 'kurum' ||
+                (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
+                  ? 'border-blue-500/80 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/40'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950'
+              }`}
+              onClick={() => {
+                onChange('sunulacak_makam_secimi', 'kurum')
+                if (data.sunulacak_kurum_adi) {
+                  onChange('makam_adi', data.sunulacak_kurum_adi)
+                }
+              }}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                  Sunulacak Kurum Adı (Muhatap)
+                </label>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onChange('sunulacak_makam_secimi', 'kurum')
+                    if (data.sunulacak_kurum_adi) {
+                      onChange('makam_adi', data.sunulacak_kurum_adi)
+                    }
+                  }}
+                  className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
+                    data.sunulacak_makam_secimi === 'kurum' ||
+                    (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                >
+                  <Check className="w-3 h-3" />
+                  <span>
+                    {data.sunulacak_makam_secimi === 'kurum' ||
+                    (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
+                      ? 'Aktif'
+                      : 'Seç'}
+                  </span>
+                </button>
+              </div>
+              <Input
+                value={data.sunulacak_kurum_adi || ''}
+                onChange={(e) => {
+                  const val = e.target.value
+                  onChange('sunulacak_kurum_adi', val)
+                  if (
+                    data.sunulacak_makam_secimi === 'kurum' ||
+                    (!data.sunulacak_makam_secimi && val)
+                  ) {
+                    onChange('makam_adi', val)
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                placeholder="Kurum Adı (Örn: BELEDİYE BAŞKANLIĞINA)"
+                className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
+              />
+            </div>
+
+            {/* Sunulacak Makam Adı (Muhatap) */}
+            <div
+              className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                data.sunulacak_makam_secimi === 'makam' || !data.sunulacak_makam_secimi
+                  ? 'border-blue-500/80 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/40'
+                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950'
+              }`}
+              onClick={() => {
+                onChange('sunulacak_makam_secimi', 'makam')
+                if (data.makam_adi_custom) {
+                  onChange('makam_adi', data.makam_adi_custom)
+                }
+              }}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                  Sunulacak Makam Adı (Muhatap)
+                </label>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onChange('sunulacak_makam_secimi', 'makam')
+                    if (data.makam_adi_custom) {
+                      onChange('makam_adi', data.makam_adi_custom)
+                    }
+                  }}
+                  className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
+                    data.sunulacak_makam_secimi === 'makam' || !data.sunulacak_makam_secimi
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                  }`}
+                >
+                  <Check className="w-3 h-3" />
+                  <span>
+                    {data.sunulacak_makam_secimi === 'makam' || !data.sunulacak_makam_secimi
+                      ? 'Aktif'
+                      : 'Seç'}
+                  </span>
+                </button>
+              </div>
+              <Input
+                value={
+                  data.makam_adi_custom !== undefined ? data.makam_adi_custom : data.makam_adi || ''
+                }
+                onChange={(e) => {
+                  const val = e.target.value
+                  onChange('makam_adi_custom', val)
+                  if (data.sunulacak_makam_secimi === 'makam' || !data.sunulacak_makam_secimi) {
+                    onChange('makam_adi', val)
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                placeholder="Makam Adı (Örn: BAŞKANLIK MAKAMINA)"
+                className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1.5">
+            Bağlı Olduğu Kurum
+            <span className="text-[9px] font-normal text-slate-400">
+              (Örn: T.C. / Bakanlık / Genel Müdürlük)
+            </span>
+          </label>
+          <div className="space-y-2">
+            {parentInstitutionLines.map((line, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input
+                  value={line}
+                  onChange={(e) => {
+                    const newArr = [...parentInstitutionLines]
+                    newArr[idx] = e.target.value
+                    setParentInstitutionLines(newArr)
+                  }}
+                  placeholder={`Kurum ${idx + 1}. Satır`}
+                  className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs flex-1"
+                />
+                {parentInstitutionLines.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newArr = parentInstitutionLines.filter((_, i) => i !== idx)
+                      setParentInstitutionLines(newArr)
+                    }}
+                    className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors shrink-0"
+                    title="Satırı Sil"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setParentInstitutionLines([...parentInstitutionLines, ''])}
+              className="mt-2 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/40 flex items-center gap-1.5 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Yeni Satır Ekle
+            </button>
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+            Kurum Tipi (Bütçeleme ve Limit Şablonu) *
+          </label>
+          <select
+            value={data.kurum_tipi || ''}
+            onChange={(e) => handleInstitutionTypeChange(e.target.value)}
+            className="w-full bg-slate-55 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 text-xs rounded-xl py-2.5 px-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="" disabled>
+              Lütfen Kurum Tipini Seçin...
+            </option>
+            <option value="belediye">Belediye / Mahalli İdare (Finansman Kaynağı: 5)</option>
+            <option value="genel_butce">Bakanlık / İl-İlçe Müdürlüğü / Genel Bütçe</option>
+            <option value="ozel_butce">Üniversite / Özel Bütçeli İdare</option>
+            <option value="duzenleyici">Düzenleyici ve Denetleyici Kurum</option>
+            <option value="sosyal_guvenlik">SGK / Sosyal Güvenlik Kurumu</option>
+            <option value="diger">Diğer İdareler / Kamu İktisadi Teşebbüsü</option>
+          </select>
+
+          {(() => {
+            const options = getSubInstitutionOptions(
+              data.kurum_tipi || '',
+              data.finansman_kodu || '5'
+            )
+            if (options.length <= 1) return null
+
+            const selectedKey = data.alt_kurum_tipi || options[0]?.value || 'belediye'
+            const selectedInfo = INSTITUTION_MAP[selectedKey] || INSTITUTION_MAP.diger
+            const currentBulunma =
+              selectedKey === 'diger'
+                ? data.alt_kurum_bulunma || selectedInfo.bulunma
+                : selectedInfo.bulunma
+            const currentBizim =
+              selectedKey === 'diger'
+                ? data.alt_kurum_bizim || selectedInfo.kurumumuz
+                : selectedInfo.kurumumuz
+
+            return (
+              <div className="mt-3 bg-slate-100/50 dark:bg-slate-900/30 p-3 rounded-2xl border border-slate-200/50 dark:border-slate-800/50">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                    Alt Kurum Türü / Tabiri *
+                  </label>
+                  <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                    Bulunma Hâl Eki: <strong>{currentBulunma}</strong>
+                  </span>
+                </div>
+                <select
+                  value={data.alt_kurum_tipi || 'belediye'}
+                  onChange={(e) => onChange('alt_kurum_tipi', e.target.value)}
+                  className="w-full bg-slate-55 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 text-xs rounded-xl py-2.5 px-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[11px] bg-white/80 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800/60">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 font-medium">Bulunma Hâli (-de / -da):</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-900/50 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                      {currentBulunma}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-500 font-medium">Bizim:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                      {currentBizim}
+                    </span>
+                  </div>
+                </div>
+
+                {(data.alt_kurum_tipi || 'belediye') === 'diger' && (
+                  <div className="mt-4 p-4 bg-white dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800/60 rounded-xl space-y-4 shadow-inner">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                          Özel Alt Kurum Adı
+                        </label>
+                        <Input
+                          value={data.alt_kurum_ozel_tanim || ''}
+                          onChange={(e) => onChange('alt_kurum_ozel_tanim', e.target.value)}
+                          className="bg-slate-50 dark:bg-slate-950 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                          Bulunma Hali (-de / -da, Örn: Müdürlüğümüzde)
+                        </label>
+                        <Input
+                          value={data.alt_kurum_bulunma || ''}
+                          onChange={(e) => onChange('alt_kurum_bulunma', e.target.value)}
+                          placeholder="Örn: Müdürlüğümüzde"
+                          className="bg-slate-50 dark:bg-slate-950 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                          Bizim (1. Çoğul)
+                        </label>
+                        <Input
+                          value={data.alt_kurum_bizim || ''}
+                          onChange={(e) => onChange('alt_kurum_bizim', e.target.value)}
+                          className="bg-slate-50 dark:bg-slate-950 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                          Sizin (2. Çoğul)
+                        </label>
+                        <Input
+                          value={data.alt_kurum_sizin || ''}
+                          onChange={(e) => onChange('alt_kurum_sizin', e.target.value)}
+                          className="bg-slate-50 dark:bg-slate-950 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                          Onun (3. Tekil)
+                        </label>
+                        <Input
+                          value={data.alt_kurum_onun || ''}
+                          onChange={(e) => onChange('alt_kurum_onun', e.target.value)}
+                          className="bg-slate-50 dark:bg-slate-950 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                          Onların (3. Çoğul)
+                        </label>
+                        <Input
+                          value={data.alt_kurum_onlarin || ''}
+                          onChange={(e) => onChange('alt_kurum_onlarin', e.target.value)}
+                          className="bg-slate-50 dark:bg-slate-950 text-xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
+            Kamu İhale Mevzuatı Limit Tipi (K.İ.K 22/d Doğrudan Temin Sınırı)
+          </label>
+          <select
+            value={data.limit_tipi || 'diger'}
+            onChange={(e) => onChange('limit_tipi', e.target.value)}
+            className="w-full bg-slate-55 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 text-xs rounded-xl py-2.5 px-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="buyuksehir">
+              Büyükşehir Belediyesi Sınırları Dahilinde Bulunan İdareler
+            </option>
+            <option value="diger">
+              Büyükşehir Belediyesi Sınırları Dışında Kalan (Diğer) İdareler
+            </option>
+          </select>
+        </div>
+
+        <div className="md:col-span-2 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                Belge Yazışma Kapsamı & Alt Bilgi (Varsayılan Tercih)
+              </label>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Yeni oluşturulan doğrudan temin belgelerinde iletişim alt bilgisinin (Adres, Web,
+                E-Posta, KEP) varsayılan görünümü.
+              </p>
+            </div>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                defaultKurumIci
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                  : 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
+              }`}
+            >
+              {defaultKurumIci ? 'Kurum İçi (Varsayılan)' : 'Kurum Dışı (Varsayılan)'}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => setDefaultKurumIci(true)}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                defaultKurumIci
+                  ? 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 ring-2 ring-amber-500/20'
+                  : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                  <span>🏢 Kurum İçi (Önerilen)</span>
+                </span>
+                {defaultKurumIci && <CheckCircle2 className="w-4 h-4 text-amber-600" />}
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Belge altında adres ve iletişim alt bilgisi <strong>basılmaz</strong>. Tutanak, onay
+                ve iç yazışmalar için standart temiz sayfa düzenidir.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDefaultKurumIci(false)}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                !defaultKurumIci
+                  ? 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800 ring-2 ring-blue-500/20'
+                  : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                  <span>🌐 Kurum Dışı</span>
+                </span>
+                {!defaultKurumIci && <CheckCircle2 className="w-4 h-4 text-blue-600" />}
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Tüm belgelerin altında resmi adres, web, e-posta ve KEP bilgileri içeren{' '}
+                <strong>alt bilgi basılır</strong>.
+              </p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

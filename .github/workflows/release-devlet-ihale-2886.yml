@@ -1,0 +1,74 @@
+name: Release Devlet İhale 2886
+
+on:
+  push:
+    tags:
+      - "devlet-ihale-2886-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release Devlet İhale 2886 Desktop
+    runs-on: windows-2022
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Sync version with tag
+        shell: bash
+        run: |
+          RAW_TAG=${GITHUB_REF_NAME}
+          VERSION=$(echo "$RAW_TAG" | sed -E 's/^devlet-ihale-2886-v//')
+          echo "Building Devlet İhale 2886 version: $VERSION"
+          cd apps/devlet-ihale-2886-desktop
+          npm pkg set version=$VERSION
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          npm_config_msvs_version: "2022"
+
+      - name: Build Database Package
+        run: pnpm --filter @dt/database build
+
+      - name: Pre-release Checks
+        run: |
+          pnpm --filter devlet-ihale-2886-desktop typecheck:node
+          pnpm --filter devlet-ihale-2886-desktop typecheck:web
+          pnpm --filter devlet-ihale-2886-desktop test
+
+      - name: Build and Package Devlet İhale 2886
+        working-directory: apps/devlet-ihale-2886-desktop
+        run: pnpm build && npx electron-builder --win --x64 -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_MIRROR: "https://cdn.npmmirror.com/binaries/electron/"
+          ELECTRON_BUILDER_BINARIES_MIRROR: "https://cdn.npmmirror.com/binaries/electron-builder-binaries/"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            apps/devlet-ihale-2886-desktop/dist-local/*.exe
+            apps/devlet-ihale-2886-desktop/dist-local/*.exe.blockmap
+            apps/devlet-ihale-2886-desktop/dist-local/*.yml
+          draft: false
+          prerelease: false
+          name: "DEVLET İHALE 2886 ${{ github.ref_name }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

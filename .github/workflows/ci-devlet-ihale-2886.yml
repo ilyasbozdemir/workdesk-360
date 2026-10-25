@@ -1,0 +1,56 @@
+name: CI (Devlet İhale 2886 Modülü)
+
+on:
+  push:
+    branches:
+      - 'module/devlet-ihale-2886'
+      - 'module/devlet-ihale**'
+    paths:
+      - 'apps/devlet-ihale-2886-desktop/**'
+      - 'packages/database/**'
+      - 'packages/document-templates/**'
+  pull_request:
+    branches:
+      - 'module/devlet-ihale-2886'
+    paths:
+      - 'apps/devlet-ihale-2886-desktop/**'
+      - 'packages/database/**'
+      - 'packages/document-templates/**'
+
+jobs:
+  test-devlet-ihale-2886:
+    name: Devlet İhale 2886 Typecheck & Unit Tests
+    runs-on: windows-2022
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          npm_config_msvs_version: "2022"
+
+      - name: Build Database Package
+        run: pnpm --filter @dt/database build
+
+      - name: Typecheck Devlet İhale 2886
+        run: |
+          pnpm --filter devlet-ihale-2886-desktop typecheck:node
+          pnpm --filter devlet-ihale-2886-desktop typecheck:web
+
+      - name: Run Devlet İhale 2886 Tests
+        run: pnpm --filter devlet-ihale-2886-desktop test
+
+      - name: Build Devlet İhale 2886
+        run: pnpm --filter devlet-ihale-2886-desktop build

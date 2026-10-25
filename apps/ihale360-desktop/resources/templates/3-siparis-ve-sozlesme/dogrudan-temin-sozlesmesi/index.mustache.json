@@ -1,0 +1,66 @@
+{
+  "kurumAdi": "ÖRNEK KAMU KURUMU BAŞKANLIĞI",
+  "isinAdi": "Destek Hizmetleri Kapsamında Çatı Yapımı Malzeme Alımı İşi",
+  "yukleniciFirma": "ABC İNŞAAT TİCARET VE SANAYİ A.Ş.",
+  "idareAdresi": "Örnek Mahallesi Atatürk Caddesi No:1",
+  "idareTelefon": "(0212) 555 00 00",
+  "idareFaks": "(0212) 555 00 01",
+  "idareEposta": "destek@kamukurumu.gov.tr",
+  "yukleniciAdresi": "Sanayi Mahallesi Teknoloji Bulvarı No:12 Kat:2",
+  "yukleniciIlce": "Çankaya",
+  "yukleniciIl": "ANKARA",
+  "yukleniciTelefon": "0532 111 00 00",
+  "yukleniciFaks": "0312 111 00 01",
+  "yukleniciEposta": "info@yuklenicifirma.com",
+  "kalemSayisi": "5",
+  "genelToplam": "340.153,00",
+  "sozlesmeSuresi": "10 (on) gün",
+  "odemeYeri": "Destek Hizmetleri Dairesi Muhasebe Birimi",
+  "odemeSartlari": "Malzemenin eksiksiz teslimine müteakip ödeme belgesi düzenlenerek yapılacaktır.",
+  "avansSartlari": "Avans verilmeyecektir.",
+  "destekHizmetleri": "Montaj, işletmeye alma ve destek hizmetleri bulunmamaktadır.",
+  "iadeSartlari": "Kesin teminat mektubu/nakit teminat kabul tutanağından sonra iade edilecektir.",
+  "gecikmeCezaOrani": "0,03 (binde üç)",
+  "digerHususlar": "Ek diğer husus bulunmamaktadır.",
+  "sozlesmeTarihi": "20/10/2026",
+  "baskanAdi": "Mustafa Yılmaz",
+  "baskanUnvan": "Daire Başkanı (Harcama Yetkilisi)",
+  "kurumIlce": "ANKARA",
+  "ihtiyacKalemleri": [
+    {
+      "siraNo": 1,
+      "malzemeAdi": "100X200X5 MM profil",
+      "ozelligi": "",
+      "birimi": "Adet",
+      "miktar": "27"
+    },
+    {
+      "siraNo": 2,
+      "malzemeAdi": "SANDAVİÇ PANEL",
+      "ozelligi": "",
+      "birimi": "Metre",
+      "miktar": "443"
+    },
+    {
+      "siraNo": 3,
+      "malzemeAdi": "50x100x3 mm boyalı profil",
+      "ozelligi": "",
+      "birimi": "Ton",
+      "miktar": "12"
+    },
+    {
+      "siraNo": 4,
+      "malzemeAdi": "40x60x3 mm boyalı profil",
+      "ozelligi": "",
+      "birimi": "Kilogram",
+      "miktar": "30"
+    },
+    {
+      "siraNo": 5,
+      "malzemeAdi": "100x100x4 mm profil",
+      "ozelligi": "",
+      "birimi": "Paket",
+      "miktar": "13"
+    }
+  ]
+}

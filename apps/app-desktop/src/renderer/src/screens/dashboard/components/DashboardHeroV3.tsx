@@ -111,6 +111,7 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
       onSwitchMode(mode)
     }
   }
+  void handleSelectMode
 
   // Modül mağazası istatistikleri
   const totalPackages = RESMI_MODUL_PAKETLERI.length
@@ -236,71 +237,18 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
         {/* ========================================================================= */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/60 dark:border-white/10">
           <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-slate-900/70 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-inner">
-            {/* Tümü (Konsolide) */}
-            <button
-              type="button"
-              onClick={() => handleSelectMode('all')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeMode === 'all'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Tümü (Konsolide)</span>
-            </button>
-
             {/* Doğrudan Temin (22/d) */}
-            <button
-              type="button"
-              onClick={() => handleSelectMode('dogrudan_temin')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeMode === 'dogrudan_temin'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
-              }`}
+            <div
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md shadow-blue-600/30"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Doğrudan Temin (22/d)</span>
+              <span>Doğrudan Temin (4734 Sayılı KİK Md. 22/d)</span>
               {dogrudanTeminSayisi > 0 ? (
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500/30 text-white font-extrabold ml-0.5">
-                  {dogrudanTeminSayisi}
+                  {dogrudanTeminSayisi} Dosya
                 </span>
               ) : null}
-            </button>
-
-            {/* Kamu İhalesi (19/21) */}
-            <button
-              type="button"
-              onClick={() => handleSelectMode('ihale')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeMode === 'ihale'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
-              }`}
-            >
-              <Gavel className="w-3.5 h-3.5" />
-              <span>Kamu İhalesi (19/21)</span>
-              {ihaleDosyaSayisi > 0 ? (
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/30 text-white font-extrabold ml-0.5">
-                  {ihaleDosyaSayisi}
-                </span>
-              ) : null}
-            </button>
-
-            {/* 2886 Devlet İhale */}
-            <button
-              type="button"
-              onClick={() => handleSelectMode('devlet_ihale_2886')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeMode === 'devlet_ihale_2886'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-800/60'
-              }`}
-            >
-              <Landmark className="w-3.5 h-3.5" />
-              <span>2886 Satış / Kira</span>
-            </button>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
