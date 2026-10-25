@@ -1,3 +1,4 @@
+import rc8 from "./versions/rc/rc.8";
 /* eslint-disable */
 // ============================================================
 // RELEASE CANDIDATE (RC) SÜRÜM ŞEMA MANİFESTLERİ
@@ -12,6 +13,7 @@ import rc6 from "./versions/rc/rc.6";
 import rc7 from "./versions/rc/rc.7";
 
 export const rcManifests: any[] = [
+  rc8,
   rc1,
   rc2,
   rc3,

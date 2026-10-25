@@ -1,6 +1,6 @@
 {
   "name": "workdesk-360-monorepo",
-  "version": "1.0.0-rc.7",
+  "version": "1.0.0-rc.8",
   "private": true,
   "engines": {
     "node": ">=22.5.0",
