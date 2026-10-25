@@ -302,13 +302,15 @@ function finalizeCurrentSchemaManifest(version, dryRun) {
 
 const releaseTargets = [
   'package.json',
-  'apps/app-desktop/package.json',
+  'apps/temin360-desktop/package.json',
+  'apps/ihale360-desktop/package.json',
+  'apps/devlet-ihale-2886-desktop/package.json',
   'packages/database/package.json',
   'packages/document-templates/package.json',
   'packages/database/schema-snapshot.json',
   'packages/database/src/schema-manifest',
   'packages/database/src/schema-snapshot',
-  'apps/app-desktop/src/renderer/src/generated-loc.json'
+  'apps/temin360-desktop/src/renderer/src/generated-loc.json'
 ]
 
 function stageReleaseFiles() {

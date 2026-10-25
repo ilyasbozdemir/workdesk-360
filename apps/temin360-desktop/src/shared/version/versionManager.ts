@@ -240,8 +240,9 @@ function getYamlParser(): any {
   const gitRoot = findGitRoot(baseDir) || findGitRoot(process.cwd()) || process.cwd()
   const candidateDirs = [
     baseDir,
-    path.resolve(baseDir, '../../../'),
-    path.resolve(gitRoot, 'apps/app-desktop'),
+    path.resolve(gitRoot, 'apps/temin360-desktop'),
+    path.resolve(gitRoot, 'apps/ihale360-desktop'),
+    path.resolve(gitRoot, 'apps/devlet-ihale-2886-desktop'),
     path.resolve(gitRoot, 'packages/database'),
     gitRoot
   ]
@@ -331,7 +332,9 @@ export function loadVersionPolicy(
   // 1. Monorepo kök dizini (Tek Doğruluk Kaynağı / Single Source of Truth)
   if (gitRoot) {
     candidatePaths.push(path.join(gitRoot, 'version-policy.yaml'))
-    candidatePaths.push(path.join(gitRoot, 'apps/app-desktop/resources/version-policy.yaml'))
+    candidatePaths.push(path.join(gitRoot, 'apps/temin360-desktop/resources/version-policy.yaml'))
+    candidatePaths.push(path.join(gitRoot, 'apps/ihale360-desktop/resources/version-policy.yaml'))
+    candidatePaths.push(path.join(gitRoot, 'apps/devlet-ihale-2886-desktop/resources/version-policy.yaml'))
   }
 
   candidatePaths.push(path.resolve(process.cwd(), 'version-policy.yaml'))

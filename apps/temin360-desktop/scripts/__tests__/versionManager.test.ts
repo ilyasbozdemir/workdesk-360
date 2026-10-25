@@ -543,7 +543,7 @@ describe('Merkezi Version Manager & Sürüm Karşılaştırma Testleri', () => {
       const rootPolicyPath = path.join(GIT_ROOT, 'version-policy.yaml')
       const packagePolicyPath = path.join(
         GIT_ROOT,
-        'apps/app-desktop/resources/version-policy.yaml'
+        'apps/temin360-desktop/resources/version-policy.yaml'
       )
 
       expect(fs.existsSync(rootPolicyPath)).toBe(true)
@@ -570,7 +570,7 @@ describe('Merkezi Version Manager & Sürüm Karşılaştırma Testleri', () => {
         fs.readFileSync(path.join(GIT_ROOT, 'package.json'), 'utf-8')
       ).version
       const expectedNext = computeNextVersion(currentVersion, { channel: 'rc' })
-      const raw = execSync('node apps/app-desktop/scripts/release.js --channel rc --dry-run', {
+      const raw = execSync('node apps/temin360-desktop/scripts/release.js --channel rc --dry-run', {
         cwd: GIT_ROOT,
         encoding: 'utf-8'
       })
@@ -589,7 +589,7 @@ describe('Merkezi Version Manager & Sürüm Karşılaştırma Testleri', () => {
       // Eğer mevcut sürüm zaten rc veya stable ise kanal düşürme (downgrade) engellenmelidir
       if (parsed.channel === 'rc' || parsed.channel === 'stable') {
         expect(() => {
-          execSync('node apps/app-desktop/scripts/release.js --channel beta --patch --dry-run', {
+          execSync('node apps/temin360-desktop/scripts/release.js --channel beta --patch --dry-run', {
             cwd: GIT_ROOT,
             encoding: 'utf-8',
             stdio: 'pipe'
@@ -597,7 +597,7 @@ describe('Merkezi Version Manager & Sürüm Karşılaştırma Testleri', () => {
         }).toThrow(/Kanal düşürme engellendi/)
       } else {
         const raw = execSync(
-          'node apps/app-desktop/scripts/release.js --channel beta --patch --dry-run',
+          'node apps/temin360-desktop/scripts/release.js --channel beta --patch --dry-run',
           {
             cwd: GIT_ROOT,
             encoding: 'utf-8'
@@ -613,7 +613,7 @@ describe('Merkezi Version Manager & Sürüm Karşılaştırma Testleri', () => {
         fs.readFileSync(path.join(GIT_ROOT, 'package.json'), 'utf-8')
       ).version
       const expectedNext = computeNextVersion(currentVersion, { channel: 'stable' })
-      const raw = execSync('node apps/app-desktop/scripts/release.js --channel stable --dry-run', {
+      const raw = execSync('node apps/temin360-desktop/scripts/release.js --channel stable --dry-run', {
         cwd: GIT_ROOT,
         encoding: 'utf-8'
       })

@@ -89,7 +89,7 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
         fs.readFileSync(path.join(GIT_ROOT, 'package.json'), 'utf-8')
       ).version
       const expectedNext = computeNextVersion(currentVersion, { rc: true })
-      const rawOutput = execSync('node apps/app-desktop/scripts/release.js --rc --dry-run', {
+      const rawOutput = execSync('node apps/temin360-desktop/scripts/release.js --rc --dry-run', {
         cwd: GIT_ROOT,
         encoding: 'utf-8'
       })
@@ -108,7 +108,7 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
         encoding: 'utf-8'
       }).trim()
 
-      execSync('node apps/app-desktop/scripts/release.js --rc --dry-run', {
+      execSync('node apps/temin360-desktop/scripts/release.js --rc --dry-run', {
         cwd: GIT_ROOT,
         encoding: 'utf-8'
       })
@@ -123,7 +123,7 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
 
     it('--no-push parametresi ile remote push adımı atlanır ve konsola kılavuz yazılır', () => {
       const rawOutput = execSync(
-        'node apps/app-desktop/scripts/release.js --rc --dry-run --no-push',
+        'node apps/temin360-desktop/scripts/release.js --rc --dry-run --no-push',
         {
           cwd: GIT_ROOT,
           encoding: 'utf-8'
@@ -141,7 +141,7 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
       const existingTags = execSync('git tag --list', { cwd: GIT_ROOT, encoding: 'utf-8' })
       if (existingTags.includes('v1.0.0-beta.256')) {
         expect(() => {
-          execSync('node apps/app-desktop/scripts/release.js --dry-run --skip-versions', {
+          execSync('node apps/temin360-desktop/scripts/release.js --dry-run --skip-versions', {
             cwd: GIT_ROOT,
             encoding: 'utf-8',
             stdio: 'pipe'
@@ -152,7 +152,7 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
 
     it('releaseTargets listesi güvenli ve seçicidir, tüm monorepo paketlerini ve şemaları içerir', () => {
       expect(releaseTargets).toContain('package.json')
-      expect(releaseTargets).toContain('apps/app-desktop/package.json')
+      expect(releaseTargets).toContain('apps/temin360-desktop/package.json')
       expect(releaseTargets).toContain('packages/database/package.json')
       expect(releaseTargets).toContain('packages/document-templates/package.json')
       expect(releaseTargets).toContain('packages/database/schema-snapshot.json')
@@ -177,7 +177,7 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
     it('Tüm monorepo package.json dosyaları mevcut ve geçerlidir', () => {
       const rootPkg = JSON.parse(fs.readFileSync(path.join(GIT_ROOT, 'package.json'), 'utf-8'))
       const desktopPkg = JSON.parse(
-        fs.readFileSync(path.join(GIT_ROOT, 'apps/app-desktop/package.json'), 'utf-8')
+        fs.readFileSync(path.join(GIT_ROOT, 'apps/temin360-desktop/package.json'), 'utf-8')
       )
       const dbPkg = JSON.parse(
         fs.readFileSync(path.join(GIT_ROOT, 'packages/database/package.json'), 'utf-8')
