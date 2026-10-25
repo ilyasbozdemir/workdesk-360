@@ -13,7 +13,7 @@ const rawEdition =
   (typeof process !== 'undefined' && process.env?.VITE_APP_EDITION) ||
   (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_APP_EDITION
 
-export const APP_EDITION: AppEdition = rawEdition === 'dogrudan-temin' ? 'dogrudan-temin' : 'full'
+export const APP_EDITION: AppEdition = rawEdition === 'full' ? 'full' : 'dogrudan-temin'
 
 /** Yalnızca Doğrudan Temin (4734 m.22) sürümü mü? */
 export const IS_DT_EDITION: boolean = APP_EDITION === 'dogrudan-temin'

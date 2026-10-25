@@ -3,8 +3,8 @@ import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ mode }) => {
-  // `--mode dogrudan-temin` → yalnızca 4734 m.22 Doğrudan Temin sürümü
-  const edition = mode === 'dogrudan-temin' ? 'dogrudan-temin' : 'full'
+  // Temin 360 masaüstü uygulaması varsayılan olarak 4734 m.22 Doğrudan Temin sürümüdür
+  const edition = mode === 'full' ? 'full' : 'dogrudan-temin'
   const define = { 'import.meta.env.VITE_APP_EDITION': JSON.stringify(edition) }
 
   return {

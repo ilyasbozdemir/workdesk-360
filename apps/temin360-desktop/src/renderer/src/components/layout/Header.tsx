@@ -1,5 +1,4 @@
 import React, { lazy, Suspense, useMemo } from 'react'
-import { Sparkles } from 'lucide-react'
 import { WindowControls } from './header/WindowControls'
 import { NativeMenuBar } from './header/NativeMenuBar'
 import { HeaderActions } from './header/HeaderActions'
@@ -24,7 +23,6 @@ export function Header(): React.JSX.Element {
     setShowAboutModal,
     showUpdateModal,
     setShowUpdateModal,
-    switchFeedback,
     updateStatus,
     maxVisibleMenus,
     procurementMode,
@@ -73,14 +71,6 @@ export function Header(): React.JSX.Element {
             : 'from-indigo-600 via-purple-500 to-pink-500'
         }`}
       />
-
-      {/* Mod Geçiş Bildirimi Toast */}
-      {switchFeedback && (
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-200 flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 text-xs font-semibold shadow-xl border border-slate-700/50 dark:border-slate-300/50 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>{switchFeedback}</span>
-        </div>
-      )}
 
       {/* ÜST SATIR: Menü Çubuğu, Çalışma Dosyası Özeti ve Sistem Kontrolleri */}
       <div className="h-9 flex items-center justify-between px-3 border-b border-slate-200/40 dark:border-slate-800/40 relative z-40">
