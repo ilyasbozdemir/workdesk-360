@@ -168,6 +168,7 @@
       "veri_json"
     ],
     "DATA_TeminDosyasi": [
+      "aktarim_grubu_id",
       "alt_yuklenici_olacak_mi",
       "antet_ek_satir",
       "avans_verilecek_mi",
@@ -197,6 +198,8 @@
       "is_ekap_sent",
       "isin_aciklama_maddeleri",
       "isin_aciklamasi",
+      "kayit_kaynagi",
+      "kaynak_kayit_id",
       "kdv",
       "kesinti_damga",
       "kesinti_karar_pulu",
