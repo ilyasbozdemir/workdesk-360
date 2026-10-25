@@ -17,6 +17,7 @@ const allowedChannels = new Set([
   'system:get-pc-info',
   'db:send-recovery-email',
   'db:verify-recovery-code',
+  'db:reset-password',
   'db:export-smtp',
   'db:import-smtp',
   // Excel / CSV / Import / Export
