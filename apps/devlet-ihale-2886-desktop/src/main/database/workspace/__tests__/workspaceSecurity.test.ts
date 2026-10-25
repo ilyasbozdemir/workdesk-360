@@ -87,7 +87,7 @@ describe('Workspace Security & Path Traversal Protections', () => {
     })
 
     it('rejects empty, non-string, or whitespace-only relative paths', async () => {
-      const workspaceFile = path.join(testDir, 'test.temin')
+      const workspaceFile = path.join(testDir, 'test.ihale2886')
       workspaceManager.create(workspaceFile, 'Test Kurum')
 
       await expect(workspaceManager.openAttachment('')).rejects.toThrow('Geçersiz ek dosya yolu.')
@@ -100,7 +100,7 @@ describe('Workspace Security & Path Traversal Protections', () => {
     })
 
     it('blocks directory traversal attempts attempting to access files outside tempDir', async () => {
-      const workspaceFile = path.join(testDir, 'test.temin')
+      const workspaceFile = path.join(testDir, 'test.ihale2886')
       workspaceManager.create(workspaceFile, 'Test Kurum')
 
       // Malicious path traversal attempts
@@ -122,7 +122,7 @@ describe('Workspace Security & Path Traversal Protections', () => {
 
   describe('workspaceManager.uploadAttachment input validation', () => {
     it('rejects invalid or non-existent source file paths', () => {
-      const workspaceFile = path.join(testDir, 'test.temin')
+      const workspaceFile = path.join(testDir, 'test.ihale2886')
       workspaceManager.create(workspaceFile, 'Test Kurum')
 
       expect(() => workspaceManager.uploadAttachment('')).toThrow('Geçersiz kaynak dosya yolu.')
@@ -133,7 +133,7 @@ describe('Workspace Security & Path Traversal Protections', () => {
     })
 
     it('safely uploads valid files and generates sanitized filenames', () => {
-      const workspaceFile = path.join(testDir, 'test.temin')
+      const workspaceFile = path.join(testDir, 'test.ihale2886')
       workspaceManager.create(workspaceFile, 'Test Kurum')
 
       const sampleFile = path.join(testDir, 'şartname & ek [2026].pdf')
@@ -150,7 +150,7 @@ describe('Workspace Security & Path Traversal Protections', () => {
 
   describe('DtmWorkspace Zip Slip protection', () => {
     it('detects and rejects zip files with path traversal entries and safely cleans up lock files', () => {
-      const maliciousZipPath = path.join(testDir, 'malicious.temin')
+      const maliciousZipPath = path.join(testDir, 'malicious.ihale2886')
       const zip = new AdmZip()
       zip.addFile(
         'meta.json',
@@ -218,7 +218,7 @@ describe('Workspace Security & Path Traversal Protections', () => {
 
   describe('Legacy Project ID Migration and Atomic Workspace Saving', () => {
     it('eski projelerde (project_id bulunmayan) ilk açılışta deterministik kimlik atanır ve diskteki arşive kalıcı olarak yazılır', () => {
-      const legacyPath = path.join(testDir, 'legacy_project.temin')
+      const legacyPath = path.join(testDir, 'legacy_project.ihale2886')
       const zip = new AdmZip()
       zip.addFile(
         'meta.json',
@@ -260,7 +260,7 @@ describe('Workspace Security & Path Traversal Protections', () => {
 
     it('atomicReplaceWorkspaceFile hedef dosyayı atomik olarak değiştirir ve geçici dosya bırakmaz', () => {
       const sourceFile = path.join(testDir, 'source.tmp')
-      const targetFile = path.join(testDir, 'target.temin')
+      const targetFile = path.join(testDir, 'target.ihale2886')
 
       fs.writeFileSync(targetFile, 'original-content')
       fs.writeFileSync(sourceFile, 'new-atomic-content')
@@ -278,7 +278,7 @@ describe('Workspace Security & Path Traversal Protections', () => {
 
     it('atomicReplaceWorkspaceFile hata durumunda hedef dosyayı güvenlik kopyasından (.bak) geri yükler', () => {
       const sourceFile = path.join(testDir, 'source-error.tmp')
-      const targetFile = path.join(testDir, 'target-protected.temin')
+      const targetFile = path.join(testDir, 'target-protected.ihale2886')
 
       fs.writeFileSync(targetFile, 'critical-existing-data')
       fs.writeFileSync(sourceFile, 'incoming-data')
@@ -305,8 +305,8 @@ describe('Workspace Security & Path Traversal Protections', () => {
 
   describe('Farklı Kaydet (saveAs) Güvenlik ve Bütünlük Denetimleri', () => {
     it('temiz (değiştirilmemiş) bir dosyada saveAs çağrıldığında yeni hedef dosya fiziksel olarak diske yazılır', () => {
-      const initialPath = path.join(testDir, 'orijinal.temin')
-      const targetPath = path.join(testDir, 'farkli_kayit.temin')
+      const initialPath = path.join(testDir, 'orijinal.ihale2886')
+      const targetPath = path.join(testDir, 'farkli_kayit.ihale2886')
 
       const ws = new DtmWorkspace()
       ws.createWorkspace(initialPath, 'Test Kurum')
@@ -338,10 +338,10 @@ describe('Workspace Security & Path Traversal Protections', () => {
       expect(fs.existsSync(targetPath + '.lock')).toBe(false)
     })
 
-    it('hedef dosya uzantısı verilmediğinde otomatik olarak .temin ekler', () => {
-      const initialPath = path.join(testDir, 'doc1.temin')
+    it('hedef dosya uzantısı verilmediğinde otomatik olarak .ihale2886 ekler', () => {
+      const initialPath = path.join(testDir, 'doc1.ihale2886')
       const targetPathWithoutExt = path.join(testDir, 'doc2_without_ext')
-      const expectedTargetPath = `${targetPathWithoutExt}.temin`
+      const expectedTargetPath = `${targetPathWithoutExt}.ihale2886`
 
       const ws = new DtmWorkspace()
       ws.createWorkspace(initialPath, 'Kurum')
@@ -356,8 +356,8 @@ describe('Workspace Security & Path Traversal Protections', () => {
     })
 
     it('kaydetme sırasında hata oluşursa aktif dosya yolu eski konumunda kalır ve yeni kilit temizlenir', () => {
-      const initialPath = path.join(testDir, 'doc_rollback.temin')
-      const targetPath = path.join(testDir, 'fail_target.temin')
+      const initialPath = path.join(testDir, 'doc_rollback.ihale2886')
+      const targetPath = path.join(testDir, 'fail_target.ihale2886')
 
       const ws = new DtmWorkspace()
       ws.createWorkspace(initialPath, 'Kurum')

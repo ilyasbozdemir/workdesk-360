@@ -83,7 +83,7 @@ function createTestManifest(overrides: Partial<BackupManifest> = {}): BackupMani
     manifestVersion: 1,
     backupId: 'backup-uuid-1111',
     projectId: 'project-uuid-2222',
-    fileName: 'test_backup.temin',
+    fileName: 'test_backup.ihale',
     driveFileId: 'gdrive-file-id-3333',
     sha256: '0000000000000000000000000000000000000000000000000000000000000000',
     fileSize: 1024,
@@ -97,7 +97,7 @@ function createTestManifest(overrides: Partial<BackupManifest> = {}): BackupMani
 }
 
 /**
- * Helper to build a valid minimal .temin archive buffer containing meta.json and database.sqlite.
+ * Helper to build a valid minimal .ihale archive buffer containing meta.json and database.sqlite.
  * Appends 2048 random bytes so the compressed archive is guaranteed to exceed the 512-byte header guard.
  */
 function createValidTeminBuffer(options?: {
@@ -192,18 +192,18 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
       expect(computed).toBe('886313e1-3b8a-5372-9b90-0c9aee199e5d')
     })
 
-    it('eski .temin dosyası iki bağımsız bilgisayarda farklı klasör ve farklı dosya adlarıyla açılsa dahi dosya adından bağımsız olarak birebir aynı UUID v5 üretir ve kalıcı olarak kaydeder', () => {
+    it('eski .ihale dosyası iki bağımsız bilgisayarda farklı klasör ve farklı dosya adlarıyla açılsa dahi dosya adından bağımsız olarak birebir aynı UUID v5 üretir ve kalıcı olarak kaydeder', () => {
       // Bilgisayar A ve Bilgisayar B simülasyonu:
-      // İki bağımsız dizin, iki farklı dosya adı ("proje_a.temin" vs "yedek_dosya_b.temin")
+      // İki bağımsız dizin, iki farklı dosya adı ("proje_a.ihale" vs "yedek_dosya_b.ihale")
       const compADir = path.join(testDir, 'computer_a')
       const compBDir = path.join(testDir, 'computer_b')
       fs.mkdirSync(compADir, { recursive: true })
       fs.mkdirSync(compBDir, { recursive: true })
 
-      const fileCompA = path.join(compADir, 'ihale_2024_01.temin')
-      const fileCompB = path.join(compBDir, 'farkli_adlandirilmis_kopya_2024.temin')
+      const fileCompA = path.join(compADir, 'ihale_2024_01.ihale')
+      const fileCompB = path.join(compBDir, 'farkli_adlandirilmis_kopya_2024.ihale')
 
-      // Eski sürümden kalma .temin arşivi oluştur (içinde project_id ALANI YOK)
+      // Eski sürümden kalma .ihale arşivi oluştur (içinde project_id ALANI YOK)
       const legacyZip = new AdmZip()
       legacyZip.addFile(
         'meta.json',
@@ -270,7 +270,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
     })
 
     it('yeni oluşturulan projeler kalıcı ve rastgele UUID v4 kimliğini korur', () => {
-      const workspaceFile = path.join(testDir, 'yeni_proje.temin')
+      const workspaceFile = path.join(testDir, 'yeni_proje.ihale')
       const ws = new DtmWorkspace()
       const createdMeta = ws.createWorkspace(workspaceFile, 'Yeni Devlet Hastanesi')
 
@@ -292,7 +292,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
   describe('2. atomicReplaceWorkspaceFile Hata Yolları ve Güvenlik Yedeği Koruması', () => {
     it('başarılı değiştirme: kaynak dosyayı hedefe taşır, hedef içeriği günceller ve geçici dosyaları temizler', () => {
       const sourceFile = path.join(testDir, 'yeni_veri.tmp')
-      const targetFile = path.join(testDir, 'hedef_calisma.temin')
+      const targetFile = path.join(testDir, 'hedef_calisma.ihale')
 
       fs.writeFileSync(targetFile, 'eski_veriler')
       fs.writeFileSync(sourceFile, 'yeni_guncel_veriler')
@@ -306,7 +306,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
 
     it('hata enjeksiyonu: renameSync EACCES/EPERM hatası verince yeniden dener; hata devam ederse hedef dosyayı ve güvenlik kopyasını (.bak) korur', () => {
       const sourceFile = path.join(testDir, 'gecici_kaynak.tmp')
-      const targetFile = path.join(testDir, 'kritik_hedef.temin')
+      const targetFile = path.join(testDir, 'kritik_hedef.ihale')
 
       fs.writeFileSync(targetFile, 'orijinal_korunmasi_gereken_veri')
       fs.writeFileSync(sourceFile, 'hatali_yeni_veri')
@@ -339,7 +339,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
 
     it('hata enjeksiyonu: güvenlik kopyası (.bak) oluşturulamadığında işlem derhal durdurulur ve hedef dosya asla değiştirilmez', () => {
       const sourceFile = path.join(testDir, 'kaynak.tmp')
-      const targetFile = path.join(testDir, 'hedef.temin')
+      const targetFile = path.join(testDir, 'hedef.ihale')
 
       fs.writeFileSync(targetFile, 'dokunulmaz_veri')
       fs.writeFileSync(sourceFile, 'yeni_veri')
@@ -363,7 +363,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
 
     it('fallback hata enjeksiyonu ve kurtarma: hedef dosya .old adına taşındıktan sonra kaynak taşıması çökerse, .old dosyası otomatik olarak hedefe geri yüklenir', () => {
       const sourceFile = path.join(testDir, 'kaynak_fallback_test.tmp')
-      const targetFile = path.join(testDir, 'hedef_fallback_test.temin')
+      const targetFile = path.join(testDir, 'hedef_fallback_test.ihale')
 
       fs.writeFileSync(targetFile, 'orijinal_kurtarilacak_dosya_icerigi')
       fs.writeFileSync(sourceFile, 'yeni_eklenmek_istenen_veri')
@@ -394,7 +394,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
 
         // Ayrıca güvenlik kopyası (.bak) da diskte sağlam durmalıdır
         const files = fs.readdirSync(testDir)
-        const bakFile = files.find((f) => f.includes('.hedef_fallback_test.temin.bak.'))
+        const bakFile = files.find((f) => f.includes('.hedef_fallback_test.ihale.bak.'))
         expect(bakFile).toBeDefined()
         expect(fs.readFileSync(path.join(testDir, bakFile!), 'utf-8')).toBe(
           'orijinal_kurtarilacak_dosya_icerigi'
@@ -407,14 +407,14 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
 
   describe('3. verifyAndRestoreBackupBuffer Üretim Fonksiyonu Doğrulamaları', () => {
     it('bozuk ZIP / 0 byte: ZIP başlığı veya minimum uzunluk eksikse hedef dosyaya dokunmadan hata fırlatır', () => {
-      const targetFile = path.join(testDir, 'yerel_aktif.temin')
+      const targetFile = path.join(testDir, 'yerel_aktif.ihale')
       fs.writeFileSync(targetFile, 'korunan_yerel_veri')
 
       const corruptBuffer = Buffer.from('bozuk_0_byte_olmayan_ama_zip_olmayan_veri')
 
       expect(() => {
         verifyAndRestoreBackupBuffer(corruptBuffer, {
-          fileName: 'bozuk.temin',
+          fileName: 'bozuk.ihale',
           destinationPath: targetFile
         })
       }).toThrow(/Güvenlik Hatası: İndirilen dosya geçerli bir TEMİN 360 arşivi değil/)
@@ -424,19 +424,19 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
     })
 
     it('hash uyuşmazlığı: manifest SHA-256 özeti eşleşmediğinde hedef dosya değiştirilmeden önce işlemi iptal eder', () => {
-      const targetFile = path.join(testDir, 'yerel_aktif.temin')
+      const targetFile = path.join(testDir, 'yerel_aktif.ihale')
       fs.writeFileSync(targetFile, 'korunan_yerel_veri')
 
       const { buffer } = createValidTeminBuffer()
       const fakeManifest = createTestManifest({
-        fileName: 'yedek.temin',
+        fileName: 'yedek.ihale',
         sha256: '0000000000000000000000000000000000000000000000000000000000000000',
         fileSize: buffer.length
       })
 
       expect(() => {
         verifyAndRestoreBackupBuffer(buffer, {
-          fileName: 'yedek.temin',
+          fileName: 'yedek.ihale',
           targetManifest: fakeManifest,
           destinationPath: targetFile
         })
@@ -447,19 +447,19 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
     })
 
     it('boyut uyuşmazlığı: manifest fileSize değeri buffer uzunluğu ile uyuşmadığında hedef dosyaya dokunulmadan reddedilir', () => {
-      const targetFile = path.join(testDir, 'yerel_aktif.temin')
+      const targetFile = path.join(testDir, 'yerel_aktif.ihale')
       fs.writeFileSync(targetFile, 'korunan_yerel_veri')
 
       const { buffer, sha256 } = createValidTeminBuffer()
       const fakeManifest = createTestManifest({
-        fileName: 'yedek.temin',
+        fileName: 'yedek.ihale',
         sha256: sha256,
         fileSize: buffer.length + 500 // Uyuşmayan boyut
       })
 
       expect(() => {
         verifyAndRestoreBackupBuffer(buffer, {
-          fileName: 'yedek.temin',
+          fileName: 'yedek.ihale',
           targetManifest: fakeManifest,
           destinationPath: targetFile
         })
@@ -475,14 +475,14 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
 
       expect(() => {
         verifyAndRestoreBackupBuffer(incompleteBuffer, {
-          fileName: 'eksik.temin',
-          destinationPath: path.join(testDir, 'cikti.temin')
+          fileName: 'eksik.ihale',
+          destinationPath: path.join(testDir, 'cikti.ihale')
         })
       }).toThrow(/zorunlu dosyalar \(meta.json veya database.sqlite\) eksik/)
     })
 
     it('bozuk SQLite veritabanı: PRAGMA quick_check başarısız olduğunda işlem durdurulur ve hedef dosya korunur', () => {
-      const targetFile = path.join(testDir, 'yerel_aktif.temin')
+      const targetFile = path.join(testDir, 'yerel_aktif.ihale')
       fs.writeFileSync(targetFile, 'korunan_yerel_veri')
 
       const { buffer } = createValidTeminBuffer({
@@ -491,7 +491,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
 
       expect(() => {
         verifyAndRestoreBackupBuffer(buffer, {
-          fileName: 'bozuk_sqlite.temin',
+          fileName: 'bozuk_sqlite.ihale',
           destinationPath: targetFile
         })
       }).toThrow(/İndirilen veritabanı bütünlük testinden geçemedi/)
@@ -500,12 +500,12 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
     })
 
     it('güvenlik kopyası (.bak) oluşturulamadığında aktif dosya üzerine yazma işlemi derhal durdurulur', () => {
-      const currentPath = path.join(testDir, 'aktif_dosya.temin')
+      const currentPath = path.join(testDir, 'aktif_dosya.ihale')
       fs.writeFileSync(currentPath, 'aktif_orijinal_veri')
 
       const { buffer, sha256, size } = createValidTeminBuffer()
       const manifest = createTestManifest({
-        fileName: 'aktif_dosya.temin',
+        fileName: 'aktif_dosya.ihale',
         sha256,
         fileSize: size
       })
@@ -518,7 +518,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
       try {
         expect(() => {
           verifyAndRestoreBackupBuffer(buffer, {
-            fileName: 'aktif_dosya.temin',
+            fileName: 'aktif_dosya.ihale',
             targetManifest: manifest,
             overwriteActive: true,
             currentPath
@@ -536,14 +536,14 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
     it('geçerli tampon ve manifest ile başarılı geri yükleme ve doğrulama bayrakları', () => {
       const { buffer, sha256, size } = createValidTeminBuffer()
       const manifest = createTestManifest({
-        fileName: 'indirilen.temin',
+        fileName: 'indirilen.ihale',
         sha256,
         fileSize: size
       })
 
-      const destFile = path.join(testDir, 'hedef_yeni.temin')
+      const destFile = path.join(testDir, 'hedef_yeni.ihale')
       const result = verifyAndRestoreBackupBuffer(buffer, {
-        fileName: 'indirilen.temin',
+        fileName: 'indirilen.ihale',
         targetManifest: manifest,
         destinationPath: destFile
       })

@@ -85,7 +85,7 @@ describe.skipIf(!isNativeSqliteAvailable)(
     }
 
     /**
-     * Helper to build a real .temin archive buffer containing meta.json and a real SQLite file.
+     * Helper to build a real .ihale2886 archive buffer containing meta.json and a real SQLite file.
      */
     function buildRealArchiveBuffer(sqliteBuffer: Buffer): Buffer {
       const zip = new AdmZip()
@@ -110,7 +110,7 @@ describe.skipIf(!isNativeSqliteAvailable)(
         manifestVersion: 1,
         backupId: 'backup-real-sqlite-uuid',
         projectId: 'project-real-sqlite-uuid',
-        fileName: 'real_backup.temin',
+        fileName: 'real_backup.ihale2886',
         driveFileId: 'gdrive-real-file-id',
         sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
         fileSize: buffer.length,
@@ -129,10 +129,10 @@ describe.skipIf(!isNativeSqliteAvailable)(
 
       const validArchiveBuffer = buildRealArchiveBuffer(validDbBytes)
       const manifest = createManifest(validArchiveBuffer)
-      const targetFile = path.join(testDir, 'hedef_proje.temin')
+      const targetFile = path.join(testDir, 'hedef_proje.ihale2886')
 
       const result = verifyAndRestoreBackupBuffer(validArchiveBuffer, {
-        fileName: 'hedef_proje.temin',
+        fileName: 'hedef_proje.ihale2886',
         destinationPath: targetFile,
         targetManifest: manifest
       })
@@ -181,12 +181,12 @@ describe.skipIf(!isNativeSqliteAvailable)(
       const manifest = createManifest(corruptedArchiveBuffer)
 
       // Target file that must be strictly preserved
-      const targetFile = path.join(testDir, 'korunmasi_gereken_calisma.temin')
+      const targetFile = path.join(testDir, 'korunmasi_gereken_calisma.ihale2886')
       fs.writeFileSync(targetFile, 'BU_ORIJINAL_KULLANICI_VERISIDIR_ASLA_SILINMEMELIDIR')
 
       expect(() => {
         verifyAndRestoreBackupBuffer(corruptedArchiveBuffer, {
-          fileName: 'hedef.temin',
+          fileName: 'hedef.ihale2886',
           currentPath: targetFile,
           overwriteActive: true,
           targetManifest: manifest
@@ -205,12 +205,12 @@ describe.skipIf(!isNativeSqliteAvailable)(
       const corruptArchiveBuffer = buildRealArchiveBuffer(fakeDbBytes)
       const manifest = createManifest(corruptArchiveBuffer)
 
-      const targetFile = path.join(testDir, 'korunacak_dosya.temin')
+      const targetFile = path.join(testDir, 'korunacak_dosya.ihale2886')
       fs.writeFileSync(targetFile, 'orijinal_saglam_veri')
 
       expect(() => {
         verifyAndRestoreBackupBuffer(corruptArchiveBuffer, {
-          fileName: 'hedef.temin',
+          fileName: 'hedef.ihale2886',
           currentPath: targetFile,
           overwriteActive: true,
           targetManifest: manifest

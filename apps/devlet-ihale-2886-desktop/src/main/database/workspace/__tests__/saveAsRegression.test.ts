@@ -86,14 +86,14 @@ describe('DtmWorkspace.saveAs (Farklı Kaydet) Kapsamlı Regresyon Test Paketi',
   })
 
   it('1. Temiz çalışma alanı: değişiklik yapılmadan Farklı Kaydet yeni dosyayı fiziksel olarak oluşturmalıdır', () => {
-    const originalFile = path.join(testDir, 'orijinal.temin')
+    const originalFile = path.join(testDir, 'orijinal.ihale2886')
     workspaceManager.create(originalFile, 'Temiz Test Kurum')
 
     expect(fs.existsSync(originalFile)).toBe(true)
     expect(workspaceManager.isDirty()).toBe(false)
     expect(fs.existsSync(originalFile + '.lock')).toBe(true)
 
-    const targetFile = path.join(testDir, 'farkli_kayit.temin')
+    const targetFile = path.join(testDir, 'farkli_kayit.ihale2886')
     const result = workspaceManager.saveAs(targetFile)
 
     expect(result.success).toBe(true)
@@ -118,14 +118,14 @@ describe('DtmWorkspace.saveAs (Farklı Kaydet) Kapsamlı Regresyon Test Paketi',
   })
 
   it('2. Değiştirilmiş çalışma alanı: veri değiştirildiğinde Farklı Kaydet değişiklikleri yeni dosyaya aktarmalıdır', () => {
-    const originalFile = path.join(testDir, 'degistirilen_orijinal.temin')
+    const originalFile = path.join(testDir, 'degistirilen_orijinal.ihale2886')
     workspaceManager.create(originalFile, 'Değiştirilmiş Kurum')
 
     // Değişiklik simülasyonu
     workspaceManager.recordMutation('DATA_TeminDosyasi', 'update', 2)
     expect(workspaceManager.isDirty()).toBe(true)
 
-    const targetFile = path.join(testDir, 'yeni_degistirilmis.temin')
+    const targetFile = path.join(testDir, 'yeni_degistirilmis.ihale2886')
     const result = workspaceManager.saveAs(targetFile)
 
     expect(result.success).toBe(true)
@@ -138,14 +138,14 @@ describe('DtmWorkspace.saveAs (Farklı Kaydet) Kapsamlı Regresyon Test Paketi',
   })
 
   it('3. Hatalı veya ulaşılamayan hedefte işlem başarısız olmalı ve eski çalışma alanı korunmalıdır', () => {
-    const originalFile = path.join(testDir, 'guvenli_orijinal.temin')
+    const originalFile = path.join(testDir, 'guvenli_orijinal.ihale2886')
     workspaceManager.create(originalFile, 'Korumalı Kurum')
 
     const originalLock = originalFile + '.lock'
     expect(fs.existsSync(originalLock)).toBe(true)
 
     // Var olmayan bir alt klasör hedefi
-    const invalidTarget = path.join(testDir, 'olmayan_alt_klasor', 'derin', 'hedef.temin')
+    const invalidTarget = path.join(testDir, 'olmayan_alt_klasor', 'derin', 'hedef.ihale2886')
     const result = workspaceManager.saveAs(invalidTarget)
 
     expect(result.success).toBe(false)
@@ -159,24 +159,24 @@ describe('DtmWorkspace.saveAs (Farklı Kaydet) Kapsamlı Regresyon Test Paketi',
     expect(fs.existsSync(invalidTarget + '.lock')).toBe(false)
   })
 
-  it('4. Uzantı normalizasyonu: .temin uzantısı olmayan hedeflere otomatik olarak .temin eklenmelidir', () => {
-    const originalFile = path.join(testDir, 'uzanti_test.temin')
+  it('4. Uzantı normalizasyonu: .ihale2886 uzantısı olmayan hedeflere otomatik olarak .ihale2886 eklenmelidir', () => {
+    const originalFile = path.join(testDir, 'uzanti_test.ihale2886')
     workspaceManager.create(originalFile, 'Uzanti Test')
 
     const targetWithoutExt = path.join(testDir, 'uzantisiz_proje')
     const result = workspaceManager.saveAs(targetWithoutExt)
 
     expect(result.success).toBe(true)
-    expect(result.newPath).toBe(path.resolve(targetWithoutExt + '.temin'))
-    expect(fs.existsSync(targetWithoutExt + '.temin')).toBe(true)
-    expect(workspaceManager.getCurrentFilePath()).toBe(path.resolve(targetWithoutExt + '.temin'))
+    expect(result.newPath).toBe(path.resolve(targetWithoutExt + '.ihale2886'))
+    expect(fs.existsSync(targetWithoutExt + '.ihale2886')).toBe(true)
+    expect(workspaceManager.getCurrentFilePath()).toBe(path.resolve(targetWithoutExt + '.ihale2886'))
   })
 
   it('5. Kilit yönetimi: başka bir aktif uygulama tarafından kilitli olan hedefe kayıt engellenmelidir', () => {
-    const originalFile = path.join(testDir, 'kilit_orijinal.temin')
+    const originalFile = path.join(testDir, 'kilit_orijinal.ihale2886')
     workspaceManager.create(originalFile, 'Kilit Kurum')
 
-    const lockedTarget = path.join(testDir, 'baskasi_kilitledi.temin')
+    const lockedTarget = path.join(testDir, 'baskasi_kilitledi.ihale2886')
     const foreignPid = 88888
     const foreignLock = lockedTarget + '.lock'
     fs.writeFileSync(foreignLock, foreignPid.toString(), { encoding: 'utf-8' })
@@ -200,10 +200,10 @@ describe('DtmWorkspace.saveAs (Farklı Kaydet) Kapsamlı Regresyon Test Paketi',
   })
 
   it('6. Bayat (stale) kilit yönetimi: kapanmış process kilidi temizlenerek işlem başarıyla tamamlanmalıdır', () => {
-    const originalFile = path.join(testDir, 'stale_orijinal.temin')
+    const originalFile = path.join(testDir, 'stale_orijinal.ihale2886')
     workspaceManager.create(originalFile, 'Stale Kurum')
 
-    const staleTarget = path.join(testDir, 'stale_hedef.temin')
+    const staleTarget = path.join(testDir, 'stale_hedef.ihale2886')
     const deadPid = 99999
     const staleLock = staleTarget + '.lock'
     fs.writeFileSync(staleLock, deadPid.toString(), { encoding: 'utf-8' })
@@ -226,17 +226,17 @@ describe('DtmWorkspace.saveAs (Farklı Kaydet) Kapsamlı Regresyon Test Paketi',
 
   it('7. IPC katmanı başarısızlık kontrolü: açık dosya yokken saveAs hata döndürmelidir', () => {
     workspaceManager.close()
-    const result = workspaceManager.saveAs(path.join(testDir, 'hedef.temin'))
+    const result = workspaceManager.saveAs(path.join(testDir, 'hedef.ihale2886'))
 
     expect(result.success).toBe(false)
     expect(result.error).toBe('Açık bir çalışma alanı yok.')
   })
 
   it('8. Kapatıp yeniden açma: Farklı Kaydet sonrası dosya kapatılıp yeniden açılabilmelidir', () => {
-    const originalFile = path.join(testDir, 'dongu_orijinal.temin')
+    const originalFile = path.join(testDir, 'dongu_orijinal.ihale2886')
     workspaceManager.create(originalFile, 'Döngü Kurumu')
 
-    const targetFile = path.join(testDir, 'dongu_yeni.temin')
+    const targetFile = path.join(testDir, 'dongu_yeni.ihale2886')
     const saveResult = workspaceManager.saveAs(targetFile)
     expect(saveResult.success).toBe(true)
 
