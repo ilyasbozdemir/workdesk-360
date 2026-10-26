@@ -54,6 +54,7 @@ const flags = {
   patch: args.includes('--patch'),
   dryRun: args.includes('--dry-run'),
   noPush: args.includes('--no-push'),
+  fixSchema: args.includes('--fix-schema'),
   skipManifest: args.includes('--skip-manifest') || args.includes('--skip-versions'),
   allowDirty: args.includes('--allow-dirty'),
   help: args.includes('--help') || args.includes('-h')
@@ -175,140 +176,38 @@ function getRangeFolder(num) {
 function finalizeCurrentSchemaManifest(version, dryRun) {
   const currentTsPath = path.join(
     GIT_ROOT,
-    'packages/database/src/schema-manifest/versions/beta.current.ts'
+    'packages/database/src/schema-manifest/apps/devlet-ihale-2886/manifest.ts'
   )
   const currentYamlPath = path.join(
     GIT_ROOT,
-    'packages/database/src/schema-manifest/1.0.0-beta.current.yaml'
+    'packages/database/src/schema-manifest/apps/devlet-ihale-2886/manifest.yaml'
   )
-  const manifestsTsPath = path.join(GIT_ROOT, 'packages/database/src/schema-manifest/manifests.ts')
 
   if (!fs.existsSync(currentTsPath)) return
 
-  const isRc = version.includes('-rc.')
-  const isAlpha = version.includes('-alpha.')
-  let subFolder = ''
-  let newTsName = ''
-  const newYamlName = `${version}.yaml`
-  let varName = ''
-
-  if (isRc) {
-    const rcMatch = version.match(/-rc\.(\d+)$/)
-    const rcNum = rcMatch ? rcMatch[1] : '1'
-    subFolder = 'rc'
-    newTsName = `rc.${rcNum}.ts`
-    varName = `rc${rcNum}`
-  } else if (isAlpha) {
-    const alphaMatch = version.match(/-alpha\.(\d+)$/)
-    const alphaNum = alphaMatch ? alphaMatch[1] : '1'
-    subFolder = 'alpha'
-    newTsName = `alpha.${alphaNum}.ts`
-    varName = `alpha${alphaNum}`
-  } else if (version.includes('-beta.')) {
-    const cleanNum = version.replace(/^.+?-beta\./, '')
-    const numVal = parseInt(cleanNum, 10) || 1
-    subFolder = getRangeFolder(numVal)
-    newTsName = `beta.${cleanNum}.ts`
-    varName = `beta${cleanNum}`
-  } else {
-    subFolder = 'stable'
-    newTsName = `stable.${version.replace(/\./g, '_')}.ts`
-    varName = `stable${version.replace(/\./g, '_')}`
-  }
-
-  const targetTsDir = path.join(
-    GIT_ROOT,
-    `packages/database/src/schema-manifest/versions/${subFolder}`
-  )
-  const targetYamlDir = path.join(
-    GIT_ROOT,
-    `packages/database/src/schema-manifest/yaml/${subFolder}`
-  )
-  const targetTsPath = path.join(targetTsDir, newTsName)
-  const targetYamlPath = path.join(targetYamlDir, newYamlName)
-
-  console.log(c.green(`✅ Şema manifesti finalize ediliyor: ${subFolder}/${newTsName}`))
+  console.log(c.green(`✅ Devlet İhale 2886 Şema manifesti güncelleniyor: ${version}`))
 
   if (!dryRun) {
-    fs.mkdirSync(targetTsDir, { recursive: true })
-    fs.mkdirSync(targetYamlDir, { recursive: true })
-
     let tsContent = fs.readFileSync(currentTsPath, 'utf-8')
-    tsContent = tsContent.replace(
-      /app:\s*["']1\.0\.0-(?:beta|rc)\.current["']/,
-      `app: "${version}"`
-    )
-    if (isRc) {
-      tsContent = tsContent.replace(
-        /AKTİF GELİŞTİRME ŞEMA MANİFESTİ \([^)]+\)/,
-        `RC SÜRÜM ŞEMA MANİFESTİ (${version})`
-      )
-    }
-    fs.writeFileSync(targetTsPath, tsContent, 'utf-8')
-
-    const schemaMaxMatch = tsContent.match(/schema_max:\s*(\d+)/)
-    const currentMaxSchema = schemaMaxMatch ? parseInt(schemaMaxMatch[1], 10) : 45
-    const todayStr = new Date().toISOString().split('T')[0]
+    tsContent = tsContent.replace(/app:\s*["'][^"']+["']/, `app: "${version}"`)
+    fs.writeFileSync(currentTsPath, tsContent, 'utf-8')
 
     if (fs.existsSync(currentYamlPath)) {
       let yamlContent = fs.readFileSync(currentYamlPath, 'utf-8')
-      yamlContent = yamlContent.replace(/app:\s*1\.0\.0-(?:beta|rc)\.current/, `app: ${version}`)
-      fs.writeFileSync(targetYamlPath, yamlContent, 'utf-8')
-    } else {
-      const defaultYaml = `app: ${version}\nschema_min: 1\nschema_max: ${currentMaxSchema}\nrelease_date: "${todayStr}"\nchanges: []\n`
-      fs.writeFileSync(targetYamlPath, defaultYaml, 'utf-8')
-    }
-
-    // Beta sürümünde beta.current.ts taşınır ve taze oluşturulur.
-    // RC sürümünde ise beta.current.ts bozulmadan korunur (kopyası alınır), beta akışı kesintiye uğramaz.
-    if (!isRc) {
-      fs.unlinkSync(currentTsPath)
-      if (fs.existsSync(currentYamlPath)) {
-        fs.unlinkSync(currentYamlPath)
-      }
-      const freshCurrentYaml = `app: 1.0.0-beta.current\nschema_min: 1\nschema_max: ${currentMaxSchema}\nrelease_date: "${todayStr}"\nchanges: []\n`
-      fs.writeFileSync(currentYamlPath, freshCurrentYaml, 'utf-8')
-
-      const freshCurrentTs = `/* eslint-disable */\n/**\n * AKTİF GELİŞTİRME ŞEMA MANİFESTİ (1.0.0-beta.current)\n */\nexport default {\n  app: "1.0.0-beta.current",\n  schema_min: 1,\n  schema_max: ${currentMaxSchema},\n  release_date: "${todayStr}",\n  changes: []\n};\n`
-      fs.writeFileSync(currentTsPath, freshCurrentTs, 'utf-8')
-    }
-
-    // Kanal bazlı manifest dosyasına (manifests.rc.ts, manifests.beta.ts, manifests.alpha.ts) import ve export ekle
-    const channelFileName = isRc
-      ? 'manifests.rc.ts'
-      : isAlpha
-        ? 'manifests.alpha.ts'
-        : 'manifests.beta.ts'
-    const channelVarArray = isRc ? 'rcManifests' : isAlpha ? 'alphaManifests' : 'betaManifests'
-    const channelFilePath = path.join(
-      GIT_ROOT,
-      `packages/database/src/schema-manifest/${channelFileName}`
-    )
-
-    if (fs.existsSync(channelFilePath)) {
-      let channelContent = fs.readFileSync(channelFilePath, 'utf-8')
-      if (!channelContent.includes(`import ${varName} `)) {
-        const importStatement = `import ${varName} from "./versions/${subFolder}/${newTsName.replace(/\.ts$/, '')}";\n`
-        channelContent = importStatement + channelContent
-        channelContent = channelContent.replace(
-          new RegExp(`(export const ${channelVarArray}: any\\[\\] = \\[)`),
-          `$1\n  ${varName},`
-        )
-        fs.writeFileSync(channelFilePath, channelContent, 'utf-8')
-      }
+      yamlContent = yamlContent.replace(/app:\s*[^\n]+/, `app: ${version}`)
+      fs.writeFileSync(currentYamlPath, yamlContent, 'utf-8')
     }
   }
 }
 
 const releaseTargets = [
   'package.json',
-  'apps/app-desktop/package.json',
+  'apps/devlet-ihale-2886-desktop/package.json',
   'packages/database/package.json',
-  'packages/document-templates/package.json',
   'packages/database/schema-snapshot.json',
   'packages/database/src/schema-manifest',
   'packages/database/src/schema-snapshot',
-  'apps/app-desktop/src/renderer/src/generated-loc.json'
+  'apps/devlet-ihale-2886-desktop/src/renderer/src/generated-loc.json'
 ]
 
 function stageReleaseFiles() {
@@ -355,21 +254,25 @@ function main() {
     }
   }
 
-  // 0.1 Ön Kontroller: Şema Snapshot Eşitleme
+  // 0.1 Ön Kontroller: Şema Doğrulama (Zorunlu Ön Koşul)
   const schemaScript = path.join(GIT_ROOT, 'scripts/check-schema.mjs')
   if (fs.existsSync(schemaScript)) {
     try {
-      if (flags.dryRun) {
-        console.log(c.cyan('🔍 [DRY RUN] Şema kontrol ediliyor (dosyalar değiştirilmeyecek)...'))
-        exec(`node "${schemaScript}"`, { silent: true })
-        console.log(c.green('✔ Şema kontrolü tamamlandı.\n'))
-      } else {
-        console.log(c.cyan('🔍 Şema kontrol ediliyor ve snapshot eşitleniyor (--fix)...'))
-        exec(`node "${schemaScript}" --fix`, { silent: true })
+      if (flags.fixSchema) {
+        console.log(c.cyan('🔍 Şema kontrol ediliyor ve snapshot eşitleniyor (--fix-schema)...'))
+        exec(`node "${schemaScript}" --fix`, { silent: false })
         console.log(c.green('✔ Şema snapshot başarıyla eşitlendi.\n'))
+      } else {
+        console.log(c.cyan('🔍 [Zorunlu Ön Koşul] Veritabanı şema ve snapshot tutarlılığı kontrol ediliyor...'))
+        exec(`node "${schemaScript}"`, { silent: false })
+        console.log(c.green('✔ Şema doğrulaması başarılı.\n'))
       }
     } catch (e) {
-      console.warn(c.yellow(`⚠️ Şema snapshot uyarısı: ${e.message}\n`))
+      console.error(c.red('\n❌ KRİTİK HATA: Veritabanı şema doğrulaması başarısız oldu!'))
+      console.error(c.yellow('Veritabanı tablo tanımları ile schema-snapshot.json arasında tutarsızlık var.'))
+      console.error(c.dim('Sürüm güvenliği için release işlemi durduruldu.'))
+      console.error(c.cyan('Lütfen şemayı inceleyip pnpm fix:schema çalıştırın veya release komutuna --fix-schema ekleyin.\n'))
+      process.exit(1)
     }
   }
 

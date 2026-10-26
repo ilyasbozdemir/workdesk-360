@@ -54,6 +54,7 @@ const flags = {
   patch: args.includes('--patch'),
   dryRun: args.includes('--dry-run'),
   noPush: args.includes('--no-push'),
+  fixSchema: args.includes('--fix-schema'),
   skipManifest: args.includes('--skip-manifest') || args.includes('--skip-versions'),
   allowDirty: args.includes('--allow-dirty'),
   help: args.includes('--help') || args.includes('-h')
@@ -297,6 +298,26 @@ function finalizeCurrentSchemaManifest(version, dryRun) {
         fs.writeFileSync(channelFilePath, channelContent, 'utf-8')
       }
     }
+
+    // apps/temin360/manifest.ts ve manifest.yaml güncelle
+    const appManifestPath = path.join(
+      GIT_ROOT,
+      'packages/database/src/schema-manifest/apps/temin360/manifest.ts'
+    )
+    if (fs.existsSync(appManifestPath)) {
+      let content = fs.readFileSync(appManifestPath, 'utf-8')
+      content = content.replace(/app:\s*["'][^"']+["']/, `app: "${version}"`)
+      fs.writeFileSync(appManifestPath, content, 'utf-8')
+    }
+    const appManifestYaml = path.join(
+      GIT_ROOT,
+      'packages/database/src/schema-manifest/apps/temin360/manifest.yaml'
+    )
+    if (fs.existsSync(appManifestYaml)) {
+      let content = fs.readFileSync(appManifestYaml, 'utf-8')
+      content = content.replace(/app:\s*[^\n]+/, `app: ${version}`)
+      fs.writeFileSync(appManifestYaml, content, 'utf-8')
+    }
   }
 }
 
@@ -357,21 +378,25 @@ function main() {
     }
   }
 
-  // 0.1 Ön Kontroller: Şema Snapshot Eşitleme
+  // 0.1 Ön Kontroller: Şema Doğrulama (Zorunlu Ön Koşul)
   const schemaScript = path.join(GIT_ROOT, 'scripts/check-schema.mjs')
   if (fs.existsSync(schemaScript)) {
     try {
-      if (flags.dryRun) {
-        console.log(c.cyan('🔍 [DRY RUN] Şema kontrol ediliyor (dosyalar değiştirilmeyecek)...'))
-        exec(`node "${schemaScript}"`, { silent: true })
-        console.log(c.green('✔ Şema kontrolü tamamlandı.\n'))
-      } else {
-        console.log(c.cyan('🔍 Şema kontrol ediliyor ve snapshot eşitleniyor (--fix)...'))
-        exec(`node "${schemaScript}" --fix`, { silent: true })
+      if (flags.fixSchema) {
+        console.log(c.cyan('🔍 Şema kontrol ediliyor ve snapshot eşitleniyor (--fix-schema)...'))
+        exec(`node "${schemaScript}" --fix`, { silent: false })
         console.log(c.green('✔ Şema snapshot başarıyla eşitlendi.\n'))
+      } else {
+        console.log(c.cyan('🔍 [Zorunlu Ön Koşul] Veritabanı şema ve snapshot tutarlılığı kontrol ediliyor...'))
+        exec(`node "${schemaScript}"`, { silent: false })
+        console.log(c.green('✔ Şema doğrulaması başarılı.\n'))
       }
     } catch (e) {
-      console.warn(c.yellow(`⚠️ Şema snapshot uyarısı: ${e.message}\n`))
+      console.error(c.red('\n❌ KRİTİK HATA: Veritabanı şema doğrulaması başarısız oldu!'))
+      console.error(c.yellow('Veritabanı tablo tanımları ile schema-snapshot.json arasında tutarsızlık var.'))
+      console.error(c.dim('Sürüm güvenliği için release işlemi durduruldu.'))
+      console.error(c.cyan('Lütfen şemayı inceleyip pnpm fix:schema çalıştırın veya release komutuna --fix-schema ekleyin.\n'))
+      process.exit(1)
     }
   }
 

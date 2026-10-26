@@ -2,12 +2,33 @@
 export interface TableColumn {
   /** Kolon adı. */
   name: string
-  /** SQLite veri tipi (INTEGER, TEXT, REAL, DATETIME vb.). */
+  /** SQLite veri tipi (INTEGER, TEXT, REAL, BLOB, NUMERIC, DATETIME vb.). */
   type: string
+  /** Kolon işlev açıklaması. */
+  description?: string
+  /** Birincil anahtar olup olmadığı. */
+  primaryKey?: boolean
+  /** Otomatik artan değer (INTEGER PRIMARY KEY AUTOINCREMENT). */
+  autoIncrement?: boolean
+  /** Boş bırakılamaz kısıtlaması (NOT NULL). */
+  notNull?: boolean
+  /** Benzersiz kısıtlaması (UNIQUE). */
+  unique?: boolean
+  /** Kolon varsayılan değeri. */
+  default?: string | number | boolean | null
+  /** Kolon varsayılan değeri (alternatif format). */
+  defaultValue?: string
+  /** Yabancı anahtar referansı (ilişkili tablo ve kolon). */
+  references?:
+    | {
+        table: string
+        column: string
+        onDelete?: string
+        onUpdate?: string
+      }
+    | string
   /** Kolon kısıtlamaları (PRIMARY KEY, NOT NULL vb.). */
   constraints?: string[]
-  /** Kolon varsayılan değeri. */
-  defaultValue?: string
 }
 
 /** Veritabanı tablo indeks tanımı arabirimi. */
@@ -16,6 +37,8 @@ export interface TableIndex {
   columns: string[]
   /** İndeksin benzersiz (UNIQUE) olup olmadığını belirtir. */
   unique?: boolean
+  /** İndeks adı (isteğe bağlı). */
+  name?: string
 }
 
 /** Veritabanı tablo şeması tanımı arabirimi. */

@@ -1,8 +1,10 @@
+import type { TableColumn } from './types'
+
 /**
  * Veritabanı tabloları için standart denetim (audit) kolon tanımları listesi.
  * Kaydı oluşturan/güncelleyen kullanıcı bilgileri ile zaman damgalarını ve aktiflik/silinme durumlarını tutar.
  */
-export const auditColumns: any[] = [
+export const auditColumns: TableColumn[] = [
   {
     name: 'created_by',
     type: 'INTEGER',
