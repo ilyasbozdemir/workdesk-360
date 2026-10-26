@@ -7,7 +7,7 @@ import {
   allExtensions,
   defaultFormat,
   allFormatsFilter,
-  perFormatFilters,
+  openDialogFilters,
   stripProjectExtension,
   PRIMARY_EXTENSION
 } from '../fileFormats'
@@ -25,27 +25,27 @@ describe('File Formats Configuration & Validation (Strict .temin Standard)', () 
     }
   })
 
-  it('should have .temin as single active format', () => {
+  it('should have .temin as primary default format', () => {
     expect(PRIMARY_EXTENSION).toBe('temin')
     expect(defaultFormat).toBeDefined()
     expect(defaultFormat.ext).toBe('temin')
     expect(defaultFormat.isDefault).toBe(true)
-    expect(allExtensions).toEqual(['temin'])
+    expect(allExtensions).toContain('temin')
+    expect(allExtensions).toContain('hkmp')
   })
 
-  it('should only expose .temin in dialog filters', () => {
+  it('should expose .temin in save filter and legacy formats in open filters', () => {
     expect(allFormatsFilter.extensions).toEqual(['temin'])
-    expect(perFormatFilters).toHaveLength(1)
-    expect(perFormatFilters[0].extensions).toEqual(['temin'])
+    expect(openDialogFilters[0].extensions).toEqual(['temin', 'hkmp', 'tmn360'])
   })
 
-  it('should strip only .temin project extension accurately', () => {
+  it('should strip project extensions (.temin, .hkmp, .tmn360) accurately', () => {
     expect(stripProjectExtension('Belediye_Projesi.temin')).toBe('Belediye_Projesi')
     expect(stripProjectExtension('Belediye_Projesi.TEMIN')).toBe('Belediye_Projesi')
-    // Legacy extensions are no longer treated as project extensions
-    expect(stripProjectExtension('Eski_Proje.hkmp')).toBe('Eski_Proje.hkmp')
+    expect(stripProjectExtension('Eski_Proje.hkmp')).toBe('Eski_Proje')
+    expect(stripProjectExtension('Eski_Proje.HKMP')).toBe('Eski_Proje')
+    expect(stripProjectExtension('Arsiv.tmn360')).toBe('Arsiv')
     expect(stripProjectExtension('Veri.dtal')).toBe('Veri.dtal')
-    expect(stripProjectExtension('Arsiv.tmn360')).toBe('Arsiv.tmn360')
     expect(stripProjectExtension('')).toBe('')
   })
 
@@ -58,26 +58,29 @@ describe('File Formats Configuration & Validation (Strict .temin Standard)', () 
     expect(isSupportedFile('-flag-arg')).toBe(false)
   })
 
-  it('should return true ONLY for .temin project files', () => {
+  it('should return true for .temin and backward-compatible legacy project files (.hkmp, .tmn360)', () => {
     expect(isSupportedFile('C:\\Projects\\test.temin')).toBe(true)
     expect(isSupportedFile('/user/docs/file.TEMIN')).toBe(true)
     expect(isSupportedFile('"project.temin"')).toBe(true)
     expect(isSupportedFile('  "C:\\Data\\kurum.temin"  ')).toBe(true)
+    // Backward compatibility: legacy files can be opened
+    expect(isSupportedFile('/user/docs/file.hkmp')).toBe(true)
+    expect(isSupportedFile('C:\\EskiVeri\\belediye.HKMP')).toBe(true)
+    expect(isSupportedFile('archive.tmn360')).toBe(true)
   })
 
-  it('should reject legacy extensions as project files', () => {
-    expect(isSupportedFile('/user/docs/file.hkmp')).toBe(false)
-    expect(isSupportedFile('archive.tmn360')).toBe(false)
+  it('should strictly reject other app extensions (İhale 360 and 2886) to prevent cross-app hijack', () => {
+    expect(isSupportedFile('proje.ihale')).toBe(false)
+    expect(isSupportedFile('ihale_dosyasi.ihale360')).toBe(false)
+    expect(isSupportedFile('arsa_satisi.ihale2886')).toBe(false)
+    expect(isSupportedFile('tasinmaz_kira.dihale')).toBe(false)
+  })
+
+  it('should return false for unsupported raw database or general file extensions', () => {
     expect(isSupportedFile('data.dtal')).toBe(false)
     expect(isSupportedFile('data.sqlite')).toBe(false)
     expect(isSupportedFile('data.db')).toBe(false)
     expect(isSupportedFile('project.dtm')).toBe(false)
-    expect(isSupportedFile('project.dte')).toBe(false)
-    expect(isSupportedFile('project.dta')).toBe(false)
-    expect(isSupportedFile('  "project.dtal"  ')).toBe(false)
-  })
-
-  it('should return false for unsupported file extensions', () => {
     expect(isSupportedFile('document.docx')).toBe(false)
     expect(isSupportedFile('script.js')).toBe(false)
     expect(isSupportedFile('executable.exe')).toBe(false)

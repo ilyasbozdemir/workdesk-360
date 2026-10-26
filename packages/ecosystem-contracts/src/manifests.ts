@@ -1,4 +1,4 @@
-﻿import { AppManifest } from './schema.js'
+import { AppManifest } from './schema.js'
 
 export const TEMIN_360_MANIFEST: AppManifest = {
   id: 'temin-360',
@@ -16,6 +16,12 @@ export const TEMIN_360_MANIFEST: AppManifest = {
       name: 'TEMİN 360 Proje Dosyası',
       description: 'TEMİN 360 Proje Dosyası (*.temin)',
       isPrimary: true
+    },
+    {
+      ext: 'hkmp',
+      name: 'HakimPro Doğrudan Temin Dosyası',
+      description: 'HakimPro Doğrudan Temin Dosyası (*.hkmp)',
+      isPrimary: false
     }
   ],
   installState: 'installed',
@@ -174,6 +180,35 @@ export const ARSIV_360_MANIFEST: AppManifest = {
   author: 'ilyasbozdemir.dev',
   repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360'
 }
+
+export const EVRAKTRON_MANIFEST: AppManifest = {
+  id: 'evraktron',
+  name: 'Evraktron',
+  version: '0.1.0-planned',
+  summary: 'Gelen-Giden Evrak Kayıt ve Takip Sistemi',
+  description:
+    'Kurum evraklarının kaydedilmesi, numaralandırılması, havale ve işlem geçmişinin izlenmesi, aranması ve arşivlenmesi için bağımsız masaüstü uygulaması.',
+  category: 'document',
+  appId: 'dev.ilyasbozdemir.evraktron',
+  executableName: 'Evraktron.exe',
+  fileAssociations: [],
+  installState: 'planned',
+  modules: [
+    'Gelen Evrak',
+    'Giden Evrak',
+    'Evrak Kayıt ve Numaralandırma',
+    'Havale ve İşlem Takibi',
+    'Ek Dosyalar',
+    'Arama ve Raporlama',
+    'Arşivleme'
+  ],
+  releaseChannel: 'planned',
+  minEcosystemVersion: '1.0.0',
+  author: 'ilyasbozdemir.dev',
+  repositoryUrl: 'https://github.com/ilyasbozdemir/evraktron'
+};
+
+
 
 export const DEFAULT_ECOSYSTEM_MANIFESTS: AppManifest[] = [
   TEMIN_360_MANIFEST,

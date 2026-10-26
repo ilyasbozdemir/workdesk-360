@@ -69,5 +69,16 @@ export function isSupportedFile(filePath: string): boolean {
   if (cleanPath.startsWith('-')) return false
   const lower = cleanPath.toLowerCase()
 
+  // Kesin izolasyon: Temin 360 ve İhale 360 uzantılarını kesinlikle reddet
+  if (
+    lower.endsWith('.temin') ||
+    lower.endsWith('.hkmp') ||
+    lower.endsWith('.tmn360') ||
+    lower.endsWith('.ihale') ||
+    lower.endsWith('.ihale360')
+  ) {
+    return false
+  }
+
   return allExtensions.some((ext) => lower.endsWith('.' + ext))
 }

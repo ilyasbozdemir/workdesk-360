@@ -6,6 +6,11 @@ fileAssociations:
     description: İHALE 360 Kamu İhalesi Proje Dosyası (*.ihale)
     role: Editor
     icon: icon.ico
+  - ext: ihale360
+    name: İHALE 360 Proje Dosyası
+    description: İHALE 360 Alternatif Proje Dosyası (*.ihale360)
+    role: Editor
+    icon: icon.ico
 directories:
   buildResources: build
   output: dist-local
