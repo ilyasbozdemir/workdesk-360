@@ -73,6 +73,9 @@ import { DATA_DosyaSablonVeri } from './tables/DATA_DosyaSablonVeri'
 import { DATA_DosyaRevizyon } from './tables/DATA_DosyaRevizyon'
 import { DATA_IhtiyacRaporu } from './tables/DATA_IhtiyacRaporu'
 import { DATA_IhtiyacRaporuKalem } from './tables/DATA_IhtiyacRaporuKalem'
+import { DATA_IhaleDosyasi } from './tables/DATA_IhaleDosyasi'
+import { DATA_IhaleKalem } from './tables/DATA_IhaleKalem'
+import { DATA_IhaleFirma } from './tables/DATA_IhaleFirma'
 
 // ============================================================================
 // 9. TAŞINIR (TİF) VE AMBAR STOK HAREKETLERİ (DATA_)
@@ -412,6 +415,21 @@ const rawTables = [
    */
   DATA_TeminBelge,
 
+  /**
+   * **DATA_IhaleDosyasi**: Kamu İhalesi (4734 Md. 19/21 vb.) Dosyaları Ana Tablosu
+   */
+  DATA_IhaleDosyasi,
+
+  /**
+   * **DATA_IhaleKalem**: Kamu İhalesi İhtiyaç ve Malzeme/Hizmet Kalemleri
+   */
+  DATA_IhaleKalem,
+
+  /**
+   * **DATA_IhaleFirma**: İhaleye Katılan veya Teklif Veren İstekliler
+   */
+  DATA_IhaleFirma,
+
   // =========================================================================
   // 7. TAŞINIR MAL YÖNETİMİ (TİF) VE AMBAR STOK HAREKETLERİ
   // =========================================================================
@@ -554,8 +572,13 @@ export const DOGRUDAN_TEMIN_TABLE_NAMES = new Set([
   'DATA_IhtiyacRaporu',
   'DATA_IhtiyacRaporuKalem',
   'TANIM_AlimTuru',
-  'TANIM_AlimTuru_Sablon',
-  'TANIM_KikLimitDonemleri'
+  'TANIM_AlimTuru_Sablon'
+])
+
+export const IHALE_SPECIFIC_TABLE_NAMES = new Set([
+  'DATA_IhaleDosyasi',
+  'DATA_IhaleKalem',
+  'DATA_IhaleFirma'
 ])
 
 /**
@@ -564,11 +587,18 @@ export const DOGRUDAN_TEMIN_TABLE_NAMES = new Set([
 export const dogrudanTeminTables = rawTables.filter((t) => DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name))
 
 /**
+ * Yalnızca Kamu İhalesi (İhale 360 ve 2886) modülüne ait tablolar
+ */
+export const ihaleSpecificTables = rawTables.filter((t) => IHALE_SPECIFIC_TABLE_NAMES.has(t.name))
+
+/**
  * WorkDesk 360 Suite tüm masaüstü uygulamaları (Temin 360, İhale 360, Devlet İhale 2886)
  * tarafından paylaşılan kurumsal teşkilat, personel, mevzuat, firma, bütçe, ambar,
  * şablon kütüphanesi ve log ortak tabloları.
  */
-export const sharedFoundationTables = rawTables.filter((t) => !DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name))
+export const sharedFoundationTables = rawTables.filter(
+  (t) => !DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name) && !IHALE_SPECIFIC_TABLE_NAMES.has(t.name)
+)
 
 /**
  * TEMİN 360 Veritabanı Şeması (Doğrudan Temin 4734 Md. 22 - v46 / 1.0.0-rc.8)
@@ -579,7 +609,7 @@ export const temin360Schema = {
   app_id: 'temin360-desktop',
   version: '1.0.0-rc.8',
   schema_version: CURRENT_SCHEMA_VERSION,
-  tables: rawTables.map(defineTable)
+  tables: [...sharedFoundationTables, ...dogrudanTeminTables].map(defineTable)
 }
 
 /**
@@ -592,7 +622,7 @@ export const ihale360Schema = {
   app_id: 'ihale360-desktop',
   version: '1.0.0-beta.1',
   schema_version: 1,
-  tables: sharedFoundationTables.map(defineTable)
+  tables: [...sharedFoundationTables, ...ihaleSpecificTables].map(defineTable)
 }
 
 /**
@@ -605,7 +635,7 @@ export const devletIhale2886Schema = {
   app_id: 'devlet-ihale-2886-desktop',
   version: '1.0.0-beta.1',
   schema_version: 1,
-  tables: sharedFoundationTables.map(defineTable)
+  tables: [...sharedFoundationTables, ...ihaleSpecificTables].map(defineTable)
 }
 
 /**
@@ -778,6 +808,108 @@ export function initializeDatabase(
     }
   } catch (error) {
     console.error('Test personelleri eklenirken hata oluştu:', error)
+  }
+
+  // İhale ve Devlet İhale uygulamaları için geriye dönük uyumluluk (DATA_Temin... Görünümleri)
+  if (appName && (appName.includes('ihale360') || appName.includes('2886'))) {
+    ensureIhaleCompatibilityViews(db)
+  }
+}
+
+/**
+ * İhale 360 ve Devlet İhale 2886 veritabanlarında geriye dönük uyumluluk için
+ * DATA_TeminDosyasi, DATA_TeminKalem ve DATA_TeminFirma VIEW ve Trigger'larını tesis eder.
+ */
+export function ensureIhaleCompatibilityViews(db: Database.Database): void {
+  try {
+    const teminDosyasiTable = db
+      .prepare("SELECT type FROM sqlite_master WHERE name = 'DATA_TeminDosyasi'")
+      .get() as { type?: string } | undefined
+    if (!teminDosyasiTable) {
+      db.exec(`
+        CREATE VIEW IF NOT EXISTS DATA_TeminDosyasi AS SELECT * FROM DATA_IhaleDosyasi;
+        
+        CREATE TRIGGER IF NOT EXISTS trg_view_temin_dosyasi_insert
+        INSTEAD OF INSERT ON DATA_TeminDosyasi
+        BEGIN
+          INSERT INTO DATA_IhaleDosyasi (
+            id, ihale_kayit_no, dosya_no, temin_no, konu, is_tanimi, is_adi, alim_turu, tur,
+            ihale_usulu, ihale_tipi, yaklasik_maliyet, toplam_tutar, sozlesme_bedeli, durum,
+            durum_asama_id, asama, birim_id, harcama_birimi, birim, firma_id, created_at,
+            updated_at, is_deleted, tarih, dosya_acilis_tarihi
+          ) VALUES (
+            NEW.id, COALESCE(NEW.ihale_kayit_no, NEW.temin_no, NEW.dosya_no),
+            COALESCE(NEW.dosya_no, NEW.temin_no), COALESCE(NEW.temin_no, NEW.dosya_no),
+            COALESCE(NEW.konu, NEW.is_adi, NEW.is_tanimi),
+            COALESCE(NEW.is_tanimi, NEW.is_adi, NEW.konu),
+            COALESCE(NEW.is_adi, NEW.konu, NEW.is_tanimi),
+            COALESCE(NEW.alim_turu, NEW.tur, 'mal'), COALESCE(NEW.tur, NEW.alim_turu, 'mal'),
+            COALESCE(NEW.ihale_usulu, 'acik'), COALESCE(NEW.ihale_tipi, 'dogrudan_temin'),
+            COALESCE(NEW.yaklasik_maliyet, 0), COALESCE(NEW.toplam_tutar, NEW.yaklasik_maliyet, 0),
+            COALESCE(NEW.sozlesme_bedeli, 0), COALESCE(NEW.durum, 'Taslak'),
+            COALESCE(NEW.durum_asama_id, 1), COALESCE(NEW.asama, 'Taslak'),
+            NEW.birim_id, COALESCE(NEW.harcama_birimi, NEW.birim), COALESCE(NEW.birim, NEW.harcama_birimi),
+            NEW.firma_id, COALESCE(NEW.created_at, datetime('now')),
+            COALESCE(NEW.updated_at, datetime('now')), COALESCE(NEW.is_deleted, 0),
+            COALESCE(NEW.tarih, date('now')), COALESCE(NEW.dosya_acilis_tarihi, date('now'))
+          );
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS trg_view_temin_dosyasi_update
+        INSTEAD OF UPDATE ON DATA_TeminDosyasi
+        BEGIN
+          UPDATE DATA_IhaleDosyasi SET
+            ihale_kayit_no = COALESCE(NEW.ihale_kayit_no, NEW.temin_no, NEW.dosya_no, DATA_IhaleDosyasi.ihale_kayit_no),
+            dosya_no = COALESCE(NEW.dosya_no, NEW.temin_no, DATA_IhaleDosyasi.dosya_no),
+            temin_no = COALESCE(NEW.temin_no, NEW.dosya_no, DATA_IhaleDosyasi.temin_no),
+            konu = COALESCE(NEW.konu, DATA_IhaleDosyasi.konu),
+            is_adi = COALESCE(NEW.is_adi, DATA_IhaleDosyasi.is_adi),
+            yaklasik_maliyet = COALESCE(NEW.yaklasik_maliyet, DATA_IhaleDosyasi.yaklasik_maliyet),
+            durum_asama_id = COALESCE(NEW.durum_asama_id, DATA_IhaleDosyasi.durum_asama_id),
+            durum = COALESCE(NEW.durum, DATA_IhaleDosyasi.durum),
+            firma_id = COALESCE(NEW.firma_id, DATA_IhaleDosyasi.firma_id),
+            birim_id = COALESCE(NEW.birim_id, DATA_IhaleDosyasi.birim_id),
+            is_deleted = COALESCE(NEW.is_deleted, DATA_IhaleDosyasi.is_deleted),
+            updated_at = datetime('now')
+          WHERE id = OLD.id;
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS trg_view_temin_dosyasi_delete
+        INSTEAD OF DELETE ON DATA_TeminDosyasi
+        BEGIN
+          DELETE FROM DATA_IhaleDosyasi WHERE id = OLD.id;
+        END;
+      `)
+    }
+
+    const teminKalemTable = db
+      .prepare("SELECT type FROM sqlite_master WHERE name = 'DATA_TeminKalem'")
+      .get() as { type?: string } | undefined
+    if (!teminKalemTable) {
+      db.exec(`
+        CREATE VIEW IF NOT EXISTS DATA_TeminKalem AS 
+        SELECT 
+          id, ihale_dosya_id, temin_dosya_id, sira_no, kalem_adi, aciklama,
+          tasinir_kod_id, okas_kodu, poz_no, olcu_birimi, birim, miktar,
+          yaklasik_birim_fiyat, yaklasik_toplam_tutar, kdv_orani, created_at, updated_at
+        FROM DATA_IhaleKalem;
+      `)
+    }
+
+    const teminFirmaTable = db
+      .prepare("SELECT type FROM sqlite_master WHERE name = 'DATA_TeminFirma'")
+      .get() as { type?: string } | undefined
+    if (!teminFirmaTable) {
+      db.exec(`
+        CREATE VIEW IF NOT EXISTS DATA_TeminFirma AS 
+        SELECT 
+          id, ihale_dosya_id, temin_dosya_id, firma_id, teklif_tutari, kdv_haric_toplam,
+          kazandi_mi, kazanan_mi, sira_no, aciklama, created_at, updated_at
+        FROM DATA_IhaleFirma;
+      `)
+    }
+  } catch (err: any) {
+    console.warn('[ensureIhaleCompatibilityViews] Uyari:', err?.message || err)
   }
 }
 

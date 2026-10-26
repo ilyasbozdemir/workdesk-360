@@ -1,20 +1,20 @@
 import { describe, it, expect } from 'vitest'
+import { schema } from '../../index'
 import {
-  schema,
   manifests,
   CURRENT_SCHEMA_VERSION,
   getMaxSchemaVersion,
   runMigrations
 } from '@dt/database'
 
-describe('Database Schema Integrity & Manifest Tests', () => {
-  it('should have all tables properly defined in @dt/database schema', () => {
+describe('Database Schema Integrity & Manifest Tests (İhale 360)', () => {
+  it('should have all tables properly defined in ihale360 schema', () => {
     expect(schema.tables).toBeDefined()
-    expect(schema.tables.length).toBeGreaterThanOrEqual(30)
+    expect(schema.tables.length).toBeGreaterThanOrEqual(25)
 
     const tableNames = new Set(schema.tables.map((t: any) => t.name))
 
-    // All 43 database tables must exist
+    // İhale 360 kurumsal ve ihale tabloları
     const allTables = [
       'TANIM_Kurum',
       'TANIM_Mevzuat',
@@ -34,10 +34,8 @@ describe('Database Schema Integrity & Manifest Tests', () => {
       'TANIM_Kalem',
       'TANIM_OlcuBirimi',
       'TANIM_BirimDonusum',
-      'TANIM_AlimTuru',
       'TANIM_Sablon',
       'TANIM_Placeholder',
-      'TANIM_AlimTuru_Sablon',
       'TANIM_SurecTaslak',
       'SABLON_Placeholder',
       'TANIM_KodSozlugu',
@@ -46,20 +44,14 @@ describe('Database Schema Integrity & Manifest Tests', () => {
       'TANIM_KomisyonUye',
       'TANIM_Komisyon_Sablon',
       'TANIM_KikLimitDonemleri',
-      'DATA_TeminDosyasi',
-      'DATA_TeminKalem',
-      'DATA_TeminFirma',
-      'DATA_TeminKalemTeklif',
-      'DATA_TeminKomisyon',
-      'DATA_TeminBelge',
+      'DATA_IhaleDosyasi',
+      'DATA_IhaleKalem',
+      'DATA_IhaleFirma',
       'DATA_TIF',
       'DATA_TIF_Kalem',
       'DATA_AmbarStok',
       'DATA_AmbarHareket',
-      'DATA_DosyaSablonVeri',
       'DATA_NotVeGorev',
-      'DATA_IhtiyacRaporu',
-      'DATA_IhtiyacRaporuKalem',
       'LOG_SystemLog'
     ]
 
@@ -99,23 +91,23 @@ describe('Database Schema Integrity & Manifest Tests', () => {
     }
   })
 
-  it('should have correct columns in DATA_TeminDosyasi and TANIM_ButceOdenek', () => {
-    const teminDosyasi = schema.tables.find((t: any) => t.name === 'DATA_TeminDosyasi')
-    expect(teminDosyasi).toBeDefined()
-    const teminCols = new Set(teminDosyasi.columns.map((c: any) => c.name))
-    expect(teminCols.has('birim'), 'DATA_TeminDosyasi must have "birim" column').toBe(true)
+  it('should have correct columns in DATA_IhaleDosyasi and TANIM_ButceOdenek', () => {
+    const ihaleDosyasi = schema.tables.find((t: any) => t.name === 'DATA_IhaleDosyasi')
+    expect(ihaleDosyasi).toBeDefined()
+    const ihaleCols = new Set(ihaleDosyasi!.columns.map((c: any) => c.name))
+    expect(ihaleCols.has('ihale_kayit_no'), 'DATA_IhaleDosyasi must have "ihale_kayit_no" column').toBe(true)
     expect(
-      teminCols.has('harcama_birimi'),
-      'DATA_TeminDosyasi must have "harcama_birimi" column'
+      ihaleCols.has('yaklasik_maliyet'),
+      'DATA_IhaleDosyasi must have "yaklasik_maliyet" column'
     ).toBe(true)
-    expect(teminCols.has('butce_yili'), 'DATA_TeminDosyasi must have "butce_yili" column').toBe(
+    expect(ihaleCols.has('ihale_usulu'), 'DATA_IhaleDosyasi must have "ihale_usulu" column').toBe(
       true
     )
-    expect(teminCols.has('tur'), 'DATA_TeminDosyasi must have "tur" column').toBe(true)
+    expect(ihaleCols.has('tur'), 'DATA_IhaleDosyasi must have "tur" column').toBe(true)
 
     const butceOdenek = schema.tables.find((t: any) => t.name === 'TANIM_ButceOdenek')
     expect(butceOdenek).toBeDefined()
-    const odenekCols = new Set(butceOdenek.columns.map((c: any) => c.name))
+    const odenekCols = new Set(butceOdenek!.columns.map((c: any) => c.name))
     expect(odenekCols.has('birim_adi'), 'TANIM_ButceOdenek must have "birim_adi" column').toBe(true)
     expect(odenekCols.has('butce_kodu'), 'TANIM_ButceOdenek must have "butce_kodu" column').toBe(
       true

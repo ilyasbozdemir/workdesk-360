@@ -102,7 +102,7 @@ describe('Database Schema Integrity & Manifest Tests', () => {
   it('should have correct columns in DATA_TeminDosyasi and TANIM_ButceOdenek', () => {
     const teminDosyasi = schema.tables.find((t: any) => t.name === 'DATA_TeminDosyasi')
     expect(teminDosyasi).toBeDefined()
-    const teminCols = new Set(teminDosyasi.columns.map((c: any) => c.name))
+    const teminCols = new Set(teminDosyasi!.columns.map((c: any) => c.name))
     expect(teminCols.has('birim'), 'DATA_TeminDosyasi must have "birim" column').toBe(true)
     expect(
       teminCols.has('harcama_birimi'),
@@ -115,7 +115,7 @@ describe('Database Schema Integrity & Manifest Tests', () => {
 
     const butceOdenek = schema.tables.find((t: any) => t.name === 'TANIM_ButceOdenek')
     expect(butceOdenek).toBeDefined()
-    const odenekCols = new Set(butceOdenek.columns.map((c: any) => c.name))
+    const odenekCols = new Set(butceOdenek!.columns.map((c: any) => c.name))
     expect(odenekCols.has('birim_adi'), 'TANIM_ButceOdenek must have "birim_adi" column').toBe(true)
     expect(odenekCols.has('butce_kodu'), 'TANIM_ButceOdenek must have "butce_kodu" column').toBe(
       true

@@ -1,14 +1,33 @@
 import Database from 'better-sqlite3'
 import { schema } from '../index'
-import { runMigrations, getAppSchemaMax } from '@dt/database'
+import { runMigrations, getAppSchemaMax, ensureIhaleCompatibilityViews } from '@dt/database'
 import { seedUnitConversions } from './conversionsSeed'
 import { seedDefaultCommissions } from './commissionsSeed'
 
 export function ensureSchemaIntegrity(db: Database.Database): void {
+  // 1. İhale 360 Uyumluluk Görünümleri (DATA_Temin... Views & Triggers)
+  try {
+    ensureIhaleCompatibilityViews(db)
+  } catch {}
+
   try {
     db.exec(`
       CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
       CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS TANIM_KikLimitDonemleri (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        yil INTEGER NOT NULL,
+        donem_adi TEXT NOT NULL,
+        baslangic_tarihi DATE NOT NULL,
+        bitis_tarihi DATE NOT NULL,
+        limit_buyuksehir REAL NOT NULL,
+        limit_diger REAL NOT NULL,
+        limit_22a REAL DEFAULT 0,
+        limit_21f REAL DEFAULT 0,
+        aktif_mi INTEGER DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
       CREATE TABLE IF NOT EXISTS TANIM_ButceOdenek (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         birim_id INTEGER,
