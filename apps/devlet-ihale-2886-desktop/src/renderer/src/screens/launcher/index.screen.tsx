@@ -65,10 +65,10 @@ export default function LauncherScreen(): React.ReactNode {
               <FolderOpen className="w-8 h-8" />
             </div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
-              TEMİN 360&apos;a Hoş Geldiniz
+              DEVLET İHALE 2886&apos;ya Hoş Geldiniz
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto">
-              Çalışmaya başlamak için yeni bir kurum/çalışma alanı dosyası (.temin) oluşturun veya
+              Çalışmaya başlamak için yeni bir 2886 ihale/satış/kiralama dosyası (.ihale2886) oluşturun veya
               mevcut bir kurumu açın.
             </p>
           </div>
@@ -82,8 +82,8 @@ export default function LauncherScreen(): React.ReactNode {
                 <PlusCircle className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-base">Yeni Kurum Oluştur</h3>
-                <p className="text-xs opacity-80 mt-0.5">Yeni yıl veya kurum için sıfırdan başla</p>
+                <h3 className="font-bold text-base">Yeni 2886 Dosyası Oluştur</h3>
+                <p className="text-xs opacity-80 mt-0.5">2886 sayılı Kanun kapsamında yeni satış, kira veya trampa için sıfırdan başla</p>
               </div>
             </button>
 
@@ -95,9 +95,9 @@ export default function LauncherScreen(): React.ReactNode {
                 <FolderOpen className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-base">Mevcut Kurumu Aç</h3>
+                <h3 className="font-bold text-base">Mevcut 2886 Dosyasını Aç</h3>
                 <p className="text-xs opacity-80 mt-0.5">
-                  Önceden oluşturulmuş .temin dosyasını yükle
+                  Önceden oluşturulmuş .ihale2886 veya .dihale dosyasını yükle
                 </p>
               </div>
             </button>

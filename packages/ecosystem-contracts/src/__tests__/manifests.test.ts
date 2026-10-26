@@ -62,8 +62,10 @@ describe('WorkSuite 360 Contracts & Manifests', () => {
     const procurementApps = filterCatalog(DEFAULT_ECOSYSTEM_MANIFESTS, {
       category: 'procurement'
     })
-    expect(procurementApps).toHaveLength(1)
-    expect(procurementApps[0].id).toBe('temin-360')
+    expect(procurementApps).toHaveLength(3)
+    expect(procurementApps.map((a) => a.id)).toEqual(
+      expect.arrayContaining(['temin-360', 'ihale-360', 'devlet-ihale-2886'])
+    )
 
     // 2. Kurulum durumu filtresi
     const installedApps = filterCatalog(DEFAULT_ECOSYSTEM_MANIFESTS, {

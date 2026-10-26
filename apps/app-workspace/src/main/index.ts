@@ -56,32 +56,76 @@ function readDevScriptInfo(
   }
 }
 
-function detectTemin360(): AppDetectionResult {
-  const repoRoot = getRepoRoot()
+interface EcosystemAppConfig {
+  displayName: string
+  folderName: string
+  exeName: string
+  installedFolderNames: string[]
+}
 
-  // 1. Check local production dist-local or unpacked build
-  const localDevUnpacked = resolve(repoRoot, 'apps/app-desktop/dist-local/win-unpacked/TEMIN360.exe')
+const KNOWN_APPS: Record<string, EcosystemAppConfig> = {
+  'dev.ilyasbozdemir.temin360': {
+    displayName: 'TEMİN 360',
+    folderName: 'temin360-desktop',
+    exeName: 'TEMIN360.exe',
+    installedFolderNames: ['temin360', 'TEMİN 360', 'Temin 360']
+  },
+  'dev.ilyasbozdemir.ihale360': {
+    displayName: 'İHALE 360',
+    folderName: 'ihale360-desktop',
+    exeName: 'IHALE360.exe',
+    installedFolderNames: ['ihale360', 'İHALE 360', 'Ihale 360']
+  },
+  'dev.ilyasbozdemir.devlet-ihale-2886': {
+    displayName: 'DEVLET İHALE 2886',
+    folderName: 'devlet-ihale-2886-desktop',
+    exeName: 'DEVLETIHALE2886.exe',
+    installedFolderNames: ['devlet-ihale-2886', 'DEVLET İHALE 2886', 'Devlet İhale 2886']
+  }
+}
+
+function detectApp(appId: string): AppDetectionResult {
+  if (appId === 'dev.ilyasbozdemir.workspace360') {
+    return {
+      installed: true,
+      isDevSource: is.dev,
+      path: process.execPath,
+      details: 'Çalışan Workspace 360 oturumu'
+    }
+  }
+
+  const repoRoot = getRepoRoot()
+  const localAppData = process.env.LOCALAPPDATA || ''
+  const programFiles = process.env.ProgramFiles || ''
+  const programFilesX86 = process.env['ProgramFiles(x86)'] || ''
+
+  const known = KNOWN_APPS[appId]
+  const appSlug = appId.replace('dev.ilyasbozdemir.', '')
+  const folderName = known ? known.folderName : appSlug
+  const exeName = known ? known.exeName : `${appSlug.charAt(0).toUpperCase() + appSlug.slice(1)}.exe`
+  const folderNamesToCheck = known ? known.installedFolderNames : [appSlug]
+
+  // 1. Monorepo içinde yerel paketlenmiş (dist-local/win-unpacked) EXE kontrolü
+  const localDevUnpacked = resolve(repoRoot, `apps/${folderName}/dist-local/win-unpacked/${exeName}`)
   if (fs.existsSync(localDevUnpacked)) {
     return {
       installed: true,
       isDevSource: false,
       path: localDevUnpacked,
-      details: 'Yerel paketlenmiş sürüm (dist-local/win-unpacked)'
+      details: `Yerel paketlenmiş sürüm (${folderName}/dist-local/win-unpacked)`
     }
   }
 
-  // 2. Check standard Windows installation directories
-  const localAppData = process.env.LOCALAPPDATA || ''
-  const programFiles = process.env.ProgramFiles || ''
-  const programFilesX86 = process.env['ProgramFiles(x86)'] || ''
-
-  const candidatePaths = [
-    join(localAppData, 'Programs', 'temin360', 'TEMIN360.exe'),
-    join(localAppData, 'temin360', 'TEMIN360.exe'),
-    join(localAppData, 'Programs', 'TEMİN 360', 'TEMIN360.exe'),
-    join(programFiles, 'TEMİN 360', 'TEMIN360.exe'),
-    join(programFilesX86, 'TEMİN 360', 'TEMIN360.exe')
-  ]
+  // 2. Standart Windows kurulum dizinleri kontrolü
+  const candidatePaths: string[] = []
+  for (const f of folderNamesToCheck) {
+    candidatePaths.push(
+      join(localAppData, 'Programs', f, exeName),
+      join(localAppData, f, exeName),
+      join(programFiles, f, exeName),
+      join(programFilesX86, f, exeName)
+    )
+  }
 
   for (const p of candidatePaths) {
     if (p && fs.existsSync(p)) {
@@ -94,79 +138,21 @@ function detectTemin360(): AppDetectionResult {
     }
   }
 
-  // 3. Check if running inside development workspace repo with source available
-  const desktopSourcePkg = resolve(repoRoot, 'apps/app-desktop/package.json')
-  if (fs.existsSync(desktopSourcePkg)) {
-    return {
-      installed: true,
-      isDevSource: true,
-      path: resolve(repoRoot, 'apps/app-desktop'),
-      details: 'Geliştirici ortamı kaynak kodu (apps/app-desktop)'
-    }
-  }
-
-  return {
-    installed: false,
-    details: 'Uygulama sistemi üzerinde bulunamadı.'
-  }
-}
-
-function detectApp(appId: string): AppDetectionResult {
-  if (appId === 'dev.ilyasbozdemir.temin360') {
-    return detectTemin360()
-  }
-
-  if (appId === 'dev.ilyasbozdemir.workspace360') {
-    return {
-      installed: true,
-      isDevSource: is.dev,
-      path: process.execPath,
-      details: 'Çalışan Workspace 360 oturumu'
-    }
-  }
-
-  // Generic detection for other ecosystem apps
-  const repoRoot = getRepoRoot()
-  const localAppData = process.env.LOCALAPPDATA || ''
-  const programFiles = process.env.ProgramFiles || ''
-  const programFilesX86 = process.env['ProgramFiles(x86)'] || ''
-
-  const appSlug = appId.replace('dev.ilyasbozdemir.', '')
-  const exeName = `${appSlug.charAt(0).toUpperCase() + appSlug.slice(1)}.exe`
-
-  const candidatePaths = [
-    join(localAppData, 'Programs', appSlug, exeName),
-    join(localAppData, appSlug, exeName),
-    join(programFiles, appSlug, exeName),
-    join(programFilesX86, appSlug, exeName),
-    resolve(repoRoot, `apps/${appSlug}/dist-local/win-unpacked/${exeName}`)
-  ]
-
-  for (const p of candidatePaths) {
-    if (p && fs.existsSync(p)) {
-      return {
-        installed: true,
-        isDevSource: false,
-        path: p,
-        details: 'Kurulu sürüm tespit edildi'
-      }
-    }
-  }
-
-  const appDir = resolve(repoRoot, `apps/${appSlug}`)
+  // 3. Monorepo geliştirici ortamı kaynak kodu kontrolü
+  const appDir = resolve(repoRoot, `apps/${folderName}`)
   if (fs.existsSync(join(appDir, 'package.json'))) {
     const info = readDevScriptInfo(appDir)
     const launchable = Boolean(info?.hasDevScript)
     return {
-      installed: false,
+      installed: true,
       isDevSource: true,
       sourceAvailable: true,
       launchable,
       packageName: info?.packageName,
       path: appDir,
       details: launchable
-        ? 'Kurulu değil; monorepo kaynak kodu geliştirici modunda çalıştırılabilir.'
-        : 'Kurulu değil; kaynak kodu var ancak tanımlı bir "dev" script\'i yok.'
+        ? `Geliştirici ortamı kaynak kodu (apps/${folderName})`
+        : `Kurulu değil; kaynak kodu var ancak tanımlı bir "dev" script'i yok.`
     }
   }
 
@@ -176,98 +162,7 @@ function detectApp(appId: string): AppDetectionResult {
   }
 }
 
-async function launchTemin360(): Promise<{ success: boolean; message: string }> {
-  const detection = detectTemin360()
-  if (!detection.installed) {
-    return {
-      success: false,
-      message: 'TEMİN 360 bulunamadı. Lütfen önce kurulumu gerçekleştirin.'
-    }
-  }
-
-  return new Promise((resolvePromise) => {
-    let resolved = false
-    const markResolved = (res: { success: boolean; message: string }) => {
-      if (!resolved) {
-        resolved = true
-        resolvePromise(res)
-      }
-    }
-
-    try {
-      if (!detection.isDevSource && detection.path && fs.existsSync(detection.path)) {
-        const child = spawn(detection.path, [], {
-          detached: true,
-          stdio: 'ignore'
-        })
-        child.on('error', (err) => {
-          markResolved({
-            success: false,
-            message: `Başlatma hatası: ${err.message}`
-          })
-        })
-        child.on('exit', (code) => {
-          if (code !== null && code !== 0) {
-            markResolved({
-              success: false,
-              message: `TEMİN 360 başlatılamadı ve kapandı (Çıkış kodu: ${code}).`
-            })
-          }
-        })
-        setTimeout(() => {
-          child.unref()
-          markResolved({
-            success: true,
-            message: `TEMİN 360 masaüstü uygulaması başlatıldı (${basename(detection.path!)}).`
-          })
-        }, 500)
-        return
-      }
-
-      const repoRoot = getRepoRoot()
-      const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
-      const child = spawn(pnpmCmd, ['--filter', 'app-desktop', 'dev'], {
-        cwd: repoRoot,
-        shell: true,
-        detached: true,
-        stdio: 'ignore'
-      })
-      child.on('error', (err) => {
-        markResolved({
-          success: false,
-          message: `Geliştirici modu başlatma hatası: ${err.message}`
-        })
-      })
-      child.on('exit', (code) => {
-        if (code !== null && code !== 0) {
-          markResolved({
-            success: false,
-            message: `TEMİN 360 geliştirici süreci sonlandı (Çıkış kodu: ${code}).`
-          })
-        }
-      })
-      setTimeout(() => {
-        child.unref()
-        markResolved({
-          success: true,
-          message: 'TEMİN 360 geliştirici modunda (pnpm dev) başlatılıyor...'
-        })
-      }, 600)
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      markResolved({
-        success: false,
-        message: `Başlatma hatası: ${errorMsg}`
-      })
-    }
-  })
-}
-
 async function launchApp(appId: string): Promise<{ success: boolean; message: string }> {
-  if (appId === 'dev.ilyasbozdemir.temin360') {
-    return await launchTemin360()
-  }
-
   const detection = detectApp(appId)
 
   // 1) Kurulu çalıştırılabilir dosya (yalnızca gerçek bir DOSYA ise spawn edilir)

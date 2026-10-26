@@ -6,6 +6,7 @@ import { getDevletIhale2886Menus } from './headerNavDevletIhale'
 import { getIhaleMenus } from './headerNavIhale'
 import { getSistemTanimlariMenu } from './headerNavSistemTanimlari'
 import { APP_ROUTES } from '../../../constants/routeConstants'
+import { IS_DT_EDITION } from '../../../../../shared/edition'
 
 export interface HeaderNavigationOptions {
   navigate: NavigateFn
@@ -108,7 +109,7 @@ export function getHeaderMenus(opts: HeaderNavigationOptions): HeaderMenu[] {
         { label: 'Uygulamadan Çık (Alt+F4)', onClick: handleClose }
       ]
     },
-    ...(procurementMode === 'dogrudan_temin'
+    ...(procurementMode === 'dogrudan_temin' || IS_DT_EDITION
       ? getDogrudanTeminMenus(navigate, activeDosyaId)
       : procurementMode === 'devlet_ihale_2886'
         ? getDevletIhale2886Menus(navigate)

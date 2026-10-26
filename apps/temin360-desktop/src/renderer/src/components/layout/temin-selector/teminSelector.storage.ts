@@ -2,7 +2,16 @@ import { DEFAULT_2886_DOSYALAR } from './teminSelector.constants'
 import { Dosya2886Item, ProcurementMode } from './teminSelector.types'
 
 export function getInitialProcurementMode(): ProcurementMode {
-  return (localStorage.getItem('temin_procurement_mode') as ProcurementMode) || 'dogrudan_temin'
+  try {
+    const saved = localStorage.getItem('temin_procurement_mode') as ProcurementMode
+    if (saved === 'devlet_ihale_2886') {
+      localStorage.setItem('temin_procurement_mode', 'dogrudan_temin')
+      return 'dogrudan_temin'
+    }
+    return saved || 'dogrudan_temin'
+  } catch {
+    return 'dogrudan_temin'
+  }
 }
 
 export function getInitial2886Dosyalar(): Dosya2886Item[] {
@@ -19,7 +28,9 @@ export function getInitial2886Dosyalar(): Dosya2886Item[] {
   // Sadece localStorage'da anahtar hiç yoksa varsayılan listeyi kaydet
   try {
     localStorage.setItem('temin_2886_dosyalar_samples', JSON.stringify(DEFAULT_2886_DOSYALAR))
-  } catch {}
+  } catch {
+    // ignore storage quota error
+  }
   return DEFAULT_2886_DOSYALAR
 }
 
@@ -42,8 +53,7 @@ export function getInitial2886ActiveDosya(): Dosya2886Item | null {
   } catch {
     return null
   }
-  const all = getInitial2886Dosyalar()
-  return all.length > 0 ? all[0] : null
+  return null
 }
 
 export function persist2886ActiveDosya(item: Dosya2886Item | null): void {

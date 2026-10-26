@@ -55,43 +55,19 @@ export function useDashboardV2Logic() {
     }
   }, [])
 
-  // Mod Seçici Durumu
+  // Mod Seçici Durumu — İhale 360 uygulamasında mod sabittir
   const [procurementMode, setProcurementMode] = useState<
     'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886' | 'all'
-  >(() => {
-    return (
-      (localStorage.getItem('temin_procurement_mode') as
-        | 'dogrudan_temin'
-        | 'ihale'
-        | 'devlet_ihale_2886') || 'dogrudan_temin'
-    )
-  })
+  >('ihale')
 
-  const isIhale = procurementMode === 'ihale'
-
-  useEffect(() => {
-    const handleModeChange = (e: any): void => {
-      if (e.detail?.mode) {
-        setProcurementMode(e.detail.mode)
-      }
-    }
-    window.addEventListener('procurement-mode-change', handleModeChange)
-    return () => {
-      window.removeEventListener('procurement-mode-change', handleModeChange)
-    }
-  }, [])
+  const isIhale = true
 
   const switchProcurementMode = (
     mode: 'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886' | 'all'
   ): void => {
-    setProcurementMode(mode)
-    if (mode !== 'all') {
-      localStorage.setItem('temin_procurement_mode', mode)
-      window.dispatchEvent(
-        new CustomEvent('procurement-mode-change', {
-          detail: { mode }
-        })
-      )
+    // İhale 360 uygulamasında süreç rejimi sabittir
+    if (mode === 'ihale' || mode === 'all') {
+      setProcurementMode(mode)
     }
   }
 

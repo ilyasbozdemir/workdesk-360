@@ -4,9 +4,9 @@ export const TEMIN_360_MANIFEST: AppManifest = {
   id: 'temin-360',
   name: 'TEMİN 360',
   version: '1.0.0-rc.6',
-  summary: 'Kamu Alımları, İhale ve Hakediş Yönetim Sistemi',
+  summary: 'Doğrudan Temin ve Satınalma Yönetim Sistemi',
   description:
-    '4734, 4735, 5018 ve 2886 sayılı kanunlara tam uyumlu; lüzum müzekkeresinden hakedişe ve taşınır işlem fişine kadar uçtan uca ihale ve doğrudan temin süreç asistanı.',
+    '4734 Sayılı Kamu İhale Kanunu Madde 22/d doğrudan temin süreçleri, piyasa fiyat araştırması, yaklaşık maliyet, onay belgesi ve hakediş asistanı.',
   category: 'procurement',
   appId: 'dev.ilyasbozdemir.temin360',
   executableName: 'TEMIN360.exe',
@@ -27,7 +27,7 @@ export const TEMIN_360_MANIFEST: AppManifest = {
   installState: 'installed',
   modules: [
     'Doğrudan Temin (Md. 22/d)',
-    '2886 Devlet İhalesi',
+    'Piyasa Fiyat Araştırması',
     'Hakediş & Yaklaşık Maliyet',
     'EBYS & Canlı Belge Stüdyosu'
   ],
@@ -35,6 +35,84 @@ export const TEMIN_360_MANIFEST: AppManifest = {
   minEcosystemVersion: '1.0.0',
   author: 'ilyasbozdemir.dev',
   websiteUrl: 'https://temin360.ilyasbozdemir.dev',
+  repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360',
+  sizeEstimatedMb: 125
+}
+
+export const IHALE_360_MANIFEST: AppManifest = {
+  id: 'ihale-360',
+  name: 'İHALE 360',
+  version: '1.0.0-beta.1',
+  summary: 'Kamu İhalesi Masası (4734 Sayılı Kanun)',
+  description:
+    '4734 Sayılı Kamu İhale Kanunu Madde 19 (Açık İhale) ve Madde 21 (Pazarlık Usulü) süreçleri, ihale komisyonları, teklif zarfları ve ihale takibi.',
+  category: 'procurement',
+  appId: 'dev.ilyasbozdemir.ihale360',
+  executableName: 'IHALE360.exe',
+  fileAssociations: [
+    {
+      ext: 'ihale',
+      name: 'İHALE 360 Dosyası',
+      description: 'İHALE 360 Dosyası (*.ihale)',
+      isPrimary: true
+    },
+    {
+      ext: 'ihale360',
+      name: 'İHALE 360 Çalışma Dosyası',
+      description: 'İHALE 360 Çalışma Dosyası (*.ihale360)',
+      isPrimary: false
+    }
+  ],
+  installState: 'installed',
+  modules: [
+    'Açık İhale (Md. 19)',
+    'Pazarlık Usulü (Md. 21)',
+    'İhale Komisyonu Yönetimi',
+    'Teklif Değerlendirme & Hakediş'
+  ],
+  releaseChannel: 'beta',
+  minEcosystemVersion: '1.0.0',
+  author: 'ilyasbozdemir.dev',
+  websiteUrl: 'https://ihale360.ilyasbozdemir.dev',
+  repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360',
+  sizeEstimatedMb: 125
+}
+
+export const DEVLET_IHALE_2886_MANIFEST: AppManifest = {
+  id: 'devlet-ihale-2886',
+  name: 'DEVLET İHALE 2886',
+  version: '1.0.0-beta.1',
+  summary: 'Devlet İhale Kanunu (2886 Sayılı Kanun) Satış ve Kiralama Sistemi',
+  description:
+    '2886 Sayılı Devlet İhale Kanunu kapsamında taşınmaz satış, kiralama, trampa ve irtifak hakkı işlemleri; muhammen bedel, encümen kararları ve artırma turları.',
+  category: 'procurement',
+  appId: 'dev.ilyasbozdemir.devlet-ihale-2886',
+  executableName: 'DEVLETIHALE2886.exe',
+  fileAssociations: [
+    {
+      ext: 'ihale2886',
+      name: 'Devlet İhale 2886 Dosyası',
+      description: 'Devlet İhale 2886 Dosyası (*.ihale2886)',
+      isPrimary: true
+    },
+    {
+      ext: 'dihale',
+      name: 'Devlet İhale Çalışma Dosyası',
+      description: 'Devlet İhale Çalışma Dosyası (*.dihale)',
+      isPrimary: false
+    }
+  ],
+  installState: 'installed',
+  modules: [
+    'Taşınmaz Satış & Kiralama',
+    'Muhammen Bedel & Kıymet Takdiri',
+    'Encümen Süreçleri',
+    'Açık Artırma Turları'
+  ],
+  releaseChannel: 'beta',
+  minEcosystemVersion: '1.0.0',
+  author: 'ilyasbozdemir.dev',
+  websiteUrl: 'https://devletihale2886.ilyasbozdemir.dev',
   repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360',
   sizeEstimatedMb: 125
 }
@@ -212,6 +290,8 @@ export const EVRAKTRON_MANIFEST: AppManifest = {
 
 export const DEFAULT_ECOSYSTEM_MANIFESTS: AppManifest[] = [
   TEMIN_360_MANIFEST,
+  IHALE_360_MANIFEST,
+  DEVLET_IHALE_2886_MANIFEST,
   WORKSPACE_360_MANIFEST,
   DOSYA_360_MANIFEST,
   SUREC_360_MANIFEST,

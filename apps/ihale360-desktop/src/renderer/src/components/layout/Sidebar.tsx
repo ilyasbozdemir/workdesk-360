@@ -8,7 +8,6 @@ import { useShallow } from 'zustand/react/shallow'
 import { getInitials } from '@renderer/utils/formatters'
 import { MenuGroup, getSidebarMenuGroups } from './sidebar.constants'
 import { useModuleStore } from '../../store/moduleStore'
-import { IS_DT_EDITION } from '../../../../shared/edition'
 
 export function Sidebar(): React.JSX.Element {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -42,46 +41,18 @@ export function Sidebar(): React.JSX.Element {
     }))
   )
 
-  // Mod Seçici Durumu
-  const [procurementMode, setProcurementMode] = useState<
-    'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886'
-  >(() => {
-    if (IS_DT_EDITION) return 'dogrudan_temin'
-    return (
-      (localStorage.getItem('temin_procurement_mode') as
-        | 'dogrudan_temin'
-        | 'ihale'
-        | 'devlet_ihale_2886') || 'dogrudan_temin'
-    )
-  })
-
-  useEffect(() => {
-    const handleModeEvent = (e: Event): void => {
-      const customEvent = e as CustomEvent<{
-        mode: 'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886'
-      }>
-      if (customEvent.detail?.mode) {
-        setProcurementMode(customEvent.detail.mode)
-      }
-    }
-    window.addEventListener('procurement-mode-change', handleModeEvent)
-    return () => window.removeEventListener('procurement-mode-change', handleModeEvent)
-  }, [])
+  // Mod Seçici Durumu — İhale 360 uygulamasında mod sabittir
+  const [procurementMode] = useState<'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886'>('ihale')
 
   const handleCloseWorkspace = async (): Promise<void> => {
     window.dispatchEvent(new CustomEvent('workspace-close-request'))
   }
 
-  const searchParams = new URLSearchParams(window.location.search)
-  const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '')
-  const isDosyaWindowMode =
-    searchParams.get('mode') === 'dosya_window' || hashParams.get('mode') === 'dosya_window'
-
   useEffect(() => {
     loadSettings()
   }, [loadSettings])
 
-  const toggleExpanded = (path: string) => {
+  const toggleExpanded = (path: string): void => {
     setExpandedItems((prev) => {
       const next = new Set(prev)
       if (next.has(path)) next.delete(path)

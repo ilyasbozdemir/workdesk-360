@@ -65,10 +65,10 @@ export default function LauncherScreen(): React.ReactNode {
               <FolderOpen className="w-8 h-8" />
             </div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
-              TEMİN 360&apos;a Hoş Geldiniz
+              İHALE 360&apos;a Hoş Geldiniz
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto">
-              Çalışmaya başlamak için yeni bir kurum/çalışma alanı dosyası (.temin) oluşturun veya
+              Çalışmaya başlamak için yeni bir ihale dosyası (.ihale) oluşturun veya
               mevcut bir kurumu açın.
             </p>
           </div>
@@ -82,8 +82,8 @@ export default function LauncherScreen(): React.ReactNode {
                 <PlusCircle className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-base">Yeni Kurum Oluştur</h3>
-                <p className="text-xs opacity-80 mt-0.5">Yeni yıl veya kurum için sıfırdan başla</p>
+                <h3 className="font-bold text-base">Yeni İhale Dosyası Oluştur</h3>
+                <p className="text-xs opacity-80 mt-0.5">4734 sayılı KİK kapsamında yeni ihale için sıfırdan başla</p>
               </div>
             </button>
 
@@ -95,9 +95,9 @@ export default function LauncherScreen(): React.ReactNode {
                 <FolderOpen className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-base">Mevcut Kurumu Aç</h3>
+                <h3 className="font-bold text-base">Mevcut İhale Dosyasını Aç</h3>
                 <p className="text-xs opacity-80 mt-0.5">
-                  Önceden oluşturulmuş .temin dosyasını yükle
+                  Önceden oluşturulmuş .ihale veya .ihale360 dosyasını yükle
                 </p>
               </div>
             </button>

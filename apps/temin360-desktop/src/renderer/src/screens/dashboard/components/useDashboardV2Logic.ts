@@ -18,6 +18,7 @@ import {
   getAsamaDetails,
   getInstitutionTypeLabel
 } from './dashboardV2.helpers'
+import { IS_DT_EDITION } from '../../../../../shared/edition'
 
 export function useDashboardV2Logic() {
   const navigate = useNavigate()
@@ -36,13 +37,16 @@ export function useDashboardV2Logic() {
 
   const { activeDosyaId, setActiveDosyaId } = useWorkspaceStore()
 
-  // 2886 Dosyaları ve Aktif 2886 Dosyası
-  const [dosyalar2886, setDosyalar2886] = useState<Dosya2886Item[]>(() => getInitial2886Dosyalar())
+  // 2886 Dosyaları ve Aktif 2886 Dosyası (Temin 360 DT sürümünde tamamen kapalı)
+  const [dosyalar2886, setDosyalar2886] = useState<Dosya2886Item[]>(() =>
+    IS_DT_EDITION ? [] : getInitial2886Dosyalar()
+  )
   const [active2886Dosya, setActive2886Dosya] = useState<Dosya2886Item | null>(() =>
-    getInitial2886ActiveDosya()
+    IS_DT_EDITION ? null : getInitial2886ActiveDosya()
   )
 
   useEffect(() => {
+    if (IS_DT_EDITION) return
     const handleReload2886 = (): void => {
       setDosyalar2886(getInitial2886Dosyalar())
       setActive2886Dosya(getInitial2886ActiveDosya())
@@ -59,17 +63,16 @@ export function useDashboardV2Logic() {
   const [procurementMode, setProcurementMode] = useState<
     'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886' | 'all'
   >(() => {
-    return (
-      (localStorage.getItem('temin_procurement_mode') as
-        | 'dogrudan_temin'
-        | 'ihale'
-        | 'devlet_ihale_2886') || 'dogrudan_temin'
-    )
+    if (IS_DT_EDITION) return 'dogrudan_temin'
+    const saved = localStorage.getItem('temin_procurement_mode')
+    if (saved === 'devlet_ihale_2886' || saved === 'ihale') return 'dogrudan_temin'
+    return (saved as 'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886') || 'dogrudan_temin'
   })
 
-  const isIhale = procurementMode === 'ihale'
+  const isIhale = false
 
   useEffect(() => {
+    if (IS_DT_EDITION) return
     const handleModeChange = (e: any): void => {
       if (e.detail?.mode) {
         setProcurementMode(e.detail.mode)
@@ -84,6 +87,7 @@ export function useDashboardV2Logic() {
   const switchProcurementMode = (
     mode: 'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886' | 'all'
   ): void => {
+    if (IS_DT_EDITION) return
     setProcurementMode(mode)
     if (mode !== 'all') {
       localStorage.setItem('temin_procurement_mode', mode)
@@ -251,14 +255,14 @@ export function useDashboardV2Logic() {
 
   // Aktif Dosya Bilgisi (4734 veya 2886)
   const activeDosya = useMemo(() => {
-    if (procurementMode === 'devlet_ihale_2886') {
-      return active2886Dosya || (dosyalar2886.length > 0 ? dosyalar2886[0] : null)
+    if (!IS_DT_EDITION && procurementMode === 'devlet_ihale_2886') {
+      return active2886Dosya
     }
     const found4734 = dosyalar.find((d) => d.id === activeDosyaId)
     if (found4734) return found4734
-    if (procurementMode === 'all' && active2886Dosya) return active2886Dosya
+    if (!IS_DT_EDITION && procurementMode === 'all' && active2886Dosya) return active2886Dosya
     return null
-  }, [procurementMode, active2886Dosya, dosyalar2886, dosyalar, activeDosyaId])
+  }, [procurementMode, active2886Dosya, dosyalar, activeDosyaId])
 
   const teminPillars = useMemo(
     () => buildTeminPillars(stats, kikLimit, limitType, formatCurrency),

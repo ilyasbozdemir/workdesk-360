@@ -8,6 +8,7 @@ import { EskiDosyaKopyalaModal } from '../../screens/dosyalar/components/EskiDos
 import { cloneDosyaWithItems } from '../../utils/cloneDosya'
 import { TEMIN_TURLERI, teminMeta, type TeminTuruId } from '../../constants/teminTurleri'
 import { APP_ROUTES } from '../../constants/routeConstants'
+import { IS_DT_EDITION } from '../../../../shared/edition'
 
 export interface YeniDosyaSecimModalProps {
   isOpen: boolean
@@ -164,64 +165,66 @@ export function YeniDosyaSecimModal({
             </div>
           </div>
 
-          {/* Bölüm 2: 2886 Sayılı Devlet İhale Kanunu Süreçleri */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Building className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                2. 2886 Sayılı Devlet İhale Kanunu (Taşınmaz Satış & Kiralama)
-              </h3>
-            </div>
+          {/* Bölüm 2: 2886 Sayılı Devlet İhale Kanunu Süreçleri (Yalnızca Tam Sürümde) */}
+          {!IS_DT_EDITION && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Building className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  2. 2886 Sayılı Devlet İhale Kanunu (Taşınmaz Satış & Kiralama)
+                </h3>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => handleSelectTeminTur('kira_2886')}
-                className="group flex items-start gap-3.5 p-4 rounded-2xl border border-teal-200/80 dark:border-teal-800/40 bg-teal-50/40 dark:bg-teal-950/20 text-left transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:border-teal-400"
-              >
-                <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 shrink-0 group-hover:scale-105 transition-transform">
-                  <Building className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1.5 mb-1">
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 transition-colors">
-                      Taşınmaz Kiralama (2886)
-                    </span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border-teal-200 dark:border-teal-800">
-                      Md. 45 & 51/g
-                    </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleSelectTeminTur('kira_2886')}
+                  className="group flex items-start gap-3.5 p-4 rounded-2xl border border-teal-200/80 dark:border-teal-800/40 bg-teal-50/40 dark:bg-teal-950/20 text-left transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:border-teal-400"
+                >
+                  <div className="p-2.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 shrink-0 group-hover:scale-105 transition-transform">
+                    <Building className="w-5 h-5" />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
-                    Kamu taşınmazlarının kiraya verilmesi, ecrimisil ve irtifak hakkı ihale
-                    şartnameleri.
-                  </p>
-                </div>
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 transition-colors">
+                        Taşınmaz Kiralama (2886)
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300 border-teal-200 dark:border-teal-800">
+                        Md. 45 & 51/g
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                      Kamu taşınmazlarının kiraya verilmesi, ecrimisil ve irtifak hakkı ihale
+                      şartnameleri.
+                    </p>
+                  </div>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => handleSelectTeminTur('satis_2886')}
-                className="group flex items-start gap-3.5 p-4 rounded-2xl border border-rose-200/80 dark:border-rose-800/40 bg-rose-50/40 dark:bg-rose-950/20 text-left transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:border-rose-400"
-              >
-                <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0 group-hover:scale-105 transition-transform">
-                  <Building className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1.5 mb-1">
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-rose-600 transition-colors">
-                      Taşınmaz / Taşınır Satışı (2886)
-                    </span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-200 dark:border-rose-800">
-                      Md. 45 & 35/a
-                    </span>
+                <button
+                  type="button"
+                  onClick={() => handleSelectTeminTur('satis_2886')}
+                  className="group flex items-start gap-3.5 p-4 rounded-2xl border border-rose-200/80 dark:border-rose-800/40 bg-rose-50/40 dark:bg-rose-950/20 text-left transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:border-rose-400"
+                >
+                  <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0 group-hover:scale-105 transition-transform">
+                    <Building className="w-5 h-5" />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
-                    Devlet ve belediye taşınmazı/taşınırının ihale ile satışı ve mülkiyet devri.
-                  </p>
-                </div>
-              </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1.5 mb-1">
+                      <span className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-rose-600 transition-colors">
+                        Taşınmaz / Taşınır Satışı (2886)
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-200 dark:border-rose-800">
+                        Md. 45 & 35/a
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                      Devlet ve belediye taşınmazı/taşınırının ihale ile satışı ve mülkiyet devri.
+                    </p>
+                  </div>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Bölüm 3: Hakediş & Sözleşmeli Süreç Yönetimi */}
           <div>

@@ -73,7 +73,7 @@ const getAppIcon = (): Electron.NativeImage | undefined => {
 // Windows Taskbar & Pinning için AppUserModelID kaydı
 if (process.platform === 'win32') {
   try {
-    app.setAppUserModelId(app.isPackaged ? 'dev.ilyasbozdemir.temin360' : process.execPath)
+    app.setAppUserModelId(app.isPackaged ? 'dev.ilyasbozdemir.ihale360' : process.execPath)
   } catch {}
 }
 

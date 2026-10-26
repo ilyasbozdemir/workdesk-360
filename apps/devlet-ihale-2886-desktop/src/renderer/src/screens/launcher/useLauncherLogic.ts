@@ -46,7 +46,7 @@ export function useLauncherLogic() {
       const res = await window.electron?.ipcRenderer.invoke('dialog:showSaveDialog')
       if (!res.canceled && res.filePath) {
         const fileName = res.filePath.split(/[/\\]/).pop() || 'Yeni Kurum'
-        const projectName = fileName.replace(/\.temin$/i, '')
+        const projectName = fileName.replace(/\.(ihale2886|dihale)$/i, '')
 
         setPendingFilePath(res.filePath)
         setInstitutionName(projectName)
@@ -62,7 +62,7 @@ export function useLauncherLogic() {
       const res = await window.electron?.ipcRenderer.invoke('dialog:showSaveDialog')
       if (!res.canceled && res.filePath) {
         const fileName = res.filePath.split(/[/\\]/).pop() || 'Yeni Kurum'
-        const projectName = fileName.replace(/\.temin$/i, '')
+        const projectName = fileName.replace(/\.(ihale2886|dihale)$/i, '')
         setPendingFilePath(res.filePath)
         if (
           !institutionName ||

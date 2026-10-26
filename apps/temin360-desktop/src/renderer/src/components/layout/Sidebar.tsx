@@ -47,15 +47,13 @@ export function Sidebar(): React.JSX.Element {
     'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886'
   >(() => {
     if (IS_DT_EDITION) return 'dogrudan_temin'
-    return (
-      (localStorage.getItem('temin_procurement_mode') as
-        | 'dogrudan_temin'
-        | 'ihale'
-        | 'devlet_ihale_2886') || 'dogrudan_temin'
-    )
+    const saved = localStorage.getItem('temin_procurement_mode')
+    if (saved === 'devlet_ihale_2886' || saved === 'ihale') return 'dogrudan_temin'
+    return (saved as 'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886') || 'dogrudan_temin'
   })
 
   useEffect(() => {
+    if (IS_DT_EDITION) return
     const handleModeEvent = (e: Event): void => {
       const customEvent = e as CustomEvent<{
         mode: 'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886'
@@ -72,16 +70,11 @@ export function Sidebar(): React.JSX.Element {
     window.dispatchEvent(new CustomEvent('workspace-close-request'))
   }
 
-  const searchParams = new URLSearchParams(window.location.search)
-  const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '')
-  const isDosyaWindowMode =
-    searchParams.get('mode') === 'dosya_window' || hashParams.get('mode') === 'dosya_window'
-
   useEffect(() => {
     loadSettings()
   }, [loadSettings])
 
-  const toggleExpanded = (path: string) => {
+  const toggleExpanded = (path: string): void => {
     setExpandedItems((prev) => {
       const next = new Set(prev)
       if (next.has(path)) next.delete(path)

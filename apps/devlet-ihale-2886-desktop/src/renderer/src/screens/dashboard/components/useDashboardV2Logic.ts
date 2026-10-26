@@ -55,43 +55,19 @@ export function useDashboardV2Logic() {
     }
   }, [])
 
-  // Mod Seçici Durumu
+  // Mod Seçici Durumu — Devlet İhale 2886 uygulamasında mod sabittir
   const [procurementMode, setProcurementMode] = useState<
     'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886' | 'all'
-  >(() => {
-    return (
-      (localStorage.getItem('temin_procurement_mode') as
-        | 'dogrudan_temin'
-        | 'ihale'
-        | 'devlet_ihale_2886') || 'dogrudan_temin'
-    )
-  })
+  >('devlet_ihale_2886')
 
-  const isIhale = procurementMode === 'ihale'
-
-  useEffect(() => {
-    const handleModeChange = (e: any): void => {
-      if (e.detail?.mode) {
-        setProcurementMode(e.detail.mode)
-      }
-    }
-    window.addEventListener('procurement-mode-change', handleModeChange)
-    return () => {
-      window.removeEventListener('procurement-mode-change', handleModeChange)
-    }
-  }, [])
+  const isIhale = false
 
   const switchProcurementMode = (
     mode: 'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886' | 'all'
   ): void => {
-    setProcurementMode(mode)
-    if (mode !== 'all') {
-      localStorage.setItem('temin_procurement_mode', mode)
-      window.dispatchEvent(
-        new CustomEvent('procurement-mode-change', {
-          detail: { mode }
-        })
-      )
+    // 2886 uygulamasında süreç rejimi sabittir
+    if (mode === 'devlet_ihale_2886' || mode === 'all') {
+      setProcurementMode(mode)
     }
   }
 
