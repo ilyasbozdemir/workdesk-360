@@ -4,6 +4,15 @@ import { runMigrations, getAppSchemaMax } from '@dt/database'
 import { seedUnitConversions } from './conversionsSeed'
 import { seedDefaultCommissions } from './commissionsSeed'
 
+function isExpectedSqliteError(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase()
+  return (
+    msg.includes('duplicate column') ||
+    msg.includes('already exists') ||
+    msg.includes('cannot add a column to a view')
+  )
+}
+
 export function ensureSchemaIntegrity(db: Database.Database): void {
   try {
     db.exec(`
@@ -269,27 +278,27 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
       }>
 
       if (rows.length > 1) {
-        // Keep rows[0] (newest). Archive rows[1..] to DATA_DosyaRevizyon and delete
+        const insertRevizyon = db.prepare(
+          `INSERT INTO DATA_DosyaRevizyon (temin_dosya_id, modul_adi, surec_kodu, belge_kodu, versiyon, baslik, veri_json) 
+           VALUES (?, 'BELGE_YONETIMI', 'MIGRATION_DEDUP', ?, 'v_arsiv', 'Eski Mükerrer Belge Verisi Arşivi', ?)`
+        )
+        const deleteSablonVeri = db.prepare(`DELETE FROM DATA_DosyaSablonVeri WHERE id = ?`)
+
         for (let i = 1; i < rows.length; i++) {
           const oldRow = rows[i]
-          try {
-            db.prepare(
-              `INSERT INTO DATA_DosyaRevizyon (temin_dosya_id, modul_adi, surec_kodu, belge_kodu, versiyon, baslik, veri_json) 
-               VALUES (?, 'BELGE_YONETIMI', 'MIGRATION_DEDUP', ?, 'v_arsiv', 'Eski Mükerrer Belge Verisi Arşivi', ?)`
-            ).run(dup.temin_dosya_id, dup.sablon_kodu, oldRow.veri_json)
-          } catch {
-            /* ignore */
-          }
-          try {
-            db.prepare(`DELETE FROM DATA_DosyaSablonVeri WHERE id = ?`).run(oldRow.id)
-          } catch {
-            /* ignore */
-          }
+          // Arşivleme ve silme tek bir atomik transaction içinde yapılır.
+          // Arşivleme başarısız olursa silme işlemi yapılmaz (veri kaybı engellenir).
+          db.transaction(() => {
+            insertRevizyon.run(dup.temin_dosya_id, dup.sablon_kodu, oldRow.veri_json)
+            deleteSablonVeri.run(oldRow.id)
+          })()
         }
       }
     }
-  } catch {
-    /* ignore */
+  } catch (err: unknown) {
+    if (!isExpectedSqliteError(err)) {
+      console.error('[ensureSchemaIntegrity Temin 360] Mükerrer şablon verisi temizleme uyarısı:', err)
+    }
   }
 
   // Ensure UNIQUE index on (temin_dosya_id, sablon_kodu)

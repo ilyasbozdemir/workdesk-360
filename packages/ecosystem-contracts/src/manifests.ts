@@ -235,15 +235,22 @@ export const PERSONEL_360_MANIFEST: AppManifest = {
   id: 'personel-360',
   name: 'Personel 360',
   version: '0.1.0-planned',
-  summary: 'Personel Kayıtları, Görevlendirmeler ve İzin Takibi',
+  summary: 'Personel Kayıtları, İzin Yönetimi ve Görevlendirme Takibi',
   description:
-    'Komisyon üyeleri, muayene kabul heyetleri, harcama yetkilileri ve kurum personeli sicil ve görev takip merkezi.',
+    'Bağımsız masaüstü uygulaması (.exe) olarak personel kayıtları, yıllık/mazeret izin talepleri, izin bakiyesi hesaplaması ve denetlenebilir işlem geçmişi.',
   category: 'hr',
   appId: 'dev.ilyasbozdemir.personel360',
   executableName: 'Personel360.exe',
   fileAssociations: [],
   installState: 'planned',
-  modules: ['Personel Kartları', 'Komisyon Atamaları', 'Yetki Matrisi'],
+  modules: [
+    'Personel Kayıtları',
+    'İzin Yönetimi & Bakiye',
+    'İzin Talepleri & Onay',
+    'Görevlendirme ve Hareketler',
+    'Belge Üretimi & Matbu Formlar',
+    'Denetlenebilir İşlem Geçmişi'
+  ],
   releaseChannel: 'planned',
   minEcosystemVersion: '1.0.0',
   author: 'ilyasbozdemir.dev',
@@ -269,19 +276,23 @@ export const BELGE_360_MANIFEST: AppManifest = {
   repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360'
 }
 
+/**
+ * Arşiv 360: Bağımsız katalog uygulaması yerine Evraktron bünyesinde bir
+ * "Arşiv Modülü" olarak konumlandırılmıştır.
+ */
 export const ARSIV_360_MANIFEST: AppManifest = {
   id: 'arsiv-360',
   name: 'Arşiv 360',
   version: '0.1.0-planned',
-  summary: 'Dosya ve Kayıt Arşivleme, Arama ve Güvenli Saklama',
+  summary: 'Dosya ve Kayıt Arşivleme, Arama ve Güvenli Saklama (Evraktron Arşiv Modülü)',
   description:
-    'Tamamlanan ihale, doğrudan temin ve mali belgelerin dijital arşiv standartlarında saklanması, indekslenmesi ve hızlı erişimi.',
+    'Evraktron bünyesindeki Arşiv Modülü ile tamamlanan ihale, doğrudan temin ve mali belgelerin dijital arşiv standartlarında (.etap) saklanması, indekslenmesi ve hızlı erişimi.',
   category: 'archive',
   appId: 'dev.ilyasbozdemir.arsiv360',
   executableName: 'Arsiv360.exe',
   fileAssociations: [],
   installState: 'planned',
-  modules: ['Dijital Arşiv', 'Kutu/Klasör Barkodlama', 'Tarihsel Erişim'],
+  modules: ['Dijital Arşiv (.etap)', 'Kutu/Klasör Barkodlama', 'Tarihsel Erişim'],
   releaseChannel: 'planned',
   minEcosystemVersion: '1.0.0',
   author: 'ilyasbozdemir.dev',
@@ -291,31 +302,40 @@ export const ARSIV_360_MANIFEST: AppManifest = {
 export const EVRAKTRON_MANIFEST: AppManifest = {
   id: 'evraktron',
   name: 'Evraktron',
-  version: '0.1.0-planned',
-  summary: 'Gelen-Giden Evrak Kayıt ve Takip Sistemi',
+  version: '1.3.2',
+  summary: 'Gelen-Giden Evrak Kayıt, Takip ve Arşivleme Sistemi',
   description:
-    'Kurum evraklarının kaydedilmesi, numaralandırılması, havale ve işlem geçmişinin izlenmesi, aranması ve arşivlenmesi için bağımsız masaüstü uygulaması.',
+    'Kurum evraklarının kaydedilmesi, numaralandırılması, havale ve işlem geçmişinin izlenmesi, FTS5 hızlı arama ve dahili Arşiv modülü (.etap) için bağımsız masaüstü uygulaması.',
   category: 'document',
   appId: 'dev.ilyasbozdemir.evraktron',
   executableName: 'Evraktron.exe',
-  fileAssociations: [],
+  fileAssociations: [
+    {
+      ext: 'etap',
+      name: 'Evraktron Evrak Paketi',
+      description: 'Evraktron Evrak Paketi (*.etap)',
+      mimeType: 'application/x-evraktron-etap',
+      progId: 'Evraktron.Document',
+      perceivedType: 'document',
+      isPrimary: true
+    }
+  ],
   installState: 'planned',
   modules: [
     'Gelen Evrak',
     'Giden Evrak',
     'Evrak Kayıt ve Numaralandırma',
     'Havale ve İşlem Takibi',
-    'Ek Dosyalar',
-    'Arama ve Raporlama',
-    'Arşivleme'
+    'Ek Dosyalar & FTS5 Arama',
+    'Arşiv Modülü (.etap)',
+    'FlowDesk Entegrasyonu'
   ],
-  releaseChannel: 'planned',
+  releaseChannel: 'beta',
   minEcosystemVersion: '1.0.0',
   author: 'ilyasbozdemir.dev',
+  websiteUrl: 'https://evraktron.ilyasbozdemir.dev',
   repositoryUrl: 'https://github.com/ilyasbozdemir/evraktron'
-};
-
-
+}
 
 export const DEFAULT_ECOSYSTEM_MANIFESTS: AppManifest[] = [
   TEMIN_360_MANIFEST,
@@ -327,5 +347,6 @@ export const DEFAULT_ECOSYSTEM_MANIFESTS: AppManifest[] = [
   HARITA_360_MANIFEST,
   PERSONEL_360_MANIFEST,
   BELGE_360_MANIFEST,
-  ARSIV_360_MANIFEST
+  EVRAKTRON_MANIFEST
 ]
+

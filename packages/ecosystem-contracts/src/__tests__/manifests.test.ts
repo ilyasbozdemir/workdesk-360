@@ -126,5 +126,80 @@ describe('WorkSuite 360 Contracts & Manifests', () => {
       }
     }
   })
+
+  it('Evraktron bağımsız masaüstü ürünü olarak .etap formatı ve Arşiv modülüyle doğrulanmalıdır', () => {
+    const evraktron = DEFAULT_ECOSYSTEM_MANIFESTS.find((m) => m.id === 'evraktron')
+    expect(evraktron).toBeDefined()
+    expect(evraktron?.appId).toBe('dev.ilyasbozdemir.evraktron')
+    expect(evraktron?.executableName).toBe('Evraktron.exe')
+    expect(evraktron?.modules).toContain('Arşiv Modülü (.etap)')
+    expect(evraktron?.modules).toContain('FlowDesk Entegrasyonu')
+
+    const etap = evraktron?.fileAssociations.find((f) => f.ext === 'etap')
+    expect(etap).toBeDefined()
+    expect(etap?.mimeType).toBe('application/x-evraktron-etap')
+    expect(etap?.progId).toBe('Evraktron.Document')
+    expect(etap?.isPrimary).toBe(true)
+  })
+
+  it('Personel 360 bağımsız bir .exe masaüstü uygulaması sözleşmesine ve iş kurallarına sahip olmalıdır', async () => {
+    const { PERSONEL_360_MANIFEST, calculateIzinGunu, validateIzinTalebiKurallari } = await import('../index.js')
+    expect(PERSONEL_360_MANIFEST.id).toBe('personel-360')
+    expect(PERSONEL_360_MANIFEST.appId).toBe('dev.ilyasbozdemir.personel360')
+    expect(PERSONEL_360_MANIFEST.executableName).toBe('Personel360.exe')
+    expect(PERSONEL_360_MANIFEST.category).toBe('hr')
+    expect(PERSONEL_360_MANIFEST.modules).toContain('İzin Yönetimi & Bakiye')
+
+    // İş kuralı: Gün hesabı
+    const gun = calculateIzinGunu('2026-06-01', '2026-06-05')
+    expect(gun).toBe(5)
+
+    // İş kuralı: Bakiye aşımı kontrolü
+    const validationResult = validateIzinTalebiKurallari({
+      talep: {
+        personelId: 'p-1',
+        personelAdSoyad: 'Ali Veli',
+        sicilNo: '1234',
+        izinTuru: 'yillik',
+        baslangicTarihi: '2026-07-01',
+        bitisTarihi: '2026-07-15',
+        gunSayisi: 15,
+        aciklama: 'Yıllık dinlenme'
+      },
+      bakiye: {
+        id: 'b-1',
+        personelId: 'p-1',
+        yil: 2026,
+        hakEdilenGun: 14,
+        devredenGun: 0,
+        kullanilanGun: 4,
+        kalanGun: 10
+      },
+      mevcutTalepler: []
+    })
+    expect(validationResult.gecerli).toBe(false)
+    expect(validationResult.hata).toContain('kalan yıllık izin bakiyesinden (10) fazladır')
+  })
+
+  it('2886 Devlet İhale Kanunu Modülü 5 aşamalı akış, şemalar ve şablonlarla doğrulanmalıdır', async () => {
+    const { DEVLET_IHALE_2886_MODULE_MANIFEST, FLOW_DEFINITION_2886 } = await import('../index.js')
+    expect(DEVLET_IHALE_2886_MODULE_MANIFEST.id).toBe('module-devlet-ihale-2886')
+    expect(DEVLET_IHALE_2886_MODULE_MANIFEST.flows).toHaveLength(1)
+    expect(FLOW_DEFINITION_2886.groups).toHaveLength(5)
+
+    const stageIds = FLOW_DEFINITION_2886.groups.map((g) => g.id)
+    expect(stageIds).toEqual([
+      'asama-1-baslangic',
+      'asama-2-kiymet-takdiri',
+      'asama-3-sartname-ilan',
+      'asama-4-ihale-gunu',
+      'asama-5-onay-sozlesme'
+    ])
+
+    const templateIds = DEVLET_IHALE_2886_MODULE_MANIFEST.documentTemplates.map((t) => t.id)
+    expect(templateIds).toContain('2886-EVR-01')
+    expect(templateIds).toContain('2886-EVR-05')
+  })
 })
+
 

@@ -94,7 +94,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
 
   // 2. Devlet İhale 2886 Uyumluluk Görünümleri (DATA_Temin... Views & Triggers)
   try {
-    ensureIhaleCompatibilityViews(db)
+    ensureIhaleCompatibilityViews(db, 'devlet-ihale-2886-desktop')
   } catch (err: unknown) {
     if (!isExpectedSqliteError(err)) {
       const errorMsg = err instanceof Error ? err.message : String(err)
@@ -314,6 +314,13 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
         UPDATE DATA_IhaleDosyasi SET tur = alim_turu WHERE (tur IS NULL OR tur = '') AND alim_turu IS NOT NULL;
         UPDATE DATA_IhaleDosyasi SET birim = harcama_birimi WHERE (birim IS NULL OR birim = '') AND harcama_birimi IS NOT NULL;
         UPDATE DATA_IhaleDosyasi SET harcama_birimi = birim WHERE (harcama_birimi IS NULL OR harcama_birimi = '') AND birim IS NOT NULL;
+
+        -- 2886 Standartlaştırma: Mevcut eski kayıtlarda kalan 4734 / temin kalıntılarını düzelt
+        UPDATE DATA_IhaleDosyasi SET madde = '2886 Sayılı Devlet İhale Kanunu' WHERE madde IS NULL OR madde = '' OR madde LIKE '%4734%' OR madde LIKE '%22/d%';
+        UPDATE DATA_IhaleDosyasi SET ihale_usulu = '2886 Sayılı Kanun' WHERE ihale_usulu IS NULL OR ihale_usulu = '' OR ihale_usulu = 'acik';
+        UPDATE DATA_IhaleDosyasi SET ihale_tipi = 'Devlet İhalesi (2886)' WHERE ihale_tipi IS NULL OR ihale_tipi = '' OR ihale_tipi = 'dogrudan_temin';
+        UPDATE DATA_IhaleDosyasi SET tur = 'satis_kiralama' WHERE tur IS NULL OR tur = '' OR tur = 'mal';
+        UPDATE DATA_IhaleDosyasi SET alim_turu = 'satis_kiralama' WHERE alim_turu IS NULL OR alim_turu = '' OR alim_turu = 'mal';
       `,
       'DATA_IhaleDosyasi Kolon Senkronizasyonu'
     )
@@ -361,6 +368,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
 
   safeAddColumn(db, 'DATA_DosyaSablonVeri', 'sablon_kodu', 'TEXT')
   safeAddColumn(db, 'DATA_DosyaSablonVeri', 'sablon_versiyon', 'INTEGER DEFAULT 1')
+  safeAddColumn(db, 'DATA_DosyaSablonVeri', 'sablon_id', 'INTEGER')
 
   if (isPhysicalTable(db, 'DATA_DosyaSablonVeri')) {
     safeExec(
@@ -378,7 +386,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
       'DATA_DosyaSablonVeri sablon_kodu backfill'
     )
 
-    // Deduplication before unique index creation
+    // Deduplication before unique index creation (Transactional & Safe against data loss)
     try {
       const duplicates = db
         .prepare(
@@ -390,37 +398,47 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
         )
         .all() as Array<{ temin_dosya_id: number; sablon_kodu: string }>
 
+      const hasRevizyon = isPhysicalTable(db, 'DATA_DosyaRevizyon')
+      const insertRevizyon = hasRevizyon
+        ? db.prepare(
+            `INSERT INTO DATA_DosyaRevizyon (temin_dosya_id, modul_adi, surec_kodu, belge_kodu, versiyon, baslik, veri_json) 
+             VALUES (?, 'BELGE_YONETIMI', 'MIGRATION_DEDUP', ?, 'v_arsiv', 'Eski Mükerrer Belge Verisi Arşivi', ?)`
+          )
+        : null
+      const deleteSablonVeri = db.prepare(`DELETE FROM DATA_DosyaSablonVeri WHERE id = ?`)
+
       for (const dup of duplicates) {
         const rows = db
           .prepare(
-            `SELECT id, veri_json, created_at, updated_at 
+            `SELECT id, veri_json 
              FROM DATA_DosyaSablonVeri 
              WHERE temin_dosya_id = ? AND sablon_kodu = ? 
-             ORDER BY updated_at DESC, id DESC`
+             ORDER BY id DESC`
           )
           .all(dup.temin_dosya_id, dup.sablon_kodu) as Array<{
           id: number
           veri_json: string
-          created_at?: string
-          updated_at?: string
         }>
 
         if (rows.length > 1) {
           for (let i = 1; i < rows.length; i++) {
             const oldRow = rows[i]
-            if (isPhysicalTable(db, 'DATA_DosyaRevizyon')) {
-              try {
-                db.prepare(
-                  `INSERT INTO DATA_DosyaRevizyon (temin_dosya_id, modul_adi, surec_kodu, belge_kodu, versiyon, baslik, veri_json) 
-                   VALUES (?, 'BELGE_YONETIMI', 'MIGRATION_DEDUP', ?, 'v_arsiv', 'Eski Mükerrer Belge Verisi Arşivi', ?)`
-                ).run(dup.temin_dosya_id, dup.sablon_kodu, oldRow.veri_json)
-              } catch {}
-            }
-            db.prepare(`DELETE FROM DATA_DosyaSablonVeri WHERE id = ?`).run(oldRow.id)
+            // Arşivleme ve silme tek bir atomik transaction içinde yapılır.
+            // Arşivleme başarısız olursa silme işlemi yapılmaz (veri kaybı engellenir).
+            db.transaction(() => {
+              if (insertRevizyon) {
+                insertRevizyon.run(dup.temin_dosya_id, dup.sablon_kodu, oldRow.veri_json)
+              }
+              deleteSablonVeri.run(oldRow.id)
+            })()
           }
         }
       }
-    } catch {}
+    } catch (err: unknown) {
+      if (!isExpectedSqliteError(err)) {
+        console.error('[ensureSchemaIntegrity 2886] Mükerrer şablon verisi temizleme uyarısı:', err)
+      }
+    }
 
     safeExec(
       db,

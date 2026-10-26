@@ -293,4 +293,177 @@ describe('Database Schema Integrity & Manifest Tests (Devlet İhale 2886)', () =
     expect(pendingChanges.length).toBe(1)
     expect(pendingChanges[0].schema).toBe(1)
   })
+
+  it('should insert through DATA_TeminDosyasi compatibility view and produce 2886 context defaults', () => {
+    const { rawDb, db } = createRealSqliteDb()
+    ensureSchemaIntegrity(db as any)
+
+    // Verify DATA_TeminDosyasi is a VIEW on DATA_IhaleDosyasi
+    const viewMeta = rawDb
+      .prepare("SELECT type FROM sqlite_master WHERE name = 'DATA_TeminDosyasi'")
+      .get() as { type: string }
+    expect(viewMeta.type).toBe('view')
+
+    // Insert legacy-style record through DATA_TeminDosyasi view without specifying ihale_tipi or madde
+    rawDb.exec(`
+      INSERT INTO DATA_TeminDosyasi (dosya_no, konu, yaklasik_maliyet)
+      VALUES ('2886/VIEW-01', 'Arsa Satışı İhalesi', 750000);
+    `)
+
+    // Verify underlying physical table DATA_IhaleDosyasi received 2886 defaults
+    const inserted = rawDb
+      .prepare("SELECT * FROM DATA_IhaleDosyasi WHERE dosya_no = '2886/VIEW-01'")
+      .get() as any
+    expect(inserted).toBeDefined()
+    expect(inserted.madde).toBe('2886 Sayılı Devlet İhale Kanunu')
+    expect(inserted.ihale_usulu).toBe('2886 Sayılı Kanun')
+    expect(inserted.ihale_tipi).toBe('Devlet İhalesi (2886)')
+    expect(inserted.tur).toBe('satis_kiralama')
+
+    // Test UPDATE through the compatibility view
+    rawDb.exec(`
+      UPDATE DATA_TeminDosyasi SET konu = 'Güncellenen Arsa Satışı' WHERE dosya_no = '2886/VIEW-01';
+    `)
+    const updated = rawDb
+      .prepare("SELECT konu, madde FROM DATA_IhaleDosyasi WHERE dosya_no = '2886/VIEW-01'")
+      .get() as any
+    expect(updated.konu).toBe('Güncellenen Arsa Satışı')
+    expect(updated.madde).toBe('2886 Sayılı Devlet İhale Kanunu')
+  })
+
+  it('should safely upgrade legacy databases, standardize existing records, and pass foreign key checks', () => {
+    const { rawDb, db } = createRealSqliteDb()
+
+    // 1. Simulate an older database created before 2886 isolation:
+    // Old table without explicit 2886 defaults and with legacy records containing old 4734/temin values
+    rawDb.exec(`
+      CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT);
+      CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
+      INSERT INTO settings (key, value) VALUES ('dbSchemaVersion', '0');
+
+      CREATE TABLE TANIM_Birim (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ad TEXT NOT NULL,
+        aktif_mi INTEGER DEFAULT 1
+      );
+      INSERT INTO TANIM_Birim (id, ad) VALUES (1, 'Emlak ve İstimlak Müdürlüğü');
+
+      CREATE TABLE TANIM_Personel (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ad_soyad TEXT NOT NULL,
+        aktif_mi INTEGER DEFAULT 1
+      );
+      INSERT INTO TANIM_Personel (id, ad_soyad) VALUES (1, 'Ahmet Yılmaz');
+
+      CREATE TABLE DATA_IhaleDosyasi (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dosya_no TEXT,
+        temin_no TEXT,
+        konu TEXT NOT NULL,
+        madde TEXT DEFAULT '4734 Sayılı Kanun 22/d',
+        ihale_usulu TEXT DEFAULT 'acik',
+        ihale_tipi TEXT DEFAULT 'dogrudan_temin',
+        tur TEXT DEFAULT 'mal',
+        alim_turu TEXT DEFAULT 'mal',
+        birim_id INTEGER REFERENCES TANIM_Birim(id),
+        yaklasik_maliyet REAL DEFAULT 0
+      );
+
+      -- Legacy record with old temin defaults
+      INSERT INTO DATA_IhaleDosyasi (id, dosya_no, konu, madde, ihale_usulu, ihale_tipi, tur, birim_id)
+      VALUES (101, 'ESKI-2886-01', 'Eski İhale Kaydı', '4734 Sayılı Kanun 22/d', 'acik', 'dogrudan_temin', 'mal', 1);
+    `)
+
+    // 2. Run ensureSchemaIntegrity (database upgrade simulation)
+    expect(() => {
+      ensureSchemaIntegrity(db as any)
+    }).not.toThrow()
+
+    // 3. Verify existing legacy records were standardized to 2886 defaults without data loss
+    const migratedRecord = rawDb
+      .prepare('SELECT * FROM DATA_IhaleDosyasi WHERE id = 101')
+      .get() as any
+    expect(migratedRecord).toBeDefined()
+    expect(migratedRecord.konu).toBe('Eski İhale Kaydı')
+    expect(migratedRecord.madde).toBe('2886 Sayılı Devlet İhale Kanunu')
+    expect(migratedRecord.ihale_usulu).toBe('2886 Sayılı Kanun')
+    expect(migratedRecord.ihale_tipi).toBe('Devlet İhalesi (2886)')
+    expect(migratedRecord.tur).toBe('satis_kiralama')
+
+    // 4. Verify PRAGMA foreign_key_check passes with 0 violations
+    const fkViolations = rawDb.prepare('PRAGMA foreign_key_check;').all()
+    expect(fkViolations).toHaveLength(0)
+
+    // 5. Test idempotency: re-running migration on upgraded DB must not throw or alter data
+    expect(() => {
+      ensureSchemaIntegrity(db as any)
+    }).not.toThrow()
+
+    const secondCheckRecord = rawDb
+      .prepare('SELECT * FROM DATA_IhaleDosyasi WHERE id = 101')
+      .get() as any
+    expect(secondCheckRecord.madde).toBe('2886 Sayılı Devlet İhale Kanunu')
+  })
+
+  it('should atomically deduplicate DATA_DosyaSablonVeri by archiving to DATA_DosyaRevizyon without data loss', () => {
+    const { rawDb, db } = createRealSqliteDb()
+    ensureSchemaIntegrity(db as any)
+
+    // Simulate legacy database having DATA_DosyaSablonVeri and DATA_DosyaRevizyon with duplicate entries
+    rawDb.exec(`
+      CREATE TABLE IF NOT EXISTS DATA_DosyaSablonVeri (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        temin_dosya_id INTEGER,
+        sablon_id INTEGER,
+        sablon_kodu TEXT,
+        veri_json TEXT,
+        updated_at DATETIME
+      );
+
+      CREATE TABLE IF NOT EXISTS DATA_DosyaRevizyon (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        temin_dosya_id INTEGER,
+        modul_adi TEXT,
+        surec_kodu TEXT,
+        belge_kodu TEXT,
+        versiyon TEXT,
+        baslik TEXT,
+        veri_json TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      DROP INDEX IF EXISTS idx_data_dosyasablonveri_unique;
+
+      INSERT INTO DATA_DosyaSablonVeri (temin_dosya_id, sablon_kodu, veri_json, updated_at)
+      VALUES 
+        (1, '2886-EVR-01', '{"version": 1, "note": "ilk versiyon"}', '2026-01-01 10:00:00'),
+        (1, '2886-EVR-01', '{"version": 2, "note": "yeni versiyon"}', '2026-01-02 10:00:00');
+    `)
+
+    // Verify 2 duplicate rows exist
+    const countBefore = rawDb
+      .prepare("SELECT COUNT(*) as cnt FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = 1 AND sablon_kodu = '2886-EVR-01'")
+      .get() as { cnt: number }
+    expect(countBefore.cnt).toBe(2)
+
+    // Run schema integrity to trigger safe transactional deduplication
+    expect(() => {
+      ensureSchemaIntegrity(db as any)
+    }).not.toThrow()
+
+    // 1 row should remain in DATA_DosyaSablonVeri (the newer version)
+    const remaining = rawDb
+      .prepare("SELECT * FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = 1 AND sablon_kodu = '2886-EVR-01'")
+      .all() as any[]
+    expect(remaining).toHaveLength(1)
+    expect(remaining[0].veri_json).toContain('yeni versiyon')
+
+    // Older duplicate must be archived in DATA_DosyaRevizyon
+    const archived = rawDb
+      .prepare("SELECT * FROM DATA_DosyaRevizyon WHERE temin_dosya_id = 1 AND surec_kodu = 'MIGRATION_DEDUP'")
+      .all() as any[]
+    expect(archived).toHaveLength(1)
+    expect(archived[0].veri_json).toContain('ilk versiyon')
+  })
 })
+
