@@ -3,10 +3,7 @@ import { describe, it, expect } from 'vitest'
 import {
   getAppManifest,
   getAppSchemaMax,
-  appManifests,
-  temin360Manifest,
-  ihale360Manifest,
-  devletIhale2886Manifest
+  appManifests
 } from '@dt/database'
 
 describe('Uygulama Bazlı Şema Manifestleri (Multi-Desktop Architecture)', () => {
@@ -31,8 +28,8 @@ describe('Uygulama Bazlı Şema Manifestleri (Multi-Desktop Architecture)', () =
     expect(manifest.app).toBe('ihale360-desktop')
     expect(manifest.target_scope).toBe('ihale')
     expect(manifest.version).toBe('1.0.0-beta.1')
-    expect(manifest.schema_max).toBe(46)
-    expect(getAppSchemaMax('ihale360-desktop')).toBe(46)
+    expect(manifest.schema_max).toBe(1)
+    expect(getAppSchemaMax('ihale360-desktop')).toBe(1)
   })
 
   it('devlet-ihale-2886-desktop için doğru şema ve sürüm bilgisi döner', () => {
@@ -40,8 +37,8 @@ describe('Uygulama Bazlı Şema Manifestleri (Multi-Desktop Architecture)', () =
     expect(manifest.app).toBe('devlet-ihale-2886-desktop')
     expect(manifest.target_scope).toBe('devlet_ihale_2886')
     expect(manifest.version).toBe('1.0.0-beta.1')
-    expect(manifest.schema_max).toBe(46)
-    expect(getAppSchemaMax('devlet-ihale-2886-desktop')).toBe(46)
+    expect(manifest.schema_max).toBe(1)
+    expect(getAppSchemaMax('devlet-ihale-2886-desktop')).toBe(1)
   })
 
   it('kısayol isimlerle aramalarda doğru hedef manifesti eşleştirir', () => {

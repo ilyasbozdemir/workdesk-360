@@ -4,7 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import os from 'os'
 import AdmZip from 'adm-zip'
-import { CURRENT_SCHEMA_VERSION } from '@dt/database'
+import { getAppSchemaMax } from '@dt/database'
 
 vi.mock('better-sqlite3', () => {
   return {
@@ -248,7 +248,7 @@ describe('DtmWorkspace.saveAs (Farklı Kaydet) Kapsamlı Regresyon Test Paketi',
     // Yeni dosyayı yeniden aç
     const openMeta = workspaceManager.open(targetFile)
     expect(openMeta).toBeDefined()
-    expect(openMeta.schema_version).toBe(CURRENT_SCHEMA_VERSION)
+    expect(openMeta.schema_version).toBe(getAppSchemaMax('ihale360-desktop'))
     expect(workspaceManager.getCurrentFilePath()).toBe(path.resolve(targetFile))
     expect(fs.existsSync(targetFile + '.lock')).toBe(true)
   })

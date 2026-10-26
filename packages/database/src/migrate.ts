@@ -136,16 +136,19 @@ export function resolveMigrationChanges(
 
   const changeMap = new Map<number, SchemaChange>()
 
-  // 1. Ortak / Temel Suite Manifestoları (tarihsel v1..v45)
-  for (const v of manifests) {
-    if (v.changes) {
-      for (const change of v.changes) {
-        changeMap.set(change.schema, change)
+  // 1. Ortak / Doğrudan Temin Tarihsel Suite Manifestoları (yalnızca temin360 için)
+  const isDedicatedApp = Boolean(appId && !appId.includes('temin'))
+  if (!isDedicatedApp) {
+    for (const v of manifests) {
+      if (v.changes) {
+        for (const change of v.changes) {
+          changeMap.set(change.schema, change)
+        }
       }
     }
   }
 
-  // 2. Uygulama Bazlı Manifest Değişiklikleri (varsa v46+ veya uygulamaya özel override'lar)
+  // 2. Uygulama Bazlı Manifest Değişiklikleri
   if (appManifest?.changes) {
     for (const change of appManifest.changes) {
       changeMap.set(change.schema, change)

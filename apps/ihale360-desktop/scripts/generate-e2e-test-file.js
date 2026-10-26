@@ -20,7 +20,7 @@ const os = require('os')
 const crypto = require('crypto')
 const Database = require('better-sqlite3')
 const AdmZip = require('adm-zip')
-const { initializeDatabase, CURRENT_SCHEMA_VERSION } = require('@dt/database')
+const { initializeDatabase, CURRENT_SCHEMA_VERSION, getAppSchemaMax } = require('@dt/database')
 
 function resolveWindowsDesktopDir() {
   if (process.platform === 'win32') {
@@ -75,15 +75,18 @@ function generateE2ETestFile(
   const db = new Database(tempDbPath)
 
   // Initialize SQLite schema and tables via @dt/database
-  initializeDatabase(db, institutionName, '1.0.0-beta.256')
+  initializeDatabase(db, institutionName, '1.0.0-beta.1', 'ihale360-desktop')
 
   // Seed sample data for E2E verification
-  const insertDosya = db.prepare(`
-    INSERT INTO DATA_TeminDosyasi (
-      temin_no, konu, tur, ihale_sekli, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
-  `)
-  insertDosya.run(dosyaNo, konu, 'mal', '22/d')
+  const hasTeminTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='DATA_TeminDosyasi'").get()
+  if (hasTeminTable) {
+    const insertDosya = db.prepare(`
+      INSERT INTO DATA_TeminDosyasi (
+        temin_no, konu, tur, ihale_sekli, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+    `)
+    insertDosya.run(dosyaNo, konu, 'mal', '22/d')
+  }
 
   const insertBirim = db.prepare(`
     INSERT OR IGNORE INTO TANIM_Birim (
@@ -104,12 +107,13 @@ function generateE2ETestFile(
   db.close()
 
   // Generate metadata conforming to WorkspaceMeta
+  const appSchemaVersion = getAppSchemaMax ? getAppSchemaMax('ihale360-desktop') : 1
   const meta = {
     dtal_version: '1.0',
-    app_version: '1.0.0-beta.256',
+    app_version: '1.0.0-beta.1',
     created_at: new Date().toISOString().split('T')[0],
     institution: institutionName,
-    schema_version: CURRENT_SCHEMA_VERSION,
+    schema_version: appSchemaVersion,
     platform: process.platform,
     file_version: 1,
     active_db_file: 'database.sqlite',

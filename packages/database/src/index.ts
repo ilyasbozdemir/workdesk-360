@@ -96,7 +96,7 @@ import { DATA_KutuphaneYerTutucu } from './tables/DATA_KutuphaneYerTutucu'
 // ============================================================================
 import { LOG_SystemLog } from './tables/LOG_SystemLog'
 
-import { runMigrations, CURRENT_SCHEMA_VERSION } from './migrate'
+import { runMigrations, CURRENT_SCHEMA_VERSION, getAppSchemaMax } from './migrate'
 import { defineTable } from './BaseTable'
 
 /**
@@ -538,30 +538,119 @@ const rawTables = [
 ]
 
 /**
- * Uygulamanın veritabanı şema ve tablo tanımları kataloğu.
- * SQLite tablolarının DDL tanımlarını, kolon tiplerini ve başlangıç seed verilerini taşır.
+ * 4734 Sayılı Kanun Madde 22 Doğrudan Temin Sürecine Özel Tablolar Listesi.
+ * İhale 360 (Md. 19/21 Açık/Pazarlık) ve Devlet İhale 2886 (Satış/Kira/Trampa)
+ * veritabanlarında yer almaz; yalnızca Temin 360'a aittir.
  */
-export const schema = {
+export const DOGRUDAN_TEMIN_TABLE_NAMES = new Set([
+  'DATA_TeminDosyasi',
+  'DATA_TeminKalem',
+  'DATA_TeminFirma',
+  'DATA_TeminKalemTeklif',
+  'DATA_TeminKomisyon',
+  'DATA_TeminBelge',
+  'DATA_DosyaSablonVeri',
+  'DATA_DosyaRevizyon',
+  'DATA_IhtiyacRaporu',
+  'DATA_IhtiyacRaporuKalem',
+  'TANIM_AlimTuru',
+  'TANIM_AlimTuru_Sablon',
+  'TANIM_KikLimitDonemleri'
+])
+
+/**
+ * Yalnızca Doğrudan Temin modülüne ait tablolar
+ */
+export const dogrudanTeminTables = rawTables.filter((t) => DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name))
+
+/**
+ * WorkDesk 360 Suite tüm masaüstü uygulamaları (Temin 360, İhale 360, Devlet İhale 2886)
+ * tarafından paylaşılan kurumsal teşkilat, personel, mevzuat, firma, bütçe, ambar,
+ * şablon kütüphanesi ve log ortak tabloları.
+ */
+export const sharedFoundationTables = rawTables.filter((t) => !DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name))
+
+/**
+ * TEMİN 360 Veritabanı Şeması (Doğrudan Temin 4734 Md. 22 - v46 / 1.0.0-rc.8)
+ */
+export const temin360Schema = {
   database: 'DOGRUDAN_TEMIN_DB',
   app_title: 'TEMİN 360',
+  app_id: 'temin360-desktop',
+  version: '1.0.0-rc.8',
+  schema_version: CURRENT_SCHEMA_VERSION,
   tables: rawTables.map(defineTable)
 }
 
 /**
- * SQLite veritabanını oluşturur; varsayılan tabloları, ayarları, indeksleri ve ilk seed verilerini yükler.
+ * İHALE 360 Veritabanı Şeması (Kamu İhalesi KİK Md. 19/21 - v1 / 1.0.0-beta.1 1. Adım)
+ * Doğrudan temin tablolarından tamamen arındırılmış bağımsız kamu ihale şeması.
+ */
+export const ihale360Schema = {
+  database: 'IHALE_360_DB',
+  app_title: 'İHALE 360',
+  app_id: 'ihale360-desktop',
+  version: '1.0.0-beta.1',
+  schema_version: 1,
+  tables: sharedFoundationTables.map(defineTable)
+}
+
+/**
+ * DEVLET İHALE 2886 Veritabanı Şeması (2886 Sayılı Kanun Satış/Kira/Trampa - v1 / 1.0.0-beta.1 1. Adım)
+ * Doğrudan temin tablolarından tamamen arındırılmış bağımsız devlet ihale şeması.
+ */
+export const devletIhale2886Schema = {
+  database: 'DEVLET_IHALE_2886_DB',
+  app_title: 'DEVLET İHALE 2886',
+  app_id: 'devlet-ihale-2886-desktop',
+  version: '1.0.0-beta.1',
+  schema_version: 1,
+  tables: sharedFoundationTables.map(defineTable)
+}
+
+/**
+ * Uygulamanın varsayılan veritabanı şema ve tablo tanımları kataloğu (Geriye dönük uyumluluk).
+ */
+export const schema = temin360Schema
+
+/**
+ * Verilen uygulama kimliğine göre ilgili uygulamanın şema tanımını döndürür.
+ */
+export function getAppSchema(appName: string) {
+  if (appName.includes('ihale360')) {
+    return ihale360Schema
+  }
+  if (appName.includes('2886')) {
+    return devletIhale2886Schema
+  }
+  return temin360Schema
+}
+
+/**
+ * SQLite veritabanını oluşturur; uygulamanın kendi şema tablolarını, ayarlarını, indekslerini ve ilk seed verilerini yükler.
  *
  * İşlem Sırası:
  * 1. Dahili sistem tablolarını (`settings`, `schema_migrations`, `LOG_YedekGecmisi`) oluşturur.
  * 2. Kurum adı, veritabanı sürümü, aktif kurum ID, vergi oranları ve şablon tema JSON'ını `settings` tablosuna yazar.
- * 3. `schema.tables` kataloğundaki tüm tabloları (`CREATE TABLE IF NOT EXISTS`) ve `initialData` satırlarını işler.
+ * 3. Hedef uygulama şemasındaki tabloları (`CREATE TABLE IF NOT EXISTS`) ve `initialData` satırlarını işler.
  * 4. Performans indekslerini (`idx_tasinirkod_tam_kod`, `idx_okaskod_kod` vb.) oluşturur.
  * 5. Geliştirme ortamında test personellerini (`TANIM_Personel` ve `TANIM_Roller`) seed eder.
  *
  * @param db - better-sqlite3 veritabanı bağlantı nesnesi.
  * @param institutionName - Kurum adı (varsayılan ayarlara kaydedilir).
  * @param currentAppVersion - Uygulama sürüm numarası.
+ * @param appName - Masaüstü uygulaması kimliği (örn: 'ihale360-desktop', 'devlet-ihale-2886-desktop', 'temin360-desktop')
  */
-export function initializeDatabase(db: Database.Database, institutionName: string, currentAppVersion: string = '1.0.0'): void {
+export function initializeDatabase(
+  db: Database.Database,
+  institutionName: string,
+  currentAppVersion: string = '1.0.0',
+  appName?: string
+): void {
+  const targetSchema = appName ? getAppSchema(appName) : schema
+  const targetSchemaVersion = appName ? getAppSchemaMax(appName) : CURRENT_SCHEMA_VERSION
+  const targetAppTitle = targetSchema.app_title || schema.app_title
+
   db.exec(`
     -- Uygulama genel ayarlarını (key-value) saklar
     CREATE TABLE IF NOT EXISTS settings (
@@ -588,8 +677,8 @@ export function initializeDatabase(db: Database.Database, institutionName: strin
     );
     INSERT OR REPLACE INTO settings (key, value) VALUES ('institutionName', '${institutionName.replace(/'/g, "''")}');
     INSERT OR REPLACE INTO settings (key, value) VALUES ('dbVersion', '${currentAppVersion}');
-    INSERT OR REPLACE INTO settings (key, value) VALUES ('dbSchemaVersion', '${CURRENT_SCHEMA_VERSION}');
-    INSERT OR REPLACE INTO settings (key, value) VALUES ('appTitle', '${schema.app_title}');
+    INSERT OR REPLACE INTO settings (key, value) VALUES ('dbSchemaVersion', '${targetSchemaVersion}');
+    INSERT OR REPLACE INTO settings (key, value) VALUES ('appTitle', '${targetAppTitle}');
     INSERT OR REPLACE INTO settings (key, value) VALUES ('adminName', 'İlyas BOZDEMİR');
     INSERT OR REPLACE INTO settings (key, value) VALUES ('adminTitle', 'Sistem Yöneticisi');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('activeKurumId', '1');
@@ -597,7 +686,7 @@ export function initializeDatabase(db: Database.Database, institutionName: strin
     INSERT OR IGNORE INTO settings (key, value) VALUES ('documentTemplateTheme', '{"typography":{"fontFamily":"Times New Roman, Times, serif","baseFontSize":"12pt","lineHeight":1.5,"fontSize":{"xs":"8pt","sm":"10pt","base":"12pt","lg":"14pt","xl":"16pt","2xl":"18pt"},"fontWeight":{"normal":400,"semibold":600,"bold":700}},"colors":{"text":"#000000","textLight":"#333333","textMuted":"#666666","border":"#333333","borderLight":"#999999","headerBg":"#ffffff","accentLine":"#cc0000","white":"#ffffff","black":"#000000"},"page":{"format":"A4","width":"21cm","height":"29.7cm","margins":{"top":1.5,"right":1.5,"bottom":1.5,"left":1.5},"printableHeight":890},"table":{"borderCollapse":"collapse","fontSize":"10pt","cellPadding":"6px","headerBgColor":"#f2f2f2","headerFontWeight":"bold","headerTextAlign":"center","borderColor":"#333333","borderWidth":"1px"},"spacing":{"headerHeight":"80px","footerHeight":"60px","approvalSpacing":"40px","marginBottom":"20px","marginTop":"20px","titleMargin":"20px 0"},"summary":{"description":"Tüm şablonlarda tutarlı görünüm.","lastUpdated":"2026-09-17T00:00:00.000Z"}}');
   `)
 
-  schema.tables.forEach((table: any) => {
+  targetSchema.tables.forEach((table: any) => {
     const columnsSql = table.columns
       .map((col: any) => {
         let colDef = '"' + col.name + '" ' + col.type
