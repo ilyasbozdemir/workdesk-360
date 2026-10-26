@@ -294,10 +294,18 @@ export function runMigrations(
             try {
               db.exec(`ALTER TABLE ${colAdd.table} ADD COLUMN ${sqlDef};`)
             } catch (err: any) {
-              if (err.message && (err.message.includes('duplicate column') || err.message.includes('already exists'))) {
+              if (
+                err.message &&
+                (err.message.includes('duplicate column') ||
+                  err.message.includes('already exists'))
+              ) {
                 console.log(`Column ${colAdd.table}.${colAdd.column} already exists, skipping.`)
               } else {
-                console.warn(`ALTER TABLE ${colAdd.table} ADD COLUMN ${sqlDef} warning:`, err.message)
+                console.error(
+                  `[Migration Error] ALTER TABLE ${colAdd.table} ADD COLUMN ${sqlDef} failed:`,
+                  err.message
+                )
+                throw err
               }
             }
           }
@@ -315,7 +323,11 @@ export function runMigrations(
               ) {
                 continue
               }
-              console.warn(`Raw SQL error in migration v${change.schema}:`, err.message)
+              console.error(
+                `[Migration Error] Raw SQL failed in migration v${change.schema}:`,
+                err.message
+              )
+              throw err
             }
           }
         }

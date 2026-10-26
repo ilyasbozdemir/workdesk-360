@@ -164,4 +164,44 @@ describe('Database Schema Integrity & Manifest Tests', () => {
     expect(olcuCreate).toContain('"donusum_tipi" TEXT DEFAULT \'linear\'')
     expect(olcuCreate).not.toContain('DEFAULT Adet/Miktar')
   })
+
+  it('should propagate errors when a migration step fails instead of silently swallowing it', () => {
+    const dbLike: any = {
+      exec: (sql: string) => {
+        if (sql.includes('ALTER TABLE') || sql.includes('CREATE TABLE')) {
+          throw new Error('disk I/O error or constraint failure')
+        }
+      },
+      prepare: () => ({
+        run: () => ({}),
+        all: () => [],
+        get: () => ({})
+      }),
+      transaction: (fn: any) => fn
+    }
+
+    expect(() => {
+      runMigrations(dbLike, 0, schema)
+    }).toThrow(/disk I\/O error or constraint failure/)
+  })
+
+  it('should tolerate idempotent already-exists or duplicate-column errors during migration', () => {
+    const dbLike: any = {
+      exec: (sql: string) => {
+        if (sql.includes('ALTER TABLE')) {
+          throw new Error('duplicate column name: test_col')
+        }
+      },
+      prepare: () => ({
+        run: () => ({}),
+        all: () => [],
+        get: () => ({})
+      }),
+      transaction: (fn: any) => fn
+    }
+
+    expect(() => {
+      runMigrations(dbLike, 10, schema)
+    }).not.toThrow()
+  })
 })

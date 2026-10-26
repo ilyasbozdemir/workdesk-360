@@ -296,10 +296,10 @@ function main() {
     }
   }
 
-  const tag = `v${version}`
+  const tag = `ihale360-v${version}`
 
-  console.log(c.cyan(`📌 Versiyon: ${c.bold(version)}`))
-  console.log(c.cyan(`🏷️  Tag:      ${c.bold(tag)}`))
+  console.log(c.cyan(`📌 İhale 360 Versiyon: ${c.bold(version)}`))
+  console.log(c.cyan(`🏷️  Tag:               ${c.bold(tag)}`))
 
   if (flags.dryRun) {
     console.log(c.yellow('\n⚠️  DRY RUN modu - hiçbir değişiklik yapılmayacak\n'))
@@ -327,21 +327,6 @@ function main() {
     if (!flags.dryRun) {
       pkg.version = version
       writeJSON('package.json', pkg)
-
-      const monorepoPkgs = [
-        path.join(GIT_ROOT, 'package.json'),
-        path.join(GIT_ROOT, 'packages/database/package.json'),
-        path.join(GIT_ROOT, 'packages/document-templates/package.json')
-      ]
-      for (const pPath of monorepoPkgs) {
-        if (fs.existsSync(pPath)) {
-          try {
-            const pData = JSON.parse(fs.readFileSync(pPath, 'utf-8'))
-            pData.version = version
-            fs.writeFileSync(pPath, JSON.stringify(pData, null, 2) + '\n', 'utf-8')
-          } catch {}
-        }
-      }
     }
   }
 
