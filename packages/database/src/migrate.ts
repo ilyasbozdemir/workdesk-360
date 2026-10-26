@@ -29,6 +29,8 @@ export interface AppVersionManifest {
   schema_max: number
   release_date: string
   changes: SchemaChange[]
+  inheritsHistoricalSuiteManifests?: boolean
+  shared_schema_scope?: string
 }
 
 /**
@@ -136,9 +138,13 @@ export function resolveMigrationChanges(
 
   const changeMap = new Map<number, SchemaChange>()
 
-  // 1. Ortak / Doğrudan Temin Tarihsel Suite Manifestoları (yalnızca temin360 için)
-  const isDedicatedApp = Boolean(appId && !appId.includes('temin'))
-  if (!isDedicatedApp) {
+  // 1. Ortak / Doğrudan Temin Tarihsel Suite Manifestoları
+  // Yalnızca manifestosunda inheritsHistoricalSuiteManifests true olan veya varsayılan Temin 360 için dahil edilir.
+  const shouldInheritSuite = appManifest
+    ? Boolean(appManifest.inheritsHistoricalSuiteManifests)
+    : !appId || appId === 'temin360-desktop'
+
+  if (shouldInheritSuite) {
     for (const v of manifests) {
       if (v.changes) {
         for (const change of v.changes) {

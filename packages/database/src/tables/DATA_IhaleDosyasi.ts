@@ -60,6 +60,11 @@ export const DATA_IhaleDosyasi: TableSchema = {
       description: 'İhale Tipi'
     },
     {
+      name: 'madde',
+      type: 'TEXT',
+      description: 'İhale Yasal Dayanağı / Mevzuat Maddesi'
+    },
+    {
       name: 'tur',
       type: 'TEXT',
       notNull: true,

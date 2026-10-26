@@ -11,6 +11,8 @@ export const ihale360Manifest = {
   schema_min: 1,
   schema_max: 1,
   release_date: "2026-10-26",
+  inheritsHistoricalSuiteManifests: false,
+  shared_schema_scope: "ihale",
   changes: [
     {
       schema: 1,

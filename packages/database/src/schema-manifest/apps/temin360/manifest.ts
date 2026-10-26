@@ -11,6 +11,8 @@ export const temin360Manifest = {
   schema_min: 1,
   schema_max: 46,
   release_date: "2026-10-25",
+  inheritsHistoricalSuiteManifests: true,
+  shared_schema_scope: "dogrudan-temin",
   changes: [
     {
       schema: 46,

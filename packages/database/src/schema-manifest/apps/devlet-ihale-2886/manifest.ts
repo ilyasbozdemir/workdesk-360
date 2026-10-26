@@ -11,6 +11,8 @@ export const devletIhale2886Manifest = {
   schema_min: 1,
   schema_max: 1,
   release_date: "2026-10-26",
+  inheritsHistoricalSuiteManifests: false,
+  shared_schema_scope: "devlet_ihale_2886",
   changes: [
     {
       schema: 1,

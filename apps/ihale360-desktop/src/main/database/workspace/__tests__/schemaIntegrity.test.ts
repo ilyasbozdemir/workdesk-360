@@ -1,11 +1,56 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest'
+import { DatabaseSync } from 'node:sqlite'
 import { schema } from '../../index'
+import { ensureSchemaIntegrity } from '../schemaIntegrity'
 import {
   manifests,
   CURRENT_SCHEMA_VERSION,
   getMaxSchemaVersion,
-  runMigrations
+  runMigrations,
+  resolveMigrationChanges,
+  getAppManifest
 } from '@dt/database'
+
+function createRealSqliteDb(): {
+  rawDb: DatabaseSync
+  db: {
+    exec: (sql: string) => void
+    prepare: (sql: string) => {
+      run: (...args: any[]) => void
+      get: (...args: any[]) => any
+      all: (...args: any[]) => any[]
+    }
+    transaction: <T extends (...args: any[]) => any>(fn: T) => T
+  }
+} {
+  const rawDb = new DatabaseSync(':memory:')
+  const db = {
+    exec: (sql: string) => rawDb.exec(sql),
+    prepare: (sql: string) => {
+      const stmt = rawDb.prepare(sql)
+      return {
+        run: (...args: any[]) => stmt.run(...args),
+        get: (...args: any[]) => stmt.get(...args),
+        all: (...args: any[]) => stmt.all(...args)
+      }
+    },
+    transaction: <T extends (...args: any[]) => any>(fn: T): T => {
+      return ((...args: any[]) => {
+        rawDb.exec('BEGIN TRANSACTION;')
+        try {
+          const res = fn(...args)
+          rawDb.exec('COMMIT;')
+          return res
+        } catch (err) {
+          rawDb.exec('ROLLBACK;')
+          throw err
+        }
+      }) as T
+    }
+  }
+  return { rawDb, db }
+}
 
 describe('Database Schema Integrity & Manifest Tests (İhale 360)', () => {
   it('should have all tables properly defined in ihale360 schema', () => {
@@ -155,5 +200,91 @@ describe('Database Schema Integrity & Manifest Tests (İhale 360)', () => {
     expect(olcuCreate).toContain('"kategori" TEXT DEFAULT \'Adet/Miktar\'')
     expect(olcuCreate).toContain('"donusum_tipi" TEXT DEFAULT \'linear\'')
     expect(olcuCreate).not.toContain('DEFAULT Adet/Miktar')
+  })
+
+  it('should initialize empty Ihale 360 database with ensureSchemaIntegrity and verify defaults', () => {
+    const { rawDb, db } = createRealSqliteDb()
+
+    // Run ensureSchemaIntegrity on pristine empty SQLite database
+    expect(() => {
+      ensureSchemaIntegrity(db as any)
+    }).not.toThrow()
+
+    // 1. Verify DATA_IhtiyacRaporu table exists and has foreign key referencing DATA_IhaleDosyasi
+    const ihtiyacTable = rawDb
+      .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'DATA_IhtiyacRaporu'")
+      .get() as { sql: string }
+    expect(ihtiyacTable).toBeDefined()
+    expect(ihtiyacTable.sql).toContain('FOREIGN KEY(ihale_dosya_id) REFERENCES DATA_IhaleDosyasi(id)')
+
+    // 2. Verify DATA_IhaleDosyasi has Kamu İhalesi defaults
+    const tableInfo = rawDb.prepare("PRAGMA table_info('DATA_IhaleDosyasi')").all() as Array<{
+      name: string
+      dflt_value: string | null
+    }>
+    const maddeCol = tableInfo.find((c) => c.name === 'madde')
+    expect(maddeCol).toBeDefined()
+    expect(maddeCol?.dflt_value).toBe("'4734 Sayılı Kanun (Kamu İhalesi)'")
+
+    const usulCol = tableInfo.find((c) => c.name === 'ihale_usulu')
+    expect(usulCol?.dflt_value).toBe("'Açık İhale (Md. 19)'")
+
+    const tipiCol = tableInfo.find((c) => c.name === 'ihale_tipi')
+    expect(tipiCol?.dflt_value).toBe("'Kamu İhalesi'")
+
+    // 3. Insert into DATA_IhaleDosyasi and test link from DATA_IhtiyacRaporu
+    rawDb.exec(`
+      INSERT INTO DATA_IhaleDosyasi (dosya_no, konu, yaklasik_maliyet)
+      VALUES ('2026/KIK-001', 'Hizmet Binası Onarım İhalesi', 1500000);
+    `)
+    const ihaleRow = rawDb
+      .prepare("SELECT id, madde, ihale_tipi FROM DATA_IhaleDosyasi WHERE dosya_no = '2026/KIK-001'")
+      .get() as { id: number; madde: string; ihale_tipi: string }
+    expect(ihaleRow).toBeDefined()
+    expect(ihaleRow.madde).toBe('4734 Sayılı Kanun (Kamu İhalesi)')
+    expect(ihaleRow.ihale_tipi).toBe('Kamu İhalesi')
+
+    // Insert linked record into DATA_IhtiyacRaporu
+    rawDb.exec(`
+      INSERT INTO DATA_IhtiyacRaporu (rapor_no, baslik, ihale_dosya_id, tahmini_butce)
+      VALUES ('IR-KIK-01', 'Onarım İhtiyaç Raporu', ${ihaleRow.id}, 1500000);
+    `)
+    const raporRow = rawDb
+      .prepare("SELECT * FROM DATA_IhtiyacRaporu WHERE rapor_no = 'IR-KIK-01'")
+      .get() as any
+    expect(raporRow).toBeDefined()
+    expect(raporRow.ihale_dosya_id).toBe(ihaleRow.id)
+  })
+
+  it('should not silently swallow unexpected SQLite errors in ensureSchemaIntegrity', () => {
+    const faultyDb: any = {
+      exec: (sql: string) => {
+        if (sql.includes('DATA_IhtiyacRaporu')) {
+          throw new Error('SQLITE_CORRUPT: database disk image is malformed')
+        }
+      },
+      prepare: () => ({
+        get: () => ({ type: 'table' }),
+        all: () => []
+      })
+    }
+
+    expect(() => {
+      ensureSchemaIntegrity(faultyDb)
+    }).toThrow('SQLITE_CORRUPT')
+  })
+
+  it('should configure ihale360 manifest to not inherit historical suite manifests', () => {
+    const manifest = getAppManifest('ihale360-desktop')
+    expect(manifest).toBeDefined()
+    expect(manifest.app).toBe('ihale360-desktop')
+    expect(manifest.inheritsHistoricalSuiteManifests).toBe(false)
+    expect(manifest.shared_schema_scope).toBe('ihale')
+
+    const { pendingChanges } = resolveMigrationChanges(0, {
+      appId: 'ihale360-desktop'
+    })
+    expect(pendingChanges.length).toBe(1)
+    expect(pendingChanges[0].schema).toBe(1)
   })
 })

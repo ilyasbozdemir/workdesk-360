@@ -600,6 +600,36 @@ export const sharedFoundationTables = rawTables.filter(
   (t) => !DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name) && !IHALE_SPECIFIC_TABLE_NAMES.has(t.name)
 )
 
+export const ihale360SpecificTables = ihaleSpecificTables.map((t) => {
+  if (t.name === 'DATA_IhaleDosyasi') {
+    return {
+      ...t,
+      columns: t.columns.map((c: any) => {
+        if (c.name === 'madde') return { ...c, default: "'4734 Sayılı Kanun (Kamu İhalesi)'" }
+        if (c.name === 'ihale_tipi') return { ...c, default: "'Kamu İhalesi'" }
+        return c
+      })
+    }
+  }
+  return t
+})
+
+export const devletIhale2886SpecificTables = ihaleSpecificTables.map((t) => {
+  if (t.name === 'DATA_IhaleDosyasi') {
+    return {
+      ...t,
+      columns: t.columns.map((c: any) => {
+        if (c.name === 'madde') return { ...c, default: "'2886 Sayılı Devlet İhale Kanunu'" }
+        if (c.name === 'ihale_usulu') return { ...c, default: "'2886 Sayılı Kanun'" }
+        if (c.name === 'ihale_tipi') return { ...c, default: "'Devlet İhalesi (2886)'" }
+        if (c.name === 'tur') return { ...c, default: "'satis_kiralama'" }
+        return c
+      })
+    }
+  }
+  return t
+})
+
 /**
  * TEMİN 360 Veritabanı Şeması (Doğrudan Temin 4734 Md. 22 - v46 / 1.0.0-rc.8)
  */
@@ -622,7 +652,7 @@ export const ihale360Schema = {
   app_id: 'ihale360-desktop',
   version: '1.0.0-beta.1',
   schema_version: 1,
-  tables: [...sharedFoundationTables, ...ihaleSpecificTables].map(defineTable)
+  tables: [...sharedFoundationTables, ...ihale360SpecificTables].map(defineTable)
 }
 
 /**
@@ -635,7 +665,7 @@ export const devletIhale2886Schema = {
   app_id: 'devlet-ihale-2886-desktop',
   version: '1.0.0-beta.1',
   schema_version: 1,
-  tables: [...sharedFoundationTables, ...ihaleSpecificTables].map(defineTable)
+  tables: [...sharedFoundationTables, ...devletIhale2886SpecificTables].map(defineTable)
 }
 
 /**
