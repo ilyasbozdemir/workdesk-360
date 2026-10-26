@@ -26,7 +26,11 @@ export const FileAssociationSchema = z.object({
   ext: z.string().min(1),
   name: z.string(),
   description: z.string(),
-  isPrimary: z.boolean().default(false)
+  mimeType: z.string().min(3).optional(),
+  progId: z.string().optional(),
+  perceivedType: z.string().optional(),
+  isPrimary: z.boolean().default(false),
+  isLegacy: z.boolean().optional()
 })
 
 export type FileAssociation = z.infer<typeof FileAssociationSchema>

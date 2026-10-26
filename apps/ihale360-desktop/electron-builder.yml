@@ -5,11 +5,13 @@ fileAssociations:
     name: İHALE 360 Proje Dosyası
     description: İHALE 360 Kamu İhalesi Proje Dosyası (*.ihale)
     role: Editor
+    mimeType: application/x-ihale
     icon: icon.ico
   - ext: ihale360
-    name: İHALE 360 Proje Dosyası
+    name: İHALE 360 Proje Dosyası (Alternatif)
     description: İHALE 360 Alternatif Proje Dosyası (*.ihale360)
     role: Editor
+    mimeType: application/x-ihale360
     icon: icon.ico
 directories:
   buildResources: build

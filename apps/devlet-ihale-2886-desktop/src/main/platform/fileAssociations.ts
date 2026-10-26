@@ -25,18 +25,27 @@ export function registerWindowsFileAssociations(): void {
     else if (fs.existsSync(pDev)) iconPath = pDev
     else if (fs.existsSync(pRoot)) iconPath = pRoot
 
-    // 1. ProgID ve Uygulama Kayıtları
+    // 1. DevletIhale2886.Document ProgID Tanımı
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Temin360.Document',
+      'HKCU\\Software\\Classes\\DevletIhale2886.Document',
       '/ve',
       '/d',
-      'TEMİN 360 Proje Dosyası',
+      'Devlet İhale 2886 Proje Dosyası',
       '/f'
     ])
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Temin360.Document\\DefaultIcon',
+      'HKCU\\Software\\Classes\\DevletIhale2886.Document',
+      '/v',
+      'FriendlyTypeName',
+      '/d',
+      'Devlet İhale 2886 Proje Dosyası',
+      '/f'
+    ])
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Classes\\DevletIhale2886.Document\\DefaultIcon',
       '/ve',
       '/d',
       iconPath,
@@ -44,7 +53,7 @@ export function registerWindowsFileAssociations(): void {
     ])
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Temin360.Document\\shell',
+      'HKCU\\Software\\Classes\\DevletIhale2886.Document\\shell',
       '/ve',
       '/d',
       'open',
@@ -52,33 +61,34 @@ export function registerWindowsFileAssociations(): void {
     ])
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Temin360.Document\\shell\\open',
+      'HKCU\\Software\\Classes\\DevletIhale2886.Document\\shell\\open',
       '/ve',
       '/d',
-      'TEMİN 360 ile Aç',
+      'Devlet İhale 2886 ile Aç',
       '/f'
     ])
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Temin360.Document\\shell\\open\\command',
+      'HKCU\\Software\\Classes\\DevletIhale2886.Document\\shell\\open\\command',
       '/ve',
       '/d',
       `"${exePath}" "%1"`,
       '/f'
     ])
 
+    // 2. Applications Kaydı
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe',
+      'HKCU\\Software\\Classes\\Applications\\DEVLETIHALE2886.exe',
       '/v',
       'FriendlyAppName',
       '/d',
-      'TEMİN 360',
+      'DEVLET İHALE 2886',
       '/f'
     ])
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe\\DefaultIcon',
+      'HKCU\\Software\\Classes\\Applications\\DEVLETIHALE2886.exe\\DefaultIcon',
       '/ve',
       '/d',
       iconPath,
@@ -86,28 +96,63 @@ export function registerWindowsFileAssociations(): void {
     ])
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe\\shell\\open\\command',
+      'HKCU\\Software\\Classes\\Applications\\DEVLETIHALE2886.exe\\shell\\open\\command',
       '/ve',
       '/d',
       `"${exePath}" "%1"`,
       '/f'
     ])
-
-    // 2. Sadece .temin uzantısını kaydet
-    const ext = 'temin'
     execFile('reg.exe', [
       'add',
-      `HKCU\\Software\\Classes\\.${ext}`,
-      '/ve',
+      'HKCU\\Software\\Classes\\Applications\\DEVLETIHALE2886.exe\\SupportedTypes',
+      '/v',
+      '.ihale2886',
       '/d',
-      'Temin360.Document',
+      '',
       '/f'
     ])
     execFile('reg.exe', [
       'add',
-      `HKCU\\Software\\Classes\\.${ext}\\OpenWithProgids`,
+      'HKCU\\Software\\Classes\\Applications\\DEVLETIHALE2886.exe\\SupportedTypes',
       '/v',
-      'Temin360.Document',
+      '.dihale',
+      '/d',
+      '',
+      '/f'
+    ])
+
+    // 3. .ihale2886 (Birincil Format)
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Classes\\.ihale2886',
+      '/ve',
+      '/d',
+      'DevletIhale2886.Document',
+      '/f'
+    ])
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Classes\\.ihale2886',
+      '/v',
+      'Content Type',
+      '/d',
+      'application/x-ihale2886',
+      '/f'
+    ])
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Classes\\.ihale2886',
+      '/v',
+      'PerceivedType',
+      '/d',
+      'document',
+      '/f'
+    ])
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Classes\\.ihale2886\\OpenWithProgids',
+      '/v',
+      'DevletIhale2886.Document',
       '/t',
       'REG_SZ',
       '/d',
@@ -116,7 +161,7 @@ export function registerWindowsFileAssociations(): void {
     ])
     execFile('reg.exe', [
       'add',
-      `HKCU\\Software\\Classes\\.${ext}\\DefaultIcon`,
+      'HKCU\\Software\\Classes\\.ihale2886\\DefaultIcon',
       '/ve',
       '/d',
       iconPath,
@@ -124,18 +169,9 @@ export function registerWindowsFileAssociations(): void {
     ])
     execFile('reg.exe', [
       'add',
-      'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe\\SupportedTypes',
+      'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.ihale2886\\OpenWithProgids',
       '/v',
-      `.${ext}`,
-      '/d',
-      '',
-      '/f'
-    ])
-    execFile('reg.exe', [
-      'add',
-      `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.${ext}\\OpenWithProgids`,
-      '/v',
-      'Temin360.Document',
+      'DevletIhale2886.Document',
       '/t',
       'REG_NONE',
       '/d',
@@ -143,7 +179,49 @@ export function registerWindowsFileAssociations(): void {
       '/f'
     ])
 
-    // 3. Windows Explorer İkon Önbelleğini Yenile (SHChangeNotify)
+    // 4. .dihale (Alternatif Format)
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Classes\\.dihale',
+      '/v',
+      'Content Type',
+      '/d',
+      'application/x-dihale',
+      '/f'
+    ])
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Classes\\.dihale',
+      '/v',
+      'PerceivedType',
+      '/d',
+      'document',
+      '/f'
+    ])
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Classes\\.dihale\\OpenWithProgids',
+      '/v',
+      'DevletIhale2886.Document',
+      '/t',
+      'REG_SZ',
+      '/d',
+      '',
+      '/f'
+    ])
+    execFile('reg.exe', [
+      'add',
+      'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.dihale\\OpenWithProgids',
+      '/v',
+      'DevletIhale2886.Document',
+      '/t',
+      'REG_NONE',
+      '/d',
+      '',
+      '/f'
+    ])
+
+    // 5. Windows Explorer İkon Önbelleğini Yenile (SHChangeNotify)
     const psCmd = `
       $code = '[DllImport("shell32.dll")] public static extern void SHChangeNotify(int eventId, int flags, IntPtr item1, IntPtr item2);'
       Add-Type -MemberDefinition $code -Namespace Win32 -Name Shell

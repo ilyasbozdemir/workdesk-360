@@ -6,6 +6,12 @@
 export interface FileFormat {
   /** Uzantı (nokta olmadan, örn: 'ihale') */
   ext: string
+  /** Standart MIME Türü (örn: 'application/x-ihale') */
+  mimeType: string
+  /** Windows ProgID (örn: 'Ihale360.Document') */
+  progId: string
+  /** Windows PerceivedType */
+  perceivedType?: 'document'
   /** Kullanıcıya gösterilecek açıklama */
   label: string
   /** Kısa açıklama (dialog filtresi adı) */
@@ -20,12 +26,18 @@ export const PRIMARY_EXTENSION = 'ihale'
 export const SUPPORTED_FORMATS: FileFormat[] = [
   {
     ext: PRIMARY_EXTENSION,
+    mimeType: 'application/x-ihale',
+    progId: 'Ihale360.Document',
+    perceivedType: 'document',
     label: 'İHALE 360 Proje Dosyası',
     dialogName: 'İHALE 360 Proje Dosyası (*.ihale)',
     isDefault: true
   },
   {
     ext: 'ihale360',
+    mimeType: 'application/x-ihale360',
+    progId: 'Ihale360.Document',
+    perceivedType: 'document',
     label: 'İHALE 360 Proje Dosyası (Alternatif)',
     dialogName: 'İHALE 360 Proje Dosyası (*.ihale360)'
   }

@@ -14,14 +14,31 @@ export const TEMIN_360_MANIFEST: AppManifest = {
     {
       ext: 'temin',
       name: 'TEMİN 360 Proje Dosyası',
-      description: 'TEMİN 360 Proje Dosyası (*.temin)',
+      description: 'TEMİN 360 Doğrudan Temin Proje Dosyası (*.temin)',
+      mimeType: 'application/x-temin',
+      progId: 'Temin360.Document',
+      perceivedType: 'document',
       isPrimary: true
     },
     {
       ext: 'hkmp',
       name: 'HakimPro Doğrudan Temin Dosyası',
       description: 'HakimPro Doğrudan Temin Dosyası (*.hkmp)',
-      isPrimary: false
+      mimeType: 'application/x-hkmp',
+      progId: 'Temin360.Document',
+      perceivedType: 'document',
+      isPrimary: false,
+      isLegacy: true
+    },
+    {
+      ext: 'tmn360',
+      name: 'Temin 360 Arşiv Dosyası',
+      description: 'Temin 360 Arşiv Dosyası (*.tmn360)',
+      mimeType: 'application/x-temin360',
+      progId: 'Temin360.Document',
+      perceivedType: 'document',
+      isPrimary: false,
+      isLegacy: true
     }
   ],
   installState: 'installed',
@@ -52,14 +69,20 @@ export const IHALE_360_MANIFEST: AppManifest = {
   fileAssociations: [
     {
       ext: 'ihale',
-      name: 'İHALE 360 Dosyası',
-      description: 'İHALE 360 Dosyası (*.ihale)',
+      name: 'İHALE 360 Proje Dosyası',
+      description: 'İHALE 360 Kamu İhalesi Proje Dosyası (*.ihale)',
+      mimeType: 'application/x-ihale',
+      progId: 'Ihale360.Document',
+      perceivedType: 'document',
       isPrimary: true
     },
     {
       ext: 'ihale360',
-      name: 'İHALE 360 Çalışma Dosyası',
-      description: 'İHALE 360 Çalışma Dosyası (*.ihale360)',
+      name: 'İHALE 360 Alternatif Proje Dosyası',
+      description: 'İHALE 360 Alternatif Proje Dosyası (*.ihale360)',
+      mimeType: 'application/x-ihale360',
+      progId: 'Ihale360.Document',
+      perceivedType: 'document',
       isPrimary: false
     }
   ],
@@ -91,14 +114,20 @@ export const DEVLET_IHALE_2886_MANIFEST: AppManifest = {
   fileAssociations: [
     {
       ext: 'ihale2886',
-      name: 'Devlet İhale 2886 Dosyası',
-      description: 'Devlet İhale 2886 Dosyası (*.ihale2886)',
+      name: 'Devlet İhale 2886 Proje Dosyası',
+      description: '2886 Sayılı Devlet İhale Kanunu Proje Dosyası (*.ihale2886)',
+      mimeType: 'application/x-ihale2886',
+      progId: 'DevletIhale2886.Document',
+      perceivedType: 'document',
       isPrimary: true
     },
     {
       ext: 'dihale',
-      name: 'Devlet İhale Çalışma Dosyası',
-      description: 'Devlet İhale Çalışma Dosyası (*.dihale)',
+      name: 'Devlet İhale 2886 Alternatif Proje Dosyası',
+      description: '2886 Sayılı Devlet İhale Kanunu Alternatif Proje Dosyası (*.dihale)',
+      mimeType: 'application/x-dihale',
+      progId: 'DevletIhale2886.Document',
+      perceivedType: 'document',
       isPrimary: false
     }
   ],

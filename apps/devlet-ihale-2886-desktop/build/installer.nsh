@@ -7,18 +7,20 @@
 
   ; --- 1. DevletIhale2886.Document ProgID Tanımı ---
   WriteRegStr HKCU "Software\Classes\DevletIhale2886.Document" "" "Devlet İhale 2886 Proje Dosyası"
+  WriteRegStr HKCU "Software\Classes\DevletIhale2886.Document" "FriendlyTypeName" "Devlet İhale 2886 Proje Dosyası"
   WriteRegStr HKCU "Software\Classes\DevletIhale2886.Document\DefaultIcon" "" "$INSTDIR\resources\icon.ico"
   WriteRegStr HKCU "Software\Classes\DevletIhale2886.Document\shell" "" "open"
   WriteRegStr HKCU "Software\Classes\DevletIhale2886.Document\shell\open" "" "Devlet İhale 2886 ile Aç"
   WriteRegStr HKCU "Software\Classes\DevletIhale2886.Document\shell\open\command" "" '"$INSTDIR\DEVLETIHALE2886.exe" "%1"'
 
-  ; --- 2. .ihale2886 Uzantısı İlişkilendirmesi ---
+  ; --- 2. .ihale2886 Uzantısı İlişkilendirmesi (Birincil Format) ---
   ReadRegStr $0 HKCU "Software\Classes\.ihale2886" ""
   ${If} $0 == ""
   ${OrIf} $0 == "DevletIhale2886.Document"
     WriteRegStr HKCU "Software\Classes\.ihale2886" "" "DevletIhale2886.Document"
   ${EndIf}
   WriteRegStr HKCU "Software\Classes\.ihale2886" "Content Type" "application/x-ihale2886"
+  WriteRegStr HKCU "Software\Classes\.ihale2886" "PerceivedType" "document"
   WriteRegStr HKCU "Software\Classes\.ihale2886\OpenWithProgids" "DevletIhale2886.Document" ""
   WriteRegStr HKCU "Software\Classes\.ihale2886\DefaultIcon" "" "$INSTDIR\resources\icon.ico"
   WriteRegStr HKCU "Software\Classes\.ihale2886\ShellNew" "NullFile" ""
@@ -33,6 +35,7 @@
     WriteRegStr HKCU "Software\Classes\.dihale" "" "DevletIhale2886.Document"
   ${EndIf}
   WriteRegStr HKCU "Software\Classes\.dihale" "Content Type" "application/x-dihale"
+  WriteRegStr HKCU "Software\Classes\.dihale" "PerceivedType" "document"
   WriteRegStr HKCU "Software\Classes\.dihale\OpenWithProgids" "DevletIhale2886.Document" ""
   WriteRegStr HKCU "Software\Classes\.dihale\DefaultIcon" "" "$INSTDIR\resources\icon.ico"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.dihale\OpenWithProgids" "DevletIhale2886.Document" ""

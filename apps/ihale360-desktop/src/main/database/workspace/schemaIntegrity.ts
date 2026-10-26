@@ -8,7 +8,11 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   // 1. İhale 360 Uyumluluk Görünümleri (DATA_Temin... Views & Triggers)
   try {
     ensureIhaleCompatibilityViews(db)
-  } catch {}
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err)
+    console.error('[ensureSchemaIntegrity] İhale 360 uyumluluk katmanı başlatılamadı:', errorMsg)
+    throw new Error(`İhale 360 uyumluluk katmanı başlatılamadı: ${errorMsg}`)
+  }
 
   try {
     db.exec(`

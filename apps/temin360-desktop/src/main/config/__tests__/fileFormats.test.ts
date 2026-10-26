@@ -25,13 +25,16 @@ describe('File Formats Configuration & Validation (Strict .temin Standard)', () 
     }
   })
 
-  it('should have .temin as primary default format', () => {
+  it('should have .temin as primary default format with valid MIME type and ProgID', () => {
     expect(PRIMARY_EXTENSION).toBe('temin')
     expect(defaultFormat).toBeDefined()
     expect(defaultFormat.ext).toBe('temin')
+    expect(defaultFormat.mimeType).toBe('application/x-temin')
+    expect(defaultFormat.progId).toBe('Temin360.Document')
     expect(defaultFormat.isDefault).toBe(true)
     expect(allExtensions).toContain('temin')
     expect(allExtensions).toContain('hkmp')
+    expect(allExtensions).toContain('tmn360')
   })
 
   it('should expose .temin in save filter and legacy formats in open filters', () => {

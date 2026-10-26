@@ -1,10 +1,23 @@
-﻿appId: dev.ilyasbozdemir.temin360
+appId: dev.ilyasbozdemir.temin360
 productName: TEMİN 360
 fileAssociations:
   - ext: temin
     name: TEMİN 360 Proje Dosyası
-    description: TEMİN 360 Proje Dosyası (*.temin)
+    description: TEMİN 360 Doğrudan Temin Proje Dosyası (*.temin)
     role: Editor
+    mimeType: application/x-temin
+    icon: icon.ico
+  - ext: hkmp
+    name: HakimPro Doğrudan Temin Dosyası
+    description: HakimPro Doğrudan Temin Dosyası (*.hkmp)
+    role: Viewer
+    mimeType: application/x-hkmp
+    icon: icon.ico
+  - ext: tmn360
+    name: Temin 360 Arşiv Dosyası
+    description: Temin 360 Arşiv Dosyası (*.tmn360)
+    role: Viewer
+    mimeType: application/x-temin360
     icon: icon.ico
 directories:
   buildResources: build

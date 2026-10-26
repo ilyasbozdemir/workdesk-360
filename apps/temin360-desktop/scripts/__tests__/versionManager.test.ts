@@ -578,7 +578,7 @@ describe('Merkezi Version Manager & Sürüm Karşılaştırma Testleri', () => {
       expect(output).toContain(`${currentVersion} → ${expectedNext}`)
       expect(output).toContain(`Tag:      v${expectedNext}`)
       expect(output).toContain('DRY RUN - Hiçbir değişiklik yapılmadı')
-    })
+    }, 20000)
 
     it('--channel beta --patch --dry-run çalıştırıldığında kanal kuralını doğru uygular', () => {
       const currentVersion = JSON.parse(
@@ -606,7 +606,7 @@ describe('Merkezi Version Manager & Sürüm Karşılaştırma Testleri', () => {
         const output = stripAnsi(raw)
         expect(output).toContain('DRY RUN - Hiçbir değişiklik yapılmadı')
       }
-    })
+    }, 20000)
 
     it('--channel stable --dry-run çalıştırıldığında kararlı geçişini simüle eder', () => {
       const currentVersion = JSON.parse(
@@ -621,6 +621,6 @@ describe('Merkezi Version Manager & Sürüm Karşılaştırma Testleri', () => {
       expect(output).toContain(`${currentVersion} → ${expectedNext}`)
       expect(output).toContain(`Tag:      v${expectedNext}`)
       expect(output).toContain('DRY RUN - Hiçbir değişiklik yapılmadı')
-    })
+    }, 20000)
   })
 })

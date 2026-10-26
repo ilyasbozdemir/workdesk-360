@@ -25,10 +25,12 @@ describe('File Formats Configuration & Validation (DEVLET İHALE 2886 .ihale2886
     }
   })
 
-  it('should have .ihale2886 as primary active format and include .dihale', () => {
+  it('should have .ihale2886 as primary active format and include .dihale with MIME and ProgID', () => {
     expect(PRIMARY_EXTENSION).toBe('ihale2886')
     expect(defaultFormat).toBeDefined()
     expect(defaultFormat.ext).toBe('ihale2886')
+    expect(defaultFormat.mimeType).toBe('application/x-ihale2886')
+    expect(defaultFormat.progId).toBe('DevletIhale2886.Document')
     expect(defaultFormat.isDefault).toBe(true)
     expect(allExtensions).toEqual(['ihale2886', 'dihale'])
   })

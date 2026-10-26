@@ -7,6 +7,12 @@
 export interface FileFormat {
   /** Uzantı (nokta olmadan, örn: 'temin') */
   ext: string
+  /** Standart MIME Türü (örn: 'application/x-temin') */
+  mimeType: string
+  /** Windows ProgID (örn: 'Temin360.Document') */
+  progId: string
+  /** Windows PerceivedType */
+  perceivedType?: 'document'
   /** Kullanıcıya gösterilecek açıklama */
   label: string
   /** Kısa açıklama (dialog filtresi adı) */
@@ -29,18 +35,27 @@ export const OPEN_SUPPORTED_EXTENSIONS = [PRIMARY_EXTENSION, ...LEGACY_EXTENSION
 export const SUPPORTED_FORMATS: FileFormat[] = [
   {
     ext: PRIMARY_EXTENSION,
+    mimeType: 'application/x-temin',
+    progId: 'Temin360.Document',
+    perceivedType: 'document',
     label: 'TEMİN 360 Proje Dosyası',
     dialogName: 'TEMİN 360 Proje Dosyası (*.temin)',
     isDefault: true
   },
   {
     ext: 'hkmp',
+    mimeType: 'application/x-hkmp',
+    progId: 'Temin360.Document',
+    perceivedType: 'document',
     label: 'HakimPro Doğrudan Temin Dosyası (Eski Sürüm)',
     dialogName: 'HakimPro Doğrudan Temin Dosyası (*.hkmp)',
     isLegacy: true
   },
   {
     ext: 'tmn360',
+    mimeType: 'application/x-temin360',
+    progId: 'Temin360.Document',
+    perceivedType: 'document',
     label: 'Temin 360 Arşiv Dosyası (Geçiş Sürümü)',
     dialogName: 'Temin 360 Arşiv Dosyası (*.tmn360)',
     isLegacy: true

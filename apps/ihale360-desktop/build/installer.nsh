@@ -7,18 +7,20 @@
 
   ; --- 1. Ihale360.Document ProgID Tanımı ---
   WriteRegStr HKCU "Software\Classes\Ihale360.Document" "" "İHALE 360 Proje Dosyası"
+  WriteRegStr HKCU "Software\Classes\Ihale360.Document" "FriendlyTypeName" "İHALE 360 Proje Dosyası"
   WriteRegStr HKCU "Software\Classes\Ihale360.Document\DefaultIcon" "" "$INSTDIR\resources\icon.ico"
   WriteRegStr HKCU "Software\Classes\Ihale360.Document\shell" "" "open"
   WriteRegStr HKCU "Software\Classes\Ihale360.Document\shell\open" "" "İHALE 360 ile Aç"
   WriteRegStr HKCU "Software\Classes\Ihale360.Document\shell\open\command" "" '"$INSTDIR\IHALE360.exe" "%1"'
 
-  ; --- 2. .ihale Uzantısı İlişkilendirmesi ---
+  ; --- 2. .ihale Uzantısı İlişkilendirmesi (Birincil Format) ---
   ReadRegStr $0 HKCU "Software\Classes\.ihale" ""
   ${If} $0 == ""
   ${OrIf} $0 == "Ihale360.Document"
     WriteRegStr HKCU "Software\Classes\.ihale" "" "Ihale360.Document"
   ${EndIf}
   WriteRegStr HKCU "Software\Classes\.ihale" "Content Type" "application/x-ihale"
+  WriteRegStr HKCU "Software\Classes\.ihale" "PerceivedType" "document"
   WriteRegStr HKCU "Software\Classes\.ihale\OpenWithProgids" "Ihale360.Document" ""
   WriteRegStr HKCU "Software\Classes\.ihale\DefaultIcon" "" "$INSTDIR\resources\icon.ico"
   WriteRegStr HKCU "Software\Classes\.ihale\ShellNew" "NullFile" ""
@@ -33,6 +35,7 @@
     WriteRegStr HKCU "Software\Classes\.ihale360" "" "Ihale360.Document"
   ${EndIf}
   WriteRegStr HKCU "Software\Classes\.ihale360" "Content Type" "application/x-ihale360"
+  WriteRegStr HKCU "Software\Classes\.ihale360" "PerceivedType" "document"
   WriteRegStr HKCU "Software\Classes\.ihale360\OpenWithProgids" "Ihale360.Document" ""
   WriteRegStr HKCU "Software\Classes\.ihale360\DefaultIcon" "" "$INSTDIR\resources\icon.ico"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.ihale360\OpenWithProgids" "Ihale360.Document" ""

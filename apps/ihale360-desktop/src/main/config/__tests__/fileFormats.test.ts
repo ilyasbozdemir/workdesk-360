@@ -25,10 +25,12 @@ describe('File Formats Configuration & Validation (İHALE 360 .ihale Standard)',
     }
   })
 
-  it('should have .ihale as primary active format and include .ihale360', () => {
+  it('should have .ihale as primary active format and include .ihale360 with MIME and ProgID', () => {
     expect(PRIMARY_EXTENSION).toBe('ihale')
     expect(defaultFormat).toBeDefined()
     expect(defaultFormat.ext).toBe('ihale')
+    expect(defaultFormat.mimeType).toBe('application/x-ihale')
+    expect(defaultFormat.progId).toBe('Ihale360.Document')
     expect(defaultFormat.isDefault).toBe(true)
     expect(allExtensions).toEqual(['ihale', 'ihale360'])
   })

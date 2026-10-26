@@ -909,7 +909,8 @@ export function ensureIhaleCompatibilityViews(db: Database.Database): void {
       `)
     }
   } catch (err: any) {
-    console.warn('[ensureIhaleCompatibilityViews] Uyari:', err?.message || err)
+    console.error('[ensureIhaleCompatibilityViews] Kritik Hata:', err?.message || err)
+    throw err
   }
 }
 

@@ -5,11 +5,13 @@ fileAssociations:
     name: Devlet İhale 2886 Proje Dosyası
     description: 2886 Sayılı Devlet İhale Kanunu Proje Dosyası (*.ihale2886)
     role: Editor
+    mimeType: application/x-ihale2886
     icon: icon.ico
   - ext: dihale
     name: Devlet İhale 2886 Proje Dosyası (Alternatif)
     description: 2886 Sayılı Devlet İhale Kanunu Alternatif Proje Dosyası (*.dihale)
     role: Editor
+    mimeType: application/x-dihale
     icon: icon.ico
 directories:
   buildResources: build

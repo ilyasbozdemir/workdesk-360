@@ -6,6 +6,12 @@
 export interface FileFormat {
   /** Uzantı (nokta olmadan, örn: 'ihale2886') */
   ext: string
+  /** Standart MIME Türü (örn: 'application/x-ihale2886') */
+  mimeType: string
+  /** Windows ProgID (örn: 'DevletIhale2886.Document') */
+  progId: string
+  /** Windows PerceivedType */
+  perceivedType?: 'document'
   /** Kullanıcıya gösterilecek açıklama */
   label: string
   /** Kısa açıklama (dialog filtresi adı) */
@@ -20,12 +26,18 @@ export const PRIMARY_EXTENSION = 'ihale2886'
 export const SUPPORTED_FORMATS: FileFormat[] = [
   {
     ext: PRIMARY_EXTENSION,
+    mimeType: 'application/x-ihale2886',
+    progId: 'DevletIhale2886.Document',
+    perceivedType: 'document',
     label: 'Devlet İhale 2886 Proje Dosyası',
     dialogName: 'Devlet İhale 2886 Proje Dosyası (*.ihale2886)',
     isDefault: true
   },
   {
     ext: 'dihale',
+    mimeType: 'application/x-dihale',
+    progId: 'DevletIhale2886.Document',
+    perceivedType: 'document',
     label: 'Devlet İhale 2886 Proje Dosyası (Alternatif)',
     dialogName: 'Devlet İhale 2886 Proje Dosyası (*.dihale)'
   }
