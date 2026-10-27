@@ -1,8 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link } from '@tanstack/react-router'
 import { Activity, Building2, ClipboardCheck, Coins, FileSpreadsheet, FileText, Scale } from 'lucide-react'
 import { cn } from '../../../utils/cn'
-import { PiyasaFiyatArastirmasiModal } from './PiyasaFiyatArastirmasiModal'
 
 export interface PillarItem {
   key: 'T' | 'E' | 'M' | 'I' | 'N'
@@ -30,8 +29,6 @@ export const TeminPillarsMatrix: React.FC<TeminPillarsMatrixProps> = ({
   teminPillars,
   currentPillar
 }) => {
-  const [isFiyatModalOpen, setIsFiyatModalOpen] = useState(false)
-
   return (
     <div className="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 md:p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -155,14 +152,15 @@ export const TeminPillarsMatrix: React.FC<TeminPillarsMatrixProps> = ({
         <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
           {activePillar === 'T' && (
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              <button
-                type="button"
-                onClick={() => setIsFiyatModalOpen(true)}
-                className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-transform hover:scale-[1.02]"
-              >
-                <Coins className="w-3.5 h-3.5" />
-                <span>Piyasa Fiyat Araştırmaları Masası</span>
-              </button>
+              <Link to="/piyasa-fiyat-arastirmasi" className="w-full md:w-auto">
+                <button
+                  type="button"
+                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-sm transition-transform hover:scale-[1.02]"
+                >
+                  <Coins className="w-3.5 h-3.5" />
+                  <span>Piyasa Fiyat Araştırmaları Masası</span>
+                </button>
+              </Link>
               <Link to="/dosyalar" className="w-full md:w-auto">
                 <button
                   type="button"
@@ -220,12 +218,6 @@ export const TeminPillarsMatrix: React.FC<TeminPillarsMatrixProps> = ({
           )}
         </div>
       </div>
-
-      {/* Piyasa Fiyat Araştırmaları Masası Detay Modalı */}
-      <PiyasaFiyatArastirmasiModal
-        isOpen={isFiyatModalOpen}
-        onClose={() => setIsFiyatModalOpen(false)}
-      />
     </div>
   )
 }

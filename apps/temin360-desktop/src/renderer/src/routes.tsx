@@ -15,6 +15,9 @@ const DashboardScreen = lazyRoute(() =>
 const HarcamaMerkeziScreen = lazyRoute(() =>
   import("./screens/dashboard/HarcamaMerkeziScreen")
 );
+const PiyasaFiyatArastirmasiScreen = lazyRoute(() =>
+  import("./screens/dashboard/PiyasaFiyatArastirmasiScreen")
+);
 const DosyalarScreen = lazyRoute(() =>
   import("./screens/dosyalar/index.screen")
 );
@@ -195,6 +198,12 @@ const harcamaMerkeziRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.HARCAMA_MERKEZI,
   component: HarcamaMerkeziScreen,
+});
+
+const piyasaFiyatArastirmalariMasasiRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: APP_ROUTES.PIYASA_FIYAT_ARASTIRMALARI_MASASI,
+  component: PiyasaFiyatArastirmasiScreen,
 });
 
 const projelerRoute = createRoute({
@@ -591,6 +600,7 @@ const islakImzaRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   harcamaMerkeziRoute,
+  piyasaFiyatArastirmalariMasasiRoute,
   belgelerimRoute,
   projelerRoute,
   devletIhale2886Route,

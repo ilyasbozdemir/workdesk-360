@@ -2,6 +2,7 @@ export const APP_ROUTES = {
   // Main
   DASHBOARD: '/',
   HARCAMA_MERKEZI: '/harcama-merkezi',
+  PIYASA_FIYAT_ARASTIRMALARI_MASASI: '/piyasa-fiyat-arastirmasi',
 
   // Dosyalar
   DOSYALAR: '/dosyalar',
