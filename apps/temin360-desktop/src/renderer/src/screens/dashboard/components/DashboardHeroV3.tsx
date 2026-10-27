@@ -97,7 +97,7 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
 
   const handleSelectMode = (mode: HeroProcurementMode): void => {
     setInternalMode(mode)
-    if (onSwitchMode && mode !== 'modul_magazasi') {
+    if (onSwitchMode && (mode === 'all' || mode === 'dogrudan_temin' || mode === 'ihale')) {
       onSwitchMode(mode)
     }
   }
