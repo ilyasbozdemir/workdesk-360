@@ -19,10 +19,16 @@ export const APP_EDITION: AppEdition = rawEdition === 'full' ? 'full' : 'dogruda
 export const IS_DT_EDITION: boolean = APP_EDITION === 'dogrudan-temin'
 
 /** Doğrudan Temin sürümünde kullanılabilen modül paketleri (ModulPaketi.id). */
-export const DT_EDITION_MODULE_IDS: readonly string[] = ['kik-dogrudan-temin-22d']
+export const DT_EDITION_MODULE_IDS: readonly string[] = [
+  'kik-dogrudan-temin-22d',
+  'dinamik-form-builder-studyosu',
+  'ebys-resmi-yazisma-studyosu',
+  'harcama-kik-limit-takibi',
+  'modul-personel-izin'
+]
 
-/** Doğrudan Temin sürümünde kullanılamayan rotalar (2886 ve EBYS kapsam dışı). */
-export const DT_EDITION_BLOCKED_ROUTES: readonly string[] = ['/devlet-ihale-2886', '/ebys']
+/** Doğrudan Temin sürümünde kullanılamayan rotalar (yalnızca 2886 satış ve kiralama). */
+export const DT_EDITION_BLOCKED_ROUTES: readonly string[] = ['/devlet-ihale-2886']
 
 /** Verilen modül bu sürümde kullanılabilir mi? */
 export function isModuleAllowedInEdition(moduleId: string): boolean {

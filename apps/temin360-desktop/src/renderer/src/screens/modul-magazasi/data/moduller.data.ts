@@ -377,12 +377,130 @@ const TUM_MODUL_PAKETLERI: ModulPaketi[] = [
         zorunluMu: false
       }
     ]
+  },
+
+  // =========================================================================
+  // 5. DİNAMİK FORM ÜRETİCİ & BELGE ŞABLON STÜDYOSU
+  // =========================================================================
+  {
+    id: 'dinamik-form-builder-studyosu',
+    kod: 'FORM-BLD',
+    paketTipi: 'modul',
+    baslik: 'Dinamik Form Üretici & Belge Şablon Stüdyosu',
+    kisaAciklama:
+      'Doğrudan temin, onay belgeleri, piyasa araştırma mektupları ve kurum içi yazışmalar için sürükle-bırak dinamik form ve şablon üretici.',
+    detayliAciklama:
+      'Kamu alımlarında ihtiyaç duyulan tüm talep, onay, tutanak ve resmi formların dinamik olarak tasarlanması, değişken eşleştirme ve anında A4/PDF baskı motoru.',
+    mevzuat: '4734 Sayılı KİK & Standart Form Yönetmeliği',
+    kategori: 'form_belge',
+    ikon: 'FileSpreadsheet',
+    renk: 'emerald',
+    versiyon: 'v2.2.0',
+    surumAsamasi: 'Kararlı',
+    etiketler: ['Form Builder', 'Dinamik Şablon', 'Belge Tasarımı', 'Değişkenler', 'Resmi Yazı'],
+    routePath: '/form-builder',
+    removable: true,
+    silinebilir: true,
+    araclar: ['Sürükle-Bırak Form Editörü', 'Dinamik Değişken Motoru', 'A4 Belge İhracı'],
+    asamalar: [
+      {
+        sira: 1,
+        baslik: 'Form & Alan Tasarımı',
+        aciklama: 'Metin, sayı, tablo ve tarih alanlarının form şablonuna yerleştirilmesi.'
+      },
+      {
+        sira: 2,
+        baslik: 'Değişken Eşleştirme',
+        aciklama: 'Dosya no, yüklenici, tutar ve birim değişkenlerinin bağlanması.'
+      },
+      {
+        sira: 3,
+        baslik: 'Önizleme & Dağıtım',
+        aciklama: 'KİK standartlarına uygun canlı A4 önizleme ve şablon kaydı.'
+      }
+    ],
+    belgeler: [
+      {
+        ad: 'Dinamik İhtiyaç & Talep Form Şablonu',
+        kod: 'DF-01',
+        aciklama: 'Özelleştirilebilir dinamik birim talep formu.',
+        zorunluMu: true
+      },
+      {
+        ad: 'Dinamik Muayene Kabul Tutanağı',
+        kod: 'DF-02',
+        aciklama: 'Alım türüne göre uyarlanabilir kabul tutanak formu.',
+        zorunluMu: true
+      },
+      {
+        ad: 'Dinamik Teklif İsteme Mektubu Taslağı',
+        kod: 'DF-03',
+        aciklama: 'Şart ve şartname maddeleri içeren dinamik teklif mektubu.',
+        zorunluMu: false
+      }
+    ]
+  },
+
+  // =========================================================================
+  // 6. HARCAMA MERKEZİ & KİK PARASAL LİMİT TAKİBİ
+  // =========================================================================
+  {
+    id: 'harcama-kik-limit-takibi',
+    kod: 'HARC-LMT',
+    paketTipi: 'modul',
+    baslik: 'Harcama Merkezi & KİK Parasal Limit Takibi',
+    kisaAciklama:
+      '4734 Sayılı Kanun Madde 22/d yıllık parasal harcama tavanı ve birim bazlı doğrudan temin bütçe tüketim kontrol paneli.',
+    detayliAciklama:
+      'Büyükşehir ve diğer idareler için güncel KİK tebliğ parasal limitleri, harcama birimleri bazında bütçe tüketim tavanı, kalan limit ve mevzuat uyarı motoru.',
+    mevzuat: '4734 Sayılı KİK m.22/d & KİK Tebliği',
+    kategori: 'finans_hesap',
+    ikon: 'Scale',
+    renk: 'amber',
+    versiyon: 'v2.1.0',
+    surumAsamasi: 'Kararlı',
+    etiketler: ['Harcama Merkezi', 'KİK Limit', '22/d Tavanı', 'Bütçe Takibi', 'Birim Analizi'],
+    routePath: '/harcama-merkezi',
+    removable: true,
+    silinebilir: true,
+    araclar: ['KİK Parasal Limit Denetleyicisi', 'Birim Bütçe Tüketim Analizi', 'Limit Aşım Uyarısı'],
+    asamalar: [
+      {
+        sira: 1,
+        baslik: 'Kurumsal Limit Tanımı',
+        aciklama: 'Büyükşehir veya diğer idare KİK tebliğ parasal tavanının tespiti.'
+      },
+      {
+        sira: 2,
+        baslik: 'Birim Bazlı Tüketim İzleme',
+        aciklama: 'Harcama birimlerinin kümülatif doğrudan temin harcamalarının dökümü.'
+      },
+      {
+        sira: 3,
+        baslik: 'Risk & Tavan Raporlama',
+        aciklama: 'Limit aşım riskleri ve harcama yetkilisi mevzuat denetim özeti.'
+      }
+    ],
+    belgeler: [
+      {
+        ad: 'KİK 22/d Yıllık Parasal Limit Tüketim Raporu',
+        kod: 'KIK-RAP-01',
+        aciklama: 'Mevzuat uyumlu kümülatif harcama ve tavan tüketim raporu.',
+        zorunluMu: true
+      },
+      {
+        ad: 'Birimler Harcama Dağılım İcmali',
+        kod: 'KIK-RAP-02',
+        aciklama: 'Birim bazlı harcama ve kalan ödenek çizelgesi.',
+        zorunluMu: false
+      }
+    ]
   }
 ]
 
 /**
- * S�r�me g�re g�r�n�r katalog: Do�rudan Temin s�r�m�nde yaln�zca 4734 m.22 paketi,
- * tam s�r�mde t�m paketler.
+ * S�r�me g�re g�r�n�r katalog: Do�rudan Temin s�r�m�nde yaln�zca 4734 m.22 paketi,
+ * tam s�r�mde t�m paketler.
  */
 export const RESMI_MODUL_PAKETLERI: ModulPaketi[] = IS_DT_EDITION
   ? TUM_MODUL_PAKETLERI.filter((m) => isModuleAllowedInEdition(m.id))

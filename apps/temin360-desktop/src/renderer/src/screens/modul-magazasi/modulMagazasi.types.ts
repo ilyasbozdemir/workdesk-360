@@ -9,6 +9,7 @@ export type ModulPaketTipi = (typeof MODULE_PACKAGE_TYPES)[number]
 /** Modül kategorileri (İngilizce/sabit dizi) */
 export const MODULE_CATEGORIES = [
   'alim_ihale',
+  'form_belge',
   'satis_kiralama',
   'ozel_istisna',
   'yapim_hakedis',
@@ -23,12 +24,13 @@ export type SurumAsamasi = (typeof MODULE_RELEASE_STAGES)[number]
 
 /** Kategori görsel ve etiket yapılandırması */
 export const MODULE_CATEGORY_LABELS: Record<ModulKategori, { label: string; icon: string }> = {
-  alim_ihale: { label: 'Alım & İhale', icon: 'FileCheck' },
+  alim_ihale: { label: 'Doğrudan Temin Süreçleri', icon: 'FileCheck' },
+  form_belge: { label: 'Dinamik Formlar & Belge Üretimi', icon: 'FileSpreadsheet' },
   satis_kiralama: { label: 'Satış & Kiralama', icon: 'Landmark' },
   ozel_istisna: { label: 'Özel İstisna & 22/a-b-c', icon: 'ShieldCheck' },
   yapim_hakedis: { label: 'Yapım & Hakediş', icon: 'FileSpreadsheet' },
-  finans_hesap: { label: 'Finans & Hesaplama', icon: 'Coins' },
-  entegrasyon: { label: 'Entegrasyon & Denetim', icon: 'Puzzle' }
+  finans_hesap: { label: 'Mali Analiz & KİK Limitleri', icon: 'Coins' },
+  entegrasyon: { label: 'EBYS & Resmî Yazışma', icon: 'Puzzle' }
 }
 
 /** Çöp kutusuna taşınan modül kayıt öğesi */

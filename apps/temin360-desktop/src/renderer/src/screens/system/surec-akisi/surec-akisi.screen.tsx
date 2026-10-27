@@ -9,6 +9,7 @@ import { FirmalarTab } from './components/tabs/FirmalarTab'
 import { KomisyonTab } from './components/tabs/KomisyonTab'
 import { BelgelerTab } from './components/tabs/BelgelerTab'
 import { SurecTab } from './components/tabs/SurecTab'
+import { DTEbysStudyosuTab } from './components/DTEbysStudyosuTab'
 import { YeniNesilBelgeStudyosuTab } from './components/YeniNesilBelgeStudyosuTab'
 import { APP_ROUTES } from '../../../constants/routeConstants'
 
@@ -57,7 +58,8 @@ export default function SurecAkisiScreen(): React.JSX.Element {
     { id: 'firmalar', label: 'İstekli Firmalar' },
     { id: 'komisyon', label: 'Komisyon' },
     { id: 'belgeler', label: 'Belgeler' },
-    { id: 'surec', label: 'Süreç' }
+    { id: 'surec', label: 'Süreç' },
+    { id: 'ebys', label: 'EBYS & Resmî Yazışma' }
   ]
 
   const handleNavigateCiktiMerkezi = () =>
@@ -194,6 +196,17 @@ export default function SurecAkisiScreen(): React.JSX.Element {
             onPreview={setPreviewBelge}
             onDosyalariEkle={dosyalariEkle}
             onNavigateCiktiMerkezi={handleNavigateCiktiMerkezi}
+          />
+        )}
+
+        {selectedTab === 'ebys' && (
+          <DTEbysStudyosuTab
+            dosya={dosya || activeDosya || {}}
+            kalemler={kalemler || []}
+            firmalar={firmalar || []}
+            komisyonlar={komisyonlar || []}
+            toplamBedel={toplamBedel || 0}
+            dosyaContext={dosyaContext}
           />
         )}
       </div>

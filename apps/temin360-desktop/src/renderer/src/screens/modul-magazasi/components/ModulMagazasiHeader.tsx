@@ -5,6 +5,7 @@ import {
   Calculator,
   CheckCircle2,
   FileCheck2,
+  FileSpreadsheet,
   Layers,
   Puzzle,
   Store
@@ -45,23 +46,23 @@ export const ModulMagazasiHeader: React.FC<ModulMagazasiHeaderProps> = ({
     },
     {
       id: 'alim_ihale',
-      label: 'Doğrudan Temin & İhale',
+      label: 'Doğrudan Temin (KİK 22)',
       icon: <FileCheck2 className="w-3.5 h-3.5" />
     },
     {
-      id: 'satis_kiralama',
-      label: 'Satış & Kiralama (2886)',
-      icon: <Store className="w-3.5 h-3.5" />
-    },
-    {
-      id: 'finans_hesap',
-      label: 'Finans & Hesaplama',
-      icon: <Calculator className="w-3.5 h-3.5" />
+      id: 'form_belge',
+      label: 'Dinamik Formlar & Belge Üretimi',
+      icon: <FileSpreadsheet className="w-3.5 h-3.5" />
     },
     {
       id: 'entegrasyon',
-      label: 'EBYS, Personel & Takip',
+      label: 'EBYS & Resmî Yazışma',
       icon: <Puzzle className="w-3.5 h-3.5" />
+    },
+    {
+      id: 'finans_hesap',
+      label: 'Mali Analiz & KİK Limitleri',
+      icon: <Calculator className="w-3.5 h-3.5" />
     },
     {
       id: 'kurulu',

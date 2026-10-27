@@ -136,8 +136,10 @@ export function getTabLabel(fullPath: string): string {
   if (path.startsWith(APP_ROUTES.HARICI_DOSYA_AKTAR)) return 'Harici Dosya Entegrasyonu'
   if (path.startsWith(APP_ROUTES.CIKTI_MERKEZI_DASHBOARD)) return 'Çıktı & Üretim Merkezi'
   if (path.startsWith(APP_ROUTES.DT_SUREC_AKISI)) return 'Doğrudan Temin'
-  if (path.startsWith(APP_ROUTES.EBYS)) return 'EBYS Resmî Yazı Şablonları'
-  if (path.startsWith(APP_ROUTES.MODUL_MAGAZASI)) return 'Modül & Belge Mağazası'
+  if (path.startsWith(APP_ROUTES.EBYS)) return 'EBYS & Resmî Yazışma'
+  if (path.startsWith(APP_ROUTES.MODUL_MAGAZASI)) return 'Modül Mağazası'
+  if (path.startsWith(APP_ROUTES.FORM_BUILDER)) return 'Dinamik Form Üretici'
+  if (path.startsWith(APP_ROUTES.PIYASA_FIYAT_ARASTIRMALARI_MASASI)) return 'Piyasa Fiyat Masası'
   if (path.startsWith(APP_ROUTES.SUREC_STUDYOSU)) return 'Doğrudan Temin Süreç Stüdyosu'
   if (path.startsWith(APP_ROUTES.IHTIYAC_RAPORLARI)) {
     const query = fullPath.split('?')[1] || ''
