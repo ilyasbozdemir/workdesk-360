@@ -5,7 +5,10 @@ import {
   Calculator,
   CheckCircle2,
   FileSpreadsheet,
+  FolderKanban,
+  Gavel,
   Info,
+  Layers,
   Scale,
   ShieldAlert,
   ShieldCheck
@@ -34,24 +37,37 @@ export const KikLimitVeBirimAnalizSection: React.FC<KikLimitVeBirimAnalizSection
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm animate-pulse min-h-[420px]">
-          <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/3 mb-4" />
-          <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-2xl mb-4" />
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="h-16 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
-            <div className="h-16 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
-            <div className="h-16 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+      <div className="space-y-6">
+        {/* Top Summary Skeleton */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm animate-pulse">
+          <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/4 mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-2xl" />
+            <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-2xl" />
+            <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-2xl" />
           </div>
-          <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-2xl" />
         </div>
-        <div className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm animate-pulse min-h-[420px]">
-          <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/3 mb-4" />
-          <div className="h-20 bg-slate-100 dark:bg-slate-800/60 rounded-2xl mb-4" />
-          <div className="space-y-3">
-            <div className="h-12 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
-            <div className="h-12 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
-            <div className="h-12 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+
+        {/* 2 Big Cards Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm animate-pulse min-h-[420px]">
+            <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/3 mb-4" />
+            <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-2xl mb-4" />
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="h-16 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+              <div className="h-16 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+              <div className="h-16 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+            </div>
+            <div className="h-24 bg-slate-100 dark:bg-slate-800/60 rounded-2xl" />
+          </div>
+          <div className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm animate-pulse min-h-[420px]">
+            <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded-lg w-1/3 mb-4" />
+            <div className="h-20 bg-slate-100 dark:bg-slate-800/60 rounded-2xl mb-4" />
+            <div className="space-y-3">
+              <div className="h-12 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+              <div className="h-12 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+              <div className="h-12 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+            </div>
           </div>
         </div>
       </div>
@@ -126,8 +142,175 @@ export const KikLimitVeBirimAnalizSection: React.FC<KikLimitVeBirimAnalizSection
   const toplamBirimHarcamasi = birimler.reduce((acc, b) => acc + (b.toplam_harcama || 0), 0)
   const toplamBirimDosyaSayisi = birimler.reduce((acc, b) => acc + (b.dosya_sayisi || 0), 0)
 
+  // Dosyalar & Yaklaşık Maliyet Ayrımı (Doğrudan Temin vs. İhale Edilen Alımlar)
+  const dtSayisi =
+    stats.dogrudanTeminSayisi ||
+    Math.max(0, stats.ihaleDosyaSayisi - (stats.acikIhaleSayisi || 0) - (stats.pazarlikSayisi || 0))
+  const dtMaliyet =
+    stats.dogrudanTeminMaliyet ||
+    Math.max(0, stats.toplamYaklasikMaliyet - (stats.acikIhaleMaliyet || 0) - (stats.pazarlikMaliyet || 0))
+
+  const ihaleSayisi = (stats.acikIhaleSayisi || 0) + (stats.pazarlikSayisi || 0)
+  const ihaleMaliyet = (stats.acikIhaleMaliyet || 0) + (stats.pazarlikMaliyet || 0)
+
+  const genelDosyaSayisi = stats.ihaleDosyaSayisi || dtSayisi + ihaleSayisi
+  const genelMaliyet = stats.toplamYaklasikMaliyet || dtMaliyet + ihaleMaliyet
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="space-y-6">
+      {/* ========================================================================= */}
+      {/* ── 0. ÜST ÖZET: DOSYALAR VE YAKLAŞIK MALİYETLER (İHALE EDİLENLER AYRI) ── */}
+      {/* ========================================================================= */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+              <FolderKanban className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                  Dosyalar & Yaklaşık Maliyet Dağılım Özeti
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  Satın Alma Usulleri Ayrımı
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                KİK 22/d doğrudan temin tavanı ve ihale edilen (Açık İhale / Pazarlık) süreçlerin kesin maliyet ayrımı
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              Genel Toplam: <strong className="text-slate-900 dark:text-white">{genelDosyaSayisi}</strong> dosya
+            </span>
+            <span className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 font-black text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 font-mono">
+              {formatCurrency(genelMaliyet)}
+            </span>
+          </div>
+        </div>
+
+        {/* 3 Ana Karşılaştırma Kartı */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* KART 1: DOĞRUDAN TEMİN (KİK 22/d) */}
+          <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-900/50 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
+                  <Scale className="w-3 h-3" />
+                  Doğrudan Temin (22/d)
+                </span>
+                <span className="text-xs font-black text-amber-800 dark:text-amber-300">
+                  {dtSayisi} Dosya
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Yaklaşık Maliyet Toplamı
+              </span>
+              <div className="text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5">
+                {formatCurrency(dtMaliyet)}
+              </div>
+            </div>
+
+            <div className="mt-3 pt-2.5 border-t border-amber-200/60 dark:border-amber-900/40 flex items-center justify-between text-[11px]">
+              <span className="text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                22/d Eşik Limitine Tabi
+              </span>
+              <span className="font-mono text-slate-600 dark:text-slate-400 text-[10px]">
+                Harcama: {formatCurrency(limitStat?.harcananTutar || 0)}
+              </span>
+            </div>
+          </div>
+
+          {/* KART 2: İHALE EDİLEN ALIMLAR (AÇIK İHALE & PAZARLIK - AYRI TUTULUR) */}
+          <div className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-900/50 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-400 bg-indigo-100/80 dark:bg-indigo-900/50 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800">
+                  <Gavel className="w-3 h-3" />
+                  İhale Edilen Alımlar (Ayrı)
+                </span>
+                <span className="text-xs font-black text-indigo-700 dark:text-indigo-300">
+                  {ihaleSayisi} İhale Dosyası
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                İhale Yaklaşık Maliyeti
+              </span>
+              <div className="text-xl font-black text-indigo-700 dark:text-indigo-300 font-mono mt-0.5">
+                {formatCurrency(ihaleMaliyet)}
+              </div>
+            </div>
+
+            <div className="mt-3 pt-2.5 border-t border-indigo-200/60 dark:border-indigo-900/40 flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400">
+              <span>
+                Açık: <strong>{stats.acikIhaleSayisi || 0}</strong> ({formatCurrency(stats.acikIhaleMaliyet || 0)})
+              </span>
+              <span>
+                Pazarlık: <strong>{stats.pazarlikSayisi || 0}</strong> ({formatCurrency(stats.pazarlikMaliyet || 0)})
+              </span>
+            </div>
+          </div>
+
+          {/* KART 3: ALIM TÜRLERİNE GÖRE YAKLAŞIK MALİYET KIRILIMI */}
+          <div className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                  <Layers className="w-3 h-3 text-blue-500" />
+                  Alım Türü Maliyet Kırılımı
+                </span>
+                <span className="text-xs font-bold text-slate-400">
+                  Tüm Türler
+                </span>
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                    Mal Alımı ({stats.malDosyaSayisi || 0}):
+                  </span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                    {formatCurrency(stats.malYaklasikMaliyet || 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    Hizmet Alımı ({stats.hizmetDosyaSayisi || 0}):
+                  </span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                    {formatCurrency(stats.hizmetYaklasikMaliyet || 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                    Yapım & Diğer ({(stats.yapimDosyaSayisi || 0) + (stats.danismanlikDosyaSayisi || 0)}):
+                  </span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
+                    {formatCurrency((stats.yapimYaklasikMaliyet || 0) + (stats.danismanlikYaklasikMaliyet || 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+              <span>İhale edilenler 22/d limitini etkilemez.</span>
+              <span className="font-bold text-blue-600 dark:text-blue-400">Yasal Ayrım Net</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* ── 1. DETAY PANELLERİ: SOL KİK LİMİT & SAĞ BİRİM ANALİZİ ── */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* ========================================================================= */}
       {/* ── 1. SOL: KİK 22/d YILLIK LİMİT VE DOĞRUDAN MEVZUAT RAPORU (IN-PAGE) ── */}
       {/* ========================================================================= */}
@@ -284,6 +467,12 @@ export const KikLimitVeBirimAnalizSection: React.FC<KikLimitVeBirimAnalizSection
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                 <span>
                   <strong>Piyasa Fiyat Araştırması Tutanağı:</strong> İhtiyaç duyulan alımlarda en az 3 geçerli teklif toplanarak Harcama Yetkilisi onayına sunulmalıdır.
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                <span>
+                  <strong>İhale Edilen Alımlar Muafiyeti:</strong> Açık ihale (Md. 19) ve pazarlık (Md. 21) usulleriyle ihale edilen alımlar ({ihaleSayisi} dosya, {formatCurrency(ihaleMaliyet)}) 22/d doğrudan temin limitine ve tavanına dahil edilmez; ihale mevzuatı uyarınca ayrı takip edilir.
                 </span>
               </li>
             </ul>
@@ -481,5 +670,6 @@ export const KikLimitVeBirimAnalizSection: React.FC<KikLimitVeBirimAnalizSection
         </div>
       </div>
     </div>
+  </div>
   )
 }
