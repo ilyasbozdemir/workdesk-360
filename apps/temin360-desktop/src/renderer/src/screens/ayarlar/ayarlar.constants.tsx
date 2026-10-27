@@ -1,4 +1,4 @@
-import { Settings, Mail, Palette, Bot, Archive, RefreshCw, Code, FileText } from 'lucide-react'
+import { Settings, Mail, Palette, Bot, Archive, RefreshCw, Code, FileText, Sparkles } from 'lucide-react'
 import { InnerMenuItem } from '../../components/ui/InnerMenu'
 
 export const menuItems: InnerMenuItem[] = [
@@ -6,6 +6,12 @@ export const menuItems: InnerMenuItem[] = [
     id: 'genel',
     label: 'Genel Ayarlar',
     icon: <Settings className="w-4 h-4 shrink-0" />
+  },
+  { id: 'div-ozellikler', label: '', icon: null, isDivider: true },
+  {
+    id: 'yeni-ozellikler',
+    label: 'Yeni Özellikler & Sürüm',
+    icon: <Sparkles className="w-4 h-4 shrink-0 text-emerald-500" />
   },
   { id: 'div0', label: '', icon: null, isDivider: true },
   {

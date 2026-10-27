@@ -18,6 +18,7 @@ import { APP_ROUTES } from '../../constants/routeConstants'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { exportCsv } from '../../utils/csvExport'
 import { cn } from '../../utils/cn'
+import { NewFeatureBadge } from '../../components/ui/NewFeatureBadge'
 
 export interface FiyatArastirmasiItem {
   id: number
@@ -226,6 +227,7 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
                 <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900">
                   KİK Md. 22/d
                 </span>
+                <NewFeatureBadge routeOrId="/piyasa-fiyat-arastirmasi" size="sm" />
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 4734 Sayılı Kamu İhale Kanunu uyarınca toplanan piyasa teklifleri, geçerlilik denetimi ve kazanan firma analiz paneli

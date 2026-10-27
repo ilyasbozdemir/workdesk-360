@@ -13,34 +13,47 @@ export function getDogrudanTeminMenus(
       items: [
         {
           label: 'Tüm Doğrudan Temin Dosyaları',
+          route: APP_ROUTES.DOSYALAR,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.DOSYALAR })
         },
         {
+          label: '⚖️ Piyasa Fiyat Araştırmaları Masası',
+          route: APP_ROUTES.PIYASA_FIYAT_ARASTIRMALARI_MASASI,
+          onClick: (): Promise<void> => navigate({ to: APP_ROUTES.PIYASA_FIYAT_ARASTIRMALARI_MASASI })
+        },
+        {
           label: '📋 İhtiyaç Raporları Havuzu (Genel)',
+          route: APP_ROUTES.IHTIYAC_RAPORLARI,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.IHTIYAC_RAPORLARI })
         },
         {
           label: '📁 Proje Yönetimi & Yatırımlar',
+          route: APP_ROUTES.PROJELER,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.PROJELER })
         },
         {
           label: 'Yeni Doğrudan Temin Dosyası',
+          route: APP_ROUTES.YENI_DOSYA,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.YENI_DOSYA })
         },
         {
           label: 'Hızlı Dosya Ekle / Güncelle',
+          route: APP_ROUTES.HIZLI_DOSYA_EKLE,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.HIZLI_DOSYA_EKLE })
         },
         {
           label: '📥 Harici Dosya Aktar (JSON)',
+          route: APP_ROUTES.HARICI_DOSYA_AKTAR,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.HARICI_DOSYA_AKTAR })
         },
         {
           label: 'Süreç Akış Haritası (Beta)',
+          route: APP_ROUTES.SUREC_AKISI,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.SUREC_AKISI })
         },
         {
           label: '📊 Harcama & Sayıştay Raporları',
+          route: APP_ROUTES.RAPORLAR,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.RAPORLAR })
         }
       ]

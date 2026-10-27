@@ -3,6 +3,7 @@ import { ChevronRight, MoreHorizontal } from 'lucide-react'
 import { HeaderMenu } from './header.types'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 import appIcon from '../../../assets/icon.png'
+import { NewFeatureBadge } from '../../ui/NewFeatureBadge'
 
 interface NativeMenuBarProps {
   visibleMenus: HeaderMenu[]
@@ -105,9 +106,10 @@ export const NativeMenuBar = React.memo(function NativeMenuBar({
                       isDt
                         ? 'hover:bg-blue-600 hover:text-white'
                         : 'hover:bg-indigo-600 hover:text-white'
-                    } text-slate-700 dark:text-slate-300 transition-colors flex items-center justify-between cursor-pointer text-xs`}
+                    } text-slate-700 dark:text-slate-300 transition-colors flex items-center justify-between gap-2 cursor-pointer text-xs`}
                   >
-                    <span>{item.label}</span>
+                    <span className="truncate">{item.label}</span>
+                    {item.route && <NewFeatureBadge routeOrId={item.route} size="xs" />}
                   </button>
                 )
               )}

@@ -2,6 +2,7 @@ export interface MenuItemOption {
   label?: string
   onClick?: () => void
   divider?: boolean
+  route?: string
 }
 
 export interface HeaderMenu {

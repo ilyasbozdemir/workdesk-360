@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAyarlarHooks } from './ayarlar.hooks'
 import { menuItems } from './ayarlar.constants'
 import { Button } from '../../components/ui/Button'
@@ -16,8 +16,18 @@ import { AiTab } from './components/AiTab'
 import { SyncTab } from './components/SyncTab'
 import { GenelTab } from './components/GenelTab'
 import { DocumentThemeTab } from './components/DocumentThemeTab'
+import { NewFeaturesTab } from './components/NewFeaturesTab'
 
-type TabType = 'genel' | 'smtp' | 'tema' | 'belge-tema' | 'developer' | 'ai' | 'archive' | 'sync'
+type TabType =
+  | 'genel'
+  | 'yeni-ozellikler'
+  | 'smtp'
+  | 'tema'
+  | 'belge-tema'
+  | 'developer'
+  | 'ai'
+  | 'archive'
+  | 'sync'
 
 export default function AyarlarScreen(): React.ReactNode {
   const { settings, isLoadingSettings, saveSettings, importSmtp, exportSmtp } = useAyarlarHooks()
@@ -33,6 +43,7 @@ export default function AyarlarScreen(): React.ReactNode {
   const [activeTab, setActiveTab] = useState<TabType>(() => {
     if (
       searchTab === 'genel' ||
+      searchTab === 'yeni-ozellikler' ||
       searchTab === 'smtp' ||
       searchTab === 'tema' ||
       searchTab === 'belge-tema' ||
@@ -49,6 +60,7 @@ export default function AyarlarScreen(): React.ReactNode {
   useEffect(() => {
     if (
       searchTab === 'genel' ||
+      searchTab === 'yeni-ozellikler' ||
       searchTab === 'smtp' ||
       searchTab === 'tema' ||
       searchTab === 'belge-tema' ||
@@ -330,6 +342,8 @@ export default function AyarlarScreen(): React.ReactNode {
                   />
                 )}
 
+                {activeTab === 'yeni-ozellikler' && <NewFeaturesTab />}
+
                 {activeTab === 'smtp' && (
                   <SmtpTab
                     smtpHost={smtpHost}
@@ -391,7 +405,7 @@ export default function AyarlarScreen(): React.ReactNode {
               </div>
 
               {/* SEKMEYİ KAYDET BUTONU */}
-              {activeTab !== 'archive' && activeTab !== 'sync' && (
+              {activeTab !== 'archive' && activeTab !== 'sync' && activeTab !== 'yeni-ozellikler' && (
                 <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-6">
                   <Button
                     onClick={() => handleSaveTab(activeTab)}

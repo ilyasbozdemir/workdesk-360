@@ -9,6 +9,8 @@ import { getInitials } from '@renderer/utils/formatters'
 import { MenuGroup, getSidebarMenuGroups } from './sidebar.constants'
 import { useModuleStore } from '../../store/moduleStore'
 import { IS_DT_EDITION } from '../../../../shared/edition'
+import { NewFeatureBadge } from '../ui/NewFeatureBadge'
+import { useNewFeaturesStore } from '../../store/newFeaturesStore'
 
 export function Sidebar(): React.JSX.Element {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -84,6 +86,7 @@ export function Sidebar(): React.JSX.Element {
   }
 
   const installedIds = useModuleStore((s) => s.installedIds)
+  const { getFeatureStatus } = useNewFeaturesStore()
 
   const finalMenuGroups: MenuGroup[] = useMemo(() => {
     return getSidebarMenuGroups(procurementMode, activeDosyaId, (id: string) =>
@@ -178,6 +181,8 @@ export function Sidebar(): React.JSX.Element {
                 const itemKey = item.path || item.name
                 const isExpanded = expandedItems.has(itemKey)
                 const hasChildren = item.children && item.children.length > 0
+                const itemFeatureStatus = getFeatureStatus(item.path)
+                const isItemNew = itemFeatureStatus.isNew
 
                 return (
                   <li key={item.name}>
@@ -198,7 +203,7 @@ export function Sidebar(): React.JSX.Element {
                             }
                           }}
                           className={cn(
-                            'flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border border-transparent cursor-pointer',
+                            'flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border border-transparent cursor-pointer relative',
                             'hover:bg-sidebar-hover-bg hover:text-sidebar-hover-text',
                             'active:scale-[0.98]'
                           )}
@@ -207,15 +212,28 @@ export function Sidebar(): React.JSX.Element {
                               'bg-sidebar-active-bg text-sidebar-active-text border-sidebar-active-border shadow-sm shadow-blue-500/5 font-bold'
                           }}
                         >
-                          <item.icon size={18} className="shrink-0" />
+                          <div className="relative shrink-0 flex items-center justify-center">
+                            <item.icon size={18} className="shrink-0" />
+                            {isCollapsed && isItemNew && (
+                              <NewFeatureBadge
+                                routeOrId={item.path}
+                                size="dot-only"
+                                className="absolute -top-1 -right-1"
+                              />
+                            )}
+                          </div>
                           {!isCollapsed && (
-                            <span className="text-sm font-medium whitespace-nowrap flex-1 flex items-center justify-between">
-                              <span>{item.name}</span>
-                              {item.badge && (
-                                <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-500 border border-indigo-500/30">
-                                  {item.badge}
-                                </span>
-                              )}
+                            <span className="text-sm font-medium whitespace-nowrap flex-1 flex items-center justify-between gap-1.5 overflow-hidden">
+                              <span className="truncate">{item.name}</span>
+                              <span className="flex items-center gap-1 shrink-0">
+                                {isItemNew ? (
+                                  <NewFeatureBadge routeOrId={item.path} size="xs" />
+                                ) : item.badge ? (
+                                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-500 border border-indigo-500/30">
+                                    {item.badge}
+                                  </span>
+                                ) : null}
+                              </span>
                             </span>
                           )}
                         </Link>
@@ -261,48 +279,76 @@ export function Sidebar(): React.JSX.Element {
 
                     {hasChildren && !isCollapsed && isExpanded && (
                       <ul className="mt-0.5 ml-4 pl-3 border-l border-sidebar-border/40 space-y-0.5">
-                        {item.children!.map((child) => (
-                          <li key={child.name}>
-                            <Link
-                              to={child.path}
-                              className={cn(
-                                'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border border-transparent cursor-pointer',
-                                'hover:bg-sidebar-hover-bg hover:text-sidebar-hover-text',
-                                'active:scale-[0.98] text-sidebar-text/80'
-                              )}
-                              activeProps={{
-                                className:
-                                  'bg-sidebar-active-bg text-sidebar-active-text border-sidebar-active-border shadow-sm font-bold'
-                              }}
-                            >
-                              <child.icon size={14} className="shrink-0 opacity-70" />
-                              <span className="whitespace-nowrap">{child.name}</span>
-                            </Link>
-                          </li>
-                        ))}
+                        {item.children!.map((child) => {
+                          const childFeatureStatus = getFeatureStatus(child.path)
+                          const isChildNew = childFeatureStatus.isNew
+
+                          return (
+                            <li key={child.name}>
+                              <Link
+                                to={child.path}
+                                className={cn(
+                                  'flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border border-transparent cursor-pointer',
+                                  'hover:bg-sidebar-hover-bg hover:text-sidebar-hover-text',
+                                  'active:scale-[0.98] text-sidebar-text/80'
+                                )}
+                                activeProps={{
+                                  className:
+                                    'bg-sidebar-active-bg text-sidebar-active-text border-sidebar-active-border shadow-sm font-bold'
+                                }}
+                              >
+                                <child.icon size={14} className="shrink-0 opacity-70" />
+                                <span className="whitespace-nowrap flex-1 flex items-center justify-between gap-1.5 overflow-hidden">
+                                  <span className="truncate">{child.name}</span>
+                                  {isChildNew ? (
+                                    <NewFeatureBadge routeOrId={child.path} size="xs" />
+                                  ) : child.badge ? (
+                                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-500 border border-indigo-500/30">
+                                      {child.badge}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              </Link>
+                            </li>
+                          )
+                        })}
                       </ul>
                     )}
 
                     {hasChildren && isCollapsed && (
                       <ul className="mt-0.5 space-y-0.5">
-                        {item.children!.map((child) => (
-                          <li key={child.name}>
-                            <Link
-                              to={child.path}
-                              title={child.name}
-                              className={cn(
-                                'flex items-center justify-center px-3 py-1.5 rounded-lg transition-all duration-200 border border-transparent cursor-pointer',
-                                'hover:bg-sidebar-hover-bg hover:text-sidebar-hover-text'
-                              )}
-                              activeProps={{
-                                className:
-                                  'bg-sidebar-active-bg text-sidebar-active-text border-sidebar-active-border shadow-sm'
-                              }}
-                            >
-                              <child.icon size={15} className="shrink-0 opacity-70" />
-                            </Link>
-                          </li>
-                        ))}
+                        {item.children!.map((child) => {
+                          const childFeatureStatus = getFeatureStatus(child.path)
+                          const isChildNew = childFeatureStatus.isNew
+
+                          return (
+                            <li key={child.name}>
+                              <Link
+                                to={child.path}
+                                title={child.name}
+                                className={cn(
+                                  'flex items-center justify-center px-3 py-1.5 rounded-lg transition-all duration-200 border border-transparent cursor-pointer relative',
+                                  'hover:bg-sidebar-hover-bg hover:text-sidebar-hover-text'
+                                )}
+                                activeProps={{
+                                  className:
+                                    'bg-sidebar-active-bg text-sidebar-active-text border-sidebar-active-border shadow-sm'
+                                }}
+                              >
+                                <div className="relative shrink-0 flex items-center justify-center">
+                                  <child.icon size={15} className="shrink-0 opacity-70" />
+                                  {isChildNew && (
+                                    <NewFeatureBadge
+                                      routeOrId={child.path}
+                                      size="dot-only"
+                                      className="absolute -top-1 -right-1"
+                                    />
+                                  )}
+                                </div>
+                              </Link>
+                            </li>
+                          )
+                        })}
                       </ul>
                     )}
                   </li>
