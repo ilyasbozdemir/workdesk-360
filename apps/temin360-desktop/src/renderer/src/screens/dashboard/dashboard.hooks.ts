@@ -117,67 +117,127 @@ export function useDashboardStats(
   const loadStats = useCallback(async () => {
     setIsLoading(true)
     try {
-      const modeFilter =
-        filterMode === 'dogrudan_temin'
-          ? " AND (ihale_tipi LIKE '%doğrudan%' OR ihale_tipi LIKE '%dogrudan%' OR ihale_tipi IS NULL OR ihale_tipi = '')"
-          : filterMode === 'ihale'
-            ? " AND (ihale_tipi LIKE '%açık%' OR ihale_tipi LIKE '%acik%' OR ihale_tipi LIKE '%ihale%' OR ihale_tipi LIKE '%pazarlık%' OR ihale_tipi LIKE '%pazarlik%' OR ihale_tipi LIKE '%hakediş%' OR ihale_tipi LIKE '%hakedis%')"
-            : ''
+      // 0. Schema inspection: Check existing tables and columns to avoid SQLite runtime errors
+      const tablesRes = await window.electron.ipcRenderer.invoke(
+        'db:query',
+        "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
+      )
+      const existingTables = new Set<string>(
+        tablesRes && tablesRes.success && Array.isArray(tablesRes.data)
+          ? tablesRes.data.map((r: any) => String(r.name).toLowerCase())
+          : []
+      )
+
+      const getCols = async (tbl: string): Promise<Set<string>> => {
+        if (!existingTables.has(tbl.toLowerCase())) return new Set()
+        try {
+          const cRes = await window.electron.ipcRenderer.invoke('db:query', `PRAGMA table_info("${tbl}")`)
+          if (cRes && cRes.success && Array.isArray(cRes.data)) {
+            return new Set(cRes.data.map((c: any) => String(c.name).toLowerCase()))
+          }
+        } catch {
+          // ignore
+        }
+        return new Set()
+      }
+
+      const [dosyaCols, birimCols] = await Promise.all([
+        getCols('DATA_TeminDosyasi'),
+        getCols('TANIM_Birim')
+      ])
+
+      const hasIhaleTipi = dosyaCols.has('ihale_tipi')
+      const hasIsDeleted = dosyaCols.has('is_deleted')
+      const hasDurumAsamaId = dosyaCols.has('durum_asama_id')
+      const hasYaklasikMaliyet = dosyaCols.has('yaklasik_maliyet')
+      const hasNetOdenen = dosyaCols.has('net_odenen')
+      const hasTur = dosyaCols.has('tur')
+      const hasFirmaId = dosyaCols.has('firma_id')
+      const hasBirimId = dosyaCols.has('birim_id')
+      const hasBirim = dosyaCols.has('birim')
+      const hasHarcamaBirimi = dosyaCols.has('harcama_birimi')
+      const hasIhtiyacYeri = dosyaCols.has('ihtiyac_yeri')
+      const hasCreatedAt = dosyaCols.has('created_at')
+
+      const isDelWhere = hasIsDeleted ? '(is_deleted = 0 OR is_deleted IS NULL)' : '1=1'
+      const isDelWhereD = hasIsDeleted ? '(d.is_deleted = 0 OR d.is_deleted IS NULL)' : '1=1'
+
+      // Mode filter: If ihale_tipi does not exist in DATA_TeminDosyasi, all files are direct procurement
+      let modeFilter = ''
+      if (hasIhaleTipi) {
+        if (filterMode === 'dogrudan_temin') {
+          modeFilter =
+            " AND (LOWER(COALESCE(ihale_tipi, '')) LIKE '%temin%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%22/%' OR ihale_tipi IS NULL OR ihale_tipi = '')"
+        } else if (filterMode === 'ihale') {
+          modeFilter =
+            " AND (LOWER(COALESCE(ihale_tipi, '')) LIKE '%açık%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%acik%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%ihale%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%pazarlık%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%pazarlik%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%hakediş%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%hakedis%') AND NOT (LOWER(COALESCE(ihale_tipi, '')) LIKE '%temin%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%22/%')"
+        }
+      } else {
+        if (filterMode === 'ihale') {
+          modeFilter = ' AND 1=0'
+        }
+      }
 
       // 1. Dosya sayısı
       const dosyaRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL)${modeFilter}`
+        `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE ${isDelWhere}${modeFilter}`
       )
       const ihaleDosyaSayisi = dosyaRes.data?.[0]?.count || 0
 
       // 2. Kayıtlı Firma Sayısı
-      const firmaRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT COUNT(*) as count FROM TANIM_Firma'
-      )
-      const kayitliFirmaSayisi = firmaRes.data?.[0]?.count || 0
+      let kayitliFirmaSayisi = 0
+      if (existingTables.has('tanim_firma')) {
+        const firmaRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT COUNT(*) as count FROM TANIM_Firma'
+        )
+        kayitliFirmaSayisi = firmaRes.data?.[0]?.count || 0
+      }
 
       // 3. Kayıtlı Personel Sayısı
-      const personelRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT COUNT(*) as count FROM TANIM_Personel'
-      )
-      const kayitliPersonelSayisi = personelRes.data?.[0]?.count || 0
+      let kayitliPersonelSayisi = 0
+      if (existingTables.has('tanim_personel')) {
+        const personelRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT COUNT(*) as count FROM TANIM_Personel'
+        )
+        kayitliPersonelSayisi = personelRes.data?.[0]?.count || 0
+      }
 
       // 4. Toplam Yaklaşık Maliyet
-      const toplamMaliyetRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COALESCE(SUM(yaklasik_maliyet), 0) as total FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL)${modeFilter}`
-      )
-      const toplamYaklasikMaliyet = toplamMaliyetRes.data?.[0]?.total || 0
+      let toplamYaklasikMaliyet = 0
+      if (hasYaklasikMaliyet) {
+        const toplamMaliyetRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT COALESCE(SUM(yaklasik_maliyet), 0) as total FROM DATA_TeminDosyasi WHERE ${isDelWhere}${modeFilter}`
+        )
+        toplamYaklasikMaliyet = toplamMaliyetRes.data?.[0]?.total || 0
+      }
 
       // 5. Türlere Göre Yaklaşık Maliyetler
-      const turRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT tur, COALESCE(SUM(yaklasik_maliyet), 0) as total FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL)${modeFilter} GROUP BY tur`
-      )
-
       let malYaklasikMaliyet = 0
       let hizmetYaklasikMaliyet = 0
       let yapimYaklasikMaliyet = 0
       let danismanlikYaklasikMaliyet = 0
 
-      if (turRes.success && turRes.data) {
-        turRes.data.forEach((row: any) => {
-          if (row.tur === 'mal') malYaklasikMaliyet = row.total || 0
-          else if (row.tur === 'hizmet') hizmetYaklasikMaliyet = row.total || 0
-          else if (row.tur === 'yapim_isi' || row.tur === 'yapim')
-            yapimYaklasikMaliyet = row.total || 0
-          else if (row.tur === 'danismanlik') danismanlikYaklasikMaliyet = row.total || 0
-        })
+      if (hasTur && hasYaklasikMaliyet) {
+        const turRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT tur, COALESCE(SUM(yaklasik_maliyet), 0) as total FROM DATA_TeminDosyasi WHERE ${isDelWhere}${modeFilter} GROUP BY tur`
+        )
+        if (turRes.success && turRes.data) {
+          turRes.data.forEach((row: any) => {
+            if (row.tur === 'mal') malYaklasikMaliyet = row.total || 0
+            else if (row.tur === 'hizmet') hizmetYaklasikMaliyet = row.total || 0
+            else if (row.tur === 'yapim_isi' || row.tur === 'yapim')
+              yapimYaklasikMaliyet = row.total || 0
+            else if (row.tur === 'danismanlik') danismanlikYaklasikMaliyet = row.total || 0
+          })
+        }
       }
 
       // 6. Aylık Harcamalar
-      const aylikRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT strftime('%m', created_at) as ay_no, COALESCE(SUM(yaklasik_maliyet), 0) as total FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL)${modeFilter} GROUP BY ay_no ORDER BY ay_no ASC`
-      )
       const aylarTR = [
         'Ocak',
         'Şubat',
@@ -192,150 +252,174 @@ export function useDashboardStats(
         'Kasım',
         'Aralık'
       ]
-      const aylikHarcamalar = aylarTR.map((ay, index) => {
-        const ayStr = String(index + 1).padStart(2, '0')
-        const found =
-          aylikRes.success && aylikRes.data
-            ? aylikRes.data.find((item: any) => item.ay_no === ayStr)
-            : null
-        return {
-          ay,
-          tutar: found ? found.total : 0
+      let aylikHarcamalar = aylarTR.map((ay) => ({ ay, tutar: 0 }))
+      if (hasCreatedAt && hasYaklasikMaliyet) {
+        const aylikRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT strftime('%m', created_at) as ay_no, COALESCE(SUM(yaklasik_maliyet), 0) as total FROM DATA_TeminDosyasi WHERE ${isDelWhere}${modeFilter} GROUP BY ay_no ORDER BY ay_no ASC`
+        )
+        if (aylikRes.success && aylikRes.data) {
+          aylikHarcamalar = aylarTR.map((ay, index) => {
+            const ayStr = String(index + 1).padStart(2, '0')
+            const found = aylikRes.data.find((item: any) => item.ay_no === ayStr)
+            return {
+              ay,
+              tutar: found ? Number(found.total) || 0 : 0
+            }
+          })
         }
-      })
+      }
 
-      // 7. İhalelere Seçilen Firma Sayısı (Unique firms that actually won at least one file)
-      const secilenFirmaRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(DISTINCT firma_id) as count FROM DATA_TeminDosyasi WHERE firma_id IS NOT NULL AND (is_deleted = 0 OR is_deleted IS NULL)${modeFilter}`
-      )
-      const ihalelereSecilenFirmaSayisi = secilenFirmaRes.data?.[0]?.count || 0
+      // 7. İhalelere Seçilen Firma Sayısı
+      let ihalelereSecilenFirmaSayisi = 0
+      if (hasFirmaId) {
+        const secilenFirmaRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT COUNT(DISTINCT firma_id) as count FROM DATA_TeminDosyasi WHERE firma_id IS NOT NULL AND ${isDelWhere}${modeFilter}`
+        )
+        ihalelereSecilenFirmaSayisi = secilenFirmaRes.data?.[0]?.count || 0
+      }
 
       // 8. İhalelere Katılan Firma Sayısı
-      const katilanFirmaRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(DISTINCT firma_id) as count FROM DATA_TeminFirma WHERE temin_dosya_id IN (SELECT id FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL)${modeFilter})`
-      )
-      const ihalelereKatilanFirmaSayisi = katilanFirmaRes.data?.[0]?.count || 0
+      let ihalelereKatilanFirmaSayisi = 0
+      if (existingTables.has('data_teminfirma')) {
+        const katilanFirmaRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT COUNT(DISTINCT firma_id) as count FROM DATA_TeminFirma WHERE temin_dosya_id IN (SELECT id FROM DATA_TeminDosyasi WHERE ${isDelWhere}${modeFilter})`
+        )
+        ihalelereKatilanFirmaSayisi = katilanFirmaRes.data?.[0]?.count || 0
+      }
 
       // 9. İhale Edilen Kalem / Malzeme Sayısı
-      const malzemeRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(*) as count FROM DATA_TeminKalem WHERE temin_dosya_id IN (SELECT id FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL)${modeFilter})`
-      )
-      const ihaleEdilenMalzemeSayisi = malzemeRes.data?.[0]?.count || 0
+      let ihaleEdilenMalzemeSayisi = 0
+      if (existingTables.has('data_teminkalem')) {
+        const malzemeRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT COUNT(*) as count FROM DATA_TeminKalem WHERE temin_dosya_id IN (SELECT id FROM DATA_TeminDosyasi WHERE ${isDelWhere}${modeFilter})`
+        )
+        ihaleEdilenMalzemeSayisi = malzemeRes.data?.[0]?.count || 0
+      }
 
-      // NEW METRICS QUERIES:
       // 10. Kayıtlı Birim Sayısı
-      const birimCountRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT COUNT(*) as count FROM TANIM_Birim'
-      )
-      const kayitliBirimSayisi = birimCountRes.data?.[0]?.count || 0
+      let kayitliBirimSayisi = 0
+      if (existingTables.has('tanim_birim')) {
+        const birimCountRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT COUNT(*) as count FROM TANIM_Birim'
+        )
+        kayitliBirimSayisi = birimCountRes.data?.[0]?.count || 0
+      }
 
       // 11. Kayıtlı Ambar Sayısı
-      const ambarCountRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT COUNT(*) as count FROM TANIM_Ambar'
-      )
-      const kayitliAmbarSayisi = ambarCountRes.data?.[0]?.count || 0
+      let kayitliAmbarSayisi = 0
+      if (existingTables.has('tanim_ambar')) {
+        const ambarCountRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT COUNT(*) as count FROM TANIM_Ambar'
+        )
+        kayitliAmbarSayisi = ambarCountRes.data?.[0]?.count || 0
+      }
 
-      // 12. Aktif Dosya Sayısı (durum_asama_id < 5 veya null)
-      const aktifDosyaCountRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL) AND (durum_asama_id < 5 OR durum_asama_id IS NULL)${modeFilter}`
-      )
-      const aktifDosyaSayisi = aktifDosyaCountRes.data?.[0]?.count || 0
+      // 12. Aktif Dosya Sayısı
+      let aktifDosyaSayisi = ihaleDosyaSayisi
+      let tamamlananDosyaSayisi = 0
+      if (hasDurumAsamaId) {
+        const aktifDosyaCountRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE ${isDelWhere} AND (durum_asama_id < 5 OR durum_asama_id IS NULL)${modeFilter}`
+        )
+        aktifDosyaSayisi = aktifDosyaCountRes.data?.[0]?.count || 0
 
-      // 13. Tamamlanan Dosya Sayısı (durum_asama_id = 5)
-      const tamamlananDosyaCountRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL) AND durum_asama_id = 5${modeFilter}`
-      )
-      const tamamlananDosyaSayisi = tamamlananDosyaCountRes.data?.[0]?.count || 0
+        const tamamlananDosyaCountRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE ${isDelWhere} AND durum_asama_id = 5${modeFilter}`
+        )
+        tamamlananDosyaSayisi = tamamlananDosyaCountRes.data?.[0]?.count || 0
+      }
 
       // 14. Dosya Türlerine Göre Sayılar
-      const malDosyaCountRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL) AND tur = 'mal'${modeFilter}`
-      )
-      const malDosyaSayisi = malDosyaCountRes.data?.[0]?.count || 0
+      let malDosyaSayisi = 0,
+        hizmetDosyaSayisi = 0,
+        yapimDosyaSayisi = 0,
+        danismanlikDosyaSayisi = 0
+      if (hasTur) {
+        const turSayiRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT tur, COUNT(*) as count FROM DATA_TeminDosyasi WHERE ${isDelWhere}${modeFilter} GROUP BY tur`
+        )
+        if (turSayiRes.success && turSayiRes.data) {
+          turSayiRes.data.forEach((row: any) => {
+            if (row.tur === 'mal') malDosyaSayisi = row.count || 0
+            else if (row.tur === 'hizmet') hizmetDosyaSayisi = row.count || 0
+            else if (row.tur === 'yapim' || row.tur === 'yapim_isi')
+              yapimDosyaSayisi = row.count || 0
+            else if (row.tur === 'danismanlik') danismanlikDosyaSayisi = row.count || 0
+          })
+        }
+      }
 
-      const hizmetDosyaCountRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL) AND tur = 'hizmet'${modeFilter}`
-      )
-      const hizmetDosyaSayisi = hizmetDosyaCountRes.data?.[0]?.count || 0
+      // 15. En Çok Seçilen Firma
+      let enCokSecilenFirma: { unvan: string; count: number } | null = null
+      if (hasFirmaId && existingTables.has('tanim_firma')) {
+        const topFirmaRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT f.unvan, COUNT(*) as count FROM DATA_TeminDosyasi d JOIN TANIM_Firma f ON d.firma_id = f.id WHERE d.firma_id IS NOT NULL AND ${isDelWhereD}${modeFilter} GROUP BY d.firma_id ORDER BY count DESC LIMIT 1`
+        )
+        if (topFirmaRes.success && topFirmaRes.data?.[0]) {
+          enCokSecilenFirma = {
+            unvan: topFirmaRes.data[0].unvan,
+            count: topFirmaRes.data[0].count
+          }
+        }
+      }
 
-      const yapimDosyaCountRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL) AND tur IN ('yapim', 'yapim_isi')${modeFilter}`
-      )
-      const yapimDosyaSayisi = yapimDosyaCountRes.data?.[0]?.count || 0
+      // 16. En Çok Harcama Yapan Birim
+      let enCokHarcamaYapanBirim: { birim_adi: string; total: number } | null = null
+      const birimFieldCandidates: string[] = []
+      if (hasBirim) birimFieldCandidates.push("NULLIF(TRIM(d.birim), '')")
+      if (hasHarcamaBirimi) birimFieldCandidates.push("NULLIF(TRIM(d.harcama_birimi), '')")
+      if (existingTables.has('tanim_birim') && birimCols.has('birim_adi'))
+        birimFieldCandidates.push("NULLIF(TRIM(b.birim_adi), '')")
+      if (existingTables.has('tanim_birim') && birimCols.has('ad'))
+        birimFieldCandidates.push("NULLIF(TRIM(b.ad), '')")
+      if (hasIhtiyacYeri) birimFieldCandidates.push("NULLIF(TRIM(d.ihtiyac_yeri), '')")
+      birimFieldCandidates.push("'Belirtilmemiş Birim'")
+      const birimFieldExpr = `COALESCE(${birimFieldCandidates.join(', ')})`
 
-      const danismanlikDosyaCountRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT COUNT(*) as count FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL) AND tur = 'danismanlik'${modeFilter}`
-      )
-      const danismanlikDosyaSayisi = danismanlikDosyaCountRes.data?.[0]?.count || 0
+      const costSumExpr =
+        hasNetOdenen && hasYaklasikMaliyet
+          ? 'SUM(CASE WHEN d.yaklasik_maliyet > 0 THEN d.yaklasik_maliyet WHEN d.net_odenen > 0 THEN d.net_odenen ELSE 0 END)'
+          : hasYaklasikMaliyet
+            ? 'SUM(d.yaklasik_maliyet)'
+            : hasNetOdenen
+              ? 'SUM(d.net_odenen)'
+              : '0'
 
-      // 15. En Çok Seçilen Firma (Kazanan)
-      const topFirmaRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT f.unvan, COUNT(*) as count FROM DATA_TeminDosyasi d JOIN TANIM_Firma f ON d.firma_id = f.id WHERE d.firma_id IS NOT NULL GROUP BY d.firma_id ORDER BY count DESC LIMIT 1'
-      )
-      const enCokSecilenFirma =
-        topFirmaRes.success && topFirmaRes.data?.[0]
-          ? { unvan: topFirmaRes.data[0].unvan, count: topFirmaRes.data[0].count }
-          : null
+      const birimJoinClause =
+        existingTables.has('tanim_birim') && hasBirimId
+          ? 'LEFT JOIN TANIM_Birim b ON d.birim_id = b.id'
+          : ''
 
-      // 16. En Çok Harcama Yapan Birim (Tüm Doğrudan Temin Verisindeki İhale / Harcama Birimlerini Alarak)
       const topBirimRes = await window.electron.ipcRenderer.invoke(
         'db:query',
         `SELECT 
-           COALESCE(
-             NULLIF(TRIM(d.birim), ''),
-             NULLIF(TRIM(d.harcama_birimi), ''),
-             NULLIF(TRIM(b.birim_adi), ''),
-             NULLIF(TRIM(b.ad), ''),
-             NULLIF(TRIM(d.ihtiyac_yeri), ''),
-             'Belirtilmemiş Birim'
-           ) as birim_adi,
-           SUM(
-             CASE 
-               WHEN d.yaklasik_maliyet > 0 THEN d.yaklasik_maliyet 
-               WHEN d.net_odenen > 0 THEN d.net_odenen 
-               ELSE 0 
-             END
-           ) as total
+           ${birimFieldExpr} as birim_adi,
+           ${costSumExpr} as total
          FROM DATA_TeminDosyasi d
-         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-         WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)${modeFilter}
+         ${birimJoinClause}
+         WHERE ${isDelWhereD}${modeFilter}
          GROUP BY 1
          ORDER BY total DESC
          LIMIT 1`
       )
-      const enCokHarcamaYapanBirim =
-        topBirimRes.success && topBirimRes.data?.[0]
-          ? { birim_adi: topBirimRes.data[0].birim_adi, total: Number(topBirimRes.data[0].total) || 0 }
-          : null
+      if (topBirimRes.success && topBirimRes.data?.[0]) {
+        enCokHarcamaYapanBirim = {
+          birim_adi: topBirimRes.data[0].birim_adi,
+          total: Number(topBirimRes.data[0].total) || 0
+        }
+      }
 
-      // 17. İhale Tipi Bazlı Dağılım (modeFilter dahil, doğrudan kategorize edilmiş)
-      const ihaleTipiRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT 
-           CASE 
-             WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%pazarlık%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%pazarlik%' THEN 'pazarlik'
-             WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%açık%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%acik%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%ihale%' THEN 'acik_ihale'
-             WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%hakediş%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%hakedis%' THEN 'hakedis'
-             ELSE 'dogrudan_temin'
-           END as tip,
-           COUNT(*) as sayi,
-           COALESCE(SUM(yaklasik_maliyet), 0) as maliyet
-         FROM DATA_TeminDosyasi
-         WHERE (is_deleted = 0 OR is_deleted IS NULL)${modeFilter}
-         GROUP BY 1`
-      )
+      // 17. İhale Tipi Bazlı Dağılım
       let dogrudanTeminSayisi = 0,
         dogrudanTeminMaliyet = 0
       let acikIhaleSayisi = 0,
@@ -344,53 +428,68 @@ export function useDashboardStats(
         pazarlikMaliyet = 0
       let hakediseSayisi = 0,
         hakediseMaliyet = 0
-      if (ihaleTipiRes.success && Array.isArray(ihaleTipiRes.data)) {
-        ihaleTipiRes.data.forEach((row: any) => {
-          if (row.tip === 'pazarlik') {
-            pazarlikSayisi = Number(row.sayi || 0)
-            pazarlikMaliyet = Number(row.maliyet || 0)
-          } else if (row.tip === 'acik_ihale') {
-            acikIhaleSayisi = Number(row.sayi || 0)
-            acikIhaleMaliyet = Number(row.maliyet || 0)
-          } else if (row.tip === 'hakedis') {
-            hakediseSayisi = Number(row.sayi || 0)
-            hakediseMaliyet = Number(row.maliyet || 0)
-          } else {
-            dogrudanTeminSayisi += Number(row.sayi || 0)
-            dogrudanTeminMaliyet += Number(row.maliyet || 0)
-          }
-        })
+
+      if (hasIhaleTipi) {
+        const ymField = hasYaklasikMaliyet ? 'yaklasik_maliyet' : '0'
+        const ihaleTipiRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT 
+             CASE 
+               WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%temin%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%22/%' THEN 'dogrudan_temin'
+               WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%pazarlık%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%pazarlik%' THEN 'pazarlik'
+               WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%açık%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%acik%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%ihale%' THEN 'acik_ihale'
+               WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%hakediş%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%hakedis%' THEN 'hakedis'
+               ELSE 'dogrudan_temin'
+             END as tip,
+             COUNT(*) as sayi,
+             COALESCE(SUM(${ymField}), 0) as maliyet
+           FROM DATA_TeminDosyasi
+           WHERE ${isDelWhere}${modeFilter}
+           GROUP BY 1`
+        )
+        if (ihaleTipiRes.success && Array.isArray(ihaleTipiRes.data)) {
+          ihaleTipiRes.data.forEach((row: any) => {
+            if (row.tip === 'pazarlik') {
+              pazarlikSayisi = Number(row.sayi || 0)
+              pazarlikMaliyet = Number(row.maliyet || 0)
+            } else if (row.tip === 'acik_ihale') {
+              acikIhaleSayisi = Number(row.sayi || 0)
+              acikIhaleMaliyet = Number(row.maliyet || 0)
+            } else if (row.tip === 'hakedis') {
+              hakediseSayisi = Number(row.sayi || 0)
+              hakediseMaliyet = Number(row.maliyet || 0)
+            } else {
+              dogrudanTeminSayisi += Number(row.sayi || 0)
+              dogrudanTeminMaliyet += Number(row.maliyet || 0)
+            }
+          })
+        }
+      } else {
+        // In legacy database without ihale_tipi, all files are inherently direct procurement
+        dogrudanTeminSayisi = ihaleDosyaSayisi
+        dogrudanTeminMaliyet = toplamYaklasikMaliyet
       }
 
-      // 18. Birimler Bazında Harcama Analizi (Tüm Doğrudan Temin Verisindeki İhale / Harcama Birimlerini Alarak)
+      // 18. Birimler Bazında Harcama Analizi
+      const birimIdExpr =
+        existingTables.has('tanim_birim') && hasBirimId
+          ? 'COALESCE(b.id, d.birim_id, MIN(d.id))'
+          : hasBirimId
+            ? 'COALESCE(d.birim_id, MIN(d.id))'
+            : 'MIN(d.id)'
+
       const birimlerHarcamaRes = await window.electron.ipcRenderer.invoke(
         'db:query',
         `SELECT 
-           COALESCE(b.id, d.birim_id, MIN(d.id)) as id,
-           COALESCE(
-             NULLIF(TRIM(b.birim_adi), ''),
-             NULLIF(TRIM(b.ad), ''),
-             NULLIF(TRIM(d.birim), ''),
-             NULLIF(TRIM(d.harcama_birimi), ''),
-             NULLIF(TRIM(d.ihtiyac_yeri), ''),
-             'Belirtilmemiş Birim'
-           ) as birim_adi, 
+           ${birimIdExpr} as id,
+           ${birimFieldExpr} as birim_adi, 
            COUNT(d.id) as dosya_sayisi,
-           COALESCE(SUM(d.yaklasik_maliyet), 0) as yaklasik_maliyet,
-           COALESCE(SUM(d.net_odenen), 0) as net_odenen,
-           COALESCE(
-             SUM(
-               CASE 
-                 WHEN d.net_odenen > 0 THEN d.net_odenen 
-                 WHEN d.yaklasik_maliyet > 0 THEN d.yaklasik_maliyet 
-                 ELSE 0 
-               END
-             ), 
-             0
-           ) as toplam_harcama
+           COALESCE(SUM(${hasYaklasikMaliyet ? 'd.yaklasik_maliyet' : '0'}), 0) as yaklasik_maliyet,
+           COALESCE(SUM(${hasNetOdenen ? 'd.net_odenen' : '0'}), 0) as net_odenen,
+           COALESCE(${costSumExpr}, 0) as toplam_harcama
          FROM DATA_TeminDosyasi d
-         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-         WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)${modeFilter}
+         ${birimJoinClause}
+         WHERE ${isDelWhereD}${modeFilter}
          GROUP BY 2
          HAVING toplam_harcama > 0 OR dosya_sayisi > 0
          ORDER BY toplam_harcama DESC, dosya_sayisi DESC`

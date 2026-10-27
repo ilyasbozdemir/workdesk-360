@@ -295,6 +295,18 @@ export class DtmWorkspace {
       throw new Error(`Dosya bulunamadı: ${filePath}`)
     }
 
+    const lower = filePath.toLowerCase()
+    if (lower.endsWith('.temin') || lower.endsWith('.tmn360') || lower.endsWith('.hkmp')) {
+      throw new Error(
+        'Seçtiğiniz dosya Doğrudan Temin formatındadır (.temin / .tmn360 / .hkmp). İHALE 360 yalnızca .ihale ve .ihale360 ihale dosyalarını açabilir. Lütfen bu dosyayı Temin 360 uygulaması ile açınız.'
+      )
+    }
+    if (!lower.endsWith('.ihale') && !lower.endsWith('.ihale360')) {
+      throw new Error(
+        'Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.'
+      )
+    }
+
     this.acquireFileLock(filePath)
 
     try {

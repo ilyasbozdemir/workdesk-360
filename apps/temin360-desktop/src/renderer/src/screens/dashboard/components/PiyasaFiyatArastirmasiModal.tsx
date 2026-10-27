@@ -57,110 +57,229 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
     }).format(val || 0)
   }
 
-  const getTableColumns = async (tableName: string): Promise<Set<string>> => {
-    try {
-      const res = await window.electron.ipcRenderer.invoke('db:query', `PRAGMA table_info(${tableName})`)
-      if (res && res.success && Array.isArray(res.data)) {
-        return new Set(res.data.map((col: { name: string }) => String(col.name).toLowerCase()))
-      }
-    } catch {
-      // ignore
-    }
-    return new Set()
-  }
-
   const loadData = React.useCallback(async () => {
     if (!window?.electron?.ipcRenderer) return
     setIsLoading(true)
     try {
-      const [firmaCols, birimCols, dosyaCols] = await Promise.all([
-        getTableColumns('DATA_TeminFirma'),
-        getTableColumns('TANIM_Birim'),
-        getTableColumns('DATA_TeminDosyasi')
-      ])
-
-      const hasFirmaDosyaId = firmaCols.has('dosya_id')
-      const hasFirmaKazananMi = firmaCols.has('kazanan_mi')
-      const hasFirmaKazandiMi = firmaCols.has('kazandi_mi')
-      const hasBirimAdi = birimCols.has('birim_adi')
-      const hasBirimAd = birimCols.has('ad')
-      const hasDosyaIsDeleted = dosyaCols.has('is_deleted')
-
-      const firmaJoinCond = hasFirmaDosyaId
-        ? '(tf.temin_dosya_id = d.id OR tf.dosya_id = d.id)'
-        : 'tf.temin_dosya_id = d.id'
-
-      const subFirmaJoinCond = hasFirmaDosyaId
-        ? '(tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id)'
-        : 'tf2.temin_dosya_id = d.id'
-
-      const winnerCond =
-        hasFirmaKazananMi && hasFirmaKazandiMi
-          ? '(tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1)'
-          : hasFirmaKazandiMi
-            ? 'tf2.kazandi_mi = 1'
-            : hasFirmaKazananMi
-              ? 'tf2.kazanan_mi = 1'
-              : '1=0'
-
-      let birimSelect = "'Genel İdare'"
-      if (hasBirimAd && hasBirimAdi) {
-        birimSelect =
-          "COALESCE(NULLIF(TRIM(b.ad), ''), NULLIF(TRIM(b.birim_adi), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
-      } else if (hasBirimAd) {
-        birimSelect =
-          "COALESCE(NULLIF(TRIM(b.ad), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
-      } else if (hasBirimAdi) {
-        birimSelect =
-          "COALESCE(NULLIF(TRIM(b.birim_adi), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
-      } else {
-        birimSelect = "COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      // 0. Schema inspection: Check all tables and columns dynamically
+      const tableColsMap = new Map<string, Set<string>>()
+      try {
+        const tRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          "SELECT name FROM sqlite_master WHERE type IN ('table', 'view')"
+        )
+        if (tRes && tRes.success && Array.isArray(tRes.data)) {
+          const names: string[] = tRes.data.map((r: { name: string }) => String(r.name).toLowerCase())
+          await Promise.all(
+            names.map(async (tbl) => {
+              try {
+                const pRes = await window.electron.ipcRenderer.invoke('db:query', `PRAGMA table_info("${tbl}")`)
+                if (pRes && pRes.success && Array.isArray(pRes.data)) {
+                  tableColsMap.set(
+                    tbl,
+                    new Set(pRes.data.map((c: { name: string }) => String(c.name).toLowerCase()))
+                  )
+                }
+              } catch {
+                // ignore
+              }
+            })
+          )
+        }
+      } catch {
+        // ignore
       }
+
+      const hasTable = (tbl: string) => tableColsMap.has(tbl.toLowerCase())
+      const hasCol = (tbl: string, col: string) =>
+        tableColsMap.get(tbl.toLowerCase())?.has(col.toLowerCase()) ?? false
+
+      if (!hasTable('DATA_TeminDosyasi')) {
+        setData([])
+        return
+      }
+
+      const hasDosyaTeminNo = hasCol('DATA_TeminDosyasi', 'temin_no')
+      const hasDosyaKonu = hasCol('DATA_TeminDosyasi', 'konu')
+      const hasDosyaYm = hasCol('DATA_TeminDosyasi', 'yaklasik_maliyet')
+      const hasDosyaTur = hasCol('DATA_TeminDosyasi', 'tur')
+      const hasDosyaTarih = hasCol('DATA_TeminDosyasi', 'dosya_acilis_tarihi')
+      const hasDosyaNetOdenen = hasCol('DATA_TeminDosyasi', 'net_odenen')
+      const hasDosyaBirimId = hasCol('DATA_TeminDosyasi', 'birim_id')
+      const hasDosyaBirim = hasCol('DATA_TeminDosyasi', 'birim')
+      const hasDosyaHarcamaBirimi = hasCol('DATA_TeminDosyasi', 'harcama_birimi')
+      const hasDosyaFirmaId = hasCol('DATA_TeminDosyasi', 'firma_id')
+      const hasDosyaIsDeleted = hasCol('DATA_TeminDosyasi', 'is_deleted')
+
+      // Birim
+      const hasBirimTable = hasTable('TANIM_Birim')
+      const hasBirimAd = hasCol('TANIM_Birim', 'ad')
+      const hasBirimAdi = hasCol('TANIM_Birim', 'birim_adi')
+      const birimJoin =
+        hasBirimTable && hasDosyaBirimId ? 'LEFT JOIN TANIM_Birim b ON d.birim_id = b.id' : ''
+
+      const birimFieldCandidates: string[] = []
+      if (hasDosyaBirim) birimFieldCandidates.push("NULLIF(TRIM(d.birim), '')")
+      if (hasDosyaHarcamaBirimi) birimFieldCandidates.push("NULLIF(TRIM(d.harcama_birimi), '')")
+      if (hasBirimTable && hasBirimAdi) birimFieldCandidates.push("NULLIF(TRIM(b.birim_adi), '')")
+      if (hasBirimTable && hasBirimAd) birimFieldCandidates.push("NULLIF(TRIM(b.ad), '')")
+      birimFieldCandidates.push("'Genel İdare'")
+      const birimSelect = `COALESCE(${birimFieldCandidates.join(', ')})`
 
       const whereDeleted = hasDosyaIsDeleted ? '(d.is_deleted = 0 OR d.is_deleted IS NULL)' : '1=1'
 
+      // Firma & Teklif
+      const hasFirmaTable = hasTable('DATA_TeminFirma')
+      const hasFirmaDosyaId = hasCol('DATA_TeminFirma', 'dosya_id')
+      const hasFirmaTeminDosyaId = hasCol('DATA_TeminFirma', 'temin_dosya_id')
+      const hasFirmaTeklifVerdiMi = hasCol('DATA_TeminFirma', 'teklif_verdi_mi')
+      const hasFirmaTeklifToplami = hasCol('DATA_TeminFirma', 'teklif_toplami')
+      const hasFirmaKazananMi = hasCol('DATA_TeminFirma', 'kazanan_mi')
+      const hasFirmaKazandiMi = hasCol('DATA_TeminFirma', 'kazandi_mi')
+      const hasFirmaFirmaId = hasCol('DATA_TeminFirma', 'firma_id')
+      const hasFirmaUnvan = hasCol('DATA_TeminFirma', 'unvan')
+
+      const hasKalemTeklifTable = hasTable('DATA_TeminKalemTeklif')
+      const hasKalemTeklifBirimFiyat = hasCol('DATA_TeminKalemTeklif', 'birim_fiyat')
+      const hasKalemTeklifFirmaId = hasCol('DATA_TeminKalemTeklif', 'temin_firma_id')
+      const hasKalemTeklifKalemId = hasCol('DATA_TeminKalemTeklif', 'temin_kalem_id')
+
+      const hasKalemTable = hasTable('DATA_TeminKalem')
+      const hasKalemMiktar = hasCol('DATA_TeminKalem', 'miktar')
+
+      const hasKalemTeklifSupport =
+        hasKalemTeklifTable && hasKalemTeklifBirimFiyat && hasKalemTeklifFirmaId
+
+      const kalemTeklifExistsCond = hasKalemTeklifSupport
+        ? 'EXISTS (SELECT 1 FROM DATA_TeminKalemTeklif tkt WHERE tkt.temin_firma_id = tf.id AND tkt.birim_fiyat > 0)'
+        : '1=0'
+
+      const kalemTeklifSumExpr = hasKalemTeklifSupport
+        ? hasKalemTable && hasKalemMiktar && hasKalemTeklifKalemId
+          ? '(SELECT SUM(tkt2.birim_fiyat * COALESCE(tk2.miktar, 1)) FROM DATA_TeminKalemTeklif tkt2 LEFT JOIN DATA_TeminKalem tk2 ON tkt2.temin_kalem_id = tk2.id WHERE tkt2.temin_firma_id = tf.id)'
+          : '(SELECT SUM(tkt2.birim_fiyat) FROM DATA_TeminKalemTeklif tkt2 WHERE tkt2.temin_firma_id = tf.id)'
+        : 'NULL'
+
+      let firmaJoin = ''
+      let toplamTeklifExpr = '0 as toplam_teklif_sayisi'
+      let gecerliTeklifExpr = '0 as gecerli_teklif_sayisi'
+      let enDusukTeklifExpr = 'NULL as en_dusuk_teklif'
+      let kazananFirmaExpr = 'NULL as kazanan_firma'
+      let kazananTutarExpr = hasDosyaNetOdenen ? 'd.net_odenen as kazanan_tutar' : 'NULL as kazanan_tutar'
+
+      const hasTanimFirma = hasTable('TANIM_Firma')
+
+      if (hasFirmaTable) {
+        const firmaJoinCond =
+          hasFirmaTeminDosyaId && hasFirmaDosyaId
+            ? '(tf.temin_dosya_id = d.id OR tf.dosya_id = d.id)'
+            : hasFirmaDosyaId
+              ? 'tf.dosya_id = d.id'
+              : 'tf.temin_dosya_id = d.id'
+
+        firmaJoin = `LEFT JOIN DATA_TeminFirma tf ON ${firmaJoinCond}`
+        toplamTeklifExpr = 'COUNT(DISTINCT tf.id) as toplam_teklif_sayisi'
+
+        const validPriceConditions: string[] = []
+        if (hasFirmaTeklifVerdiMi) validPriceConditions.push('tf.teklif_verdi_mi = 1')
+        if (hasFirmaTeklifToplami) validPriceConditions.push('COALESCE(tf.teklif_toplami, 0) > 0')
+        if (hasKalemTeklifSupport) validPriceConditions.push(kalemTeklifExistsCond)
+
+        const validPriceCond =
+          validPriceConditions.length > 0 ? `(${validPriceConditions.join(' OR ')})` : '1=0'
+        gecerliTeklifExpr = `SUM(CASE WHEN tf.id IS NOT NULL AND ${validPriceCond} THEN 1 ELSE 0 END) as gecerli_teklif_sayisi`
+
+        const enDusukCases: string[] = []
+        if (hasFirmaTeklifToplami) {
+          enDusukCases.push('WHEN COALESCE(tf.teklif_toplami, 0) > 0 THEN tf.teklif_toplami')
+        }
+        if (hasKalemTeklifSupport) {
+          enDusukCases.push(`WHEN ${kalemTeklifExistsCond} THEN ${kalemTeklifSumExpr}`)
+        }
+        enDusukTeklifExpr =
+          enDusukCases.length > 0
+            ? `MIN(CASE ${enDusukCases.join(' ')} ELSE NULL END) as en_dusuk_teklif`
+            : 'NULL as en_dusuk_teklif'
+
+        const subFirmaJoinCond =
+          hasFirmaTeminDosyaId && hasFirmaDosyaId
+            ? '(tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id)'
+            : hasFirmaDosyaId
+              ? 'tf2.dosya_id = d.id'
+              : 'tf2.temin_dosya_id = d.id'
+
+        const winnerConds: string[] = []
+        if (hasFirmaKazandiMi) winnerConds.push('tf2.kazandi_mi = 1')
+        if (hasFirmaKazananMi) winnerConds.push('tf2.kazanan_mi = 1')
+        const winnerCond = winnerConds.length > 0 ? `(${winnerConds.join(' OR ')})` : '1=0'
+
+        const tanimFirmaJoin =
+          hasTanimFirma && hasFirmaFirmaId
+            ? 'LEFT JOIN TANIM_Firma tfn ON tf2.firma_id = tfn.id'
+            : ''
+        const firmUnvanSelect =
+          hasTanimFirma && hasFirmaFirmaId && hasFirmaUnvan
+            ? 'COALESCE(tf2.unvan, tfn.unvan)'
+            : hasFirmaUnvan
+              ? 'tf2.unvan'
+              : hasTanimFirma && hasFirmaFirmaId
+                ? 'tfn.unvan'
+                : 'NULL'
+
+        const winnerFirmSubquery =
+          winnerConds.length > 0
+            ? `(SELECT ${firmUnvanSelect} FROM DATA_TeminFirma tf2 ${tanimFirmaJoin} WHERE ${subFirmaJoinCond} AND ${winnerCond} LIMIT 1)`
+            : 'NULL'
+
+        const fallbackWinnerFirm =
+          hasTanimFirma && hasDosyaFirmaId
+            ? '(SELECT tfn2.unvan FROM TANIM_Firma tfn2 WHERE tfn2.id = d.firma_id LIMIT 1)'
+            : 'NULL'
+
+        kazananFirmaExpr = `COALESCE(${winnerFirmSubquery}, ${fallbackWinnerFirm}) as kazanan_firma`
+
+        const winnerTutarSubquery =
+          winnerConds.length > 0 && hasFirmaTeklifToplami
+            ? `(SELECT tf2.teklif_toplami FROM DATA_TeminFirma tf2 WHERE ${subFirmaJoinCond} AND ${winnerCond} LIMIT 1)`
+            : 'NULL'
+
+        kazananTutarExpr = hasDosyaNetOdenen
+          ? `COALESCE(${winnerTutarSubquery}, d.net_odenen) as kazanan_tutar`
+          : `${winnerTutarSubquery} as kazanan_tutar`
+      } else {
+        const fallbackWinnerFirm =
+          hasTanimFirma && hasDosyaFirmaId
+            ? '(SELECT tfn2.unvan FROM TANIM_Firma tfn2 WHERE tfn2.id = d.firma_id LIMIT 1)'
+            : 'NULL'
+        kazananFirmaExpr = `${fallbackWinnerFirm} as kazanan_firma`
+      }
+
+      const teminNoExpr = hasDosyaTeminNo
+        ? "COALESCE(NULLIF(TRIM(d.temin_no), ''), 'DT-' || d.id)"
+        : "'DT-' || d.id"
+      const konuExpr = hasDosyaKonu
+        ? "COALESCE(NULLIF(TRIM(d.konu), ''), 'İsimsiz Doğrudan Temin')"
+        : "'İsimsiz Doğrudan Temin'"
+      const ymExpr = hasDosyaYm ? 'COALESCE(d.yaklasik_maliyet, 0)' : '0'
+      const turExpr = hasDosyaTur ? "COALESCE(d.tur, 'mal')" : "'mal'"
+      const tarihExpr = hasDosyaTarih ? 'd.dosya_acilis_tarihi' : 'NULL'
+
       const query = `SELECT 
            d.id,
-           COALESCE(NULLIF(TRIM(d.temin_no), ''), 'DT-' || d.id) as temin_no,
-           COALESCE(NULLIF(TRIM(d.konu), ''), 'İsimsiz Doğrudan Temin') as konu,
+           ${teminNoExpr} as temin_no,
+           ${konuExpr} as konu,
            ${birimSelect} as birim_adi,
-           COALESCE(d.yaklasik_maliyet, 0) as yaklasik_maliyet,
-           COALESCE(d.tur, 'mal') as tur,
-           d.dosya_acilis_tarihi,
-           COUNT(DISTINCT tf.id) as toplam_teklif_sayisi,
-           SUM(
-             CASE 
-               WHEN tf.id IS NOT NULL AND (
-                 tf.teklif_verdi_mi = 1 
-                 OR COALESCE(tf.teklif_toplami, 0) > 0 
-                 OR EXISTS (SELECT 1 FROM DATA_TeminKalemTeklif tkt WHERE tkt.temin_firma_id = tf.id AND tkt.birim_fiyat > 0)
-               ) THEN 1 
-               ELSE 0 
-             END
-           ) as gecerli_teklif_sayisi,
-           MIN(
-             CASE 
-               WHEN COALESCE(tf.teklif_toplami, 0) > 0 THEN tf.teklif_toplami 
-               WHEN EXISTS (SELECT 1 FROM DATA_TeminKalemTeklif tkt WHERE tkt.temin_firma_id = tf.id AND tkt.birim_fiyat > 0) THEN (
-                 SELECT SUM(tkt2.birim_fiyat * COALESCE(tk2.miktar, 1))
-                 FROM DATA_TeminKalemTeklif tkt2
-                 LEFT JOIN DATA_TeminKalem tk2 ON tkt2.temin_kalem_id = tk2.id
-                 WHERE tkt2.temin_firma_id = tf.id
-               )
-               ELSE NULL 
-             END
-           ) as en_dusuk_teklif,
-           COALESCE(
-             (SELECT COALESCE(tf2.unvan, tfn.unvan) FROM DATA_TeminFirma tf2 LEFT JOIN TANIM_Firma tfn ON tf2.firma_id = tfn.id WHERE ${subFirmaJoinCond} AND ${winnerCond} LIMIT 1),
-             (SELECT tfn.unvan FROM TANIM_Firma tfn WHERE tfn.id = d.firma_id LIMIT 1)
-           ) as kazanan_firma,
-           COALESCE(
-             (SELECT tf2.teklif_toplami FROM DATA_TeminFirma tf2 WHERE ${subFirmaJoinCond} AND ${winnerCond} LIMIT 1),
-             d.net_odenen
-           ) as kazanan_tutar
+           ${ymExpr} as yaklasik_maliyet,
+           ${turExpr} as tur,
+           ${tarihExpr} as dosya_acilis_tarihi,
+           ${toplamTeklifExpr},
+           ${gecerliTeklifExpr},
+           ${enDusukTeklifExpr},
+           ${kazananFirmaExpr},
+           ${kazananTutarExpr}
          FROM DATA_TeminDosyasi d
-         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-         LEFT JOIN DATA_TeminFirma tf ON ${firmaJoinCond}
+         ${birimJoin}
+         ${firmaJoin}
          WHERE ${whereDeleted}
          GROUP BY d.id
          ORDER BY d.id DESC

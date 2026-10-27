@@ -147,6 +147,20 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   openWorkspace: async (filePath: string, allowMigration: boolean = false) => {
     try {
+      const lower = filePath.toLowerCase().trim()
+      if (lower.endsWith('.temin') || lower.endsWith('.tmn360') || lower.endsWith('.hkmp')) {
+        const msg =
+          'Seçtiğiniz dosya Doğrudan Temin formatındadır (.temin).\nİHALE 360 yalnızca .ihale ve .ihale360 uzantılı ihale veri dosyalarını açabilir.\nLütfen bu dosyayı Temin 360 uygulaması ile açınız.'
+        alert(msg)
+        return { success: false, error: msg }
+      }
+      if (!lower.endsWith('.ihale') && !lower.endsWith('.ihale360')) {
+        const msg =
+          'Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.'
+        alert(msg)
+        return { success: false, error: msg }
+      }
+
       const result = await window.electron.ipcRenderer.invoke(
         'workspace:open',
         filePath,
