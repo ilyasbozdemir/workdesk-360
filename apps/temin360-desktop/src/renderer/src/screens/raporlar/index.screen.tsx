@@ -8,10 +8,13 @@ import {
   ChevronRight,
   Filter,
   Package,
-  Layers
+  Layers,
+  Clock
 } from 'lucide-react'
 
 // Subcomponents
+import { OlayOrgusuTimelineView } from './components/OlayOrgusuTimelineView'
+import { DosyaMuhteviyatView } from './components/DosyaMuhteviyatView'
 import { KayitFormuView } from './components/KayitFormuView'
 import { MalzemeHarcamaView } from './components/MalzemeHarcamaView'
 import { DokumanlarView } from './components/DokumanlarView'
@@ -22,6 +25,8 @@ import { ButceView } from './components/ButceView'
 import { RaporFilters } from './raporlar.hooks'
 
 type RaporTipi =
+  | 'olay-orgusu'
+  | 'dosya-muhteviyat'
   | 'kayit-formu'
   | 'malzemeler'
   | 'dokumanlar'
@@ -31,6 +36,18 @@ type RaporTipi =
   | 'butce'
 
 const RAPOR_TIPLERI: { id: RaporTipi; label: string; icon: React.ReactNode; desc: string }[] = [
+  {
+    id: 'olay-orgusu',
+    label: 'Olay Örgüsü & Süreç Zaman Çizelgesi',
+    icon: <Clock className="w-5 h-5 text-blue-600" />,
+    desc: 'Hangi dosyada ne zaman ne oldu; talep, onay, teklif, kabul ve ödeme kronolojisi'
+  },
+  {
+    id: 'dosya-muhteviyat',
+    label: 'Dosya Muhteviyat & Kalem Dökümü',
+    icon: <Layers className="w-5 h-5 text-indigo-600" />,
+    desc: 'Hangi dosyada hangi malzemeler, miktarlar ve teklif veren firmalar yer alıyor'
+  },
   {
     id: 'kayit-formu',
     label: 'Doğrudan Temin Harcama Listesi',
@@ -76,7 +93,7 @@ const RAPOR_TIPLERI: { id: RaporTipi; label: string; icon: React.ReactNode; desc
 ]
 
 export default function RaporlarScreen(): React.JSX.Element {
-  const [seciliTip, setSeciliTip] = useState<RaporTipi>('kayit-formu')
+  const [seciliTip, setSeciliTip] = useState<RaporTipi>('olay-orgusu')
   const [dinamikYillar, setDinamikYillar] = useState<string[]>([])
   const [seciliYil, setSeciliYil] = useState<string>('2026')
   const [tarihEsasi, setTarihEsasi] = useState<'temin' | 'acilis'>('temin')
@@ -138,7 +155,7 @@ export default function RaporlarScreen(): React.JSX.Element {
             Kamu Harcama, Doküman & Bütçe Raporları
           </h1>
           <p className="text-xs text-slate-500">
-            Doğrudan temin (22/d), ihale dokümanları arşivi ve 4734 Md. 62/ı %10 ödenek takibi
+            Doğrudan temin (22/d), olay örgüsü kronolojisi, dosya muhteviyatı ve 4734 Md. 62/ı %10 ödenek takibi
           </p>
         </div>
       </div>
@@ -276,6 +293,8 @@ export default function RaporlarScreen(): React.JSX.Element {
 
         {/* Sağ Panel – Rapor İçeriği */}
         <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-slate-900">
+          {seciliTip === 'olay-orgusu' && <OlayOrgusuTimelineView filters={currentFilters} />}
+          {seciliTip === 'dosya-muhteviyat' && <DosyaMuhteviyatView filters={currentFilters} />}
           {seciliTip === 'kayit-formu' && <KayitFormuView ay="" yil={seciliYil} />}
           {seciliTip === 'malzemeler' && (
             <MalzemeHarcamaView
