@@ -1,0 +1,23 @@
+appId: dev.ilyasbozdemir.personel360
+productName: Personel 360
+directories:
+  output: dist-local
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+
+win:
+  executableName: Personel360
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: Personel 360
+  uninstallDisplayName: Personel 360
+  createDesktopShortcut: always
