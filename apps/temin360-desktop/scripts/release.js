@@ -325,7 +325,7 @@ const releaseTargets = [
   'package.json',
   'apps/temin360-desktop/package.json',
   'apps/ihale360-desktop/package.json',
-  'apps/devlet-ihale-2886-desktop/package.json',
+  'apps/flowdesk-desktop/package.json',
   'packages/database/package.json',
   'packages/document-templates/package.json',
   'packages/database/schema-snapshot.json',
