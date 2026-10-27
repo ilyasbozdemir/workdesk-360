@@ -4,26 +4,19 @@ import {
   Printer,
   Download,
   Search,
-  CheckCircle2,
-  AlertCircle,
   FileText,
   Building2,
   Calendar,
   Layers,
-  ArrowRight,
   ChevronDown,
   ChevronUp,
   FileCheck,
-  TrendingDown,
-  ShieldCheck,
-  Package,
-  Wallet
+  TrendingDown
 } from 'lucide-react'
-import { cn } from '../../../../utils/cn'
-import { exportCsv } from '../../../../utils/csvExport'
+import { exportCsv } from '../../../utils/csvExport'
 import type { RaporFilters } from '../raporlar.hooks'
 
-const fmt = (n: number) =>
+const fmt = (n: number): string =>
   (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺'
 
 interface TimelineStep {
@@ -72,12 +65,7 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
   const [loading, setLoading] = useState<boolean>(true)
   const [dosyalar, setDosyalar] = useState<DosyaOlayOrgusuItem[]>([])
   const [searchTerm, setSearchTerm] = useState<string>('')
-  const [seciliDosyaId, setSeciliDosyaId] = useState<number | null>(null)
   const [acikKartlar, setAcikKartlar] = useState<Record<number, boolean>>({})
-
-  useEffect(() => {
-    fetchTimelineData()
-  }, [filters.seciliYil, filters.seciliBirim, filters.alimTuru])
 
   const fetchTimelineData = async (): Promise<void> => {
     if (typeof window === 'undefined' || !window.electron?.ipcRenderer) return
@@ -276,9 +264,6 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
         })
 
         setDosyalar(filtered)
-        if (filtered.length > 0 && !seciliDosyaId) {
-          setSeciliDosyaId(filtered[0].id)
-        }
         // İlk kartı varsayılan açık yap
         if (filtered.length > 0) {
           setAcikKartlar({ [filtered[0].id]: true })
@@ -291,6 +276,10 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
     }
   }
 
+  useEffect(() => {
+    fetchTimelineData()
+  }, [filters.seciliYil, filters.seciliBirim, filters.alimTuru])
+
   // Arama filtreli liste
   const goruntulenenDosyalar = dosyalar.filter((d) => {
     if (!searchTerm.trim()) return true
@@ -302,9 +291,6 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
       (d.kazanan_firma && d.kazanan_firma.toLowerCase().includes(s))
     )
   })
-
-  // Tekil seçili dosya
-  const odakDosya = dosyalar.find((d) => d.id === seciliDosyaId) || goruntulenenDosyalar[0]
 
   const handleExportCSV = (): void => {
     if (dosyalar.length === 0) return

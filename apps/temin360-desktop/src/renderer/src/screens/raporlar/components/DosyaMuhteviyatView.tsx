@@ -6,21 +6,17 @@ import {
   Search,
   Building2,
   Package,
-  FileText,
   ChevronDown,
   ChevronUp,
-  Tag,
-  Users,
   CheckCircle2,
   TrendingDown,
-  Briefcase,
-  FileCheck
+  Briefcase
 } from 'lucide-react'
-import { cn } from '../../../../utils/cn'
-import { exportCsv } from '../../../../utils/csvExport'
+import { cn } from '../../../utils/cn'
+import { exportCsv } from '../../../utils/csvExport'
 import type { RaporFilters } from '../raporlar.hooks'
 
-const fmt = (n: number) =>
+const fmt = (n: number): string =>
   (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺'
 
 interface KalemItem {
@@ -65,10 +61,6 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
   const [dosyalar, setDosyalar] = useState<DosyaMuhteviyatItem[]>([])
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [acikDosyalar, setAcikDosyalar] = useState<Record<number, boolean>>({})
-
-  useEffect(() => {
-    fetchMuhteviyatData()
-  }, [filters.seciliYil, filters.seciliBirim, filters.alimTuru])
 
   const fetchMuhteviyatData = async (): Promise<void> => {
     if (typeof window === 'undefined' || !window.electron?.ipcRenderer) return
@@ -209,6 +201,10 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchMuhteviyatData()
+  }, [filters.seciliYil, filters.seciliBirim, filters.alimTuru])
 
   // Arama filtreli liste
   const goruntulenenDosyalar = dosyalar.filter((d) => {
