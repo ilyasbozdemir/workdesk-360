@@ -3,8 +3,8 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import {
   ArrowRight,
   FileText,
+  Kanban,
   KeyRound,
-  Landmark,
   Layers,
   Plus,
   Search,
@@ -51,7 +51,7 @@ export const LivePipelineSection: React.FC<LivePipelineSectionProps> = ({
             Canlı Süreç Akış Hattı & Dosyalar
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Doğrudan temin ve 2886 Devlet İhale süreçlerinin anlık operasyonel listesi
+            Doğrudan temin ve kamu alım süreçlerinin anlık operasyonel listesi
           </p>
         </div>
 
@@ -75,13 +75,13 @@ export const LivePipelineSection: React.FC<LivePipelineSectionProps> = ({
               <span>Yeni Alım</span>
             </button>
           </Link>
-          <Link to="/devlet-ihale-2886">
+          <Link to="/takip">
             <button
               type="button"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1.5 px-3 rounded-xl cursor-pointer flex items-center gap-1 shadow-xs"
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold py-1.5 px-3 rounded-xl cursor-pointer flex items-center gap-1 border border-slate-200 dark:border-slate-700 shadow-xs"
             >
-              <Landmark className="w-3.5 h-3.5" />
-              <span>2886 İhale</span>
+              <Kanban className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Süreç Takip</span>
             </button>
           </Link>
         </div>
@@ -94,24 +94,23 @@ export const LivePipelineSection: React.FC<LivePipelineSectionProps> = ({
             Henüz Kayıtlı Dosya Bulunmuyor
           </h4>
           <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-4">
-            Yeni bir doğrudan temin veya 2886 ihale dosyası başlatarak süreçlerinizi anında devreye
-            alın.
+            Yeni bir doğrudan temin dosyası başlatarak süreçlerinizi anında devreye alın.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link to="/dosyalar/yeni">
               <button
                 type="button"
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded-xl cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded-xl cursor-pointer shadow-xs"
               >
                 Yeni Doğrudan Temin
               </button>
             </Link>
-            <Link to="/devlet-ihale-2886">
+            <Link to="/dosyalar">
               <button
                 type="button"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded-xl cursor-pointer"
+                className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold py-2 px-4 rounded-xl cursor-pointer border border-slate-200 dark:border-slate-700 shadow-xs"
               >
-                2886 İhale Masası
+                Tüm Dosyalar Havuzu
               </button>
             </Link>
           </div>
@@ -256,10 +255,11 @@ export const LivePipelineSection: React.FC<LivePipelineSectionProps> = ({
           })}
           <button
             type="button"
-            onClick={() => {}}
-            className="text-xs font-bold py-2 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-950/50 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+            onClick={() => navigate({ to: '/dosyalar' })}
+            className="w-full text-xs font-bold py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-blue-950/50 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
           >
-            Daha fazlasını gör
+            <span>Tüm Dosyalar Havuzunu Aç ({filteredDosyalar.length} Kayıt)</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
