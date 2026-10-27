@@ -39,7 +39,7 @@ jobs:
           echo "Building suite release for version: $VERSION (from tag: $RAW_TAG)"
           cd apps/temin360-desktop && npm pkg set version=$VERSION
           cd ../ihale360-desktop && npm pkg set version=$VERSION
-          cd ../devlet-ihale-2886-desktop && npm pkg set version=$VERSION
+          cd ../flowdesk-desktop && npm pkg set version=$VERSION
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -57,15 +57,14 @@ jobs:
           pnpm --filter temin360-desktop typecheck:web
           pnpm --filter ihale360-desktop typecheck:node
           pnpm --filter ihale360-desktop typecheck:web
-          pnpm --filter devlet-ihale-2886-desktop typecheck:node
-          pnpm --filter devlet-ihale-2886-desktop typecheck:web
+          pnpm --filter flowdesk-desktop typecheck
 
       - name: Pre-release Unit & Integration Tests
         run: |
           pnpm --filter @temin360/document-templates test
           pnpm --filter temin360-desktop test
           pnpm --filter ihale360-desktop test
-          pnpm --filter devlet-ihale-2886-desktop test
+          pnpm --filter flowdesk-desktop test
 
       - name: Build and Package Temin 360 Desktop
         working-directory: apps/temin360-desktop
@@ -83,8 +82,8 @@ jobs:
           ELECTRON_MIRROR: "https://cdn.npmmirror.com/binaries/electron/"
           ELECTRON_BUILDER_BINARIES_MIRROR: "https://cdn.npmmirror.com/binaries/electron-builder-binaries/"
 
-      - name: Build and Package Devlet İhale 2886 Desktop
-        working-directory: apps/devlet-ihale-2886-desktop
+      - name: Build and Package FlowDesk 360 Desktop
+        working-directory: apps/flowdesk-desktop
         run: pnpm build && npx electron-builder --win --x64 -p never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -122,9 +121,9 @@ jobs:
             apps/ihale360-desktop/dist-local/*.exe
             apps/ihale360-desktop/dist-local/*.exe.blockmap
             apps/ihale360-desktop/dist-local/*.yml
-            apps/devlet-ihale-2886-desktop/dist-local/*.exe
-            apps/devlet-ihale-2886-desktop/dist-local/*.exe.blockmap
-            apps/devlet-ihale-2886-desktop/dist-local/*.yml
+            apps/flowdesk-desktop/dist-local/*.exe
+            apps/flowdesk-desktop/dist-local/*.exe.blockmap
+            apps/flowdesk-desktop/dist-local/*.yml
           draft: false
           prerelease: ${{ steps.prep.outputs.is_prerelease == 'true' }}
           make_latest: ${{ steps.prep.outputs.make_latest }}

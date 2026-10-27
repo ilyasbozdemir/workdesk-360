@@ -22,8 +22,8 @@ export const TEMIN_360_MANIFEST: AppManifest = {
     },
     {
       ext: 'hkmp',
-      name: 'HakimPro Doğrudan Temin Dosyası',
-      description: 'HakimPro Doğrudan Temin Dosyası (*.hkmp)',
+      name: 'TEMİN 360 Eski Sürüm Proje Dosyası (HakimPro)',
+      description: 'TEMİN 360 ile Açılabilen Eski Proje Dosyası (*.hkmp)',
       mimeType: 'application/x-hkmp',
       progId: 'Temin360.Document',
       perceivedType: 'document',
@@ -101,50 +101,6 @@ export const IHALE_360_MANIFEST: AppManifest = {
   sizeEstimatedMb: 125
 }
 
-export const DEVLET_IHALE_2886_MANIFEST: AppManifest = {
-  id: 'devlet-ihale-2886',
-  name: 'DEVLET İHALE 2886',
-  version: '1.0.0-beta.1',
-  summary: 'Devlet İhale Kanunu (2886 Sayılı Kanun) Satış ve Kiralama Sistemi',
-  description:
-    '2886 Sayılı Devlet İhale Kanunu kapsamında taşınmaz satış, kiralama, trampa ve irtifak hakkı işlemleri; muhammen bedel, encümen kararları ve artırma turları.',
-  category: 'procurement',
-  appId: 'dev.ilyasbozdemir.devlet-ihale-2886',
-  executableName: 'DEVLETIHALE2886.exe',
-  fileAssociations: [
-    {
-      ext: 'ihale2886',
-      name: 'Devlet İhale 2886 Proje Dosyası',
-      description: '2886 Sayılı Devlet İhale Kanunu Proje Dosyası (*.ihale2886)',
-      mimeType: 'application/x-ihale2886',
-      progId: 'DevletIhale2886.Document',
-      perceivedType: 'document',
-      isPrimary: true
-    },
-    {
-      ext: 'dihale',
-      name: 'Devlet İhale 2886 Alternatif Proje Dosyası',
-      description: '2886 Sayılı Devlet İhale Kanunu Alternatif Proje Dosyası (*.dihale)',
-      mimeType: 'application/x-dihale',
-      progId: 'DevletIhale2886.Document',
-      perceivedType: 'document',
-      isPrimary: false
-    }
-  ],
-  installState: 'installed',
-  modules: [
-    'Taşınmaz Satış & Kiralama',
-    'Muhammen Bedel & Kıymet Takdiri',
-    'Encümen Süreçleri',
-    'Açık Artırma Turları'
-  ],
-  releaseChannel: 'beta',
-  minEcosystemVersion: '1.0.0',
-  author: 'ilyasbozdemir.dev',
-  websiteUrl: 'https://devletihale2886.ilyasbozdemir.dev',
-  repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360',
-  sizeEstimatedMb: 125
-}
 
 export const WORKSPACE_360_MANIFEST: AppManifest = {
   id: 'workspace-360',
@@ -210,6 +166,54 @@ export const SUREC_360_MANIFEST: AppManifest = {
   minEcosystemVersion: '1.0.0',
   author: 'ilyasbozdemir.dev',
   repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360'
+}
+
+export const FLOWDESK_360_MANIFEST: AppManifest = {
+  id: 'flowdesk-360',
+  name: 'FLOWDESK 360',
+  version: '1.0.0-alpha.1',
+  summary: 'Kurumsal Dinamik Süreç, Görev ve İş Akışı Yönetim Sistemi',
+  description:
+    'Kurumun farklı iş süreçlerini dinamik olarak tanımlayabildiği, adımlara ayırabildiği, sorumlular atayabildiği ve süreç ilerleyişini takip edebildiği bağımsız süreç yönetim masası.',
+  category: 'workflow',
+  appId: 'dev.ilyasbozdemir.flowdesk360',
+  executableName: 'FlowDesk360.exe',
+  fileAssociations: [
+    {
+      ext: 'flowdesk',
+      name: 'FLOWDESK 360 Süreç Dosyası',
+      description: 'FLOWDESK 360 Dinamik Süreç Dosyası (*.flowdesk)',
+      mimeType: 'application/x-flowdesk',
+      progId: 'FlowDesk360.Document',
+      perceivedType: 'document',
+      isPrimary: true
+    },
+    {
+      ext: 'flow',
+      name: 'FLOWDESK Süreç Şablonu',
+      description: 'FLOWDESK Süreç Şablonu (*.flow)',
+      mimeType: 'application/x-flowdesk-template',
+      progId: 'FlowDesk360.Document',
+      perceivedType: 'document',
+      isPrimary: false
+    }
+  ],
+  installState: 'installed',
+  modules: [
+    'Dinamik Süreç Şablonları',
+    'Aktif Süreç Örnekleri',
+    'Adım ve Görev Yönetimi',
+    'Kontrollü Durum Geçişleri',
+    'Sorumlu ve Rol Atamaları',
+    'Denetlenebilir Süreç Tarihçesi',
+    'Belge ve Dosya Referansları'
+  ],
+  releaseChannel: 'alpha',
+  minEcosystemVersion: '1.0.0',
+  author: 'ilyasbozdemir.dev',
+  websiteUrl: 'https://flowdesk.ilyasbozdemir.dev',
+  repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360',
+  sizeEstimatedMb: 120
 }
 
 export const HARITA_360_MANIFEST: AppManifest = {
@@ -340,13 +344,14 @@ export const EVRAKTRON_MANIFEST: AppManifest = {
 export const DEFAULT_ECOSYSTEM_MANIFESTS: AppManifest[] = [
   TEMIN_360_MANIFEST,
   IHALE_360_MANIFEST,
-  DEVLET_IHALE_2886_MANIFEST,
   WORKSPACE_360_MANIFEST,
   DOSYA_360_MANIFEST,
   SUREC_360_MANIFEST,
+  FLOWDESK_360_MANIFEST,
   HARITA_360_MANIFEST,
   PERSONEL_360_MANIFEST,
   BELGE_360_MANIFEST,
   EVRAKTRON_MANIFEST
 ]
+
 

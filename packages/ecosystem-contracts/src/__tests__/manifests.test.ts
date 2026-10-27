@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest'
 import {
   DEFAULT_ECOSYSTEM_MANIFESTS,
   TEMIN_360_MANIFEST,
+  IHALE_360_MANIFEST,
   WORKSPACE_360_MANIFEST,
   DOSYA_360_MANIFEST,
+  FLOWDESK_360_MANIFEST,
   validateManifest,
   isValidManifest,
   checkAppIdUniqueness,
@@ -58,13 +60,13 @@ describe('WorkSuite 360 Contracts & Manifests', () => {
   })
 
   it('filterCatalog arama ve filtreleme seçeneklerini doğru uygulamalıdır', () => {
-    // 1. Kategori filtresi
+    // 1. Kategori filtresi (Artık yalnızca temin-360 ve ihale-360)
     const procurementApps = filterCatalog(DEFAULT_ECOSYSTEM_MANIFESTS, {
       category: 'procurement'
     })
-    expect(procurementApps).toHaveLength(3)
+    expect(procurementApps).toHaveLength(2)
     expect(procurementApps.map((a) => a.id)).toEqual(
-      expect.arrayContaining(['temin-360', 'ihale-360', 'devlet-ihale-2886'])
+      expect.arrayContaining(['temin-360', 'ihale-360'])
     )
 
     // 2. Kurulum durumu filtresi
@@ -101,18 +103,12 @@ describe('WorkSuite 360 Contracts & Manifests', () => {
     expect(hkmpExt?.progId).toBe('Temin360.Document')
     expect(hkmpExt?.isLegacy).toBe(true)
 
-    // 2. İhale 360 ve 2886 formatları
+    // 2. İhale 360 formatları
     const ihaleManifest = DEFAULT_ECOSYSTEM_MANIFESTS.find((m) => m.id === 'ihale-360')
     expect(ihaleManifest).toBeDefined()
     const ihaleExt = ihaleManifest?.fileAssociations.find((f) => f.ext === 'ihale')
     expect(ihaleExt?.mimeType).toBe('application/x-ihale')
     expect(ihaleExt?.progId).toBe('Ihale360.Document')
-
-    const ihale2886Manifest = DEFAULT_ECOSYSTEM_MANIFESTS.find((m) => m.id === 'devlet-ihale-2886')
-    expect(ihale2886Manifest).toBeDefined()
-    const ihale2886Ext = ihale2886Manifest?.fileAssociations.find((f) => f.ext === 'ihale2886')
-    expect(ihale2886Ext?.mimeType).toBe('application/x-ihale2886')
-    expect(ihale2886Ext?.progId).toBe('DevletIhale2886.Document')
 
     // 3. Kesin ayrıklık (Hiçbir uzantı iki farklı uygulamada birden bulunamaz)
     const seenExtensions = new Map<string, string>()
@@ -181,25 +177,35 @@ describe('WorkSuite 360 Contracts & Manifests', () => {
     expect(validationResult.hata).toContain('kalan yıllık izin bakiyesinden (10) fazladır')
   })
 
-  it('2886 Devlet İhale Kanunu Modülü 5 aşamalı akış, şemalar ve şablonlarla doğrulanmalıdır', async () => {
-    const { DEVLET_IHALE_2886_MODULE_MANIFEST, FLOW_DEFINITION_2886 } = await import('../index.js')
-    expect(DEVLET_IHALE_2886_MODULE_MANIFEST.id).toBe('module-devlet-ihale-2886')
-    expect(DEVLET_IHALE_2886_MODULE_MANIFEST.flows).toHaveLength(1)
-    expect(FLOW_DEFINITION_2886.groups).toHaveLength(5)
+  it('Genel Kurumsal Süreç tanımları aşamalı akış, şemalar ve şablonlarla doğrulanmalıdır', async () => {
+    const { GENERIC_FLOW_DEFINITION, FORM_SCHEMA_KURUMSAL_TALEP, DOCUMENT_TEMPLATE_TALEP_ONAY_YAZISI } = await import('../index.js')
+    expect(GENERIC_FLOW_DEFINITION.id).toBe('flow-kurumsal-talep-yonetimi')
+    expect(GENERIC_FLOW_DEFINITION.groups).toHaveLength(2)
 
-    const stageIds = FLOW_DEFINITION_2886.groups.map((g) => g.id)
-    expect(stageIds).toEqual([
-      'asama-1-baslangic',
-      'asama-2-kiymet-takdiri',
-      'asama-3-sartname-ilan',
-      'asama-4-ihale-gunu',
-      'asama-5-onay-sozlesme'
-    ])
+    const stageIds = GENERIC_FLOW_DEFINITION.groups.map((g) => g.id)
+    expect(stageIds).toEqual(['grup-talep', 'grup-yurutme'])
 
-    const templateIds = DEVLET_IHALE_2886_MODULE_MANIFEST.documentTemplates.map((t) => t.id)
-    expect(templateIds).toContain('2886-EVR-01')
-    expect(templateIds).toContain('2886-EVR-05')
+    expect(FORM_SCHEMA_KURUMSAL_TALEP.id).toBe('form-kurumsal-talep')
+    expect(DOCUMENT_TEMPLATE_TALEP_ONAY_YAZISI.id).toBe('DOC-TALEP-01')
+  })
+
+  it('FLOWDESK 360 bağımsız dinamik süreç masası olarak kendi kimlik ve dosya formatlarıyla doğrulanmalıdır', async () => {
+    const { FLOWDESK_360_MANIFEST, getFileFormatsByAppId } = await import('../index.js')
+    expect(FLOWDESK_360_MANIFEST.id).toBe('flowdesk-360')
+    expect(FLOWDESK_360_MANIFEST.appId).toBe('dev.ilyasbozdemir.flowdesk360')
+    expect(FLOWDESK_360_MANIFEST.executableName).toBe('FlowDesk360.exe')
+    expect(FLOWDESK_360_MANIFEST.category).toBe('workflow')
+    expect(FLOWDESK_360_MANIFEST.installState).toBe('installed')
+
+    // Dosya formatları: .flowdesk (birincil) ve .flow (şablon)
+    const formats = getFileFormatsByAppId('flowdesk-360')
+    expect(formats).toHaveLength(2)
+    expect(formats.map((f) => f.ext)).toEqual(['flowdesk', 'flow'])
+
+    // TEMİN 360 ve İHALE 360 izolasyonu: FlowDesk bunlara ait hiçbir format içermemelidir
+    const extList = FLOWDESK_360_MANIFEST.fileAssociations.map((f) => f.ext)
+    expect(extList).not.toContain('temin')
+    expect(extList).not.toContain('hkmp')
+    expect(extList).not.toContain('ihale')
   })
 })
-
-

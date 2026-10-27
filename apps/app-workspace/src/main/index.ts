@@ -76,11 +76,17 @@ const KNOWN_APPS: Record<string, EcosystemAppConfig> = {
     exeName: 'IHALE360.exe',
     installedFolderNames: ['ihale360', 'İHALE 360', 'Ihale 360']
   },
-  'dev.ilyasbozdemir.devlet-ihale-2886': {
-    displayName: 'DEVLET İHALE 2886',
-    folderName: 'devlet-ihale-2886-desktop',
-    exeName: 'DEVLETIHALE2886.exe',
-    installedFolderNames: ['devlet-ihale-2886', 'DEVLET İHALE 2886', 'Devlet İhale 2886']
+  'dev.ilyasbozdemir.personel360': {
+    displayName: 'Personel 360',
+    folderName: 'personel360-desktop',
+    exeName: 'Personel360.exe',
+    installedFolderNames: ['personel360', 'Personel 360', 'Personel360']
+  },
+  'dev.ilyasbozdemir.flowdesk360': {
+    displayName: 'FLOWDESK 360',
+    folderName: 'flowdesk-desktop',
+    exeName: 'FlowDesk360.exe',
+    installedFolderNames: ['flowdesk', 'FLOWDESK 360', 'FlowDesk 360']
   }
 }
 
@@ -105,18 +111,20 @@ function detectApp(appId: string): AppDetectionResult {
   const exeName = known ? known.exeName : `${appSlug.charAt(0).toUpperCase() + appSlug.slice(1)}.exe`
   const folderNamesToCheck = known ? known.installedFolderNames : [appSlug]
 
-  // 1. Monorepo içinde yerel paketlenmiş (dist-local/win-unpacked) EXE kontrolü
-  const localDevUnpacked = resolve(repoRoot, `apps/${folderName}/dist-local/win-unpacked/${exeName}`)
-  if (fs.existsSync(localDevUnpacked)) {
-    return {
-      installed: true,
-      isDevSource: false,
-      path: localDevUnpacked,
-      details: `Yerel paketlenmiş sürüm (${folderName}/dist-local/win-unpacked)`
+  // 1. Monorepo içinde yerel paketlenmiş (dist-local/win-unpacked) EXE kontrolü (yalnızca dev/unpacked ortamda)
+  if (!app.isPackaged) {
+    const localDevUnpacked = resolve(repoRoot, `apps/${folderName}/dist-local/win-unpacked/${exeName}`)
+    if (fs.existsSync(localDevUnpacked)) {
+      return {
+        installed: true,
+        isDevSource: false,
+        path: localDevUnpacked,
+        details: `Yerel paketlenmiş sürüm (${folderName}/dist-local/win-unpacked)`
+      }
     }
   }
 
-  // 2. Standart Windows kurulum dizinleri kontrolü
+  // 2. Standart Windows kurulum dizinleri kontrolü (gerçek kurulu binary'ler)
   const candidatePaths: string[] = []
   for (const f of folderNamesToCheck) {
     candidatePaths.push(
@@ -138,21 +146,23 @@ function detectApp(appId: string): AppDetectionResult {
     }
   }
 
-  // 3. Monorepo geliştirici ortamı kaynak kodu kontrolü
-  const appDir = resolve(repoRoot, `apps/${folderName}`)
-  if (fs.existsSync(join(appDir, 'package.json'))) {
-    const info = readDevScriptInfo(appDir)
-    const launchable = Boolean(info?.hasDevScript)
-    return {
-      installed: true,
-      isDevSource: true,
-      sourceAvailable: true,
-      launchable,
-      packageName: info?.packageName,
-      path: appDir,
-      details: launchable
-        ? `Geliştirici ortamı kaynak kodu (apps/${folderName})`
-        : `Kurulu değil; kaynak kodu var ancak tanımlı bir "dev" script'i yok.`
+  // 3. Monorepo geliştirici ortamı kaynak kodu kontrolü (yalnızca dev ortamda, kurulu anlamına gelmez)
+  if (!app.isPackaged) {
+    const appDir = resolve(repoRoot, `apps/${folderName}`)
+    if (fs.existsSync(join(appDir, 'package.json'))) {
+      const info = readDevScriptInfo(appDir)
+      const launchable = Boolean(info?.hasDevScript)
+      return {
+        installed: false,
+        isDevSource: true,
+        sourceAvailable: true,
+        launchable,
+        packageName: info?.packageName,
+        path: appDir,
+        details: launchable
+          ? `Geliştirici ortamı kaynak kodu (apps/${folderName})`
+          : `Kurulu değil; kaynak kodu var ancak tanımlı bir "dev" script'i yok.`
+      }
     }
   }
 

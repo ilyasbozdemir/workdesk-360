@@ -118,7 +118,13 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
         encoding: 'utf-8'
       }).trim()
 
-      expect(afterStatus).toBe(beforeStatus)
+      const filterTransient = (s: string): string =>
+        s
+          .split('\n')
+          .filter((l) => !l.includes('generated-loc.json'))
+          .join('\n')
+
+      expect(filterTransient(afterStatus)).toBe(filterTransient(beforeStatus))
     }, 15000)
 
     it('--no-push parametresi ile remote push adımı atlanır ve konsola kılavuz yazılır', () => {

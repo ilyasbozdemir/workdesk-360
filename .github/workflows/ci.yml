@@ -46,8 +46,7 @@ jobs:
           pnpm --filter temin360-desktop typecheck:web
           pnpm --filter ihale360-desktop typecheck:node
           pnpm --filter ihale360-desktop typecheck:web
-          pnpm --filter devlet-ihale-2886-desktop typecheck:node
-          pnpm --filter devlet-ihale-2886-desktop typecheck:web
+          pnpm --filter flowdesk-desktop typecheck
           pnpm --filter app-workspace typecheck
 
       - name: Run Unit & Integration Tests
@@ -55,14 +54,14 @@ jobs:
           pnpm --filter @temin360/document-templates test
           pnpm --filter temin360-desktop test
           pnpm --filter ihale360-desktop test
-          pnpm --filter devlet-ihale-2886-desktop test
+          pnpm --filter flowdesk-desktop test
           pnpm --filter app-workspace test
 
       - name: Build All Core Apps
         run: |
           pnpm --filter temin360-desktop build
           pnpm --filter ihale360-desktop build
-          pnpm --filter devlet-ihale-2886-desktop build
+          pnpm --filter flowdesk-desktop build
 
       - name: Run Electron E2E Tests
         run: pnpm --filter temin360-desktop test:e2e

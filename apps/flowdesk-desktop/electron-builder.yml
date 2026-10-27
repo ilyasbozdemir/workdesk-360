@@ -1,0 +1,41 @@
+appId: dev.ilyasbozdemir.flowdesk360
+productName: FLOWDESK 360
+directories:
+  output: dist-local
+
+publish:
+  provider: github
+  owner: ilyasbozdemir
+  repo: workdesk-360
+  updaterCacheDirName: flowdesk-updater
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+
+fileAssociations:
+  - ext: flowdesk
+    name: FLOWDESK 360 Süreç Dosyası
+    description: FLOWDESK 360 Dinamik Süreç Dosyası (*.flowdesk)
+    mimeType: application/x-flowdesk
+    role: Editor
+  - ext: flow
+    name: FLOWDESK Süreç Şablonu
+    description: FLOWDESK Süreç Şablonu (*.flow)
+    mimeType: application/x-flowdesk-template
+    role: Editor
+
+win:
+  executableName: FlowDesk360
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: FLOWDESK 360
+  uninstallDisplayName: FLOWDESK 360
+  createDesktopShortcut: always

@@ -60,8 +60,8 @@ export const ECOSYSTEM_FILE_FORMATS: readonly EcosystemFileFormatDefinition[] = 
     electronAppId: 'dev.ilyasbozdemir.temin360',
     executableName: 'TEMIN360.exe',
     appName: 'TEMİN 360',
-    label: 'HakimPro Doğrudan Temin Dosyası',
-    description: 'HakimPro Doğrudan Temin Dosyası (*.hkmp)',
+    label: 'TEMİN 360 Eski Sürüm Proje Dosyası (HakimPro)',
+    description: 'TEMİN 360 ile Açılabilen Eski Proje Dosyası (*.hkmp)',
     perceivedType: 'document',
     isPrimary: false,
     isLegacy: true
@@ -113,38 +113,7 @@ export const ECOSYSTEM_FILE_FORMATS: readonly EcosystemFileFormatDefinition[] = 
   },
 
   // -------------------------------------------------------------------------
-  // 3. DEVLET İHALE 2886 (2886 Sayılı Kanun Satış & Kiralama Masası)
-  // -------------------------------------------------------------------------
-  {
-    ext: 'ihale2886',
-    mimeType: 'application/x-ihale2886',
-    progId: 'DevletIhale2886.Document',
-    appId: 'devlet-ihale-2886',
-    electronAppId: 'dev.ilyasbozdemir.devlet-ihale-2886',
-    executableName: 'DEVLETIHALE2886.exe',
-    appName: 'DEVLET İHALE 2886',
-    label: 'Devlet İhale 2886 Proje Dosyası',
-    description: '2886 Sayılı Devlet İhale Kanunu Proje Dosyası (*.ihale2886)',
-    perceivedType: 'document',
-    isPrimary: true
-  },
-  {
-    ext: 'dihale',
-    mimeType: 'application/x-dihale',
-    progId: 'DevletIhale2886.Document',
-    appId: 'devlet-ihale-2886',
-    electronAppId: 'dev.ilyasbozdemir.devlet-ihale-2886',
-    executableName: 'DEVLETIHALE2886.exe',
-    appName: 'DEVLET İHALE 2886',
-    label: 'Devlet İhale 2886 Alternatif Proje Dosyası',
-    description: '2886 Sayılı Devlet İhale Kanunu Alternatif Proje Dosyası (*.dihale)',
-    perceivedType: 'document',
-    isPrimary: false,
-    isAlternative: true
-  },
-
-  // -------------------------------------------------------------------------
-  // 4. EVRAKTRON (Gelen-Giden Evrak Kayıt & Takip Masası - Planlanan)
+  // 3. EVRAKTRON (Gelen-Giden Evrak Kayıt & Takip Masası - Planlanan)
   // -------------------------------------------------------------------------
   {
     ext: 'etap',
@@ -158,6 +127,37 @@ export const ECOSYSTEM_FILE_FORMATS: readonly EcosystemFileFormatDefinition[] = 
     description: 'Evraktron Evrak Paketi (*.etap)',
     perceivedType: 'document',
     isPrimary: true
+  },
+
+  // -------------------------------------------------------------------------
+  // 5. FLOWDESK 360 (Kurumsal Dinamik Süreç ve Görev Masası)
+  // -------------------------------------------------------------------------
+  {
+    ext: 'flowdesk',
+    mimeType: 'application/x-flowdesk',
+    progId: 'FlowDesk360.Document',
+    appId: 'flowdesk-360',
+    electronAppId: 'dev.ilyasbozdemir.flowdesk360',
+    executableName: 'FlowDesk360.exe',
+    appName: 'FLOWDESK 360',
+    label: 'FLOWDESK 360 Süreç Dosyası',
+    description: 'FLOWDESK 360 Dinamik Süreç Dosyası (*.flowdesk)',
+    perceivedType: 'document',
+    isPrimary: true
+  },
+  {
+    ext: 'flow',
+    mimeType: 'application/x-flowdesk-template',
+    progId: 'FlowDesk360.Document',
+    appId: 'flowdesk-360',
+    electronAppId: 'dev.ilyasbozdemir.flowdesk360',
+    executableName: 'FlowDesk360.exe',
+    appName: 'FLOWDESK 360',
+    label: 'FLOWDESK Süreç Şablonu',
+    description: 'FLOWDESK Süreç Şablonu (*.flow)',
+    perceivedType: 'document',
+    isPrimary: false,
+    isAlternative: true
   }
 ] as const
 

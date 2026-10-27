@@ -265,7 +265,7 @@ function main() {
   const targetDirs = [
     path.join(rootDir, 'apps', 'temin360-desktop', 'src'),
     path.join(rootDir, 'apps', 'ihale360-desktop', 'src'),
-    path.join(rootDir, 'apps', 'devlet-ihale-2886-desktop', 'src'),
+    path.join(rootDir, 'apps', 'flowdesk-desktop', 'src'),
     path.join(rootDir, 'packages', 'document-templates', 'src'),
     path.join(rootDir, 'packages', 'database', 'src')
   ]

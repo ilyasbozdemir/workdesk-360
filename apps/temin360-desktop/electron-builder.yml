@@ -8,8 +8,8 @@ fileAssociations:
     mimeType: application/x-temin
     icon: icon.ico
   - ext: hkmp
-    name: HakimPro Doğrudan Temin Dosyası
-    description: HakimPro Doğrudan Temin Dosyası (*.hkmp)
+    name: TEMİN 360 Eski Sürüm Proje Dosyası (HakimPro)
+    description: TEMİN 360 ile Açılabilen Eski Proje Dosyası (*.hkmp)
     role: Viewer
     mimeType: application/x-hkmp
     icon: icon.ico
@@ -77,4 +77,4 @@ publish:
   provider: github
   owner: ilyasbozdemir
   repo: workdesk-360
-  updaterCacheDirName: workdesk-360-updater
+  updaterCacheDirName: temin360-updater

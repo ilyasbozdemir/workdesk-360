@@ -47,8 +47,8 @@ export const SUPPORTED_FORMATS: FileFormat[] = [
     mimeType: 'application/x-hkmp',
     progId: 'Temin360.Document',
     perceivedType: 'document',
-    label: 'HakimPro Doğrudan Temin Dosyası (Eski Sürüm)',
-    dialogName: 'HakimPro Doğrudan Temin Dosyası (*.hkmp)',
+    label: 'TEMİN 360 Eski Sürüm Proje Dosyası (HakimPro)',
+    dialogName: 'TEMİN 360 Eski Sürüm Proje Dosyası (*.hkmp)',
     isLegacy: true
   },
   {
@@ -85,7 +85,7 @@ export const openDialogFilters = [
     extensions: [PRIMARY_EXTENSION]
   },
   {
-    name: 'Eski HakimPro Dosyaları (*.hkmp, *.tmn360)',
+    name: 'TEMİN 360 Eski Sürüm Dosyaları (*.hkmp, *.tmn360)',
     extensions: LEGACY_EXTENSIONS
   },
   {

@@ -71,4 +71,4 @@ publish:
   provider: github
   owner: ilyasbozdemir
   repo: workdesk-360
-  updaterCacheDirName: workdesk-360-updater
+  updaterCacheDirName: ihale360-updater

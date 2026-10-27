@@ -25,8 +25,21 @@ export function registerWindowsFileAssociations(): void {
     else if (fs.existsSync(pDev)) iconPath = pDev
     else if (fs.existsSync(pRoot)) iconPath = pRoot
 
+    // Güvenli kayıt defteri komut çalıştırıcısı (hata fırlatmaz, sessizce loglar)
+    const runReg = (args: string[]): void => {
+      try {
+        execFile('reg.exe', args, (err) => {
+          if (err) {
+            console.warn(`[FileAssoc] reg.exe ${args[1] || ''} uyarısı:`, err.message)
+          }
+        })
+      } catch (err: unknown) {
+        console.warn('[FileAssoc] reg.exe çalıştırma hatası:', err)
+      }
+    }
+
     // 1. Temin360.Document ProgID Tanımı
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Temin360.Document',
       '/ve',
@@ -34,7 +47,7 @@ export function registerWindowsFileAssociations(): void {
       'TEMİN 360 Proje Dosyası',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Temin360.Document',
       '/v',
@@ -43,7 +56,7 @@ export function registerWindowsFileAssociations(): void {
       'TEMİN 360 Proje Dosyası',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Temin360.Document\\DefaultIcon',
       '/ve',
@@ -51,7 +64,7 @@ export function registerWindowsFileAssociations(): void {
       iconPath,
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Temin360.Document\\shell',
       '/ve',
@@ -59,7 +72,7 @@ export function registerWindowsFileAssociations(): void {
       'open',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Temin360.Document\\shell\\open',
       '/ve',
@@ -67,7 +80,7 @@ export function registerWindowsFileAssociations(): void {
       'TEMİN 360 ile Aç',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Temin360.Document\\shell\\open\\command',
       '/ve',
@@ -77,7 +90,7 @@ export function registerWindowsFileAssociations(): void {
     ])
 
     // 2. Applications Kaydı
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe',
       '/v',
@@ -86,7 +99,7 @@ export function registerWindowsFileAssociations(): void {
       'TEMİN 360',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe\\DefaultIcon',
       '/ve',
@@ -94,7 +107,7 @@ export function registerWindowsFileAssociations(): void {
       iconPath,
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe\\shell\\open\\command',
       '/ve',
@@ -102,7 +115,7 @@ export function registerWindowsFileAssociations(): void {
       `"${exePath}" "%1"`,
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe\\SupportedTypes',
       '/v',
@@ -111,7 +124,7 @@ export function registerWindowsFileAssociations(): void {
       '',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe\\SupportedTypes',
       '/v',
@@ -120,7 +133,7 @@ export function registerWindowsFileAssociations(): void {
       '',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\Applications\\TEMIN360.exe\\SupportedTypes',
       '/v',
@@ -131,7 +144,7 @@ export function registerWindowsFileAssociations(): void {
     ])
 
     // 3. .temin (Birincil Format)
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\.temin',
       '/ve',
@@ -139,7 +152,7 @@ export function registerWindowsFileAssociations(): void {
       'Temin360.Document',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\.temin',
       '/v',
@@ -148,7 +161,7 @@ export function registerWindowsFileAssociations(): void {
       'application/x-temin',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\.temin',
       '/v',
@@ -157,7 +170,7 @@ export function registerWindowsFileAssociations(): void {
       'document',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\.temin\\OpenWithProgids',
       '/v',
@@ -168,7 +181,7 @@ export function registerWindowsFileAssociations(): void {
       '',
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Classes\\.temin\\DefaultIcon',
       '/ve',
@@ -176,7 +189,7 @@ export function registerWindowsFileAssociations(): void {
       iconPath,
       '/f'
     ])
-    execFile('reg.exe', [
+    runReg([
       'add',
       'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.temin\\OpenWithProgids',
       '/v',
@@ -193,7 +206,7 @@ export function registerWindowsFileAssociations(): void {
       { ext: 'hkmp', mime: 'application/x-hkmp' },
       { ext: 'tmn360', mime: 'application/x-temin360' }
     ]) {
-      execFile('reg.exe', [
+      runReg([
         'add',
         `HKCU\\Software\\Classes\\.${legacy.ext}`,
         '/v',
@@ -202,7 +215,7 @@ export function registerWindowsFileAssociations(): void {
         legacy.mime,
         '/f'
       ])
-      execFile('reg.exe', [
+      runReg([
         'add',
         `HKCU\\Software\\Classes\\.${legacy.ext}`,
         '/v',
@@ -211,7 +224,7 @@ export function registerWindowsFileAssociations(): void {
         'document',
         '/f'
       ])
-      execFile('reg.exe', [
+      runReg([
         'add',
         `HKCU\\Software\\Classes\\.${legacy.ext}\\OpenWithProgids`,
         '/v',
@@ -222,7 +235,7 @@ export function registerWindowsFileAssociations(): void {
         '',
         '/f'
       ])
-      execFile('reg.exe', [
+      runReg([
         'add',
         `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\FileExts\\.${legacy.ext}\\OpenWithProgids`,
         '/v',

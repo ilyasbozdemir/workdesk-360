@@ -254,6 +254,22 @@ export interface PersonelIslemGecmisi {
 // ============================================================================
 
 /**
+ * Tamamlanmış fiilî hizmet yılını ay ve gün bazında tam olarak hesaplar.
+ * Yalnızca yıl farkını almak Aralık girişli personelin erken hak ediş almasına neden olabilir.
+ */
+export function calculateTamHizmetYili(iseBaslamaTarihiIso: string, referansTarih: Date = new Date()): number {
+  const baslama = new Date(iseBaslamaTarihiIso)
+  let yil = referansTarih.getFullYear() - baslama.getFullYear()
+  const ayFarki = referansTarih.getMonth() - baslama.getMonth()
+  const gunFarki = referansTarih.getDate() - baslama.getDate()
+
+  if (ayFarki < 0 || (ayFarki === 0 && gunFarki < 0)) {
+    yil--
+  }
+  return Math.max(0, yil)
+}
+
+/**
  * Personelin statüsüne ve hizmet yılına göre mevzuata uygun hak ediş gün sayısını hesaplar.
  * 
  * - 657 Memur: 1-10 yıl (dahil) 20 gün, 10 yıldan fazla 30 gün, 1 yıldan az 0 gün

@@ -328,6 +328,7 @@ describe('Database Schema Integrity & Manifest Tests', () => {
         tur TEXT,
         ihale_usulu TEXT,
         ihale_tipi TEXT,
+        madde TEXT,
         yaklasik_maliyet REAL,
         toplam_tutar REAL,
         sozlesme_bedeli REAL,

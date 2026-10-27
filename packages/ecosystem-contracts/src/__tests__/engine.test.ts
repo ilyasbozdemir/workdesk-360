@@ -1,123 +1,108 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { FlowEngine } from '../engine.js'
 import {
-  FLOW_DEFINITION_2886,
-  FORM_SCHEMAS_2886,
-  DOCUMENT_TEMPLATES_2886
-} from '../module2886.js'
+  GENERIC_FLOW_DEFINITION,
+  FORM_SCHEMA_KURUMSAL_TALEP,
+  DOCUMENT_TEMPLATE_TALEP_ONAY_YAZISI
+} from '../genericSampleFlows.js'
 
-describe('FlowEngine — Genel Süreç ve Belge Yürütme Motoru (2886 İhale Entegrasyonu)', () => {
+describe('FlowEngine — Genel Süreç ve Belge Yürütme Motoru (FLOWDESK 360)', () => {
   let engine: FlowEngine
 
   beforeEach(() => {
     engine = new FlowEngine()
-    engine.registerFlowDefinition(FLOW_DEFINITION_2886)
-    for (const schema of FORM_SCHEMAS_2886) {
-      engine.registerFormSchema(schema)
-    }
-    for (const template of DOCUMENT_TEMPLATES_2886) {
-      engine.registerTemplate(template)
-    }
+    engine.registerFlowDefinition(GENERIC_FLOW_DEFINITION)
+    engine.registerFormSchema(FORM_SCHEMA_KURUMSAL_TALEP)
+    engine.registerTemplate(DOCUMENT_TEMPLATE_TALEP_ONAY_YAZISI)
   })
 
-  it('2886 Taşınmaz İhale Sürecini başlatmalı ve ilk adımı aktif yapmalıdır', () => {
+  it('Genel Kurumsal Talep Sürecini başlatmalı ve ilk adımı aktif yapmalıdır', () => {
     const instance = engine.startProcess({
-      definitionId: FLOW_DEFINITION_2886.id,
-      title: 'Kadıköy 104 Ada 12 Parsel Taşınmaz Satış İhalesi',
-      initiatorId: 'user-emlak-01',
-      initiatorName: 'Emlak İstimlak Md. Ahmet Bey'
+      definitionId: GENERIC_FLOW_DEFINITION.id,
+      title: 'Bilgi İşlem Sunucu Bakım Talebi',
+      initiatorId: 'user-01',
+      initiatorName: 'Mühendis Ali Bey'
     })
 
     expect(instance.id).toBeDefined()
     expect(instance.status).toBe('active')
-    expect(instance.flowDefinitionId).toBe('flow-2886-tasinmaz-ihale')
-    expect(instance.currentStepId).toBe('step-tasinmaz-bilgileri')
+    expect(instance.flowDefinitionId).toBe('flow-kurumsal-talep-yonetimi')
+    expect(instance.currentStepId).toBe('step-talep-formu')
 
     // İlk adım in_progress olmalı
-    const currentExec = instance.stepExecutions['step-tasinmaz-bilgileri']
+    const currentExec = instance.stepExecutions['step-talep-formu']
     expect(currentExec?.status).toBe('in_progress')
   })
 
   it('Form adımını yürütmeli, verileri kaydetmeli ve sonraki belge adımına ilerlemelidir', () => {
     const instance = engine.startProcess({
-      definitionId: FLOW_DEFINITION_2886.id,
-      title: 'Beşiktaş Taşınmaz Kiralama İhalesi',
+      definitionId: GENERIC_FLOW_DEFINITION.id,
+      title: 'Ofis Donanım Talebi',
       initiatorId: 'user-01',
-      initiatorName: 'Müdür Ali Bey'
+      initiatorName: 'Ahmet Bey'
     })
 
     // Adım 1: Form Verilerini Gir
     engine.executeFormStep({
       instanceId: instance.id,
-      stepId: 'step-tasinmaz-bilgileri',
+      stepId: 'step-talep-formu',
       actorId: 'user-01',
-      actorName: 'Müdür Ali Bey',
+      actorName: 'Ahmet Bey',
       formData: {
-        tasinmaz_adi: 'Akaretler Dükkan No: 4',
-        islem_turu: 'kiralama',
-        ada_parsel: '204 / 15',
-        yuzolcumu: 450,
-        tahmini_bedel: 1500000,
-        gecici_teminat: 45000,
-        ihale_usulu: 'AcikTeklif_45',
-        organizationName: 'Beşiktaş Belediyesi'
+        talep_basligi: 'Yedek Monitör ve Klavye Talebi',
+        talep_eden_birim: 'Yazılım Geliştirme Birimi',
+        ihtiyac_aciklamasi: 'Yeni başlayan geliştiriciler için donanım ihtiyacı.',
+        tahmini_butce: 25000,
+        oncelik: 'normal'
       }
     })
 
     // Adım 1 tamamlanmış olmalı, sonraki adım belge adımı olmalı
-    expect(instance.currentStepId).toBe('step-baskanlik-oluru-belge')
-    const step1Exec = instance.stepExecutions['step-tasinmaz-bilgileri']
+    expect(instance.currentStepId).toBe('step-talep-belgesi')
+    const step1Exec = instance.stepExecutions['step-talep-formu']
     expect(step1Exec?.status).toBe('completed')
-    expect(step1Exec?.data?.tasinmaz_adi).toBe('Akaretler Dükkan No: 4')
+    expect(step1Exec?.data?.talep_basligi).toBe('Yedek Monitör ve Klavye Talebi')
   })
 
-  it('Belge adımında şablonu süreç verileriyle birleştirip A4 EBYS matbu evrak üretmelidir', () => {
+  it('Belge adımında şablonu süreç verileriyle birleştirip matbu evrak üretmelidir', () => {
     const instance = engine.startProcess({
-      definitionId: FLOW_DEFINITION_2886.id,
-      title: 'Kadıköy Taşınmaz İhalesi',
+      definitionId: GENERIC_FLOW_DEFINITION.id,
+      title: 'Sunucu Bakım Sözleşmesi',
       initiatorId: 'user-01',
-      initiatorName: 'Müdür Ali'
+      initiatorName: 'Mühendis Ali'
     })
 
     // 1. Formu doldur
     engine.executeFormStep({
       instanceId: instance.id,
-      stepId: 'step-tasinmaz-bilgileri',
+      stepId: 'step-talep-formu',
       actorId: 'user-01',
-      actorName: 'Müdür Ali',
+      actorName: 'Mühendis Ali',
       formData: {
-        tasinmaz_adi: 'Moda Sahil Büfe',
-        islem_turu: 'satis',
-        ada_parsel: '105 / 8',
-        yuzolcumu: 320,
-        tahmini_bedel: 850000,
-        gecici_teminat: 25500,
-        ihale_usulu: 'KapaliTeklif_36',
-        organizationName: 'Kadıköy Belediyesi'
+        talep_basligi: 'Ana Veri Merkezi Bakım Hizmeti',
+        talep_eden_birim: 'Bilgi İşlem Daire Başkanlığı',
+        ihtiyac_aciklamasi: 'Yıllık periyodik veri tabanı ve donanım bakımı',
+        tahmini_butce: 180000,
+        oncelik: 'high'
       }
     })
 
-    // 2. Belge üret (2886-EVR-01 Başkanlık Oluru)
+    // 2. Belge üret (DOC-TALEP-01)
     const { document } = engine.executeDocumentStep({
       instanceId: instance.id,
-      stepId: 'step-baskanlik-oluru-belge',
+      stepId: 'step-talep-belgesi',
       actorId: 'user-01',
-      actorName: 'Müdür Ali',
-      customOverrides: {
-        sayiNo: '2886-2026/044',
-        tarih: '27.10.2026'
-      }
+      actorName: 'Mühendis Ali'
     })
 
     expect(document.id).toBeDefined()
-    expect(document.templateId).toBe('2886-EVR-01')
-    expect(document.renderedHtml).toContain('Kadıköy Belediyesi')
-    expect(document.renderedHtml).toContain('Moda Sahil Büfe')
-    expect(document.renderedHtml).toContain('105 / 8') // Ada no
-    expect(document.renderedHtml).toContain('850000') // Tahmini bedel
+    expect(document.templateId).toBe('DOC-TALEP-01')
+    expect(document.renderedHtml).toContain('Bilgi İşlem Daire Başkanlığı')
+    expect(document.renderedHtml).toContain('Ana Veri Merkezi Bakım Hizmeti')
+    expect(document.renderedHtml).toContain('180000')
 
     // Sonraki adım onay adımı olmalı
-    expect(instance.currentStepId).toBe('step-encumen-yetki-onay')
+    expect(instance.currentStepId).toBe('step-amir-onayi')
 
     // Kayıtlı belgelerde yer almalı
     const docs = engine.getDocuments(instance.id)
@@ -125,52 +110,49 @@ describe('FlowEngine — Genel Süreç ve Belge Yürütme Motoru (2886 İhale En
     expect(docs[0].id).toBe(document.id)
   })
 
-  it('Onay adımında encümen yetki onayını işlemeli ve sonraki aşamaya (Kıymet Takdiri) geçmelidir', () => {
+  it('Onay adımında amir onayını işlemeli ve sonraki aşamaya (görev atama) geçmelidir', () => {
     const instance = engine.startProcess({
-      definitionId: FLOW_DEFINITION_2886.id,
-      title: 'İhale Onay Testi',
+      definitionId: GENERIC_FLOW_DEFINITION.id,
+      title: 'Donanım Onay Testi',
       initiatorId: 'user-01',
-      initiatorName: 'Müdür Ali'
+      initiatorName: 'Ali'
     })
 
     // Form
     engine.executeFormStep({
       instanceId: instance.id,
-      stepId: 'step-tasinmaz-bilgileri',
+      stepId: 'step-talep-formu',
       actorId: 'user-01',
-      actorName: 'Müdür Ali',
+      actorName: 'Ali',
       formData: {
-        tasinmaz_adi: 'Merkez Arsa',
-        islem_turu: 'satis',
-        ada_parsel: '10 / 2',
-        yuzolcumu: 100,
-        tahmini_bedel: 500000,
-        gecici_teminat: 15000,
-        ihale_usulu: 'AcikTeklif_45',
-        organizationName: 'Test Belediyesi'
+        talep_basligi: 'Kırtasiye Talebi',
+        talep_eden_birim: 'İdari İşler',
+        ihtiyac_aciklamasi: 'A4 Kağıt ve toner',
+        tahmini_butce: 12000,
+        oncelik: 'normal'
       }
     })
 
     // Belge
     engine.executeDocumentStep({
       instanceId: instance.id,
-      stepId: 'step-baskanlik-oluru-belge',
+      stepId: 'step-talep-belgesi',
       actorId: 'user-01',
-      actorName: 'Müdür Ali'
+      actorName: 'Ali'
     })
 
-    // Onay: Encümen Onayı
+    // Onay
     engine.executeApprovalStep({
       instanceId: instance.id,
-      stepId: 'step-encumen-yetki-onay',
+      stepId: 'step-amir-onayi',
       decision: 'approved',
-      notes: 'Encümenin 2026/12 sayılı kararıyla uygun bulunmuştur.',
-      actorId: 'encumen-baskani',
-      actorName: 'Baskan Yard. Veli Bey'
+      notes: 'Bütçe dahilinde uygundur.',
+      actorId: 'amir-01',
+      actorName: 'Daire Başkanı Mehmet Bey'
     })
 
-    // 1. Aşama tamamlanıp 2. Aşama (Kıymet Takdiri) grubundaki ilk adıma geçmeli
-    expect(instance.currentStepId).toBe('step-komisyon-atamasi')
+    // 1. Aşama tamamlanıp 2. Aşama (step-gorev-atama) adımına geçmeli
+    expect(instance.currentStepId).toBe('step-gorev-atama')
 
     // Tarihçede tüm hareketler izlenebilir olmalı
     const history = engine.getHistory(instance.id)
@@ -181,51 +163,48 @@ describe('FlowEngine — Genel Süreç ve Belge Yürütme Motoru (2886 İhale En
 
   it('Onay adımı reddedilirse süreci cancelled durumuna getirmeli ve sonraki adımlara geçmemelidir', () => {
     const instance = engine.startProcess({
-      definitionId: FLOW_DEFINITION_2886.id,
-      title: 'Reddedilecek İhale Talebi',
+      definitionId: GENERIC_FLOW_DEFINITION.id,
+      title: 'Reddedilecek Talep',
       initiatorId: 'user-01',
-      initiatorName: 'Müdür Ali'
+      initiatorName: 'Ali'
     })
 
     // Form
     engine.executeFormStep({
       instanceId: instance.id,
-      stepId: 'step-tasinmaz-bilgileri',
+      stepId: 'step-talep-formu',
       actorId: 'user-01',
-      actorName: 'Müdür Ali',
+      actorName: 'Ali',
       formData: {
-        tasinmaz_adi: 'Reddedilecek Arsa',
-        islem_turu: 'satis',
-        ada_parsel: '10 / 2',
-        yuzolcumu: 100,
-        tahmini_bedel: 500000,
-        gecici_teminat: 15000,
-        ihale_usulu: 'AcikTeklif_45',
-        organizationName: 'Test Belediyesi'
+        talep_basligi: 'Gereksiz Harcama Talebi',
+        talep_eden_birim: 'Özel Büro',
+        ihtiyac_aciklamasi: 'Ödenek yetersizliği',
+        tahmini_butce: 999999,
+        oncelik: 'urgent'
       }
     })
 
     // Belge
     engine.executeDocumentStep({
       instanceId: instance.id,
-      stepId: 'step-baskanlik-oluru-belge',
+      stepId: 'step-talep-belgesi',
       actorId: 'user-01',
-      actorName: 'Müdür Ali'
+      actorName: 'Ali'
     })
 
     // Onay: Red
     engine.executeApprovalStep({
       instanceId: instance.id,
-      stepId: 'step-encumen-yetki-onay',
+      stepId: 'step-amir-onayi',
       decision: 'rejected',
-      notes: 'Kamu yararı bulunmadığından encümence reddedilmiştir.',
-      actorId: 'encumen-baskani',
-      actorName: 'Baskan Veli'
+      notes: 'Bütçe yetersiz olduğundan onaylanmamıştır.',
+      actorId: 'amir-01',
+      actorName: 'Başkan Mehmet'
     })
 
     expect(instance.status).toBe('cancelled')
-    const rejectedExec = instance.stepExecutions['step-encumen-yetki-onay']
+    const rejectedExec = instance.stepExecutions['step-amir-onayi']
     expect(rejectedExec?.status).toBe('returned')
-    expect(rejectedExec?.notes).toContain('Kamu yararı bulunmadığından')
+    expect(rejectedExec?.notes).toContain('Bütçe yetersiz olduğundan')
   })
 })

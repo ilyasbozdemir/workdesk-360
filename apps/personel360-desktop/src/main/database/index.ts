@@ -10,6 +10,7 @@ import {
   PersonelIslemGecmisi,
   calculateNetIzinGunu,
   calculateIzinHakedisi,
+  calculateTamHizmetYili,
   validateIzinTalebiKurallari,
   advanceIzinOnayAdimi,
   getPersonelFiiliCalismaDurumu,
@@ -34,6 +35,7 @@ export class PersonelDatabase {
     this.db.pragma('journal_mode = WAL')
     this.db.pragma('foreign_keys = ON')
     this.initSchema()
+    this.runMigrations()
     this.seedDefaultsIfEmpty()
   }
 
@@ -150,6 +152,32 @@ export class PersonelDatabase {
       CREATE INDEX IF NOT EXISTS idx_izin_tarih ON DATA_IzinTalebi(baslangicTarihi, bitisTarihi);
       CREATE INDEX IF NOT EXISTS idx_bakiye_personel_yil ON DATA_IzinBakiyesi(personelId, yil);
     `)
+  }
+
+  /**
+   * Mevcut SQLite veritabanlarında yeni eklenen kolonları (migration) kontrol edip güvenle ekler.
+   * Bu sayede eski personel360.db dosyalarında açılış ve SQL çökmesi yaşanmaz.
+   */
+  private runMigrations(): void {
+    const tableInfo = this.db.prepare('PRAGMA table_info(TANIM_Personel)').all() as Array<{ name: string }>
+    const existingCols = new Set(tableInfo.map((col) => col.name))
+
+    const migrations = [
+      { name: 'sendikaUyesiMi', sql: 'ALTER TABLE TANIM_Personel ADD COLUMN sendikaUyesiMi INTEGER DEFAULT 0' },
+      { name: 'sendikaAdi', sql: 'ALTER TABLE TANIM_Personel ADD COLUMN sendikaAdi TEXT' },
+      { name: 'sendikaGorevi', sql: 'ALTER TABLE TANIM_Personel ADD COLUMN sendikaGorevi TEXT' },
+      { name: 'tisKapsamindaMi', sql: 'ALTER TABLE TANIM_Personel ADD COLUMN tisKapsamindaMi INTEGER DEFAULT 0' }
+    ]
+
+    for (const m of migrations) {
+      if (!existingCols.has(m.name)) {
+        try {
+          this.db.exec(m.sql)
+        } catch {
+          /* ignore if already applied */
+        }
+      }
+    }
   }
 
   private seedDefaultsIfEmpty(): void {
@@ -296,9 +324,8 @@ export class PersonelDatabase {
         record.olusturulduguTarih, record.guncellendigiTarih
       )
 
-      // Mevzuata göre hizmet yılı ve hak ediş hesabı
-      const iseBaslamaYili = new Date(record.iseBaslamaTarihi).getFullYear()
-      const hizmetYili = Math.max(0, currentYear - iseBaslamaYili)
+      // Mevzuata göre tam hizmet yılı ve hak ediş hesabı
+      const hizmetYili = calculateTamHizmetYili(record.iseBaslamaTarihi)
       const hakEdilen = calculateIzinHakedisi({
         kadroTuru: record.kadro,
         hizmetYili,
@@ -342,12 +369,15 @@ export class PersonelDatabase {
         UPDATE TANIM_Personel SET
           ad = ?, soyad = ?, unvan = ?, kadro = ?, birimId = ?, birimAdi = ?,
           calismaDurumu = ?, telefon = ?, eposta = ?, kanGrubu = ?, adres = ?,
+          sendikaUyesiMi = ?, sendikaAdi = ?, sendikaGorevi = ?, tisKapsamindaMi = ?,
           guncellendigiTarih = ?
         WHERE id = ?
       `).run(
         updated.ad, updated.soyad, updated.unvan, updated.kadro, updated.birimId || null,
         updated.birimAdi, updated.calismaDurumu, updated.telefon || null, updated.eposta || null,
-        updated.kanGrubu || null, updated.adres || null, updated.guncellendigiTarih, updated.id
+        updated.kanGrubu || null, updated.adres || null,
+        updated.sendikaUyesiMi ? 1 : 0, updated.sendikaAdi || null, updated.sendikaGorevi || null, updated.tisKapsamindaMi ? 1 : 0,
+        updated.guncellendigiTarih, updated.id
       )
 
       this.db.prepare(`
@@ -371,9 +401,9 @@ export class PersonelDatabase {
   public getIzinBakiyesi(personelId: string, yil: number = new Date().getFullYear()): IzinBakiyesi | undefined {
     let row = this.db.prepare('SELECT * FROM DATA_IzinBakiyesi WHERE personelId = ? AND yil = ?').get(personelId, yil) as IzinBakiyesi | undefined
     if (!row) {
-      // Mevzuata uygun lazy init
+      // Mevzuata uygun lazy init (ilgili yıl sonu itibariyle tam kıdem)
       const personel = this.getPersonelById(personelId)
-      const hizmetYili = personel ? Math.max(0, yil - new Date(personel.iseBaslamaTarihi).getFullYear()) : 1
+      const hizmetYili = personel ? calculateTamHizmetYili(personel.iseBaslamaTarihi, new Date(yil, 11, 31)) : 1
       const hakEdilen = calculateIzinHakedisi({
         kadroTuru: personel?.kadro || 'memur_657',
         hizmetYili,
@@ -414,7 +444,8 @@ export class PersonelDatabase {
     if (!personel) return { success: false, hata: 'Personel kaydı bulunamadı.' }
 
     const kural = this.getIzinTipiKurali(params.izinTuru)
-    const haftaSonuHaric = params.haftaSonuHaric ?? (kural?.haftaSonuHaricMi ?? false)
+    // Merkezî kural tanımlı ise kural esastır; UI çağrısının merkezî kuralı ezmesi engellenir
+    const haftaSonuHaric = kural ? kural.haftaSonuHaricMi : (params.haftaSonuHaric ?? false)
     const gunSayisi = calculateNetIzinGunu(params.baslangicTarihi, params.bitisTarihi, haftaSonuHaric)
     const bakiye = this.getIzinBakiyesi(params.personelId, new Date(params.baslangicTarihi).getFullYear())
     const mevcutTalepler = this.getIzinTalepleri(params.personelId)
@@ -709,8 +740,9 @@ export class PersonelDatabase {
         data.bitisTarihi || null, data.olurNo || null, data.olurTarihi || null, data.durum || 'aktif'
       )
 
-      this.db.prepare("UPDATE TANIM_Personel SET calismaDurumu = 'gorevlendirmede', guncellendigiTarih = ? WHERE id = ?")
-        .run(new Date().toISOString(), data.personelId)
+      // Gelecekte başlayacak görevlendirmelerin fiili çalışma durumunu erken 'gorevlendirmede' yapmamak için
+      // tarih bazlı dinamik senkronizasyon çalıştırılır:
+      this.syncPersonelFiiliCalismaDurumu(data.personelId)
 
       this.db.prepare(`
         INSERT INTO LOG_PersonelIslem (id, personelId, islemTuru, aciklama, yapanKullaniciId, yapanKullaniciAdi, tarih, detayJson)
