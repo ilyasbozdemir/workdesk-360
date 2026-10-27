@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from '@tanstack/react-router'
 import { Activity, Building2, ClipboardCheck, Coins, FileSpreadsheet, FileText, Scale } from 'lucide-react'
 import { cn } from '../../../utils/cn'
+import { PillarsPiyasaFiyatTable } from './PillarsPiyasaFiyatTable'
 
 export interface PillarItem {
   key: 'T' | 'E' | 'M' | 'I' | 'N'
@@ -218,6 +219,9 @@ export const TeminPillarsMatrix: React.FC<TeminPillarsMatrixProps> = ({
           )}
         </div>
       </div>
+
+      {/* T Sütunu Seçildiğinde: Ekrana Bağlı Doğrudan Temin Fiyat Araştırmaları Tablosu */}
+      {activePillar === 'T' && <PillarsPiyasaFiyatTable />}
     </div>
   )
 }

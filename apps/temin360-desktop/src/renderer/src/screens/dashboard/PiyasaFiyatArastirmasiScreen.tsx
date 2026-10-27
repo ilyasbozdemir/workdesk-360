@@ -8,15 +8,14 @@ import {
   Building2,
   FileSpreadsheet,
   PlusCircle,
-  TrendingDown,
   ShieldCheck,
   RefreshCw,
   ArrowLeft,
-  ChevronRight,
-  ExternalLink,
-  Filter
+  ChevronRight
 } from 'lucide-react'
 import { Link, useNavigate } from '@tanstack/react-router'
+import { APP_ROUTES } from '../../constants/routeConstants'
+import { useWorkspaceStore } from '../../store/workspaceStore'
 import { exportCsv } from '../../utils/csvExport'
 import { cn } from '../../utils/cn'
 
@@ -165,9 +164,9 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
 
   const handleOpenDosya = (id: number): void => {
     if (id > 0) {
-      sessionStorage.setItem('selected_dosya_id', String(id))
+      useWorkspaceStore.getState().setActiveDosyaId(id)
+      navigate({ to: APP_ROUTES.TAKIP })
     }
-    navigate({ to: '/dosyalar' })
   }
 
   const handleExportCSV = (): void => {
