@@ -52,9 +52,26 @@ app.whenReady().then(() => {
   ipcMain.handle('personel:update', (_, data) => db?.updatePersonel(data))
   ipcMain.handle('personel:bakiye', (_, { personelId, yil }) => db?.getIzinBakiyesi(personelId, yil))
 
+  ipcMain.handle('izin:kurallar', () => db?.getIzinTipiKurallari() || [])
   ipcMain.handle('izin:list', (_, personelId?: string) => db?.getIzinTalepleri(personelId) || [])
-  ipcMain.handle('izin:create', (_, params) => db?.createIzinTalebi(params))
-  ipcMain.handle('izin:approve', (_, { izinId, onaylayanAdi }) => db?.approveIzinTalebi(izinId, onaylayanAdi))
+  ipcMain.handle('izin:create', (_, params) => {
+    if (!params?.personelId || !params?.baslangicTarihi || !params?.bitisTarihi) {
+      return { success: false, hata: 'Geçersiz parametreler: Personel ve tarihler zorunludur.' }
+    }
+    return db?.createIzinTalebi(params)
+  })
+  ipcMain.handle('izin:approve', (_, { izinId, onaylayanId, onaylayanAdi, aciklama }) => {
+    if (!izinId) throw new Error('İzin ID zorunludur.')
+    return db?.approveIzinTalebi(izinId, onaylayanId || 'sys-user', onaylayanAdi || 'Yetkili Amir', aciklama)
+  })
+  ipcMain.handle('izin:reject', (_, { izinId, onaylayanId, onaylayanAdi, gerekce }) => {
+    if (!izinId) throw new Error('İzin ID zorunludur.')
+    return db?.rejectIzinTalebi(izinId, onaylayanId || 'sys-user', onaylayanAdi || 'Yetkili Amir', gerekce)
+  })
+  ipcMain.handle('izin:return', (_, { izinId, onaylayanId, onaylayanAdi, gerekce }) => {
+    if (!izinId) throw new Error('İzin ID zorunludur.')
+    return db?.returnIzinTalebi(izinId, onaylayanId || 'sys-user', onaylayanAdi || 'Yetkili Amir', gerekce)
+  })
 
   ipcMain.handle('gorevlendirme:list', (_, personelId?: string) => db?.getGorevlendirmeler(personelId) || [])
   ipcMain.handle('gorevlendirme:create', (_, data) => db?.createGorevlendirme(data))

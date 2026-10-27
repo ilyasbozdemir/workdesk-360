@@ -8,8 +8,14 @@ import {
   IzinBakiyesi,
   Gorevlendirme,
   PersonelIslemGecmisi,
-  calculateIzinGunu,
-  validateIzinTalebiKurallari
+  calculateNetIzinGunu,
+  calculateIzinHakedisi,
+  validateIzinTalebiKurallari,
+  advanceIzinOnayAdimi,
+  getPersonelFiiliCalismaDurumu,
+  sanitizePersonelForAudit,
+  IzinTipiKurali,
+  DEFAULT_IZIN_TIPI_KURALLARI
 } from '@worksuite-360/contracts'
 
 export class PersonelDatabase {
@@ -44,6 +50,19 @@ export class PersonelDatabase {
         aktif INTEGER DEFAULT 1
       );
 
+      CREATE TABLE IF NOT EXISTS TANIM_IzinTipi (
+        kod TEXT PRIMARY KEY,
+        ad TEXT NOT NULL,
+        kadroTuru TEXT DEFAULT 'hepsi',
+        bakiyedenDuserMi INTEGER DEFAULT 0,
+        haftaSonuHaricMi INTEGER DEFAULT 0,
+        ucretliMi INTEGER DEFAULT 1,
+        belgeZorunluMu INTEGER DEFAULT 0,
+        yillikKotaGun INTEGER,
+        sendikaGerektirirMi INTEGER DEFAULT 0,
+        aciklama TEXT
+      );
+
       CREATE TABLE IF NOT EXISTS TANIM_Personel (
         id TEXT PRIMARY KEY,
         tcKimlikNo TEXT NOT NULL UNIQUE,
@@ -60,6 +79,10 @@ export class PersonelDatabase {
         eposta TEXT,
         kanGrubu TEXT,
         adres TEXT,
+        sendikaUyesiMi INTEGER DEFAULT 0,
+        sendikaAdi TEXT,
+        sendikaGorevi TEXT,
+        tisKapsamindaMi INTEGER DEFAULT 0,
         olusturulduguTarih TEXT NOT NULL,
         guncellendigiTarih TEXT NOT NULL,
         FOREIGN KEY(birimId) REFERENCES TANIM_Birim(id) ON DELETE SET NULL
@@ -130,6 +153,24 @@ export class PersonelDatabase {
   }
 
   private seedDefaultsIfEmpty(): void {
+    // Fiş / İzin Türü Kuralları Tohumlama
+    const tipCount = (this.db.prepare('SELECT count(*) as count FROM TANIM_IzinTipi').get() as { count: number }).count
+    if (tipCount === 0) {
+      const insertTip = this.db.prepare(`
+        INSERT INTO TANIM_IzinTipi (
+          kod, ad, kadroTuru, bakiyedenDuserMi, haftaSonuHaricMi, ucretliMi,
+          belgeZorunluMu, yillikKotaGun, sendikaGerektirirMi, aciklama
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      for (const k of DEFAULT_IZIN_TIPI_KURALLARI) {
+        insertTip.run(
+          k.kod, k.ad, k.kadroTuru, k.bakiyedenDuserMi ? 1 : 0,
+          k.haftaSonuHaricMi ? 1 : 0, k.ucretliMi ? 1 : 0, k.belgeZorunluMu ? 1 : 0,
+          k.yillikKotaGun || null, k.sendikaGerektirirMi ? 1 : 0, k.aciklama || null
+        )
+      }
+    }
+
     const birimCount = (this.db.prepare('SELECT count(*) as count FROM TANIM_Birim').get() as { count: number }).count
     if (birimCount === 0) {
       const insertBirim = this.db.prepare('INSERT INTO TANIM_Birim (id, ad, kod) VALUES (?, ?, ?)')
@@ -153,10 +194,13 @@ export class PersonelDatabase {
         kadro: 'Memur (657)',
         birimId: 'b-1',
         birimAdi: 'İnsan Kaynakları ve Eğitim Müdürlüğü',
-        iseBaslamaTarihi: '2020-03-15',
+        iseBaslamaTarihi: '2018-03-15',
         calismaDurumu: 'aktif',
         telefon: '0555 111 22 33',
         eposta: 'ahmet.yilmaz@kurum.gov.tr',
+        sendikaUyesiMi: true,
+        sendikaAdi: 'Bem-Bir-Sen',
+        sendikaGorevi: 'isyeri_temsilcisi',
         olusturulduguTarih: now,
         guncellendigiTarih: now
       }, 'Sistem Başlangıç Kurulumu')
@@ -175,19 +219,57 @@ export class PersonelDatabase {
         calismaDurumu: 'aktif',
         telefon: '0555 444 55 66',
         eposta: 'ayse.demir@kurum.gov.tr',
+        sendikaUyesiMi: false,
         olusturulduguTarih: now,
         guncellendigiTarih: now
       }, 'Sistem Başlangıç Kurulumu')
     }
   }
 
+  // --- Fiş Tipi / İzin Kuralı Yönetimi ---
+  public getIzinTipiKurallari(): IzinTipiKurali[] {
+    const rows = this.db.prepare('SELECT * FROM TANIM_IzinTipi ORDER BY ad ASC').all() as any[]
+    return rows.map((r) => ({
+      ...r,
+      bakiyedenDuserMi: Boolean(r.bakiyedenDuserMi),
+      haftaSonuHaricMi: Boolean(r.haftaSonuHaricMi),
+      ucretliMi: Boolean(r.ucretliMi),
+      belgeZorunluMu: Boolean(r.belgeZorunluMu),
+      sendikaGerektirirMi: Boolean(r.sendikaGerektirirMi)
+    }))
+  }
+
+  public getIzinTipiKurali(kod: string): IzinTipiKurali | undefined {
+    const r = this.db.prepare('SELECT * FROM TANIM_IzinTipi WHERE kod = ?').get(kod) as any
+    if (!r) return undefined
+    return {
+      ...r,
+      bakiyedenDuserMi: Boolean(r.bakiyedenDuserMi),
+      haftaSonuHaricMi: Boolean(r.haftaSonuHaricMi),
+      ucretliMi: Boolean(r.ucretliMi),
+      belgeZorunluMu: Boolean(r.belgeZorunluMu),
+      sendikaGerektirirMi: Boolean(r.sendikaGerektirirMi)
+    }
+  }
+
   // --- Personel CRUD ---
   public getPersonelList(): PersonelRecord[] {
-    return this.db.prepare('SELECT * FROM TANIM_Personel ORDER BY ad ASC, soyad ASC').all() as PersonelRecord[]
+    const rows = this.db.prepare('SELECT * FROM TANIM_Personel ORDER BY ad ASC, soyad ASC').all() as any[]
+    return rows.map((r) => ({
+      ...r,
+      sendikaUyesiMi: Boolean(r.sendikaUyesiMi),
+      tisKapsamindaMi: Boolean(r.tisKapsamindaMi)
+    }))
   }
 
   public getPersonelById(id: string): PersonelRecord | undefined {
-    return this.db.prepare('SELECT * FROM TANIM_Personel WHERE id = ?').get(id) as PersonelRecord | undefined
+    const r = this.db.prepare('SELECT * FROM TANIM_Personel WHERE id = ?').get(id) as any
+    if (!r) return undefined
+    return {
+      ...r,
+      sendikaUyesiMi: Boolean(r.sendikaUyesiMi),
+      tisKapsamindaMi: Boolean(r.tisKapsamindaMi)
+    }
   }
 
   public createPersonel(record: PersonelRecord, actorName = 'Yetkili'): void {
@@ -197,10 +279,12 @@ export class PersonelDatabase {
         INSERT INTO TANIM_Personel (
           id, tcKimlikNo, sicilNo, ad, soyad, unvan, kadro, birimId, birimAdi,
           iseBaslamaTarihi, calismaDurumu, telefon, eposta, kanGrubu, adres,
+          sendikaUyesiMi, sendikaAdi, sendikaGorevi, tisKapsamindaMi,
           olusturulduguTarih, guncellendigiTarih
         ) VALUES (
           ?, ?, ?, ?, ?, ?, ?, ?, ?,
           ?, ?, ?, ?, ?, ?,
+          ?, ?, ?, ?,
           ?, ?
         )
       `).run(
@@ -208,26 +292,37 @@ export class PersonelDatabase {
         record.unvan, record.kadro, record.birimId || null, record.birimAdi,
         record.iseBaslamaTarihi, record.calismaDurumu || 'aktif',
         record.telefon || null, record.eposta || null, record.kanGrubu || null, record.adres || null,
+        record.sendikaUyesiMi ? 1 : 0, record.sendikaAdi || null, record.sendikaGorevi || null, record.tisKapsamindaMi ? 1 : 0,
         record.olusturulduguTarih, record.guncellendigiTarih
       )
+
+      // Mevzuata göre hizmet yılı ve hak ediş hesabı
+      const iseBaslamaYili = new Date(record.iseBaslamaTarihi).getFullYear()
+      const hizmetYili = Math.max(0, currentYear - iseBaslamaYili)
+      const hakEdilen = calculateIzinHakedisi({
+        kadroTuru: record.kadro,
+        hizmetYili,
+        izinTuru: 'yillik'
+      })
 
       // Initialize leave balance for current year
       this.db.prepare(`
         INSERT OR IGNORE INTO DATA_IzinBakiyesi (id, personelId, yil, hakEdilenGun, devredenGun, kullanilanGun, kalanGun)
-        VALUES (?, ?, ?, 14, 0, 0, 14)
-      `).run(`bakiye-${record.id}-${currentYear}`, record.id, currentYear)
+        VALUES (?, ?, ?, ?, 0, 0, ?)
+      `).run(`bakiye-${record.id}-${currentYear}`, record.id, currentYear, hakEdilen, hakEdilen)
 
-      // Audit log
+      // KVKK uyumlu denetim kaydı (hassas veriler maskelenir)
+      const safeAuditData = sanitizePersonelForAudit(record)
       this.db.prepare(`
         INSERT INTO LOG_PersonelIslem (id, personelId, islemTuru, aciklama, yapanKullaniciId, yapanKullaniciAdi, tarih, detayJson)
         VALUES (?, ?, 'kayit_olusturma', ?, 'sys-admin', ?, ?, ?)
       `).run(
         `log-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
         record.id,
-        `Personel kaydı oluşturuldu: ${record.ad} ${record.soyad} (${record.sicilNo})`,
+        `Personel kaydı oluşturuldu: ${record.ad} ${record.soyad} (${record.sicilNo}) - Hizmet Yılı: ${hizmetYili}, Hak Edilen İzin: ${hakEdilen} gün`,
         actorName,
         new Date().toISOString(),
-        JSON.stringify(record)
+        JSON.stringify(safeAuditData)
       )
     })()
   }
@@ -264,7 +359,10 @@ export class PersonelDatabase {
         `Personel bilgileri güncellendi (${updated.ad} ${updated.soyad})`,
         actorName,
         new Date().toISOString(),
-        JSON.stringify({ old: existing, new: updated })
+        JSON.stringify({
+          old: sanitizePersonelForAudit(existing),
+          new: sanitizePersonelForAudit(updated)
+        })
       )
     })()
   }
@@ -273,12 +371,20 @@ export class PersonelDatabase {
   public getIzinBakiyesi(personelId: string, yil: number = new Date().getFullYear()): IzinBakiyesi | undefined {
     let row = this.db.prepare('SELECT * FROM DATA_IzinBakiyesi WHERE personelId = ? AND yil = ?').get(personelId, yil) as IzinBakiyesi | undefined
     if (!row) {
-      // Lazy init balance if missing
+      // Mevzuata uygun lazy init
+      const personel = this.getPersonelById(personelId)
+      const hizmetYili = personel ? Math.max(0, yil - new Date(personel.iseBaslamaTarihi).getFullYear()) : 1
+      const hakEdilen = calculateIzinHakedisi({
+        kadroTuru: personel?.kadro || 'memur_657',
+        hizmetYili,
+        izinTuru: 'yillik'
+      })
+
       const newId = `bakiye-${personelId}-${yil}`
       this.db.prepare(`
         INSERT INTO DATA_IzinBakiyesi (id, personelId, yil, hakEdilenGun, devredenGun, kullanilanGun, kalanGun)
-        VALUES (?, ?, ?, 14, 0, 0, 14)
-      `).run(newId, personelId, yil)
+        VALUES (?, ?, ?, ?, 0, 0, ?)
+      `).run(newId, personelId, yil, hakEdilen, hakEdilen)
       row = this.db.prepare('SELECT * FROM DATA_IzinBakiyesi WHERE id = ?').get(newId) as IzinBakiyesi
     }
     return row
@@ -302,11 +408,14 @@ export class PersonelDatabase {
     bitisTarihi: string
     aciklama: string
     actorName?: string
+    haftaSonuHaric?: boolean
   }): { success: boolean; id?: string; hata?: string } {
     const personel = this.getPersonelById(params.personelId)
     if (!personel) return { success: false, hata: 'Personel kaydı bulunamadı.' }
 
-    const gunSayisi = calculateIzinGunu(params.baslangicTarihi, params.bitisTarihi)
+    const kural = this.getIzinTipiKurali(params.izinTuru)
+    const haftaSonuHaric = params.haftaSonuHaric ?? (kural?.haftaSonuHaricMi ?? false)
+    const gunSayisi = calculateNetIzinGunu(params.baslangicTarihi, params.bitisTarihi, haftaSonuHaric)
     const bakiye = this.getIzinBakiyesi(params.personelId, new Date(params.baslangicTarihi).getFullYear())
     const mevcutTalepler = this.getIzinTalepleri(params.personelId)
 
@@ -322,7 +431,9 @@ export class PersonelDatabase {
         aciklama: params.aciklama
       },
       bakiye,
-      mevcutTalepler
+      mevcutTalepler,
+      kural,
+      personel
     })
 
     if (!validation.gecerli) {
@@ -367,31 +478,50 @@ export class PersonelDatabase {
     return { success: true, id }
   }
 
-  public approveIzinTalebi(izinId: string, onaylayanAdi = 'Birim Amiri'): void {
-    const talep = this.db.prepare('SELECT * FROM DATA_IzinTalebi WHERE id = ?').get(izinId) as any
-    if (!talep) throw new Error(`İzin talebi bulunamadı: ${izinId}`)
-    if (talep.durum === 'onaylandi') return
+  /**
+   * Sıralı çok adımlı onay yürütücüsü:
+   * 1. Adım: Birim Amiri -> Onaylanırsa durum 'onayda' kalır, Adım 2 açılır.
+   * 2. Adım: İK Müdürü -> Onaylanırsa durum 'onaylandi' olur, bakiye düşülür.
+   */
+  public approveIzinTalebi(
+    izinId: string,
+    onaylayanId = 'sys-user',
+    onaylayanAdi = 'Yetkili Amir',
+    aciklama?: string
+  ): { tamamlandiMi: boolean; durum: string } {
+    const rawTalep = this.db.prepare('SELECT * FROM DATA_IzinTalebi WHERE id = ?').get(izinId) as any
+    if (!rawTalep) throw new Error(`İzin talebi bulunamadı: ${izinId}`)
+    if (rawTalep.durum === 'onaylandi') return { tamamlandiMi: true, durum: 'onaylandi' }
+
+    const talep: IzinTalebi = {
+      ...rawTalep,
+      onayAdimlari: rawTalep.onayAdimlari ? JSON.parse(rawTalep.onayAdimlari) : []
+    }
+
+    const { tamamlandiMi, nihaiDurum } = advanceIzinOnayAdimi({
+      talep,
+      onaylayanKullaniciId: onaylayanId,
+      onaylayanAdi,
+      karar: 'onaylandi',
+      aciklama
+    })
 
     const now = new Date().toISOString()
-    const steps = talep.onayAdimlari ? JSON.parse(talep.onayAdimlari) : []
-    const updatedSteps = steps.map((s: any) => ({
-      ...s,
-      karar: 'onaylandi',
-      onaylayanAdi,
-      onayTarihi: now
-    }))
 
     this.db.transaction(() => {
       this.db.prepare(`
         UPDATE DATA_IzinTalebi SET
-          durum = 'onaylandi',
+          durum = ?,
           onayAdimlari = ?,
           guncellendigiTarih = ?
         WHERE id = ?
-      `).run(JSON.stringify(updatedSteps), now, izinId)
+      `).run(nihaiDurum, JSON.stringify(talep.onayAdimlari), now, izinId)
 
-      // Deduct from balance if annual leave
-      if (talep.izinTuru === 'yillik') {
+      // Fiş / İzin tipi kuralına göre bakiye düşümü (Yıllık izin vb. düşer, Sendika/Mazeret düşmez!)
+      const kural = this.getIzinTipiKurali(talep.izinTuru)
+      const bakiyedenDuser = kural ? kural.bakiyedenDuserMi : talep.izinTuru === 'yillik'
+
+      if (tamamlandiMi && nihaiDurum === 'onaylandi' && bakiyedenDuser) {
         const yil = new Date(talep.baslangicTarihi).getFullYear()
         const bakiye = this.getIzinBakiyesi(talep.personelId, yil)
         if (bakiye) {
@@ -406,23 +536,153 @@ export class PersonelDatabase {
         }
       }
 
-      // Update personel working status
-      this.db.prepare("UPDATE TANIM_Personel SET calismaDurumu = 'izinli', guncellendigiTarih = ? WHERE id = ?")
-        .run(now, talep.personelId)
+      // Fiili çalışma durumunu güncelle (izin başlangıcı bugün veya geçmişte ise izinli)
+      this.syncPersonelFiiliCalismaDurumu(talep.personelId)
 
       // Audit log
       this.db.prepare(`
         INSERT INTO LOG_PersonelIslem (id, personelId, islemTuru, aciklama, yapanKullaniciId, yapanKullaniciAdi, tarih, detayJson)
-        VALUES (?, ?, 'izin_onayi', ?, 'sys-admin', ?, ?, ?)
+        VALUES (?, ?, 'izin_onayi', ?, ?, ?, ?, ?)
       `).run(
         `log-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
         talep.personelId,
-        `İzin talebi onaylandı (${talep.gunSayisi} gün, ${talep.izinTuru})`,
+        tamamlandiMi
+          ? `İzin talebi nihai onay aldı (${talep.gunSayisi} gün, ${talep.izinTuru})`
+          : `İzin talebi ara onay aldı (${onaylayanAdi})`,
+        onaylayanId,
         onaylayanAdi,
         now,
-        JSON.stringify({ izinId, gunSayisi: talep.gunSayisi })
+        JSON.stringify({ izinId, tamamlandiMi, nihaiDurum, aciklama })
       )
     })()
+
+    return { tamamlandiMi, durum: nihaiDurum }
+  }
+
+  public rejectIzinTalebi(
+    izinId: string,
+    onaylayanId = 'sys-user',
+    onaylayanAdi = 'Yetkili Amir',
+    gerekce = 'Gerekçe belirtilmedi'
+  ): void {
+    const rawTalep = this.db.prepare('SELECT * FROM DATA_IzinTalebi WHERE id = ?').get(izinId) as any
+    if (!rawTalep) throw new Error(`İzin talebi bulunamadı: ${izinId}`)
+
+    const talep: IzinTalebi = {
+      ...rawTalep,
+      onayAdimlari: rawTalep.onayAdimlari ? JSON.parse(rawTalep.onayAdimlari) : []
+    }
+
+    const { nihaiDurum } = advanceIzinOnayAdimi({
+      talep,
+      onaylayanKullaniciId: onaylayanId,
+      onaylayanAdi,
+      karar: 'reddedildi',
+      aciklama: gerekce
+    })
+
+    const now = new Date().toISOString()
+
+    this.db.transaction(() => {
+      this.db.prepare(`
+        UPDATE DATA_IzinTalebi SET
+          durum = ?,
+          redGerekcesi = ?,
+          onayAdimlari = ?,
+          guncellendigiTarih = ?
+        WHERE id = ?
+      `).run(nihaiDurum, gerekce, JSON.stringify(talep.onayAdimlari), now, izinId)
+
+      this.syncPersonelFiiliCalismaDurumu(talep.personelId)
+
+      this.db.prepare(`
+        INSERT INTO LOG_PersonelIslem (id, personelId, islemTuru, aciklama, yapanKullaniciId, yapanKullaniciAdi, tarih, detayJson)
+        VALUES (?, ?, 'izin_reddi', ?, ?, ?, ?, ?)
+      `).run(
+        `log-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        talep.personelId,
+        `İzin talebi reddedildi: ${gerekce}`,
+        onaylayanId,
+        onaylayanAdi,
+        now,
+        JSON.stringify({ izinId, gerekce })
+      )
+    })()
+  }
+
+  public returnIzinTalebi(
+    izinId: string,
+    onaylayanId = 'sys-user',
+    onaylayanAdi = 'Yetkili Amir',
+    gerekce = 'Eksik bilgi'
+  ): void {
+    const rawTalep = this.db.prepare('SELECT * FROM DATA_IzinTalebi WHERE id = ?').get(izinId) as any
+    if (!rawTalep) throw new Error(`İzin talebi bulunamadı: ${izinId}`)
+
+    const talep: IzinTalebi = {
+      ...rawTalep,
+      onayAdimlari: rawTalep.onayAdimlari ? JSON.parse(rawTalep.onayAdimlari) : []
+    }
+
+    const { nihaiDurum } = advanceIzinOnayAdimi({
+      talep,
+      onaylayanKullaniciId: onaylayanId,
+      onaylayanAdi,
+      karar: 'iade_edildi',
+      aciklama: gerekce
+    })
+
+    const now = new Date().toISOString()
+
+    this.db.transaction(() => {
+      this.db.prepare(`
+        UPDATE DATA_IzinTalebi SET
+          durum = ?,
+          redGerekcesi = ?,
+          onayAdimlari = ?,
+          guncellendigiTarih = ?
+        WHERE id = ?
+      `).run(nihaiDurum, gerekce, JSON.stringify(talep.onayAdimlari), now, izinId)
+
+      this.db.prepare(`
+        INSERT INTO LOG_PersonelIslem (id, personelId, islemTuru, aciklama, yapanKullaniciId, yapanKullaniciAdi, tarih, detayJson)
+        VALUES (?, ?, 'izin_reddi', ?, ?, ?, ?, ?)
+      `).run(
+        `log-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        talep.personelId,
+        `İzin talebi iade edildi: ${gerekce}`,
+        onaylayanId,
+        onaylayanAdi,
+        now,
+        JSON.stringify({ izinId, gerekce })
+      )
+    })()
+  }
+
+  /**
+   * Tarih bazlı fiili çalışma durumu senkronizasyonu:
+   * İzin onaylanmış olsa dahi, ancak izin başlangıç tarihi geldiğinde 'izinli' olur.
+   */
+  public syncPersonelFiiliCalismaDurumu(personelId: string, referansTarih?: string): string {
+    const personel = this.getPersonelById(personelId)
+    if (!personel) return 'aktif'
+
+    const onayliIzinler = this.getIzinTalepleri(personelId).filter((i) => i.durum === 'onaylandi')
+    const aktifGorevler = this.getGorevlendirmeler(personelId).filter((g) => g.durum === 'aktif')
+
+    const fiiliDurum = getPersonelFiiliCalismaDurumu({
+      personel,
+      onayliIzinler,
+      aktifGorevlendirmeler: aktifGorevler,
+      referansTarih
+    })
+
+    if (personel.calismaDurumu !== fiiliDurum) {
+      this.db.prepare('UPDATE TANIM_Personel SET calismaDurumu = ?, guncellendigiTarih = ? WHERE id = ?')
+        .run(fiiliDurum, new Date().toISOString(), personelId)
+    }
+
+    return fiiliDurum
   }
 
   // --- Görevlendirmeler ---
