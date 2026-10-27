@@ -84,7 +84,7 @@ export function getHeaderMenus(opts: HeaderNavigationOptions): HeaderMenu[] {
               if (!res?.canceled && res?.filePath) {
                 const filePath = res.filePath as string
                 const ext = (filePath.split('.').pop() || '').toLowerCase()
-                if (ext !== 'ihale' && ext !== 'ihale360' && ext !== 'temin') {
+                if (ext !== 'ihale' && ext !== 'ihale360') {
                   alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
                 } else {
                   let result = await useWorkspaceStore.getState().openWorkspace(filePath, false)

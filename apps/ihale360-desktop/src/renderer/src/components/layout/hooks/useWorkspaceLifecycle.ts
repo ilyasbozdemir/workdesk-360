@@ -140,7 +140,7 @@ export function useWorkspaceLifecycle(
         }
 
         const p = filePath.toLowerCase()
-        if (!p.endsWith('.ihale') && !p.endsWith('.ihale360') && !p.endsWith('.temin')) {
+        if (!p.endsWith('.ihale') && !p.endsWith('.ihale360')) {
           alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
           return
         }

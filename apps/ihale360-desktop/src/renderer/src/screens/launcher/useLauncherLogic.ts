@@ -110,7 +110,7 @@ export function useLauncherLogic() {
       const res = await window.electron?.ipcRenderer.invoke('dialog:showOpenDialog')
       if (!res.canceled && res.filePath) {
         const p = res.filePath.toLowerCase()
-        if (!p.endsWith('.ihale') && !p.endsWith('.ihale360') && !p.endsWith('.temin')) {
+        if (!p.endsWith('.ihale') && !p.endsWith('.ihale360')) {
           alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
           return
         }
@@ -140,7 +140,7 @@ export function useLauncherLogic() {
   const handleOpenRecent = async (filePath: string): Promise<void> => {
     try {
       const p = filePath.toLowerCase()
-      if (!p.endsWith('.ihale') && !p.endsWith('.ihale360') && !p.endsWith('.temin')) {
+      if (!p.endsWith('.ihale') && !p.endsWith('.ihale360')) {
         alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
         return
       }

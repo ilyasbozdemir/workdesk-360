@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Clock,
   Printer,
@@ -67,7 +67,7 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [acikKartlar, setAcikKartlar] = useState<Record<number, boolean>>({})
 
-  const fetchTimelineData = async (): Promise<void> => {
+  const fetchTimelineData = useCallback(async (): Promise<void> => {
     if (typeof window === 'undefined' || !window.electron?.ipcRenderer) return
     setLoading(true)
 
@@ -81,9 +81,9 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
           d.temin_no,
           COALESCE(d.is_adi, d.dosya_adi, d.konu, 'İsimsiz Temin') as is_adi,
           d.konu,
-          COALESCE(d.birim, d.harcama_birimi, 'Genel İdare') as birim,
+          COALESCE(b.ad, b.birim_adi, d.birim, d.harcama_birimi, 'Genel İdare') as birim,
           COALESCE(d.alim_turu, d.tur, 'mal') as alim_turu,
-          d.butce_yili,
+          COALESCE(d.butce_yili, strftime('%Y', COALESCE(d.dosya_acilis_tarihi, d.created_at, 'now'))) as butce_yili,
           d.dosya_acilis_tarihi,
           d.temin_tarihi,
           d.teslim_tarihi,
@@ -103,27 +103,42 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
             FROM DATA_TeminFirma f 
             WHERE f.temin_dosya_id = d.id OR f.dosya_id = d.id
           ) as firma_sayisi,
-          (
-            SELECT COALESCE(tf.unvan, f.unvan)
-            FROM DATA_TeminFirma f
-            LEFT JOIN TANIM_Firma tf ON tf.id = f.firma_id
-            WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1)
-            LIMIT 1
+          COALESCE(
+            (
+              SELECT COALESCE(tf.unvan, f.unvan)
+              FROM DATA_TeminFirma f
+              LEFT JOIN TANIM_Firma tf ON tf.id = f.firma_id
+              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1 OR f.kazandi_mi = 1 OR f.kazanan_mi = 1)
+              LIMIT 1
+            ),
+            (
+              SELECT tf.unvan FROM TANIM_Firma tf WHERE tf.id = d.firma_id LIMIT 1
+            )
           ) as kazanan_firma,
-          (
-            SELECT COALESCE(tf.vergi_no, f.vergi_no)
-            FROM DATA_TeminFirma f
-            LEFT JOIN TANIM_Firma tf ON tf.id = f.firma_id
-            WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1)
-            LIMIT 1
+          COALESCE(
+            (
+              SELECT COALESCE(tf.vergi_no, f.vergi_no)
+              FROM DATA_TeminFirma f
+              LEFT JOIN TANIM_Firma tf ON tf.id = f.firma_id
+              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1 OR f.kazandi_mi = 1 OR f.kazanan_mi = 1)
+              LIMIT 1
+            ),
+            (
+              SELECT tf.vergi_no FROM TANIM_Firma tf WHERE tf.id = d.firma_id LIMIT 1
+            )
           ) as kazanan_vkn,
-          (
-            SELECT COALESCE(f.teklif_tutari, f.teklif_bedeli, 0)
-            FROM DATA_TeminFirma f
-            WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1)
-            LIMIT 1
+          COALESCE(
+            (
+              SELECT COALESCE(f.teklif_tutari, f.teklif_toplami, f.teklif_bedeli, 0)
+              FROM DATA_TeminFirma f
+              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1 OR f.kazandi_mi = 1 OR f.kazanan_mi = 1)
+              LIMIT 1
+            ),
+            d.net_odenen,
+            0
           ) as kazanan_teklif
         FROM DATA_TeminDosyasi d
+        LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
         WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
         ORDER BY d.id DESC`
       )
@@ -255,11 +270,23 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
 
         // Filtreleri uygula
         const filtered = mapped.filter((d) => {
-          if (filters.seciliYil && d.butce_yili !== filters.seciliYil) return false
-          if (filters.seciliBirim && filters.seciliBirim !== 'tumu' && d.birim !== filters.seciliBirim)
-            return false
-          if (filters.alimTuru && filters.alimTuru !== 'tumu' && d.alim_turu !== filters.alimTuru)
-            return false
+          if (filters.seciliYil) {
+            const dYil = String(d.butce_yili || '').trim()
+            const sYil = String(filters.seciliYil).trim()
+            if (dYil && sYil && dYil !== sYil) return false
+          }
+          if (filters.seciliBirim && filters.seciliBirim !== 'tumu') {
+            const dBirim = (d.birim || '').toLowerCase().trim()
+            const sBirim = filters.seciliBirim.toLowerCase().trim()
+            if (dBirim !== sBirim && !dBirim.includes(sBirim) && !sBirim.includes(dBirim)) {
+              return false
+            }
+          }
+          if (filters.alimTuru && filters.alimTuru !== 'tumu') {
+            const dTur = (d.alim_turu || '').toLowerCase().trim()
+            const sTur = filters.alimTuru.toLowerCase().trim()
+            if (dTur !== sTur) return false
+          }
           return true
         })
 
@@ -274,11 +301,14 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters.seciliYil, filters.seciliBirim, filters.alimTuru])
 
   useEffect(() => {
-    fetchTimelineData()
-  }, [filters.seciliYil, filters.seciliBirim, filters.alimTuru])
+    const timer = setTimeout(() => {
+      void fetchTimelineData()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [fetchTimelineData])
 
   // Arama filtreli liste
   const goruntulenenDosyalar = dosyalar.filter((d) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Layers,
   Printer,
@@ -62,7 +62,7 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [acikDosyalar, setAcikDosyalar] = useState<Record<number, boolean>>({})
 
-  const fetchMuhteviyatData = async (): Promise<void> => {
+  const fetchMuhteviyatData = useCallback(async (): Promise<void> => {
     if (typeof window === 'undefined' || !window.electron?.ipcRenderer) return
     setLoading(true)
 
@@ -76,13 +76,15 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
           d.temin_no,
           COALESCE(d.is_adi, d.dosya_adi, d.konu, 'İsimsiz Temin') as is_adi,
           d.konu,
-          COALESCE(d.birim, d.harcama_birimi, 'Genel İdare') as birim,
+          COALESCE(b.ad, b.birim_adi, d.birim, d.harcama_birimi, 'Genel İdare') as birim,
           COALESCE(d.alim_turu, d.tur, 'mal') as alim_turu,
-          d.butce_yili,
+          COALESCE(d.butce_yili, strftime('%Y', COALESCE(d.dosya_acilis_tarihi, d.created_at, 'now'))) as butce_yili,
           COALESCE(d.durum, 'Tamamlandı') as durum,
           COALESCE(d.yaklasik_maliyet, 0) as yaklasik_maliyet,
-          COALESCE(d.net_odenen, 0) as net_odenen
+          COALESCE(d.net_odenen, 0) as net_odenen,
+          d.firma_id
         FROM DATA_TeminDosyasi d
+        LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
         WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
         ORDER BY d.id DESC`
       )
@@ -112,11 +114,12 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
         'db:query',
         `SELECT 
           f.id,
+          f.firma_id,
           COALESCE(f.temin_dosya_id, f.dosya_id) as dosya_id,
           COALESCE(tf.unvan, f.unvan, 'Firma') as unvan,
           COALESCE(tf.vergi_no, f.vergi_no, '') as vergi_no,
           COALESCE(f.teklif_tutari, f.teklif_bedeli, 0) as teklif_tutari,
-          COALESCE(f.secildi, f.kazanan, 0) as kazanan
+          COALESCE(f.secildi, f.kazanan, f.kazandi_mi, f.kazanan_mi, 0) as kazanan
         FROM DATA_TeminFirma f
         LEFT JOIN TANIM_Firma tf ON tf.id = f.firma_id
         ORDER BY f.id ASC`
@@ -155,14 +158,17 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
 
       const mapped: DosyaMuhteviyatItem[] = resDosyalar.data.map((r: any) => {
         const fileKalemler = kalemlerMap[r.id] || []
-        const fileFirmalar = firmalarMap[r.id] || []
+        const fileFirmalar = (firmalarMap[r.id] || []).map((f) => ({
+          ...f,
+          kazanan: f.kazanan || Boolean(r.firma_id && f.id === r.firma_id)
+        }))
 
         const kazananFirma = fileFirmalar.find((f) => f.kazanan)
         const sozlesmeBedeli = kazananFirma ? kazananFirma.teklif_tutari : Number(r.net_odenen || 0)
         const yaklasikMaliyet =
           Number(r.yaklasik_maliyet) > 0
             ? Number(r.yaklasik_maliyet)
-            : fileKalemler.reduce((acc, k) => acc + k.toplam_tutar, 0)
+            : fileKalemler.reduce((acc, k) => acc + k.toplam_tutar, 0) || sozlesmeBedeli
 
         return {
           id: r.id,
@@ -183,11 +189,23 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
 
       // Filtrele
       const filtered = mapped.filter((d) => {
-        if (filters.seciliYil && d.butce_yili !== filters.seciliYil) return false
-        if (filters.seciliBirim && filters.seciliBirim !== 'tumu' && d.birim !== filters.seciliBirim)
-          return false
-        if (filters.alimTuru && filters.alimTuru !== 'tumu' && d.alim_turu !== filters.alimTuru)
-          return false
+        if (filters.seciliYil) {
+          const dYil = String(d.butce_yili || '').trim()
+          const sYil = String(filters.seciliYil).trim()
+          if (dYil && sYil && dYil !== sYil) return false
+        }
+        if (filters.seciliBirim && filters.seciliBirim !== 'tumu') {
+          const dBirim = (d.birim || '').toLowerCase().trim()
+          const sBirim = filters.seciliBirim.toLowerCase().trim()
+          if (dBirim !== sBirim && !dBirim.includes(sBirim) && !sBirim.includes(dBirim)) {
+            return false
+          }
+        }
+        if (filters.alimTuru && filters.alimTuru !== 'tumu') {
+          const dTur = (d.alim_turu || '').toLowerCase().trim()
+          const sTur = filters.alimTuru.toLowerCase().trim()
+          if (dTur !== sTur) return false
+        }
         return true
       })
 
@@ -200,11 +218,14 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters.seciliYil, filters.seciliBirim, filters.alimTuru])
 
   useEffect(() => {
-    fetchMuhteviyatData()
-  }, [filters.seciliYil, filters.seciliBirim, filters.alimTuru])
+    const timer = setTimeout(() => {
+      void fetchMuhteviyatData()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [fetchMuhteviyatData])
 
   // Arama filtreli liste
   const goruntulenenDosyalar = dosyalar.filter((d) => {
