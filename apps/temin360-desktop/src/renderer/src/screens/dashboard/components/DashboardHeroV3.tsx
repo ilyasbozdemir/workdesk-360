@@ -4,6 +4,8 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Boxes,
+  Building2,
+  Calculator,
   CheckCircle2,
   ChevronRight,
   FileSpreadsheet,
@@ -11,17 +13,12 @@ import {
   Gavel,
   Kanban,
   KeyRound,
-  Landmark,
-  Layers,
   Plus,
   ShieldCheck,
   Sparkles,
-  Store,
   Users
 } from 'lucide-react'
 import { APP_ROUTES } from '../../../constants/routeConstants'
-import { useModuleStore } from '../../../store/moduleStore'
-import { RESMI_MODUL_PAKETLERI } from '../../modul-magazasi/data/moduller.data'
 import type { DashboardStats } from '../dashboard.hooks'
 
 export type HeroProcurementMode =
@@ -83,16 +80,10 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
   smartAlerts
 }) => {
   const navigate = useNavigate()
-  const { installedIds, trashedModules } = useModuleStore()
 
   // Dahili seçili mod (prop yoksa isIhale'den türetilir)
   const [internalMode, setInternalMode] = useState<HeroProcurementMode>(() => {
-    if (
-      initialMode &&
-      ['all', 'dogrudan_temin', 'ihale', 'devlet_ihale_2886', 'modul_magazasi'].includes(
-        initialMode
-      )
-    ) {
+    if (initialMode && ['all', 'dogrudan_temin', 'ihale'].includes(initialMode)) {
       return initialMode as HeroProcurementMode
     }
     return propIsIhale ? 'ihale' : 'dogrudan_temin'
@@ -100,8 +91,7 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
 
   // Props güncellendiğinde senkronize et
   const activeMode: HeroProcurementMode =
-    initialMode &&
-    ['all', 'dogrudan_temin', 'ihale', 'devlet_ihale_2886', 'modul_magazasi'].includes(initialMode)
+    initialMode && ['all', 'dogrudan_temin', 'ihale'].includes(initialMode)
       ? (initialMode as HeroProcurementMode)
       : internalMode
 
@@ -113,27 +103,22 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
   }
   void handleSelectMode
 
-  // Modül mağazası istatistikleri
-  const totalPackages = RESMI_MODUL_PAKETLERI.length
-  const installedCount = installedIds.length
-  const trashedCount = Object.keys(trashedModules).length
-
   // Stats sayıları
   const dogrudanTeminSayisi = Number(stats.dogrudanTeminSayisi || 0)
   const ihaleDosyaSayisi = Number(stats.ihaleDosyaSayisi || 0)
   const toplamDosyaSayisi = dogrudanTeminSayisi + ihaleDosyaSayisi
 
-  // Mod konfigürasyonları
+  // TEMİN 360 Mod konfigürasyonları
   const modeConfigs = {
     all: {
-      badgeTitle: '360° KONSOLİDE KOMUTA MERKEZİ • TÜM SÜREÇLER & MODÜLLER',
-      badgeLaw: '4734 KİK • 2886 DİK • 5018 MALİ KANUN & RESMÎ MODÜLLER',
+      badgeTitle: 'TEMİN 360 KOMUTA MERKEZİ • TÜM DOĞRUDAN TEMİN SÜREÇLERİ',
+      badgeLaw: '4734 KİK • 5018 MALİ YÖNETİM & MERKEZİ HARCAMA BELGELERİ',
       roleBadge:
         adminTitle && !adminTitle.includes('YÖNETİCİ')
           ? adminTitle
-          : 'Harcama Yetkilisi & İdare Yöneticisi',
+          : 'Harcama Yetkilisi / Şube Müdürü',
       description:
-        'Kurum bünyesindeki Doğrudan Temin (22/d), Açık & Pazarlık İhale (19/21), 2886 Taşınmaz Gelir Masası ve kurulu modüller tek ekranda konsolide yönetiliyor.',
+        'Kurum bünyesindeki tüm doğrudan temin alımları (22/d, 22/a-f), piyasa fiyat araştırmaları, onay belgeleri, muayene kabul ve ödeme tahakkuk işlemleri konsolide yönetiliyor.',
       bgGradient:
         'bg-linear-to-br from-slate-900 via-indigo-950 to-slate-900 border-indigo-700/40 text-white shadow-xl shadow-indigo-950/30',
       glow1: 'bg-indigo-500/30 dark:bg-indigo-600/30',
@@ -148,7 +133,7 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
       roleBadge:
         adminTitle && !adminTitle.includes('YÖNETİCİ')
           ? adminTitle
-          : 'Harcama Yetkilisi / Şube Müdürü',
+          : 'Harcama Yetkilisi / Satın Alma Sorumlusu',
       description:
         'Doğrudan temin süreçleri (22/d), piyasa fiyat araştırmaları, KİK eşik limit denetimleri, harcama talimatları ve ödeme tahakkuk işlemleri yönetiliyor.',
       bgGradient:
@@ -179,45 +164,10 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
         'bg-indigo-100 text-indigo-700 border-indigo-300/80 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-400/30',
       lawBadge:
         'bg-emerald-100 text-emerald-800 border-emerald-300/80 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30'
-    },
-    devlet_ihale_2886: {
-      badgeTitle: '2886 DEVLET İHALE MASASI • GELİR, SATIŞ & KİRALAMA',
-      badgeLaw: '2886 Sayılı Devlet İhale Kanunu & Taşınmaz Mevzuatı Uyumlu',
-      roleBadge:
-        adminTitle && !adminTitle.includes('YÖNETİCİ')
-          ? adminTitle
-          : 'Taşınmaz Gelir / Encümen Sorumlusu',
-      description:
-        'Kamu ve belediye taşınmazlarının satış, kiralama, trampa ve irtifak hakları; kıymet takdiri, encümen kararları ve Yİ-ÜFE kira artışları yönetiliyor.',
-      bgGradient:
-        'bg-linear-to-br from-emerald-50/95 via-white to-slate-50/90 border-emerald-200 dark:bg-linear-to-br dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/80 dark:border-emerald-800/50 text-slate-800 dark:text-white shadow-lg shadow-emerald-950/10',
-      glow1: 'bg-emerald-300/40 dark:bg-emerald-600/30',
-      glow2: 'bg-teal-300/30 dark:bg-teal-600/25',
-      accentColor: 'text-emerald-600 dark:text-emerald-400',
-      badgeBorder:
-        'bg-emerald-100 text-emerald-800 border-emerald-300/80 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-400/30',
-      lawBadge:
-        'bg-teal-100 text-teal-800 border-teal-300/80 dark:bg-teal-500/20 dark:text-teal-300 dark:border-teal-500/30'
-    },
-    modul_magazasi: {
-      badgeTitle: 'MODÜL & SÜREÇ MAĞAZASI • RESMÎ EKLENTİ & ŞABLON MERKEZİ',
-      badgeLaw: 'Resmî Yazışma Yönetmeliği • 657 DMK • 4857 İş Kanunu',
-      roleBadge: 'Modül & Süreç Yöneticisi',
-      description:
-        'Resmî modül paketleri, EBYS şablonları, Personel İzin takibi ve özel süreçler tek tıkla kurulabilir, kaldırılabilir veya çöp kutusundan geri yüklenebilir.',
-      bgGradient:
-        'bg-linear-to-br from-purple-50/95 via-white to-slate-50/90 border-purple-200 dark:bg-linear-to-br dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/80 dark:border-purple-800/50 text-slate-800 dark:text-white shadow-lg shadow-purple-950/10',
-      glow1: 'bg-purple-300/40 dark:bg-purple-600/30',
-      glow2: 'bg-pink-300/30 dark:bg-pink-600/25',
-      accentColor: 'text-purple-600 dark:text-purple-400',
-      badgeBorder:
-        'bg-purple-100 text-purple-800 border-purple-300/80 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-400/30',
-      lawBadge:
-        'bg-violet-100 text-violet-800 border-violet-300/80 dark:bg-violet-500/20 dark:text-violet-300 dark:border-violet-500/30'
     }
   }
 
-  const currentConfig = modeConfigs[activeMode] || modeConfigs.all
+  const currentConfig = modeConfigs[activeMode as keyof typeof modeConfigs] || modeConfigs.dogrudan_temin
 
   return (
     <div
@@ -233,14 +183,12 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
 
       <div className="relative z-10 space-y-6">
         {/* ========================================================================= */}
-        {/* ÜST BÖLÜM: DİNAMİK MOD SEÇİCİ SEKMELERİ (TÜMÜ, DT, İHALE, 2886, MAĞAZA) */}
+        {/* ÜST BÖLÜM: DOĞRUDAN TEMİN (KİK 22/d) ETİKETİ VE TARİH */}
         {/* ========================================================================= */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/60 dark:border-white/10">
           <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-slate-900/70 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-inner">
-            {/* Doğrudan Temin (22/d) */}
-            <div
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md shadow-blue-600/30"
-            >
+            {/* Doğrudan Temin (22/d) Rozeti */}
+            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md shadow-blue-600/30">
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Doğrudan Temin (4734 Sayılı KİK Md. 22/d)</span>
               {dogrudanTeminSayisi > 0 ? (
@@ -271,12 +219,6 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
               >
                 {activeMode === 'ihale' ? (
                   <Gavel className="w-3.5 h-3.5" />
-                ) : activeMode === 'devlet_ihale_2886' ? (
-                  <Landmark className="w-3.5 h-3.5" />
-                ) : activeMode === 'modul_magazasi' ? (
-                  <Store className="w-3.5 h-3.5" />
-                ) : activeMode === 'all' ? (
-                  <Layers className="w-3.5 h-3.5" />
                 ) : (
                   <ShieldCheck className="w-3.5 h-3.5" />
                 )}
@@ -350,27 +292,7 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
             )}
 
             {/* Modun Ana Aksiyon Butonu */}
-            {activeMode === 'modul_magazasi' ? (
-              <Link to={APP_ROUTES.MODUL_MAGAZASI} className="w-full">
-                <button
-                  type="button"
-                  className="w-full bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-md shadow-purple-900/20 border border-purple-400/30 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] text-xs"
-                >
-                  <Store className="w-4 h-4" />
-                  <span className="font-extrabold tracking-wide">Modül Mağazası</span>
-                </button>
-              </Link>
-            ) : activeMode === 'devlet_ihale_2886' ? (
-              <Link to={APP_ROUTES.DEVLET_IHALE_2886} className="w-full">
-                <button
-                  type="button"
-                  className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-md shadow-emerald-900/20 border border-emerald-400/30 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] text-xs"
-                >
-                  <Landmark className="w-4 h-4" />
-                  <span className="font-extrabold tracking-wide">2886 Masasını Aç</span>
-                </button>
-              </Link>
-            ) : activeMode === 'ihale' ? (
+            {activeMode === 'ihale' ? (
               <Link to={APP_ROUTES.HARCAMA_MERKEZI} className="w-full">
                 <button
                   type="button"
@@ -380,16 +302,6 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
                   <span className="font-extrabold tracking-wide">+ Yeni İhale (19/21)</span>
                 </button>
               </Link>
-            ) : activeMode === 'all' ? (
-              <Link to={APP_ROUTES.DOSYALAR} className="w-full">
-                <button
-                  type="button"
-                  className="w-full bg-linear-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-md shadow-indigo-900/20 border border-indigo-400/30 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] text-xs"
-                >
-                  <Layers className="w-4 h-4" />
-                  <span className="font-extrabold tracking-wide">Tüm Dosya Havuzu</span>
-                </button>
-              </Link>
             ) : (
               <Link to={APP_ROUTES.YENI_DOSYA} className="w-full">
                 <button
@@ -397,33 +309,13 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
                   className="w-full bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-md shadow-blue-900/20 border border-blue-400/30 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] text-xs"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="font-extrabold tracking-wide">+ Yeni Temin (22)</span>
+                  <span className="font-extrabold tracking-wide">+ Yeni Temin (22/d)</span>
                 </button>
               </Link>
             )}
 
             {/* İkincil Aksiyon Butonu */}
-            {activeMode === 'modul_magazasi' ? (
-              <Link to={APP_ROUTES.EBYS} className="w-full">
-                <button
-                  type="button"
-                  className="w-full bg-linear-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold py-2.5 px-3.5 rounded-xl shadow-md border border-indigo-400/30 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] text-xs"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span className="font-extrabold tracking-wide">EBYS Resmî Yazı</span>
-                </button>
-              </Link>
-            ) : activeMode === 'devlet_ihale_2886' ? (
-              <Link to={APP_ROUTES.TAKIP} className="w-full">
-                <button
-                  type="button"
-                  className="w-full bg-white hover:bg-slate-50 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-100 hover:text-slate-900 dark:hover:text-white border border-slate-200/90 dark:border-slate-700/90 font-bold py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] text-xs"
-                >
-                  <Kanban className="w-4 h-4 text-emerald-600" />
-                  <span className="font-bold">Süreç Takip Panosu</span>
-                </button>
-              </Link>
-            ) : activeMode === 'ihale' ? (
+            {activeMode === 'ihale' ? (
               <Link to={APP_ROUTES.HAKEDIS} className="w-full">
                 <button
                   type="button"
@@ -445,191 +337,169 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
               </Link>
             )}
 
-            {/* Dosyalar / Mağaza Listesi */}
-            {activeMode === 'modul_magazasi' ? (
+            {/* Dosyalar Havuzu Butonu */}
+            <Link to={APP_ROUTES.DOSYALAR} className="w-full">
               <button
                 type="button"
-                onClick={() => navigate({ to: APP_ROUTES.MODUL_MAGAZASI })}
                 className="w-full bg-white hover:bg-slate-50 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-100 hover:text-slate-900 dark:hover:text-white border border-slate-200/90 dark:border-slate-700/90 font-bold py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] text-xs"
               >
-                <Boxes className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                <span className="font-bold">Kurulu Paketler ({installedCount})</span>
+                <FileSpreadsheet
+                  className={`w-4 h-4 ${
+                    activeMode === 'ihale'
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-blue-600 dark:text-blue-400'
+                  }`}
+                />
+                <span className="font-bold">
+                  {activeMode === 'ihale'
+                    ? `İhale Dosyaları (${ihaleDosyaSayisi})`
+                    : `Temin Dosyaları (${dogrudanTeminSayisi})`}
+                </span>
               </button>
-            ) : (
-              <Link to={APP_ROUTES.DOSYALAR} className="w-full">
-                <button
-                  type="button"
-                  className="w-full bg-white hover:bg-slate-50 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-100 hover:text-slate-900 dark:hover:text-white border border-slate-200/90 dark:border-slate-700/90 font-bold py-2.5 px-3.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] text-xs"
-                >
-                  <FileSpreadsheet
-                    className={`w-4 h-4 ${
-                      activeMode === 'ihale'
-                        ? 'text-indigo-600 dark:text-indigo-400'
-                        : activeMode === 'devlet_ihale_2886'
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : 'text-blue-600 dark:text-blue-400'
-                    }`}
-                  />
-                  <span className="font-bold">
-                    {activeMode === 'ihale'
-                      ? `İhale Dosyaları (${ihaleDosyaSayisi})`
-                      : activeMode === 'devlet_ihale_2886'
-                        ? '2886 Taşınmaz Dosyaları'
-                        : activeMode === 'all'
-                          ? `Tüm Dosyalar (${toplamDosyaSayisi})`
-                          : `Temin Dosyaları (${dogrudanTeminSayisi})`}
-                  </span>
-                </button>
-              </Link>
-            )}
+            </Link>
           </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* ALT BÖLÜM: MODÜL & SÜREÇ ÖZET KARTLARI (KULLANICININ TIKLAYIP GİDEBİLECEĞİ HUB) */}
+        {/* ALT BÖLÜM: TEMİN 360 MERKEZİ SATIN ALMA VE MEVZUAT FIRLATMA KARTLARI */}
         {/* ========================================================================= */}
         <div className="pt-4 border-t border-slate-200/60 dark:border-white/10">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
-              <Boxes className="w-4 h-4 text-indigo-500" />
-              <span>Hızlı Modül ve Süreç Fırlatma Merkezi</span>
+              <Boxes className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>Hızlı Temin ve Satın Alma Masası Fırlatma Merkezi</span>
             </div>
             <Link
-              to={APP_ROUTES.MODUL_MAGAZASI}
-              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+              to={APP_ROUTES.DOSYALAR}
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
             >
-              <span>Tüm Modülleri & Şablonları Gör ({totalPackages})</span>
+              <span>Tüm Temin Dosyaları Havuzu ({toplamDosyaSayisi})</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-            {/* 1. Modül & Şablon Mağazası */}
+            {/* 1. Piyasa Fiyat Araştırması & Teklifler */}
             <div
-              onClick={() => navigate({ to: APP_ROUTES.MODUL_MAGAZASI })}
-              role="button"
-              tabIndex={0}
-              className="group p-3 rounded-2xl bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-850 border border-purple-200/70 dark:border-purple-900/40 hover:border-purple-400 dark:hover:border-purple-600 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between gap-1 mb-2">
-                <div className="w-7 h-7 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <Store className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                  {installedCount}/{totalPackages} Aktif
-                </span>
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 truncate">
-                  Modül Mağazası
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  {trashedCount > 0 ? `${trashedCount} Çöpte` : 'Eklenti & Şablon'}
-                </div>
-              </div>
-            </div>
-
-            {/* 2. EBYS Resmî Yazışma */}
-            <div
-              onClick={() => navigate({ to: APP_ROUTES.EBYS })}
-              role="button"
-              tabIndex={0}
-              className="group p-3 rounded-2xl bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-850 border border-indigo-200/70 dark:border-indigo-900/40 hover:border-indigo-400 dark:hover:border-indigo-600 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between gap-1 mb-2">
-                <div className="w-7 h-7 rounded-xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                  EYP 2.0
-                </span>
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate">
-                  EBYS Resmî Yazı
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  TipTap A4 & Onay
-                </div>
-              </div>
-            </div>
-
-            {/* 3. 2886 Devlet İhale */}
-            <div
-              onClick={() => navigate({ to: APP_ROUTES.DEVLET_IHALE_2886 })}
-              role="button"
-              tabIndex={0}
-              className="group p-3 rounded-2xl bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-850 border border-emerald-200/70 dark:border-emerald-900/40 hover:border-emerald-400 dark:hover:border-emerald-600 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-            >
-              <div className="flex items-center justify-between gap-1 mb-2">
-                <div className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <Landmark className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  2886 DİK
-                </span>
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 truncate">
-                  2886 Satış & Kira
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  Encümen & Gelir
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Personel & İzin (657 / 4857) */}
-            <div
-              onClick={() =>
-                navigate({
-                  to: APP_ROUTES.PERSONEL as unknown as string,
-                  search: { tab: 'izinler' } as unknown as Record<string, unknown>
-                })
-              }
+              onClick={() => navigate({ to: APP_ROUTES.HARCAMA_MERKEZI })}
               role="button"
               tabIndex={0}
               className="group p-3 rounded-2xl bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-850 border border-blue-200/70 dark:border-blue-900/40 hover:border-blue-400 dark:hover:border-blue-600 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
             >
               <div className="flex items-center justify-between gap-1 mb-2">
                 <div className="w-7 h-7 rounded-xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <Users className="w-4 h-4" />
+                  <FileText className="w-4 h-4" />
                 </div>
                 <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                  657 / 4857
+                  KİK 22/d
                 </span>
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
-                  Personel İzinleri
+                  Piyasa Araştırması
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  Kıdem & İzin Belgesi
+                  Teklif Mektubu & Cetvel
                 </div>
               </div>
             </div>
 
-            {/* 5. Kamu İhalesi (19/21 & Hakediş) */}
+            {/* 2. Onay Belgesi & Resmî Çıktı Merkezi */}
             <div
-              onClick={() => navigate({ to: APP_ROUTES.HARCAMA_MERKEZI })}
+              onClick={() => navigate({ to: APP_ROUTES.SABLONLAR })}
+              role="button"
+              tabIndex={0}
+              className="group p-3 rounded-2xl bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-850 border border-emerald-200/70 dark:border-emerald-900/40 hover:border-emerald-400 dark:hover:border-emerald-600 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <div className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <FileSpreadsheet className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  5018 Harcama
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 truncate">
+                  Onay & Harcama Belgesi
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Resmî Evrak & Çıktı
+                </div>
+              </div>
+            </div>
+
+            {/* 3. KİK Eşik Limit & Damga Vergisi Motoru */}
+            <div
+              onClick={() => navigate({ to: APP_ROUTES.HESAPLAMA_ARACLARI })}
+              role="button"
+              tabIndex={0}
+              className="group p-3 rounded-2xl bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-850 border border-indigo-200/70 dark:border-indigo-900/40 hover:border-indigo-400 dark:hover:border-indigo-600 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <div className="w-7 h-7 rounded-xl bg-indigo-100 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Calculator className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                  %10 Limit
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate">
+                  Eşik Limit & Damga
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Parasal Sınır Denetimi
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Muayene & Kabul Heyeti */}
+            <div
+              onClick={() => navigate({ to: APP_ROUTES.KOMISYONLAR })}
+              role="button"
+              tabIndex={0}
+              className="group p-3 rounded-2xl bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-850 border border-purple-200/70 dark:border-purple-900/40 hover:border-purple-400 dark:hover:border-purple-600 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+            >
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <div className="w-7 h-7 rounded-xl bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                  <Users className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                  Kabul Heyeti
+                </span>
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 truncate">
+                  Muayene & Kabul Heyeti
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                  Kabul Tutanakları
+                </div>
+              </div>
+            </div>
+
+            {/* 5. İstekli & Tedarikçi Havuzu */}
+            <div
+              onClick={() => navigate({ to: APP_ROUTES.FIRMALAR })}
               role="button"
               tabIndex={0}
               className="group p-3 rounded-2xl bg-white/80 dark:bg-slate-900/70 hover:bg-white dark:hover:bg-slate-850 border border-amber-200/70 dark:border-amber-900/40 hover:border-amber-400 dark:hover:border-amber-600 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
             >
               <div className="flex items-center justify-between gap-1 mb-2">
                 <div className="w-7 h-7 rounded-xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                  <Gavel className="w-4 h-4" />
+                  <Building2 className="w-4 h-4" />
                 </div>
                 <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                  {ihaleDosyaSayisi} Dosya
+                  Firmalar
                 </span>
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 truncate">
-                  İhale & Hakediş
+                  Tedarikçi Havuzu
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  KİK 19/21 Komisyon
+                  Teklif Geçmişi & Vergi No
                 </div>
               </div>
             </div>
@@ -651,10 +521,10 @@ export const DashboardHeroV3: React.FC<DashboardHeroV3Props> = ({
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-800 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 truncate">
-                  Süreç & Belge Takip
+                  Süreç & Dosya Takip
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                  Aşamalar & İmzalar
+                  Aşamalar & Onay Akışı
                 </div>
               </div>
             </div>
