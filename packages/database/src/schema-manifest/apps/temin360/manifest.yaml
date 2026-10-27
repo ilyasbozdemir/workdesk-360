@@ -1,4 +1,4 @@
-app: temin360-desktop
+app: 1.0.0-rc.9
 target: temin360-desktop
 target_scope: dogrudan-temin
 version: 1.0.0-rc.7
