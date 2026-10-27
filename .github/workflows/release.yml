@@ -96,15 +96,15 @@ jobs:
         run: |
           RAW_TAG=${{ github.ref_name }}
           if [[ "$RAW_TAG" == *"rc"* ]]; then
-            echo "release_name=WORKDESK 360 $RAW_TAG (Sürüm Adayı)" >> $GITHUB_OUTPUT
+            echo "release_name=TEMİN 360 $RAW_TAG (Sürüm Adayı)" >> $GITHUB_OUTPUT
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
             echo "make_latest=false" >> $GITHUB_OUTPUT
           elif [[ "$RAW_TAG" == *"beta"* || "$RAW_TAG" == *"alpha"* ]]; then
-            echo "release_name=WORKDESK 360 $RAW_TAG (Erken Erişim)" >> $GITHUB_OUTPUT
+            echo "release_name=TEMİN 360 $RAW_TAG (Erken Erişim)" >> $GITHUB_OUTPUT
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
             echo "make_latest=false" >> $GITHUB_OUTPUT
           else
-            echo "release_name=WORKDESK 360 $RAW_TAG" >> $GITHUB_OUTPUT
+            echo "release_name=TEMİN 360 $RAW_TAG" >> $GITHUB_OUTPUT
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
             echo "make_latest=true" >> $GITHUB_OUTPUT
           fi
