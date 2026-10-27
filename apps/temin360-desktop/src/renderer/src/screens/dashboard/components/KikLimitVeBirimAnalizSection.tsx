@@ -5,18 +5,14 @@ import {
   Calculator,
   CheckCircle2,
   ChevronRight,
-  ExternalLink,
   FileSpreadsheet,
-  FileText,
   Info,
-  Layers,
   Scale,
   ShieldAlert,
   ShieldCheck,
-  TrendingUp,
-  X
+  TrendingUp
 } from 'lucide-react'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { cn } from '../../../utils/cn'
 import { Modal } from '../../../components/ui/Modal'
 import type { DashboardStats, KikLimitStat, BirimHarcamaStat } from '../dashboard.hooks'
@@ -572,7 +568,7 @@ export const KikLimitVeBirimAnalizSection: React.FC<KikLimitVeBirimAnalizSection
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                   <span>
-                    <strong>%10 Ödenek Tavanı (KİK Md. 62/ı):</strong> Bütçeye konulan ödeneklerin toplamının %10'u, Kamu İhale Kurulu uygun görüşü alınmadan doğrudan temin (22/d) ve pazarlık (21/f) yoluyla aşılamaz.
+                    <strong>%10 Ödenek Tavanı (KİK Md. 62/ı):</strong> Bütçeye konulan ödeneklerin toplamının %10&apos;u, Kamu İhale Kurulu uygun görüşü alınmadan doğrudan temin (22/d) ve pazarlık (21/f) yoluyla aşılamaz.
                   </span>
                 </li>
                 <li className="flex items-start gap-2">

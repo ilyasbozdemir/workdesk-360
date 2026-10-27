@@ -287,14 +287,35 @@ export function useDashboardStats(
           ? { unvan: topFirmaRes.data[0].unvan, count: topFirmaRes.data[0].count }
           : null
 
-      // 16. En Çok Harcama Yapan Birim
+      // 16. En Çok Harcama Yapan Birim (Tüm Doğrudan Temin Verisindeki İhale / Harcama Birimlerini Alarak)
       const topBirimRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        'SELECT b.birim_adi, SUM(d.yaklasik_maliyet) as total FROM DATA_TeminDosyasi d JOIN TANIM_Birim b ON d.birim_id = b.id GROUP BY d.birim_id ORDER BY total DESC LIMIT 1'
+        `SELECT 
+           COALESCE(
+             NULLIF(TRIM(d.birim), ''),
+             NULLIF(TRIM(d.harcama_birimi), ''),
+             NULLIF(TRIM(b.birim_adi), ''),
+             NULLIF(TRIM(b.ad), ''),
+             NULLIF(TRIM(d.ihtiyac_yeri), ''),
+             'Belirtilmemiş Birim'
+           ) as birim_adi,
+           SUM(
+             CASE 
+               WHEN d.yaklasik_maliyet > 0 THEN d.yaklasik_maliyet 
+               WHEN d.net_odenen > 0 THEN d.net_odenen 
+               ELSE 0 
+             END
+           ) as total
+         FROM DATA_TeminDosyasi d
+         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
+         WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)${modeFilter}
+         GROUP BY 1
+         ORDER BY total DESC
+         LIMIT 1`
       )
       const enCokHarcamaYapanBirim =
         topBirimRes.success && topBirimRes.data?.[0]
-          ? { birim_adi: topBirimRes.data[0].birim_adi, total: topBirimRes.data[0].total || 0 }
+          ? { birim_adi: topBirimRes.data[0].birim_adi, total: Number(topBirimRes.data[0].total) || 0 }
           : null
 
       // 17. İhale Tipi Bazlı Dağılım (tek sorguda)
@@ -336,17 +357,36 @@ export function useDashboardStats(
         })
       }
 
-      // 18. Birimler Bazında Harcama Analizi
+      // 18. Birimler Bazında Harcama Analizi (Tüm Doğrudan Temin Verisindeki İhale / Harcama Birimlerini Alarak)
       const birimlerHarcamaRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT b.id, b.birim_adi, 
-                COUNT(d.id) as dosya_sayisi, 
-                COALESCE(SUM(d.yaklasik_maliyet), 0) as toplam_harcama
-         FROM TANIM_Birim b
-         LEFT JOIN DATA_TeminDosyasi d ON d.birim_id = b.id AND (d.is_deleted = 0 OR d.is_deleted IS NULL)${modeFilter}
-         GROUP BY b.id, b.birim_adi
+        `SELECT 
+           COALESCE(b.id, d.birim_id, MIN(d.id)) as id,
+           COALESCE(
+             NULLIF(TRIM(d.birim), ''),
+             NULLIF(TRIM(d.harcama_birimi), ''),
+             NULLIF(TRIM(b.birim_adi), ''),
+             NULLIF(TRIM(b.ad), ''),
+             NULLIF(TRIM(d.ihtiyac_yeri), ''),
+             'Belirtilmemiş Birim'
+           ) as birim_adi, 
+           COUNT(d.id) as dosya_sayisi, 
+           COALESCE(
+             SUM(
+               CASE 
+                 WHEN d.yaklasik_maliyet > 0 THEN d.yaklasik_maliyet 
+                 WHEN d.net_odenen > 0 THEN d.net_odenen 
+                 ELSE 0 
+               END
+             ), 
+             0
+           ) as toplam_harcama
+         FROM DATA_TeminDosyasi d
+         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
+         WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)${modeFilter}
+         GROUP BY 2
          HAVING toplam_harcama > 0 OR dosya_sayisi > 0
-         ORDER BY toplam_harcama DESC`
+         ORDER BY toplam_harcama DESC, dosya_sayisi DESC`
       )
       const rawBirimHarcama =
         birimlerHarcamaRes.success && Array.isArray(birimlerHarcamaRes.data)
