@@ -50,45 +50,116 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
     }).format(val || 0)
   }
 
+  const getTableColumns = async (tableName: string): Promise<Set<string>> => {
+    try {
+      const res = await window.electron.ipcRenderer.invoke('db:query', `PRAGMA table_info(${tableName})`)
+      if (res && res.success && Array.isArray(res.data)) {
+        return new Set(res.data.map((col: { name: string }) => String(col.name).toLowerCase()))
+      }
+    } catch {
+      // ignore
+    }
+    return new Set()
+  }
+
   const loadData = useCallback(async () => {
     if (!window?.electron?.ipcRenderer) return
     setIsLoading(true)
     try {
-      const res = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT 
+      const [firmaCols, birimCols, dosyaCols] = await Promise.all([
+        getTableColumns('DATA_TeminFirma'),
+        getTableColumns('TANIM_Birim'),
+        getTableColumns('DATA_TeminDosyasi')
+      ])
+
+      const hasFirmaDosyaId = firmaCols.has('dosya_id')
+      const hasFirmaKazananMi = firmaCols.has('kazanan_mi')
+      const hasFirmaKazandiMi = firmaCols.has('kazandi_mi')
+      const hasBirimAdi = birimCols.has('birim_adi')
+      const hasBirimAd = birimCols.has('ad')
+      const hasDosyaIsDeleted = dosyaCols.has('is_deleted')
+
+      const firmaJoinCond = hasFirmaDosyaId
+        ? '(tf.temin_dosya_id = d.id OR tf.dosya_id = d.id)'
+        : 'tf.temin_dosya_id = d.id'
+
+      const subFirmaJoinCond = hasFirmaDosyaId
+        ? '(tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id)'
+        : 'tf2.temin_dosya_id = d.id'
+
+      const winnerCond =
+        hasFirmaKazananMi && hasFirmaKazandiMi
+          ? '(tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1)'
+          : hasFirmaKazandiMi
+            ? 'tf2.kazandi_mi = 1'
+            : hasFirmaKazananMi
+              ? 'tf2.kazanan_mi = 1'
+              : '1=0'
+
+      let birimSelect = "'Genel İdare'"
+      if (hasBirimAd && hasBirimAdi) {
+        birimSelect =
+          "COALESCE(NULLIF(TRIM(b.ad), ''), NULLIF(TRIM(b.birim_adi), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      } else if (hasBirimAd) {
+        birimSelect =
+          "COALESCE(NULLIF(TRIM(b.ad), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      } else if (hasBirimAdi) {
+        birimSelect =
+          "COALESCE(NULLIF(TRIM(b.birim_adi), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      } else {
+        birimSelect = "COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      }
+
+      const whereDeleted = hasDosyaIsDeleted ? '(d.is_deleted = 0 OR d.is_deleted IS NULL)' : '1=1'
+
+      const query = `SELECT 
            d.id,
            COALESCE(NULLIF(TRIM(d.temin_no), ''), 'DT-' || d.id) as temin_no,
            COALESCE(NULLIF(TRIM(d.konu), ''), 'İsimsiz Doğrudan Temin') as konu,
-           COALESCE(
-             NULLIF(TRIM(b.ad), ''),
-             NULLIF(TRIM(b.birim_adi), ''),
-             NULLIF(TRIM(d.birim), ''),
-             NULLIF(TRIM(d.harcama_birimi), ''),
-             'Genel İdare'
-           ) as birim_adi,
+           ${birimSelect} as birim_adi,
            COALESCE(d.yaklasik_maliyet, 0) as yaklasik_maliyet,
            COALESCE(d.tur, 'mal') as tur,
            d.dosya_acilis_tarihi,
-           COUNT(tf.id) as toplam_teklif_sayisi,
-           SUM(CASE WHEN tf.teklif_verdi_mi = 1 OR COALESCE(tf.teklif_toplami, 0) > 0 THEN 1 ELSE 0 END) as gecerli_teklif_sayisi,
-           MIN(CASE WHEN COALESCE(tf.teklif_toplami, 0) > 0 THEN tf.teklif_toplami ELSE NULL END) as en_dusuk_teklif,
+           COUNT(DISTINCT tf.id) as toplam_teklif_sayisi,
+           SUM(
+             CASE 
+               WHEN tf.id IS NOT NULL AND (
+                 tf.teklif_verdi_mi = 1 
+                 OR COALESCE(tf.teklif_toplami, 0) > 0 
+                 OR EXISTS (SELECT 1 FROM DATA_TeminKalemTeklif tkt WHERE tkt.temin_firma_id = tf.id AND tkt.birim_fiyat > 0)
+               ) THEN 1 
+               ELSE 0 
+             END
+           ) as gecerli_teklif_sayisi,
+           MIN(
+             CASE 
+               WHEN COALESCE(tf.teklif_toplami, 0) > 0 THEN tf.teklif_toplami 
+               WHEN EXISTS (SELECT 1 FROM DATA_TeminKalemTeklif tkt WHERE tkt.temin_firma_id = tf.id AND tkt.birim_fiyat > 0) THEN (
+                 SELECT SUM(tkt2.birim_fiyat * COALESCE(tk2.miktar, 1))
+                 FROM DATA_TeminKalemTeklif tkt2
+                 LEFT JOIN DATA_TeminKalem tk2 ON tkt2.temin_kalem_id = tk2.id
+                 WHERE tkt2.temin_firma_id = tf.id
+               )
+               ELSE NULL 
+             END
+           ) as en_dusuk_teklif,
            COALESCE(
-             (SELECT COALESCE(tf2.unvan, tfn.unvan) FROM DATA_TeminFirma tf2 LEFT JOIN TANIM_Firma tfn ON tf2.firma_id = tfn.id WHERE (tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id) AND (tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1) LIMIT 1),
+             (SELECT COALESCE(tf2.unvan, tfn.unvan) FROM DATA_TeminFirma tf2 LEFT JOIN TANIM_Firma tfn ON tf2.firma_id = tfn.id WHERE ${subFirmaJoinCond} AND ${winnerCond} LIMIT 1),
              (SELECT tfn.unvan FROM TANIM_Firma tfn WHERE tfn.id = d.firma_id LIMIT 1)
            ) as kazanan_firma,
            COALESCE(
-             (SELECT tf2.teklif_toplami FROM DATA_TeminFirma tf2 WHERE (tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id) AND (tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1) LIMIT 1),
+             (SELECT tf2.teklif_toplami FROM DATA_TeminFirma tf2 WHERE ${subFirmaJoinCond} AND ${winnerCond} LIMIT 1),
              d.net_odenen
            ) as kazanan_tutar
          FROM DATA_TeminDosyasi d
          LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-         LEFT JOIN DATA_TeminFirma tf ON (tf.temin_dosya_id = d.id OR tf.dosya_id = d.id)
-         WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
+         LEFT JOIN DATA_TeminFirma tf ON ${firmaJoinCond}
+         WHERE ${whereDeleted}
          GROUP BY d.id
          ORDER BY d.id DESC
          LIMIT 200`
-      )
+
+      const res = await window.electron.ipcRenderer.invoke('db:query', query)
 
       if (res && res.success && Array.isArray(res.data)) {
         setData(
@@ -166,6 +237,14 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
   const handleOpenDosya = (id: number): void => {
     if (id > 0) {
       useWorkspaceStore.getState().setActiveDosyaId(id)
+      navigate({ to: APP_ROUTES.PIYASA_FIYAT_ARASTIRMASI })
+    }
+  }
+
+  const handleOpenDosyaTakip = (id: number, e?: React.MouseEvent): void => {
+    e?.stopPropagation()
+    if (id > 0) {
+      useWorkspaceStore.getState().setActiveDosyaId(id)
       navigate({ to: APP_ROUTES.TAKIP })
     }
   }
@@ -194,13 +273,21 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
       d.yaklasik_maliyet.toFixed(2),
       d.toplam_teklif_sayisi,
       d.gecerli_teklif_sayisi,
-      d.gecerli_teklif_sayisi >= 3 ? 'Yeterli (>=3)' : d.gecerli_teklif_sayisi > 0 ? 'Eksik (1-2)' : 'Teklif Bekliyor',
+      d.gecerli_teklif_sayisi >= 3
+        ? '3+ Teklif (Yeterli Havuz)'
+        : d.gecerli_teklif_sayisi > 0
+          ? '1-2 Teklif (Ek Teklif Onerilir)'
+          : 'Teklif Kaydi Yok',
       d.en_dusuk_teklif != null ? d.en_dusuk_teklif.toFixed(2) : '0.00',
       `"${(d.kazanan_firma || '-').replace(/"/g, '""')}"`,
       d.kazanan_tutar != null ? d.kazanan_tutar.toFixed(2) : '0.00'
     ])
 
-    exportCsv(`Piyasa_Fiyat_Arastirmalari_${new Date().toISOString().slice(0, 10)}.csv`, headers, rows)
+    exportCsv(
+      `Piyasa_Fiyat_Arastirmalari_${new Date().toISOString().slice(0, 10)}.csv`,
+      headers,
+      rows
+    )
   }
 
   return (
@@ -209,12 +296,17 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1">
+            <Link
+              to="/"
+              className="hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1"
+            >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Ana Sayfa</span>
             </Link>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-800 dark:text-slate-200 font-bold">Piyasa Fiyat Araştırmaları Masası</span>
+            <span className="text-slate-800 dark:text-slate-200 font-bold">
+              Piyasa Fiyat Araştırmaları Masası
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -282,33 +374,34 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
 
         <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/50 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider">≥3 Teklif (Yeterli)</span>
+            <span className="text-[11px] font-black uppercase tracking-wider">≥3 Teklif (Yeterli Havuz)</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
             {stats.yeterliTeklif}
           </div>
           <span className="text-[10px] text-emerald-600 font-semibold mt-1">
-            %{stats.totalDosya > 0 ? Math.round((stats.yeterliTeklif / stats.totalDosya) * 100) : 0} Mevzuata Tam Uyumlu
+            %{stats.totalDosya > 0 ? Math.round((stats.yeterliTeklif / stats.totalDosya) * 100) : 0}{' '}
+            Asgari Teklif Havuzu Sağlandı (≥ 3 Kayıt)
           </span>
         </div>
 
         <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/50 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-amber-700 dark:text-amber-400 mb-1">
-            <span className="text-[11px] font-black uppercase tracking-wider">1-2 Teklif (Eksik)</span>
+            <span className="text-[11px] font-black uppercase tracking-wider">1-2 Teklif (Ek Önerilir)</span>
             <AlertTriangle className="w-4 h-4 text-amber-600" />
           </div>
           <div className="text-2xl font-black text-amber-600 dark:text-amber-400">
             {stats.eksikTeklif}
           </div>
           <span className="text-[10px] text-amber-600 font-semibold mt-1">
-            Ek teklif mektubu gerekli
+            Yeterli rekabet/havuz için ek teklif önerilir
           </span>
         </div>
 
         <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Teklif Bekleniyor</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">Teklif Kaydı Yok</span>
             <Clock className="w-4 h-4 text-slate-400" />
           </div>
           <div className="text-2xl font-black text-slate-700 dark:text-slate-300">
@@ -318,12 +411,12 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
         </div>
       </div>
 
-      {/* ── 3. MEVZUAT HATIRLATMA BANDI ── */}
+      {/* ── 3. MEVZUAT BİLGİLENDİRME BANDI ── */}
       <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-blue-900 dark:text-blue-200">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
           <span>
-            <strong>KİK Madde 22/d Kuralı:</strong> İhtiyaç duyulan mal ve hizmet alımlarında piyasa fiyat araştırması yapılarak en az 3 geçerli teklif toplanması ve Harcama Yetkilisi onayına sunulması esastır.
+            <strong>KİK Madde 22/d Kuralı:</strong> İhtiyaç duyulan mal ve hizmet alımlarında piyasa fiyat araştırması yapılarak en az 3 geçerli teklif toplanması ve Harcama Yetkilisi onayına sunulması esastır. Bu masa, kayıtlı teklif mektuplarının havuz yeterliliğini takip eder.
           </span>
         </div>
         <div className="text-[11px] font-bold text-blue-700 dark:text-blue-300 shrink-0">
@@ -371,7 +464,7 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
               )}
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>≥3 Teklif ({stats.yeterliTeklif})</span>
+              <span>≥3 Teklif Havuzu ({stats.yeterliTeklif})</span>
             </button>
             <button
               type="button"
@@ -397,7 +490,7 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
               )}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>Teklif Bekleyen ({stats.teklifBekleyen})</span>
+              <span>Teklif Kaydı Yok ({stats.teklifBekleyen})</span>
             </button>
           </div>
         </div>
@@ -406,13 +499,18 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
         {isLoading ? (
           <div className="space-y-3 py-6">
             {[1, 2, 3, 4, 5].map((n) => (
-              <div key={n} className="h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+              <div
+                key={n}
+                className="h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse"
+              />
             ))}
           </div>
         ) : filteredData.length === 0 ? (
           <div className="py-16 text-center text-slate-500 dark:text-slate-400 space-y-3">
             <Coins className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
-            <div className="text-sm font-bold">Aramanıza uygun piyasa fiyat araştırması dosyası bulunamadı.</div>
+            <div className="text-sm font-bold">
+              Aramanıza uygun piyasa fiyat araştırması dosyası bulunamadı.
+            </div>
             <p className="text-xs text-slate-400">
               Arama filtrenizi temizleyebilir veya yeni bir doğrudan temin dosyası başlatabilirsiniz.
             </p>
@@ -475,19 +573,19 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
                       {isYeterli && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>{item.gecerli_teklif_sayisi} Geçerli Teklif</span>
+                          <span>{item.gecerli_teklif_sayisi} Teklif Kaydı (≥3 Havuz)</span>
                         </span>
                       )}
                       {isEksik && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                           <AlertTriangle className="w-3 h-3 text-amber-600" />
-                          <span>{item.gecerli_teklif_sayisi} Teklif (Eksik)</span>
+                          <span>{item.gecerli_teklif_sayisi} Teklif (Ek Önerilir)</span>
                         </span>
                       )}
                       {isBekliyor && (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
                           <Clock className="w-3 h-3" />
-                          <span>Teklif Bekliyor</span>
+                          <span>Teklif Kaydı Yok</span>
                         </span>
                       )}
                       {item.en_dusuk_teklif != null && item.en_dusuk_teklif > 0 && (
@@ -497,10 +595,10 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
                       )}
                     </div>
 
-                    {/* 5. Kazanan / Sonuç */}
-                    <div className="lg:col-span-2 text-left lg:text-right">
+                    {/* 5. Kazanan / Sonuç & Aksiyonlar */}
+                    <div className="lg:col-span-2 flex flex-col items-start lg:items-end gap-1">
                       {item.kazanan_firma ? (
-                        <div>
+                        <div className="text-left lg:text-right">
                           <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate block">
                             {item.kazanan_firma}
                           </span>
@@ -513,6 +611,19 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
                           Henüz sonuçlanmadı
                         </span>
                       )}
+                      <div className="flex items-center gap-1 pt-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                          Piyasa Araştırmasını Aç →
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleOpenDosyaTakip(item.id, e)}
+                          title="Dosyayı Süreç Takibi Ekranında Gör"
+                          className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-200/70 hover:bg-slate-300 dark:bg-slate-700/60 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors"
+                        >
+                          /takip
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { Modal } from '../../../components/ui/Modal'
+import { APP_ROUTES } from '../../../constants/routeConstants'
+import { useWorkspaceStore } from '../../../store/workspaceStore'
 import { cn } from '../../../utils/cn'
 
 export interface FiyatArastirmasiItem {
@@ -55,45 +57,116 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
     }).format(val || 0)
   }
 
+  const getTableColumns = async (tableName: string): Promise<Set<string>> => {
+    try {
+      const res = await window.electron.ipcRenderer.invoke('db:query', `PRAGMA table_info(${tableName})`)
+      if (res && res.success && Array.isArray(res.data)) {
+        return new Set(res.data.map((col: { name: string }) => String(col.name).toLowerCase()))
+      }
+    } catch {
+      // ignore
+    }
+    return new Set()
+  }
+
   const loadData = React.useCallback(async () => {
     if (!window?.electron?.ipcRenderer) return
     setIsLoading(true)
     try {
-      const res = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT 
+      const [firmaCols, birimCols, dosyaCols] = await Promise.all([
+        getTableColumns('DATA_TeminFirma'),
+        getTableColumns('TANIM_Birim'),
+        getTableColumns('DATA_TeminDosyasi')
+      ])
+
+      const hasFirmaDosyaId = firmaCols.has('dosya_id')
+      const hasFirmaKazananMi = firmaCols.has('kazanan_mi')
+      const hasFirmaKazandiMi = firmaCols.has('kazandi_mi')
+      const hasBirimAdi = birimCols.has('birim_adi')
+      const hasBirimAd = birimCols.has('ad')
+      const hasDosyaIsDeleted = dosyaCols.has('is_deleted')
+
+      const firmaJoinCond = hasFirmaDosyaId
+        ? '(tf.temin_dosya_id = d.id OR tf.dosya_id = d.id)'
+        : 'tf.temin_dosya_id = d.id'
+
+      const subFirmaJoinCond = hasFirmaDosyaId
+        ? '(tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id)'
+        : 'tf2.temin_dosya_id = d.id'
+
+      const winnerCond =
+        hasFirmaKazananMi && hasFirmaKazandiMi
+          ? '(tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1)'
+          : hasFirmaKazandiMi
+            ? 'tf2.kazandi_mi = 1'
+            : hasFirmaKazananMi
+              ? 'tf2.kazanan_mi = 1'
+              : '1=0'
+
+      let birimSelect = "'Genel İdare'"
+      if (hasBirimAd && hasBirimAdi) {
+        birimSelect =
+          "COALESCE(NULLIF(TRIM(b.ad), ''), NULLIF(TRIM(b.birim_adi), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      } else if (hasBirimAd) {
+        birimSelect =
+          "COALESCE(NULLIF(TRIM(b.ad), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      } else if (hasBirimAdi) {
+        birimSelect =
+          "COALESCE(NULLIF(TRIM(b.birim_adi), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      } else {
+        birimSelect = "COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Genel İdare')"
+      }
+
+      const whereDeleted = hasDosyaIsDeleted ? '(d.is_deleted = 0 OR d.is_deleted IS NULL)' : '1=1'
+
+      const query = `SELECT 
            d.id,
            COALESCE(NULLIF(TRIM(d.temin_no), ''), 'DT-' || d.id) as temin_no,
            COALESCE(NULLIF(TRIM(d.konu), ''), 'İsimsiz Doğrudan Temin') as konu,
-           COALESCE(
-             NULLIF(TRIM(d.birim), ''),
-             NULLIF(TRIM(d.harcama_birimi), ''),
-             NULLIF(TRIM(b.birim_adi), ''),
-             NULLIF(TRIM(b.ad), ''),
-             'Genel Birim'
-           ) as birim_adi,
+           ${birimSelect} as birim_adi,
            COALESCE(d.yaklasik_maliyet, 0) as yaklasik_maliyet,
            COALESCE(d.tur, 'mal') as tur,
            d.dosya_acilis_tarihi,
-           COUNT(tf.id) as toplam_teklif_sayisi,
-           SUM(CASE WHEN tf.teklif_verdi_mi = 1 OR COALESCE(tf.teklif_toplami, 0) > 0 THEN 1 ELSE 0 END) as gecerli_teklif_sayisi,
-           MIN(CASE WHEN COALESCE(tf.teklif_toplami, 0) > 0 THEN tf.teklif_toplami ELSE NULL END) as en_dusuk_teklif,
+           COUNT(DISTINCT tf.id) as toplam_teklif_sayisi,
+           SUM(
+             CASE 
+               WHEN tf.id IS NOT NULL AND (
+                 tf.teklif_verdi_mi = 1 
+                 OR COALESCE(tf.teklif_toplami, 0) > 0 
+                 OR EXISTS (SELECT 1 FROM DATA_TeminKalemTeklif tkt WHERE tkt.temin_firma_id = tf.id AND tkt.birim_fiyat > 0)
+               ) THEN 1 
+               ELSE 0 
+             END
+           ) as gecerli_teklif_sayisi,
+           MIN(
+             CASE 
+               WHEN COALESCE(tf.teklif_toplami, 0) > 0 THEN tf.teklif_toplami 
+               WHEN EXISTS (SELECT 1 FROM DATA_TeminKalemTeklif tkt WHERE tkt.temin_firma_id = tf.id AND tkt.birim_fiyat > 0) THEN (
+                 SELECT SUM(tkt2.birim_fiyat * COALESCE(tk2.miktar, 1))
+                 FROM DATA_TeminKalemTeklif tkt2
+                 LEFT JOIN DATA_TeminKalem tk2 ON tkt2.temin_kalem_id = tk2.id
+                 WHERE tkt2.temin_firma_id = tf.id
+               )
+               ELSE NULL 
+             END
+           ) as en_dusuk_teklif,
            COALESCE(
-             (SELECT COALESCE(tf2.unvan, tfn.unvan) FROM DATA_TeminFirma tf2 LEFT JOIN TANIM_Firma tfn ON tf2.firma_id = tfn.id WHERE (tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id) AND (tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1) LIMIT 1),
+             (SELECT COALESCE(tf2.unvan, tfn.unvan) FROM DATA_TeminFirma tf2 LEFT JOIN TANIM_Firma tfn ON tf2.firma_id = tfn.id WHERE ${subFirmaJoinCond} AND ${winnerCond} LIMIT 1),
              (SELECT tfn.unvan FROM TANIM_Firma tfn WHERE tfn.id = d.firma_id LIMIT 1)
            ) as kazanan_firma,
            COALESCE(
-             (SELECT tf2.teklif_toplami FROM DATA_TeminFirma tf2 WHERE (tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id) AND (tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1) LIMIT 1),
+             (SELECT tf2.teklif_toplami FROM DATA_TeminFirma tf2 WHERE ${subFirmaJoinCond} AND ${winnerCond} LIMIT 1),
              d.net_odenen
            ) as kazanan_tutar
          FROM DATA_TeminDosyasi d
          LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-         LEFT JOIN DATA_TeminFirma tf ON (tf.temin_dosya_id = d.id OR tf.dosya_id = d.id)
-         WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
+         LEFT JOIN DATA_TeminFirma tf ON ${firmaJoinCond}
+         WHERE ${whereDeleted}
          GROUP BY d.id
          ORDER BY d.id DESC
          LIMIT 150`
-      )
+
+      const res = await window.electron.ipcRenderer.invoke('db:query', query)
 
       if (res && res.success && Array.isArray(res.data)) {
         setData(
@@ -101,7 +174,7 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
             id: Number(row.id),
             temin_no: String(row.temin_no || ''),
             konu: String(row.konu || ''),
-            birim_adi: String(row.birim_adi || 'Genel Birim'),
+            birim_adi: String(row.birim_adi || 'Genel İdare'),
             yaklasik_maliyet: Number(row.yaklasik_maliyet) || 0,
             tur: String(row.tur || 'mal'),
             dosya_acilis_tarihi: row.dosya_acilis_tarihi as string | undefined,
@@ -169,9 +242,9 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
   const handleOpenDosya = (id: number): void => {
     onClose()
     if (id > 0) {
-      sessionStorage.setItem('selected_dosya_id', String(id))
+      useWorkspaceStore.getState().setActiveDosyaId(id)
+      navigate({ to: APP_ROUTES.PIYASA_FIYAT_ARASTIRMASI })
     }
-    navigate({ to: '/dosyalar' })
   }
 
   return (
@@ -232,7 +305,7 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
 
           <div className="p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 flex flex-col justify-between">
             <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-300">
-              <span className="text-[11px] font-bold uppercase tracking-wider">≥3 Teklif (Yeterli)</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">≥3 Teklif (Yeterli Havuz)</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
             <div className="mt-2 flex items-baseline justify-between">
@@ -240,34 +313,34 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
                 {stats.yeterliTeklif}
               </span>
               <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                %{stats.totalDosya > 0 ? Math.round((stats.yeterliTeklif / stats.totalDosya) * 100) : 0}
+                %{stats.totalDosya > 0 ? Math.round((stats.yeterliTeklif / stats.totalDosya) * 100) : 0} Asgari Havuz
               </span>
             </div>
           </div>
 
           <div className="p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 flex flex-col justify-between">
             <div className="flex items-center justify-between text-amber-700 dark:text-amber-300">
-              <span className="text-[11px] font-bold uppercase tracking-wider">1-2 Teklif (Eksik)</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">1-2 Teklif (Ek Önerilir)</span>
               <AlertTriangle className="w-4 h-4 text-amber-600" />
             </div>
             <div className="mt-2 flex items-baseline justify-between">
               <span className="text-2xl font-black text-amber-600 dark:text-amber-400">
                 {stats.eksikTeklif}
               </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">Teklif İkmalı</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">Ek Teklif Önerilir</span>
             </div>
           </div>
 
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
             <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-              <span className="text-[11px] font-bold uppercase tracking-wider">Teklif Bekleniyor</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">Teklif Kaydı Yok</span>
               <Clock className="w-4 h-4 text-slate-500" />
             </div>
             <div className="mt-2 flex items-baseline justify-between">
               <span className="text-2xl font-black text-slate-800 dark:text-slate-200">
                 {stats.teklifBekleyen}
               </span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">Başlangıç</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400">Piyasa Aşamasında</span>
             </div>
           </div>
         </div>
@@ -308,7 +381,7 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
                   : 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 border border-slate-200 dark:border-slate-700 hover:border-emerald-300'
               )}
             >
-              ≥3 Teklif ({stats.yeterliTeklif})
+              ≥3 Teklif Havuzu ({stats.yeterliTeklif})
             </button>
             <button
               type="button"
@@ -332,7 +405,7 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
                   : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-slate-400'
               )}
             >
-              Teklifsiz ({stats.teklifBekleyen})
+              Teklif Kaydı Yok ({stats.teklifBekleyen})
             </button>
 
             <button
@@ -386,17 +459,17 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
                       {isYeterli ? (
                         <span className="text-[10px] font-black text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                          {item.gecerli_teklif_sayisi} Teklif (Yeterli)
+                          {item.gecerli_teklif_sayisi} Teklif (≥3 Havuz)
                         </span>
                       ) : isEksik ? (
                         <span className="text-[10px] font-black text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3 text-amber-500" />
-                          {item.gecerli_teklif_sayisi}/3 Teklif (Eksik)
+                          {item.gecerli_teklif_sayisi} Teklif (Ek Önerilir)
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Teklif Bekleniyor
+                          Teklif Kaydı Yok
                         </span>
                       )}
                     </div>
