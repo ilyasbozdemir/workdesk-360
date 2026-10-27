@@ -77,15 +77,15 @@ export function getHeaderMenus(opts: HeaderNavigationOptions): HeaderMenu[] {
         },
         { divider: true },
         {
-          label: 'Farklı Çalışma Dosyası Aç (*.temin)...',
+          label: 'Farklı Çalışma Dosyası Aç (*.ihale)...',
           onClick: async (): Promise<void> => {
             try {
               const res = await window.electron?.ipcRenderer.invoke('dialog:showOpenDialog')
               if (!res?.canceled && res?.filePath) {
                 const filePath = res.filePath as string
                 const ext = (filePath.split('.').pop() || '').toLowerCase()
-                if (ext !== 'temin') {
-                  alert('Yalnızca .temin uzantılı Temin 360 proje dosyaları desteklenmektedir.')
+                if (ext !== 'ihale' && ext !== 'ihale360' && ext !== 'temin') {
+                  alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
                 } else {
                   let result = await useWorkspaceStore.getState().openWorkspace(filePath, false)
                   if (result.requiresMigration) {

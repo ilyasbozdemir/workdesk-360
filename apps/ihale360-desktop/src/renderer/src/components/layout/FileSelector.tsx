@@ -64,8 +64,9 @@ export function FileSelector(): React.JSX.Element {
     try {
       const res = await window.electron?.ipcRenderer.invoke('dialog:showOpenDialog')
       if (!res.canceled && res.filePath) {
-        if (!res.filePath.toLowerCase().endsWith('.temin')) {
-          alert('Yalnızca .temin uzantılı Temin 360 proje dosyaları desteklenmektedir.')
+        const p = res.filePath.toLowerCase()
+        if (!p.endsWith('.ihale') && !p.endsWith('.ihale360') && !p.endsWith('.temin')) {
+          alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
           return
         }
 
@@ -137,8 +138,9 @@ export function FileSelector(): React.JSX.Element {
                     setSelectedFile(file as any)
                     setIsOpen(false)
                     setSearchQuery('')
-                    if (!file.path.toLowerCase().endsWith('.temin')) {
-                      alert('Yalnızca .temin uzantılı Temin 360 proje dosyaları desteklenmektedir.')
+                    const p = file.path.toLowerCase()
+                    if (!p.endsWith('.ihale') && !p.endsWith('.ihale360') && !p.endsWith('.temin')) {
+                      alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
                       return
                     }
                     let r = await openWorkspace(file.path, false)

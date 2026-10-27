@@ -139,8 +139,9 @@ export function useWorkspaceLifecycle(
           return
         }
 
-        if (!filePath.toLowerCase().endsWith('.temin')) {
-          alert('Yalnızca .temin uzantılı Temin 360 proje dosyaları desteklenmektedir.')
+        const p = filePath.toLowerCase()
+        if (!p.endsWith('.ihale') && !p.endsWith('.ihale360') && !p.endsWith('.temin')) {
+          alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
           return
         }
 
