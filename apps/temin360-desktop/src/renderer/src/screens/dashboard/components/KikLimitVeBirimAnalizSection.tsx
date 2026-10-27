@@ -143,18 +143,15 @@ export const KikLimitVeBirimAnalizSection: React.FC<KikLimitVeBirimAnalizSection
   const toplamBirimDosyaSayisi = birimler.reduce((acc, b) => acc + (b.dosya_sayisi || 0), 0)
 
   // Dosyalar & Yaklaşık Maliyet Ayrımı (Doğrudan Temin vs. İhale Edilen Alımlar)
-  const dtSayisi =
-    stats.dogrudanTeminSayisi ||
-    Math.max(0, stats.ihaleDosyaSayisi - (stats.acikIhaleSayisi || 0) - (stats.pazarlikSayisi || 0))
-  const dtMaliyet =
-    stats.dogrudanTeminMaliyet ||
-    Math.max(0, stats.toplamYaklasikMaliyet - (stats.acikIhaleMaliyet || 0) - (stats.pazarlikMaliyet || 0))
+  // Nullish coalescing (??) kullanılarak gerçek 0 değerleri korunur, yapay çıkarma fallback'i uygulanmaz.
+  const dtSayisi = stats.dogrudanTeminSayisi ?? 0
+  const dtMaliyet = stats.dogrudanTeminMaliyet ?? 0
 
-  const ihaleSayisi = (stats.acikIhaleSayisi || 0) + (stats.pazarlikSayisi || 0)
-  const ihaleMaliyet = (stats.acikIhaleMaliyet || 0) + (stats.pazarlikMaliyet || 0)
+  const ihaleSayisi = (stats.acikIhaleSayisi ?? 0) + (stats.pazarlikSayisi ?? 0)
+  const ihaleMaliyet = (stats.acikIhaleMaliyet ?? 0) + (stats.pazarlikMaliyet ?? 0)
 
-  const genelDosyaSayisi = stats.ihaleDosyaSayisi || dtSayisi + ihaleSayisi
-  const genelMaliyet = stats.toplamYaklasikMaliyet || dtMaliyet + ihaleMaliyet
+  const genelDosyaSayisi = stats.ihaleDosyaSayisi ?? (dtSayisi + ihaleSayisi)
+  const genelMaliyet = stats.toplamYaklasikMaliyet ?? (dtMaliyet + ihaleMaliyet)
 
   return (
     <div className="space-y-6">
@@ -559,6 +556,12 @@ export const KikLimitVeBirimAnalizSection: React.FC<KikLimitVeBirimAnalizSection
                 <span className="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">
                   Kurum Bütçesinin %{activeSelectedBirim.yuzde}&apos;si
                 </span>
+                {(activeSelectedBirim.yaklasik_maliyet !== undefined || activeSelectedBirim.net_odenen !== undefined) && (
+                  <div className="flex flex-col sm:items-end gap-0.5 mt-1 text-[10px] text-slate-500 font-mono">
+                    <span>Yaklaşık Mal.: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(activeSelectedBirim.yaklasik_maliyet || 0)}</strong></span>
+                    <span>Net Ödenen: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(activeSelectedBirim.net_odenen || 0)}</strong></span>
+                  </div>
+                )}
               </div>
             </div>
           ) : null}

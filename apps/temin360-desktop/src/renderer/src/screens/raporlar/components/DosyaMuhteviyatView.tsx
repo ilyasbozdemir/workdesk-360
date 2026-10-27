@@ -43,6 +43,7 @@ interface DosyaMuhteviyatItem {
   is_adi: string
   konu?: string
   birim?: string
+  birim_id?: number
   alim_turu: string
   butce_yili?: string
   durum: string
@@ -67,19 +68,20 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
     setLoading(true)
 
     try {
-      // 1. Dosyaları çek
+      // 1. Dosyaları çek (Şemaya tam uyumlu alanlar)
       const resDosyalar = await window.electron.ipcRenderer.invoke(
         'db:query',
         `SELECT 
           d.id,
-          COALESCE(d.dosya_no, d.temin_no, '#' || d.id) as dosya_no,
+          COALESCE(NULLIF(d.temin_no, ''), '#' || d.id) as dosya_no,
           d.temin_no,
-          COALESCE(d.is_adi, d.dosya_adi, d.konu, 'İsimsiz Temin') as is_adi,
+          COALESCE(NULLIF(d.konu, ''), 'İsimsiz Temin') as is_adi,
           d.konu,
-          COALESCE(b.ad, b.birim_adi, d.birim, d.harcama_birimi, 'Genel İdare') as birim,
-          COALESCE(d.alim_turu, d.tur, 'mal') as alim_turu,
-          COALESCE(d.butce_yili, strftime('%Y', COALESCE(d.dosya_acilis_tarihi, d.created_at, 'now'))) as butce_yili,
-          COALESCE(d.durum, 'Tamamlandı') as durum,
+          COALESCE(b.birim_adi, b.ad, d.birim, d.harcama_birimi, 'Genel İdare') as birim,
+          d.birim_id,
+          COALESCE(NULLIF(d.tur, ''), 'mal') as alim_turu,
+          COALESCE(d.butce_yili, CAST(strftime('%Y', COALESCE(d.dosya_acilis_tarihi, d.created_at, 'now')) AS INTEGER)) as butce_yili,
+          COALESCE(d.status, 'devam_ediyor') as durum,
           COALESCE(d.yaklasik_maliyet, 0) as yaklasik_maliyet,
           COALESCE(d.net_odenen, 0) as net_odenen,
           d.firma_id
@@ -94,22 +96,28 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
         return
       }
 
-      // 2. Kalemleri çek
+      // 2. Kalemleri çek (Şemaya tam uyumlu alanlar)
       const resKalemler = await window.electron.ipcRenderer.invoke(
         'db:query',
         `SELECT 
           k.id,
           COALESCE(k.temin_dosya_id, k.dosya_id) as dosya_id,
-          COALESCE(k.kalem_adi, k.malzeme_adi, 'Kalem') as kalem_adi,
+          COALESCE(k.kalem_adi, 'Kalem') as kalem_adi,
           COALESCE(k.miktar, 1) as miktar,
           COALESCE(k.birim, 'Adet') as birim,
-          COALESCE(k.birim_fiyat, k.yaklasik_maliyet, 0) as yaklasik_birim_fiyat,
-          COALESCE(k.toplam_tutar, (k.miktar * k.birim_fiyat), 0) as toplam_tutar
+          COALESCE(
+            (
+              SELECT AVG(t.birim_fiyat) 
+              FROM DATA_TeminKalemTeklif t 
+              WHERE t.temin_kalem_id = k.id AND t.birim_fiyat > 0
+            ), 
+            0
+          ) as yaklasik_birim_fiyat
         FROM DATA_TeminKalem k
         ORDER BY k.id ASC`
       )
 
-      // 3. Firmaları çek
+      // 3. Firmaları çek (Şemaya tam uyumlu alanlar)
       const resFirmalar = await window.electron.ipcRenderer.invoke(
         'db:query',
         `SELECT 
@@ -130,13 +138,15 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
         for (const k of resKalemler.data) {
           const did = Number(k.dosya_id)
           if (!kalemlerMap[did]) kalemlerMap[did] = []
+          const miktar = Number(k.miktar || 1)
+          const fiy = Number(k.yaklasik_birim_fiyat || 0)
           kalemlerMap[did].push({
             id: k.id,
             kalem_adi: k.kalem_adi,
-            miktar: Number(k.miktar || 1),
+            miktar: miktar,
             birim: k.birim,
-            yaklasik_birim_fiyat: Number(k.yaklasik_birim_fiyat || 0),
-            toplam_tutar: Number(k.toplam_tutar || 0)
+            yaklasik_birim_fiyat: fiy,
+            toplam_tutar: miktar * fiy
           })
         }
       }
@@ -177,6 +187,7 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
           is_adi: r.is_adi,
           konu: r.konu,
           birim: r.birim,
+          birim_id: r.birim_id,
           alim_turu: r.alim_turu,
           butce_yili: r.butce_yili ? String(r.butce_yili) : '2026',
           durum: r.durum,
@@ -187,7 +198,7 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
         }
       })
 
-      // Filtrele
+      // Filtrele: Birim ID öncelikli, kesin metin eşleşmesi ikinci
       const filtered = mapped.filter((d) => {
         if (filters.seciliYil) {
           const dYil = String(d.butce_yili || '').trim()
@@ -195,10 +206,13 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
           if (dYil && sYil && dYil !== sYil) return false
         }
         if (filters.seciliBirim && filters.seciliBirim !== 'tumu') {
-          const dBirim = (d.birim || '').toLowerCase().trim()
-          const sBirim = filters.seciliBirim.toLowerCase().trim()
-          if (dBirim !== sBirim && !dBirim.includes(sBirim) && !sBirim.includes(dBirim)) {
-            return false
+          const sBirim = filters.seciliBirim.trim().toLowerCase()
+          const isNumericId = !isNaN(Number(filters.seciliBirim))
+          if (isNumericId) {
+            if (d.birim_id !== Number(filters.seciliBirim)) return false
+          } else {
+            const dBirim = (d.birim || '').trim().toLowerCase()
+            if (dBirim !== sBirim) return false
           }
         }
         if (filters.alimTuru && filters.alimTuru !== 'tumu') {

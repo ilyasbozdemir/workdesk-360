@@ -11,6 +11,8 @@ export interface BirimHarcamaStat {
   birim_adi: string
   dosya_sayisi: number
   toplam_harcama: number
+  yaklasik_maliyet?: number
+  net_odenen?: number
   yuzde: number
 }
 
@@ -318,13 +320,21 @@ export function useDashboardStats(
           ? { birim_adi: topBirimRes.data[0].birim_adi, total: Number(topBirimRes.data[0].total) || 0 }
           : null
 
-      // 17. İhale Tipi Bazlı Dağılım (tek sorguda)
+      // 17. İhale Tipi Bazlı Dağılım (modeFilter dahil, doğrudan kategorize edilmiş)
       const ihaleTipiRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT ihale_tipi, COUNT(*) as sayi, COALESCE(SUM(yaklasik_maliyet),0) as maliyet
+        `SELECT 
+           CASE 
+             WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%pazarlık%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%pazarlik%' THEN 'pazarlik'
+             WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%açık%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%acik%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%ihale%' THEN 'acik_ihale'
+             WHEN LOWER(COALESCE(ihale_tipi, '')) LIKE '%hakediş%' OR LOWER(COALESCE(ihale_tipi, '')) LIKE '%hakedis%' THEN 'hakedis'
+             ELSE 'dogrudan_temin'
+           END as tip,
+           COUNT(*) as sayi,
+           COALESCE(SUM(yaklasik_maliyet), 0) as maliyet
          FROM DATA_TeminDosyasi
-         WHERE (is_deleted = 0 OR is_deleted IS NULL)
-         GROUP BY ihale_tipi`
+         WHERE (is_deleted = 0 OR is_deleted IS NULL)${modeFilter}
+         GROUP BY 1`
       )
       let dogrudanTeminSayisi = 0,
         dogrudanTeminMaliyet = 0
@@ -334,25 +344,20 @@ export function useDashboardStats(
         pazarlikMaliyet = 0
       let hakediseSayisi = 0,
         hakediseMaliyet = 0
-      if (ihaleTipiRes.success && ihaleTipiRes.data) {
+      if (ihaleTipiRes.success && Array.isArray(ihaleTipiRes.data)) {
         ihaleTipiRes.data.forEach((row: any) => {
-          const tip = (row.ihale_tipi || '').toLowerCase()
-          if (tip.includes('doğrudan') || tip.includes('dogrudan') || tip === '') {
-            dogrudanTeminSayisi += row.sayi || 0
-            dogrudanTeminMaliyet += row.maliyet || 0
-          } else if (tip.includes('açık') || tip.includes('acik') || tip.includes('ihale')) {
-            acikIhaleSayisi += row.sayi || 0
-            acikIhaleMaliyet += row.maliyet || 0
-          } else if (tip.includes('pazarlık') || tip.includes('pazarlik')) {
-            pazarlikSayisi += row.sayi || 0
-            pazarlikMaliyet += row.maliyet || 0
-          } else if (tip.includes('hakediş') || tip.includes('hakedis')) {
-            hakediseSayisi += row.sayi || 0
-            hakediseMaliyet += row.maliyet || 0
+          if (row.tip === 'pazarlik') {
+            pazarlikSayisi = Number(row.sayi || 0)
+            pazarlikMaliyet = Number(row.maliyet || 0)
+          } else if (row.tip === 'acik_ihale') {
+            acikIhaleSayisi = Number(row.sayi || 0)
+            acikIhaleMaliyet = Number(row.maliyet || 0)
+          } else if (row.tip === 'hakedis') {
+            hakediseSayisi = Number(row.sayi || 0)
+            hakediseMaliyet = Number(row.maliyet || 0)
           } else {
-            // bilinmeyen tipler → doğrudan temine ekle
-            dogrudanTeminSayisi += row.sayi || 0
-            dogrudanTeminMaliyet += row.maliyet || 0
+            dogrudanTeminSayisi += Number(row.sayi || 0)
+            dogrudanTeminMaliyet += Number(row.maliyet || 0)
           }
         })
       }
@@ -363,19 +368,21 @@ export function useDashboardStats(
         `SELECT 
            COALESCE(b.id, d.birim_id, MIN(d.id)) as id,
            COALESCE(
-             NULLIF(TRIM(d.birim), ''),
-             NULLIF(TRIM(d.harcama_birimi), ''),
              NULLIF(TRIM(b.birim_adi), ''),
              NULLIF(TRIM(b.ad), ''),
+             NULLIF(TRIM(d.birim), ''),
+             NULLIF(TRIM(d.harcama_birimi), ''),
              NULLIF(TRIM(d.ihtiyac_yeri), ''),
              'Belirtilmemiş Birim'
            ) as birim_adi, 
-           COUNT(d.id) as dosya_sayisi, 
+           COUNT(d.id) as dosya_sayisi,
+           COALESCE(SUM(d.yaklasik_maliyet), 0) as yaklasik_maliyet,
+           COALESCE(SUM(d.net_odenen), 0) as net_odenen,
            COALESCE(
              SUM(
                CASE 
-                 WHEN d.yaklasik_maliyet > 0 THEN d.yaklasik_maliyet 
                  WHEN d.net_odenen > 0 THEN d.net_odenen 
+                 WHEN d.yaklasik_maliyet > 0 THEN d.yaklasik_maliyet 
                  ELSE 0 
                END
              ), 
@@ -401,6 +408,8 @@ export function useDashboardStats(
         birim_adi: b.birim_adi || 'Birim Belirtilmemiş',
         dosya_sayisi: Number(b.dosya_sayisi) || 0,
         toplam_harcama: Number(b.toplam_harcama) || 0,
+        yaklasik_maliyet: Number(b.yaklasik_maliyet) || 0,
+        net_odenen: Number(b.net_odenen) || 0,
         yuzde:
           totalBirimHarcama > 0
             ? Math.round(((Number(b.toplam_harcama) || 0) / totalBirimHarcama) * 100)

@@ -38,6 +38,7 @@ interface DosyaOlayOrgusuItem {
   is_adi: string
   konu?: string
   birim?: string
+  birim_id?: number
   alim_turu: string
   butce_yili?: string
   dosya_acilis_tarihi?: string
@@ -77,19 +78,20 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
         'db:query',
         `SELECT 
           d.id,
-          COALESCE(d.dosya_no, d.temin_no, '#' || d.id) as dosya_no,
+          COALESCE(NULLIF(d.temin_no, ''), '#' || d.id) as dosya_no,
           d.temin_no,
-          COALESCE(d.is_adi, d.dosya_adi, d.konu, 'İsimsiz Temin') as is_adi,
+          COALESCE(NULLIF(d.konu, ''), 'İsimsiz Temin') as is_adi,
           d.konu,
-          COALESCE(b.ad, b.birim_adi, d.birim, d.harcama_birimi, 'Genel İdare') as birim,
-          COALESCE(d.alim_turu, d.tur, 'mal') as alim_turu,
-          COALESCE(d.butce_yili, strftime('%Y', COALESCE(d.dosya_acilis_tarihi, d.created_at, 'now'))) as butce_yili,
+          COALESCE(b.birim_adi, b.ad, d.birim, d.harcama_birimi, 'Genel İdare') as birim,
+          d.birim_id,
+          COALESCE(NULLIF(d.tur, ''), 'mal') as alim_turu,
+          COALESCE(d.butce_yili, CAST(strftime('%Y', COALESCE(d.dosya_acilis_tarihi, d.created_at, 'now')) AS INTEGER)) as butce_yili,
           d.dosya_acilis_tarihi,
           d.temin_tarihi,
           d.teslim_tarihi,
           d.created_at,
           d.updated_at,
-          COALESCE(d.durum, 'Tamamlandı') as durum,
+          COALESCE(d.status, 'devam_ediyor') as durum,
           d.status,
           COALESCE(d.yaklasik_maliyet, 0) as yaklasik_maliyet,
           COALESCE(d.net_odenen, 0) as net_odenen,
@@ -108,7 +110,7 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
               SELECT COALESCE(tf.unvan, f.unvan)
               FROM DATA_TeminFirma f
               LEFT JOIN TANIM_Firma tf ON tf.id = f.firma_id
-              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1 OR f.kazandi_mi = 1 OR f.kazanan_mi = 1)
+              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.kazandi_mi = 1 OR f.kazanan_mi = 1)
               LIMIT 1
             ),
             (
@@ -120,7 +122,7 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
               SELECT COALESCE(tf.vergi_no, f.vergi_no)
               FROM DATA_TeminFirma f
               LEFT JOIN TANIM_Firma tf ON tf.id = f.firma_id
-              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1 OR f.kazandi_mi = 1 OR f.kazanan_mi = 1)
+              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.kazandi_mi = 1 OR f.kazanan_mi = 1)
               LIMIT 1
             ),
             (
@@ -248,6 +250,7 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
             is_adi: r.is_adi,
             konu: r.konu,
             birim: r.birim,
+            birim_id: r.birim_id,
             alim_turu: r.alim_turu,
             butce_yili: r.butce_yili ? String(r.butce_yili) : '2026',
             dosya_acilis_tarihi: acilisTarihi,
@@ -276,10 +279,13 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
             if (dYil && sYil && dYil !== sYil) return false
           }
           if (filters.seciliBirim && filters.seciliBirim !== 'tumu') {
-            const dBirim = (d.birim || '').toLowerCase().trim()
-            const sBirim = filters.seciliBirim.toLowerCase().trim()
-            if (dBirim !== sBirim && !dBirim.includes(sBirim) && !sBirim.includes(dBirim)) {
-              return false
+            const sBirim = filters.seciliBirim.trim().toLowerCase()
+            const isNumericId = !isNaN(Number(filters.seciliBirim))
+            if (isNumericId) {
+              if (d.birim_id !== Number(filters.seciliBirim)) return false
+            } else {
+              const dBirim = (d.birim || '').trim().toLowerCase()
+              if (dBirim !== sBirim) return false
             }
           }
           if (filters.alimTuru && filters.alimTuru !== 'tumu') {

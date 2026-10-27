@@ -65,6 +65,10 @@ export function FileSelector(): React.JSX.Element {
       const res = await window.electron?.ipcRenderer.invoke('dialog:showOpenDialog')
       if (!res.canceled && res.filePath) {
         const p = res.filePath.toLowerCase()
+        if (p.endsWith('.temin') || p.endsWith('.hkmp') || p.endsWith('.tmn360')) {
+          alert('Seçtiğiniz dosya TEMİN 360 doğrudan temin formatındadır (.temin).\nLütfen bu dosyayı Temin 360 uygulaması ile açınız.')
+          return
+        }
         if (!p.endsWith('.ihale') && !p.endsWith('.ihale360')) {
           alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
           return
@@ -139,6 +143,10 @@ export function FileSelector(): React.JSX.Element {
                     setIsOpen(false)
                     setSearchQuery('')
                     const p = file.path.toLowerCase()
+                    if (p.endsWith('.temin') || p.endsWith('.hkmp') || p.endsWith('.tmn360')) {
+                      alert('Seçtiğiniz dosya TEMİN 360 doğrudan temin formatındadır (.temin).\nLütfen bu dosyayı Temin 360 uygulaması ile açınız.')
+                      return
+                    }
                     if (!p.endsWith('.ihale') && !p.endsWith('.ihale360')) {
                       alert('Yalnızca .ihale veya .ihale360 uzantılı İHALE 360 proje dosyaları desteklenmektedir.')
                       return
