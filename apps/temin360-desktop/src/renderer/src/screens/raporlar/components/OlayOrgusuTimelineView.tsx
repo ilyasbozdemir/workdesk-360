@@ -129,9 +129,9 @@ export const OlayOrgusuTimelineView: React.FC<OlayOrgusuTimelineViewProps> = ({ 
           ) as kazanan_vkn,
           COALESCE(
             (
-              SELECT COALESCE(f.teklif_tutari, f.teklif_toplami, f.teklif_bedeli, 0)
+              SELECT COALESCE(f.teklif_toplami, 0)
               FROM DATA_TeminFirma f
-              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.secildi = 1 OR f.kazanan = 1 OR f.kazandi_mi = 1 OR f.kazanan_mi = 1)
+              WHERE (f.temin_dosya_id = d.id OR f.dosya_id = d.id) AND (f.kazandi_mi = 1 OR f.kazanan_mi = 1)
               LIMIT 1
             ),
             d.net_odenen,

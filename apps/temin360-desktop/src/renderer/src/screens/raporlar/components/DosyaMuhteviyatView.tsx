@@ -118,8 +118,8 @@ export const DosyaMuhteviyatView: React.FC<DosyaMuhteviyatViewProps> = ({ filter
           COALESCE(f.temin_dosya_id, f.dosya_id) as dosya_id,
           COALESCE(tf.unvan, f.unvan, 'Firma') as unvan,
           COALESCE(tf.vergi_no, f.vergi_no, '') as vergi_no,
-          COALESCE(f.teklif_tutari, f.teklif_bedeli, 0) as teklif_tutari,
-          COALESCE(f.secildi, f.kazanan, f.kazandi_mi, f.kazanan_mi, 0) as kazanan
+          COALESCE(f.teklif_toplami, 0) as teklif_tutari,
+          COALESCE(f.kazandi_mi, f.kazanan_mi, 0) as kazanan
         FROM DATA_TeminFirma f
         LEFT JOIN TANIM_Firma tf ON tf.id = f.firma_id
         ORDER BY f.id ASC`

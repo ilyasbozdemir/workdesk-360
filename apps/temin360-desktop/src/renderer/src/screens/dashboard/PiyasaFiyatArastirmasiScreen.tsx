@@ -70,14 +70,14 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
            COALESCE(d.tur, 'mal') as tur,
            d.dosya_acilis_tarihi,
            COUNT(tf.id) as toplam_teklif_sayisi,
-           SUM(CASE WHEN tf.teklif_verdi_mi = 1 OR COALESCE(tf.teklif_toplami, tf.teklif_tutari, tf.teklif_bedeli, 0) > 0 THEN 1 ELSE 0 END) as gecerli_teklif_sayisi,
-           MIN(CASE WHEN COALESCE(tf.teklif_toplami, tf.teklif_tutari, tf.teklif_bedeli, 0) > 0 THEN COALESCE(tf.teklif_toplami, tf.teklif_tutari, tf.teklif_bedeli) ELSE NULL END) as en_dusuk_teklif,
+           SUM(CASE WHEN tf.teklif_verdi_mi = 1 OR COALESCE(tf.teklif_toplami, 0) > 0 THEN 1 ELSE 0 END) as gecerli_teklif_sayisi,
+           MIN(CASE WHEN COALESCE(tf.teklif_toplami, 0) > 0 THEN tf.teklif_toplami ELSE NULL END) as en_dusuk_teklif,
            COALESCE(
-             (SELECT COALESCE(tf2.unvan, tfn.unvan) FROM DATA_TeminFirma tf2 LEFT JOIN TANIM_Firma tfn ON tf2.firma_id = tfn.id WHERE (tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id) AND (tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1 OR tf2.secildi = 1 OR tf2.kazanan = 1) LIMIT 1),
+             (SELECT COALESCE(tf2.unvan, tfn.unvan) FROM DATA_TeminFirma tf2 LEFT JOIN TANIM_Firma tfn ON tf2.firma_id = tfn.id WHERE (tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id) AND (tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1) LIMIT 1),
              (SELECT tfn.unvan FROM TANIM_Firma tfn WHERE tfn.id = d.firma_id LIMIT 1)
            ) as kazanan_firma,
            COALESCE(
-             (SELECT COALESCE(tf2.teklif_toplami, tf2.teklif_tutari, tf2.teklif_bedeli) FROM DATA_TeminFirma tf2 WHERE (tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id) AND (tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1 OR tf2.secildi = 1 OR tf2.kazanan = 1) LIMIT 1),
+             (SELECT tf2.teklif_toplami FROM DATA_TeminFirma tf2 WHERE (tf2.temin_dosya_id = d.id OR tf2.dosya_id = d.id) AND (tf2.kazandi_mi = 1 OR tf2.kazanan_mi = 1) LIMIT 1),
              d.net_odenen
            ) as kazanan_tutar
          FROM DATA_TeminDosyasi d
