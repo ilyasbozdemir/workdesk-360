@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
+  BarChart2,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -26,6 +27,7 @@ import {
   Square,
   StopCircle,
   Sun,
+  Terminal,
   Trash2,
   X
 } from 'lucide-react'
@@ -38,8 +40,12 @@ import {
   DiskAnalyzerSettings,
   DriveInfo,
   DuplicateSummary,
+  ExplorerDirectoryResponse,
   IndexedFileRecord,
   IndexedFolderRecord,
+  PythonExitEvent,
+  PythonMigrationReports,
+  PythonOutputEvent,
   ScanErrorRecord,
   ScanProgressPayload,
   ScanSessionRecord,
@@ -47,12 +53,16 @@ import {
   TreemapViewResponse
 } from '../../shared/types'
 import { InteractiveTreemapCanvas } from './components/InteractiveTreemapCanvas'
+import { SmartArchiveExplorerView } from './components/SmartArchiveExplorerView'
+import { PythonEngineRunnerView } from './components/PythonEngineRunnerView'
+import { PythonReportsAndCleanerView } from './components/PythonReportsAndCleanerView'
 
 declare global {
   interface Window {
     diskAnalizAPI?: {
       getDrives: () => Promise<DriveInfo[]>
       selectFolderDialog: () => Promise<string | null>
+      selectFolder?: () => Promise<string | null>
       startScan: (params: {
         rootPath: string
         detectDuplicates?: boolean
@@ -89,6 +99,50 @@ declare global {
         updates: Partial<DiskAnalyzerSettings>
       ) => Promise<DiskAnalyzerSettings>
       showInFolder: (targetPath: string) => Promise<boolean>
+      listDirectory: (
+        dirPath: string,
+        options?: { maxDepth?: number }
+      ) => Promise<ExplorerDirectoryResponse>
+      openFile: (filePath: string) => Promise<{ success: boolean; message?: string }>
+      addFileTag: (data: {
+        filePath: string
+        tag: string
+      }) => Promise<{ success: boolean; tags: string[] }>
+      removeFileTag: (data: {
+        filePath: string
+        tag: string
+      }) => Promise<{ success: boolean; tags: string[] }>
+      runPythonTask: (data: {
+        taskId: string
+        scriptName: string
+        args: string[]
+      }) => Promise<{ success: boolean; pid?: number; message?: string }>
+      stopPythonTask: (data: {
+        taskId: string
+      }) => Promise<{ success: boolean; message?: string }>
+      onPythonOutput: (callback: (data: PythonOutputEvent) => void) => () => void
+      onPythonExit: (callback: (data: PythonExitEvent) => void) => () => void
+      getMigrationReports: () => Promise<PythonMigrationReports>
+      checkFilesExist: (filePaths: string[]) => Promise<Record<string, boolean>>
+      moveFiles: (data: {
+        filePaths: string[]
+        destinationFolder?: string
+      }) => Promise<{
+        success: boolean
+        successCount: number
+        failCount: number
+        errors: Array<{ path: string; error: string }>
+        targetFolder?: string
+      }>
+      deleteFiles: (data: {
+        filePaths: string[]
+        useRecycleBin?: boolean
+      }) => Promise<{
+        success: boolean
+        successCount: number
+        failCount: number
+        errors: Array<{ path: string; error: string }>
+      }>
       minimizeWindow: () => void
       maximizeWindow: () => void
       closeWindow: () => void
@@ -123,7 +177,10 @@ export function formatDateTr(msOrIso?: number | string): string {
 
 type ActiveTab =
   | 'overview'
+  | 'explorer'
   | 'treemap'
+  | 'python_runner'
+  | 'python_reports'
   | 'files'
   | 'duplicates'
   | 'cleanup'
@@ -134,6 +191,7 @@ export function App(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(true)
+  const [pythonReports, setPythonReports] = useState<PythonMigrationReports | null>(null)
 
   // Sürücüler ve Seçili Kök Dizin
   const [drives, setDrives] = useState<DriveInfo[]>([])
@@ -224,7 +282,8 @@ export function App(): React.JSX.Element {
         sessions,
         clnHist,
         errs,
-        cfg
+        cfg,
+        pyReps
       ] = await Promise.all([
         api.getDrives(),
         api.getDashboardSummary(root || undefined),
@@ -233,10 +292,12 @@ export function App(): React.JSX.Element {
         api.getScanSessions(25),
         api.getCleanupHistory(100),
         api.getScanErrors(),
-        api.getSettings()
+        api.getSettings(),
+        api.getMigrationReports ? api.getMigrationReports() : Promise.resolve({})
       ])
 
       setDrives(drvList)
+      setPythonReports(pyReps)
       if (!root && drvList.length > 0) {
         const nonSys = drvList.find((d) => !d.isSystemDrive && d.accessible) || drvList[0]
         setSelectedRootPath(nonSys.mountPath)
@@ -572,6 +633,13 @@ export function App(): React.JSX.Element {
               </button>
               <button
                 type="button"
+                onClick={() => setActiveTab('explorer')}
+                className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors font-semibold text-sky-600 dark:text-sky-400"
+              >
+                Akıllı Arşiv Gezgini
+              </button>
+              <button
+                type="button"
                 onClick={() => setActiveTab('treemap')}
                 className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
               >
@@ -579,10 +647,17 @@ export function App(): React.JSX.Element {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('duplicates')}
+                onClick={() => setActiveTab('python_runner')}
+                className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors font-semibold text-emerald-600 dark:text-emerald-400"
+              >
+                Python Motoru
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('python_reports')}
                 className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
               >
-                Mükerrer Dosyalar
+                Rapor & Betikler
               </button>
               <button
                 type="button"
@@ -833,10 +908,30 @@ export function App(): React.JSX.Element {
                 badge: drives.length
               },
               {
+                id: 'explorer' as const,
+                label: 'Akıllı Arşiv Gezgini',
+                icon: FolderOpen,
+                badge: undefined
+              },
+              {
                 id: 'treemap' as const,
                 label: 'Disk Haritası (Treemap)',
                 icon: Layers,
                 badge: treemapView?.childrenFolders.length
+              },
+              {
+                id: 'python_runner' as const,
+                label: 'Python Motoru & Konsol',
+                icon: Terminal,
+                badge: undefined
+              },
+              {
+                id: 'python_reports' as const,
+                label: 'Python Rapor & Betikler',
+                icon: BarChart2,
+                badge:
+                  pythonReports?.duplicate?.summary?.duplicate_groups_count ||
+                  pythonReports?.duplicate?.duplicates?.length
               },
               {
                 id: 'files' as const,
@@ -846,7 +941,7 @@ export function App(): React.JSX.Element {
               },
               {
                 id: 'duplicates' as const,
-                label: 'Mükerrer Dosyalar',
+                label: 'Mükerrer Analiz (SQLite)',
                 icon: Copy,
                 badge: duplicateSummary.totalGroups
               },
@@ -899,9 +994,11 @@ export function App(): React.JSX.Element {
               <div className="flex items-center space-x-2">
                 <Database className="w-4 h-4 text-emerald-400 shrink-0" />
                 <div className="truncate">
-                  <div className="text-slate-200 font-medium">SQLite WAL İndeksi</div>
+                  <div className="text-slate-200 font-medium">
+                    Native Python + SQLite WAL
+                  </div>
                   <div className="text-[10px] text-slate-400">
-                    Tamamen Yerel • Kalıcı
+                    Win32 ctypes • os.scandir • SHA-256
                   </div>
                 </div>
               </div>
@@ -916,6 +1013,55 @@ export function App(): React.JSX.Element {
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{toastMessage}</span>
             </div>
+          )}
+
+          {/* =====================================================================
+              ARŞİV 360 SEKMELERİ: AKILLI GEZGİN, PYTHON MOTORU & RAPORLAR
+             ===================================================================== */}
+          {activeTab === 'explorer' && (
+            <div className="h-[calc(100vh-7.5rem)] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+              <SmartArchiveExplorerView
+                drives={drives}
+                initialDir={selectedRootPath || 'D:\\'}
+                isDarkMode={isDarkMode}
+                onSendToPythonRunner={(dir) => {
+                  setSelectedRootPath(dir)
+                  setActiveTab('python_runner')
+                }}
+                onOpenInTreemap={(dir) => {
+                  setSelectedRootPath(dir)
+                  setCurrentTreemapFolder(dir)
+                  setActiveTab('treemap')
+                  loadAllViews(dir)
+                }}
+              />
+            </div>
+          )}
+
+          {activeTab === 'python_runner' && (
+            <div className="h-[calc(100vh-7.5rem)]">
+              <PythonEngineRunnerView
+                drives={drives}
+                sourceDir={selectedRootPath || 'D:\\'}
+                onChangeSourceDir={(dir) => setSelectedRootPath(dir)}
+                onReportsUpdated={() => {
+                  loadAllViews()
+                  showToast('Python görevi tamamlandı ve raporlar güncellendi.')
+                }}
+              />
+            </div>
+          )}
+
+          {activeTab === 'python_reports' && (
+            <PythonReportsAndCleanerView
+              reports={pythonReports}
+              onReloadReports={async () => {
+                await loadAllViews()
+                showToast('Python raporları yeniden yüklendi.')
+              }}
+              onNavigateToPythonRunner={() => setActiveTab('python_runner')}
+              onShowToast={showToast}
+            />
           )}
 
           {/* =====================================================================

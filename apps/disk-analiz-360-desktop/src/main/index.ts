@@ -1,33 +1,124 @@
 /**
  * <summary>
- * Disk Analiz 360 — Electron Ana Süreç (Main Process) ve Tip Güvenli IPC Köprüsü.
+ * Disk Analiz 360 & Arşiv 360 — Electron Ana Süreç (Main Process),
+ * Native Python Görev Yöneticisi (scanner.py, birlestir.py, inventory_cli.py) ve Tip Güvenli IPC Köprüsü.
  * </summary>
  */
 
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
-import { join } from 'path'
+import { join, extname, basename } from 'path'
 import fs from 'fs'
+import { spawn, ChildProcess } from 'child_process'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { DiskAnalyzerStorage } from './modules/storage.js'
 import { discoverSystemDrives } from './modules/disk-discovery.js'
 import { runDiskScan } from './modules/scanner.js'
 import { runDuplicateDetectionPipeline } from './modules/duplicate-detector.js'
-import { executeSafeTrashCleanup } from './modules/cleanup.js'
-import { CleanupExecutionItemRequest, DiskAnalyzerSettings } from '../shared/types.js'
+import { executeSafeTrashCleanup, isProtectedSystemPath } from './modules/cleanup.js'
+import {
+  CleanupExecutionItemRequest,
+  DiskAnalyzerSettings,
+  ExplorerDirectoryResponse,
+  ExplorerSubfolderInfo,
+  PythonMigrationReports
+} from '../shared/types.js'
 
 let mainWindow: BrowserWindow | null = null
 let storage: DiskAnalyzerStorage | null = null
 let activeScanAbortController: AbortController | null = null
+const activePythonProcesses = new Map<string, ChildProcess>()
+
+function resolvePythonScriptDir(): string {
+  const candidates = [
+    join(__dirname, '../..'),
+    process.cwd(),
+    join(process.cwd(), 'apps/disk-analiz-360-desktop')
+  ]
+  for (const dir of candidates) {
+    if (fs.existsSync(join(dir, 'scanner.py'))) {
+      return dir
+    }
+  }
+  return join(__dirname, '../..')
+}
+
+const SCRIPT_DIR = resolvePythonScriptDir()
+const TAGS_DB_PATH = join(SCRIPT_DIR, '.arsiv360_tags.json')
+
+function loadTagsDb(): Record<string, string[]> {
+  try {
+    if (fs.existsSync(TAGS_DB_PATH)) {
+      return JSON.parse(fs.readFileSync(TAGS_DB_PATH, 'utf-8'))
+    }
+  } catch (e) {
+    console.error('Error loading tags DB:', e)
+  }
+  return {}
+}
+
+function saveTagsDb(data: Record<string, string[]>): void {
+  try {
+    fs.writeFileSync(TAGS_DB_PATH, JSON.stringify(data, null, 2), 'utf-8')
+  } catch (e) {
+    console.error('Error saving tags DB:', e)
+  }
+}
+
+export function extractInlineTags(filename: string): { cleanName: string; tags: string[] } {
+  const tags = new Set<string>()
+  let cleanName = filename
+
+  const bracketRegex = /\[([^\]]+)\]/g
+  let match: RegExpExecArray | null
+  while ((match = bracketRegex.exec(filename)) !== null) {
+    const parts = match[1].split(/[,\s]+/).filter(Boolean)
+    parts.forEach((p) => tags.add(p.toLowerCase()))
+  }
+
+  const hashRegex = /#([a-zA-Z0-9_ğüşıöçĞÜŞİÖÇ-]+)/g
+  while ((match = hashRegex.exec(filename)) !== null) {
+    tags.add(match[1].toLowerCase())
+  }
+
+  const lower = filename.toLowerCase()
+  if (lower.includes('ihale') || lower.includes('sartname') || lower.includes('yaklasik'))
+    tags.add('ihale')
+  if (lower.includes('dogrudan') || lower.includes('temin')) tags.add('temin360')
+  if (lower.includes('hakedis') || lower.includes('metraj') || lower.includes('kesif'))
+    tags.add('hakedis')
+  if (lower.includes('imar') || lower.includes('parsel') || lower.includes('ada'))
+    tags.add('imar')
+  if (lower.includes('kamulastirma') || lower.includes('istimlak')) tags.add('kamulastirma')
+  if (lower.includes('encumen') || lower.includes('meclis') || lower.includes('karar'))
+    tags.add('karar')
+  if (lower.includes('ruhsat') || lower.includes('iskan')) tags.add('ruhsat')
+  if (lower.includes('kira') || lower.includes('tahsis') || lower.includes('ecrimisil'))
+    tags.add('tasinmaz')
+  if (lower.endsWith('.dwg') || lower.endsWith('.dxf') || lower.endsWith('.ncz'))
+    tags.add('cad-harita')
+  if (lower.endsWith('.pdf')) tags.add('pdf')
+  if (lower.endsWith('.xlsx') || lower.endsWith('.xls')) tags.add('excel')
+  if (lower.endsWith('.docx') || lower.endsWith('.doc')) tags.add('word')
+
+  cleanName = cleanName
+    .replace(/\[[^\]]+\]/g, '')
+    .replace(/#[a-zA-Z0-9_ğüşıöçĞÜŞİÖÇ-]+/g, '')
+    .trim()
+  if (!cleanName) cleanName = filename
+
+  return { cleanName, tags: Array.from(tags) }
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: 1440,
+    height: 920,
     minWidth: 1120,
     minHeight: 720,
     show: false,
     autoHideMenuBar: true,
-    title: 'Disk Analiz 360 — Akıllı Disk Haritası, Mükerrer Tespit ve Güvenli Temizlik',
+    title:
+      'Disk Analiz 360 & Arşiv 360 — Native Python Motoru, Semantik Gezgin, Treemap ve Güvenli Temizlik',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -65,7 +156,7 @@ app.whenReady().then(() => {
   })
 
   // ==========================================================================
-  // IPC HANDLERS
+  // 1. DİSK ANALİZ 360 — SQLITE İNDEKS, TREEMAP VE GÜVENLİ TEMİZLİK IPC HANDLERS
   // ==========================================================================
 
   ipcMain.handle('diskAnaliz:getDrives', () => {
@@ -198,6 +289,393 @@ app.whenReady().then(() => {
     return false
   })
 
+  // ==========================================================================
+  // 2. ARŞİV 360 & DİZİN-RAPOR — AKILLI DOSYA GEZGİNİ, ETİKETLEME & NATIVE PYTHON MOTORU
+  // ==========================================================================
+
+  ipcMain.handle(
+    'diskAnaliz:listDirectory',
+    async (
+      _event,
+      dirPath: string,
+      options?: { maxDepth?: number }
+    ): Promise<ExplorerDirectoryResponse> => {
+      try {
+        const targetDir = dirPath || SCRIPT_DIR
+        if (!fs.existsSync(targetDir)) {
+          return {
+            success: false,
+            message: `Klasör bulunamadı: ${targetDir}`,
+            items: [],
+            subfolders: []
+          }
+        }
+
+        const tagsDb = loadTagsDb()
+        const maxDepth = options?.maxDepth ?? 2
+        const maxItems = 2500
+
+        const items: NonNullable<ExplorerDirectoryResponse['items']> = []
+        const subfolders: ExplorerSubfolderInfo[] = []
+
+        const skipDirs = new Set([
+          'node_modules',
+          '.git',
+          'dist',
+          'out',
+          '__pycache__',
+          '$recycle.bin',
+          'system volume information',
+          '.gemini'
+        ])
+
+        function scanDir(currentPath: string, depth: number): void {
+          if (depth > maxDepth || items.length >= maxItems) return
+          let entries: fs.Dirent[] = []
+          try {
+            entries = fs.readdirSync(currentPath, { withFileTypes: true })
+          } catch {
+            return
+          }
+
+          for (const entry of entries) {
+            if (items.length >= maxItems) break
+            if (entry.name.startsWith('.')) continue
+
+            const fullPath = join(currentPath, entry.name)
+            if (entry.isDirectory()) {
+              if (skipDirs.has(entry.name.toLowerCase())) continue
+
+              if (depth === 1) {
+                let childCount = 0
+                try {
+                  childCount = fs
+                    .readdirSync(fullPath)
+                    .filter((n) => !n.startsWith('.')).length
+                } catch {}
+                subfolders.push({
+                  name: entry.name,
+                  path: fullPath,
+                  fileCount: childCount
+                })
+              }
+
+              scanDir(fullPath, depth + 1)
+            } else if (entry.isFile()) {
+              try {
+                const stats = fs.statSync(fullPath)
+                const { cleanName, tags: inlineTags } = extractInlineTags(entry.name)
+                const storedTags = tagsDb[fullPath] || []
+                const mergedTags = Array.from(new Set([...inlineTags, ...storedTags]))
+
+                items.push({
+                  name: entry.name,
+                  cleanName,
+                  path: fullPath,
+                  isDirectory: false,
+                  size: stats.size,
+                  ext: extname(entry.name).toLowerCase(),
+                  mtime: stats.mtime.toISOString(),
+                  tags: mergedTags
+                })
+              } catch {}
+            }
+          }
+        }
+
+        scanDir(targetDir, 1)
+
+        return {
+          success: true,
+          targetDir,
+          items,
+          subfolders,
+          totalCount: items.length
+        }
+      } catch (error: unknown) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+          items: [],
+          subfolders: []
+        }
+      }
+    }
+  )
+
+  ipcMain.handle('diskAnaliz:openFile', async (_event, filePath: string) => {
+    try {
+      if (filePath && fs.existsSync(filePath)) {
+        await shell.openPath(filePath)
+        return { success: true }
+      }
+      return { success: false, message: 'Dosya bulunamadı' }
+    } catch (error: unknown) {
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : String(error)
+      }
+    }
+  })
+
+  ipcMain.handle(
+    'diskAnaliz:addFileTag',
+    async (_event, { filePath, tag }: { filePath: string; tag: string }) => {
+      const db = loadTagsDb()
+      const current = new Set(db[filePath] || [])
+      current.add(tag.toLowerCase().trim())
+      db[filePath] = Array.from(current)
+      saveTagsDb(db)
+      return { success: true, tags: db[filePath] }
+    }
+  )
+
+  ipcMain.handle(
+    'diskAnaliz:removeFileTag',
+    async (_event, { filePath, tag }: { filePath: string; tag: string }) => {
+      const db = loadTagsDb()
+      const current = new Set(db[filePath] || [])
+      current.delete(tag.toLowerCase().trim())
+      db[filePath] = Array.from(current)
+      saveTagsDb(db)
+      return { success: true, tags: db[filePath] }
+    }
+  )
+
+  ipcMain.handle(
+    'diskAnaliz:runPythonTask',
+    async (
+      event,
+      { taskId, scriptName, args = [] }: { taskId: string; scriptName: string; args: string[] }
+    ) => {
+      if (activePythonProcesses.has(taskId)) {
+        return { success: false, message: 'Bu görev zaten çalışıyor.' }
+      }
+
+      const scriptPath = join(SCRIPT_DIR, scriptName)
+      if (!fs.existsSync(scriptPath)) {
+        return { success: false, message: `Python betiği bulunamadı: ${scriptPath}` }
+      }
+
+      try {
+        const pyProcess = spawn('python', ['-u', scriptPath, ...args], {
+          cwd: SCRIPT_DIR,
+          env: {
+            ...process.env,
+            PYTHONIOENCODING: 'utf-8',
+            PYTHONUNBUFFERED: '1'
+          }
+        })
+
+        activePythonProcesses.set(taskId, pyProcess)
+
+        pyProcess.stdout.on('data', (data) => {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send('diskAnaliz:pythonOutput', {
+              taskId,
+              type: 'stdout',
+              text: data.toString('utf-8')
+            })
+          }
+        })
+
+        pyProcess.stderr.on('data', (data) => {
+          if (!event.sender.isDestroyed()) {
+            event.sender.send('diskAnaliz:pythonOutput', {
+              taskId,
+              type: 'stderr',
+              text: data.toString('utf-8')
+            })
+          }
+        })
+
+        pyProcess.on('close', (code) => {
+          activePythonProcesses.delete(taskId)
+          if (!event.sender.isDestroyed()) {
+            event.sender.send('diskAnaliz:pythonExit', {
+              taskId,
+              code
+            })
+          }
+        })
+
+        return { success: true, pid: pyProcess.pid }
+      } catch (err: unknown) {
+        return {
+          success: false,
+          message: err instanceof Error ? err.message : String(err)
+        }
+      }
+    }
+  )
+
+  ipcMain.handle('diskAnaliz:stopPythonTask', async (_event, { taskId }: { taskId: string }) => {
+    const proc = activePythonProcesses.get(taskId)
+    if (proc) {
+      proc.kill()
+      activePythonProcesses.delete(taskId)
+      return { success: true }
+    }
+    return { success: false, message: 'Çalışan görev bulunamadı.' }
+  })
+
+  ipcMain.handle('diskAnaliz:getMigrationReports', async (): Promise<PythonMigrationReports> => {
+    const reports: PythonMigrationReports = {}
+    try {
+      const dupJson = join(SCRIPT_DIR, 'duplicate_report.json')
+      if (fs.existsSync(dupJson)) {
+        reports.duplicate = JSON.parse(fs.readFileSync(dupJson, 'utf-8'))
+      }
+      const migJson = join(SCRIPT_DIR, 'migration_plan.json')
+      if (fs.existsSync(migJson)) {
+        reports.migration = JSON.parse(fs.readFileSync(migJson, 'utf-8'))
+      }
+    } catch (err) {
+      console.error('Error reading reports:', err)
+    }
+    return reports
+  })
+
+  ipcMain.handle('diskAnaliz:checkFilesExist', async (_event, filePaths: string[]) => {
+    const result: Record<string, boolean> = {}
+    if (!Array.isArray(filePaths)) return result
+    for (const fp of filePaths) {
+      try {
+        result[fp] = fs.existsSync(fp)
+      } catch {
+        result[fp] = false
+      }
+    }
+    return result
+  })
+
+  ipcMain.handle(
+    'diskAnaliz:moveFiles',
+    async (
+      _event,
+      { filePaths, destinationFolder }: { filePaths: string[]; destinationFolder?: string }
+    ) => {
+      let successCount = 0
+      let failCount = 0
+      const errors: { path: string; error: string }[] = []
+
+      for (const src of filePaths) {
+        try {
+          const check = isProtectedSystemPath(src)
+          if (check.protected) {
+            failCount++
+            errors.push({
+              path: src,
+              error: `Sistem koruması: ${check.reason || 'Kritik yol'}`
+            })
+            continue
+          }
+
+          if (!fs.existsSync(src)) {
+            failCount++
+            errors.push({ path: src, error: 'Dosya bulunamadı' })
+            continue
+          }
+
+          let destDir = destinationFolder
+          if (!destDir) {
+            const driveMatch = src.match(/^([a-zA-Z]:)/)
+            const drive = driveMatch ? driveMatch[1] : 'C:'
+            destDir = join(`${drive}\\`, '_SILINECEK_KOPYALAR')
+          }
+
+          if (!fs.existsSync(destDir)) {
+            fs.mkdirSync(destDir, { recursive: true })
+          }
+
+          const fileName = basename(src)
+          let destPath = join(destDir, fileName)
+
+          if (fs.existsSync(destPath)) {
+            const ext = extname(fileName)
+            const nameWithoutExt = basename(fileName, ext)
+            destPath = join(destDir, `${nameWithoutExt}_${Date.now()}${ext}`)
+          }
+
+          try {
+            fs.renameSync(src, destPath)
+          } catch (e: unknown) {
+            const code = (e as { code?: string })?.code
+            if (code === 'EXDEV') {
+              fs.copyFileSync(src, destPath)
+              fs.unlinkSync(src)
+            } else {
+              throw e
+            }
+          }
+
+          successCount++
+        } catch (err: unknown) {
+          failCount++
+          errors.push({
+            path: src,
+            error: err instanceof Error ? err.message : String(err)
+          })
+        }
+      }
+
+      return {
+        success: failCount === 0,
+        successCount,
+        failCount,
+        errors,
+        targetFolder: destinationFolder
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'diskAnaliz:deleteFiles',
+    async (
+      _event,
+      { filePaths, useRecycleBin = true }: { filePaths: string[]; useRecycleBin?: boolean }
+    ) => {
+      let successCount = 0
+      let failCount = 0
+      const errors: { path: string; error: string }[] = []
+
+      for (const src of filePaths) {
+        try {
+          const check = isProtectedSystemPath(src)
+          if (check.protected) {
+            failCount++
+            errors.push({
+              path: src,
+              error: `Sistem koruması: ${check.reason || 'Kritik yol'}`
+            })
+            continue
+          }
+
+          if (!fs.existsSync(src)) {
+            failCount++
+            errors.push({ path: src, error: 'Dosya bulunamadı' })
+            continue
+          }
+
+          if (useRecycleBin) {
+            await shell.trashItem(src)
+          } else {
+            fs.unlinkSync(src)
+          }
+          successCount++
+        } catch (err: unknown) {
+          failCount++
+          errors.push({
+            path: src,
+            error: err instanceof Error ? err.message : String(err)
+          })
+        }
+      }
+
+      return { success: failCount === 0, successCount, failCount, errors }
+    }
+  )
+
   ipcMain.on('window:minimize', () => {
     mainWindow?.minimize()
   })
@@ -225,6 +703,12 @@ app.on('before-quit', () => {
   if (activeScanAbortController) {
     activeScanAbortController.abort()
   }
+  for (const [, proc] of activePythonProcesses.entries()) {
+    try {
+      proc.kill()
+    } catch {}
+  }
+  activePythonProcesses.clear()
 })
 
 app.on('window-all-closed', () => {
@@ -232,4 +716,3 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-

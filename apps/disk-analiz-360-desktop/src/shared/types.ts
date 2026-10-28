@@ -273,3 +273,102 @@ export interface DiskAnalyzerSettings {
   followSymlinks: boolean
 }
 
+export interface ExplorerSubfolderInfo {
+  name: string
+  path: string
+  fileCount: number
+}
+
+export interface ExplorerDirectoryResponse {
+  success: boolean
+  targetDir?: string
+  items?: Array<{
+    name: string
+    cleanName: string
+    path: string
+    isDirectory: boolean
+    size: number
+    ext: string
+    mtime: string
+    tags: string[]
+  }>
+  subfolders?: ExplorerSubfolderInfo[]
+  totalCount?: number
+  message?: string
+}
+
+export interface PythonOutputEvent {
+  taskId: string
+  type: 'stdout' | 'stderr'
+  text: string
+}
+
+export interface PythonExitEvent {
+  taskId: string
+  code: number | null
+}
+
+export interface PythonMigrationReports {
+  duplicate?: {
+    summary?: {
+      report_title?: string
+      scan_date?: string
+      elapsed_seconds?: number
+      scanned_drives?: string[]
+      total_files_scanned?: number
+      total_size_scanned?: number
+      total_size_scanned_formatted?: string
+      duplicate_groups_count?: number
+      duplicate_files_count?: number
+      total_wasted_bytes?: number
+      total_wasted_formatted?: string
+      cross_drive_groups_count?: number
+      cross_drive_wasted_bytes?: number
+      cross_drive_wasted_formatted?: string
+      large_groups_count?: number
+    }
+    duplicates?: Array<{
+      group_id: number
+      hash: string
+      size_bytes: number
+      size_formatted: string
+      count: number
+      wasted_bytes: number
+      wasted_formatted: string
+      drives: string[]
+      is_cross_drive: boolean
+      files: Array<{
+        path: string
+        drive: string
+        folder: string
+        filename: string
+        modified: string
+      }>
+    }>
+  }
+  migration?: {
+    source_drive?: string
+    target_dir?: string
+    max_path_limit?: number
+    total_files?: number
+    total_bytes?: number
+    total_gb?: number
+    shortened_count?: number
+    shortened_samples?: Array<{
+      source: string
+      relative_source: string
+      destination: string
+      source_len: number
+      dest_len: number
+      was_shortened: boolean
+      changes: string[]
+      size_bytes: number
+    }>
+    summary?: {
+      total_files_scanned?: number
+      shortened_paths_count?: number
+    }
+  }
+}
+
+
