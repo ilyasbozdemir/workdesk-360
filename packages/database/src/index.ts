@@ -626,21 +626,13 @@ export const ihale360SpecificTables = ihaleSpecificTables.map((t) => {
   return t
 })
 
-export const devletIhale2886SpecificTables = ihaleSpecificTables.map((t) => {
-  if (t.name === 'DATA_IhaleDosyasi') {
-    return {
-      ...t,
-      columns: t.columns.map((c: any) => {
-        if (c.name === 'madde') return { ...c, default: "'2886 Sayılı Devlet İhale Kanunu'" }
-        if (c.name === 'ihale_usulu') return { ...c, default: "'2886 Sayılı Kanun'" }
-        if (c.name === 'ihale_tipi') return { ...c, default: "'Devlet İhalesi (2886)'" }
-        if (c.name === 'tur') return { ...c, default: "'satis_kiralama'" }
-        return c
-      })
-    }
-  }
-  return t
-})
+/**
+ * @deprecated 2886 Sayılı Devlet İhale Kanunu, 3194 Sayılı İmar Kanunu (Kaçak Yapı Md. 32/42)
+ * gibi çok aşamalı ve algoritmik mevzuat süreçleri veritabanı şemasına sabitlenmez;
+ * `@worksuite-360/contracts` (`FlowEngine` / `FlowdeskDatabase`) üzerinde şablon ve algoritma
+ * modülü (`FlowdeskModuleManifest`) olarak yürütülür.
+ */
+export const devletIhale2886SpecificTables = ihale360SpecificTables
 
 export const temin360Schema = {
   database: 'DOGRUDAN_TEMIN_DB',
@@ -868,13 +860,12 @@ export function initializeDatabase(
  * DATA_TeminDosyasi, DATA_TeminKalem ve DATA_TeminFirma VIEW ve Trigger'larÄ±nÄ± tesis eder.
  * Tetikleyici varsayÄ±lanlarÄ± ilgili uygulamanÄ±n baÄlamÄ±na (2886 vs 4734) gÃ¶re izole edilir.
  */
-export function ensureIhaleCompatibilityViews(db: Database.Database, appName?: string): void {
+export function ensureIhaleCompatibilityViews(db: Database.Database, _appName?: string): void {
   try {
-    const is2886 = appName ? appName.includes('2886') : false
-    const defaultUsul = is2886 ? '2886 Sayılı Kanun' : 'Açık İhale (Md. 19)'
-    const defaultTipi = is2886 ? 'Devlet İhalesi (2886)' : 'Kamu İhalesi'
-    const defaultTur = is2886 ? 'satis_kiralama' : 'mal'
-    const defaultMadde = is2886 ? '2886 Sayılı Devlet İhale Kanunu' : '4734 Sayılı Kanun (Kamu İhalesi)'
+    const defaultUsul = 'Açık İhale (Md. 19)'
+    const defaultTipi = 'Kamu İhalesi'
+    const defaultTur = 'mal'
+    const defaultMadde = '4734 Sayılı Kanun (Kamu İhalesi)'
 
     const teminDosyasiTable = db
       .prepare("SELECT type FROM sqlite_master WHERE name = 'DATA_TeminDosyasi'")

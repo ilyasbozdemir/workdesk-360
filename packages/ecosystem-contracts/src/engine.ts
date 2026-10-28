@@ -1,9 +1,10 @@
 /**
- * FlowDesk — Genel Süreç ve Belge Yürütme Motoru (Process & Document Engine)
- * 
- * Kurumdaki tüm iş akışlarını (2886 Devlet İhale Süreci, Doğrudan Temin, Personel İzin/Görev, vb.)
- * JSON tabanlı tanımlar üzerinden genel amaçlı olarak yürüten, form verilerini toplayan,
- * onay adımlarını işleten ve EBYS matbu belgelerini üreten çekirdek motor.
+ * FlowDesk — Genel Süreç, Algoritma ve Belge Yürütme Motoru (Process, Rule & Document Engine)
+ *
+ * Kurumdaki tüm çok aşamalı ve algoritmik iş akışlarını (3194 İmar Kanunu Md. 32/42 Kaçak Yapı
+ * Tespit/Ceza/Yıkım Süreci, 2886 Devlet İhale Süreci, Kamulaştırma, Personel İzin/Görev vb.)
+ * veritabanına sabit şema gömmeden, JSON/Şablon tanımları ve kural algoritmaları üzerinden
+ * yürüten çekirdek motor.
  */
 
 import type {
@@ -14,8 +15,67 @@ import type {
   FlowHistory,
   FormSchema,
   DocumentTemplateDefinition,
-  DocumentInstance
+  DocumentInstance,
+  FlowdeskModuleManifest,
+  FlowConditionRule
 } from './flowdesk.js'
+
+/**
+ * Kanuni süre hesaplayıcı (Takvim günü veya hafta sonu hariç iş günü)
+ */
+export function calculateStatutoryDeadline(
+  baseDateIso: string,
+  durationDays: number,
+  dayType: 'calendar' | 'business'
+): string {
+  const baseDate = new Date(baseDateIso)
+  const start = isNaN(baseDate.getTime()) ? new Date() : new Date(baseDate.getTime())
+
+  if (dayType === 'calendar') {
+    start.setUTCDate(start.getUTCDate() + durationDays)
+    return start.toISOString().split('T')[0]
+  }
+
+  let added = 0
+  while (added < durationDays) {
+    start.setUTCDate(start.getUTCDate() + 1)
+    const dayOfWeek = start.getUTCDay()
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      added++
+    }
+  }
+  return start.toISOString().split('T')[0]
+}
+
+/**
+ * Algoritmik koşul değerlendirici
+ */
+export function evaluateConditionRule(
+  rule: FlowConditionRule,
+  data: Record<string, unknown>
+): boolean {
+  const actual = data[rule.field]
+  const expected = rule.value
+
+  switch (rule.operator) {
+    case 'eq':
+      return actual === expected
+    case 'neq':
+      return actual !== expected
+    case 'gt':
+      return Number(actual) > Number(expected)
+    case 'gte':
+      return Number(actual) >= Number(expected)
+    case 'lt':
+      return Number(actual) < Number(expected)
+    case 'lte':
+      return Number(actual) <= Number(expected)
+    case 'in':
+      return Array.isArray(expected) && expected.includes(actual)
+    default:
+      return false
+  }
+}
 
 export class FlowEngine {
   private instances: Map<string, FlowInstance> = new Map()
@@ -23,6 +83,31 @@ export class FlowEngine {
   private templates: Map<string, DocumentTemplateDefinition> = new Map()
   private formSchemas: Map<string, FormSchema> = new Map()
   private documentInstances: Map<string, DocumentInstance[]> = new Map()
+  private modules: Map<string, FlowdeskModuleManifest> = new Map()
+
+  /**
+   * Çok aşamalı bir mevzuat/süreç modülünü (şablonlar + algoritmalar + formlar + evraklar)
+   * tek seferde motora yükler.
+   */
+  registerModule(manifest: FlowdeskModuleManifest): void {
+    this.modules.set(manifest.id, { ...manifest, isInstalled: true, isEnabled: true })
+    for (const schema of manifest.formSchemas || []) {
+      this.registerFormSchema(schema)
+    }
+    for (const tpl of manifest.documentTemplates || []) {
+      this.registerTemplate(tpl)
+    }
+    for (const flow of manifest.flows || []) {
+      this.registerFlowDefinition(flow)
+    }
+  }
+
+  /**
+   * Yüklü mevzuat/süreç modüllerini listeler
+   */
+  getRegisteredModules(): FlowdeskModuleManifest[] {
+    return Array.from(this.modules.values())
+  }
 
   /**
    * Süreç tanımını motora kaydeder
@@ -46,7 +131,7 @@ export class FlowEngine {
   }
 
   /**
-   * Yeni bir süreç başlatır (Örn: 2886 İhalesi, İzin Talebi, Satın Alma vb.)
+   * Yeni bir süreç başlatır (Örn: 3194 Kaçak Yapı Takibi, 2886 İhalesi, İzin Talebi vb.)
    */
   startProcess(params: {
     definitionId: string
@@ -61,7 +146,9 @@ export class FlowEngine {
     }
 
     if (definition.status !== 'published') {
-      throw new Error(`Sadece 'published' durumundaki süreç tanımları başlatılabilir. Mevcut durum: ${definition.status}`)
+      throw new Error(
+        `Sadece 'published' durumundaki süreç tanımları başlatılabilir. Mevcut durum: ${definition.status}`
+      )
     }
 
     const firstGroup = definition.groups.slice().sort((a, b) => a.order - b.order)[0]
@@ -125,7 +212,7 @@ export class FlowEngine {
   }
 
   /**
-   * Süreçteki toplanan tüm form verilerini birleştirir
+   * Süreçteki toplanan tüm form ve algoritma verilerini birleştirir
    */
   getAggregatedData(instance: FlowInstance): Record<string, unknown> {
     const aggregated: Record<string, unknown> = {}
@@ -138,7 +225,101 @@ export class FlowEngine {
   }
 
   /**
-   * Form adımını yürütür ve form verilerini kaydeder
+   * Adım üzerindeki kanuni süre (`deadlineRule`) ve algoritmik hesaplama (`computedFields`)
+   * kurallarını çalıştırarak üretilen türetilmiş verileri döner.
+   */
+  public evaluateStepAlgorithms(
+    step: FlowStep,
+    mergedData: Record<string, unknown>,
+    nowIso: string
+  ): Record<string, unknown> {
+    const computed: Record<string, unknown> = {}
+
+    if (step.config.deadlineRule) {
+      const rule = step.config.deadlineRule
+      const rawBase =
+        rule.sourceDateField && mergedData[rule.sourceDateField]
+          ? String(mergedData[rule.sourceDateField])
+          : nowIso
+      computed[rule.targetDateField] = calculateStatutoryDeadline(
+        rawBase,
+        rule.durationDays,
+        rule.dayType
+      )
+      computed[`${rule.targetDateField}_aciklama`] = rule.description
+    }
+
+    if (step.config.computedFields && step.config.computedFields.length > 0) {
+      const workingData = { ...mergedData, ...computed }
+      for (const rule of step.config.computedFields) {
+        if (rule.formula === 'percentage' && rule.sourceField) {
+          const baseVal = Number(workingData[rule.sourceField] || 0)
+          const rate = Number(rule.rateOrFactor || 0)
+          const result = Math.round(baseVal * (rate / 100) * 100) / 100
+          computed[rule.targetField] = result
+          workingData[rule.targetField] = result
+        } else if (rule.formula === 'multiply' && rule.sourceField && rule.secondaryField) {
+          const valA = Number(workingData[rule.sourceField] || 0)
+          const valB = Number(workingData[rule.secondaryField] || 0)
+          const factor = Number(rule.rateOrFactor ?? 1)
+          const result = Math.round(valA * valB * factor * 100) / 100
+          computed[rule.targetField] = result
+          workingData[rule.targetField] = result
+        } else if (rule.formula === 'imar_md42_fine') {
+          // 3194 Sayılı İmar Kanunu Md. 42 Kaçak Yapı İdari Para Cezası Algoritması
+          const alanM2 = Number(workingData['aykirilik_alani_m2'] || 0)
+          const birimMaliyet = Number(workingData['birim_maliyet_tl'] || 15000)
+          const yapiSinifi = String(workingData['yapi_sinifi'] || 'III')
+          const imarDurumu = String(workingData['imar_durumu'] || 'planli')
+          const aykirilikTuru = String(workingData['aykirilik_turu'] || 'ruhsatsiz')
+          const tehlikeVarMi = Boolean(workingData['kamu_tehlikesi_var_mi'])
+
+          const sinifKatsayilari: Record<string, number> = {
+            I: 0.03,
+            II: 0.04,
+            III: 0.06,
+            IV: 0.08,
+            V: 0.1
+          }
+          const sinifKatsayisi = sinifKatsayilari[yapiSinifi] ?? 0.06
+          const temelCeza = alanM2 * birimMaliyet * sinifKatsayisi
+
+          // Md. 42/2-c artırım katsayıları
+          let artirimCarpani = 1.0
+          if (aykirilikTuru === 'ruhsatsiz') artirimCarpani += 1.0 // Ruhsatsız yapım +%100
+          if (imarDurumu === 'plansiz') artirimCarpani += 0.5 // İmar 부적합/plansız alan +%50
+          if (tehlikeVarMi) artirimCarpani += 1.0 // Can ve mal güvenliği tehlikesi +%100
+
+          const toplamCeza = Math.round(temelCeza * artirimCarpani * 100) / 100
+          computed['temel_idari_para_cezasi'] = Math.round(temelCeza * 100) / 100
+          computed['artirim_carpani'] = artirimCarpani
+          computed[rule.targetField] = toplamCeza
+          workingData[rule.targetField] = toplamCeza
+        } else if (rule.formula === 'ihale_2886_notice_rule') {
+          // 2886 Sayılı Devlet İhale Kanunu Usul ve İlan Süresi Algoritması
+          const tahminiBedel = Number(workingData['tahmini_bedel'] || 0)
+          const parasalLimit = Number(workingData['parasal_limit'] || 2500000)
+          const isKapaliTeklif = tahminiBedel >= parasalLimit
+
+          const belirlenenUsul = isKapaliTeklif
+            ? 'Kapalı Teklif Usulü (2886 Md. 36)'
+            : 'Açık Teklif Usulü (2886 Md. 45)'
+          const ilanKurali = isKapaliTeklif
+            ? 'İhale tarihinden en az 10 gün önce Basın İlan Kurumu / Yerel Gazete (2 kez) + 7 gün önce İlan Tahtası (Md. 17)'
+            : 'İhale tarihinden en az 7 gün önce İdare ve Belediye İlan Tahtası (Md. 17)'
+
+          computed[rule.targetField] = belirlenenUsul
+          computed['zorunlu_ilan_kurali'] = ilanKurali
+          workingData[rule.targetField] = belirlenenUsul
+        }
+      }
+    }
+
+    return computed
+  }
+
+  /**
+   * Form adımını yürütür, varsa adım algoritmalarını (süre/ceza/katsayı) çalıştırır ve kaydeder
    */
   executeFormStep(params: {
     instanceId: string
@@ -149,7 +330,8 @@ export class FlowEngine {
   }): FlowInstance {
     const instance = this.instances.get(params.instanceId)
     if (!instance) throw new Error(`Süreç örneği bulunamadı: ${params.instanceId}`)
-    if (instance.status !== 'active') throw new Error(`Aktif olmayan süreç üzerinde işlem yapılamaz: ${instance.status}`)
+    if (instance.status !== 'active')
+      throw new Error(`Aktif olmayan süreç üzerinde işlem yapılamaz: ${instance.status}`)
 
     const definition = this.definitions.get(instance.flowDefinitionId)
     if (!definition) throw new Error(`Süreç tanımı bulunamadı: ${instance.flowDefinitionId}`)
@@ -163,18 +345,30 @@ export class FlowEngine {
       const schema = this.formSchemas.get(step.config.formSchemaId)
       if (schema) {
         for (const field of schema.fields) {
-          if (field.required && (params.formData[field.id] === undefined || params.formData[field.id] === null || params.formData[field.id] === '')) {
+          if (
+            field.required &&
+            (params.formData[field.id] === undefined ||
+              params.formData[field.id] === null ||
+              params.formData[field.id] === '')
+          ) {
             throw new Error(`Zorunlu alan eksik: ${field.label} (${field.id})`)
           }
         }
       }
     }
 
+    const now = new Date().toISOString()
+    const currentAggregated = {
+      ...this.getAggregatedData(instance),
+      ...params.formData
+    }
+    const algorithmOutputs = this.evaluateStepAlgorithms(step, currentAggregated, now)
+
     const exec = instance.stepExecutions[params.stepId]
     if (exec) {
-      exec.data = { ...(exec.data || {}), ...params.formData }
+      exec.data = { ...(exec.data || {}), ...params.formData, ...algorithmOutputs }
       exec.status = 'completed'
-      exec.completedAt = new Date().toISOString()
+      exec.completedAt = now
       exec.completedBy = {
         userId: params.actorId,
         userName: params.actorName
@@ -186,10 +380,14 @@ export class FlowEngine {
       stepId: params.stepId,
       userId: params.actorId,
       userName: params.actorName,
-      details: { stepTitle: step.title, formDataKeys: Object.keys(params.formData) }
+      details: {
+        stepTitle: step.title,
+        formDataKeys: Object.keys(params.formData),
+        computedKeys: Object.keys(algorithmOutputs)
+      }
     })
 
-    this.advanceToNextStep(instance, definition)
+    this.advanceToNextStep(instance, definition, step)
     return instance
   }
 
@@ -219,10 +417,15 @@ export class FlowEngine {
     const template = this.templates.get(templateId)
     if (!template) throw new Error(`Belge şablonu bulunamadı: ${templateId}`)
 
-    // Süreçteki tüm form verilerini topla
-    const aggregatedData = {
+    const now = new Date().toISOString()
+    const baseAggregated = {
       ...this.getAggregatedData(instance),
       ...(params.customOverrides || {})
+    }
+    const algorithmOutputs = this.evaluateStepAlgorithms(step, baseAggregated, now)
+    const aggregatedData = {
+      ...baseAggregated,
+      ...algorithmOutputs
     }
 
     // Resolver: Şablon mapping'lerini çöz
@@ -244,7 +447,7 @@ export class FlowEngine {
       stepExecutionId: step.id,
       renderedHtml: generatedHtml,
       metadata: resolvedPayload,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
       createdBy: params.actorId,
       status: 'finalized'
     }
@@ -255,8 +458,9 @@ export class FlowEngine {
 
     const exec = instance.stepExecutions[params.stepId]
     if (exec) {
+      exec.data = { ...(exec.data || {}), ...algorithmOutputs }
       exec.status = 'completed'
-      exec.completedAt = new Date().toISOString()
+      exec.completedAt = now
       exec.completedBy = {
         userId: params.actorId,
         userName: params.actorName
@@ -272,8 +476,62 @@ export class FlowEngine {
       details: { documentId: docId, templateId: template.id, title: template.title }
     })
 
-    this.advanceToNextStep(instance, definition)
+    this.advanceToNextStep(instance, definition, step)
     return { instance, document: docInstance }
+  }
+
+  /**
+   * Görev (task) veya Sistem Eylemi (action) adımını yürütür
+   */
+  executeTaskStep(params: {
+    instanceId: string
+    stepId: string
+    actorId: string
+    actorName: string
+    data?: Record<string, unknown>
+    notes?: string
+  }): FlowInstance {
+    const instance = this.instances.get(params.instanceId)
+    if (!instance) throw new Error(`Süreç örneği bulunamadı: ${params.instanceId}`)
+
+    const definition = this.definitions.get(instance.flowDefinitionId)
+    if (!definition) throw new Error(`Süreç tanımı bulunamadı: ${instance.flowDefinitionId}`)
+
+    const step = this.findStep(definition, params.stepId)
+    if (!step) throw new Error(`Adım bulunamadı: ${params.stepId}`)
+    if (step.type !== 'task' && step.type !== 'action') {
+      throw new Error(`Bu adım bir görev/eylem adımı değil: ${step.type}`)
+    }
+
+    const now = new Date().toISOString()
+    const baseData = {
+      ...this.getAggregatedData(instance),
+      ...(params.data || {})
+    }
+    const algorithmOutputs = this.evaluateStepAlgorithms(step, baseData, now)
+
+    const exec = instance.stepExecutions[params.stepId]
+    if (exec) {
+      exec.data = { ...(exec.data || {}), ...(params.data || {}), ...algorithmOutputs }
+      exec.status = 'completed'
+      exec.completedAt = now
+      exec.completedBy = {
+        userId: params.actorId,
+        userName: params.actorName
+      }
+      exec.notes = params.notes
+    }
+
+    this.logHistory(instance, {
+      action: 'task_completed',
+      stepId: params.stepId,
+      userId: params.actorId,
+      userName: params.actorName,
+      details: { stepTitle: step.title, notes: params.notes }
+    })
+
+    this.advanceToNextStep(instance, definition, step)
+    return instance
   }
 
   /**
@@ -302,7 +560,13 @@ export class FlowEngine {
     const now = new Date().toISOString()
 
     if (params.decision === 'approved') {
+      const algorithmOutputs = this.evaluateStepAlgorithms(
+        step,
+        this.getAggregatedData(instance),
+        now
+      )
       if (exec) {
+        exec.data = { ...(exec.data || {}), ...algorithmOutputs }
         exec.status = 'completed'
         exec.completedAt = now
         exec.completedBy = {
@@ -320,7 +584,7 @@ export class FlowEngine {
         details: { decision: 'approved', notes: params.notes }
       })
 
-      this.advanceToNextStep(instance, definition)
+      this.advanceToNextStep(instance, definition, step)
     } else {
       // Reddedildi
       if (exec) {
@@ -398,13 +662,13 @@ export class FlowEngine {
 
   private findStep(definition: FlowDefinition, stepId: string): FlowStep | undefined {
     for (const group of definition.groups) {
-      const step = group.steps.find(s => s.id === stepId)
+      const step = group.steps.find((s) => s.id === stepId)
       if (step) return step
     }
     return undefined
   }
 
-  private advanceToNextStep(instance: FlowInstance, definition: FlowDefinition): void {
+  private getOrderedSteps(definition: FlowDefinition): { step: FlowStep; groupId: string }[] {
     const allSteps: { step: FlowStep; groupId: string }[] = []
     const sortedGroups = definition.groups.slice().sort((a, b) => a.order - b.order)
     for (const group of sortedGroups) {
@@ -413,16 +677,112 @@ export class FlowEngine {
         allSteps.push({ step, groupId: group.id })
       }
     }
+    return allSteps
+  }
 
-    const currentIndex = allSteps.findIndex(item => item.step.id === instance.currentStepId)
-    if (currentIndex >= 0 && currentIndex < allSteps.length - 1) {
-      const nextItem = allSteps[currentIndex + 1]
+  private resolveBranchTargetStepId(
+    step: FlowStep,
+    aggregatedData: Record<string, unknown>
+  ): { targetStepId: string; matchedReason?: string } | null {
+    if (step.config.conditionRules && step.config.conditionRules.length > 0) {
+      for (const rule of step.config.conditionRules) {
+        if (evaluateConditionRule(rule, aggregatedData)) {
+          return {
+            targetStepId: rule.targetStepId,
+            matchedReason:
+              rule.reason || `${rule.field} ${rule.operator} ${String(rule.value)} -> ${rule.targetStepId}`
+          }
+        }
+      }
+      if (step.config.defaultTargetStepId) {
+        return {
+          targetStepId: step.config.defaultTargetStepId,
+          matchedReason: `Varsayılan dal -> ${step.config.defaultTargetStepId}`
+        }
+      }
+    }
+    return null
+  }
+
+  private advanceToNextStep(
+    instance: FlowInstance,
+    definition: FlowDefinition,
+    completedStep?: FlowStep
+  ): void {
+    const allSteps = this.getOrderedSteps(definition)
+    const currentIndex = allSteps.findIndex((item) => item.step.id === instance.currentStepId)
+    const now = new Date().toISOString()
+
+    // 1. Tamamlanan adım bir dalın sonlandırıcı (terminalStep) adımıysa, kalan alternatif dal adımlarını 'skipped' yap ve süreci bitir
+    if (completedStep?.config.customParams?.terminalStep === true) {
+      for (let i = currentIndex + 1; i < allSteps.length; i++) {
+        const remStep = allSteps[i].step
+        const remExec = instance.stepExecutions[remStep.id]
+        if (remExec && remExec.status === 'pending') {
+          remExec.status = 'skipped'
+          remExec.completedAt = now
+        }
+      }
+      instance.status = 'completed'
+      instance.updatedAt = now
+      instance.currentStepId = undefined
+
+      this.logHistory(instance, {
+        action: 'process_completed',
+        stepId: completedStep.id,
+        userId: 'system',
+        userName: 'Süreç ve Algoritma Motoru',
+        details: {
+          message: `Sonlandırıcı dal adımı (${completedStep.title}) tamamlandı; alternatif dal adımları atlandı.`
+        }
+      })
+      return
+    }
+
+    // 2. Tamamlanan adımda koşullu dallanma kuralı (conditionRules) tanımlı mı?
+    const aggregatedData = this.getAggregatedData(instance)
+    const branchDecision = completedStep
+      ? this.resolveBranchTargetStepId(completedStep, aggregatedData)
+      : null
+
+    let nextIndex = currentIndex + 1
+    if (branchDecision) {
+      const targetIdx = allSteps.findIndex((item) => item.step.id === branchDecision.targetStepId)
+      if (targetIdx > currentIndex) {
+        // Arada kalan diğer dala ait adımları 'skipped' olarak işaretle
+        const skippedStepIds: string[] = []
+        for (let i = currentIndex + 1; i < targetIdx; i++) {
+          const bypassedStep = allSteps[i].step
+          const bypassedExec = instance.stepExecutions[bypassedStep.id]
+          if (bypassedExec && bypassedExec.status === 'pending') {
+            bypassedExec.status = 'skipped'
+            bypassedExec.completedAt = now
+            skippedStepIds.push(bypassedStep.id)
+          }
+        }
+        nextIndex = targetIdx
+        this.logHistory(instance, {
+          action: 'algorithmic_branch_selected',
+          stepId: completedStep?.id,
+          userId: 'system',
+          userName: 'Süreç ve Algoritma Motoru',
+          details: {
+            targetStepId: branchDecision.targetStepId,
+            reason: branchDecision.matchedReason,
+            skippedStepIds
+          }
+        })
+      }
+    }
+
+    if (nextIndex >= 0 && nextIndex < allSteps.length) {
+      const nextItem = allSteps[nextIndex]
       instance.currentStepId = nextItem.step.id
 
       const nextExecution = instance.stepExecutions[nextItem.step.id]
       if (nextExecution) {
         nextExecution.status = 'in_progress'
-        nextExecution.startedAt = new Date().toISOString()
+        nextExecution.startedAt = now
       }
 
       this.logHistory(instance, {
@@ -432,10 +792,19 @@ export class FlowEngine {
         userName: 'Süreç Motoru',
         details: { nextStepTitle: nextItem.step.title }
       })
+
+      // 3. Eğer yeni geçilen adım saf bir 'condition' (otomatik karar düğümü) adımıysa, otomatik değerlendir ve ilerlet
+      if (nextItem.step.type === 'condition') {
+        if (nextExecution) {
+          nextExecution.status = 'completed'
+          nextExecution.completedAt = now
+        }
+        this.advanceToNextStep(instance, definition, nextItem.step)
+      }
     } else {
       // Tüm adımlar bitti: Süreç tamamlandı
       instance.status = 'completed'
-      instance.updatedAt = new Date().toISOString()
+      instance.updatedAt = now
       instance.currentStepId = undefined
 
       this.logHistory(instance, {

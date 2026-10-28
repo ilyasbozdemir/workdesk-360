@@ -114,8 +114,47 @@ export interface DocumentInstance {
 }
 
 // ============================================================================
-// 4. JSON Tabanlı Süreç Tanımları (FlowDefinition)
+// 4. JSON Tabanlı Süreç ve Algoritma Tanımları (FlowDefinition)
 // ============================================================================
+
+/**
+ * Kanuni Süre Hesaplama Kuralı (Örn: 3194 Md. 32 Mühürlemeden itibaren 30 gün,
+ * 2886 Md. 31 Komisyon kararından itibaren 15 iş günü, 2886 Md. 54 Tebliğden itibaren 15 gün)
+ */
+export interface FlowDeadlineRule {
+  sourceDateField?: string       // Örn: 'muhurleme_tarihi' veya 'teblig_tarihi' (yoksa adım tamamlanma tarihi)
+  durationDays: number           // Örn: 30, 15, 10, 7
+  dayType: 'calendar' | 'business'
+  targetDateField: string        // Hesaplanan son tarihin yazılacağı alan (Örn: 'yasal_sure_bitis_tarihi')
+  description: string            // Mevzuat dayanağı açıklaması
+}
+
+/**
+ * Algoritmik Hesaplama ve Mevzuat Katsayı Kuralı
+ */
+export interface FlowComputedFieldRule {
+  targetField: string            // Hesaplanan değerin yazılacağı alan
+  formula:
+    | 'percentage'               // sourceField * (rateOrFactor / 100)
+    | 'multiply'                 // sourceField * secondaryField * (rateOrFactor || 1)
+    | 'imar_md42_fine'           // 3194 Sayılı İmar Kanunu Md. 42 Kaçak Yapı İdari Para Cezası Algoritması
+    | 'ihale_2886_notice_rule'   // 2886 Sayılı Kanun Tahmini Bedel -> İhale Usulü ve İlan Süresi Algoritması
+  sourceField?: string
+  secondaryField?: string
+  rateOrFactor?: number
+  description?: string
+}
+
+/**
+ * Algoritmik Koşullu Dallanma Kuralı (Karar Ağacı)
+ */
+export interface FlowConditionRule {
+  field: string
+  operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in'
+  value: unknown
+  targetStepId: string
+  reason?: string
+}
 
 export interface FlowStepConfig {
   formSchemaId?: string
@@ -124,12 +163,10 @@ export interface FlowStepConfig {
   approvalRoles?: string[]
   assigneeType?: 'user' | 'unit'
   assigneeId?: string
-  conditionRules?: Array<{
-    field: string
-    operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in'
-    value: unknown
-    targetStepId: string
-  }>
+  deadlineRule?: FlowDeadlineRule
+  computedFields?: FlowComputedFieldRule[]
+  conditionRules?: FlowConditionRule[]
+  defaultTargetStepId?: string
   customParams?: Record<string, unknown>
 }
 
@@ -252,7 +289,14 @@ export interface FlowdeskModuleManifest {
   flowdeskVersionRange: string   // örn: '>=1.0.0'
   summary: string
   description: string
-  category: 'procurement' | 'hr' | 'real-estate' | 'official-letter' | 'general'
+  category:
+    | 'procurement'
+    | 'hr'
+    | 'real-estate'
+    | 'urban-inspection'
+    | 'legal-enforcement'
+    | 'official-letter'
+    | 'general'
   author: string
   repositoryUrl?: string
   flows: FlowDefinition[]
