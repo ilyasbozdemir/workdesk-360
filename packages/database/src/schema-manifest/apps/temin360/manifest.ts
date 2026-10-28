@@ -3,7 +3,7 @@
  * TEMİN 360 (Doğrudan Temin - 4734 KİK Md. 22) Şema Manifesti
  */
 export const temin360Manifest = {
-  app: "temin360-desktop",
+  app: "1.0.0-rc.10",
   target: "temin360-desktop",
   target_scope: "dogrudan-temin",
   version: "1.0.0-rc.9",
