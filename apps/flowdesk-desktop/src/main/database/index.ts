@@ -3,6 +3,31 @@ import path from 'path'
 import fs from 'fs'
 import { app } from 'electron'
 
+export interface KanuniSureKurali {
+  kaynakTarihAlani?: string
+  gunSayisi: number
+  gunTuru: 'calendar' | 'business'
+  hedefTarihAlani: string
+  aciklama: string
+}
+
+export interface AlgoritmaHesapKurali {
+  hedefAlan: string
+  formul: 'percentage' | 'multiply' | 'imar_md42_fine' | 'ihale_2886_notice_rule'
+  kaynakAlan?: string
+  ikincilAlan?: string
+  katsayi?: number
+  aciklama?: string
+}
+
+export interface DallanmaKurali {
+  alan: string
+  operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in'
+  deger: unknown
+  hedefAdimKodu: string
+  aciklama?: string
+}
+
 export interface SurecSablonu {
   id: string
   kod: string
@@ -19,6 +44,10 @@ export interface SurecSablonu {
     sorumluRol?: string
     sorumluBirim?: string
     zorunluMu?: boolean
+    kanuniSureKurali?: KanuniSureKurali
+    algoritmaKurallari?: AlgoritmaHesapKurali[]
+    dallanmaKurallari?: DallanmaKurali[]
+    sonlandiriciDalMi?: boolean
     formSemasi?: Array<{
       id: string
       label: string
@@ -598,6 +627,322 @@ export class FlowdeskDatabase {
     return res.changes > 0
   }
 
+  /**
+   * Şablon ve algoritma tabanlı mevzuat süreç paketleri kataloğu:
+   * - IMAR_3194_KACAK_YAPI: 3194 Sayılı İmar Kanunu Md. 32 & 42 Kaçak Yapı Takip Algoritması
+   * - DEVLET_IHALE_2886: 2886 Sayılı Devlet İhale Kanunu Satış/Kiralama/İrtifak Algoritması
+   */
+  public getStatutoryModuleCatalog(): Array<{
+    moduleCode: 'IMAR_3194_KACAK_YAPI' | 'DEVLET_IHALE_2886'
+    template: Omit<SurecSablonu, 'id' | 'createdAt' | 'updatedAt'>
+  }> {
+    return [
+      {
+        moduleCode: 'IMAR_3194_KACAK_YAPI',
+        template: {
+          kod: 'SBL-IMAR-3194',
+          ad: '3194 Sayılı İmar Kanunu Md. 32 & 42 Kaçak Yapı Tespit, Ceza ve Yıkım Algoritması',
+          kategori: 'imar_denetim',
+          aciklama:
+            'Yapı tatil tutanağı (mühürleme), 30 günlük yasal ruhsata bağlama süresi, Md. 42 kademeli para cezası algoritması ve 30 gün sonunda Mühür Fekki veya Yıkım/Savcılık (TCK 184) dallanması.',
+          versiyon: 1,
+          aktif: true,
+          adimlar: [
+            {
+              adimKodu: 'IMAR-01',
+              baslik: 'Saha Tespiti, Yapı Tatil Tutanağı (Mühürleme) ve Md. 42 Ceza Parametreleri',
+              adimTuru: 'form',
+              sira: 1,
+              sorumluRol: 'yapi_kontrol_ekibi',
+              sorumluBirim: 'Yapı Kontrol ve İmar Müdürlüğü',
+              zorunluMu: true,
+              kanuniSureKurali: {
+                kaynakTarihAlani: 'muhurleme_tarihi',
+                gunSayisi: 30,
+                gunTuru: 'calendar',
+                hedefTarihAlani: 'yasal_sure_bitis_tarihi',
+                aciklama:
+                  '3194 Sayılı Kanun Md. 32 uyarınca mühürleme tarihinden itibaren 30 günlük ruhsata bağlama süresi'
+              },
+              algoritmaKurallari: [
+                {
+                  hedefAlan: 'hesaplanan_idari_para_cezasi',
+                  formul: 'imar_md42_fine',
+                  aciklama:
+                    '3194 S.K. Md. 42 uyarınca m², yapı sınıfı ve artırım katsayılarına göre idari para cezası'
+                }
+              ],
+              formSemasi: [
+                { id: 'ada_parsel', label: 'Mahalle / Ada / Parsel', type: 'text', required: true },
+                { id: 'yapi_sahibi', label: 'Yapı Sahibi Adı Soyadı', type: 'text', required: true },
+                {
+                  id: 'aykirilik_turu',
+                  label: 'Aykırılık Türü',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'Tamamen Ruhsatsız Yapı', value: 'ruhsatsiz' },
+                    { label: 'Ruhsat ve Eklerine Aykırı Yapı', value: 'ruhsata_aykiri' }
+                  ]
+                },
+                { id: 'aykirilik_alani_m2', label: 'Aykırılık Alanı (m²)', type: 'number', required: true },
+                {
+                  id: 'yapi_sinifi',
+                  label: 'Yapı Sınıfı',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'I. Sınıf', value: 'I' },
+                    { label: 'II. Sınıf', value: 'II' },
+                    { label: 'III. Sınıf', value: 'III' },
+                    { label: 'IV. Sınıf', value: 'IV' },
+                    { label: 'V. Sınıf', value: 'V' }
+                  ]
+                },
+                { id: 'birim_maliyet_tl', label: 'Birim Maliyet (TL/m²)', type: 'currency', required: true },
+                {
+                  id: 'imar_durumu',
+                  label: 'İmar Planı Durumu',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'Uygulama İmar Planlı Alan', value: 'planli' },
+                    { label: 'İmarsız / Plansız Alan', value: 'plansiz' }
+                  ]
+                },
+                {
+                  id: 'kamu_tehlikesi_var_mi',
+                  label: 'Can ve Mal Güvenliği Tehlikesi Var mı?',
+                  type: 'boolean',
+                  required: false
+                },
+                { id: 'muhurleme_tarihi', label: 'Mühürleme Tarihi', type: 'date', required: true }
+              ]
+            },
+            {
+              adimKodu: 'IMAR-02',
+              baslik: 'Encümen İdari Para Cezası Kararı (Md. 42) ve Tebligat',
+              adimTuru: 'approval',
+              sira: 2,
+              sorumluRol: 'belediye_encumeni',
+              sorumluBirim: 'Encümen Müdürlüğü',
+              zorunluMu: true
+            },
+            {
+              adimKodu: 'IMAR-03',
+              baslik: '30 Günlük Yasal Süre Sonu Teknik Kontrol ve Karar Dallanması (Md. 32)',
+              adimTuru: 'form',
+              sira: 3,
+              sorumluRol: 'yapi_kontrol_muhendisi',
+              sorumluBirim: 'Yapı Kontrol ve İmar Müdürlüğü',
+              zorunluMu: true,
+              dallanmaKurallari: [
+                {
+                  alan: 'ruhsata_baglandi_mi',
+                  operator: 'eq',
+                  deger: 'evet',
+                  hedefAdimKodu: 'IMAR-04A',
+                  aciklama: '30 gün içinde ruhsat alındı / aykırılık giderildi -> Mühür Fekki dalı'
+                },
+                {
+                  alan: 'ruhsata_baglandi_mi',
+                  operator: 'eq',
+                  deger: 'hayir',
+                  hedefAdimKodu: 'IMAR-04B',
+                  aciklama: '30 gün içinde aykırılık giderilmedi -> Encümen Yıkım ve TCK 184 Suç Duyurusu dalı'
+                }
+              ],
+              formSemasi: [
+                { id: 'kontrol_tarihi', label: 'Süre Sonu Kontrol Tarihi', type: 'date', required: true },
+                {
+                  id: 'ruhsata_baglandi_mi',
+                  label: '30 Gün İçinde Ruhsata Bağlandı mı / Aykırılık Giderildi mi?',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'Evet — Ruhsata Bağlandı (Mühür Fekki)', value: 'evet' },
+                    { label: 'Hayır — Aykırılık Devam Ediyor (Yıkım ve Savcılık)', value: 'hayir' }
+                  ]
+                },
+                { id: 'kontrol_ozeti', label: 'Teknik Heyet Kontrol Özeti', type: 'textarea', required: true }
+              ]
+            },
+            {
+              adimKodu: 'IMAR-04A',
+              baslik: 'Dal A: Mühür Fekki (Kaldırma) Tutanağı ve Dosya Kapatma',
+              adimTuru: 'document',
+              sira: 4,
+              sorumluRol: 'yapi_kontrol_ekibi',
+              zorunluMu: false,
+              sonlandiriciDalMi: true
+            },
+            {
+              adimKodu: 'IMAR-04B',
+              baslik: 'Dal B: Encümen Yıkım Kararı (Md. 32) ve TCK Md. 184 Suç Duyurusu',
+              adimTuru: 'document',
+              sira: 5,
+              sorumluRol: 'hukuk_ve_encumen',
+              zorunluMu: false
+            },
+            {
+              adimKodu: 'IMAR-05B',
+              baslik: 'Dal B: Fen İşleri Yıkım İnfazı ve Yıkım Masraflarının %20 Fazlasıyla Tahsili',
+              adimTuru: 'task',
+              sira: 6,
+              sorumluBirim: 'Fen İşleri ve Mali Hizmetler',
+              zorunluMu: false
+            }
+          ]
+        }
+      },
+      {
+        moduleCode: 'DEVLET_IHALE_2886',
+        template: {
+          kod: 'SBL-DEVLET-IHALE-2886',
+          ad: '2886 Sayılı Devlet İhale Kanunu — Satış, Kiralama ve Trampa Süreç Algoritması',
+          kategori: 'emlak_ihale',
+          aciklama:
+            'Kıymet takdiri, %3 geçici teminat, parasal limite göre Kapalı/Açık teklif usulü ve ilan süresi algoritması, 15 iş günü İta Amiri onayı ve %6 kesin teminat / sözleşme süreci.',
+          versiyon: 1,
+          aktif: true,
+          adimlar: [
+            {
+              adimKodu: 'DI2886-01',
+              baslik: 'Taşınmaz Kıymet Takdiri, Tahmini Bedel ve Usul/Teminat Algoritması',
+              adimTuru: 'form',
+              sira: 1,
+              sorumluBirim: 'Emlak ve İstimlak Müdürlüğü',
+              zorunluMu: true,
+              algoritmaKurallari: [
+                {
+                  hedefAlan: 'gecici_teminat_tutari',
+                  formul: 'percentage',
+                  kaynakAlan: 'tahmini_bedel',
+                  katsayi: 3,
+                  aciklama: '2886 S.K. Md. 25 uyarınca %3 Geçici Teminat'
+                },
+                {
+                  hedefAlan: 'belirlenen_ihale_usulu',
+                  formul: 'ihale_2886_notice_rule',
+                  aciklama: 'Tahmini bedel ve parasal eşiğe göre Kapalı/Açık teklif ve ilan kuralı'
+                }
+              ],
+              formSemasi: [
+                { id: 'tasinmaz_tanimi', label: 'Taşınmaz Ada/Parsel ve Tanımı', type: 'text', required: true },
+                {
+                  id: 'islem_turu',
+                  label: 'İşlem Türü',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'Satış', value: 'satis' },
+                    { label: 'Kiralama (Md. 64)', value: 'kiralama' },
+                    { label: 'Trampa / İrtifak', value: 'trampa_irtifak' }
+                  ]
+                },
+                { id: 'tahmini_bedel', label: 'Tahmini (Muhammen) Bedel (TL)', type: 'currency', required: true },
+                { id: 'parasal_limit', label: 'Kapalı Teklif Parasal Eşiği (TL)', type: 'currency', required: true }
+              ]
+            },
+            {
+              adimKodu: 'DI2886-02',
+              baslik: 'İta Amiri İhale Onayı ve İlan Süreci (Md. 17)',
+              adimTuru: 'approval',
+              sira: 2,
+              sorumluRol: 'ita_amiri',
+              zorunluMu: true
+            },
+            {
+              adimKodu: 'DI2886-03',
+              baslik: 'İhale Komisyonu Kararı, 15 İş Günü Onay Süresi ve Sonuç Dallanması (Md. 28-31)',
+              adimTuru: 'form',
+              sira: 3,
+              sorumluRol: 'ihale_komisyonu',
+              zorunluMu: true,
+              kanuniSureKurali: {
+                kaynakTarihAlani: 'karar_tarihi',
+                gunSayisi: 15,
+                gunTuru: 'business',
+                hedefTarihAlani: 'ita_amiri_onay_son_tarihi',
+                aciklama: '2886 S.K. Md. 31 uyarınca karar tarihinden itibaren 15 iş günü İta Amiri onay süresi'
+              },
+              algoritmaKurallari: [
+                {
+                  hedefAlan: 'kesin_teminat_tutari',
+                  formul: 'percentage',
+                  kaynakAlan: 'ihale_bedeli',
+                  katsayi: 6,
+                  aciklama: '2886 S.K. Md. 54 uyarınca %6 Kesin Teminat'
+                }
+              ],
+              dallanmaKurallari: [
+                {
+                  alan: 'ihale_sonucu',
+                  operator: 'eq',
+                  deger: 'pazarliga_birakildi',
+                  hedefAdimKodu: 'DI2886-04A',
+                  aciklama: 'İstekli çıkmadı -> Md. 49/51 Pazarlık Usulüne Dönüşüm dalı'
+                },
+                {
+                  alan: 'ihale_sonucu',
+                  operator: 'eq',
+                  deger: 'uygun_teklif_var',
+                  hedefAdimKodu: 'DI2886-04B',
+                  aciklama: 'Uygun teklif var -> Kesinleşen Karar Tebligatı ve Sözleşme dalı'
+                }
+              ],
+              formSemasi: [
+                { id: 'karar_tarihi', label: 'Komisyon Karar Tarihi', type: 'date', required: true },
+                {
+                  id: 'ihale_sonucu',
+                  label: 'İhale Oturum Sonucu',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'Uygun Teklif Verildi', value: 'uygun_teklif_var' },
+                    { label: 'İstekli Çıkmadı — Pazarlığa Bırakıldı', value: 'pazarliga_birakildi' }
+                  ]
+                },
+                { id: 'kazanan_istekli', label: 'İhale Üzerinde Kalan İstekli', type: 'text', required: false },
+                { id: 'ihale_bedeli', label: 'Gerçekleşen İhale Bedeli (TL)', type: 'currency', required: false }
+              ]
+            },
+            {
+              adimKodu: 'DI2886-04A',
+              baslik: 'Dal A: 2886 Md. 49/51 Pazarlık Usulüne Dönüştürme İşlemi',
+              adimTuru: 'task',
+              sira: 4,
+              sorumluRol: 'ihale_komisyonu',
+              sonlandiriciDalMi: true
+            },
+            {
+              adimKodu: 'DI2886-04B',
+              baslik: 'Dal B: Kesinleşen İhale Kararı Tebligatı, %6 Kesin Teminat ve Noter Sözleşmesi (Md. 54)',
+              adimTuru: 'document',
+              sira: 5,
+              sorumluBirim: 'Emlak ve Hukuk İşleri'
+            }
+          ]
+        }
+      }
+    ]
+  }
+
+  /**
+   * İlgili mevzuat süreç modülünü şablon olarak veritabanına yükler (veya yüklüyse mevcut şablonu döner).
+   */
+  public installStatutoryModule(
+    moduleCode: 'IMAR_3194_KACAK_YAPI' | 'DEVLET_IHALE_2886'
+  ): SurecSablonu {
+    const entry = this.getStatutoryModuleCatalog().find((m) => m.moduleCode === moduleCode)
+    if (!entry) {
+      throw new Error(`Tanımsız mevzuat süreç modülü: ${moduleCode}`)
+    }
+    const existing = this.getTemplates().find((t) => t.kod === entry.template.kod)
+    if (existing) return existing
+    return this.createTemplate(entry.template)
+  }
+
   // ==========================================================================
   // SÜREÇ YÖNETİMİ (DATA_Surec, DATA_SurecAdim, DATA_Gorev)
   // ==========================================================================
@@ -966,8 +1311,135 @@ export class FlowdeskDatabase {
   }
 
   /**
+   * Kanuni süre hesaplayıcı (takvim günü veya hafta sonu hariç iş günü)
+   */
+  public calculateDeadline(
+    baseDateIso: string,
+    durationDays: number,
+    dayType: 'calendar' | 'business'
+  ): string {
+    const baseDate = new Date(baseDateIso)
+    const start = isNaN(baseDate.getTime()) ? new Date() : new Date(baseDate.getTime())
+    if (dayType === 'calendar') {
+      start.setUTCDate(start.getUTCDate() + durationDays)
+      return start.toISOString().split('T')[0]
+    }
+    let added = 0
+    while (added < durationDays) {
+      start.setUTCDate(start.getUTCDate() + 1)
+      const dow = start.getUTCDay()
+      if (dow !== 0 && dow !== 6) added++
+    }
+    return start.toISOString().split('T')[0]
+  }
+
+  private evaluateStepRules(
+    stepRuleDef: SurecSablonu['adimlar'][number] | undefined,
+    mergedData: Record<string, unknown>,
+    nowIso: string
+  ): Record<string, unknown> {
+    const computed: Record<string, unknown> = {}
+    if (!stepRuleDef) return computed
+
+    if (stepRuleDef.kanuniSureKurali) {
+      const r = stepRuleDef.kanuniSureKurali
+      const baseStr =
+        r.kaynakTarihAlani && mergedData[r.kaynakTarihAlani]
+          ? String(mergedData[r.kaynakTarihAlani])
+          : nowIso
+      computed[r.hedefTarihAlani] = this.calculateDeadline(baseStr, r.gunSayisi, r.gunTuru)
+      computed[`${r.hedefTarihAlani}_aciklama`] = r.aciklama
+    }
+
+    if (stepRuleDef.algoritmaKurallari && stepRuleDef.algoritmaKurallari.length > 0) {
+      const work = { ...mergedData, ...computed }
+      for (const rule of stepRuleDef.algoritmaKurallari) {
+        if (rule.formul === 'percentage' && rule.kaynakAlan) {
+          const baseVal = Number(work[rule.kaynakAlan] || 0)
+          const res = Math.round(baseVal * ((rule.katsayi || 0) / 100) * 100) / 100
+          computed[rule.hedefAlan] = res
+          work[rule.hedefAlan] = res
+        } else if (rule.formul === 'multiply' && rule.kaynakAlan && rule.ikincilAlan) {
+          const valA = Number(work[rule.kaynakAlan] || 0)
+          const valB = Number(work[rule.ikincilAlan] || 0)
+          const res = Math.round(valA * valB * (rule.katsayi ?? 1) * 100) / 100
+          computed[rule.hedefAlan] = res
+          work[rule.hedefAlan] = res
+        } else if (rule.formul === 'imar_md42_fine') {
+          const alanM2 = Number(work['aykirilik_alani_m2'] || 0)
+          const birimMaliyet = Number(work['birim_maliyet_tl'] || 15000)
+          const yapiSinifi = String(work['yapi_sinifi'] || 'III')
+          const imarDurumu = String(work['imar_durumu'] || 'planli')
+          const aykirilikTuru = String(work['aykirilik_turu'] || 'ruhsatsiz')
+          const tehlikeVarMi = Boolean(work['kamu_tehlikesi_var_mi'])
+
+          const sinifKatsayilari: Record<string, number> = {
+            I: 0.03,
+            II: 0.04,
+            III: 0.06,
+            IV: 0.08,
+            V: 0.1
+          }
+          const sinifKatsayisi = sinifKatsayilari[yapiSinifi] ?? 0.06
+          const temelCeza = alanM2 * birimMaliyet * sinifKatsayisi
+
+          let artirimCarpani = 1.0
+          if (aykirilikTuru === 'ruhsatsiz') artirimCarpani += 1.0
+          if (imarDurumu === 'plansiz') artirimCarpani += 0.5
+          if (tehlikeVarMi) artirimCarpani += 1.0
+
+          const toplamCeza = Math.round(temelCeza * artirimCarpani * 100) / 100
+          computed['temel_idari_para_cezasi'] = Math.round(temelCeza * 100) / 100
+          computed['artirim_carpani'] = artirimCarpani
+          computed[rule.hedefAlan] = toplamCeza
+          work[rule.hedefAlan] = toplamCeza
+        } else if (rule.formul === 'ihale_2886_notice_rule') {
+          const tahminiBedel = Number(work['tahmini_bedel'] || 0)
+          const parasalLimit = Number(work['parasal_limit'] || 2500000)
+          const isKapali = tahminiBedel >= parasalLimit
+          const usul = isKapali
+            ? 'Kapalı Teklif Usulü (2886 Md. 36)'
+            : 'Açık Teklif Usulü (2886 Md. 45)'
+          const ilan = isKapali
+            ? 'İhale tarihinden en az 10 gün önce Basın İlan Kurumu / Yerel Gazete + 7 gün önce İlan Tahtası (Md. 17)'
+            : 'İhale tarihinden en az 7 gün önce İdare ve Belediye İlan Tahtası (Md. 17)'
+          computed[rule.hedefAlan] = usul
+          computed['zorunlu_ilan_kurali'] = ilan
+          work[rule.hedefAlan] = usul
+        }
+      }
+    }
+
+    return computed
+  }
+
+  private evaluateBranchRule(rule: DallanmaKurali, data: Record<string, unknown>): boolean {
+    const actual = data[rule.alan]
+    const expected = rule.deger
+    switch (rule.operator) {
+      case 'eq':
+        return actual === expected
+      case 'neq':
+        return actual !== expected
+      case 'gt':
+        return Number(actual) > Number(expected)
+      case 'gte':
+        return Number(actual) >= Number(expected)
+      case 'lt':
+        return Number(actual) < Number(expected)
+      case 'lte':
+        return Number(actual) <= Number(expected)
+      case 'in':
+        return Array.isArray(expected) && expected.includes(actual)
+      default:
+        return false
+    }
+  }
+
+  /**
    * Adım ilerletme (advanceStep)
-   * Aktif adımı tamamlar, bir sonraki adıma geçer veya tüm süreci tamamlar.
+   * Aktif adımı tamamlar, varsa şablondaki kanuni süre, ceza/oran algoritması ve
+   * koşullu dallanma (branch) kurallarını çalıştırarak bir sonraki adıma geçer veya süreci tamamlar.
    */
   public advanceStep(params: {
     processId: string
@@ -975,7 +1447,14 @@ export class FlowdeskDatabase {
     actor: string
     formData?: Record<string, unknown>
     notes?: string
-  }): { success: boolean; processCompleted?: boolean; message?: string } {
+  }): {
+    success: boolean
+    processCompleted?: boolean
+    computedData?: Record<string, unknown>
+    selectedBranchStepCode?: string
+    skippedStepCodes?: string[]
+    message?: string
+  } {
     const detail = this.getProcessById(params.processId)
     if (!detail) return { success: false, message: 'Süreç bulunamadı.' }
     if (detail.surec.durum !== 'aktif') {
@@ -988,17 +1467,66 @@ export class FlowdeskDatabase {
     const currentStep = detail.adimlar[currentStepIndex]
     const now = new Date().toISOString()
 
-    // Süreç genel verisine form verilerini birleştir
-    const updatedProcessData = {
+    const template = detail.surec.sablonId ? this.getTemplateById(detail.surec.sablonId) : null
+    const templateStepDef = template?.adimlar.find((a) => a.adimKodu === currentStep.adimKodu)
+
+    const baseProcessData = {
       ...detail.surec.surecVerisi,
       ...(params.formData || {})
     }
+    const computedData = this.evaluateStepRules(templateStepDef, baseProcessData, now)
+    const updatedProcessData = {
+      ...baseProcessData,
+      ...computedData
+    }
+    const stepFormPayload =
+      params.formData || Object.keys(computedData).length > 0
+        ? { ...(currentStep.formVerisi || {}), ...(params.formData || {}), ...computedData }
+        : currentStep.formVerisi
 
-    const nextStep = detail.adimlar[currentStepIndex + 1]
+    // Dallanma (condition) veya sonlandırıcı dal (sonlandiriciDalMi) kontrolü
+    let nextStepIndex = currentStepIndex + 1
+    let selectedBranchStepCode: string | undefined
+    let branchReason: string | undefined
+    const skippedSteps: SurecAdimKaydi[] = []
+
+    if (templateStepDef?.sonlandiriciDalMi) {
+      for (let i = currentStepIndex + 1; i < detail.adimlar.length; i++) {
+        if (detail.adimlar[i].durum === 'beklemede') {
+          skippedSteps.push(detail.adimlar[i])
+        }
+      }
+      nextStepIndex = detail.adimlar.length
+    } else if (templateStepDef?.dallanmaKurallari && templateStepDef.dallanmaKurallari.length > 0) {
+      for (const bRule of templateStepDef.dallanmaKurallari) {
+        if (this.evaluateBranchRule(bRule, updatedProcessData)) {
+          const targetIdx = detail.adimlar.findIndex((a) => a.adimKodu === bRule.hedefAdimKodu)
+          if (targetIdx > currentStepIndex) {
+            for (let i = currentStepIndex + 1; i < targetIdx; i++) {
+              if (detail.adimlar[i].durum === 'beklemede') {
+                skippedSteps.push(detail.adimlar[i])
+              }
+            }
+            nextStepIndex = targetIdx
+            selectedBranchStepCode = bRule.hedefAdimKodu
+            branchReason = bRule.aciklama
+          }
+          break
+        }
+      }
+    }
+
+    const nextStep = detail.adimlar[nextStepIndex]
     const isLastStep = !nextStep
 
-    const completedStepCount = detail.adimlar.filter((a) => a.durum === 'tamamlandi').length + 1
-    const progressPercent = Math.round((completedStepCount / detail.adimlar.length) * 100)
+    const completedOrSkippedCount =
+      detail.adimlar.filter((a) => a.durum === 'tamamlandi' || a.durum === 'atlandi').length +
+      1 +
+      skippedSteps.length
+    const progressPercent = Math.min(
+      100,
+      Math.round((completedOrSkippedCount / detail.adimlar.length) * 100)
+    )
 
     const tx = this.db.transaction(() => {
       // 1. Mevcut adımı tamamla
@@ -1013,10 +1541,28 @@ export class FlowdeskDatabase {
       `).run(
         params.actor,
         now,
-        params.formData ? JSON.stringify(params.formData) : currentStep.formVerisi ? JSON.stringify(currentStep.formVerisi) : null,
+        stepFormPayload ? JSON.stringify(stepFormPayload) : null,
         params.notes || null,
         params.stepId
       )
+
+      // 2. Dallanma nedeniyle atlanan adımları 'atlandi' olarak işaretle
+      if (skippedSteps.length > 0) {
+        const markSkipped = this.db.prepare(`
+          UPDATE DATA_SurecAdim
+          SET durum = 'atlandi',
+              tamamlanmaTarihi = ?,
+              notlar = ?
+          WHERE id = ?
+        `)
+        for (const sk of skippedSteps) {
+          markSkipped.run(
+            now,
+            branchReason || 'Algoritmik karar dallanması nedeniyle bu dal atlandı.',
+            sk.id
+          )
+        }
+      }
 
       if (isLastStep) {
         // Tüm adımlar bitti: Süreci tamamla
@@ -1040,7 +1586,11 @@ export class FlowdeskDatabase {
           params.stepId,
           params.actor,
           now,
-          JSON.stringify({ notlar: params.notes, bitisTarihi: now })
+          JSON.stringify({
+            notlar: params.notes,
+            bitisTarihi: now,
+            atlananAdimlar: skippedSteps.map((s) => s.adimKodu)
+          })
         )
       } else {
         // Sonraki adıma geç
@@ -1071,14 +1621,23 @@ export class FlowdeskDatabase {
           JSON.stringify({
             tamamlananAdim: currentStep.baslik,
             sonrakiAdim: nextStep.baslik,
-            ilerlemeYuzdesi: progressPercent
+            ilerlemeYuzdesi: progressPercent,
+            secilenDal: selectedBranchStepCode,
+            atlananAdimlar: skippedSteps.map((s) => s.adimKodu),
+            hesaplananAlanlar: Object.keys(computedData)
           })
         )
       }
     })
 
     tx()
-    return { success: true, processCompleted: isLastStep }
+    return {
+      success: true,
+      processCompleted: isLastStep,
+      computedData,
+      selectedBranchStepCode,
+      skippedStepCodes: skippedSteps.map((s) => s.adimKodu)
+    }
   }
 
   /**

@@ -7,6 +7,9 @@ export const flowdeskAPI = {
   createTemplate: (data: unknown) => ipcRenderer.invoke('flowdesk:createTemplate', data),
   updateTemplate: (id: string, updates: unknown) =>
     ipcRenderer.invoke('flowdesk:updateTemplate', { id, updates }),
+  getStatutoryModuleCatalog: () => ipcRenderer.invoke('flowdesk:getStatutoryModuleCatalog'),
+  installStatutoryModule: (moduleCode: 'IMAR_3194_KACAK_YAPI' | 'DEVLET_IHALE_2886') =>
+    ipcRenderer.invoke('flowdesk:installStatutoryModule', moduleCode),
 
   getProcesses: (filter?: unknown) => ipcRenderer.invoke('flowdesk:getProcesses', filter),
   getProcessById: (id: string) => ipcRenderer.invoke('flowdesk:getProcessById', id),

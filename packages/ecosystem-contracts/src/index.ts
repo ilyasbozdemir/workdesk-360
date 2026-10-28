@@ -7,4 +7,6 @@ export * from './genericSampleFlows.js'
 export * from './personel.js'
 export * from './evraktron.js'
 export * from './engine.js'
+export * from './statutoryProcessModules.js'
+
 

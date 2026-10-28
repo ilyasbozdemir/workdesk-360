@@ -265,4 +265,69 @@ describe('FlowdeskDatabase — Kurumsal Dinamik Süreç ve Veri İzolasyon Testl
     const stats = db.getDashboardStats()
     expect(stats.totalProcesses).toBeGreaterThanOrEqual(1)
   })
+
+  it('Şablon ve algoritma tabanlı 3194 İmar Kanunu Kaçak Yapı (Md. 32/42) ve 2886 modüllerini isteğe bağlı yükleyip algoritmik dallanmaları yürütmelidir', () => {
+    const imarTemplate = db.installStatutoryModule('IMAR_3194_KACAK_YAPI')
+    expect(imarTemplate.kod).toBe('SBL-IMAR-3194')
+    expect(imarTemplate.adimlar.length).toBe(6)
+
+    const proc = db.startProcess({
+      templateId: imarTemplate.id,
+      title: '142 Ada 8 Parsel Kaçak Yapı Takibi',
+      initiator: 'Yapı Kontrol Ekibi'
+    })
+
+    // 1. Adım: Mühürleme ve Md. 42 Ceza Parametreleri
+    const res1 = db.advanceStep({
+      processId: proc.surec.id,
+      stepId: proc.adimlar[0].id,
+      actor: 'Yapı Kontrol Mühendisi',
+      formData: {
+        ada_parsel: '142 Ada 8 Parsel',
+        yapi_sahibi: 'Ali Veli',
+        aykirilik_turu: 'ruhsatsiz',
+        aykirilik_alani_m2: 120,
+        yapi_sinifi: 'III',
+        birim_maliyet_tl: 15000,
+        imar_durumu: 'planli',
+        kamu_tehlikesi_var_mi: false,
+        muhurleme_tarihi: '2026-10-01'
+      }
+    })
+
+    expect(res1.success).toBe(true)
+    expect(res1.computedData?.['yasal_sure_bitis_tarihi']).toBe('2026-10-31')
+    // 120 * 15000 * 0.06 = 108.000 * 2.0 (ruhsatsiz) = 216.000 TL
+    expect(res1.computedData?.['hesaplanan_idari_para_cezasi']).toBe(216000)
+
+    // 2. Adım: Encümen Ceza Kararı Onayı
+    const after1 = db.getProcessById(proc.surec.id)!
+    db.advanceStep({
+      processId: proc.surec.id,
+      stepId: after1.adimlar[1].id,
+      actor: 'Belediye Encümeni'
+    })
+
+    // 3. Adım: 30 Gün Sonu Kontrol -> Ruhsata bağlanmadı ('hayir') -> IMAR-04A (Mühür Fekki) atlanmalı, IMAR-04B (Yıkım ve Savcılık) seçilmeli
+    const after2 = db.getProcessById(proc.surec.id)!
+    const res3 = db.advanceStep({
+      processId: proc.surec.id,
+      stepId: after2.adimlar[2].id,
+      actor: 'Yapı Kontrol Mühendisi',
+      formData: {
+        kontrol_tarihi: '2026-11-01',
+        ruhsata_baglandi_mi: 'hayir',
+        kontrol_ozeti: 'Yasal sürede ruhsat alınmadı.'
+      }
+    })
+
+    expect(res3.selectedBranchStepCode).toBe('IMAR-04B')
+    expect(res3.skippedStepCodes).toContain('IMAR-04A')
+
+    const after3 = db.getProcessById(proc.surec.id)!
+    const muhurFekkiStep = after3.adimlar.find((a) => a.adimKodu === 'IMAR-04A')
+    const yikimStep = after3.adimlar.find((a) => a.adimKodu === 'IMAR-04B')
+    expect(muhurFekkiStep?.durum).toBe('atlandi')
+    expect(yikimStep?.durum).toBe('devam_ediyor')
+  })
 })

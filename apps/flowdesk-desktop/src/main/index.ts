@@ -49,11 +49,17 @@ app.whenReady().then(() => {
   // IPC HANDLERS
   // ========================================================================
 
-  // Şablonlar
+  // Şablonlar ve Mevzuat Süreç Modülleri
   ipcMain.handle('flowdesk:getTemplates', () => db?.getTemplates() || [])
   ipcMain.handle('flowdesk:getTemplateById', (_, id: string) => db?.getTemplateById(id) || null)
   ipcMain.handle('flowdesk:createTemplate', (_, data) => db?.createTemplate(data))
   ipcMain.handle('flowdesk:updateTemplate', (_, { id, updates }) => db?.updateTemplate(id, updates))
+  ipcMain.handle('flowdesk:getStatutoryModuleCatalog', () => db?.getStatutoryModuleCatalog() || [])
+  ipcMain.handle(
+    'flowdesk:installStatutoryModule',
+    (_, moduleCode: 'IMAR_3194_KACAK_YAPI' | 'DEVLET_IHALE_2886') =>
+      db?.installStatutoryModule(moduleCode)
+  )
 
   // Süreçler
   ipcMain.handle('flowdesk:getProcesses', (_, filter) => db?.getProcesses(filter) || [])
