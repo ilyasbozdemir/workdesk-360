@@ -399,7 +399,11 @@ describe('Workspace Security & Path Traversal Protections', () => {
       // AuditIntegrityVerifier.verifyChain'i tahrifat alarmı verecek şekilde spy'lıyoruz
       const verifySpy = vi.spyOn(AuditIntegrityVerifier, 'verifyChain').mockReturnValue({
         isValid: false,
+        isFullySealed: true,
+        hasPendingUnhashed: false,
+        status: 'TAMPERED_CONTENT',
         totalRecords: 10,
+        sealedRecords: 10,
         unhashedRecords: 0,
         brokenRecordId: 5,
         error: 'Sistem günlüğü (Audit Log) tahrifatı tespit edildi: Kayıt #5 hash uyumsuzluğu!'

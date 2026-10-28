@@ -430,7 +430,7 @@ export class AuditChainService {
     const lastLog = db
       .prepare(
         `
-      SELECT current_hash 
+      SELECT id, current_hash 
       FROM sys_audit_logs 
       WHERE current_hash IS NOT NULL 
       ORDER BY id DESC 
@@ -438,6 +438,13 @@ export class AuditChainService {
     `
       )
       .get() as any
+
+    // Savunma Kalkanı: Mühürsüz kayıt, mühürlü bir kayıttan daha düşük ID'ye sahip olamaz (araya kayıt sokulamaz)
+    if (lastLog && typeof lastLog.id === 'number' && unhashedLog.id <= lastLog.id) {
+      throw new Error(
+        `[AuditChainService] Güvenlik ihlali: Mühürsüz kayıt #${unhashedLog.id}, önceden mühürlenmiş #${lastLog.id} kaydından önce yer alıyor! Sıra dışı mühürleme engellendi.`
+      )
+    }
 
     const prevHash = lastLog && lastLog.current_hash ? lastLog.current_hash : GENESIS_HASH
 
@@ -491,9 +498,29 @@ export class AuditChainService {
   }
 }
 
+export type ChainVerificationStatus =
+  | 'CLEAN'             // Zincir geçerli ve bütün kayıtlar mühürlü (%100 mühürlü)
+  | 'PENDING_UNSEALED'  // Mühürlü bloklar geçerli ancak kuyrukta henüz mühürlenmemiş işlemler var
+  | 'INTERLEAVED_HOLE'  // Mühürsüz kayıtlar mühürlü blokların arasında veya öncesinde! (Kritik tahrifat/anomali)
+  | 'BROKEN_CHAIN'      // prev_hash zinciri kırılmış (aradan kayıt silinmiş)
+  | 'TAMPERED_CONTENT'  // current_hash blok içeriğiyle uyuşmuyor (kayıt içeriği tahrif edilmiş)
+  | 'ERROR'             // Veritabanı veya şema sorgu hatası
+
+export interface VerifyChainOptions {
+  /**
+   * Kuyrukta henüz mühürlenmemiş kayıtlar olduğunda (ve zincir sağlamsa)
+   * isValid: true kabul edilsin mi? (Varsayılan: false - strict adli doğrulama modu)
+   */
+  allowPendingUnhashed?: boolean
+}
+
 export interface ChainVerificationResult {
   isValid: boolean
+  isFullySealed: boolean
+  hasPendingUnhashed: boolean
+  status: ChainVerificationStatus
   totalRecords: number
+  sealedRecords: number
   unhashedRecords: number
   brokenRecordId?: number
   error?: string
@@ -505,46 +532,108 @@ export interface ChainVerificationResult {
 export class AuditIntegrityVerifier {
   /**
    * Tüm log geçmişini tarayarak zincir bütünlüğünü doğrular.
+   * @param db SQLite veritabanı örneği
+   * @param options Doğrulama seçenekleri
    * @returns ChainVerificationResult
    */
-  public static verifyChain(db: Database.Database): ChainVerificationResult {
+  public static verifyChain(
+    db: Database.Database,
+    options?: VerifyChainOptions
+  ): ChainVerificationResult {
     ensureAuditLogSchema(db)
 
-    let unhashedCount = 0
-    try {
-      const res = db
-        .prepare(`SELECT COUNT(*) as cnt FROM sys_audit_logs WHERE current_hash IS NULL`)
-        .get() as { cnt: number }
-      unhashedCount = res?.cnt || 0
-    } catch {}
+    const stats = (db
+      .prepare(
+        `
+      SELECT 
+        COUNT(*) as total_count,
+        COUNT(CASE WHEN current_hash IS NOT NULL THEN 1 END) as sealed_count,
+        COUNT(CASE WHEN current_hash IS NULL THEN 1 END) as unhashed_count,
+        MIN(CASE WHEN current_hash IS NOT NULL THEN id END) as min_sealed_id,
+        MAX(CASE WHEN current_hash IS NOT NULL THEN id END) as max_sealed_id,
+        MIN(CASE WHEN current_hash IS NULL THEN id END) as min_unhashed_id,
+        MAX(CASE WHEN current_hash IS NULL THEN id END) as max_unhashed_id
+      FROM sys_audit_logs
+    `
+      )
+      .get() || {}) as any
 
+    const totalRecords = Number(stats.total_count || 0)
+    const sealedRecords = Number(stats.sealed_count || 0)
+    const unhashedRecords = Number(stats.unhashed_count || 0)
+    const maxSealedId = stats.max_sealed_id !== null ? Number(stats.max_sealed_id) : null
+    const minUnhashedId = stats.min_unhashed_id !== null ? Number(stats.min_unhashed_id) : null
+
+    // 1. Senaryo: Tamamen boş denetim günlüğü
+    if (totalRecords === 0) {
+      return {
+        isValid: true,
+        isFullySealed: true,
+        hasPendingUnhashed: false,
+        status: 'CLEAN',
+        totalRecords: 0,
+        sealedRecords: 0,
+        unhashedRecords: 0
+      }
+    }
+
+    // 2. Senaryo: Henüz hiçbir kayıt mühürlenmemiş (yalnızca mühürsüz kayıtlar var)
+    if (sealedRecords === 0 && unhashedRecords > 0) {
+      const isAllowed = Boolean(options?.allowPendingUnhashed)
+      return {
+        isValid: isAllowed,
+        isFullySealed: false,
+        hasPendingUnhashed: true,
+        status: 'PENDING_UNSEALED',
+        totalRecords,
+        sealedRecords: 0,
+        unhashedRecords,
+        error: `Denetim izinde ${unhashedRecords} adet mühürsüz kayıt bulundu; blokzincir henüz başlatılmamış/mühürlenmemiş.`
+      }
+    }
+
+    // 3. Senaryo: Mühürsüz bir kayıt, mühürlü bir kayıttan ÖNCE veya ARADA yer alıyorsa (INTERLEAVED_HOLE)
+    // Bu durum normal çalışmada imkansızdır; ya araya kayıt eklenmiş ya da aradaki bir kaydın hash'i NULL yapılmıştır.
+    if (unhashedRecords > 0 && sealedRecords > 0 && minUnhashedId !== null && maxSealedId !== null) {
+      if (minUnhashedId < maxSealedId) {
+        return {
+          isValid: false,
+          isFullySealed: false,
+          hasPendingUnhashed: true,
+          status: 'INTERLEAVED_HOLE',
+          totalRecords,
+          sealedRecords,
+          unhashedRecords,
+          brokenRecordId: minUnhashedId,
+          error: `Kritik Anomali: Mühürsüz kayıt #${minUnhashedId}, mühürlü blokların arasında veya öncesinde tespit edildi! Olası tahrifat veya aradan kayıt sızdırma girişimi.`
+        }
+      }
+    }
+
+    // 4. Senaryo: Mühürlü kayıtları Genesis'ten itibaren sırayla zincirleme hash kontrolünden geçir
     const logs = db
       .prepare(`SELECT * FROM sys_audit_logs WHERE current_hash IS NOT NULL ORDER BY id ASC`)
       .all() as any[]
 
-    if (logs.length === 0) {
-      return {
-        isValid: true,
-        totalRecords: 0,
-        unhashedRecords: unhashedCount
-      }
-    }
-
     let expectedPrevHash = GENESIS_HASH
 
     for (const log of logs) {
-      // 1. Kaydedilmiş prev_hash beklenen hash ile eşleşiyor mu?
+      // 4a. Kaydedilmiş prev_hash beklenen hash ile eşleşiyor mu?
       if (log.prev_hash !== expectedPrevHash) {
         return {
           isValid: false,
-          totalRecords: logs.length,
-          unhashedRecords: unhashedCount,
+          isFullySealed: unhashedRecords === 0,
+          hasPendingUnhashed: unhashedRecords > 0,
+          status: 'BROKEN_CHAIN',
+          totalRecords,
+          sealedRecords,
+          unhashedRecords,
           brokenRecordId: log.id,
           error: `Zincir kırılması: Kayıt #${log.id} için beklenen prev_hash '${expectedPrevHash}', ancak '${log.prev_hash}' bulundu!`
         }
       }
 
-      // 2. Blok verisinin hash'ini yeniden hesapla
+      // 4b. Blok verisinin hash'ini yeniden hesapla
       const recalculatedHash = calculateLogBlockHash({
         id: log.id,
         tableName: log.table_name,
@@ -557,12 +646,16 @@ export class AuditIntegrityVerifier {
         prevHash: log.prev_hash
       })
 
-      // 3. Yeniden hesaplanan hash veritabanındaki current_hash ile eşleşiyor mu?
+      // 4c. Yeniden hesaplanan hash veritabanındaki current_hash ile eşleşiyor mu?
       if (log.current_hash !== recalculatedHash) {
         return {
           isValid: false,
-          totalRecords: logs.length,
-          unhashedRecords: unhashedCount,
+          isFullySealed: unhashedRecords === 0,
+          hasPendingUnhashed: unhashedRecords > 0,
+          status: 'TAMPERED_CONTENT',
+          totalRecords,
+          sealedRecords,
+          unhashedRecords,
           brokenRecordId: log.id,
           error: `Veri tahrifatı: Kayıt #${log.id} içeriği sonradan değiştirilmiş! Blok bütünlüğü bozuldu.`
         }
@@ -571,11 +664,32 @@ export class AuditIntegrityVerifier {
       expectedPrevHash = log.current_hash
     }
 
+    // 5. Senaryo: Mühürlü zincir 100% sağlam. Kuyrukta mühürsüz kayıt var mı?
+    if (unhashedRecords > 0) {
+      const isAllowed = Boolean(options?.allowPendingUnhashed)
+      return {
+        isValid: isAllowed,
+        isFullySealed: false,
+        hasPendingUnhashed: true,
+        status: 'PENDING_UNSEALED',
+        totalRecords,
+        sealedRecords,
+        unhashedRecords,
+        error: `Blokzincir mühürlü bölümü (${sealedRecords} blok) doğrulandı; ancak kuyrukta ${unhashedRecords} adet henüz mühürlenmemiş kayıt bekliyor.`
+      }
+    }
+
+    // 6. Senaryo: Tüm kayıtlar doğrulanmış ve %100 mühürlü
     return {
       isValid: true,
-      totalRecords: logs.length,
-      unhashedRecords: unhashedCount
+      isFullySealed: true,
+      hasPendingUnhashed: false,
+      status: 'CLEAN',
+      totalRecords,
+      sealedRecords,
+      unhashedRecords: 0
     }
   }
 }
+
 

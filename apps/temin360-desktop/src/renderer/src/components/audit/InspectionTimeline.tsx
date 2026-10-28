@@ -31,7 +31,11 @@ export interface AuditLog {
 
 export interface ChainStatus {
   isValid: boolean
+  isFullySealed?: boolean
+  hasPendingUnhashed?: boolean
+  status?: 'CLEAN' | 'PENDING_UNSEALED' | 'INTERLEAVED_HOLE' | 'BROKEN_CHAIN' | 'TAMPERED_CONTENT' | 'ERROR'
   totalRecords: number
+  sealedRecords?: number
   unhashedRecords: number
   brokenRecordId?: number
   error?: string
@@ -55,6 +59,7 @@ export const InspectionTimeline: React.FC<InspectionTimelineProps> = ({
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [chainStatus, setChainStatus] = useState<ChainStatus | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isSealing, setIsSealing] = useState<boolean>(false)
   const [selectedOp, setSelectedOp] = useState<'ALL' | 'UPDATE' | 'DELETE' | 'TAMPER'>('ALL')
   const [copiedHashId, setCopiedHashId] = useState<number | null>(null)
   const [copiedBlockHashId, setCopiedBlockHashId] = useState<number | null>(null)
@@ -70,6 +75,20 @@ export const InspectionTimeline: React.FC<InspectionTimelineProps> = ({
       setChainStatus(result)
     } catch (err) {
       console.warn('[InspectionTimeline] Blokzincir bütünlüğü doğrulanamadı:', err)
+    }
+  }
+
+  const sealPendingLogs = async (): Promise<void> => {
+    setIsSealing(true)
+    try {
+      if (window.electron?.ipcRenderer) {
+        await window.electron.ipcRenderer.invoke('audit:seal-pending')
+      }
+      await fetchLogs()
+    } catch (err) {
+      console.error('[InspectionTimeline] Mühürleme hatası:', err)
+    } finally {
+      setIsSealing(false)
     }
   }
 
@@ -230,20 +249,26 @@ export const InspectionTimeline: React.FC<InspectionTimelineProps> = ({
       {chainStatus && (
         <div
           className={`mb-6 p-4 rounded-xl border flex items-start gap-3.5 transition-all ${
-            chainStatus.isValid
+            chainStatus.isValid && (chainStatus.isFullySealed ?? chainStatus.unhashedRecords === 0)
               ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-100'
-              : 'bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-100 shadow-sm animate-pulse'
+              : chainStatus.status === 'PENDING_UNSEALED' || (!chainStatus.isValid && chainStatus.unhashedRecords > 0 && chainStatus.status !== 'INTERLEAVED_HOLE' && chainStatus.status !== 'BROKEN_CHAIN' && chainStatus.status !== 'TAMPERED_CONTENT')
+                ? 'bg-amber-50/80 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100'
+                : 'bg-rose-50 dark:bg-rose-950/50 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-100 shadow-sm animate-pulse'
           }`}
         >
           <div
-            className={`p-2 rounded-xl flex-shrink-0 mt-0.5 ${
-              chainStatus.isValid
+            className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+              chainStatus.isValid && (chainStatus.isFullySealed ?? chainStatus.unhashedRecords === 0)
                 ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
-                : 'bg-rose-100 dark:bg-rose-900/80 text-rose-700 dark:text-rose-300'
+                : chainStatus.status === 'PENDING_UNSEALED' || (!chainStatus.isValid && chainStatus.unhashedRecords > 0 && chainStatus.status !== 'INTERLEAVED_HOLE' && chainStatus.status !== 'BROKEN_CHAIN' && chainStatus.status !== 'TAMPERED_CONTENT')
+                  ? 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300'
+                  : 'bg-rose-100 dark:bg-rose-900/80 text-rose-700 dark:text-rose-300'
             }`}
           >
-            {chainStatus.isValid ? (
+            {chainStatus.isValid && (chainStatus.isFullySealed ?? chainStatus.unhashedRecords === 0) ? (
               <ShieldCheck className="w-5 h-5" />
+            ) : chainStatus.status === 'PENDING_UNSEALED' || (!chainStatus.isValid && chainStatus.unhashedRecords > 0 && chainStatus.status !== 'INTERLEAVED_HOLE' && chainStatus.status !== 'BROKEN_CHAIN' && chainStatus.status !== 'TAMPERED_CONTENT') ? (
+              <Clock className="w-5 h-5" />
             ) : (
               <ShieldAlert className="w-5 h-5" />
             )}
@@ -251,29 +276,52 @@ export const InspectionTimeline: React.FC<InspectionTimelineProps> = ({
           <div className="text-xs space-y-1 flex-1">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h4 className="font-bold text-sm flex items-center gap-1.5">
-                {chainStatus.isValid
-                  ? '🛡️ Blokzincir Bütünlüğü Doğrulandı (Mühürlü Zincir)'
-                  : '🚨 KRİTİK ALARM: Blokzincir Zincir Bütünlüğü Bozulmuş!'}
+                {chainStatus.isValid && (chainStatus.isFullySealed ?? chainStatus.unhashedRecords === 0)
+                  ? '🛡️ Blokzincir Bütünlüğü Doğrulandı (%100 Mühürlü Zincir)'
+                  : chainStatus.status === 'PENDING_UNSEALED' || (!chainStatus.isValid && chainStatus.unhashedRecords > 0 && chainStatus.status !== 'INTERLEAVED_HOLE' && chainStatus.status !== 'BROKEN_CHAIN' && chainStatus.status !== 'TAMPERED_CONTENT')
+                    ? '⏳ Mühür Bekleyen Kayıtlar Mevcut'
+                    : '🚨 KRİTİK ALARM: Blokzincir Zincir Bütünlüğü Bozulmuş!'}
               </h4>
-              <span
-                className={`font-mono text-[11px] px-2 py-0.5 rounded-full font-semibold ${
-                  chainStatus.isValid
-                    ? 'bg-emerald-200/80 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200'
-                    : 'bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-100'
-                }`}
-              >
-                {chainStatus.totalRecords} Mühürlü Blok
-                {chainStatus.unhashedRecords > 0
-                  ? ` • ${chainStatus.unhashedRecords} Bekleyen`
-                  : ' • %100 Mühürlü'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`font-mono text-[11px] px-2 py-0.5 rounded-full font-semibold ${
+                    chainStatus.isValid && (chainStatus.isFullySealed ?? chainStatus.unhashedRecords === 0)
+                      ? 'bg-emerald-200/80 dark:bg-emerald-900/70 text-emerald-800 dark:text-emerald-200'
+                      : chainStatus.status === 'PENDING_UNSEALED' || (!chainStatus.isValid && chainStatus.unhashedRecords > 0 && chainStatus.status !== 'INTERLEAVED_HOLE' && chainStatus.status !== 'BROKEN_CHAIN' && chainStatus.status !== 'TAMPERED_CONTENT')
+                        ? 'bg-amber-200/90 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
+                        : 'bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-100'
+                  }`}
+                >
+                  {chainStatus.sealedRecords ?? chainStatus.totalRecords} Mühürlü Blok
+                  {chainStatus.unhashedRecords > 0
+                    ? ` • ${chainStatus.unhashedRecords} Bekleyen`
+                    : ' • %100 Mühürlü'}
+                </span>
+                {(chainStatus.status === 'PENDING_UNSEALED' || (!chainStatus.isValid && chainStatus.unhashedRecords > 0 && chainStatus.status !== 'INTERLEAVED_HOLE' && chainStatus.status !== 'BROKEN_CHAIN' && chainStatus.status !== 'TAMPERED_CONTENT')) && (
+                  <button
+                    onClick={sealPendingLogs}
+                    disabled={isSealing}
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-semibold text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 rounded-md transition-colors shadow-2xs"
+                  >
+                    <Lock className="w-3 h-3" />
+                    {isSealing ? 'Mühürleniyor...' : 'Şimdi Mühürle'}
+                  </button>
+                )}
+              </div>
             </div>
             <p className="leading-relaxed text-slate-700 dark:text-slate-300">
-              {chainStatus.isValid ? (
+              {chainStatus.isValid && (chainStatus.isFullySealed ?? chainStatus.unhashedRecords === 0) ? (
                 <>
                   Tüm denetim logları SHA-256 kriptografik hash zinciri ile birbirine bağlanmış
                   ve Genesis bloğundan son satıra kadar adli bilişim (forensics) standartlarında
                   doğrulanmıştır. Kayıt silinemez ve manipüle edilemez.
+                </>
+              ) : chainStatus.status === 'PENDING_UNSEALED' || (!chainStatus.isValid && chainStatus.unhashedRecords > 0 && chainStatus.status !== 'INTERLEAVED_HOLE' && chainStatus.status !== 'BROKEN_CHAIN' && chainStatus.status !== 'TAMPERED_CONTENT') ? (
+                <>
+                  Mevcut blokzinciri doğrulanmıştır; ancak son yapılan işlemlerden kalan{' '}
+                  <strong>{chainStatus.unhashedRecords} adet</strong> denetim kaydı henüz zincire
+                  kriptografik olarak mühürlenmemiştir. Oturum kaydedilirken veya &quot;Şimdi Mühürle&quot;
+                  butonuyla otomatik mühürlenecektir.
                 </>
               ) : (
                 <>
@@ -291,7 +339,7 @@ export const InspectionTimeline: React.FC<InspectionTimelineProps> = ({
       {/* Dış Müdahale Uyarısı (Eğer harici SQLite client ile değiştirilmişse) */}
       {hasExternalTamper && (
         <div className="mb-6 p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl flex items-start gap-3 text-rose-800 dark:text-rose-200 animate-in fade-in">
-          <div className="p-1.5 bg-rose-100 dark:bg-rose-900/60 rounded-lg text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5">
+          <div className="p-1.5 bg-rose-100 dark:bg-rose-900/60 rounded-lg text-rose-600 dark:text-rose-400 shrink-0 mt-0.5">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div className="text-xs space-y-1">

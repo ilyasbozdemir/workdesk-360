@@ -177,21 +177,57 @@ export function registerDbCoreHandlers(): void {
 
   /**
    * Blokzincir Denetim Zinciri Bütünlük Doğrulayıcısı (`audit:verify-chain`)
+   * Varsayılan olarak veritabanı durumunu değiştirmeden doğrular.
    */
-  ipcMain.handle('audit:verify-chain', async () => {
+  ipcMain.handle(
+    'audit:verify-chain',
+    async (_event, options?: { autoSeal?: boolean; allowPendingUnhashed?: boolean }) => {
+      try {
+        const db = workspaceManager.getDb()
+        const { AuditChainService, AuditIntegrityVerifier } = await import('@dt/database')
+        if (options?.autoSeal) {
+          AuditChainService.secureAllPendingLogs(db)
+        }
+        return AuditIntegrityVerifier.verifyChain(db, {
+          allowPendingUnhashed: options?.allowPendingUnhashed
+        })
+      } catch (err: any) {
+        console.warn('[IPC] audit:verify-chain error:', err?.message || err)
+        return {
+          isValid: false,
+          isFullySealed: false,
+          hasPendingUnhashed: false,
+          status: 'ERROR',
+          totalRecords: 0,
+          sealedRecords: 0,
+          unhashedRecords: 0,
+          error: err?.message || String(err)
+        }
+      }
+    }
+  )
+
+  /**
+   * Bekleyen mühürsüz denetim kayıtlarını zincire bağlama (`audit:seal-pending`)
+   */
+  ipcMain.handle('audit:seal-pending', async () => {
     try {
       const db = workspaceManager.getDb()
       const { AuditChainService, AuditIntegrityVerifier } = await import('@dt/database')
-      AuditChainService.secureAllPendingLogs(db)
-      return AuditIntegrityVerifier.verifyChain(db)
-    } catch (err: any) {
-      console.warn('[IPC] audit:verify-chain error:', err?.message || err)
+      const sealedCount = AuditChainService.secureAllPendingLogs(db)
+      const verify = AuditIntegrityVerifier.verifyChain(db)
       return {
-        isValid: false,
-        totalRecords: 0,
-        unhashedRecords: 0,
+        success: true,
+        sealedCount,
+        chainStatus: verify
+      }
+    } catch (err: any) {
+      console.warn('[IPC] audit:seal-pending error:', err?.message || err)
+      return {
+        success: false,
         error: err?.message || String(err)
       }
     }
   })
 }
+

@@ -244,7 +244,114 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     // Doğrulama başarısız olmalı
     const verify = AuditIntegrityVerifier.verifyChain(db)
     expect(verify.isValid).toBe(false)
+    expect(verify.status).toBe('TAMPERED_CONTENT')
     expect(verify.brokenRecordId).toBe(targetId)
     expect(verify.error).toContain('tahrifatı')
   })
+
+  it('Audit Doğrulama: boş log tablosu CLEAN ve isValid: true döner', () => {
+    const { db: emptyDb, rawDb } = createRealSqliteDb()
+    const result = AuditIntegrityVerifier.verifyChain(emptyDb as any)
+    expect(result.isValid).toBe(true)
+    expect(result.isFullySealed).toBe(true)
+    expect(result.hasPendingUnhashed).toBe(false)
+    expect(result.status).toBe('CLEAN')
+    expect(result.totalRecords).toBe(0)
+    expect(result.sealedRecords).toBe(0)
+    expect(result.unhashedRecords).toBe(0)
+    rawDb.close()
+  })
+
+  it('Audit Doğrulama: yalnızca mühürsüz kayıtlar varken strict modda isValid: false, PENDING_UNSEALED döner', () => {
+    initSessionContext(db)
+    enableAuditLogForTable(db, 'test_teklif', ['teklif_fiyati'])
+
+    // Mühürleme yapmadan INSERT yapıyoruz
+    db.prepare(`INSERT INTO test_teklif (id, teklif_fiyati) VALUES (9, 3000)`).run()
+    db.prepare(`UPDATE test_teklif SET teklif_fiyati = 3500 WHERE id = 9`).run()
+
+    // 1. Strict adli doğrulama (varsayılan)
+    const strictVerify = AuditIntegrityVerifier.verifyChain(db)
+    expect(strictVerify.isValid).toBe(false)
+    expect(strictVerify.isFullySealed).toBe(false)
+    expect(strictVerify.hasPendingUnhashed).toBe(true)
+    expect(strictVerify.status).toBe('PENDING_UNSEALED')
+    expect(strictVerify.unhashedRecords).toBeGreaterThanOrEqual(2)
+    expect(strictVerify.error).toContain('mühürsüz kayıt bulundu')
+
+    // 2. allowPendingUnhashed: true ile kontrol
+    const permissiveVerify = AuditIntegrityVerifier.verifyChain(db, { allowPendingUnhashed: true })
+    expect(permissiveVerify.isValid).toBe(true)
+    expect(permissiveVerify.isFullySealed).toBe(false)
+    expect(permissiveVerify.status).toBe('PENDING_UNSEALED')
+
+    // 3. Mühürleme yapıldıktan sonra CLEAN ve %100 mühürlü olmalı
+    const sealed = AuditChainService.secureAllPendingLogs(db)
+    expect(sealed).toBeGreaterThanOrEqual(2)
+
+    const sealedVerify = AuditIntegrityVerifier.verifyChain(db)
+    expect(sealedVerify.isValid).toBe(true)
+    expect(sealedVerify.isFullySealed).toBe(true)
+    expect(sealedVerify.hasPendingUnhashed).toBe(false)
+    expect(sealedVerify.status).toBe('CLEAN')
+  })
+
+  it('Audit Doğrulama: araya mühürsüz kayıt sızdırıldığında (INTERLEAVED_HOLE) alarm verir ve sıra dışı mühürlemeyi engeller', () => {
+    initSessionContext(db)
+    enableAuditLogForTable(db, 'test_teklif', ['teklif_fiyati'])
+
+    db.prepare(`INSERT INTO test_teklif (id, teklif_fiyati) VALUES (10, 4000)`).run()
+    db.prepare(`UPDATE test_teklif SET teklif_fiyati = 4100 WHERE id = 10`).run()
+    db.prepare(`UPDATE test_teklif SET teklif_fiyati = 4200 WHERE id = 10`).run()
+
+    AuditChainService.secureAllPendingLogs(db)
+
+    // Tüm kayıtlar mühürlü
+    const initialVerify = AuditIntegrityVerifier.verifyChain(db)
+    expect(initialVerify.isValid).toBe(true)
+    expect(initialVerify.status).toBe('CLEAN')
+
+    // Saldırgan simülasyonu: aradaki bir kaydın current_hash değerini NULL yapıyor (veya araya satır enjekte ediyor)
+    const logs = db.prepare(`SELECT id FROM sys_audit_logs WHERE record_id = 10 ORDER BY id ASC`).all() as any[]
+    const middleId = logs[1].id
+
+    db.exec(`DROP TRIGGER IF EXISTS trg_prevent_audit_update;`)
+    db.prepare(`UPDATE sys_audit_logs SET current_hash = NULL WHERE id = ?`).run(middleId)
+
+    // Bütünlük denetleyicisi INTERLEAVED_HOLE anomalisini anında yakalamalı
+    const holeVerify = AuditIntegrityVerifier.verifyChain(db)
+    expect(holeVerify.isValid).toBe(false)
+    expect(holeVerify.status).toBe('INTERLEAVED_HOLE')
+    expect(holeVerify.brokenRecordId).toBe(middleId)
+    expect(holeVerify.error).toContain('mühürlü blokların arasında veya öncesinde')
+
+    // AuditChainService.secureNextLog aradaki deliği sıra dışı mühürlemeyi reddetmeli
+    expect(() => AuditChainService.secureNextLog(db)).toThrow(/Sıra dışı mühürleme engellendi/i)
+  })
+
+  it('Audit Doğrulama: aradan kayıt tamamen silindiğinde BROKEN_CHAIN yakalar', () => {
+    initSessionContext(db)
+    enableAuditLogForTable(db, 'test_teklif', ['teklif_fiyati'])
+
+    db.prepare(`INSERT INTO test_teklif (id, teklif_fiyati) VALUES (11, 5000)`).run()
+    db.prepare(`UPDATE test_teklif SET teklif_fiyati = 5100 WHERE id = 11`).run()
+    db.prepare(`UPDATE test_teklif SET teklif_fiyati = 5200 WHERE id = 11`).run()
+
+    AuditChainService.secureAllPendingLogs(db)
+
+    const logs = db.prepare(`SELECT id FROM sys_audit_logs WHERE record_id = 11 ORDER BY id ASC`).all() as any[]
+    const deleteId = logs[1].id
+    const nextId = logs[2].id
+
+    // Dışarıdan satır silme (DB Browser vb.)
+    db.exec(`DROP TRIGGER IF EXISTS trg_prevent_audit_delete;`)
+    db.prepare(`DELETE FROM sys_audit_logs WHERE id = ?`).run(deleteId)
+
+    const verify = AuditIntegrityVerifier.verifyChain(db)
+    expect(verify.isValid).toBe(false)
+    expect(verify.status).toBe('BROKEN_CHAIN')
+    expect(verify.brokenRecordId).toBe(nextId)
+    expect(verify.error).toContain('Zincir kırılması')
+  })
 })
+

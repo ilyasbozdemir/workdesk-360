@@ -436,32 +436,63 @@ export class DtmWorkspace {
         try {
           const chainVerification = AuditIntegrityVerifier.verifyChain(this.db)
           if (!chainVerification.isValid) {
-            console.error(
-              `[SECURITY ALARM] Blokzincir audit log bütünlük hatası tespit edildi! Kayıt #${chainVerification.brokenRecordId}: ${chainVerification.error}`
-            )
-            if (!meta.warnings) {
-              meta.warnings = []
-            }
-            meta.warnings.push(
-              `GÜVENLİK ALARMI: Dosya denetim izinde tahrifat şüphesi tespit edildi (Kayıt #${chainVerification.brokenRecordId}). Bütünlük mührü kırılmış!`
-            )
-            meta.is_read_only = true
-            meta.is_tampered = true
-            meta.tamper_reason = chainVerification.error
+            // Eğer yalnızca kuyrukta henüz mühürlenmemiş kayıtlar varsa (beklenmedik kapanma / crash sonrası kurtarma):
+            if (chainVerification.status === 'PENDING_UNSEALED') {
+              console.warn(
+                `[SECURITY NOTICE] Çalışma alanında ${chainVerification.unhashedRecords} adet mühürsüz kayıt tespit edildi. Güvenli mühürleme ve doğrulama devreye alınıyor...`
+              )
+              if (!meta.warnings) {
+                meta.warnings = []
+              }
+              meta.warnings.push(
+                `BİLGİ: Dosyada son oturumdan kalan ${chainVerification.unhashedRecords} adet henüz mühürlenmemiş denetim kaydı güvenli şekilde zincire bağlandı.`
+              )
 
-            // 🚨 TAHRİFAT ALGILANDI! Veritabanını kapatıp fiziksel olarak SALT-OKUNUR (Read-Only) modda yeniden açıyoruz
-            const dbFileName = meta.active_db_file || 'database.sqlite'
-            const dbPath = path.join(this.tempDir, dbFileName)
-            try {
-              this.db.close()
-            } catch {}
-            this.db = new Database(dbPath, { readonly: true })
-            this.isReadOnly = true
-            this.isTampered = true
-            this.tamperReason = chainVerification.error || 'Bütünlük mührü kırılmış'
+              // Kuyruktaki mühürsüz kayıtları blokzincirine bağla
+              AuditChainService.secureAllPendingLogs(this.db)
+
+              // Mühürleme sonrası zinciri sıfırdan %100 strict modda tekrar doğrula
+              const reVerification = AuditIntegrityVerifier.verifyChain(this.db)
+              if (!reVerification.isValid) {
+                throw new Error(
+                  reVerification.error ||
+                    `Mühürleme sonrası denetim izi doğrulanamadı (Kayıt #${reVerification.brokenRecordId})`
+                )
+              }
+
+              this.isReadOnly = false
+              this.isTampered = false
+              this.tamperReason = null
+              meta.is_read_only = false
+              meta.is_tampered = false
+            } else {
+              // 🚨 GERÇEK TAHRİFAT, ZİNCİR KOPMASI VEYA ARAYA KAYIT SIZDIRMA (INTERLEAVED_HOLE / BROKEN_CHAIN / TAMPERED_CONTENT)
+              console.error(
+                `[SECURITY ALARM] Blokzincir audit log bütünlük hatası tespit edildi! Kayıt #${chainVerification.brokenRecordId}: ${chainVerification.error}`
+              )
+              if (!meta.warnings) {
+                meta.warnings = []
+              }
+              meta.warnings.push(
+                `GÜVENLİK ALARMI: Dosya denetim izinde tahrifat şüphesi tespit edildi (Kayıt #${chainVerification.brokenRecordId}). Bütünlük mührü kırılmış!`
+              )
+              meta.is_read_only = true
+              meta.is_tampered = true
+              meta.tamper_reason = chainVerification.error
+
+              // Veritabanını kapatıp fiziksel olarak SALT-OKUNUR (Read-Only) modda yeniden açıyoruz
+              const dbFileName = meta.active_db_file || 'database.sqlite'
+              const dbPath = path.join(this.tempDir, dbFileName)
+              try {
+                this.db.close()
+              } catch {}
+              this.db = new Database(dbPath, { readonly: true })
+              this.isReadOnly = true
+              this.isTampered = true
+              this.tamperReason = chainVerification.error || 'Bütünlük mührü kırılmış'
+            }
           } else {
-            // Zincir sağlamsa bekleyen mühürsüz logları blokzincirine bağla
-            AuditChainService.secureAllPendingLogs(this.db)
+            // Zincir %100 sağlam ve tam mühürlü
             this.isReadOnly = false
             this.isTampered = false
             this.tamperReason = null

@@ -86,6 +86,7 @@
       "ihtiyac_yeri",
       "ilan_tarihi",
       "irtibat_yetkilisi_id",
+      "is_deleted",
       "is_locked",
       "isin_aciklama_maddeleri",
       "isin_aciklamasi",
