@@ -1,40 +1,28 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Archive,
-  ArrowDownAZ,
   ArrowUp,
-  ArrowUpAZ,
   Calendar,
-  Check,
-  CheckSquare,
   ChevronRight,
-  Code,
   Copy,
-  Database,
   Edit3,
   ExternalLink,
   Eye,
   FileCode,
   FileQuestion,
-  FileSearch,
   FileSpreadsheet,
   FileText,
-  Filter,
   Folder,
   FolderKanban,
   FolderOpen,
   FolderPlus,
   FolderSearch,
-  Grid,
   HardDrive,
-  Hash,
   Image as ImageIcon,
   Info,
   Layers,
   LayoutGrid,
   List,
-  MoreVertical,
-  MoveRight,
   PanelLeftClose,
   PanelLeftOpen,
   PanelRightClose,
@@ -42,13 +30,9 @@ import {
   Plus,
   RefreshCw,
   Search,
-  Share2,
-  SlidersHorizontal,
   Sparkles,
-  Square,
   Table as TableIcon,
   Tag,
-  Trash2,
   Video,
   X
 } from 'lucide-react'
@@ -1336,8 +1320,10 @@ export function SmartArchiveWorkspaceView({
                       onDoubleClick={() => window.diskAnalizAPI?.openFile(file.path)}
                       className={`p-3 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between group relative select-none ${
                         isSelected
-                          ? 'bg-sky-500/15 border-sky-500 shadow-sm'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-sky-500/50 hover:shadow-sm'
+                          ? 'bg-sky-500/15 border-sky-500 shadow-sm ring-1 ring-sky-500/30'
+                          : isPrimary
+                            ? 'bg-sky-500/5 border-sky-400 dark:border-sky-500/50'
+                            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-sky-500/50 hover:shadow-sm'
                       }`}
                     >
                       {/* Seçim Rozeti */}

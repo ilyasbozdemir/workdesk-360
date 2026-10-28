@@ -41,6 +41,7 @@ import {
   DriveInfo,
   DuplicateSummary,
   ExplorerDirectoryResponse,
+  FilePreviewResponse,
   IndexedFileRecord,
   IndexedFolderRecord,
   PythonExitEvent,
@@ -50,7 +51,8 @@ import {
   ScanProgressPayload,
   ScanSessionRecord,
   TreemapColorMode,
-  TreemapViewResponse
+  TreemapViewResponse,
+  VirtualFolderRecord
 } from '../../shared/types'
 import { InteractiveTreemapCanvas } from './components/InteractiveTreemapCanvas'
 import { SmartArchiveExplorerView } from './components/SmartArchiveExplorerView'
