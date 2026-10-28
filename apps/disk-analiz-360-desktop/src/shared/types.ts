@@ -297,6 +297,33 @@ export interface ExplorerDirectoryResponse {
   message?: string
 }
 
+export interface VirtualFolderRecord {
+  id: string
+  name: string
+  color: string
+  description?: string
+  filePaths: string[]
+  isSmart?: boolean
+  smartRule?: 'large_files' | 'recent_files' | 'zero_byte' | 'has_duplicates' | 'cad_drawings' | 'images' | 'documents'
+  createdAt: string
+  updatedAt: string
+}
+
+export type WorkspaceViewMode = 'grid' | 'list' | 'details' | 'gallery'
+
+export interface FilePreviewResponse {
+  success: boolean
+  filePath: string
+  fileName: string
+  fileSize: number
+  mtime: string
+  category: 'image' | 'text' | 'pdf' | 'binary'
+  previewUrl?: string
+  textContent?: string
+  lineCount?: number
+  error?: string
+}
+
 export interface PythonOutputEvent {
   taskId: string
   type: 'stdout' | 'stderr'
@@ -315,6 +342,22 @@ export interface PythonMigrationReports {
       scan_date?: string
       elapsed_seconds?: number
       scanned_drives?: string[]
+      scan_status?: 'COMPLETE' | 'PARTIAL_WITH_ERRORS'
+      is_complete_scan?: boolean
+      total_errors_count?: number
+      skipped_unreadable_dirs_count?: number
+      skipped_unreadable_files_count?: number
+      unverified_hash_files_count?: number
+      changed_during_scan_count?: number
+      zero_byte_files_count?: number
+      zero_byte_groups_count?: number
+      zero_byte_included?: boolean
+      scan_errors?: Array<{
+        path: string
+        stage: string
+        error_type: string
+        message: string
+      }>
       total_files_scanned?: number
       total_size_scanned?: number
       total_size_scanned_formatted?: string
@@ -335,6 +378,7 @@ export interface PythonMigrationReports {
       count: number
       wasted_bytes: number
       wasted_formatted: string
+      is_zero_byte?: boolean
       drives: string[]
       is_cross_drive: boolean
       files: Array<{

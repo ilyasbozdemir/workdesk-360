@@ -1,11 +1,13 @@
 {
   "name": "app-web",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.10",
+  "description": "WorkDesk 360 & Temin 360 - Merkezi Ekosistem API Gateway, Şablon Tabanlı Mevzuat Süreç Motoru ve Bulut Senkronizasyon Portalı",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
@@ -15,6 +17,7 @@
   },
   "dependencies": {
     "@dt/database": "workspace:*",
+    "@worksuite-360/contracts": "workspace:*",
     "@prisma/client": "^6.4.1",
     "better-sqlite3": "^12.10.0",
     "googleapis": "^144.0.0",

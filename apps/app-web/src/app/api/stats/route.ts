@@ -36,7 +36,7 @@ export async function GET() {
         count = 0;
       }
 
-      // Turkish descriptions for well known tables
+      // Turkish descriptions for well known ecosystem & procurement tables
       const descriptions: Record<string, string> = {
         dosyalar: "İhale ve doğrudan temin dosya kayıtları ve genel ayarları.",
         sablonlar: "Dosyalara bağlı dinamik evrak ve şablon snapshot verileri.",
@@ -46,6 +46,14 @@ export async function GET() {
         settings: "Sistem, kurum bilgileri ve veritabanı şema ayarları.",
         audit_logs: "Sistemde gerçekleşen tüm veri işlem ve değişiklik kayıtları.",
         teklifler: "Firmalar tarafından verilen fiyat teklif dökümleri.",
+        ecosystem_sync_records: "WorkDesk 360 çoklu uygulama (Temin, İhale, FlowDesk, Personel, Disk Analiz, Evraktron) bulut eşitleme kayıtları.",
+        ecosystem_process_instances: "Şablon ve algoritma tabanlı mevzuat süreç kayıtları (3194 Kaçak Yapı, 2886 Devlet İhale, Kamulaştırma vb.).",
+        sync_history: "Masaüstü istemcilerden gelen bulut senkronizasyon oturum geçmişi.",
+        DATA_TeminDosyasi: "TEMİN 360 (4734 Md. 22) doğrudan temin ana dosya kayıtları.",
+        DATA_IhaleDosyasi: "İHALE 360 (4734 Md. 19/21) açık ve pazarlık ihale dosyaları.",
+        TANIM_Firma: "Kurumsal tedarikçi ve istekli firma sicil havuzu.",
+        TANIM_Personel: "Kurum personeli, komisyon üyeleri ve harcama yetkilileri.",
+        SYS_AuditLog: "Kriptografik hash zincirli (SHA-256) denetim izi kayıtları.",
       };
 
       return {

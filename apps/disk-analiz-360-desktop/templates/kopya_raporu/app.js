@@ -79,7 +79,8 @@ function applyFilters() {
   filteredList = duplicateData.filter(g => {
     if (currentFilter === 'cross' && !g.is_cross_drive) return false;
     if (currentFilter === 'large' && g.size_bytes < 10 * 1024 * 1024) return false;
-    if (currentFilter !== 'all' && currentFilter !== 'cross' && currentFilter !== 'large') {
+    if (currentFilter === 'zero' && !g.is_zero_byte && g.size_bytes !== 0) return false;
+    if (currentFilter !== 'all' && currentFilter !== 'cross' && currentFilter !== 'large' && currentFilter !== 'zero') {
       const isSingle = !g.is_cross_drive && g.drives.length === 1;
       const drvKey = isSingle ? g.drives[0].replace(':', '').toLowerCase() : '';
       if (drvKey !== currentFilter) return false;
@@ -478,6 +479,55 @@ function setPlatform(plat) {
   }
 }
 
+function quotePowerShellLiteral(rawPath) {
+  const clean = String(rawPath || '').replace(/[\r\n\0]/g, '');
+  return "'" + clean.replace(/'/g, "''") + "'";
+}
+
+function quoteBashLiteral(rawPath) {
+  const clean = String(rawPath || '').replace(/[\r\n\0]/g, '');
+  return "'" + clean.replace(/'/g, "'\\''") + "'";
+}
+
+function quoteCmdLiteral(rawPath) {
+  const clean = String(rawPath || '').replace(/[\r\n\0"]/g, '').replace(/%/g, '%%');
+  return '"' + clean + '"';
+}
+
+function planQuarantineTargets(sourcePaths, quarantineFolderName = '_SILINECEK_KOPYALAR') {
+  const usedTargets = new Set();
+  return sourcePaths.map(rawSrc => {
+    const winSrc = String(rawSrc || '').replace(/\//g, '\\');
+    const driveMatch = winSrc.match(/^([a-zA-Z]:)\\?(.*)$/);
+    const drive = driveMatch ? driveMatch[1].toUpperCase() : 'C:';
+    const relPath = driveMatch ? driveMatch[2].replace(/^\\+/, '') : winSrc.replace(/^\\+/, '');
+    const lastSlash = relPath.lastIndexOf('\\');
+    const relDir = lastSlash >= 0 ? relPath.slice(0, lastSlash) : '';
+    const fileName = lastSlash >= 0 ? relPath.slice(lastSlash + 1) : (relPath || 'dosya');
+    const dotIdx = fileName.lastIndexOf('.');
+    const stem = dotIdx > 0 ? fileName.slice(0, dotIdx) : fileName;
+    const ext = dotIdx > 0 ? fileName.slice(dotIdx) : '';
+    const baseTargetDir = relDir ? `${drive}\\${quarantineFolderName}\\${relDir}` : `${drive}\\${quarantineFolderName}`;
+
+    let candidate = `${baseTargetDir}\\${fileName}`;
+    let counter = 1;
+    while (usedTargets.has(candidate.toLowerCase())) {
+      candidate = `${baseTargetDir}\\${stem}_kopya_${counter}${ext}`;
+      counter++;
+    }
+    usedTargets.add(candidate.toLowerCase());
+
+    const posixSource = String(rawSrc || '').replace(/\\/g, '/');
+    const posixRel = relPath.replace(/\\/g, '/');
+    let posixTarget = `./${quarantineFolderName}/${posixRel}`;
+    if (counter > 1) {
+      const posixDir = relDir ? `./${quarantineFolderName}/${relDir.replace(/\\/g, '/')}` : `./${quarantineFolderName}`;
+      posixTarget = `${posixDir}/${stem}_kopya_${counter - 1}${ext}`;
+    }
+    return { source: winSrc, target: candidate, posixSource, posixTarget };
+  });
+}
+
 function generateScriptText() {
   const paths = Array.from(selectedPaths);
   const isSafe = document.getElementById('safeModeChbox').checked;
@@ -488,66 +538,80 @@ function generateScriptText() {
     return '# Henüz silinecek dosya seçilmedi.\n# Yukarıdaki listeden dosyaları seçin veya "İlkini Tut, Kalanları Seç" butonuna tıklayın.';
   }
 
+  const planned = planQuarantineTargets(paths, '_SILINECEK_KOPYALAR');
+
   if (currentPlatform === 'powershell') {
     if (isSafe) {
+      const pairLines = planned.map(it =>
+        `    @{ Src = ${quotePowerShellLiteral(it.source)}; Dst = ${quotePowerShellLiteral(it.target)} }`
+      ).join(',\n');
+
       return `# ========================================================\n` +
-             `# Arşiv 360 - Güvenli Kopya Taşıma Betiği (PowerShell)\n` +
+             `# Arşiv 360 - Çakışmasız Güvenli Karantina Betiği (PowerShell)\n` +
              `# Tarih: ${now}\n` +
-             `# Taşınacak Dosya: ${paths.length} adet (${totalSize})\n` +
+             `# Taşınacak Dosya: ${planned.length} adet (${totalSize})\n` +
+             `# Not: Üzerine yazma (overwrite) engellenmiştir; göreli dizin korunur.\n` +
              `# ========================================================\n` +
              `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n` +
-             `$ErrorActionPreference = "Continue"\n\n` +
-             `$targetRoot = "_SILINECEK_KOPYALAR"\n` +
-             `Write-Host "Kopya dosyalar güvenli karantinaya taşınıyor..." -ForegroundColor Cyan\n\n` +
-             `$files = @(\n` +
-             paths.map(p => `    "${p.replace(/`/g, '``').replace(/\$/g, '`$')}"`).join(',\n') +
-             `\n)\n\n` +
+             `$ErrorActionPreference = 'Stop'\n\n` +
+             `function Get-UniqueTargetPath([string]$PreferredPath) {\n` +
+             `    if (-not (Test-Path -LiteralPath $PreferredPath)) { return $PreferredPath }\n` +
+             `    $dir = Split-Path -Parent $PreferredPath\n` +
+             `    $leaf = Split-Path -Leaf $PreferredPath\n` +
+             `    $stem = [System.IO.Path]::GetFileNameWithoutExtension($leaf)\n` +
+             `    $ext  = [System.IO.Path]::GetExtension($leaf)\n` +
+             `    $idx  = 1\n` +
+             `    while ($true) {\n` +
+             `        $cand = Join-Path $dir ("{0}_karantina_{1}{2}" -f $stem, $idx, $ext)\n` +
+             `        if (-not (Test-Path -LiteralPath $cand)) { return $cand }\n` +
+             `        $idx++\n` +
+             `    }\n` +
+             `}\n\n` +
+             `$items = @(\n${pairLines}\n)\n\n` +
              `$success = 0; $fail = 0\n` +
-             `foreach ($f in $files) {\n` +
-             `    if (Test-Path -LiteralPath $f) {\n` +
+             `foreach ($it in $items) {\n` +
+             `    $src = $it.Src\n` +
+             `    if (Test-Path -LiteralPath $src) {\n` +
              `        try {\n` +
-             `            $drive = (Get-Item -LiteralPath $f).PSDrive.Name + ":\\\\"\n` +
-             `            $destFolder = Join-Path $drive $targetRoot\n` +
-             `            if (-not (Test-Path -LiteralPath $destFolder)) { New-Item -ItemType Directory -Path $destFolder -Force | Out-Null }\n` +
-             `            Move-Item -LiteralPath $f -Destination $destFolder -Force -ErrorAction Stop\n` +
-             `            Write-Host "  [✓ Taşındı] $f -> $destFolder" -ForegroundColor Green\n` +
+             `            $finalDst = Get-UniqueTargetPath $it.Dst\n` +
+             `            $parentDir = Split-Path -Parent $finalDst\n` +
+             `            if (-not (Test-Path -LiteralPath $parentDir)) { New-Item -ItemType Directory -Path $parentDir -Force | Out-Null }\n` +
+             `            Move-Item -LiteralPath $src -Destination $finalDst -ErrorAction Stop\n` +
+             `            Write-Host "  [✓ Taşındı] $src -> $finalDst" -ForegroundColor Green\n` +
              `            $success++\n` +
              `        } catch {\n` +
-             `            Write-Host "  [X Hata] $f ($($_.Exception.Message))" -ForegroundColor Red\n` +
+             `            Write-Host "  [X Hata] $src ($($_.Exception.Message))" -ForegroundColor Red\n` +
              `            $fail++\n` +
              `        }\n` +
              `    } else {\n` +
-             `        Write-Host "  [-] Bulunamadı: $f" -ForegroundColor Yellow\n` +
+             `        Write-Host "  [-] Bulunamadı: $src" -ForegroundColor Yellow\n` +
              `    }\n` +
              `}\n\n` +
              `Write-Host "\\nİşlem Tamamlandı! Başarılı: $success | Hata: $fail" -ForegroundColor Cyan\n` +
-             `Write-Host "Dosyalarınız disk kökündeki '_SILINECEK_KOPYALAR' klasörüne taşındı." -ForegroundColor Yellow\n` +
              `pause\n`;
     } else {
       return `# ========================================================\n` +
              `# Arşiv 360 - Kalıcı Kopya Silme Betiği (PowerShell)\n` +
              `# Tarih: ${now}\n` +
-             `# Silinecek Dosya: ${paths.length} adet (${totalSize})\n` +
+             `# Silinecek Dosya: ${planned.length} adet (${totalSize})\n` +
              `# ========================================================\n` +
              `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n` +
-             `$ErrorActionPreference = "Continue"\n\n` +
-             `$confirm = Read-Host "${paths.length} adet kopya dosya KALICI OLARAK silinecektir. Devam etmek için 'EVET' yazın"\n` +
+             `$ErrorActionPreference = 'Continue'\n\n` +
+             `$confirm = Read-Host '${planned.length} adet kopya dosya KALICI OLARAK silinecektir. Devam etmek için EVET yazın'\n` +
              `if ($confirm -ne 'EVET') { Write-Host 'İşlem iptal edildi.' -ForegroundColor Yellow; exit }\n\n` +
              `$files = @(\n` +
-             paths.map(p => `    "${p.replace(/`/g, '``').replace(/\$/g, '`$')}"`).join(',\n') +
+             planned.map(it => `    ${quotePowerShellLiteral(it.source)}`).join(',\n') +
              `\n)\n\n` +
              `$deleted = 0\n` +
              `foreach ($f in $files) {\n` +
              `    if (Test-Path -LiteralPath $f) {\n` +
              `        try {\n` +
-             `            Remove-Item -LiteralPath $f -Force -ErrorAction Stop\n` +
+             `            Remove-Item -LiteralPath $f -ErrorAction Stop\n` +
              `            Write-Host "  [✓ Silindi] $f" -ForegroundColor Green\n` +
              `            $deleted++\n` +
              `        } catch {\n` +
              `            Write-Host "  [X Hata] $f ($($_.Exception.Message))" -ForegroundColor Red\n` +
              `        }\n` +
-             `    } else {\n` +
-             `        Write-Host "  [-] Bulunamadı: $f" -ForegroundColor Yellow\n` +
              `    }\n` +
              `}\n\n` +
              `Write-Host "\\nToplam Silinen: $deleted dosya." -ForegroundColor Cyan\npause\n`;
@@ -558,39 +622,42 @@ function generateScriptText() {
     if (isSafe) {
       const lines = [
         `@echo off`,
+        `setlocal DisableDelayedExpansion`,
         `chcp 65001 > nul`,
-        `title Arşiv 360 - Kopya Taşıma`,
+        `title Arşiv 360 - Çakışmasız Kopya Taşıma`,
         `echo ========================================================`,
-        `echo Arşiv 360 - Kopya Dosyaları _SILINECEKLER Klasörüne Taşıma`,
-        `echo Taşınacak Dosya: ${paths.length} adet (${totalSize})`,
+        `echo Arşiv 360 - Kopya Dosyaları _SILINECEK_KOPYALAR Klasörüne Taşıma`,
+        `echo Taşınacak Dosya: ${planned.length} adet (${totalSize})`,
         `echo ========================================================`,
         `echo.`,
         `pause`
       ];
-      paths.forEach(p => {
-        const drv = p.substring(0, 2);
-        lines.push(`if not exist "${drv}\\_SILINECEK_KOPYALAR" mkdir "${drv}\\_SILINECEK_KOPYALAR" >nul 2>&1`);
-        lines.push(`move /y "${p}" "${drv}\\_SILINECEK_KOPYALAR\\" >nul 2>&1 && echo [OK] ${p} || echo [HATA] ${p}`);
+      planned.forEach(it => {
+        const lastSlash = it.target.lastIndexOf('\\');
+        const targetDir = lastSlash > 0 ? it.target.slice(0, lastSlash) : 'C:\\_SILINECEK_KOPYALAR';
+        lines.push(`if not exist ${quoteCmdLiteral(targetDir)} mkdir ${quoteCmdLiteral(targetDir)} >nul 2>&1`);
+        lines.push(`if exist ${quoteCmdLiteral(it.target)} (echo [ATLANDI - HEDEF MEVCUT] ${quoteCmdLiteral(it.target)}) else (move /-y ${quoteCmdLiteral(it.source)} ${quoteCmdLiteral(it.target)} >nul 2>&1 && echo [OK] ${quoteCmdLiteral(it.source)} || echo [HATA] ${quoteCmdLiteral(it.source)})`);
       });
-      lines.push(`echo.`, `echo İşlem tamamlandı. Dosyalar _SILINECEK_KOPYALAR klasörüne taşındı.`, `pause`);
+      lines.push(`endlocal`, `echo.`, `echo İşlem tamamlandı.`, `pause`);
       return lines.join('\n');
     } else {
       const lines = [
         `@echo off`,
+        `setlocal DisableDelayedExpansion`,
         `chcp 65001 > nul`,
         `title Arşiv 360 - Kalıcı Kopya Silme`,
         `echo ========================================================`,
-        `echo DİKKAT: ${paths.length} adet dosya kalıcı olarak silinecek!`,
+        `echo DİKKAT: ${planned.length} adet dosya kalıcı olarak silinecek!`,
         `echo Kurtarılacak Alan: ${totalSize}`,
         `echo ========================================================`,
         `set /p onay="Onaylıyor musunuz? (E/H): "`,
         `if /i not "%onay%"=="E" exit /b`,
         `echo.`
       ];
-      paths.forEach(p => {
-        lines.push(`del /f /q "${p}" 2>nul && echo [SILINDI] ${p} || echo [BULUNAMADI/HATA] ${p}`);
+      planned.forEach(it => {
+        lines.push(`del /f /q ${quoteCmdLiteral(it.source)} 2>nul && echo [SILINDI] ${quoteCmdLiteral(it.source)} || echo [BULUNAMADI/HATA] ${quoteCmdLiteral(it.source)}`);
       });
-      lines.push(`echo.`, `echo Tamamlandı.`, `pause`);
+      lines.push(`endlocal`, `echo.`, `echo Tamamlandı.`, `pause`);
       return lines.join('\n');
     }
   }
@@ -599,29 +666,41 @@ function generateScriptText() {
     const lines = [
       `#!/usr/bin/env bash`,
       `# ========================================================`,
-      `# Arşiv 360 - Kopya Dosya Temizleme Betiği (macOS & Linux)`,
-      `# Dosya Sayısı: ${paths.length} adet (${totalSize})`,
+      `# Arşiv 360 - Çakışmasız Kopya Dosya Temizleme Betiği (macOS & Linux)`,
+      `# Dosya Sayısı: ${planned.length} adet (${totalSize})`,
       `# ========================================================`,
       `set -euo pipefail`,
-      `echo "Toplam ${paths.length} dosya işlenecek..."`
+      `echo "Toplam ${planned.length} dosya işlenecek..."`
     ];
     if (isSafe) {
       lines.push(
-        `mkdir -p "./_SILINECEK_KOPYALAR"`,
-        `echo "Dosyalar ./_SILINECEK_KOPYALAR klasörüne taşınıyor..."`
+        `move_quarantine_safe() {`,
+        `  local src="$1"`,
+        `  local dst="$2"`,
+        `  if [ ! -e "$src" ]; then echo "  [-] Bulunamadı: $src"; return 0; fi`,
+        `  local dir`,
+        `  dir="$(dirname -- "$dst")"`,
+        `  mkdir -p -- "$dir"`,
+        `  local final_dst="$dst"`,
+        `  local idx=1`,
+        `  while [ -e "$final_dst" ]; do`,
+        `    final_dst="\${dst}_karantina_\${idx}"`,
+        `    idx=$((idx + 1))`,
+        `  done`,
+        `  mv -n -- "$src" "$final_dst"`,
+        `  echo "  [OK] $src -> $final_dst"`,
+        `}`
       );
-      paths.forEach(p => {
-        const posixPath = p.replace(/\\/g, '/');
-        lines.push(`mv -f "${posixPath}" "./_SILINECEK_KOPYALAR/" 2>/dev/null || true`);
+      planned.forEach(it => {
+        lines.push(`move_quarantine_safe ${quoteBashLiteral(it.posixSource)} ${quoteBashLiteral(it.posixTarget)}`);
       });
     } else {
       lines.push(
-        `read -p "Dosyaları kalıcı olarak silmek istiyor musunuz? (e/h): " onay`,
+        `read -r -p "Dosyaları kalıcı olarak silmek istiyor musunuz? (e/h): " onay`,
         `if [[ "$onay" != "e" && "$onay" != "E" ]]; then echo "İptal edildi."; exit 0; fi`
       );
-      paths.forEach(p => {
-        const posixPath = p.replace(/\\/g, '/');
-        lines.push(`rm -f "${posixPath}"`);
+      planned.forEach(it => {
+        lines.push(`rm -f -- ${quoteBashLiteral(it.posixSource)}`);
       });
     }
     lines.push(`echo "İşlem tamamlandı!"`);

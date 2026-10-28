@@ -40,6 +40,8 @@ model Kurum {
   personeller    Personel[]
   firmalar       Firma[]
   dosyalar       TeminDosyasi[]
+  surecKayitlari EkosistemSurecKaydi[]
+  senkronKayitlar EkosistemSenkronKaydi[]
   apiKeys        ApiKey[]
   gdriveAyarlari GoogleDriveAyarlari[]
   createdAt      DateTime              @default(now())
@@ -48,15 +50,16 @@ model Kurum {
 
 // 3. KURUM BİRİMLERİ (TANIM_Birim)
 model Birim {
-  id        Int            @id @default(autoincrement())
-  kurumId   Int?
-  kurum     Kurum?         @relation(fields: [kurumId], references: [id], onDelete: SetNull)
-  birimAdi  String
-  kod       String?
-  aktif     Boolean        @default(true)
-  dosyalar  TeminDosyasi[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id             Int                   @id @default(autoincrement())
+  kurumId        Int?
+  kurum          Kurum?                @relation(fields: [kurumId], references: [id], onDelete: SetNull)
+  birimAdi       String
+  kod            String?
+  aktif          Boolean               @default(true)
+  dosyalar       TeminDosyasi[]
+  surecKayitlari EkosistemSurecKaydi[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 }
 
 // 4. PERSONEL & GÖREVLİLER (TANIM_Personel)
@@ -283,4 +286,62 @@ model GoogleDriveAyarlari {
   lastBackupTime    DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+}
+
+// 15. WORKDESK 360 EKOSİSTEM VE MEVZUAT SÜREÇ MODÜLLERİ (GENEL ŞABLON & ALGORİTMA KATMANI)
+model EkosistemModulu {
+  id            Int                   @id @default(autoincrement())
+  moduleId      String                @unique // Örn: module-imar-kacak-yapi-3194, module-devlet-ihale-2886
+  appId         String                @default("flowdesk-360") // temin-360, ihale-360, flowdesk-360, personel-360, disk-analiz-360, evraktron
+  ad            String
+  kanunDayanagi String?               // Örn: 3194 S.K. Md. 32/42, 2886 S.K., 4734 S.K., 2942 S.K.
+  kategori      String                @default("workflow")
+  versiyon      String                @default("1.0.0")
+  manifestJson  String                @db.Text
+  aktif         Boolean               @default(true)
+  surecler      EkosistemSurecKaydi[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+}
+
+// 16. ŞABLON TABANLI ÇOK AŞAMALI SÜREÇ ÖRNEKLERİ (3194 Kaçak Yapı, 2886 Devlet İhale, Kamulaştırma vb.)
+model EkosistemSurecKaydi {
+  id                     Int              @id @default(autoincrement())
+  kurumId                Int?
+  kurum                  Kurum?           @relation(fields: [kurumId], references: [id], onDelete: SetNull)
+  birimId                Int?
+  birim                  Birim?           @relation(fields: [birimId], references: [id], onDelete: SetNull)
+  modulId                Int?
+  modul                  EkosistemModulu? @relation(fields: [modulId], references: [id], onDelete: SetNull)
+  surecNo                String
+  baslik                 String
+  appId                  String           @default("flowdesk-360")
+  moduleCode             String           // Örn: module-imar-kacak-yapi-3194, module-devlet-ihale-2886
+  flowId                 String           // Örn: flow-imar-kacak-yapi-3194
+  durum                  String           @default("aktif") // taslak, aktif, tamamlandi, askida, iptal
+  aktifAdimId            String?
+  veriJson               String           @db.Text
+  hesaplananSonuclarJson String?          @db.Text
+  yasalSureBitis         DateTime?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+
+  @@unique([kurumId, surecNo])
+}
+
+// 17. ÇOKLU MASAÜSTÜ UYGULAMASI BULUT SENKRONİZASYON DEPOSU (Multi-App Cloud Sync)
+model EkosistemSenkronKaydi {
+  id         Int      @id @default(autoincrement())
+  kurumId    Int?
+  kurum      Kurum?   @relation(fields: [kurumId], references: [id], onDelete: SetNull)
+  kayitId    String   @unique
+  appId      String   @default("temin-360") // temin-360, ihale-360, flowdesk-360, personel-360, disk-analiz-360, evraktron
+  moduleId   String?
+  kayitTuru  String   @default("dosya") // dosya, surec, sablon, personel, envanter_raporu, evrak
+  baslik     String
+  veriJson   String   @db.Text
+  token      String?
+  syncedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

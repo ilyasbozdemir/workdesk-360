@@ -44,6 +44,7 @@ function resolvePythonScriptDir(): string {
 
 const SCRIPT_DIR = resolvePythonScriptDir()
 const TAGS_DB_PATH = join(SCRIPT_DIR, '.arsiv360_tags.json')
+const VIRTUAL_FOLDERS_DB_PATH = join(SCRIPT_DIR, '.arsiv360_virtual_folders.json')
 
 function loadTagsDb(): Record<string, string[]> {
   try {
@@ -61,6 +62,79 @@ function saveTagsDb(data: Record<string, string[]>): void {
     fs.writeFileSync(TAGS_DB_PATH, JSON.stringify(data, null, 2), 'utf-8')
   } catch (e) {
     console.error('Error saving tags DB:', e)
+  }
+}
+
+function getDefaultVirtualFolders(): Array<{
+  id: string
+  name: string
+  color: string
+  description?: string
+  filePaths: string[]
+  isSmart?: boolean
+  smartRule?: string
+  createdAt: string
+  updatedAt: string
+}> {
+  return [
+    {
+      id: 'vf-important',
+      name: 'Önemli Belgeler',
+      color: '#f59e0b',
+      description: 'Sık kullanılan ve öncelikli belgeler koleksiyonu',
+      filePaths: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'vf-tenders',
+      name: 'İhale & Satınalma',
+      color: '#0284c7',
+      description: 'Doğrudan temin ve ihale süreçlerine ilişkin şartnameler ve sözleşmeler',
+      filePaths: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: 'vf-archive-2026',
+      name: '2026 Arşivi',
+      color: '#10b981',
+      description: '2026 mali yılına ait resmi evrak ve yazışmalar',
+      filePaths: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+  ]
+}
+
+function loadVirtualFoldersDb(): Array<{
+  id: string
+  name: string
+  color: string
+  description?: string
+  filePaths: string[]
+  isSmart?: boolean
+  smartRule?: string
+  createdAt: string
+  updatedAt: string
+}> {
+  try {
+    if (fs.existsSync(VIRTUAL_FOLDERS_DB_PATH)) {
+      return JSON.parse(fs.readFileSync(VIRTUAL_FOLDERS_DB_PATH, 'utf-8'))
+    }
+  } catch (e) {
+    console.error('Error loading virtual folders DB:', e)
+  }
+  const defaults = getDefaultVirtualFolders()
+  saveVirtualFoldersDb(defaults)
+  return defaults
+}
+
+function saveVirtualFoldersDb(data: unknown): void {
+  try {
+    fs.writeFileSync(VIRTUAL_FOLDERS_DB_PATH, JSON.stringify(data, null, 2), 'utf-8')
+  } catch (e) {
+    console.error('Error saving virtual folders DB:', e)
   }
 }
 
@@ -443,6 +517,170 @@ app.whenReady().then(() => {
   )
 
   ipcMain.handle(
+    'diskAnaliz:bulkTagFiles',
+    async (
+      _event,
+      {
+        filePaths,
+        tagsToAdd = [],
+        tagsToRemove = []
+      }: {
+        filePaths: string[]
+        tagsToAdd?: string[]
+        tagsToRemove?: string[]
+      }
+    ) => {
+      const db = loadTagsDb()
+      let updatedCount = 0
+
+      for (const p of filePaths) {
+        const cur = new Set(db[p] || [])
+        for (const t of tagsToAdd) {
+          if (t && t.trim()) cur.add(t.toLowerCase().trim())
+        }
+        for (const t of tagsToRemove) {
+          if (t && t.trim()) cur.delete(t.toLowerCase().trim())
+        }
+        db[p] = Array.from(cur)
+        updatedCount++
+      }
+
+      saveTagsDb(db)
+      return { success: true, updatedCount }
+    }
+  )
+
+  ipcMain.handle('diskAnaliz:getVirtualFolders', async () => {
+    return loadVirtualFoldersDb()
+  })
+
+  ipcMain.handle('diskAnaliz:saveVirtualFolders', async (_event, folders: unknown) => {
+    saveVirtualFoldersDb(folders)
+    return { success: true }
+  })
+
+  ipcMain.handle(
+    'diskAnaliz:readFilePreview',
+    async (_event, { filePath, maxBytes = 64 * 1024 }: { filePath: string; maxBytes?: number }) => {
+      try {
+        if (!filePath || !fs.existsSync(filePath)) {
+          return {
+            success: false,
+            filePath,
+            fileName: '',
+            fileSize: 0,
+            mtime: '',
+            category: 'binary' as const,
+            error: 'Dosya bulunamadı'
+          }
+        }
+
+        const stats = fs.statSync(filePath)
+        const name = basename(filePath)
+        const ext = extname(filePath).toLowerCase()
+
+        const imageExts = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.bmp', '.ico'])
+        const textExts = new Set([
+          '.txt',
+          '.md',
+          '.json',
+          '.csv',
+          '.tsv',
+          '.xml',
+          '.html',
+          '.js',
+          '.ts',
+          '.jsx',
+          '.tsx',
+          '.py',
+          '.sql',
+          '.log',
+          '.ini',
+          '.yaml',
+          '.yml',
+          '.env'
+        ])
+
+        if (imageExts.has(ext)) {
+          if (stats.size > 20 * 1024 * 1024) {
+            return {
+              success: true,
+              filePath,
+              fileName: name,
+              fileSize: stats.size,
+              mtime: stats.mtime.toISOString(),
+              category: 'image' as const,
+              error: 'Büyük görsel (20 MB üzeri), bellek koruması nedeniyle tam önizlenmiyor.'
+            }
+          }
+          const buffer = fs.readFileSync(filePath)
+          const mimeType = ext === '.svg' ? 'image/svg+xml' : `image/${ext.replace('.', '')}`
+          const previewUrl = `data:${mimeType};base64,${buffer.toString('base64')}`
+          return {
+            success: true,
+            filePath,
+            fileName: name,
+            fileSize: stats.size,
+            mtime: stats.mtime.toISOString(),
+            category: 'image' as const,
+            previewUrl
+          }
+        }
+
+        if (textExts.has(ext)) {
+          const limit = Math.min(stats.size, maxBytes)
+          const fd = fs.openSync(filePath, 'r')
+          const buf = Buffer.alloc(limit)
+          fs.readSync(fd, buf, 0, limit, 0)
+          fs.closeSync(fd)
+          const textContent = buf.toString('utf-8')
+          const lineCount = textContent.split('\n').length
+          return {
+            success: true,
+            filePath,
+            fileName: name,
+            fileSize: stats.size,
+            mtime: stats.mtime.toISOString(),
+            category: 'text' as const,
+            textContent,
+            lineCount
+          }
+        }
+
+        if (ext === '.pdf') {
+          return {
+            success: true,
+            filePath,
+            fileName: name,
+            fileSize: stats.size,
+            mtime: stats.mtime.toISOString(),
+            category: 'pdf' as const
+          }
+        }
+
+        return {
+          success: true,
+          filePath,
+          fileName: name,
+          fileSize: stats.size,
+          mtime: stats.mtime.toISOString(),
+          category: 'binary' as const
+        }
+      } catch (err: unknown) {
+        return {
+          success: false,
+          filePath,
+          fileName: basename(filePath || ''),
+          fileSize: 0,
+          mtime: '',
+          category: 'binary' as const,
+          error: err instanceof Error ? err.message : String(err)
+        }
+      }
+    }
+  )
+
+  ipcMain.handle(
     'diskAnaliz:runPythonTask',
     async (
       event,
@@ -579,9 +817,15 @@ app.whenReady().then(() => {
 
           let destDir = destinationFolder
           if (!destDir) {
-            const driveMatch = src.match(/^([a-zA-Z]:)/)
-            const drive = driveMatch ? driveMatch[1] : 'C:'
-            destDir = join(`${drive}\\`, '_SILINECEK_KOPYALAR')
+            const winSrc = src.replace(/\//g, '\\')
+            const driveMatch = winSrc.match(/^([a-zA-Z]:)\\?(.*)$/)
+            const drive = driveMatch ? driveMatch[1].toUpperCase() : 'C:'
+            const relPath = driveMatch ? driveMatch[2].replace(/^\\+/, '') : ''
+            const lastSlash = relPath.lastIndexOf('\\')
+            const relDir = lastSlash >= 0 ? relPath.slice(0, lastSlash) : ''
+            destDir = relDir
+              ? join(`${drive}\\`, '_SILINECEK_KOPYALAR', relDir)
+              : join(`${drive}\\`, '_SILINECEK_KOPYALAR')
           }
 
           if (!fs.existsSync(destDir)) {
@@ -589,12 +833,14 @@ app.whenReady().then(() => {
           }
 
           const fileName = basename(src)
+          const ext = extname(fileName)
+          const nameWithoutExt = basename(fileName, ext)
           let destPath = join(destDir, fileName)
+          let collisionIdx = 1
 
-          if (fs.existsSync(destPath)) {
-            const ext = extname(fileName)
-            const nameWithoutExt = basename(fileName, ext)
-            destPath = join(destDir, `${nameWithoutExt}_${Date.now()}${ext}`)
+          while (fs.existsSync(destPath)) {
+            destPath = join(destDir, `${nameWithoutExt}_karantina_${collisionIdx}${ext}`)
+            collisionIdx++
           }
 
           try {
@@ -602,7 +848,7 @@ app.whenReady().then(() => {
           } catch (e: unknown) {
             const code = (e as { code?: string })?.code
             if (code === 'EXDEV') {
-              fs.copyFileSync(src, destPath)
+              fs.copyFileSync(src, destPath, fs.constants.COPYFILE_EXCL)
               fs.unlinkSync(src)
             } else {
               throw e

@@ -68,6 +68,12 @@ export const diskAnalizAPI = {
     ipcRenderer.invoke('diskAnaliz:addFileTag', data),
   removeFileTag: (data: { filePath: string; tag: string }) =>
     ipcRenderer.invoke('diskAnaliz:removeFileTag', data),
+  bulkTagFiles: (data: { filePaths: string[]; tagsToAdd?: string[]; tagsToRemove?: string[] }) =>
+    ipcRenderer.invoke('diskAnaliz:bulkTagFiles', data),
+  getVirtualFolders: () => ipcRenderer.invoke('diskAnaliz:getVirtualFolders'),
+  saveVirtualFolders: (folders: unknown) => ipcRenderer.invoke('diskAnaliz:saveVirtualFolders', folders),
+  readFilePreview: (data: { filePath: string; maxBytes?: number }) =>
+    ipcRenderer.invoke('diskAnaliz:readFilePreview', data),
   runPythonTask: (data: { taskId: string; scriptName: string; args: string[] }) =>
     ipcRenderer.invoke('diskAnaliz:runPythonTask', data),
   stopPythonTask: (data: { taskId: string }) =>

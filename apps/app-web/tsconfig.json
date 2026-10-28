@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@worksuite-360/contracts": ["../../packages/ecosystem-contracts/src/index.ts"],
+      "@worksuite-360/contracts/*": ["../../packages/ecosystem-contracts/src/*"]
     }
   },
   "include": [

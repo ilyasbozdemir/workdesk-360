@@ -33,6 +33,38 @@ export function getDatabase(): Database.Database {
     runMigrations(db, currentSchemaVer, schema)
   }
 
+  // Ensure WorkDesk 360 Ecosystem multi-app sync & statutory process tables exist
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ecosystem_sync_records (
+      id TEXT PRIMARY KEY,
+      app_id TEXT NOT NULL DEFAULT 'temin-360',
+      module_id TEXT,
+      record_type TEXT NOT NULL DEFAULT 'dosya',
+      title TEXT NOT NULL,
+      data TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_ecosystem_sync_app ON ecosystem_sync_records(app_id);
+
+    CREATE TABLE IF NOT EXISTS ecosystem_process_instances (
+      id TEXT PRIMARY KEY,
+      process_no TEXT NOT NULL,
+      title TEXT NOT NULL,
+      app_id TEXT NOT NULL DEFAULT 'flowdesk-360',
+      module_id TEXT NOT NULL,
+      flow_id TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      current_step_id TEXT,
+      step_data TEXT NOT NULL,
+      computed_results TEXT,
+      deadline_iso TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_ecosystem_proc_module ON ecosystem_process_instances(module_id);
+  `)
+
   dbInstance = db
   return dbInstance
 }

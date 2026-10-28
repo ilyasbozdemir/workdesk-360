@@ -54,6 +54,7 @@ import {
 } from '../../shared/types'
 import { InteractiveTreemapCanvas } from './components/InteractiveTreemapCanvas'
 import { SmartArchiveExplorerView } from './components/SmartArchiveExplorerView'
+import { SmartArchiveWorkspaceView } from './components/SmartArchiveWorkspaceView'
 import { PythonEngineRunnerView } from './components/PythonEngineRunnerView'
 import { PythonReportsAndCleanerView } from './components/PythonReportsAndCleanerView'
 
@@ -112,6 +113,17 @@ declare global {
         filePath: string
         tag: string
       }) => Promise<{ success: boolean; tags: string[] }>
+      bulkTagFiles: (data: {
+        filePaths: string[]
+        tagsToAdd?: string[]
+        tagsToRemove?: string[]
+      }) => Promise<{ success: boolean; updatedCount: number }>
+      getVirtualFolders: () => Promise<VirtualFolderRecord[]>
+      saveVirtualFolders: (folders: VirtualFolderRecord[]) => Promise<{ success: boolean }>
+      readFilePreview: (data: {
+        filePath: string
+        maxBytes?: number
+      }) => Promise<FilePreviewResponse>
       runPythonTask: (data: {
         taskId: string
         scriptName: string
@@ -176,6 +188,7 @@ export function formatDateTr(msOrIso?: number | string): string {
 }
 
 type ActiveTab =
+  | 'workspace'
   | 'overview'
   | 'explorer'
   | 'treemap'
@@ -188,7 +201,7 @@ type ActiveTab =
   | 'settings'
 
 export function App(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('workspace')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [pythonReports, setPythonReports] = useState<PythonMigrationReports | null>(null)
@@ -626,17 +639,21 @@ export function App(): React.JSX.Element {
             <nav className="flex items-center space-x-1 pl-2 text-xs text-slate-600 dark:text-slate-300">
               <button
                 type="button"
-                onClick={() => setActiveTab('overview')}
-                className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                onClick={() => setActiveTab('workspace')}
+                className={`px-2.5 py-1 rounded transition-colors font-bold ${
+                  activeTab === 'workspace'
+                    ? 'bg-sky-600 text-white'
+                    : 'hover:bg-slate-200/60 dark:hover:bg-slate-800 text-sky-600 dark:text-sky-400'
+                }`}
               >
-                Genel Bakış
+                Görsel Dosya Çalışma Alanı
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('explorer')}
-                className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors font-semibold text-sky-600 dark:text-sky-400"
+                className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors font-semibold"
               >
-                Akıllı Arşiv Gezgini
+                Semantik Kümeleme
               </button>
               <button
                 type="button"
@@ -644,6 +661,13 @@ export function App(): React.JSX.Element {
                 className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
               >
                 Disk Haritası (Treemap)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className="px-2 py-1 rounded hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+              >
+                Genel Bakış
               </button>
               <button
                 type="button"
@@ -902,14 +926,20 @@ export function App(): React.JSX.Element {
           <div className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
             {[
               {
+                id: 'workspace' as const,
+                label: 'Görsel Çalışma Alanı (TagSpaces)',
+                icon: LayoutDashboard,
+                badge: undefined
+              },
+              {
                 id: 'overview' as const,
                 label: 'Genel Bakış & Diskler',
-                icon: LayoutDashboard,
+                icon: HardDrive,
                 badge: drives.length
               },
               {
                 id: 'explorer' as const,
-                label: 'Akıllı Arşiv Gezgini',
+                label: 'Semantik Kümeleme Gezgini',
                 icon: FolderOpen,
                 badge: undefined
               },
@@ -1016,8 +1046,28 @@ export function App(): React.JSX.Element {
           )}
 
           {/* =====================================================================
-              ARŞİV 360 SEKMELERİ: AKILLI GEZGİN, PYTHON MOTORU & RAPORLAR
+              ARŞİV 360 SEKMELERİ: GÖRSEL ÇALIŞMA ALANI (TAGSPACES), AKILLI GEZGİN, PYTHON MOTORU
              ===================================================================== */}
+          {activeTab === 'workspace' && (
+            <div className="h-[calc(100vh-7.5rem)] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+              <SmartArchiveWorkspaceView
+                drives={drives}
+                initialDir={selectedRootPath || 'D:\\'}
+                isDarkMode={isDarkMode}
+                onSendToPythonRunner={(dir) => {
+                  setSelectedRootPath(dir)
+                  setActiveTab('python_runner')
+                }}
+                onOpenInTreemap={(dir) => {
+                  setSelectedRootPath(dir)
+                  setCurrentTreemapFolder(dir)
+                  setActiveTab('treemap')
+                  loadAllViews(dir)
+                }}
+              />
+            </div>
+          )}
+
           {activeTab === 'explorer' && (
             <div className="h-[calc(100vh-7.5rem)] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
               <SmartArchiveExplorerView

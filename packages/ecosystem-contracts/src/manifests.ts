@@ -1,4 +1,4 @@
-import { AppManifest } from './schema.js'
+import type { AppManifest } from './schema.js'
 
 export const TEMIN_360_MANIFEST: AppManifest = {
   id: 'temin-360',

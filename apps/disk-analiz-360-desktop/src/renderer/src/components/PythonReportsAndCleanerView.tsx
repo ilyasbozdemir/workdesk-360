@@ -21,6 +21,7 @@ import {
   Trash2
 } from 'lucide-react'
 import { PythonMigrationReports } from '../../../shared/types'
+import { generateSafeCleanupScript } from '../../../shared/scriptGenerator'
 import { formatBytes } from '../App'
 
 interface PythonReportsAndCleanerViewProps {
@@ -230,67 +231,7 @@ export function PythonReportsAndCleanerView({
     paths: string[],
     isSafe: boolean
   ): string => {
-    if (paths.length === 0) {
-      return "# Henüz silinecek dosya seçilmedi.\n# Lütfen listeden dosyaları işaretleyin veya 'İlkini Tut, Kalanları Seç' butonuna tıklayın."
-    }
-    const now = new Date().toLocaleString('tr-TR')
-    if (platform === 'powershell') {
-      if (isSafe) {
-        return (
-          `# Disk Analiz 360 & Arşiv 360 - Güvenli Kopya Taşıma Betiği (PowerShell)\n` +
-          `# Tarih: ${now} | Dosya: ${paths.length} adet (${selectedSizeFormatted})\n` +
-          `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n` +
-          `$targetRoot = "_SILINECEK_KOPYALAR"\n` +
-          `$files = @(\n` +
-          paths.map((p) => `    "${p.replace(/`/g, '``').replace(/\$/g, '`$')}"`).join(',\n') +
-          `\n)\n` +
-          `foreach ($f in $files) {\n` +
-          `    if (Test-Path -LiteralPath $f) {\n` +
-          `        $drive = (Get-Item -LiteralPath $f).PSDrive.Name + ":\\\\"\n` +
-          `        $destFolder = Join-Path $drive $targetRoot\n` +
-          `        if (-not (Test-Path -LiteralPath $destFolder)) { New-Item -ItemType Directory -Path $destFolder -Force | Out-Null }\n` +
-          `        Move-Item -LiteralPath $f -Destination $destFolder -Force\n` +
-          `    }\n` +
-          `}\n`
-        )
-      }
-      return (
-        `# Disk Analiz 360 & Arşiv 360 - Kopya Silme Betiği (PowerShell)\n` +
-        `$files = @(\n` +
-        paths.map((p) => `    "${p.replace(/`/g, '``').replace(/\$/g, '`$')}"`).join(',\n') +
-        `\n)\n` +
-        `foreach ($f in $files) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } }\n`
-      )
-    }
-
-    if (platform === 'cmd') {
-      const lines = [
-        `@echo off`,
-        `chcp 65001 > nul`,
-        `echo Disk Analiz 360 - ${paths.length} dosya (${selectedSizeFormatted})`
-      ]
-      paths.forEach((p) => {
-        const drv = p.substring(0, 2)
-        if (isSafe) {
-          lines.push(
-            `if not exist "${drv}\\_SILINECEK_KOPYALAR" mkdir "${drv}\\_SILINECEK_KOPYALAR"`
-          )
-          lines.push(`move /y "${p}" "${drv}\\_SILINECEK_KOPYALAR\\"`)
-        } else {
-          lines.push(`del /f /q "${p}"`)
-        }
-      })
-      return lines.join('\n')
-    }
-
-    const lines = [`#!/usr/bin/env bash`, `set -euo pipefail`]
-    if (isSafe) {
-      lines.push(`mkdir -p "./_SILINECEK_KOPYALAR"`)
-      paths.forEach((p) => lines.push(`mv -f "${p.replace(/\\/g, '/')}" "./_SILINECEK_KOPYALAR/"`))
-    } else {
-      paths.forEach((p) => lines.push(`rm -f "${p.replace(/\\/g, '/')}"`))
-    }
-    return lines.join('\n')
+    return generateSafeCleanupScript(platform, paths, isSafe, selectedSizeFormatted)
   }
 
   const handleCopyScript = async (): Promise<void> => {
@@ -325,11 +266,39 @@ export function PythonReportsAndCleanerView({
 
   return (
     <div className="space-y-5">
+      {/* Eksik / Kısmi Tarama Uyarısı (Varsa) */}
+      {dupSummary && dupSummary.scan_status === 'PARTIAL_WITH_ERRORS' && (
+        <div className="p-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-amber-300 text-xs space-y-1">
+          <div className="font-bold text-sm text-amber-400">
+            ⚠️ Kısmi Tarama Uyarısı ({dupSummary.total_errors_count || 0} Erişim / Doğrulama Kaydı)
+          </div>
+          <p>
+            Tarama sırasında{' '}
+            <b>{dupSummary.skipped_unreadable_dirs_count || 0}</b> klasör ve{' '}
+            <b>{dupSummary.skipped_unreadable_files_count || 0}</b> dosya yetki/erişim hatası
+            nedeniyle atlandı;{' '}
+            <b>{dupSummary.changed_during_scan_count || 0}</b> dosya ise tarama esnasında
+            değiştiği (TOCTOU) için mükerrer grubuna dahil edilmedi.
+          </p>
+        </div>
+      )}
+
       {/* Özet Kartları */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <div className="text-[11px] font-bold text-slate-400 uppercase">
-            Python Motoru Taranan Dosya
+          <div className="text-[11px] font-bold text-slate-400 uppercase flex items-center justify-between">
+            <span>Python Motoru Taranan Dosya</span>
+            {dupSummary?.scan_status && (
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                  dupSummary.scan_status === 'COMPLETE'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'bg-amber-500/20 text-amber-400'
+                }`}
+              >
+                {dupSummary.scan_status === 'COMPLETE' ? 'Eksiksiz' : 'Kısmi'}
+              </span>
+            )}
           </div>
           <div className="text-2xl font-black text-sky-500 mt-1 font-mono">
             {dupSummary?.total_files_scanned?.toLocaleString('tr-TR') ||
@@ -337,7 +306,8 @@ export function PythonReportsAndCleanerView({
               '0'}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            {dupSummary?.total_size_scanned_formatted || 'scanner.py çıktısı'}
+            {dupSummary?.total_size_scanned_formatted || 'scanner.py çıktısı'} •{' '}
+            {dupSummary?.zero_byte_files_count ?? 0} adet 0B dosya
           </div>
         </div>
 

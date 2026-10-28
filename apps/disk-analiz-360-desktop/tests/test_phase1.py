@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Arşiv 360 - Faz 1 Otomatik Doğrulama ve Performans Testi
+Arşiv 360 - Faz 1 & Güvenlik Bulguları Otomatik Doğrulama ve Performans Testi
 - Volume GUID ve File ID doğrulaması
 - 3 Seviyeli Koruma Motoru ve Yanlış Pozitif (Anti-False-Positive) testleri
 - İşlem anında Güvenlik Veto (Defense in Depth) testi
 - SQLite WAL modunda toplu kayıt ve sayfalanmış arama testi
 - İzole geçici klasörde os.scandir envanterleme testi
+- Scanner.py: Metadata-doğrulamalı hash önbelleği, TOCTOU koruması, 0 bayt gruplama ve hata izleme testi
 """
 
 import os
@@ -29,10 +30,17 @@ from engine.volume_utils import get_volume_info, get_file_identity
 from engine.protection_engine import ProtectionEngine, ProtectionLevel, SecurityViolationError
 from engine.index_db import IndexDatabase
 from engine.inventory import crawl_and_index
+from scanner import (
+    is_cache_entry_valid,
+    get_cached_hash,
+    get_quick_sample_hash_verified,
+    get_full_hash_verified,
+    scan_subtree,
+)
 
 
 def test_volume_utils():
-    print("[1/5] Birim ve Dosya Kimliği Testi (Volume & File ID)...", flush=True)
+    print("[1/6] Birim ve Dosya Kimliği Testi (Volume & File ID)...", flush=True)
     vol = get_volume_info("C:\\")
     assert vol.guid.startswith("\\\\?\\Volume"), f"Geçersiz Volume GUID: {vol.guid}"
     assert vol.filesystem == "NTFS", f"Beklenen NTFS, alınan: {vol.filesystem}"
@@ -41,7 +49,7 @@ def test_volume_utils():
 
 
 def test_protection_classifier():
-    print("[2/5] Koruma Motoru ve Yanlış Pozitif (Anti-False-Positive) Testi...", flush=True)
+    print("[2/6] Koruma Motoru ve Yanlış Pozitif (Anti-False-Positive) Testi...", flush=True)
     engine = ProtectionEngine()
 
     # --- A) Yanlış Pozitif Testleri (Bunlar KESİNLİKLE Kullanıcı Verisi - Seviye 0 olmalı) ---
@@ -90,7 +98,7 @@ def test_protection_classifier():
 
 
 def test_protection_veto():
-    print("[3/5] İşlem Anında Güvenlik Kalkanı (Defense in Depth / Veto) Testi...", flush=True)
+    print("[3/6] İşlem Anında Güvenlik Kalkanı (Defense in Depth / Veto) Testi...", flush=True)
     engine = ProtectionEngine()
 
     # Kullanıcı dosyası silme denemesi: Başarılı olmalı (istisna yok)
@@ -112,7 +120,7 @@ def test_protection_veto():
 
 
 def test_sqlite_batch_and_query():
-    print("[4/5] SQLite WAL Modu, Toplu Kayıt (Batch) ve Sayfalı Arama Testi...", flush=True)
+    print("[4/6] SQLite WAL Modu, Toplu Kayıt (Batch) ve Sayfalı Arama Testi...", flush=True)
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = os.path.join(tmpdir, "test_index.db")
         db = IndexDatabase(db_path)
@@ -159,7 +167,7 @@ def test_sqlite_batch_and_query():
 
 
 def test_isolated_crawler():
-    print("[5/5] İzole Klasör Üzerinde os.scandir Envanterleme ve Koruma Testi...", flush=True)
+    print("[5/6] İzole Klasör Üzerinde os.scandir Envanterleme ve Koruma Testi...", flush=True)
     with tempfile.TemporaryDirectory() as tmp_scan_dir, tempfile.TemporaryDirectory() as tmp_db_dir:
         # Geçici bir klasör yapısı kur
         proj_dir = os.path.join(tmp_scan_dir, "Projeler", "Windows_Sistemi")
@@ -195,9 +203,65 @@ def test_isolated_crawler():
             db.close()
 
 
+def test_scanner_cache_toctou_and_zero_byte():
+    print("[6/6] Scanner.py: Hash Önbellek Doğrulaması, TOCTOU Koruması ve 0-Bayt Gruplama Testi...", flush=True)
+
+    # 1. Eski (salt metin) ve değişmiş metadata önbellek doğrulaması (Bulgu #2)
+    assert is_cache_entry_valid("deadbeef" * 8, 1024, 123456789) is False, "Eski string önbellek kaydı reddedilmeli!"
+    valid_entry = {"hash": "a" * 64, "size": 1024, "mtime_ns": 999888777}
+    assert is_cache_entry_valid(valid_entry, 1024, 999888777) is True, "Geçerli önbellek kaydı kabul edilmeli!"
+    assert is_cache_entry_valid(valid_entry, 2048, 999888777) is False, "Boyutu değişmiş önbellek kaydı reddedilmeli!"
+    assert is_cache_entry_valid(valid_entry, 1024, 111222333) is False, "mtime_ns değişmiş önbellek kaydı reddedilmeli!"
+
+    # 2. TOCTOU (Dosya taranırken değiştirilirse doğrulama) ve 0-bayt dosya tespiti (Bulgu #2, #4, #5, #6)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        f_normal = os.path.join(tmpdir, "ornek.bin")
+        f_empty1 = os.path.join(tmpdir, "bos1.txt")
+        f_empty2 = os.path.join(tmpdir, "bos2.txt")
+
+        with open(f_normal, "wb") as fp:
+            fp.write(b"WorkDesk 360 TOCTOU Test Content " * 100)
+        open(f_empty1, "wb").close()
+        open(f_empty2, "wb").close()
+
+        st = os.stat(f_normal)
+
+        # get_cached_hash diskteki gerçek dosya stat'ını da doğrular
+        cache_map = {
+            f_normal: {"hash": "c" * 64, "size": st.st_size, "mtime_ns": st.st_mtime_ns},
+            f_empty1: "b" * 64,
+        }
+        assert get_cached_hash(cache_map, f_empty1, 0, 0) is None
+        assert get_cached_hash(cache_map, f_normal, st.st_size, st.st_mtime_ns) == "c" * 64
+        assert get_cached_hash(cache_map, f_normal, st.st_size, st.st_mtime_ns + 1) is None
+        print("  ✓ Bulgu #2 doğrulandı: Eski string önbelleği ve mtime_ns/size uyuşmazlıkları reddediliyor.")
+
+        # Doğru metadata ile örnek ve tam hash başarılı olmalı
+        sh, s_err = get_quick_sample_hash_verified(f_normal, st.st_size, st.st_mtime_ns)
+        assert sh is not None and s_err is None, f"Beklenmeyen örnek hash hatası: {s_err}"
+
+        fh, f_err, v_mtime = get_full_hash_verified(f_normal, st.st_size, st.st_mtime_ns)
+        assert fh is not None and f_err is None and v_mtime == st.st_mtime_ns, f"Beklenmeyen tam hash hatası: {f_err}"
+
+        # Yanlış boyut veya yanlış mtime_ns verildiğinde TOCTOU hatası dönmeli
+        sh_bad, s_err_bad = get_quick_sample_hash_verified(f_normal, st.st_size + 5, st.st_mtime_ns)
+        assert sh_bad is None and s_err_bad == "TOCTOU_MODIFIED_BEFORE_SAMPLE", f"TOCTOU yakalanmadı: {s_err_bad}"
+
+        fh_bad, f_err_bad, _ = get_full_hash_verified(f_normal, st.st_size, st.st_mtime_ns + 1000)
+        assert fh_bad is None and f_err_bad == "TOCTOU_MODIFIED_BEFORE_FULL_HASH", f"TOCTOU yakalanmadı: {f_err_bad}"
+        print("  ✓ Bulgu #6 doğrulandı: Tarama sırasında değişen dosyalar TOCTOU kontrolüyle yakalanıyor.")
+
+        # scan_subtree 0 bayt dosyaları ve hata listesini döndürmeli
+        size_map, zero_files, total_files, total_size, errors = scan_subtree(tmpdir)
+        assert total_files == 3, f"Beklenen 3 dosya, bulunan: {total_files}"
+        assert len(zero_files) == 2, f"2 adet 0-bayt dosya yakalanmalıydı, bulunan: {len(zero_files)}"
+        assert errors == [], f"Hatasız klasörde hata çıkmamalıydı: {errors}"
+        print("  ✓ Bulgu #4 ve #5 doğrulandı: 0-bayt dosyalar ayrı listeleniyor ve erişim hataları yapılandırılmış olarak izleniyor.")
+
+
 def main():
     print("\n" + "=" * 65)
-    print("  ARŞİV 360 - FAZ 1 DOĞRULAMA VE ENTEGRASYON TESTİ")
+    print("  ARŞİV 360 - FAZ 1 & GÜVENLİK BULGULARI DOĞRULAMA TESTİ")
     print("=" * 65 + "\n")
 
     t_all = time.time()
@@ -206,6 +270,7 @@ def main():
     test_protection_veto()
     test_sqlite_batch_and_query()
     test_isolated_crawler()
+    test_scanner_cache_toctou_and_zero_byte()
 
     print("\n" + "=" * 65)
     print(f"  TÜM TESTLER BAŞARIYLA GEÇTİ! (Toplam Süre: {time.time() - t_all:.2f} sn)")
