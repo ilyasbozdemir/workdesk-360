@@ -45,8 +45,13 @@ function controlledRendererObfuscator(isProduction: boolean): Plugin | null {
           map: null
         }
       } catch (error) {
-        console.warn(`[Obfuscator] Uyarı: ${chunk.fileName} karıştırılırken hata oluştu:`, error)
-        return null
+        const msg = `[Obfuscator Kritik Hata] ${chunk.fileName} dosyasının karıştırılması başarısız oldu!`
+        console.error(msg, error)
+        throw new Error(
+          `${msg} Üretim (production) güvenliği için karıştırılmamış JavaScript derlemesine izin verilmez. Hata detayı: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        )
       }
     }
   }

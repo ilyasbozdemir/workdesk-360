@@ -469,7 +469,26 @@ export class DtmWorkspace {
             meta.is_tampered = false
           }
         } catch (chainErr) {
-          console.warn('[DtmWorkspace] Blokzincir denetim izi kontrolü sırasında uyarı:', chainErr)
+          const errMsg = `Denetim izi doğrulama hatası (bütünlük doğrulanamadı): ${chainErr instanceof Error ? chainErr.message : String(chainErr)}`
+          console.error(`[SECURITY ALARM] ${errMsg}`)
+          if (!meta.warnings) {
+            meta.warnings = []
+          }
+          meta.warnings.push(`GÜVENLİK ALARMI: ${errMsg}`)
+          meta.is_read_only = true
+          meta.is_tampered = true
+          meta.tamper_reason = errMsg
+
+          // 🚨 DOĞRULAMA TAMAMLANAMADI: Fail-Safe gereği dosya güvenli kabul edilmez ve fiziksel SALT-OKUNUR moda alınır
+          const dbFileName = meta.active_db_file || 'database.sqlite'
+          const dbPath = path.join(this.tempDir, dbFileName)
+          try {
+            this.db.close()
+          } catch {}
+          this.db = new Database(dbPath, { readonly: true })
+          this.isReadOnly = true
+          this.isTampered = true
+          this.tamperReason = errMsg
         }
       }
 

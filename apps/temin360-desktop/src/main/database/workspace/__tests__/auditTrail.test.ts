@@ -65,18 +65,36 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     expect(hash).toMatch(/^[a-f0-9]{64}$/)
   })
 
+  it('tabloya yeni kayıt eklenmesinde (INSERT) eklenen verileri günlüğe yazar', () => {
+    initSessionContext(db, { macHash: 'mock-mac-hash-insert', userId: 'USER_KATIP' })
+    enableAuditLogForTable(db, 'test_teklif', ['firma_adi', 'teklif_fiyati'])
+
+    db.prepare(`INSERT INTO test_teklif (id, firma_adi, teklif_fiyati) VALUES (10, 'Firma Yeni', 3500)`).run()
+
+    const history = getAuditHistory(db, { tableName: 'test_teklif', recordId: 10 })
+    expect(history.length).toBe(1)
+    expect(history[0].operation_type).toBe('INSERT')
+    expect(history[0].old_values).toBeNull()
+    expect(history[0].mac_hash).toBe('mock-mac-hash-insert')
+    expect(history[0].changed_by).toBe('USER_KATIP')
+
+    const newVals = JSON.parse(history[0].new_values!)
+    expect(newVals.firma_adi).toBe('Firma Yeni')
+    expect(newVals.teklif_fiyati).toBe(3500)
+  })
+
   it('tablo güncellemesinde (UPDATE) eski ve yeni verileri ve mac_hash değerini günlüğe yazar', () => {
     initSessionContext(db, { macHash: 'mock-mac-hash-12345', userId: 'USER_MUDUR' })
     enableAuditLogForTable(db, 'test_teklif', ['firma_adi', 'teklif_fiyati'])
 
-    // Insert initial record
+    // Insert initial record (logs INSERT)
     db.prepare(`INSERT INTO test_teklif (id, firma_adi, teklif_fiyati) VALUES (1, 'Firma A', 1000)`).run()
 
-    // Update record
+    // Update record (logs UPDATE)
     db.prepare(`UPDATE test_teklif SET teklif_fiyati = 1250, firma_adi = 'Firma A Revize' WHERE id = 1`).run()
 
     const history = getAuditHistory(db, { tableName: 'test_teklif', recordId: 1 })
-    expect(history.length).toBe(1)
+    expect(history.length).toBe(2)
     expect(history[0].operation_type).toBe('UPDATE')
     expect(history[0].mac_hash).toBe('mock-mac-hash-12345')
     expect(history[0].changed_by).toBe('USER_MUDUR')
@@ -87,6 +105,8 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     expect(oldVals.firma_adi).toBe('Firma A')
     expect(newVals.teklif_fiyati).toBe(1250)
     expect(newVals.firma_adi).toBe('Firma A Revize')
+
+    expect(history[1].operation_type).toBe('INSERT')
   })
 
   it('tablo silinmesinde (DELETE) silinen veriyi kanıt olarak saklar', () => {
@@ -97,12 +117,14 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     db.prepare(`DELETE FROM test_teklif WHERE id = 2`).run()
 
     const history = getAuditHistory(db, { tableName: 'test_teklif', recordId: 2 })
-    expect(history.length).toBe(1)
+    expect(history.length).toBe(2)
     expect(history[0].operation_type).toBe('DELETE')
     expect(history[0].mac_hash).toBe('mock-mac-hash-99999')
     const oldVals = JSON.parse(history[0].old_values!)
     expect(oldVals.teklif_fiyati).toBe(500)
     expect(oldVals.firma_adi).toBe('Silinecek Firma')
+
+    expect(history[1].operation_type).toBe('INSERT')
   })
 
   it('oturum açılmadan yapılan dış müdahaleleri UNAUTHORIZED_EXTERNAL_CLIENT olarak damgalar', () => {
@@ -114,8 +136,9 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     db.prepare(`UPDATE test_teklif SET teklif_fiyati = 350 WHERE id = 3`).run()
 
     const history = getAuditHistory(db, { tableName: 'test_teklif', recordId: 3 })
-    expect(history.length).toBe(1)
+    expect(history.length).toBe(2)
     expect(history[0].mac_hash).toBe('UNAUTHORIZED_EXTERNAL_CLIENT')
+    expect(history[1].mac_hash).toBe('UNAUTHORIZED_EXTERNAL_CLIENT')
   })
 
   it('Anti-Tampering: sys_audit_logs tablosundan log silinmesini (DELETE) engeller', () => {
@@ -126,7 +149,7 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     db.prepare(`UPDATE test_teklif SET teklif_fiyati = 200 WHERE id = 4`).run()
 
     const history = getAuditHistory(db, { recordId: 4 })
-    expect(history.length).toBe(1)
+    expect(history.length).toBe(2)
     const logId = history[0].id
 
     // Log silme girişimi RAISE(FAIL) ile engellenmeli
@@ -143,6 +166,7 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     db.prepare(`UPDATE test_teklif SET teklif_fiyati = 300 WHERE id = 5`).run()
 
     const history = getAuditHistory(db, { recordId: 5 })
+    expect(history.length).toBe(2)
     const logId = history[0].id
 
     // Log değiştirme girişimi RAISE(FAIL) ile engellenmeli
@@ -155,13 +179,14 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     initSessionContext(db)
     enableAuditLogForTable(db, 'test_teklif', ['teklif_fiyati'])
 
+    // Yalnızca 1 işlem (ilk INSERT kaydı)
     db.prepare(`INSERT INTO test_teklif (id, teklif_fiyati) VALUES (6, 500)`).run()
-    db.prepare(`UPDATE test_teklif SET teklif_fiyati = 550 WHERE id = 6`).run()
 
     const history = getAuditHistory(db, { recordId: 6 })
     expect(history.length).toBe(1)
     const log1 = history[0]
 
+    expect(log1.operation_type).toBe('INSERT')
     expect(log1.prev_hash).toBe(GENESIS_HASH)
     expect(log1.current_hash).toBeDefined()
     expect(log1.current_hash).toMatch(/^[a-f0-9]{64}$/)
@@ -184,13 +209,15 @@ describe('SQLite Audit Trail & Anti-Tampering Triggers', () => {
     AuditChainService.secureAllPendingLogs(db)
 
     const allLogs = db.prepare(`SELECT * FROM sys_audit_logs WHERE record_id = 7 ORDER BY id ASC`).all() as any[]
-    expect(allLogs.length).toBe(3)
+    expect(allLogs.length).toBe(4) // 1 INSERT + 3 UPDATEs
 
     // Blok 0 (ilk log) prev_hash = GENESIS_HASH veya önceki son kayıt
     // Blok 1 prev_hash = Blok 0 current_hash
     expect(allLogs[1].prev_hash).toBe(allLogs[0].current_hash)
     // Blok 2 prev_hash = Blok 1 current_hash
     expect(allLogs[2].prev_hash).toBe(allLogs[1].current_hash)
+    // Blok 3 prev_hash = Blok 2 current_hash
+    expect(allLogs[3].prev_hash).toBe(allLogs[2].current_hash)
 
     // Bütünlük doğrulaması
     const verify = AuditIntegrityVerifier.verifyChain(db)

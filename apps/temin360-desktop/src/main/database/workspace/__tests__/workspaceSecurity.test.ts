@@ -435,6 +435,36 @@ describe('Workspace Security & Path Traversal Protections', () => {
         ws2.closeWorkspace()
       }
     })
+
+    it('bütünlük doğrulaması istisna fırlatırsa (Fail-Safe), dosya güvenli kabul edilmez ve salt-okunur teftiş moduna kilitlenir', () => {
+      const docPath = path.join(testDir, 'hata_firlatan.temin')
+      const ws1 = new DtmWorkspace()
+      ws1.createWorkspace(docPath, 'Test Kurum')
+      ws1.closeWorkspace()
+
+      const verifySpy = vi.spyOn(AuditIntegrityVerifier, 'verifyChain').mockImplementation(() => {
+        throw new Error('SQLite disk I/O veya bozuk log tablosu istisnası!')
+      })
+
+      const ws2 = new DtmWorkspace()
+      try {
+        const meta = ws2.openWorkspace(docPath)
+
+        // Fail-safe: doğrulanamayan dosya kilitli ve salt-okunur olmalıdır
+        expect(meta.is_read_only).toBe(true)
+        expect(meta.is_tampered).toBe(true)
+        expect(meta.tamper_reason).toContain('bütünlük doğrulanamadı')
+
+        expect(ws2.isReadOnlyState()).toBe(true)
+        expect(ws2.isTamperedState()).toBe(true)
+
+        expect(() => ws2.saveWorkspace()).toThrow(/teftiş/i)
+      } finally {
+        verifySpy.mockRestore()
+        ws2.closeWorkspace()
+      }
+    })
   })
 })
+
 

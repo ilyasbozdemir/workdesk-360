@@ -18,6 +18,8 @@ export interface AuditLogEntry {
 
 /**
  * Cihazın ilk aktif fiziksel ağ arayüzünün MAC adresini bulur ve SHA-256 ile hash'ler.
+ * NOT: Bu değer adli bilişim (forensics) ve cihaz ilişkilendirmesi (telemetry) amacıyla
+ * kayıt altına alınır; tek başına bir yetkilendirme anahtarı veya gizli parola değildir.
  */
 export function getMacHash(): string {
   try {
@@ -142,6 +144,33 @@ export function enableAuditLogForTable(
   const oldJsonFields = validColumns.map((col) => `'${col}', OLD."${col}"`).join(', ')
   const newJsonFields = validColumns.map((col) => `'${col}', NEW."${col}"`).join(', ')
 
+  const insertTriggerSQL = `
+    DROP TRIGGER IF EXISTS trg_audit_${tableName}_insert;
+    CREATE TRIGGER trg_audit_${tableName}_insert
+    AFTER INSERT ON "${tableName}"
+    FOR EACH ROW
+    BEGIN
+      INSERT INTO sys_audit_logs (
+        table_name,
+        operation_type,
+        record_id,
+        old_values,
+        new_values,
+        mac_hash,
+        changed_by
+      )
+      VALUES (
+        '${tableName}',
+        'INSERT',
+        NEW.id,
+        NULL,
+        json_object(${newJsonFields}),
+        IFNULL((SELECT value FROM sys_session_context WHERE key = 'mac_hash'), 'UNAUTHORIZED_EXTERNAL_CLIENT'),
+        IFNULL((SELECT value FROM sys_session_context WHERE key = 'user_id'), 'SYSTEM')
+      );
+    END;
+  `
+
   const updateTriggerSQL = `
     DROP TRIGGER IF EXISTS trg_audit_${tableName}_update;
     CREATE TRIGGER trg_audit_${tableName}_update
@@ -196,6 +225,7 @@ export function enableAuditLogForTable(
     END;
   `
 
+  db.exec(insertTriggerSQL)
   db.exec(updateTriggerSQL)
   db.exec(deleteTriggerSQL)
 }
@@ -363,6 +393,17 @@ export function calculateLogBlockHash(block: LogBlockPayload): string {
 
 /**
  * Blokzincir Mantığında Zincirleme Hash Motoru (Chained Hashing Service)
+ *
+ * MİMARİ GÜVENLİK SINIRI & TEHDİT MODELİ:
+ * 1. Bu mekanizma, SQLite içerisindeki denetim izinin (sys_audit_logs) kronolojik sırasını
+ *    kriptografik olarak mühürler.
+ * 2. SQLite seviyesinde harici bir GUI aracıyla (DB Browser vb.) yapılan aradan kayıt silme,
+ *    eski kayıtları manipüle etme veya satır değiştirme girişimlerinde zincir kırılır ve
+ *    dosya açılışında adli teftiş kalkanı (Startup Shield) dosyayı kilitler.
+ * 3. Dosyayı fiziksel olarak diskte yeniden yazabilen bir saldırgana karşı mutlak
+ *    değiştirilemezlik (immutability), ileriki aşamada devreye girecek olan SQLCipher veritabanı
+ *    şifrelemesi ve çalışma alanı dijital imza (HMAC/Asymmetric Signature) katmanları ile
+ *    tamamlanacaktır.
  */
 export class AuditChainService {
   /**
