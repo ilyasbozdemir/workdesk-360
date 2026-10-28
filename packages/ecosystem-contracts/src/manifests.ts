@@ -149,6 +149,33 @@ export const DOSYA_360_MANIFEST: AppManifest = {
   sizeEstimatedMb: 110
 }
 
+export const DISK_ANALIZ_360_MANIFEST: AppManifest = {
+  id: 'disk-analiz-360',
+  name: 'Disk Analiz 360',
+  version: '1.0.0-alpha.1',
+  summary: 'Etkileşimli Disk Haritası (Treemap), Mükerrer Dosya Tespiti ve Güvenli Temizlik',
+  description:
+    'Windows sürücülerini ve klasörlerini analiz eden, etkileşimli Treemap haritasıyla alan dağılımını gösteren, 3 aşamalı SHA-256 doğrulamalı mükerrer tespiti ve Geri Dönüşüm Kutusu tabanlı güvenli temizlik sunan masaüstü uygulaması.',
+  category: 'file-management',
+  appId: 'dev.ilyasbozdemir.diskanaliz360',
+  executableName: 'DiskAnaliz360.exe',
+  fileAssociations: [],
+  installState: 'installed',
+  modules: [
+    'Disk ve Birim Keşfi',
+    'Etkileşimli Disk Haritası (Treemap)',
+    'Artımlı SQLite WAL İndeksi',
+    '3 Aşamalı SHA-256 Mükerrer Tespiti',
+    'Güvenli Temizlik (Çöp Kutusu)',
+    'Tarama ve İşlem Geçmişi'
+  ],
+  releaseChannel: 'alpha',
+  minEcosystemVersion: '1.0.0',
+  author: 'ilyasbozdemir.dev',
+  repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360',
+  sizeEstimatedMb: 115
+}
+
 export const SUREC_360_MANIFEST: AppManifest = {
   id: 'surec-360',
   name: 'Süreç 360',
@@ -346,6 +373,7 @@ export const DEFAULT_ECOSYSTEM_MANIFESTS: AppManifest[] = [
   IHALE_360_MANIFEST,
   WORKSPACE_360_MANIFEST,
   DOSYA_360_MANIFEST,
+  DISK_ANALIZ_360_MANIFEST,
   SUREC_360_MANIFEST,
   FLOWDESK_360_MANIFEST,
   HARITA_360_MANIFEST,

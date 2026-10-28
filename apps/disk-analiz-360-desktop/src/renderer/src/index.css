@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 p-0 font-sans bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased select-none;
+    overflow: hidden;
+  }
+}
+
+input:not(:disabled),
+textarea:not(:disabled),
+select:not(:disabled),
+button,
+[contenteditable='true'],
+[contenteditable=''] {
+  -webkit-app-region: no-drag !important;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+

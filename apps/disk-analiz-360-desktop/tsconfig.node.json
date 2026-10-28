@@ -1,0 +1,17 @@
+{
+  "extends": "../flowdesk-desktop/node_modules/@electron-toolkit/tsconfig/tsconfig.node.json",
+  "include": [
+    "src/main/**/*",
+    "src/preload/**/*",
+    "src/shared/**/*"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "baseUrl": ".",
+    "typeRoots": ["../flowdesk-desktop/node_modules/@types"],
+    "types": ["node"],
+    "paths": {
+      "*": ["../flowdesk-desktop/node_modules/*"]
+    }
+  }
+}

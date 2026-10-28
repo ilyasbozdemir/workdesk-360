@@ -1,0 +1,30 @@
+appId: dev.ilyasbozdemir.diskanaliz360
+productName: Disk Analiz 360
+directories:
+  output: dist-local
+
+publish:
+  provider: github
+  owner: ilyasbozdemir
+  repo: workdesk-360
+  updaterCacheDirName: diskanaliz360-updater
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+
+win:
+  executableName: DiskAnaliz360
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: Disk Analiz 360
+  uninstallDisplayName: Disk Analiz 360
+  createDesktopShortcut: always
+

@@ -1,0 +1,56 @@
+{
+  "name": "disk-analiz-360-desktop",
+  "version": "1.0.0-alpha.1",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "description": "Disk Analiz 360 - Kurumsal Disk Alanı Analizi, Etkileşimli Treemap, Mükerrer Dosya Tespiti ve Güvenli Temizlik Masaüstü Uygulaması",
+  "main": "./out/main/index.js",
+  "author": "ilyasbozdemir.dev",
+  "homepage": "https://workdesk360.ilyasbozdemir.dev",
+  "scripts": {
+    "test": "node scripts/test-electron.js run",
+    "test:watch": "node scripts/test-electron.js",
+    "typecheck:node": "node scripts/run-tsc.js node",
+    "typecheck:web": "node scripts/run-tsc.js web",
+    "typecheck": "node scripts/run-tsc.js all",
+    "start": "node scripts/run-vite.js preview",
+    "dev": "node scripts/run-vite.js dev",
+    "build": "node scripts/run-tsc.js all && node scripts/run-vite.js build",
+    "install-deps": "electron-builder install-app-deps",
+    "build:unpack": "npm run build && electron-builder --dir",
+    "build:win": "npm run build && electron-builder --win --x64"
+  },
+  "dependencies": {
+    "@electron-toolkit/preload": "^3.0.2",
+    "@electron-toolkit/utils": "^4.0.0",
+    "@worksuite-360/contracts": "workspace:*",
+    "better-sqlite3": "^12.10.0",
+    "clsx": "^2.1.1",
+    "electron-is-dev": "^3.0.1",
+    "electron-updater": "^6.8.3",
+    "lucide-react": "^1.16.0",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@electron-toolkit/tsconfig": "^2.0.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.19.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.5.0",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^5.0.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.7.4",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.6",
+    "vitest": "^3.2.4"
+  }
+}

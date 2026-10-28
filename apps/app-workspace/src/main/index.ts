@@ -87,6 +87,12 @@ const KNOWN_APPS: Record<string, EcosystemAppConfig> = {
     folderName: 'flowdesk-desktop',
     exeName: 'FlowDesk360.exe',
     installedFolderNames: ['flowdesk', 'FLOWDESK 360', 'FlowDesk 360']
+  },
+  'dev.ilyasbozdemir.diskanaliz360': {
+    displayName: 'Disk Analiz 360',
+    folderName: 'disk-analiz-360-desktop',
+    exeName: 'DiskAnaliz360.exe',
+    installedFolderNames: ['disk-analiz-360-desktop', 'Disk Analiz 360', 'DiskAnaliz360']
   }
 }
 
