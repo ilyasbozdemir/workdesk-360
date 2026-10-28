@@ -186,7 +186,13 @@ export function useWorkspaceLifecycle(
           if (result.requiresMigration) {
             result = await openWorkspace(targetPath, true)
           }
-          if (result.success) queryClient.clear()
+          if (result.success) {
+            queryClient.clear()
+          } else {
+            console.warn('Önceki çalışma alanı dosyası bulunamadı, son dosya kaydı temizleniyor:', targetPath)
+            localStorage.removeItem('workspace_path')
+            sessionStorage.removeItem('workspace_path')
+          }
         }
       } catch (e) {
         console.warn('Otomatik son dosya yükleme başarısız:', e)

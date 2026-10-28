@@ -159,13 +159,13 @@ export function SmartArchiveWorkspaceView({
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true)
   const [isRightDetailOpen, setIsRightDetailOpen] = useState(true)
 
-  // 3. Görünüm & Sıralama (TagSpaces B & A gereksinimleri)
+  // 3. Görünüm & Sıralama (Izgara, Liste, Ayrıntı, Galeri)
   const [viewMode, setViewMode] = useState<WorkspaceViewMode>('grid')
   const [sortBy, setSortBy] = useState<
     'name_asc' | 'name_desc' | 'size_desc' | 'size_asc' | 'mtime_desc' | 'mtime_asc'
   >('name_asc')
 
-  // 4. Sanal Klasörler & Koleksiyonlar (TagSpaces D gereksinimi)
+  // 4. Sanal Klasörler & Koleksiyonlar (Kullanıcı Tanımlı Gruplar)
   const [virtualFolders, setVirtualFolders] = useState<VirtualFolderRecord[]>([])
   const [activeVirtualFolderId, setActiveVirtualFolderId] = useState<string | null>(null)
   const [activeSmartView, setActiveSmartView] = useState<
@@ -175,14 +175,14 @@ export function SmartArchiveWorkspaceView({
   const [newVirtualFolderName, setNewVirtualFolderName] = useState('')
   const [newVirtualFolderColor, setNewVirtualFolderColor] = useState('#0284c7')
 
-  // 5. Arama, Filtreler & Etiketler (TagSpaces C & G gereksinimleri)
+  // 5. Arama, Filtreler & Etiketler
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedExtCategory, setSelectedExtCategory] = useState<
     'all' | 'documents' | 'sheets' | 'cad' | 'images' | 'archives' | 'zero'
   >('all')
 
-  // 6. Seçim & Toplu İşlemler (TagSpaces F gereksinimi)
+  // 6. Seçim & Toplu İşlemler
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
   const [primarySelectedFile, setPrimarySelectedFile] = useState<WorkspaceFileItem | null>(null)
   const [previewData, setPreviewData] = useState<FilePreviewResponse | null>(null)
@@ -257,7 +257,7 @@ export function SmartArchiveWorkspaceView({
     setPrimarySelectedFile(null)
   }, [baseDir, scanDepth, loadFiles])
 
-  // Seçili dosya değiştiğinde önizleme getir (TagSpaces E gereksinimi)
+  // Seçili dosya değiştiğinde önizleme getir
   useEffect(() => {
     const api = window.diskAnalizAPI
     if (!primarySelectedFile || !api?.readFilePreview) {
@@ -446,7 +446,7 @@ export function SmartArchiveWorkspaceView({
     setSelectedPaths(new Set())
   }
 
-  // Sanal Klasör Oluşturma (TagSpaces D gereksinimi)
+  // Sanal Klasör Oluşturma
   const handleCreateVirtualFolder = async (): Promise<void> => {
     if (!newVirtualFolderName.trim() || !window.diskAnalizAPI?.saveVirtualFolders) return
     const newVf: VirtualFolderRecord = {
@@ -533,7 +533,7 @@ export function SmartArchiveWorkspaceView({
     }
   }
 
-  // Toplu Etiket Ekle (TagSpaces C gereksinimi)
+  // Toplu Etiket Ekle
   const handleApplyBulkTags = async (): Promise<void> => {
     if (!bulkTagInput.trim() || selectedPaths.size === 0 || !window.diskAnalizAPI?.bulkTagFiles) return
     const tags = bulkTagInput
@@ -619,7 +619,7 @@ export function SmartArchiveWorkspaceView({
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans select-none">
       {/* =========================================================================
-          1. ÜST ARAÇ ÇUBUĞU (TagSpaces A & G: Breadcrumbs, Arama, Filtreler, Görünümler)
+          1. ÜST ARAÇ ÇUBUĞU (Breadcrumbs, Arama, Filtreler, Görünümler)
          ========================================================================= */}
       <div className="px-3.5 py-2 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-2.5 shrink-0 z-20">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
@@ -763,7 +763,7 @@ export function SmartArchiveWorkspaceView({
           )}
         </div>
 
-        {/* Görünüm Seçici (TagSpaces B: Grid, List, Details, Gallery) */}
+        {/* Görünüm Seçici (Grid, List, Details, Gallery) */}
         <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-2">
           <div className="flex bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
             <button
@@ -842,7 +842,7 @@ export function SmartArchiveWorkspaceView({
       </div>
 
       {/* =========================================================================
-          2. İKİNCİL FİLTRE VE TOPLU İŞLEM ÇUBUĞU (TagSpaces C & F: Aktif Filtre Çipleri)
+          2. İKİNCİL FİLTRE VE TOPLU İŞLEM ÇUBUĞU (Aktif Filtre Çipleri)
          ========================================================================= */}
       <div className="px-4 py-1.5 border-b border-slate-200 dark:border-slate-800/80 bg-slate-100/70 dark:bg-slate-900/40 flex items-center justify-between gap-2 flex-wrap shrink-0">
         {/* Kategori Filtre Butonları */}
@@ -941,7 +941,7 @@ export function SmartArchiveWorkspaceView({
           </div>
         )}
 
-        {/* Çoklu Seçim Eylem Çubuğu (TagSpaces F: Toplu İşlemler) */}
+        {/* Çoklu Seçim Eylem Çubuğu (Toplu İşlemler) */}
         {selectedPaths.size > 0 && (
           <div className="flex items-center gap-2 bg-sky-500/15 border border-sky-500/30 rounded-xl px-2.5 py-1 text-xs">
             <span className="font-bold text-sky-700 dark:text-sky-300">
@@ -1020,7 +1020,7 @@ export function SmartArchiveWorkspaceView({
           3. ANA ÇALIŞMA GÖVDESİ (Sol Sidebar, Merkez Grid/List/Gallery, Sağ Detay)
          ========================================================================= */}
       <div className="flex-1 flex overflow-hidden">
-        {/* SOL KENAR ÇUBUĞU (TagSpaces A: Diskler, Sanal Klasörler, Akıllı Görünümler, Etiketler) */}
+        {/* SOL KENAR ÇUBUĞU (Diskler, Sanal Klasörler, Akıllı Görünümler, Etiketler) */}
         {isLeftSidebarOpen && (
           <aside className="w-68 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between shrink-0 select-none overflow-y-auto">
             <div className="p-3 space-y-4">
@@ -1066,7 +1066,7 @@ export function SmartArchiveWorkspaceView({
                 </div>
               </div>
 
-              {/* Bölüm 2: Sanal Klasörler & Koleksiyonlar (TagSpaces D) */}
+              {/* Bölüm 2: Sanal Klasörler & Koleksiyonlar */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
@@ -1187,7 +1187,7 @@ export function SmartArchiveWorkspaceView({
                 </div>
               </div>
 
-              {/* Bölüm 4: Etiketler Matrisi (TagSpaces C) */}
+              {/* Bölüm 4: Etiketler Matrisi */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
@@ -1254,7 +1254,7 @@ export function SmartArchiveWorkspaceView({
           </aside>
         )}
 
-        {/* ORTA İÇERİK ALANI (TagSpaces B: Grid, List, Details, Gallery) */}
+        {/* ORTA İÇERİK ALANI (Grid, List, Details, Gallery) */}
         <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/40 dark:bg-slate-950/30">
           {/* Alt Klasörler Hızlı Gezinti Şeridi */}
           {realSubfolders.length > 0 && !activeVirtualFolderId && (
@@ -1585,7 +1585,7 @@ export function SmartArchiveWorkspaceView({
           </div>
 
           {/* =========================================================================
-              4. ALT DURUM ÇUBUĞU (TagSpaces A: Durum Göstergesi & Metrikler)
+              4. ALT DURUM ÇUBUĞU (Durum Göstergesi & Metrikler)
              ========================================================================= */}
           <div className="px-4 py-1.5 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between text-xs text-slate-500 shrink-0">
             <div className="flex items-center gap-3">
@@ -1635,7 +1635,7 @@ export function SmartArchiveWorkspaceView({
           </div>
         </div>
 
-        {/* SAĞ AYRINTI VE CANLI ÖNİZLEME PANELİ (TagSpaces E: Önizleme & Detay) */}
+        {/* SAĞ AYRINTI VE CANLI ÖNİZLEME PANELİ (Önizleme & Detay) */}
         {isRightDetailOpen && (
           <aside className="w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-col justify-between shrink-0 select-none overflow-y-auto">
             {primarySelectedFile ? (
@@ -1653,7 +1653,7 @@ export function SmartArchiveWorkspaceView({
                   </button>
                 </div>
 
-                {/* Görsel / Metin Canlı Önizleyici (TagSpaces E) */}
+                {/* Görsel / Metin Canlı Önizleyici */}
                 <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 overflow-hidden">
                   {previewLoading ? (
                     <div className="h-36 flex items-center justify-center flex-col gap-2 text-slate-400">
@@ -1726,7 +1726,7 @@ export function SmartArchiveWorkspaceView({
                   </div>
                 </div>
 
-                {/* Ait Olduğu Sanal Klasörler (TagSpaces D) */}
+                {/* Ait Olduğu Sanal Klasörler (Koleksiyonlar & Konumlar) */}
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                     Dahil Olduğu Sanal Klasörler
@@ -1762,7 +1762,7 @@ export function SmartArchiveWorkspaceView({
                   )}
                 </div>
 
-                {/* Etiket Yönetimi (TagSpaces C) */}
+                {/* Etiket Yönetimi (Çoklu Etiketleme & Renk Rozetleri) */}
                 <div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                     <span className="flex items-center gap-1">
@@ -1821,7 +1821,7 @@ export function SmartArchiveWorkspaceView({
               </div>
             )}
 
-            {/* Alt Hızlı İşlemler Butonları (TagSpaces E) */}
+            {/* Alt Hızlı İşlemler Butonları */}
             {primarySelectedFile && (
               <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
                 <button

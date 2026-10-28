@@ -929,7 +929,7 @@ export function App(): React.JSX.Element {
             {[
               {
                 id: 'workspace' as const,
-                label: 'Görsel Çalışma Alanı (TagSpaces)',
+                label: 'Görsel Dosya Çalışma Alanı',
                 icon: LayoutDashboard,
                 badge: undefined
               },
@@ -1048,7 +1048,7 @@ export function App(): React.JSX.Element {
           )}
 
           {/* =====================================================================
-              ARŞİV 360 SEKMELERİ: GÖRSEL ÇALIŞMA ALANI (TAGSPACES), AKILLI GEZGİN, PYTHON MOTORU
+              ARŞİV 360 SEKMELERİ: GÖRSEL DOSYA ÇALIŞMA ALANI, AKILLI GEZGİN, PYTHON MOTORU
              ===================================================================== */}
           {activeTab === 'workspace' && (
             <div className="h-[calc(100vh-7.5rem)] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-sm">

@@ -60,6 +60,9 @@ importers:
       '@prisma/client':
         specifier: ^6.4.1
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@worksuite-360/contracts':
+        specifier: workspace:*
+        version: link:../../packages/ecosystem-contracts
       better-sqlite3:
         specifier: ^12.10.0
         version: 12.10.0

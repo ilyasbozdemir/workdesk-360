@@ -6,6 +6,7 @@ import { allFormatsFilter } from '../config/fileFormats'
 import { getDeviceInfo } from '../utils/deviceInfo'
 import { registerGdriveIpcHandlers } from './workspace/gdrive.ipc'
 import { registerRemoteSyncIpcHandlers } from './workspace/remoteSync.ipc'
+import { recentFilesStore } from '../store/recentFiles'
 
 export { getDeviceInfo }
 
@@ -32,6 +33,11 @@ export function registerWorkspaceIpcHandlers(closeAllSecondaryWindows: () => voi
         const payloadStr = error.message.split('|')[1]
         const payload = JSON.parse(payloadStr)
         return { success: false, ...payload }
+      }
+      if (error.message && error.message.includes('Dosya bulunamadı')) {
+        try {
+          recentFilesStore.removeRecentFile(filePath)
+        } catch (_) {}
       }
       console.error('Open workspace error:', error)
       return { success: false, error: error.message }
