@@ -130,6 +130,7 @@ export const DATA_IhaleDosyasi: TableSchema = {
     // Kilit ve Dış Aktarım Takibi
     { name: 'is_locked', type: 'INTEGER', default: 0, description: 'Dosya Kilitli mi?' },
     { name: 'lock_reason', type: 'TEXT', description: 'Kilit Nedeni' },
+    { name: 'is_deleted', type: 'INTEGER', default: 0, description: 'Silinmiş mi? (Soft delete)' },
     { name: 'kayit_kaynagi', type: 'TEXT', default: "'manual'", description: 'Kayıt Kaynağı (manual | import | ekap)' },
     { name: 'aktarim_grubu_id', type: 'TEXT', description: 'Aktarım Grubu ID' },
     { name: 'kaynak_kayit_id', type: 'TEXT', description: 'Harici Sistem Kayıt ID' }

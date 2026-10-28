@@ -940,29 +940,65 @@ export function ensureIhaleCompatibilityViews(db: Database.Database, appName?: s
       `);
     }
 
-    const teminKalemTable = db
-      .prepare("SELECT type FROM sqlite_master WHERE name = 'DATA_TeminKalem'")
-      .get() as { type?: string } | undefined
-    if (!teminKalemTable) {
+    const isPhysicalTable = (name: string): boolean => {
+      const res = db.prepare("SELECT type FROM sqlite_master WHERE name = ?").get(name) as { type?: string } | undefined
+      return res?.type === 'table'
+    }
+
+    if (!isPhysicalTable('DATA_TeminKalem')) {
       db.exec(`
-        CREATE VIEW IF NOT EXISTS DATA_TeminKalem AS 
+        DROP VIEW IF EXISTS DATA_TeminKalem;
+        CREATE VIEW DATA_TeminKalem AS 
         SELECT 
-          id, ihale_dosya_id, temin_dosya_id, sira_no, kalem_adi, aciklama,
-          tasinir_kod_id, okas_kodu, poz_no, olcu_birimi, birim, miktar,
-          yaklasik_birim_fiyat, yaklasik_toplam_tutar, kdv_orani, created_at, updated_at
+          id,
+          ihale_dosya_id,
+          COALESCE(temin_dosya_id, ihale_dosya_id) as temin_dosya_id,
+          COALESCE(dosya_id, ihale_dosya_id, temin_dosya_id) as dosya_id,
+          sira_no,
+          kalem_adi,
+          aciklama,
+          tasinir_kodu,
+          tasinir_kodu as tasinir_kod_id,
+          okas_kodu,
+          poz_no,
+          olcu_birimi,
+          birim,
+          miktar,
+          0.0 as yaklasik_birim_fiyat,
+          0.0 as yaklasik_toplam_tutar,
+          kdv_orani,
+          tipi,
+          barkod_id,
+          datetime('now') as created_at,
+          datetime('now') as updated_at
         FROM DATA_IhaleKalem;
       `);
     }
 
-    const teminFirmaTable = db
-      .prepare("SELECT type FROM sqlite_master WHERE name = 'DATA_TeminFirma'")
-      .get() as { type?: string } | undefined
-    if (!teminFirmaTable) {
+    if (!isPhysicalTable('DATA_TeminFirma')) {
       db.exec(`
-        CREATE VIEW IF NOT EXISTS DATA_TeminFirma AS 
+        DROP VIEW IF EXISTS DATA_TeminFirma;
+        CREATE VIEW DATA_TeminFirma AS 
         SELECT 
-          id, ihale_dosya_id, temin_dosya_id, firma_id, teklif_tutari, kdv_haric_toplam,
-          kazandi_mi, kazanan_mi, sira_no, aciklama, created_at, updated_at
+          id,
+          ihale_dosya_id,
+          COALESCE(temin_dosya_id, ihale_dosya_id) as temin_dosya_id,
+          firma_id,
+          COALESCE(toplam_teklif, 0.0) as teklif_tutari,
+          COALESCE(toplam_teklif, 0.0) as toplam_teklif_tutari,
+          COALESCE(toplam_teklif, 0.0) as kdv_haric_toplam,
+          COALESCE(toplam_teklif, 0.0) as teklif_toplami,
+          COALESCE(kazanan_mi, 0) as kazandi_mi,
+          COALESCE(kazanan_mi, 0) as kazanan_mi,
+          1 as teklif_verdi_mi,
+          id as sira_no,
+          aciklama,
+          indirim_orani,
+          gecici_teminat_tutari,
+          kesin_teminat_tutari,
+          teklif_tarihi,
+          datetime('now') as created_at,
+          datetime('now') as updated_at
         FROM DATA_IhaleFirma;
       `);
     }

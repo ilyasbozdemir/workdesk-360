@@ -2,19 +2,41 @@
  * Utility higher-order function to wrap SQLite database queries/executions.
  * If a "no such column" or missing table error is encountered, it triggers schema auto-repair and retries.
  */
-import { schema } from '@dt/database'
+import { schema, getAppSchema } from '@dt/database'
 
 let repairInFlight: Promise<void> | null = null
 
 const knownColumns = new Set<string>()
 try {
-  schema.tables.forEach((t: any) => {
-    t.columns.forEach((c: any) => {
-      if (c && c.name) {
-        knownColumns.add(String(c.name).toLowerCase())
-      }
+  const ihaleSchema = getAppSchema('ihale360-desktop')
+  const allSchemas = [schema, ihaleSchema]
+  allSchemas.forEach((sch) => {
+    sch?.tables?.forEach((t: any) => {
+      t.columns?.forEach((c: any) => {
+        if (c && c.name) {
+          knownColumns.add(String(c.name).toLowerCase())
+        }
+      })
     })
   })
+
+  // Görünüm (VIEW) ve geriye dönük takma adlar (alias)
+  const compatibilityAliases = [
+    'teklif_tutari',
+    'toplam_teklif_tutari',
+    'kdv_haric_toplam',
+    'teklif_toplami',
+    'kazandi_mi',
+    'kazanan_mi',
+    'teklif_verdi_mi',
+    'tasinir_kod_id',
+    'tasinir_kodu',
+    'yaklasik_birim_fiyat',
+    'yaklasik_toplam_tutar',
+    'dosya_kodu',
+    'is_deleted'
+  ]
+  compatibilityAliases.forEach((alias) => knownColumns.add(alias.toLowerCase()))
 } catch {}
 
 function extractMissingColumn(error: any): string | null {
