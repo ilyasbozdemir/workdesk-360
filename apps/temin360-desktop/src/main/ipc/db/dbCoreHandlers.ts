@@ -157,4 +157,41 @@ export function registerDbCoreHandlers(): void {
       }
     })
   })
+
+  /**
+   * Teftiş ve Güvenlik Denetim Günlüğü İşleyicisi (`audit:get-history`)
+   */
+  ipcMain.handle(
+    'audit:get-history',
+    async (_, filter?: { recordId?: number; tableName?: string; limit?: number }) => {
+      try {
+        const db = workspaceManager.getDb()
+        const { getAuditHistory } = await import('@dt/database')
+        return getAuditHistory(db, filter)
+      } catch (err: any) {
+        console.warn('[IPC] audit:get-history error:', err?.message || err)
+        return []
+      }
+    }
+  )
+
+  /**
+   * Blokzincir Denetim Zinciri Bütünlük Doğrulayıcısı (`audit:verify-chain`)
+   */
+  ipcMain.handle('audit:verify-chain', async () => {
+    try {
+      const db = workspaceManager.getDb()
+      const { AuditChainService, AuditIntegrityVerifier } = await import('@dt/database')
+      AuditChainService.secureAllPendingLogs(db)
+      return AuditIntegrityVerifier.verifyChain(db)
+    } catch (err: any) {
+      console.warn('[IPC] audit:verify-chain error:', err?.message || err)
+      return {
+        isValid: false,
+        totalRecords: 0,
+        unhashedRecords: 0,
+        error: err?.message || String(err)
+      }
+    }
+  })
 }

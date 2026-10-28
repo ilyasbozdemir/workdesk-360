@@ -16,9 +16,9 @@ describe('edition (sürüm bayrağı)', () => {
     expect(e.IS_DT_EDITION).toBe(true)
     expect(e.isModuleAllowedInEdition('kik-dogrudan-temin-22d')).toBe(true)
     expect(e.isModuleAllowedInEdition('dik-devlet-ihale-2886')).toBe(false)
-    expect(e.isModuleAllowedInEdition('ebys-resmi-yazisma-studyosu')).toBe(false)
-    expect(e.isModuleAllowedInEdition('modul-personel-izin')).toBe(false)
-    expect(e.DT_EDITION_BLOCKED_ROUTES).toEqual(['/devlet-ihale-2886', '/ebys'])
+    expect(e.isModuleAllowedInEdition('ebys-resmi-yazisma-studyosu')).toBe(true)
+    expect(e.isModuleAllowedInEdition('modul-personel-izin')).toBe(true)
+    expect(e.DT_EDITION_BLOCKED_ROUTES).toEqual(['/devlet-ihale-2886'])
   })
 
   it('VITE_APP_EDITION=full verildiğinde tam sürüm davranışını korur', async () => {

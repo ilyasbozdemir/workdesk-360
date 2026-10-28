@@ -19,6 +19,7 @@ import { useWorkspaceStore } from '../../store/workspaceStore'
 import { exportCsv } from '../../utils/csvExport'
 import { cn } from '../../utils/cn'
 import { NewFeatureBadge } from '../../components/ui/NewFeatureBadge'
+import { InspectionTimelineModal } from '../../components/audit/InspectionTimelineModal'
 
 export interface FiyatArastirmasiItem {
   id: number
@@ -41,6 +42,12 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDurum, setFilterDurum] = useState<'all' | 'yeterli' | 'eksik' | 'bekliyor'>('all')
+  const [auditModalOpen, setAuditModalOpen] = useState(false)
+  const [selectedAuditRecord, setSelectedAuditRecord] = useState<{
+    id?: number
+    tableName?: string
+    title?: string
+  } | null>(null)
 
   const formatCurrency = (val: number): string => {
     return new Intl.NumberFormat('tr-TR', {
@@ -466,6 +473,20 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
             <span>CSV İndir</span>
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedAuditRecord({
+                title: 'Tüm Sistem ve Piyasa Araştırması Teftiş Günlüğü'
+              })
+              setAuditModalOpen(true)
+            }}
+            className="px-3.5 py-2 text-xs font-bold rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 cursor-pointer flex items-center gap-1.5 transition-colors shadow-2xs"
+            title="Adli Bilişim & Teftiş Kurulu Güvenlik Günlüğü"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span>Teftiş Günlüğü</span>
+          </button>
           <Link to="/dosyalar/yeni">
             <button
               type="button"
@@ -742,6 +763,23 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
                         >
                           /takip
                         </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedAuditRecord({
+                              id: item.id,
+                              tableName: 'DATA_TeminDosyasi',
+                              title: `${item.temin_no} - Teftiş Denetim Günlüğü`
+                            })
+                            setAuditModalOpen(true)
+                          }}
+                          title="Bu Dosyanın Değişiklik ve Teftiş Günlüğünü Gör"
+                          className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800 transition-colors flex items-center gap-0.5"
+                        >
+                          <ShieldCheck className="w-2.5 h-2.5 text-indigo-500" />
+                          <span>/teftiş</span>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -751,6 +789,18 @@ export default function PiyasaFiyatArastirmasiScreen(): React.JSX.Element {
           </div>
         )}
       </div>
+
+      {/* ── Teftiş Kurulu Denetim Günlüğü Modalı (mac_hash Donanım İmzalı) ── */}
+      <InspectionTimelineModal
+        isOpen={auditModalOpen}
+        onClose={() => {
+          setAuditModalOpen(false)
+          setSelectedAuditRecord(null)
+        }}
+        recordId={selectedAuditRecord?.id}
+        tableName={selectedAuditRecord?.tableName}
+        title={selectedAuditRecord?.title}
+      />
     </div>
   )
 }

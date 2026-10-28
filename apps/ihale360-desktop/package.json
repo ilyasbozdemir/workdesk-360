@@ -146,6 +146,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "javascript-obfuscator": "^5.9.0",
     "jsdom": "^30.1.1",
     "postcss": "^8.5.15",
     "prettier": "^3.7.4",

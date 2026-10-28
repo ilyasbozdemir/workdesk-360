@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import { schema } from '../index'
-import { runMigrations, getAppSchemaMax } from '@dt/database'
+import { runMigrations, getAppSchemaMax, initSessionContext, registerDefaultAuditTriggers } from '@dt/database'
 import { seedUnitConversions } from './conversionsSeed'
 import { seedDefaultCommissions } from './commissionsSeed'
 
@@ -507,4 +507,12 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   // Seed Units & Default Commissions
   seedUnitConversions(db)
   seedDefaultCommissions(db)
+
+  // Denetim Gunlugu ve Donanim Kimligi (mac_hash) Guvenlik Enjeksiyonu
+  try {
+    initSessionContext(db)
+    registerDefaultAuditTriggers(db, 'temin360-desktop')
+  } catch (auditErr) {
+    console.warn('[AuditTrail] ensureSchemaIntegrity tetikleyici uyarisi:', auditErr)
+  }
 }

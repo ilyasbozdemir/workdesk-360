@@ -901,7 +901,7 @@ export class DtmWorkspace {
         if (!win.isDestroyed()) {
           win.webContents.send('workspace:dirty-changed', dirty)
           if (this.currentFilePath) {
-            win.setTitle(`${dirty ? '● ' : ''}${path.basename(this.currentFilePath)} - TEMİN 360`)
+            win.setTitle(`${dirty ? '● ' : ''}${path.basename(this.currentFilePath)} - İHALE 360`)
           }
         }
       }

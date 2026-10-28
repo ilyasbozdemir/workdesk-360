@@ -13,6 +13,9 @@ export interface WorkspaceMeta {
   data_revision?: number
   last_backup_id?: string | null
   warnings?: string[]
+  is_read_only?: boolean
+  is_tampered?: boolean
+  tamper_reason?: string
 }
 
 interface WorkspaceState {
@@ -24,6 +27,9 @@ interface WorkspaceState {
   activeMeta: WorkspaceMeta | null
   activeStarredDocs: string[]
   isDirty: boolean
+  isReadOnly: boolean
+  isTampered: boolean
+  tamperReason?: string
   setIsDirty: (dirty: boolean) => void
   saveWorkspace: () => Promise<{ success: boolean; error?: string }>
   saveAsWorkspace: (
@@ -74,8 +80,18 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   activeMeta: null,
   activeStarredDocs: [],
   isDirty: false,
+  isReadOnly: false,
+  isTampered: false,
+  tamperReason: undefined,
   setIsDirty: (dirty) => set({ isDirty: dirty }),
   saveWorkspace: async () => {
+    if (get().isReadOnly || get().isTampered) {
+      return {
+        success: false,
+        error:
+          'Bu dosya adli tahrifat nedeniyle salt-okunur (teftiş) moduna alınmıştır. Değişiklik kaydedilemez.'
+      }
+    }
     const res = await window.electron.ipcRenderer.invoke('workspace:save')
     if (res?.success) {
       set({ isDirty: false })
@@ -84,6 +100,13 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     return res
   },
   saveAsWorkspace: async (targetFilePath?: string) => {
+    if (get().isReadOnly || get().isTampered) {
+      return {
+        success: false,
+        error:
+          'Bu dosya adli tahrifat nedeniyle salt-okunur (teftiş) modundadır. Farklı kaydedilemez.'
+      }
+    }
     const res = await window.electron.ipcRenderer.invoke('workspace:save-as', targetFilePath)
     if (res?.success && res.newFilePath) {
       const newPath = res.newFilePath
@@ -170,12 +193,19 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           sessionStorage.removeItem('workspace_dosya_id')
         }
 
+        const isReadOnly = Boolean(result.meta?.is_read_only)
+        const isTampered = Boolean(result.meta?.is_tampered)
+        const tamperReason = result.meta?.tamper_reason
+
         set({
           activeFilePath: actualFilePath,
           fileName: actualFilePath.split(/[/\\]/).pop() || 'Bilinmeyen Dosya',
           isAuthenticated: keepAuth,
           isDirty: false,
           activeMeta: result.meta || null,
+          isReadOnly,
+          isTampered,
+          tamperReason,
           activeDosyaId: keepAuth
             ? sessionStorage.getItem('workspace_dosya_id')
               ? parseInt(sessionStorage.getItem('workspace_dosya_id')!, 10)
@@ -232,6 +262,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           isAuthenticated: true, // Auto-logged in on create
           isDirty: false,
           activeMeta: result.meta || null,
+          isReadOnly: false,
+          isTampered: false,
+          tamperReason: undefined,
           activeDosyaId: null
         })
 
@@ -269,6 +302,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       isAuthenticated: false,
       isDirty: false,
       activeMeta: null,
+      isReadOnly: false,
+      isTampered: false,
+      tamperReason: undefined,
       activeDosyaId: null
     })
   },
@@ -277,7 +313,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     try {
       const result = await window.electron.ipcRenderer.invoke('workspace:get-meta')
       if (result.success) {
-        set({ activeMeta: result.meta || null })
+        set({
+          activeMeta: result.meta || null,
+          isReadOnly: Boolean(result.meta?.is_read_only),
+          isTampered: Boolean(result.meta?.is_tampered),
+          tamperReason: result.meta?.tamper_reason
+        })
       }
     } catch (e) {
       console.error(e)

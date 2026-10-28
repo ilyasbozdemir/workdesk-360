@@ -19,6 +19,23 @@ declare global {
       ) => Promise<{ success: boolean; data?: string; error?: string }>
       getAppVersion?: () => Promise<string>
       setDevVersion?: (mode: boolean, version: string) => Promise<void>
+      getAuditHistory?: (filter?: {
+        recordId?: number
+        tableName?: string
+        limit?: number
+      }) => Promise<Record<string, unknown>[]>
+      verifyAuditChain?: () => Promise<{
+        isValid: boolean
+        totalRecords: number
+        unhashedRecords: number
+        brokenRecordId?: number
+        error?: string
+      }>
+      getActiveSessionStatus?: () => Promise<{
+        isReadOnly: boolean
+        isTampered: boolean
+        tamperReason?: string
+      }>
     }
   }
 }

@@ -18,6 +18,7 @@ import { Modal } from '../../../components/ui/Modal'
 import { APP_ROUTES } from '../../../constants/routeConstants'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
 import { cn } from '../../../utils/cn'
+import { InspectionTimelineModal } from '../../../components/audit/InspectionTimelineModal'
 
 export interface FiyatArastirmasiItem {
   id: number
@@ -48,6 +49,12 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDurum, setFilterDurum] = useState<'all' | 'yeterli' | 'eksik' | 'bekliyor'>('all')
+  const [auditModalOpen, setAuditModalOpen] = useState(false)
+  const [selectedAuditRecord, setSelectedAuditRecord] = useState<{
+    id?: number
+    tableName?: string
+    title?: string
+  } | null>(null)
 
   const formatCurrency = (val: number): string => {
     return new Intl.NumberFormat('tr-TR', {
@@ -535,6 +542,20 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
             >
               <RefreshCw className={cn('w-3.5 h-3.5', isLoading && 'animate-spin')} />
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedAuditRecord({
+                  title: 'Piyasa Araştırması ve Teklifler Teftiş Günlüğü'
+                })
+                setAuditModalOpen(true)
+              }}
+              title="Teftiş Kurulu Güvenlik ve Denetim Günlüğü"
+              className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 transition-colors cursor-pointer"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
@@ -639,9 +660,27 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
                       </div>
                     )}
 
-                    <div className="hidden group-hover:flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1">
-                      <span>Teklifleri İncele</span>
-                      <ExternalLink className="w-3 h-3" />
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="hidden group-hover:flex items-center gap-1 text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                        <span>Teklifleri İncele</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedAuditRecord({
+                            id: item.id,
+                            tableName: 'DATA_TeminDosyasi',
+                            title: `${item.temin_no} - Teftiş Denetim Günlüğü`
+                          })
+                          setAuditModalOpen(true)
+                        }}
+                        title="Dosya Denetim ve Değişiklik Geçmişi"
+                        className="p-1 rounded bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800 transition-colors"
+                      >
+                        <ShieldCheck className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -650,6 +689,18 @@ export const PiyasaFiyatArastirmasiModal: React.FC<PiyasaFiyatArastirmasiModalPr
           )}
         </div>
       </div>
+
+      {/* ── Teftiş Kurulu Güvenlik Denetim Günlüğü Modalı (mac_hash Donanım İmzalı) ── */}
+      <InspectionTimelineModal
+        isOpen={auditModalOpen}
+        onClose={() => {
+          setAuditModalOpen(false)
+          setSelectedAuditRecord(null)
+        }}
+        recordId={selectedAuditRecord?.id}
+        tableName={selectedAuditRecord?.tableName}
+        title={selectedAuditRecord?.title}
+      />
     </Modal>
   )
 }

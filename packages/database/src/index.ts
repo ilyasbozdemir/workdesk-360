@@ -1,5 +1,6 @@
 /* eslint-disable */
 import Database from 'better-sqlite3'
+import { initSessionContext, registerDefaultAuditTriggers } from './audit-trail'
 
 // ============================================================================
 // 1. KURUM, TEÅKÄ°LAT VE PERSONEL TANIMLARI
@@ -852,6 +853,14 @@ export function initializeDatabase(
   if (appName && (appName.includes('ihale360') || appName.includes('2886'))) {
     ensureIhaleCompatibilityViews(db, appName)
   }
+
+  try {
+    initSessionContext(db)
+    registerDefaultAuditTriggers(db, appName || 'temin360-desktop')
+  } catch (auditErr) {
+    console.warn('[AuditTrail] initializeDatabase tetikleyici kaydi uyarisi:', auditErr)
+  
+  }
 }
 
 /**
@@ -982,3 +991,4 @@ export {
 export { defineTable } from './BaseTable'
 export { auditColumns, auditColumnsNoRef } from './audit'
 export * from './migrate'
+export * from './audit-trail'

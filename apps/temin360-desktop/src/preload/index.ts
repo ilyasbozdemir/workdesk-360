@@ -63,6 +63,8 @@ const allowedChannels = new Set([
   'workspace:download-gdrive-file',
   'workspace:delete-gdrive-file',
   'workspace:get-device-info',
+  'workspace:get-session-status',
+  'get-active-session-status',
   'workspace:upload-file',
   'workspace:open-file',
   'workspace:verify-detsis',
@@ -206,7 +208,10 @@ const allowedChannels = new Set([
   'kutuphane:sablona-yayinla',
   // Clipboard
   'clipboard:readText',
-  'clipboard:writeText'
+  'clipboard:writeText',
+  // Audit Trail & Inspection
+  'audit:get-history',
+  'audit:verify-chain'
 ])
 
 // Secure gated wrapper exposing only authorized channels to renderer
@@ -241,7 +246,11 @@ const api = {
   runTests: () => ipcRenderer.invoke('dev:run-tests'),
   openLogFile: () => ipcRenderer.invoke('logs:open-file'),
   openLogFolder: () => ipcRenderer.invoke('logs:open-dir'),
-  readRecentLogs: (lineCount?: number) => ipcRenderer.invoke('logs:read-recent', lineCount)
+  readRecentLogs: (lineCount?: number) => ipcRenderer.invoke('logs:read-recent', lineCount),
+  getAuditHistory: (filter?: { recordId?: number; tableName?: string; limit?: number }) =>
+    ipcRenderer.invoke('audit:get-history', filter),
+  verifyAuditChain: () => ipcRenderer.invoke('audit:verify-chain'),
+  getActiveSessionStatus: () => ipcRenderer.invoke('get-active-session-status')
 }
 
 if (process.contextIsolated) {

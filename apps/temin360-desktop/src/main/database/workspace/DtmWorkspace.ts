@@ -5,7 +5,14 @@ import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
 import { initializeDatabase } from '../index'
-import { runMigrations, getAppSchemaMax, getPendingMigrations, schema } from '@dt/database'
+import {
+  runMigrations,
+  getAppSchemaMax,
+  getPendingMigrations,
+  schema,
+  AuditChainService,
+  AuditIntegrityVerifier
+} from '@dt/database'
 import tasinirKodlariSeed from '../seed/tasinir_kodlari.json'
 import { allExtensions, defaultFormat } from '../../config/fileFormats'
 import {
@@ -196,6 +203,9 @@ export class DtmWorkspace {
   private isDirty: boolean = false
   private mutationMap: Map<string, MutationSummaryItem> = new Map()
   private lastMutationTime: string | null = null
+  private isReadOnly: boolean = false
+  private isTampered: boolean = false
+  private tamperReason: string | null = null
 
   constructor() {
     this.tempDir = path.join(
@@ -421,6 +431,46 @@ export class DtmWorkspace {
       if (this.db) {
         ensureSchemaIntegrity(this.db)
         seedTemplates(this.db)
+
+        // Adli Bilişim & Blokzincir Denetim İzi (Chained Hashing) Doğrulama Kalkanı:
+        try {
+          const chainVerification = AuditIntegrityVerifier.verifyChain(this.db)
+          if (!chainVerification.isValid) {
+            console.error(
+              `[SECURITY ALARM] Blokzincir audit log bütünlük hatası tespit edildi! Kayıt #${chainVerification.brokenRecordId}: ${chainVerification.error}`
+            )
+            if (!meta.warnings) {
+              meta.warnings = []
+            }
+            meta.warnings.push(
+              `GÜVENLİK ALARMI: Dosya denetim izinde tahrifat şüphesi tespit edildi (Kayıt #${chainVerification.brokenRecordId}). Bütünlük mührü kırılmış!`
+            )
+            meta.is_read_only = true
+            meta.is_tampered = true
+            meta.tamper_reason = chainVerification.error
+
+            // 🚨 TAHRİFAT ALGILANDI! Veritabanını kapatıp fiziksel olarak SALT-OKUNUR (Read-Only) modda yeniden açıyoruz
+            const dbFileName = meta.active_db_file || 'database.sqlite'
+            const dbPath = path.join(this.tempDir, dbFileName)
+            try {
+              this.db.close()
+            } catch {}
+            this.db = new Database(dbPath, { readonly: true })
+            this.isReadOnly = true
+            this.isTampered = true
+            this.tamperReason = chainVerification.error || 'Bütünlük mührü kırılmış'
+          } else {
+            // Zincir sağlamsa bekleyen mühürsüz logları blokzincirine bağla
+            AuditChainService.secureAllPendingLogs(this.db)
+            this.isReadOnly = false
+            this.isTampered = false
+            this.tamperReason = null
+            meta.is_read_only = false
+            meta.is_tampered = false
+          }
+        } catch (chainErr) {
+          console.warn('[DtmWorkspace] Blokzincir denetim izi kontrolü sırasında uyarı:', chainErr)
+        }
       }
 
       this.meta = meta
@@ -525,6 +575,17 @@ export class DtmWorkspace {
     if (!this.db || !this.tempDir) {
       throw new Error('Hiçbir veri dosyası veya geçici dizin açık değil.')
     }
+    if (this.isReadOnly || this.isTampered) {
+      throw new Error(
+        'Dosya adli tahrifat nedeniyle salt-okunur (teftiş) modundadır. Arşiv yazma engellendi.'
+      )
+    }
+
+    try {
+      AuditChainService.secureAllPendingLogs(this.db)
+    } catch (chainErr) {
+      console.warn('[DtmWorkspace] Kaydetme öncesi audit log mühürleme uyarısı:', chainErr)
+    }
 
     try {
       this.db.pragma('wal_checkpoint(TRUNCATE)')
@@ -621,6 +682,11 @@ export class DtmWorkspace {
 
   public saveWorkspace(force: boolean = false): void {
     if (!this.currentFilePath || !this.db) throw new Error('Hiçbir veri dosyası açık değil.')
+    if (this.isReadOnly || this.isTampered) {
+      throw new Error(
+        'Dosya adli tahrifat nedeniyle salt-okunur (teftiş) moduna alınmıştır. Değişiklik kaydedilemez.'
+      )
+    }
     if (!force && !this.isDirtyState()) return
 
     this.writeWorkspaceArchive(this.currentFilePath, force)
@@ -631,6 +697,12 @@ export class DtmWorkspace {
   public saveAs(targetFilePath: string): { success: boolean; newPath?: string; error?: string } {
     if (!this.currentFilePath || !this.db) {
       return { success: false, error: 'Açık bir çalışma alanı yok.' }
+    }
+    if (this.isReadOnly || this.isTampered) {
+      return {
+        success: false,
+        error: 'Dosya adli tahrifat nedeniyle salt-okunur (teftiş) modundadır. Farklı kaydedilemez.'
+      }
     }
     if (!targetFilePath || typeof targetFilePath !== 'string' || !targetFilePath.trim()) {
       return { success: false, error: 'Geçersiz hedef dosya yolu.' }
@@ -782,6 +854,10 @@ export class DtmWorkspace {
 
   public recordMutation(tableName?: string, action?: string, count: number = 1): void {
     if (count <= 0) return
+    if (this.isReadOnly || this.isTampered) {
+      console.warn('[DtmWorkspace] Dosya salt-okunur modunda; mutasyon kaydedilmedi.')
+      return
+    }
     const table = tableName || 'Veritabanı'
     const tableUpper = table.toUpperCase()
     if (
@@ -835,6 +911,22 @@ export class DtmWorkspace {
       })
     }
     this.notifyDirtyChange(true)
+  }
+
+  public isReadOnlyState(): boolean {
+    return this.isReadOnly
+  }
+
+  public isTamperedState(): boolean {
+    return this.isTampered
+  }
+
+  public getSessionStatus(): { isReadOnly: boolean; isTampered: boolean; tamperReason?: string } {
+    return {
+      isReadOnly: this.isReadOnly,
+      isTampered: this.isTampered,
+      tamperReason: this.tamperReason || undefined
+    }
   }
 
   public isDirtyState(): boolean {

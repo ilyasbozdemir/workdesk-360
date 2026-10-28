@@ -221,6 +221,22 @@ export function registerWorkspaceIpcHandlers(closeAllSecondaryWindows: () => voi
     }
   })
 
+  ipcMain.handle('workspace:get-session-status', async () => {
+    try {
+      return { success: true, ...workspaceManager.getSessionStatus() }
+    } catch (error: any) {
+      return { success: false, isReadOnly: false, isTampered: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('get-active-session-status', async () => {
+    try {
+      return { success: true, ...workspaceManager.getSessionStatus() }
+    } catch (error: any) {
+      return { success: false, isReadOnly: false, isTampered: false, error: error.message }
+    }
+  })
+
   ipcMain.handle('workspace:upload-file', async (_, sourcePath: string) => {
     try {
       const result = workspaceManager.uploadAttachment(sourcePath)

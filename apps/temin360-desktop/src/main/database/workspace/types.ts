@@ -18,6 +18,9 @@ export interface WorkspaceMeta {
   data_revision?: number
   last_backup_id?: string | null
   warnings?: string[]
+  is_read_only?: boolean
+  is_tampered?: boolean
+  tamper_reason?: string
 }
 
 export interface MutationSummaryItem {

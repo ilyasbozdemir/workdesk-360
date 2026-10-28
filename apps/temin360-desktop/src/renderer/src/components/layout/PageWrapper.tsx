@@ -39,6 +39,7 @@ import { useInactiveTabCleaner } from './hooks/useInactiveTabCleaner'
 import { useWorkspaceCloseHandler } from './hooks/useWorkspaceCloseHandler'
 import { useWorkspaceLifecycle } from './hooks/useWorkspaceLifecycle'
 import { DetachedWindowLayout } from './components/DetachedWindowLayout'
+import { TamperAlertBanner } from '../audit/TamperAlertBanner'
 
 export function PageWrapper(): React.ReactNode {
   const routerState = useRouterState()
@@ -153,6 +154,7 @@ export function PageWrapper(): React.ReactNode {
       <GlobalDocumentPreviewHost />
       <div className="flex flex-col flex-1 min-w-0 min-h-0 h-full overflow-hidden">
         <Header />
+        <TamperAlertBanner />
         <TabsBar />
         <div className="flex flex-1 min-h-0 overflow-hidden relative">
           {activeDosyaId && <ActiveFileShortcuts />}

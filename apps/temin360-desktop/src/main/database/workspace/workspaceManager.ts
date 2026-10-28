@@ -24,7 +24,10 @@ export const workspaceManager = {
       clearTimeout(debouncedSaveTimer)
       debouncedSaveTimer = null
     }
-    if (activeWorkspace) activeWorkspace.saveWorkspace(force)
+    if (activeWorkspace) {
+      if (activeWorkspace.isReadOnlyState()) return
+      activeWorkspace.saveWorkspace(force)
+    }
   },
   saveDebounced: (delayMs: number = 1000, force: boolean = false) => {
     if (debouncedSaveTimer) {
@@ -33,6 +36,7 @@ export const workspaceManager = {
     debouncedSaveTimer = setTimeout(() => {
       debouncedSaveTimer = null
       if (activeWorkspace && activeWorkspace.isDirtyState()) {
+        if (activeWorkspace.isReadOnlyState()) return
         try {
           activeWorkspace.saveWorkspace(force)
         } catch (err) {
@@ -47,8 +51,21 @@ export const workspaceManager = {
       debouncedSaveTimer = null
     }
     if (activeWorkspace && activeWorkspace.isDirtyState()) {
+      if (activeWorkspace.isReadOnlyState()) return
       activeWorkspace.saveWorkspace(force)
     }
+  },
+  isReadOnly: () => {
+    if (!activeWorkspace) return false
+    return activeWorkspace.isReadOnlyState()
+  },
+  isTampered: () => {
+    if (!activeWorkspace) return false
+    return activeWorkspace.isTamperedState()
+  },
+  getSessionStatus: () => {
+    if (!activeWorkspace) return { isReadOnly: false, isTampered: false }
+    return activeWorkspace.getSessionStatus()
   },
   saveAs: (targetFilePath: string) => {
     if (!activeWorkspace) return { success: false, error: 'Açık bir çalışma alanı yok.' }

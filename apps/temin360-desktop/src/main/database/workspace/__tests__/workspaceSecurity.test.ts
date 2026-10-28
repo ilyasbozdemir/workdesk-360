@@ -4,7 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import os from 'os'
 import AdmZip from 'adm-zip'
-import { CURRENT_SCHEMA_VERSION } from '@dt/database'
+import { CURRENT_SCHEMA_VERSION, AuditIntegrityVerifier } from '@dt/database'
 
 vi.mock('better-sqlite3', () => {
   return {
@@ -388,4 +388,53 @@ describe('Workspace Security & Path Traversal Protections', () => {
       }
     })
   })
+
+  describe('Bütünlük Kontrolü (Startup Shield) ve Salt Okunur / Teftiş Modu', () => {
+    it('dosya açılışında blokzincir zinciri kırılmışsa (tahrifat algılanmışsa) dosyayı salt-okunur teftiş modunda açar ve kaydetmeyi kilitler', () => {
+      const docPath = path.join(testDir, 'tahrif_edilmis.temin')
+      const ws1 = new DtmWorkspace()
+      ws1.createWorkspace(docPath, 'Guvenli Kurum')
+      ws1.closeWorkspace()
+
+      // AuditIntegrityVerifier.verifyChain'i tahrifat alarmı verecek şekilde spy'lıyoruz
+      const verifySpy = vi.spyOn(AuditIntegrityVerifier, 'verifyChain').mockReturnValue({
+        isValid: false,
+        totalRecords: 10,
+        unhashedRecords: 0,
+        brokenRecordId: 5,
+        error: 'Sistem günlüğü (Audit Log) tahrifatı tespit edildi: Kayıt #5 hash uyumsuzluğu!'
+      })
+
+      const ws2 = new DtmWorkspace()
+      try {
+        const meta = ws2.openWorkspace(docPath)
+
+        // 1. Meta bilgileri kilitli ve tahrif edilmiş olmalı
+        expect(meta.is_read_only).toBe(true)
+        expect(meta.is_tampered).toBe(true)
+        expect(meta.tamper_reason).toContain('Kayıt #5')
+
+        // 2. Workspace getter durumları
+        expect(ws2.isReadOnlyState()).toBe(true)
+        expect(ws2.isTamperedState()).toBe(true)
+        expect(ws2.getSessionStatus()).toEqual({
+          isReadOnly: true,
+          isTampered: true,
+          tamperReason: expect.stringContaining('Kayıt #5')
+        })
+
+        // 3. Dosyaya yazma / kaydetme kilitlenmiş olmalı
+        expect(() => ws2.saveWorkspace()).toThrow(/teftiş/i)
+
+        // 4. saveAs çağrısı da engellenmeli
+        const saveAsResult = ws2.saveAs(path.join(testDir, 'kacak_kopya.temin'))
+        expect(saveAsResult.success).toBe(false)
+        expect(saveAsResult.error).toMatch(/teftiş/i)
+      } finally {
+        verifySpy.mockRestore()
+        ws2.closeWorkspace()
+      }
+    })
+  })
 })
+

@@ -25,7 +25,7 @@ export function LauncherTitleBar({
     >
       <div className="flex items-center gap-2 text-slate-400 dark:text-slate-600 text-xs font-semibold">
         <FolderOpen className="w-3.5 h-3.5" />
-        <span>TEMİN 360 Başlatıcı</span>
+        <span>İHALE 360 Başlatıcı</span>
       </div>
 
       <div
