@@ -1,14 +1,8 @@
 const { spawnSync } = require('child_process')
 const path = require('path')
-const fs = require('fs')
 
 const localNodeModules = path.resolve(__dirname, '../node_modules')
-const sharedNodeModules = path.resolve(__dirname, '../../flowdesk-desktop/node_modules')
-const effectiveNodeModules = fs.existsSync(path.join(localNodeModules, 'typescript'))
-  ? localNodeModules
-  : sharedNodeModules
-
-const tscBin = path.join(effectiveNodeModules, 'typescript/bin/tsc')
+const tscBin = path.join(localNodeModules, 'typescript/bin/tsc')
 const appRoot = path.resolve(__dirname, '..')
 
 const target = process.argv[2] || 'all'
@@ -25,15 +19,10 @@ for (const proj of projects) {
     [tscBin, '--noEmit', '-p', proj, '--composite', 'false'],
     {
       stdio: 'inherit',
-      cwd: appRoot,
-      env: {
-        ...process.env,
-        NODE_PATH: effectiveNodeModules
-      }
+      cwd: appRoot
     }
   )
   if (res.status !== 0) {
     process.exit(res.status || 1)
   }
 }
-

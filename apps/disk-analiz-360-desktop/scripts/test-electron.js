@@ -1,16 +1,4 @@
 const { spawn } = require('child_process')
-const path = require('path')
-const fs = require('fs')
-
-const localNodeModules = path.resolve(__dirname, '../node_modules')
-const sharedNodeModules = path.resolve(__dirname, '../../flowdesk-desktop/node_modules')
-const effectiveNodeModules = fs.existsSync(path.join(localNodeModules, 'electron'))
-  ? localNodeModules
-  : sharedNodeModules
-
-if (!module.paths.includes(effectiveNodeModules)) {
-  module.paths.unshift(effectiveNodeModules)
-}
 
 const electronPath = require('electron')
 const vitestPath = require.resolve('vitest').replace(/index\.(c|m)?js$/, 'vitest.mjs')
@@ -22,8 +10,7 @@ const child = spawn(electronPath, args, {
   stdio: 'inherit',
   env: {
     ...process.env,
-    ELECTRON_RUN_AS_NODE: '1',
-    NODE_PATH: effectiveNodeModules
+    ELECTRON_RUN_AS_NODE: '1'
   }
 })
 

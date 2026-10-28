@@ -6,7 +6,7 @@
  * ortak SQLite veritabanı şema standardını (Sürüm 46) ve her bir uygulamanın
  * aktif geliştirme/dağıtım sürümlerini tanımlar:
  * 
- *  1. temin360-desktop: 1.0.0-rc.7 (Doğrudan Temin ve Harcama Masası - RC)
+ *  1. temin360-desktop: 1.0.0-rc.10 (Doğrudan Temin ve Harcama Masası - RC)
  *  2. ihale360-desktop: 1.0.0-beta.1 (4734 Sayılı KİK Kamu İhalesi Masası - Beta)
  *  3. devlet-ihale-2886-desktop: 1.0.0-beta.1 (2886 Sayılı Devlet İhale Kanunu Masası - Beta)
  */
@@ -14,7 +14,7 @@ export default {
   app: "1.0.0-rc.10",
   suite: "workdesk-360",
   apps: {
-    "temin360-desktop": "1.0.0-rc.7",
+    "temin360-desktop": "1.0.0-rc.10",
     "ihale360-desktop": "1.0.0-beta.1",
     "devlet-ihale-2886-desktop": "1.0.0-beta.1"
   },

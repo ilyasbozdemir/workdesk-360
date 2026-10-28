@@ -299,14 +299,15 @@ function finalizeCurrentSchemaManifest(version, dryRun) {
       }
     }
 
-    // apps/temin360/manifest.ts ve manifest.yaml güncelle
+    // apps/temin360/manifest.ts ve manifest.yaml güncelle (app alanı korunur, version güncellenir)
     const appManifestPath = path.join(
       GIT_ROOT,
       'packages/database/src/schema-manifest/apps/temin360/manifest.ts'
     )
     if (fs.existsSync(appManifestPath)) {
       let content = fs.readFileSync(appManifestPath, 'utf-8')
-      content = content.replace(/app:\s*["'][^"']+["']/, `app: "${version}"`)
+      content = content.replace(/app:\s*["'][^"']+["']/, `app: "temin360-desktop"`)
+      content = content.replace(/version:\s*["'][^"']+["']/, `version: "${version}"`)
       fs.writeFileSync(appManifestPath, content, 'utf-8')
     }
     const appManifestYaml = path.join(
@@ -315,7 +316,8 @@ function finalizeCurrentSchemaManifest(version, dryRun) {
     )
     if (fs.existsSync(appManifestYaml)) {
       let content = fs.readFileSync(appManifestYaml, 'utf-8')
-      content = content.replace(/app:\s*[^\n]+/, `app: ${version}`)
+      content = content.replace(/app:\s*[^\n]+/, `app: temin360-desktop`)
+      content = content.replace(/version:\s*[^\n]+/, `version: ${version}`)
       fs.writeFileSync(appManifestYaml, content, 'utf-8')
     }
   }
