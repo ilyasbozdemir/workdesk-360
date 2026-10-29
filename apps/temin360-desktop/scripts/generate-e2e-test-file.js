@@ -74,8 +74,8 @@ function generateE2ETestFile(
 
   const db = new Database(tempDbPath)
 
-  // Initialize SQLite schema and tables via @dt/database
-  initializeDatabase(db, institutionName, '1.0.0-beta.256')
+  // Initialize SQLite schema and tables via @dt/database (E2E ortamı için seedTestData: true)
+  initializeDatabase(db, institutionName, '1.0.0-beta.256', { seedTestData: true })
 
   // Seed sample data for E2E verification
   const insertDosya = db.prepare(`

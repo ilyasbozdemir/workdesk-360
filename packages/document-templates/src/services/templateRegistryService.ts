@@ -13,13 +13,9 @@ import {
 import { isMemberVisibleInDocument } from '../constants/visibility.config'
 
 export class TemplateRegistryService {
-  private static templatesMap: Map<string, TemplateType> = new Map()
-
-  static {
-    TEMPLATE_REGISTRY.forEach((t) => {
-      this.templatesMap.set(t.id, t)
-    })
-  }
+  private static templatesMap: Map<string, TemplateType> = new Map(
+    TEMPLATE_REGISTRY.map((t) => [t.id, t])
+  )
 
   /**
    * Get all registered document templates with complete metadata and capabilities
