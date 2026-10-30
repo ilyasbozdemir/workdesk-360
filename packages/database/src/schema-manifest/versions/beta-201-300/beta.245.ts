@@ -45,7 +45,7 @@ export default {
           belge_id INTEGER NOT NULL,
           surum_no INTEGER NOT NULL,
           etiket TEXT,
-          not TEXT,
+          "not" TEXT,
           icerik_html TEXT NOT NULL,
           kosullar_json TEXT DEFAULT '[]',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
