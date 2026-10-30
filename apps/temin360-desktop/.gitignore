@@ -89,6 +89,7 @@ node_modules/
 *.db
 *.db-journal
 *.sqlite
+!src/**/__tests__/fixtures/*.sqlite
 /data/
 !src/**/data/
 *.xlsx

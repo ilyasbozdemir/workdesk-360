@@ -117,13 +117,11 @@ jobs:
           files: |
             apps/temin360-desktop/dist-local/*.exe
             apps/temin360-desktop/dist-local/*.exe.blockmap
-            apps/temin360-desktop/dist-local/*.yml
+            apps/temin360-desktop/dist-local/latest.yml
             apps/ihale360-desktop/dist-local/*.exe
             apps/ihale360-desktop/dist-local/*.exe.blockmap
-            apps/ihale360-desktop/dist-local/*.yml
             apps/flowdesk-desktop/dist-local/*.exe
             apps/flowdesk-desktop/dist-local/*.exe.blockmap
-            apps/flowdesk-desktop/dist-local/*.yml
           draft: false
           prerelease: ${{ steps.prep.outputs.is_prerelease == 'true' }}
           make_latest: ${{ steps.prep.outputs.make_latest }}
