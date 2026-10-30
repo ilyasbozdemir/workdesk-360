@@ -1,0 +1,69 @@
+name: Release FlowDesk 360
+
+on:
+  push:
+    tags:
+      - "flowdesk-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2022
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Sync version with tag
+        shell: bash
+        run: |
+          RAW_TAG=${GITHUB_REF_NAME}
+          VERSION=$(echo "$RAW_TAG" | sed -E 's/^flowdesk-v//')
+          echo "Building FlowDesk 360 version: $VERSION"
+          cd apps/flowdesk-desktop
+          npm pkg set version=$VERSION
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          npm_config_msvs_version: "2022"
+
+      - name: Pre-release Checks
+        run: |
+          pnpm --filter flowdesk-desktop typecheck
+          pnpm --filter flowdesk-desktop test
+
+      - name: Build and Package FlowDesk 360
+        working-directory: apps/flowdesk-desktop
+        run: pnpm build && npx electron-builder --win --x64 -p never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_MIRROR: "https://cdn.npmmirror.com/binaries/electron/"
+          ELECTRON_BUILDER_BINARIES_MIRROR: "https://cdn.npmmirror.com/binaries/electron-builder-binaries/"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            apps/flowdesk-desktop/dist-local/*.exe
+            apps/flowdesk-desktop/dist-local/*.exe.blockmap
+            apps/flowdesk-desktop/dist-local/*.yml
+          draft: false
+          prerelease: true
+          name: "FlowDesk 360 ${{ github.ref_name }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

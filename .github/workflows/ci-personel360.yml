@@ -1,0 +1,54 @@
+name: CI (Personel 360 - Kurumsal Personel ve İzin)
+
+on:
+  push:
+    branches:
+      - 'module/personel360'
+      - 'module/personel**'
+    paths:
+      - 'apps/personel360-desktop/**'
+      - 'packages/ecosystem-contracts/**'
+      - 'packages/database/**'
+  pull_request:
+    branches:
+      - 'module/personel360'
+    paths:
+      - 'apps/personel360-desktop/**'
+      - 'packages/ecosystem-contracts/**'
+      - 'packages/database/**'
+
+jobs:
+  test-personel360:
+    name: Personel 360 Typecheck & Unit Tests
+    runs-on: windows-2022
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          npm_config_msvs_version: "2022"
+
+      - name: Build Database Package
+        run: pnpm --filter @dt/database build
+
+      - name: Typecheck Personel 360
+        run: |
+          pnpm --filter personel360-desktop typecheck:node
+          pnpm --filter personel360-desktop typecheck:web
+
+      - name: Run Personel 360 Tests
+        run: |
+          pnpm --filter personel360-desktop test

@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   release:
+    name: Build & Release Temin 360 Desktop
     runs-on: windows-2022
     steps:
       - name: Check out Git repository
@@ -33,7 +34,7 @@ jobs:
         run: |
           RAW_TAG=${GITHUB_REF_NAME}
           VERSION=$(echo "$RAW_TAG" | sed -E 's/^temin360-v//')
-          echo "Building Temin 360 version: $VERSION"
+          echo "Building Temin 360 version: $VERSION (from tag: $RAW_TAG)"
           cd apps/temin360-desktop
           npm pkg set version=$VERSION
 
@@ -47,8 +48,11 @@ jobs:
 
       - name: Pre-release Checks
         run: |
+          pnpm check:schema
+          pnpm --filter @temin360/document-templates typecheck
           pnpm --filter temin360-desktop typecheck:node
           pnpm --filter temin360-desktop typecheck:web
+          pnpm --filter @temin360/document-templates test
           pnpm --filter temin360-desktop test
 
       - name: Build and Package Temin 360
@@ -59,6 +63,27 @@ jobs:
           ELECTRON_MIRROR: "https://cdn.npmmirror.com/binaries/electron/"
           ELECTRON_BUILDER_BINARIES_MIRROR: "https://cdn.npmmirror.com/binaries/electron-builder-binaries/"
 
+      - name: Prepare Release Metadata
+        id: prep
+        shell: bash
+        run: |
+          RAW_TAG=${GITHUB_REF_NAME}
+          VERSION=$(echo "$RAW_TAG" | sed -E 's/^temin360-v//')
+          if [[ "$RAW_TAG" == *"rc"* ]]; then
+            echo "release_name=TEMİN 360 v$VERSION (Sürüm Adayı)" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "make_latest=false" >> $GITHUB_OUTPUT
+          elif [[ "$RAW_TAG" == *"beta"* || "$RAW_TAG" == *"alpha"* ]]; then
+            echo "release_name=TEMİN 360 v$VERSION (Erken Erişim)" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "make_latest=false" >> $GITHUB_OUTPUT
+          else
+            echo "release_name=TEMİN 360 v$VERSION" >> $GITHUB_OUTPUT
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "make_latest=true" >> $GITHUB_OUTPUT
+          fi
+          node apps/temin360-desktop/scripts/generate-release-notes.js "v$VERSION" release_notes.md
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -67,7 +92,9 @@ jobs:
             apps/temin360-desktop/dist-local/*.exe.blockmap
             apps/temin360-desktop/dist-local/*.yml
           draft: false
-          prerelease: false
-          name: "Temin 360 ${{ github.ref_name }}"
+          prerelease: ${{ steps.prep.outputs.is_prerelease == 'true' }}
+          make_latest: ${{ steps.prep.outputs.make_latest }}
+          name: ${{ steps.prep.outputs.release_name }}
+          body_path: release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
