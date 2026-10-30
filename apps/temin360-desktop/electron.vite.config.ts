@@ -34,24 +34,24 @@ function controlledRendererObfuscator(isProduction: boolean): Plugin | null {
     name: 'vite-plugin-controlled-renderer-obfuscator',
     apply: 'build',
     enforce: 'post',
-    renderChunk(code, chunk) {
-      if (!chunk.fileName.endsWith('.js') && !chunk.fileName.endsWith('.mjs')) {
-        return null
-      }
-      try {
-        const obfuscated = JavaScriptObfuscator.obfuscate(code, obfuscatorOptions)
-        return {
-          code: obfuscated.getObfuscatedCode(),
-          map: null
+    generateBundle(_options, bundle) {
+      for (const fileName in bundle) {
+        const chunk = bundle[fileName]
+        if (chunk.type !== 'chunk' || (!fileName.endsWith('.js') && !fileName.endsWith('.mjs'))) {
+          continue
         }
-      } catch (error) {
-        const msg = `[Obfuscator Kritik Hata] ${chunk.fileName} dosyasının karıştırılması başarısız oldu!`
-        console.error(msg, error)
-        throw new Error(
-          `${msg} Üretim (production) güvenliği için karıştırılmamış JavaScript derlemesine izin verilmez. Hata detayı: ${
-            error instanceof Error ? error.message : String(error)
-          }`
-        )
+        try {
+          const obfuscated = JavaScriptObfuscator.obfuscate(chunk.code, obfuscatorOptions)
+          chunk.code = obfuscated.getObfuscatedCode()
+        } catch (error) {
+          const msg = `[Obfuscator Kritik Hata] ${fileName} dosyasının karıştırılması başarısız oldu!`
+          console.error(msg, error)
+          throw new Error(
+            `${msg} Üretim (production) güvenliği için karıştırılmamış JavaScript derlemesine izin verilmez. Hata detayı: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          )
+        }
       }
     }
   }

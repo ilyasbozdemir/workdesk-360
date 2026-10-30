@@ -22,12 +22,11 @@ taşınmaz yönetimi süreçlerini uçtan uca dijitalleştiren **çevrimdışı 
 WorkDesk 360 monoreposu, her biri kendi mevzuat ve iş akışına odaklanmış 3
 bağımsız masaüstü uygulamasını barındırır:
 
-| Uygulama / Platform | Konum                                                                            | Odaklandığı Mevzuat ve Alan                                                                                                                                  | Format / Entegrasyon  |         Durum         |
-| :------------------ | :------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------: | :-------------------: |
-| **⚖️ TEMİN 360**    | [`apps/temin360-desktop`](apps/temin360-desktop)                                 | **4734 Sayılı KİK Madde 22 Doğrudan Temin**<br/>Yaklaşık maliyet, piyasa araştırması, teklif değerlendirme, TİF ve kabul süreçleri.                          |       `.temin`        | `v1.0.0-rc.8` (Aktif) |
-| **📑 İHALE 360**    | [`apps/ihale360-desktop`](apps/ihale360-desktop)                                 | **4734 Sayılı Kanun Kapsamındaki İhale Usulleri**<br/>Açık İhale (m.19), Belli İstekliler (m.20), Pazarlık Usulü (m.21) ve EKAP entegrasyonları.             |       `.ihale`        |      Geliştirme       |
-| **⚡ FLOWDESK**     | [`ilyasbozdemir/flowdesk`](https://github.com/ilyasbozdemir/flowdesk)            | **Dinamik Süreç Tasarımı, Görev Yönetimi & EBYS Belge Motoru**<br/>JSON tabanlı iş akışları, dinamik formlar ve Workspace 360 Market modülleri.              | `.flowdesk` / `.flow` |     Aktif Dönüşüm     |
-| **🏛️ 2886 MODÜLÜ**  | [`packages/ecosystem-contracts`](packages/ecosystem-contracts/src/module2886.ts) | **2886 Sayılı Devlet İhale Kanunu Modülü (FlowDesk Uyumlu)**<br/>Taşınmaz satış/kiralama, muhammen bedel, encümen kararı, artırma turları ve sözleşme akışı. |   Modül Manifestosu   |      Entegrasyon      |
+| Uygulama / Platform | Konum                                                                 | Odaklandığı Mevzuat ve Alan                                                                                                                      | Format / Entegrasyon  |         Durum         |
+| :------------------ | :-------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------: | :-------------------: |
+| **⚖️ TEMİN 360**    | [`apps/temin360-desktop`](apps/temin360-desktop)                      | **4734 Sayılı KİK Madde 22 Doğrudan Temin**<br/>Yaklaşık maliyet, piyasa araştırması, teklif değerlendirme, TİF ve kabul süreçleri.              |       `.temin`        | `v1.0.0-rc.8` (Aktif) |
+| **📑 İHALE 360**    | [`apps/ihale360-desktop`](apps/ihale360-desktop)                      | **4734 Sayılı Kanun Kapsamındaki İhale Usulleri**<br/>Açık İhale (m.19), Belli İstekliler (m.20), Pazarlık Usulü (m.21) ve EKAP entegrasyonları. |       `.ihale`        |      Geliştirme       |
+| **⚡ FLOWDESK**     | [`ilyasbozdemir/flowdesk`](https://github.com/ilyasbozdemir/flowdesk) | **Dinamik Süreç Tasarımı, Görev Yönetimi & EBYS Belge Motoru**<br/>JSON tabanlı iş akışları, dinamik formlar ve Workspace 360 Market modülleri.  | `.flowdesk` / `.flow` |     Aktif Dönüşüm     |
 
 ---
 
@@ -48,7 +47,7 @@ workdesk-360 / flowdesk ekosistemi
     ├── document-templates/          # @temin360/document-templates: Resmi evrak & şablon kütüphanesi
     ├── pdf-generator/               # @temin360/pdf-generator: Puppeteer tabanlı PDF/A derleyicisi
     ├── domain/                      # @temin360/domain: Kamu maliyesi saf iş ve limit kuralları
-    └── ecosystem-contracts/         # @worksuite-360/contracts: FlowDesk JSON tanımları, 2886 modülü & Market modelleri
+    └── ecosystem-contracts/         # @worksuite-360/contracts: FlowDesk JSON tanımları, süreç şablonları & Market modelleri
 ```
 
 ### 🧩 Paket Sorumlulukları
@@ -65,8 +64,7 @@ workdesk-360 / flowdesk ekosistemi
   KİK Md. 62/ı denetimleri, tevkifat ve fiyat farkı hesaplamaları.
 - **`@worksuite-360/contracts`:** FlowDesk JSON süreç tanımları
   (`FlowDefinition`), dinamik form şemaları (`FormSchema`), EBYS belge
-  çözümleyicileri ve **2886 Devlet İhale Modül Sözleşmesi**
-  (`DEVLET_IHALE_2886_MODULE_MANIFEST`).
+  sözleşmeleri.
 
 ---
 
@@ -126,19 +124,6 @@ aktarılabilir ve sürümlenebilir JSON süreç tanımları** üzerinden çalı�
 - **`action`:** Önceden tanımlı ve izin verilen sistem işlevini güvenli
   tetikleme.
 
-### 🏛️ 2886 Devlet İhale Modülü Dönüşümü
-
-2886 Devlet İhale Kanunu ayrı, silolaşmış bir masaüstü uygulaması olarak değil;
-**FlowDesk üzerinde çalışan ve Workspace 360 Market üzerinden edinilebilen 5
-aşamalı bir modül** olarak konumlandırılmıştır:
-
-1. **Aşama:** Başlangıç ve Yetki Evrakları (Başkanlık Oluru `2886-EVR-01`,
-   Encümen Kararı)
-2. **Aşama:** Kıymet Takdiri & Muhammen Bedel (`2886-EVR-05`)
-3. **Aşama:** Şartname, İhale Kararı & İlan Süreci (`2886-EVR-06`)
-4. **Aşama:** İhale Günü, Açık Artırma & Encümen Kararı (`2886-EVR-12`)
-5. **Aşama:** İta Amiri Onayı, Tebligat & Sözleşme (`2886-EVR-14`)
-
 ---
 
 ## 🌟 Temel Mimari Prensipler
@@ -147,11 +132,11 @@ aşamalı bir modül** olarak konumlandırılmıştır:
    internet bağlantısına ihtiyaç duymaz. Veriler kurum intranetinde veya
    kullanıcının yerel bilgisayarında kalır.
 2. **Bağımsız Mikro-Veritabanı Dosyaları:** Her alım veya ihale dosyası
-   (`.temin`, `.ihale`, `.ihale2886`) içinde SQLite veritabanı, ek belgeler ve
-   metadata içeren taşınabilir bir arşivdir.
+   (`.temin`, `.ihale`) içinde SQLite veritabanı, ek belgeler ve metadata içeren
+   taşınabilir bir arşivdir.
 3. **Uygulama İzolasyonu:** Her uygulamanın `appId`'si (`com.temin360.desktop`,
-   `com.ihale360.desktop`, `com.devletihale2886.desktop`), güncelleme kanalı ve
-   şema manifestosu tamamen bağımsızdır.
+   `com.ihale360.desktop`), güncelleme kanalı ve şema manifestosu tamamen
+   bağımsızdır.
 4. **Resmi Evrak & Şablon Motoru:** Yazıcı çıktıları, barkod/karekod desteği,
    kurum logoları ve imza blokları standart sayfa düzeni motoru
    (`DocumentEngine`) tarafından yönetilir.
@@ -183,8 +168,8 @@ pnpm --filter temin360-desktop dev
 # İhale 360 uygulamasını başlatın
 pnpm --filter ihale360-desktop dev
 
-# Devlet İhale 2886 uygulamasını başlatın
-pnpm --filter devlet-ihale-2886-desktop dev
+# FlowDesk uygulamasını başlatın
+pnpm --filter flowdesk-desktop dev
 ```
 
 ### 3. Paketleri Derleme ve Test Etme
@@ -193,13 +178,11 @@ pnpm --filter devlet-ihale-2886-desktop dev
 # Veritabanı paketini derleyin
 pnpm --filter @dt/database build
 
-# Temin 360 birim ve entegrasyon testlerini çalıştırın (550+ test)
+# Temin 360 birim ve entegrasyon testlerini çalıştırın
 pnpm --filter temin360-desktop test
 
 # Tüm projede TypeScript tip denetimini yürütün
-pnpm --filter temin360-desktop typecheck
-pnpm --filter ihale360-desktop typecheck:node
-pnpm --filter devlet-ihale-2886-desktop typecheck:node
+pnpm typecheck:all
 ```
 
 ### 4. Kurulum Paketlerini Derleme (Production Build)
