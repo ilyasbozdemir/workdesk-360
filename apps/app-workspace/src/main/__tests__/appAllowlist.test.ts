@@ -68,3 +68,4 @@ describe('appAllowlist – güvenilmeyen appId girdisi', () => {
     expect(isTrustedDevPackage(cfg, undefined)).toBe(false)
   })
 })
+

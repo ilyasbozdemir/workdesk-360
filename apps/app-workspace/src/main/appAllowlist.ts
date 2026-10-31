@@ -68,3 +68,4 @@ export function isWorkspaceAppId(appId: unknown): boolean {
 export function isTrustedDevPackage(config: EcosystemAppConfig, packageName: unknown): boolean {
   return typeof packageName === 'string' && packageName === config.folderName
 }
+
