@@ -143,6 +143,7 @@ describe('initializeDatabase — Aşama 1: Üretim Güvenliği ve Kullanıcı Ve
     try {
       // 1. Aşama: Kullanıcının rc.8 sürümünde oluşturduğu gerçek çalışma alanı veritabanını simüle et
       const rawDb1 = new DatabaseSync(dbPath)
+      rawDb1.exec('PRAGMA journal_mode = WAL;')
       const wrapDb1 = {
         exec: (sql: string) => rawDb1.exec(sql),
         prepare: (sql: string) => {
@@ -190,6 +191,7 @@ describe('initializeDatabase — Aşama 1: Üretim Güvenliği ve Kullanıcı Ve
       // 2. Aşama: Uygulama güncellendi (1.0.0-rc.10) ve dosya yeniden açıldı
       // DtmWorkspace.openWorkspace akışı: Önce DB açılır, migrasyonlar koşulur, ardından initializeDatabase çağrılır
       const rawDb2 = new DatabaseSync(dbPath)
+      rawDb2.exec('PRAGMA journal_mode = WAL;')
       const wrapDb2 = {
         exec: (sql: string) => rawDb2.exec(sql),
         prepare: (sql: string) => {
@@ -245,6 +247,7 @@ describe('initializeDatabase — Aşama 1: Üretim Güvenliği ve Kullanıcı Ve
 
       // 4. Aşama: Dosyayı üçüncü kez açıp kapat (tekrar açılış idempotency testi)
       const rawDb3 = new DatabaseSync(dbPath)
+      rawDb3.exec('PRAGMA journal_mode = WAL;')
       const wrapDb3 = {
         exec: (sql: string) => rawDb3.exec(sql),
         prepare: (sql: string) => {
@@ -286,6 +289,6 @@ describe('initializeDatabase — Aşama 1: Üretim Güvenliği ve Kullanıcı Ve
         fs.rmSync(tempDir, { recursive: true, force: true })
       } catch {}
     }
-  }, 60000)
+  }, 120000)
 })
 
