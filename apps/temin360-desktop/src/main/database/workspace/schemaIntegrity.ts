@@ -75,6 +75,49 @@ function safeAddColumn(
 }
 
 export function ensureSchemaIntegrity(db: Database.Database): void {
+  // 1. Temel Şema Tablolarının Varlığını Garanti Et (CREATE TABLE IF NOT EXISTS)
+  for (const table of schema.tables as any[]) {
+    try {
+      const tableInfo = db.prepare(`PRAGMA table_info(${table.name})`).all() as any[]
+      if (tableInfo.length === 0) {
+        const columnsSql = table.columns
+          .map((col: any) => {
+            let colDef = '"' + col.name + '" ' + col.type
+            if (col.primaryKey) colDef += ' PRIMARY KEY'
+            if (col.autoIncrement) colDef += ' AUTOINCREMENT'
+            if (col.unique) colDef += ' UNIQUE'
+            if (col.notNull) colDef += ' NOT NULL'
+            if (col.default !== undefined) {
+              const d = col.default
+              if (typeof d === 'string') {
+                if (d.toUpperCase() === 'CURRENT_TIMESTAMP') colDef += ' DEFAULT CURRENT_TIMESTAMP'
+                else if (d.startsWith("'") || d.startsWith('"')) colDef += ' DEFAULT ' + d
+                else colDef += " DEFAULT '" + d.replace(/'/g, "''") + "'"
+              } else colDef += ' DEFAULT ' + d
+            }
+            return colDef
+          })
+          .join(', ')
+        const constraintsSql = table.constraints ? ', ' + table.constraints.join(', ') : ''
+        safeExec(
+          db,
+          'CREATE TABLE IF NOT EXISTS ' + table.name + ' (' + columnsSql + constraintsSql + ');',
+          `Tablo Onarımı: ${table.name}`
+        )
+      }
+    } catch (err: unknown) {
+      if (!isExpectedSqliteError(err)) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error(`[ensureSchemaIntegrity Temin 360] Tablo onarım hatası (${table.name}):`, msg)
+        throw new SchemaMigrationError(
+          `Tablo onarımı başarısız (${table.name}): ${msg}`,
+          err
+        )
+      }
+    }
+  }
+
+  // 2. Çekirdek Sistem Tabloları ve Bağımsız İhtiyaç Raporu Kurulumu
   safeExec(
     db,
     `
@@ -144,6 +187,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'talep_eden_unvan', 'TEXT')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'evrak_sayisi', 'TEXT')
 
+  // 3. Şema Sürümü ve Migrasyon Kontrolü
   try {
     const row = db.prepare("SELECT value FROM settings WHERE key = 'dbSchemaVersion'").get() as
       | { value?: string }
@@ -167,7 +211,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     }
   }
 
-  // Explicit columns for TANIM_Firma CRM
+  // 4. TANIM_Firma CRM Kolonları
   const firmaCrmColumns = [
     { name: 'deneyim_skoru', def: 'INTEGER DEFAULT 0' },
     { name: 'kalite_skoru', def: 'INTEGER DEFAULT 0' },
@@ -182,7 +226,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     safeAddColumn(db, 'TANIM_Firma', c.name, c.def)
   }
 
-  // Explicit columns for DATA_TeminDosyasi
+  // 5. DATA_TeminDosyasi Kolonları
   const teminDosyasiColumns = [
     { name: 'tarih', def: 'DATE' },
     { name: 'temin_tarihi', def: 'DATE' },
@@ -224,7 +268,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     safeAddColumn(db, 'DATA_TeminDosyasi', c.name, c.def)
   }
 
-  // Explicit columns for DATA_TeminKomisyon & TANIM_KomisyonUye
+  // 6. DATA_TeminKomisyon & TANIM_KomisyonUye Kolonları
   const komisyonExtendedColumns = [
     { name: 'asli_yedek', def: "TEXT DEFAULT 'Asil'" },
     { name: 'kaynak', def: "TEXT DEFAULT 'kurumsal'" },
@@ -242,6 +286,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     safeAddColumn(db, 'TANIM_KomisyonUye', c.name, c.def)
   }
 
+  // 7. DATA_TeminKomisyonHistory
   safeExec(
     db,
     `
@@ -258,7 +303,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     'DATA_TeminKomisyonHistory Kurulumu'
   )
 
-  // Sync alias columns for DATA_TeminDosyasi & DATA_TeminKomisyon
+  // 8. DATA_TeminDosyasi & DATA_TeminKomisyon Kolon Eşitleme
   if (isPhysicalTable(db, 'DATA_TeminDosyasi')) {
     safeExec(
       db,
@@ -299,10 +344,10 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     )
   }
 
+  // 9. DATA_DosyaSablonVeri Kolonları & sablon_kodu Doldurma
   safeAddColumn(db, 'DATA_DosyaSablonVeri', 'sablon_kodu', 'TEXT')
   safeAddColumn(db, 'DATA_DosyaSablonVeri', 'sablon_versiyon', 'INTEGER DEFAULT 1')
 
-  // Backfill sablon_kodu from TANIM_Sablon if missing
   if (isPhysicalTable(db, 'DATA_DosyaSablonVeri') && isPhysicalTable(db, 'TANIM_Sablon')) {
     safeExec(
       db,
@@ -320,8 +365,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     )
   }
 
-  // Deterministic deduplication before unique index creation:
-  // If duplicate records exist for (temin_dosya_id, sablon_kodu), archive older duplicates into DATA_DosyaRevizyon and keep newest
+  // 10. Mükerrer Şablon Verisi Arşivleme & UNIQUE Index
   if (isPhysicalTable(db, 'DATA_DosyaSablonVeri') && isPhysicalTable(db, 'DATA_DosyaRevizyon')) {
     try {
       const duplicates = db
@@ -358,8 +402,6 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
 
           for (let i = 1; i < rows.length; i++) {
             const oldRow = rows[i]
-            // Arşivleme ve silme tek bir atomik transaction içinde yapılır.
-            // Arşivleme başarısız olursa silme işlemi yapılmaz (veri kaybı engellenir).
             db.transaction(() => {
               insertRevizyon.run(dup.temin_dosya_id, dup.sablon_kodu, oldRow.veri_json)
               deleteSablonVeri.run(oldRow.id)
@@ -379,7 +421,6 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     }
   }
 
-  // Ensure UNIQUE index on (temin_dosya_id, sablon_kodu)
   if (isPhysicalTable(db, 'DATA_DosyaSablonVeri')) {
     safeExec(
       db,
@@ -391,6 +432,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     )
   }
 
+  // 11. DATA_TeminFirma Kazanan Kolonları
   safeAddColumn(db, 'DATA_TeminFirma', 'kazanan_mi', 'INTEGER DEFAULT 0')
   safeAddColumn(db, 'DATA_TeminFirma', 'kazandi_mi', 'INTEGER DEFAULT 0')
 
@@ -405,7 +447,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     )
   }
 
-  // Child tables dosya_id sync & triggers
+  // 12. Çocuk Tablolar dosya_id Senkronizasyonu ve Tetikleyicileri
   const dosyaChildTables = [
     'DATA_TeminKalem',
     'DATA_TeminFirma',
@@ -456,7 +498,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     )
   }
 
-  // Kalem, OlcuBirimi, Personel extended columns
+  // 13. Kalem, OlcuBirimi, Personel, Ihtiyac, Belge Kolonları
   const kalemCols = [
     { name: 'sira_no', def: 'INTEGER' },
     { name: 'poz_no', def: 'TEXT' },
@@ -525,36 +567,11 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     safeAddColumn(db, 'DATA_TeminBelge', c.name, c.def)
   }
 
-  // Schema Table & Column self-repair
+  // 14. Eksik Kolonların Tespiti ve Tamamlanması
   for (const table of schema.tables as any[]) {
     try {
       const tableInfo = db.prepare(`PRAGMA table_info(${table.name})`).all() as any[]
-      if (tableInfo.length === 0) {
-        const columnsSql = table.columns
-          .map((col: any) => {
-            let colDef = '"' + col.name + '" ' + col.type
-            if (col.primaryKey) colDef += ' PRIMARY KEY'
-            if (col.autoIncrement) colDef += ' AUTOINCREMENT'
-            if (col.unique) colDef += ' UNIQUE'
-            if (col.notNull) colDef += ' NOT NULL'
-            if (col.default !== undefined) {
-              const d = col.default
-              if (typeof d === 'string') {
-                if (d.toUpperCase() === 'CURRENT_TIMESTAMP') colDef += ' DEFAULT CURRENT_TIMESTAMP'
-                else if (d.startsWith("'") || d.startsWith('"')) colDef += ' DEFAULT ' + d
-                else colDef += " DEFAULT '" + d.replace(/'/g, "''") + "'"
-              } else colDef += ' DEFAULT ' + d
-            }
-            return colDef
-          })
-          .join(', ')
-        const constraintsSql = table.constraints ? ', ' + table.constraints.join(', ') : ''
-        safeExec(
-          db,
-          'CREATE TABLE IF NOT EXISTS ' + table.name + ' (' + columnsSql + constraintsSql + ');',
-          `Tablo Onarımı: ${table.name}`
-        )
-      } else {
+      if (tableInfo.length > 0) {
         const existingColumns = new Set(tableInfo.map((c) => c.name))
         for (const col of table.columns as any[]) {
           if (!existingColumns.has(col.name)) {
@@ -578,20 +595,20 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     } catch (err: unknown) {
       if (!isExpectedSqliteError(err)) {
         const msg = err instanceof Error ? err.message : String(err)
-        console.error(`[ensureSchemaIntegrity Temin 360] Tablo onarım hatası (${table.name}):`, msg)
+        console.error(`[ensureSchemaIntegrity Temin 360] Kolon tamamlama hatası (${table.name}):`, msg)
         throw new SchemaMigrationError(
-          `Tablo onarımı başarısız (${table.name}): ${msg}`,
+          `Kolon tamamlama başarısız (${table.name}): ${msg}`,
           err
         )
       }
     }
   }
 
-  // Seed Units & Default Commissions
+  // 15. Ölçü Birimleri & Varsayılan Komisyonlar Seed İşlemleri
   seedUnitConversions(db)
   seedDefaultCommissions(db)
 
-  // Denetim Günlüğü ve Donanım Kimliği (mac_hash) Güvenlik Enjeksiyonu
+  // 16. Denetim Günlüğü ve Donanım Kimliği (mac_hash) Güvenlik Enjeksiyonu
   try {
     initSessionContext(db)
     registerDefaultAuditTriggers(db, 'temin360-desktop')
