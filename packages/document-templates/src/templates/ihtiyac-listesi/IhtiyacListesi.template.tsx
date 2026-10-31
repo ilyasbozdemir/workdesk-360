@@ -108,7 +108,8 @@ export function IhtiyacListesi({
                 >
                   <EditableField
                     name="sunulacakMakamAdi"
-                    value={data.sunulacakMakamAdi || (data as any).sunulacakMakam}
+                    value={data.sunulacakMakamAdi ||
+                      (data as any).sunulacakMakam}
                     placeholder="SUNULACAK MAKAM ADI"
                   />
                 </div>
