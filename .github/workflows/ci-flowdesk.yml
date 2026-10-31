@@ -46,3 +46,4 @@ jobs:
       - name: Run FlowDesk Tests
         run: |
           pnpm --filter flowdesk-desktop test
+
