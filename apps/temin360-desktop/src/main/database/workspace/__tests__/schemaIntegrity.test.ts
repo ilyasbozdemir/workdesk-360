@@ -12,6 +12,11 @@ import {
   sharedFoundationTables,
   ensureIhaleCompatibilityViews
 } from '@dt/database'
+import {
+  ensureSchemaIntegrity,
+  SchemaMigrationError,
+  isExpectedSqliteError
+} from '../schemaIntegrity'
 
 function createRealSqliteDb(): {
   rawDb: DatabaseSync
@@ -424,5 +429,96 @@ describe('Database Schema Integrity & Manifest Tests', () => {
     expect(() => {
       runMigrations(dbLike, 10, schema)
     }).not.toThrow()
+  })
+
+  describe('TEMİN 360 ensureSchemaIntegrity & Error Hardening Tests', () => {
+    it('isExpectedSqliteError should correctly classify idempotent vs unexpected errors', () => {
+      expect(isExpectedSqliteError(new Error('duplicate column name: test_col'))).toBe(true)
+      expect(isExpectedSqliteError(new Error('table TANIM_Birim already exists'))).toBe(true)
+      expect(isExpectedSqliteError(new Error('index idx_test already exists'))).toBe(true)
+      expect(isExpectedSqliteError(new Error('trigger trg_test already exists'))).toBe(true)
+      expect(isExpectedSqliteError(new Error('Cannot add a column to a view'))).toBe(true)
+
+      // Unexpected errors that must NEVER be swallowed
+      expect(isExpectedSqliteError(new Error('syntax error near "SELECT"'))).toBe(false)
+      expect(isExpectedSqliteError(new Error('database disk image is malformed'))).toBe(false)
+      expect(isExpectedSqliteError(new Error('disk I/O error'))).toBe(false)
+      expect(isExpectedSqliteError(new Error('no such table: TANIM_Unknown'))).toBe(false)
+      expect(isExpectedSqliteError(new Error('FOREIGN KEY constraint failed'))).toBe(false)
+      expect(isExpectedSqliteError(null)).toBe(false)
+      expect(isExpectedSqliteError(undefined)).toBe(false)
+    })
+
+    it('ensureSchemaIntegrity should safely run on fresh SQLite db and be idempotent', () => {
+      const { rawDb, db } = createRealSqliteDb()
+
+      // First run on fresh database
+      expect(() => {
+        ensureSchemaIntegrity(db as any)
+      }).not.toThrow()
+
+      // Verify settings and tables are created
+      const verRow = rawDb
+        .prepare("SELECT value FROM settings WHERE key = 'dbSchemaVersion'")
+        .get() as { value?: string }
+      expect(verRow).toBeDefined()
+      expect(Number(verRow?.value)).toBeGreaterThanOrEqual(37)
+
+      // Second run must be completely idempotent and not throw duplicate column errors
+      expect(() => {
+        ensureSchemaIntegrity(db as any)
+      }).not.toThrow()
+    })
+
+    it('ensureSchemaIntegrity must throw SchemaMigrationError when a fatal SQLite error occurs and NOT swallow it', () => {
+      const { rawDb, db } = createRealSqliteDb()
+
+      // Corrupt exec so that non-expected error occurs on DDL
+      const corruptDb = {
+        ...db,
+        exec: (sql: string) => {
+          if (sql.includes('DATA_TeminKomisyonHistory')) {
+            throw new Error('database disk image is malformed (SQLITE_CORRUPT)')
+          }
+          rawDb.exec(sql)
+        }
+      }
+
+      expect(() => {
+        ensureSchemaIntegrity(corruptDb as any)
+      }).toThrowError(SchemaMigrationError)
+    })
+
+    it('ensureSchemaIntegrity must throw SchemaMigrationError and NOT advance dbSchemaVersion when migration fails', () => {
+      const { rawDb, db } = createRealSqliteDb()
+
+      // Set up a database at v10
+      rawDb.exec(`
+        CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT);
+        CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
+        INSERT INTO settings (key, value) VALUES ('dbSchemaVersion', '10');
+      `)
+
+      // Corrupt exec during migration step
+      const faultyMigrationDb = {
+        ...db,
+        exec: (sql: string) => {
+          if (sql.includes('TANIM_OlcuBirimi')) {
+            throw new Error('SQLITE_IOERR: disk I/O error')
+          }
+          rawDb.exec(sql)
+        }
+      }
+
+      expect(() => {
+        ensureSchemaIntegrity(faultyMigrationDb as any)
+      }).toThrowError(SchemaMigrationError)
+
+      // dbSchemaVersion must NOT have been updated to target version
+      const verRow = rawDb
+        .prepare("SELECT value FROM settings WHERE key = 'dbSchemaVersion'")
+        .get() as { value?: string }
+      expect(verRow?.value).toBe('10')
+    })
   })
 })

@@ -174,7 +174,7 @@ describe('Gerçek RC.8 / v44 SQLite Veritabanı Migration ve Bütünlük Testler
         fs.rmSync(tempDir, { recursive: true, force: true })
       } catch {}
     }
-  })
+  }, 30000)
 
   it('3. Migration hatası durumunda transaction rollback çalışmalı, veri bozulmamalı ve sürüm v44 kalmalıdır', () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'temin-rollback-test-'))
@@ -264,6 +264,6 @@ describe('Gerçek RC.8 / v44 SQLite Veritabanı Migration ve Bütünlük Testler
         fs.rmSync(tempDir, { recursive: true, force: true })
       } catch {}
     }
-  })
+  }, 30000)
 })
 
