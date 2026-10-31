@@ -40,3 +40,4 @@ jobs:
       - name: Typecheck Disk Analiz 360
         run: |
           pnpm --filter disk-analiz-360-desktop typecheck
+

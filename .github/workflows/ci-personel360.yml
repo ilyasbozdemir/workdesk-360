@@ -52,3 +52,4 @@ jobs:
       - name: Run Personel 360 Tests
         run: |
           pnpm --filter personel360-desktop test
+

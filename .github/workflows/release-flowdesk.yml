@@ -67,3 +67,4 @@ jobs:
           name: "FlowDesk 360 ${{ github.ref_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
