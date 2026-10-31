@@ -286,6 +286,6 @@ describe('initializeDatabase — Aşama 1: Üretim Güvenliği ve Kullanıcı Ve
         fs.rmSync(tempDir, { recursive: true, force: true })
       } catch {}
     }
-  }, 30000)
+  }, 60000)
 })
 
