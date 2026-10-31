@@ -1,9 +1,12 @@
 import {
   TemplateKey,
-  resolveTemplateKey,
   templateRegistry as baseTemplateRegistry
 } from '@temin360/document-templates'
-import { DocumentDefinition } from './types'
+import {
+  TemplateRegistry as CoreTemplateRegistry,
+  InvalidTemplateKeyError,
+  DocumentDefinition
+} from '@worksuite-360/document-engine'
 import { LuzumMuzekkeresiResolver } from '../resolvers/LuzumMuzekkeresiResolver'
 import { LuzumMuzekkeresiRenderer } from '../renderers/LuzumMuzekkeresiRenderer'
 import { IhtiyacListesiResolver } from '../resolvers/IhtiyacListesiResolver'
@@ -12,33 +15,24 @@ import { DefaultDocumentResolver } from '../resolvers/DefaultDocumentResolver'
 import { DefaultDocumentRenderer } from '../renderers/DefaultDocumentRenderer'
 import React from 'react'
 
-/**
- * Bilinmeyen veya tanımsız şablon kimliği hatası
- */
-export class InvalidTemplateKeyError extends Error {
-  constructor(templateKey: string) {
-    super(`Bilinmeyen veya geçersiz şablon kimliği: "${templateKey}". Kayıtlı bir şablon bulunamadı.`)
-    this.name = 'InvalidTemplateKeyError'
-  }
-}
+export { InvalidTemplateKeyError }
 
 /**
- * Belge Şablon Kayıt Defteri (TemplateRegistry)
- * - Her şablonun kendine ait resolver, renderer ve metadata kaydını tutar.
- * - Bilinmeyen anahtarlar için açık hata fırlatır; sessiz yönlendirme yapmaz.
+ * TEMİN 360 Belge Şablon Kayıt Defteri Adaptörü
+ * - Çekirdek @worksuite-360/document-engine TemplateRegistry'sini kullanır.
+ * - TEMİN 360'a özel Lüzum Müzekkeresi, İhtiyaç Listesi ve diğer şablonları çekirdek deftere kaydeder.
  */
 export class TemplateRegistry {
-  private static definitions = new Map<string, DocumentDefinition<any>>()
   private static isInitialized = false
 
   /**
    * Başlangıç tanımlarını kaydeder
    */
-  private static init(): void {
+  static init(): void {
     if (this.isInitialized) return
 
     // 1. Pilot Belge: Lüzum Müzekkeresi (Tam İzolasyon)
-    this.register({
+    CoreTemplateRegistry.register({
       templateKey: 'luzum_muzekkeresi',
       name: 'LuzumMuzekkeresi',
       title: 'Standart Form: Lüzum Müzekkeresi',
@@ -52,7 +46,7 @@ export class TemplateRegistry {
     })
 
     // 2. Çekirdek Belge: İhtiyaç Listesi (Tam İzolasyon)
-    this.register({
+    CoreTemplateRegistry.register({
       templateKey: 'ihtiyac_listesi',
       name: 'IhtiyacListesi',
       title: 'Standart Form: İhtiyaç Listesi Cetveli',
@@ -68,14 +62,14 @@ export class TemplateRegistry {
     // 3. Diğer 28 Şablon (Kademeli Geçiş Adaptörü)
     const baseKeys = Object.keys(baseTemplateRegistry) as TemplateKey[]
     for (const key of baseKeys) {
-      if (!this.definitions.has(key)) {
+      if (!CoreTemplateRegistry.has(key)) {
         const baseDef = baseTemplateRegistry[key]
         if (baseDef) {
           const defaultResolver = new DefaultDocumentResolver()
           const defaultRenderer = (props: any) =>
             React.createElement(DefaultDocumentRenderer, { ...props, templateKey: key })
 
-          this.register({
+          CoreTemplateRegistry.register({
             templateKey: key,
             name: baseDef.name,
             title: baseDef.title,
@@ -93,63 +87,28 @@ export class TemplateRegistry {
     this.isInitialized = true
   }
 
-  /**
-   * Yeni bir belge tanımı kaydeder
-   */
   static register<TData>(def: DocumentDefinition<TData>): void {
-    const canonicalKey = resolveTemplateKey(def.templateKey) || def.templateKey
-    this.definitions.set(canonicalKey, def)
-    this.definitions.set(def.templateKey, def)
-    this.definitions.set(def.templateKey.replace(/_/g, '-'), def)
+    this.init()
+    CoreTemplateRegistry.register(def)
   }
 
-  /**
-   * Şablon anahtarına göre belge tanımını getirir.
-   * Bilinmeyen anahtarlarda açık InvalidTemplateKeyError fırlatır.
-   */
   static get<TData = any>(templateKey: string): DocumentDefinition<TData> {
     this.init()
-
-    if (!templateKey || typeof templateKey !== 'string' || templateKey.trim() === '') {
-      throw new InvalidTemplateKeyError(String(templateKey))
-    }
-
-    const cleanKey = templateKey.replace(/\.html$/i, '').trim()
-    const canonical = resolveTemplateKey(cleanKey) || cleanKey
-
-    const found =
-      this.definitions.get(canonical) ||
-      this.definitions.get(cleanKey) ||
-      this.definitions.get(cleanKey.replace(/-/g, '_')) ||
-      this.definitions.get(cleanKey.replace(/_/g, '-'))
-
-    if (!found) {
-      throw new InvalidTemplateKeyError(templateKey)
-    }
-
-    return found as DocumentDefinition<TData>
+    return CoreTemplateRegistry.get<TData>(templateKey)
   }
 
-  /**
-   * Şablonun kayıtlı olup olmadığını kontrol eder
-   */
   static has(templateKey: string): boolean {
     this.init()
-    if (!templateKey) return false
-    const cleanKey = templateKey.replace(/\.html$/i, '').trim()
-    const canonical = resolveTemplateKey(cleanKey) || cleanKey
-    return this.definitions.has(canonical) || this.definitions.has(cleanKey)
+    return CoreTemplateRegistry.has(templateKey)
   }
 
-  /**
-   * Tüm kayıtlı belge tanımlarını döner
-   */
   static getAll(): DocumentDefinition[] {
     this.init()
-    const unique = new Map<TemplateKey, DocumentDefinition>()
-    this.definitions.forEach((def) => {
-      unique.set(def.templateKey, def)
-    })
-    return Array.from(unique.values())
+    return CoreTemplateRegistry.getAll()
+  }
+
+  static clear(): void {
+    this.isInitialized = false
+    CoreTemplateRegistry.clear()
   }
 }
