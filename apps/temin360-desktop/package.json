@@ -61,6 +61,7 @@
     "@tanstack/react-router": "^1.170.8",
     "@tanstack/react-table": "^8.21.3",
     "@temin360/document-templates": "workspace:*",
+    "@worksuite-360/document-engine": "workspace:*",
     "@tiptap/extension-table": "^3.26.0",
     "@tiptap/extension-table-cell": "^3.26.0",
     "@tiptap/extension-table-header": "^3.26.0",
