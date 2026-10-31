@@ -20,20 +20,27 @@ export function isExpectedSqliteError(err: unknown): boolean {
   if (!err) return false
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase()
   return (
-    msg.includes('duplicate column') ||
-    msg.includes('already exists') ||
-    msg.includes('cannot add a column to a view')
+    msg.includes('duplicate column') || msg.includes('already exists')
   )
 }
 
+/**
+ * Nesnenin fiziksel bir TABLO olup olmadığını döndürür (yoksa veya view ise false).
+ * sqlite_master sorgusu başarısız olursa (disk/bozulma/beklenmeyen hata) hata YUTULMAZ;
+ * tablo yokmuş gibi davranmak yerine SchemaMigrationError fırlatılır.
+ */
 function isPhysicalTable(db: Database.Database, tableName: string): boolean {
   try {
     const row = db
       .prepare('SELECT type FROM sqlite_master WHERE name = ?')
       .get(tableName) as { type?: string } | undefined
     return row?.type === 'table'
-  } catch {
-    return false
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new SchemaMigrationError(
+      `[ensureSchemaIntegrity Temin 360] Tablo varlığı doğrulanamadı (${tableName}): ${msg}`,
+      err
+    )
   }
 }
 
@@ -204,11 +211,17 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
       )
     }
   } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
     if (!isExpectedSqliteError(err)) {
-      const msg = err instanceof Error ? err.message : String(err)
       console.error('[Schema Self-Healing] Migration failed critically:', msg)
       throw new SchemaMigrationError(`Veritabanı şema yükseltmesi başarısız oldu: ${msg}`, err)
     }
+    // Beklenen (idempotent) hata: runMigrations transaction'ı geri alındı, dbSchemaVersion ilerletilmedi.
+    // Sessiz geçmek yerine açıkça logla; sürüm bir sonraki açılışta yeniden denenir.
+    console.warn(
+      '[Schema Self-Healing] Beklenen SQLite hatası nedeniyle migration tamamlanmadı, dbSchemaVersion ilerletilmedi:',
+      msg
+    )
   }
 
   // 4. TANIM_Firma CRM Kolonları
@@ -316,7 +329,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
       UPDATE DATA_TeminDosyasi SET alim_turu = tur WHERE (alim_turu IS NULL OR alim_turu = '') AND tur IS NOT NULL;
       UPDATE DATA_TeminDosyasi SET tur = alim_turu WHERE (tur IS NULL OR tur = '') AND alim_turu IS NOT NULL;
       UPDATE DATA_TeminDosyasi SET birim = harcama_birimi WHERE (birim IS NULL OR birim = '') AND harcama_birimi IS NOT NULL;
-      UPDATE DATA_TeminDosyasi SET harcama_birimi = birim WHERE (harcama_birimi IS NULL OR birim = '') AND birim IS NOT NULL;
+      UPDATE DATA_TeminDosyasi SET harcama_birimi = birim WHERE (harcama_birimi IS NULL OR harcama_birimi = '') AND birim IS NOT NULL AND birim <> '';
     `,
       'DATA_TeminDosyasi Kolon Eşitleme'
     )
@@ -609,12 +622,58 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   seedDefaultCommissions(db)
 
   // 16. Denetim Günlüğü ve Donanım Kimliği (mac_hash) Güvenlik Enjeksiyonu
+  // Denetim günlüğü zorunludur (adli bilişim/mühür zinciri). @dt/database içindeki
+  // initSessionContext/registerDefaultAuditTriggers kendi hatalarını loglayıp yuttuğu için
+  // başarıyı çağrı sonucundan değil, veritabanının gerçek durumundan doğruluyoruz.
   try {
     initSessionContext(db)
     registerDefaultAuditTriggers(db, 'temin360-desktop')
   } catch (auditErr: unknown) {
+    if (auditErr instanceof SchemaMigrationError) throw auditErr
     if (!isExpectedSqliteError(auditErr)) {
-      console.warn('[AuditTrail] ensureSchemaIntegrity tetikleyici uyarisi:', auditErr)
+      const msg = auditErr instanceof Error ? auditErr.message : String(auditErr)
+      throw new SchemaMigrationError(`Denetim günlüğü kurulumu başarısız: ${msg}`, auditErr)
     }
+  }
+  verifyAuditInfrastructure(db)
+}
+
+const AUDITED_TABLES = [
+  'DATA_TeminKalemTeklif',
+  'DATA_TeminFirma',
+  'DATA_TeminDosyasi',
+  'DATA_TeminKalem'
+]
+
+/**
+ * Denetim altyapısının gerçekten kurulduğunu doğrular; eksikse SchemaMigrationError fırlatır.
+ * Veri veya mevcut audit kayıtları değiştirilmez (salt okunur kontrol).
+ */
+export function verifyAuditInfrastructure(db: Database.Database): void {
+  const missing: string[] = []
+  for (const t of ['sys_audit_logs', 'sys_session_context']) {
+    if (!isPhysicalTable(db, t)) missing.push(`tablo:${t}`)
+  }
+  const triggerExists = (name: string): boolean => {
+    try {
+      return !!db
+        .prepare("SELECT name FROM sqlite_master WHERE type = 'trigger' AND name = ?")
+        .get(name)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      throw new SchemaMigrationError(`Audit trigger doğrulanamadı (${name}): ${msg}`, err)
+    }
+  }
+  for (const t of AUDITED_TABLES) {
+    if (!isPhysicalTable(db, t)) continue
+    for (const op of ['insert', 'update', 'delete']) {
+      const name = `trg_audit_${t}_${op}`
+      if (!triggerExists(name)) missing.push(`trigger:${name}`)
+    }
+  }
+  if (missing.length > 0) {
+    throw new SchemaMigrationError(
+      `Denetim günlüğü altyapısı eksik, çalışma alanı güvenli açılamadı: ${missing.join(', ')}`
+    )
   }
 }

@@ -15,7 +15,8 @@ import {
 import {
   ensureSchemaIntegrity,
   SchemaMigrationError,
-  isExpectedSqliteError
+  isExpectedSqliteError,
+  verifyAuditInfrastructure
 } from '../schemaIntegrity'
 
 function createRealSqliteDb(): {
@@ -437,7 +438,9 @@ describe('Database Schema Integrity & Manifest Tests', () => {
       expect(isExpectedSqliteError(new Error('table TANIM_Birim already exists'))).toBe(true)
       expect(isExpectedSqliteError(new Error('index idx_test already exists'))).toBe(true)
       expect(isExpectedSqliteError(new Error('trigger trg_test already exists'))).toBe(true)
-      expect(isExpectedSqliteError(new Error('Cannot add a column to a view'))).toBe(true)
+      // View hedefleme hatası artık beklenen sayılmaz: fiziksel tablo kontrolü zaten view'ları atlar,
+      // dolayısıyla bu hata yanlış hedeflemeyi gösterir ve gizlenmemelidir.
+      expect(isExpectedSqliteError(new Error('Cannot add a column to a view'))).toBe(false)
 
       // Unexpected errors that must NEVER be swallowed
       expect(isExpectedSqliteError(new Error('syntax error near "SELECT"'))).toBe(false)
@@ -519,6 +522,106 @@ describe('Database Schema Integrity & Manifest Tests', () => {
         .prepare("SELECT value FROM settings WHERE key = 'dbSchemaVersion'")
         .get() as { value?: string }
       expect(verRow?.value).toBe('10')
+    })
+
+    it('isPhysicalTable must NOT swallow sqlite_master query failures (throws SchemaMigrationError)', () => {
+      const { rawDb, db } = createRealSqliteDb()
+      const failingDb = {
+        ...db,
+        prepare: (sql: string) => {
+          if (sql.includes('FROM sqlite_master WHERE name = ?')) {
+            throw new Error('SQLITE_IOERR: disk I/O error')
+          }
+          return db.prepare(sql)
+        }
+      }
+      let thrown: unknown
+      try {
+        ensureSchemaIntegrity(failingDb as any)
+      } catch (e) {
+        thrown = e
+      }
+      expect(thrown).toBeInstanceOf(SchemaMigrationError)
+      expect((thrown as Error).message).toContain('Tablo varlığı doğrulanamadı')
+      expect((thrown as Error).message).toContain('disk I/O error')
+      void rawDb
+    })
+
+    describe('birim / harcama_birimi senkronizasyonu (gerçek SQLite)', () => {
+      function seedAndSync(rows: Array<[number, string | null, string | null]>) {
+        const { rawDb, db } = createRealSqliteDb()
+        ensureSchemaIntegrity(db as any)
+        const ins = rawDb.prepare(
+          "INSERT INTO DATA_TeminDosyasi (id, konu, birim, harcama_birimi) VALUES (?, 'test', ?, ?)"
+        )
+        for (const [id, birim, harcama] of rows) ins.run(id, birim, harcama)
+        ensureSchemaIntegrity(db as any)
+        const out = new Map<number, { birim: string | null; harcama_birimi: string | null }>()
+        for (const r of rawDb
+          .prepare('SELECT id, birim, harcama_birimi FROM DATA_TeminDosyasi')
+          .all() as any[]) {
+          out.set(r.id, { birim: r.birim, harcama_birimi: r.harcama_birimi })
+        }
+        return out
+      }
+
+      it('harcama_birimi NULL/boş ise birim\'den doldurulur; dolu ve farklı değerler ezilmez', () => {
+        const out = seedAndSync([
+          [1, 'Fen İşleri', null],
+          [2, 'Fen İşleri', ''],
+          [3, 'Fen İşleri', 'Yazı İşleri'],
+          [4, null, 'Mali Hizmetler'],
+          [5, null, null],
+          [6, '', 'Destek']
+        ])
+        expect(out.get(1)).toEqual({ birim: 'Fen İşleri', harcama_birimi: 'Fen İşleri' })
+        expect(out.get(2)).toEqual({ birim: 'Fen İşleri', harcama_birimi: 'Fen İşleri' })
+        expect(out.get(3)).toEqual({ birim: 'Fen İşleri', harcama_birimi: 'Yazı İşleri' })
+        expect(out.get(4)).toEqual({ birim: 'Mali Hizmetler', harcama_birimi: 'Mali Hizmetler' })
+        expect(out.get(5)).toEqual({ birim: null, harcama_birimi: null })
+        expect(out.get(6)).toEqual({ birim: 'Destek', harcama_birimi: 'Destek' })
+      })
+    })
+
+    describe('audit altyapısı', () => {
+      it('başarılı kurulumda tablolar ve trigger\'lar mevcuttur, tekrar çalıştırma idempotenttir', () => {
+        const { rawDb, db } = createRealSqliteDb()
+        ensureSchemaIntegrity(db as any)
+        expect(() => verifyAuditInfrastructure(db as any)).not.toThrow()
+        const count = (rawDb
+          .prepare("SELECT COUNT(*) AS c FROM sqlite_master WHERE type='trigger' AND name LIKE 'trg_audit_%'")
+          .get() as { c: number }).c
+        expect(count).toBeGreaterThanOrEqual(3)
+        expect(() => ensureSchemaIntegrity(db as any)).not.toThrow()
+      })
+
+      it('eksik audit trigger tespit edilir (SchemaMigrationError) ve yeniden çalıştırmada onarılır', () => {
+        const { rawDb, db } = createRealSqliteDb()
+        ensureSchemaIntegrity(db as any)
+        rawDb.exec('DROP TRIGGER trg_audit_DATA_TeminFirma_update;')
+        expect(() => verifyAuditInfrastructure(db as any)).toThrowError(SchemaMigrationError)
+        expect(() => verifyAuditInfrastructure(db as any)).toThrowError(
+          /trg_audit_DATA_TeminFirma_update/
+        )
+        // Self-healing: ensureSchemaIntegrity tetikleyiciyi yeniden kurar
+        expect(() => ensureSchemaIntegrity(db as any)).not.toThrow()
+        expect(() => verifyAuditInfrastructure(db as any)).not.toThrow()
+      })
+
+      it('audit kurulumu sessizce başarısız olursa açılış durdurulur', () => {
+        const { rawDb, db } = createRealSqliteDb()
+        const brokenAuditDb = {
+          ...db,
+          exec: (sql: string) => {
+            // sys_audit_logs şemasının kurulumunu engelle (paket hatayı kendi içinde yutar)
+            if (sql.includes('CREATE TABLE IF NOT EXISTS sys_audit_logs')) {
+              throw new Error('SQLITE_IOERR: disk I/O error')
+            }
+            rawDb.exec(sql)
+          }
+        }
+        expect(() => ensureSchemaIntegrity(brokenAuditDb as any)).toThrowError(SchemaMigrationError)
+      })
     })
   })
 })
