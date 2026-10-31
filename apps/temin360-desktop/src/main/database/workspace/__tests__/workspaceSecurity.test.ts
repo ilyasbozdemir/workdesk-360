@@ -42,6 +42,13 @@ vi.mock('better-sqlite3', () => {
 })
 
 // Mock Electron shell and app
+// Bu test dosyası better-sqlite3'ü tablo oluşturmayan bir mock ile değiştirir; şema/audit doğrulaması
+// bu ortamda anlamlı değildir. Şema bütünlüğü gerçek SQLite ile schemaIntegrity.test.ts'te test edilir.
+vi.mock('../schemaIntegrity', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../schemaIntegrity')>()
+  return { ...actual, ensureSchemaIntegrity: vi.fn() }
+})
+
 vi.mock('electron', () => ({
   shell: {
     openPath: vi.fn().mockResolvedValue('')
