@@ -81,7 +81,7 @@ export class IhtiyacListesiResolver implements DocumentDataResolver<IhtiyacListe
       antetSatirlari: headerData.antetSatirlari,
       solLogo: headerData.solLogo || undefined,
       sagLogo: headerData.sagLogo || undefined,
-      evrakSayisi: dosyaRow?.temin_no || headerData.dosyaNo || '',
+      evrakSayisi: headerData.evrakSayisi || dosyaRow?.temin_no || headerData.dosyaNo || '',
       konu: dosyaRow?.konu || headerData.konu || '',
       maddeNo: dosyaRow?.madde_no || '22/d',
       tarih: effectiveDate,

@@ -13,6 +13,7 @@ export interface InstitutionalHeaderData {
   solLogo: string | null
   sagLogo: string | null
   dosyaNo?: string
+  evrakSayisi?: string
   butceYili?: number
   dosyaTarihi?: string
   konu?: string
@@ -194,4 +195,3 @@ export interface ExportPdfParams {
   firmaListesi?: unknown[]
   firstPageLimit?: number
 }
-

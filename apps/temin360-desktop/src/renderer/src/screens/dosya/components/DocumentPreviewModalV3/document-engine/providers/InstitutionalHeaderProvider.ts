@@ -1,5 +1,6 @@
 import { InstitutionalHeaderData } from '../registry/types'
 import { useSettingsStore } from '../../../../../../store/settingsStore'
+import { resolveEvrakSayisi } from '@temin360/document-templates'
 
 /**
  * Kurumsal ve Antet Bilgileri Sağlayıcısı (Institutional Header Provider)
@@ -58,7 +59,7 @@ export class InstitutionalHeaderProvider {
     // 3. Kurum Bilgisi ve Antet Satırları
     let kurumRow: any = null
     const kurumRows = await queryExecutor(
-      `SELECT * FROM TANIM_Kurum ORDER BY is_active DESC, id ASC LIMIT 1`,
+      `SELECT kurum_adi, ust_kurum_adi, kurum_anteti, logo_sol, logo_sag, logo_kurum, logo_url, detsis_kodu, detsis_no, dtvt_kodu FROM TANIM_Kurum LIMIT 1`,
       []
     )
     if (kurumRows && kurumRows[0]) {
@@ -69,34 +70,27 @@ export class InstitutionalHeaderProvider {
     if (kurumRow?.kurum_anteti) {
       try {
         const parsed = JSON.parse(kurumRow.kurum_anteti)
-        if (Array.isArray(parsed)) {
-          antetSatirlari = parsed.filter((s: string) => s && String(s).trim() !== '')
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          antetSatirlari = parsed.map((s) => String(s).trim()).filter(Boolean)
         }
       } catch {
-        if (typeof kurumRow.kurum_anteti === 'string' && kurumRow.kurum_anteti.trim()) {
-          antetSatirlari = kurumRow.kurum_anteti
-            .split('\n')
-            .map((s: string) => s.trim())
-            .filter(Boolean)
-        }
+        antetSatirlari = [String(kurumRow.kurum_anteti).trim()]
       }
     }
 
     const kurumAdiText =
       kurumRow?.ust_kurum_adi ||
       kurumRow?.kurum_adi ||
-      kurumRow?.ad ||
+      settings.parentInstitutionName ||
       settings.institutionName ||
-      'KAMU KURUMU'
-
-    if (antetSatirlari.length === 0) {
-      antetSatirlari = ['T.C.', String(kurumAdiText).toUpperCase()]
-    }
+      'T.C.'
 
     const effectiveMudurluk =
-      dosyaRow?.birim_adi ||
-      (dosyaRow?.antet_ek_satir ? String(dosyaRow.antet_ek_satir).trim() : '') ||
-      'Destek Hizmetleri Müdürlüğü'
+      dosyaRow?.birim_adi || settings.departmentName || 'Satın Alma Şube Müdürlüğü'
+
+    if (antetSatirlari.length === 0) {
+      antetSatirlari = ['T.C.', kurumAdiText.toUpperCase(), effectiveMudurluk.toUpperCase()]
+    }
 
     const solLogo =
       kurumRow?.logo_sol ||
@@ -108,6 +102,16 @@ export class InstitutionalHeaderProvider {
 
     const sagLogo = kurumRow?.logo_sag || settings.logoRight || null
 
+    // 4. DETSİS formatlı resmî evrak sayısı çözümlenmesi
+    let detsisEvrakSayisi = ''
+    if (dosyaId) {
+      try {
+        detsisEvrakSayisi = await resolveEvrakSayisi(dosyaId, queryExecutor)
+      } catch (err) {
+        console.warn('[InstitutionalHeaderProvider] resolveEvrakSayisi failed:', err)
+      }
+    }
+
     const result: InstitutionalHeaderData = {
       antetSatirlari,
       kurumUst: kurumAdiText,
@@ -116,6 +120,7 @@ export class InstitutionalHeaderProvider {
       solLogo,
       sagLogo,
       dosyaNo: dosyaRow?.temin_no || '',
+      evrakSayisi: detsisEvrakSayisi || dosyaRow?.temin_no || '',
       butceYili: dosyaRow?.butce_yili ? Number(dosyaRow.butce_yili) : new Date().getFullYear(),
       dosyaTarihi: dosyaRow?.tarih || '',
       konu: dosyaRow?.konu || '',
