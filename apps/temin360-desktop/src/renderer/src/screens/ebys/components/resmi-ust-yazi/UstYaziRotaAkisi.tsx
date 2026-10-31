@@ -28,7 +28,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
             <div key={idx} className="relative flex items-start gap-4">
               <div className="w-7 h-7 rounded-full bg-purple-600 text-white font-bold text-xs flex items-center justify-center shrink-0 z-10 shadow-xs">
                 {idx + 1}
-              </div>
+              </div
               <div className="bg-slate-50 dark:bg-slate-950 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 flex-1">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-xs text-slate-800 dark:text-slate-200">

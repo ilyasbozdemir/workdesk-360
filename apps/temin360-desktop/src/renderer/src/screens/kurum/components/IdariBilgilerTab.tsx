@@ -1,12 +1,25 @@
-import React, { useState } from 'react'
-import { Building2, Check, CheckCircle2, Plus, Sparkles, X } from 'lucide-react'
-import { Input } from '../../../components/ui/Input'
-import { Button } from '../../../components/ui/Button'
-import { DetsisBadge, DetsisVerificationState } from '../../../components/ui/DetsisBadge'
-import { DetsisSearchModal } from '../../../components/ui/DetsisSearchModal'
-import { getSubInstitutionOptions, INSTITUTION_MAP } from '../../../utils/kurumHelper'
-import { useSettingsStore } from '../../../store/settingsStore'
-import { KurumTabProps } from '../types'
+import React, { useState } from "react";
+import {
+  Building2,
+  Check,
+  CheckCircle2,
+  Plus,
+  Sparkles,
+  X,
+} from "lucide-react";
+import { Input } from "../../../components/ui/Input";
+import { Button } from "../../../components/ui/Button";
+import {
+  DetsisBadge,
+  DetsisVerificationState,
+} from "../../../components/ui/DetsisBadge";
+import { DetsisSearchModal } from "../../../components/ui/DetsisSearchModal";
+import {
+  getSubInstitutionOptions,
+  INSTITUTION_MAP,
+} from "../../../utils/kurumHelper";
+import { useSettingsStore } from "../../../store/settingsStore";
+import { KurumTabProps } from "../types";
 
 export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
   data,
@@ -14,49 +27,49 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
   institutionLetterhead,
   setInstitutionLetterhead,
   parentInstitutionLines,
-  setParentInstitutionLines
+  setParentInstitutionLines,
 }) => {
-  const { defaultKurumIci, setDefaultKurumIci } = useSettingsStore()
-  const [isDetsisSearchOpen, setIsDetsisSearchOpen] = useState(false)
+  const { defaultKurumIci, setDefaultKurumIci } = useSettingsStore();
+  const [isDetsisSearchOpen, setIsDetsisSearchOpen] = useState(false);
 
   const handleInstitutionTypeChange = (type: string): void => {
-    onChange('kurum_tipi', type)
-    if (type === 'belediye') {
-      onChange('finansman_kodu', '5')
-    } else if (type === 'genel_butce') {
-      onChange('finansman_kodu', '1')
-    } else if (type === 'ozel_butce') {
-      onChange('finansman_kodu', '2')
-    } else if (type === 'duzenleyici') {
-      onChange('finansman_kodu', '3')
-    } else if (type === 'sosyal_guvenlik') {
-      onChange('finansman_kodu', '4')
+    onChange("kurum_tipi", type);
+    if (type === "belediye") {
+      onChange("finansman_kodu", "5");
+    } else if (type === "genel_butce") {
+      onChange("finansman_kodu", "1");
+    } else if (type === "ozel_butce") {
+      onChange("finansman_kodu", "2");
+    } else if (type === "duzenleyici") {
+      onChange("finansman_kodu", "3");
+    } else if (type === "sosyal_guvenlik") {
+      onChange("finansman_kodu", "4");
     }
-  }
+  };
 
   const handleApplyDetsisData = (detsisInfo: DetsisVerificationState): void => {
-    if (!detsisInfo) return
-    if (detsisInfo.birimAdi) onChange('kurum_adi', detsisInfo.birimAdi)
+    if (!detsisInfo) return;
+    if (detsisInfo.birimAdi) onChange("kurum_adi", detsisInfo.birimAdi);
     if (detsisInfo.kurumHiyerarsisi) {
-      onChange('ust_kurum_adi', detsisInfo.kurumHiyerarsisi)
+      onChange("ust_kurum_adi", detsisInfo.kurumHiyerarsisi);
       const hierarchyParts = detsisInfo.kurumHiyerarsisi
-        .split('>')
+        .split(">")
         .map((s) => s.trim())
-        .filter(Boolean)
+        .filter(Boolean);
       if (hierarchyParts.length > 0) {
-        setInstitutionLetterhead(['T.C.', ...hierarchyParts])
+        setInstitutionLetterhead(["T.C.", ...hierarchyParts]);
       }
     }
     if (detsisInfo.detsisNo) {
-      onChange('detsis_kodu', detsisInfo.detsisNo)
-      onChange('dtvt_kodu', detsisInfo.detsisNo)
+      onChange("detsis_kodu", detsisInfo.detsisNo);
+      onChange("dtvt_kodu", detsisInfo.detsisNo);
     }
-    if (detsisInfo.ilAdi) onChange('il', detsisInfo.ilAdi)
-    if (detsisInfo.ilceAdi) onChange('ilce', detsisInfo.ilceAdi)
+    if (detsisInfo.ilAdi) onChange("il", detsisInfo.ilAdi);
+    if (detsisInfo.ilceAdi) onChange("ilce", detsisInfo.ilceAdi);
     if (detsisInfo.logoByteArray) {
-      onChange('logo_kurum', detsisInfo.logoByteArray)
+      onChange("logo_kurum", detsisInfo.logoByteArray);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -84,8 +97,8 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
           </div>
           <div className="flex gap-2">
             <Input
-              value={data.kurum_adi || ''}
-              onChange={(e) => onChange('kurum_adi', e.target.value)}
+              value={data.kurum_adi || ""}
+              onChange={(e) => onChange("kurum_adi", e.target.value)}
               placeholder="Kurum Adı (Örn: Çankaya Kaymakamlığı veya İçişleri Bakanlığı)"
               className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs flex-1"
             />
@@ -105,7 +118,7 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
         <DetsisSearchModal
           isOpen={isDetsisSearchOpen}
           onClose={() => setIsDetsisSearchOpen(false)}
-          initialQuery={data.kurum_adi || ''}
+          initialQuery={data.kurum_adi || ""}
           onSelect={handleApplyDetsisData}
           title="DETSİS'te Resmi Kurum / Bakanlık Ara"
         />
@@ -123,9 +136,9 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 <Input
                   value={line}
                   onChange={(e) => {
-                    const newArr = [...institutionLetterhead]
-                    newArr[idx] = e.target.value
-                    setInstitutionLetterhead(newArr)
+                    const newArr = [...institutionLetterhead];
+                    newArr[idx] = e.target.value;
+                    setInstitutionLetterhead(newArr);
                   }}
                   placeholder={`Antet ${idx + 1}. Satır`}
                   className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs flex-1"
@@ -134,8 +147,10 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      const newArr = institutionLetterhead.filter((_, i) => i !== idx)
-                      setInstitutionLetterhead(newArr)
+                      const newArr = institutionLetterhead.filter((_, i) =>
+                        i !== idx
+                      );
+                      setInstitutionLetterhead(newArr);
                     }}
                     className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors shrink-0"
                     title="Satırı Sil"
@@ -147,7 +162,8 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             ))}
             <button
               type="button"
-              onClick={() => setInstitutionLetterhead([...institutionLetterhead, ''])}
+              onClick={() =>
+                setInstitutionLetterhead([...institutionLetterhead, ""])}
               className="mt-2 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/40 flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -162,8 +178,8 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             Kurum En Üst Yöneticisi / Başkanı (Seçimle / Atamayla Gelen)
           </label>
           <Input
-            value={data.kurum_baskani || ''}
-            onChange={(e) => onChange('kurum_baskani', e.target.value)}
+            value={data.kurum_baskani || ""}
+            onChange={(e) => onChange("kurum_baskani", e.target.value)}
             placeholder="Örn: Ahmet YILMAZ"
             className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
           />
@@ -178,8 +194,8 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             Üst Yönetici Unvanı (Resmi Yazışmalardaki)
           </label>
           <Input
-            value={data.baskan_unvani || ''}
-            onChange={(e) => onChange('baskan_unvani', e.target.value)}
+            value={data.baskan_unvani || ""}
+            onChange={(e) => onChange("baskan_unvani", e.target.value)}
             placeholder="Örn: Belediye Başkanı, İlçe Kaymakamı, Rektör"
             className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
           />
@@ -191,13 +207,14 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             Varsayılan Harcama Yetkilisi (Ad Soyad / Unvan)
           </label>
           <Input
-            value={data.harcama_yetkilisi || ''}
-            onChange={(e) => onChange('harcama_yetkilisi', e.target.value)}
+            value={data.harcama_yetkilisi || ""}
+            onChange={(e) => onChange("harcama_yetkilisi", e.target.value)}
             placeholder="Örn: Harcama Yetkilisi Adı Soyadı veya Makam Unvanı"
             className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
           />
           <span className="text-[10px] text-slate-400 mt-0.5 block">
-            Onay belgelerinde ve harcama talimatlarında en üst seviye imza yetkilisi.
+            Onay belgelerinde ve harcama talimatlarında en üst seviye imza
+            yetkilisi.
           </span>
         </div>
 
@@ -209,7 +226,8 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
               Sunulacak Muhatap Başlığı (Onay ve Müzekkere Hitap Başlığı)
             </span>
             <span className="text-[10px] text-slate-400">
-              Yanındaki tiki işaretleyerek belgelere basılacak varsayılan muhatabı seçebilirsiniz
+              Yanındaki tiki işaretleyerek belgelere basılacak varsayılan
+              muhatabı seçebilirsiniz
             </span>
           </div>
 
@@ -217,15 +235,15 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             {/* Sunulacak Kurum Adı (Muhatap) */}
             <div
               className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                data.sunulacak_makam_secimi === 'kurum' ||
-                (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
-                  ? 'border-blue-500/80 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/40'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950'
+                data.sunulacak_makam_secimi === "kurum" ||
+                  (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
+                  ? "border-blue-500/80 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/40"
+                  : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
               }`}
               onClick={() => {
-                onChange('sunulacak_makam_secimi', 'kurum')
+                onChange("sunulacak_makam_secimi", "kurum");
                 if (data.sunulacak_kurum_adi) {
-                  onChange('makam_adi', data.sunulacak_kurum_adi)
+                  onChange("makam_adi", data.sunulacak_kurum_adi);
                 }
               }}
             >
@@ -236,38 +254,39 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onChange('sunulacak_makam_secimi', 'kurum')
+                    e.stopPropagation();
+                    onChange("sunulacak_makam_secimi", "kurum");
                     if (data.sunulacak_kurum_adi) {
-                      onChange('makam_adi', data.sunulacak_kurum_adi)
+                      onChange("makam_adi", data.sunulacak_kurum_adi);
                     }
                   }}
                   className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
-                    data.sunulacak_makam_secimi === 'kurum' ||
-                    (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    data.sunulacak_makam_secimi === "kurum" ||
+                      (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
                   <Check className="w-3 h-3" />
                   <span>
-                    {data.sunulacak_makam_secimi === 'kurum' ||
-                    (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
-                      ? 'Aktif'
-                      : 'Seç'}
+                    {data.sunulacak_makam_secimi === "kurum" ||
+                        (!data.sunulacak_makam_secimi &&
+                          data.sunulacak_kurum_adi)
+                      ? "Aktif"
+                      : "Seç"}
                   </span>
                 </button>
               </div>
               <Input
-                value={data.sunulacak_kurum_adi || ''}
+                value={data.sunulacak_kurum_adi || ""}
                 onChange={(e) => {
-                  const val = e.target.value
-                  onChange('sunulacak_kurum_adi', val)
+                  const val = e.target.value;
+                  onChange("sunulacak_kurum_adi", val);
                   if (
-                    data.sunulacak_makam_secimi === 'kurum' ||
+                    data.sunulacak_makam_secimi === "kurum" ||
                     (!data.sunulacak_makam_secimi && val)
                   ) {
-                    onChange('makam_adi', val)
+                    onChange("makam_adi", val);
                   }
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -279,14 +298,15 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             {/* Sunulacak Makam Adı (Muhatap) */}
             <div
               className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                data.sunulacak_makam_secimi === 'makam' || !data.sunulacak_makam_secimi
-                  ? 'border-blue-500/80 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/40'
-                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950'
+                data.sunulacak_makam_secimi === "makam" ||
+                  !data.sunulacak_makam_secimi
+                  ? "border-blue-500/80 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/40"
+                  : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
               }`}
               onClick={() => {
-                onChange('sunulacak_makam_secimi', 'makam')
+                onChange("sunulacak_makam_secimi", "makam");
                 if (data.makam_adi_custom) {
-                  onChange('makam_adi', data.makam_adi_custom)
+                  onChange("makam_adi", data.makam_adi_custom);
                 }
               }}
             >
@@ -297,35 +317,40 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onChange('sunulacak_makam_secimi', 'makam')
+                    e.stopPropagation();
+                    onChange("sunulacak_makam_secimi", "makam");
                     if (data.makam_adi_custom) {
-                      onChange('makam_adi', data.makam_adi_custom)
+                      onChange("makam_adi", data.makam_adi_custom);
                     }
                   }}
                   className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
-                    data.sunulacak_makam_secimi === 'makam' || !data.sunulacak_makam_secimi
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                    data.sunulacak_makam_secimi === "makam" ||
+                      !data.sunulacak_makam_secimi
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
                   <Check className="w-3 h-3" />
                   <span>
-                    {data.sunulacak_makam_secimi === 'makam' || !data.sunulacak_makam_secimi
-                      ? 'Aktif'
-                      : 'Seç'}
+                    {data.sunulacak_makam_secimi === "makam" ||
+                        !data.sunulacak_makam_secimi
+                      ? "Aktif"
+                      : "Seç"}
                   </span>
                 </button>
               </div>
               <Input
-                value={
-                  data.makam_adi_custom !== undefined ? data.makam_adi_custom : data.makam_adi || ''
-                }
+                value={data.makam_adi_custom !== undefined
+                  ? data.makam_adi_custom
+                  : data.makam_adi || ""}
                 onChange={(e) => {
-                  const val = e.target.value
-                  onChange('makam_adi_custom', val)
-                  if (data.sunulacak_makam_secimi === 'makam' || !data.sunulacak_makam_secimi) {
-                    onChange('makam_adi', val)
+                  const val = e.target.value;
+                  onChange("makam_adi_custom", val);
+                  if (
+                    data.sunulacak_makam_secimi === "makam" ||
+                    !data.sunulacak_makam_secimi
+                  ) {
+                    onChange("makam_adi", val);
                   }
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -349,9 +374,9 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 <Input
                   value={line}
                   onChange={(e) => {
-                    const newArr = [...parentInstitutionLines]
-                    newArr[idx] = e.target.value
-                    setParentInstitutionLines(newArr)
+                    const newArr = [...parentInstitutionLines];
+                    newArr[idx] = e.target.value;
+                    setParentInstitutionLines(newArr);
                   }}
                   placeholder={`Kurum ${idx + 1}. Satır`}
                   className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs flex-1"
@@ -360,8 +385,10 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      const newArr = parentInstitutionLines.filter((_, i) => i !== idx)
-                      setParentInstitutionLines(newArr)
+                      const newArr = parentInstitutionLines.filter((_, i) =>
+                        i !== idx
+                      );
+                      setParentInstitutionLines(newArr);
                     }}
                     className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-colors shrink-0"
                     title="Satırı Sil"
@@ -373,7 +400,8 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             ))}
             <button
               type="button"
-              onClick={() => setParentInstitutionLines([...parentInstitutionLines, ''])}
+              onClick={() =>
+                setParentInstitutionLines([...parentInstitutionLines, ""])}
               className="mt-2 text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/40 flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -382,7 +410,9 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
           </div>
         </div>
 
-        <div className="md:col-span-2">
+        {
+          /*
+    <div className="md:col-span-2">
           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
             Kurum Tipi (Bütçeleme ve Limit Şablonu) *
           </label>
@@ -529,13 +559,16 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
           })()}
         </div>
 
+  */
+        }
+
         <div className="md:col-span-2">
           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
             Kamu İhale Mevzuatı Limit Tipi (K.İ.K 22/d Doğrudan Temin Sınırı)
           </label>
           <select
-            value={data.limit_tipi || 'diger'}
-            onChange={(e) => onChange('limit_tipi', e.target.value)}
+            value={data.limit_tipi || "diger"}
+            onChange={(e) => onChange("limit_tipi", e.target.value)}
             className="w-full bg-slate-55 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 text-xs rounded-xl py-2.5 px-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="buyuksehir">
@@ -554,18 +587,20 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 Belge Yazışma Kapsamı & Alt Bilgi (Varsayılan Tercih)
               </label>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Yeni oluşturulan doğrudan temin belgelerinde iletişim alt bilgisinin (Adres, Web,
-                E-Posta, KEP) varsayılan görünümü.
+                Yeni oluşturulan doğrudan temin belgelerinde iletişim alt
+                bilgisinin (Adres, Web, E-Posta, KEP) varsayılan görünümü.
               </p>
             </div>
             <span
               className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                 defaultKurumIci
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                  : 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
+                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                  : "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300"
               }`}
             >
-              {defaultKurumIci ? 'Kurum İçi (Varsayılan)' : 'Kurum Dışı (Varsayılan)'}
+              {defaultKurumIci
+                ? "Kurum İçi (Varsayılan)"
+                : "Kurum Dışı (Varsayılan)"}
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -574,19 +609,22 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
               onClick={() => setDefaultKurumIci(true)}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                 defaultKurumIci
-                  ? 'bg-amber-50/60 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 ring-2 ring-amber-500/20'
-                  : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                  ? "bg-amber-50/60 dark:bg-amber-950/30 border-amber-300 dark:border-amber-800 ring-2 ring-amber-500/20"
+                  : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                   <span>🏢 Kurum İçi (Önerilen)</span>
                 </span>
-                {defaultKurumIci && <CheckCircle2 className="w-4 h-4 text-amber-600" />}
+                {defaultKurumIci && (
+                  <CheckCircle2 className="w-4 h-4 text-amber-600" />
+                )}
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Belge altında adres ve iletişim alt bilgisi <strong>basılmaz</strong>. Tutanak, onay
-                ve iç yazışmalar için standart temiz sayfa düzenidir.
+                Belge altında adres ve iletişim alt bilgisi{" "}
+                <strong>basılmaz</strong>. Tutanak, onay ve iç yazışmalar için
+                standart temiz sayfa düzenidir.
               </p>
             </button>
             <button
@@ -594,24 +632,26 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
               onClick={() => setDefaultKurumIci(false)}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                 !defaultKurumIci
-                  ? 'bg-blue-50/60 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800 ring-2 ring-blue-500/20'
-                  : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                  ? "bg-blue-50/60 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800 ring-2 ring-blue-500/20"
+                  : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                   <span>🌐 Kurum Dışı</span>
                 </span>
-                {!defaultKurumIci && <CheckCircle2 className="w-4 h-4 text-blue-600" />}
+                {!defaultKurumIci && (
+                  <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                )}
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Tüm belgelerin altında resmi adres, web, e-posta ve KEP bilgileri içeren{' '}
-                <strong>alt bilgi basılır</strong>.
+                Tüm belgelerin altında resmi adres, web, e-posta ve KEP
+                bilgileri içeren <strong>alt bilgi basılır</strong>.
               </p>
             </button>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
