@@ -36,67 +36,104 @@ export type {
 const teminStorageAdapter: DocumentStorageAdapter = {
   async getDocument({ dosyaId, templateKey }) {
     if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
-      const res = await window.electron.ipcRenderer.invoke('belge:get-document', {
-        dosyaId,
-        templateKey
-      })
-      if (res?.success && res.exists && res.record) {
-        return {
-          success: true,
-          exists: true,
-          record: {
-            id: res.record.id,
-            data: res.record.data,
-            sablonVersiyon: res.record.sablonVersiyon,
-            createdAt: res.record.createdAt,
-            updatedAt: res.record.updatedAt
+      try {
+        const res = await window.electron.ipcRenderer.invoke('belge:get-document', {
+          dosyaId,
+          templateKey
+        })
+        if (!res?.success) {
+          return {
+            success: false,
+            error: res?.error || 'Belge veritabanından okunurken hata oluştu'
           }
         }
+        if (res.exists && res.record) {
+          return {
+            success: true,
+            exists: true,
+            record: {
+              id: res.record.id,
+              data: res.record.data,
+              sablonVersiyon: res.record.sablonVersiyon,
+              createdAt: res.record.createdAt,
+              updatedAt: res.record.updatedAt
+            }
+          }
+        }
+        return { success: true, exists: false }
+      } catch (err) {
+        return { success: false, error: err?.message || 'IPC hatası' }
       }
-      return { success: true, exists: false }
     }
     return { success: false, error: 'IPC kullanılamıyor' }
   },
 
   async saveDocument({ dosyaId, templateKey, data, sablonVersiyon }) {
     if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
-      return await window.electron.ipcRenderer.invoke('belge:save-document', {
-        dosyaId,
-        templateKey,
-        data,
-        sablonVersiyon
-      })
+      try {
+        const res = await window.electron.ipcRenderer.invoke('belge:save-document', {
+          dosyaId,
+          templateKey,
+          data,
+          sablonVersiyon
+        })
+        if (!res?.success) {
+          return {
+            success: false,
+            error: res?.error || 'Belge kaydedilemedi'
+          }
+        }
+        return res
+      } catch (err) {
+        return { success: false, error: err?.message || 'IPC hatası' }
+      }
     }
-    return { success: true }
+    return { success: false, error: 'IPC kullanılamıyor' }
   },
 
   async resetDocument({ dosyaId, templateKey }) {
     if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
-      return await window.electron.ipcRenderer.invoke('belge:reset-document', {
-        dosyaId,
-        templateKey
-      })
+      try {
+        const res = await window.electron.ipcRenderer.invoke('belge:reset-document', {
+          dosyaId,
+          templateKey
+        })
+        if (!res?.success) {
+          return { success: false, error: res?.error || 'Belge sıfırlanamadı' }
+        }
+        return res
+      } catch (err) {
+        return { success: false, error: err?.message || 'IPC hatası' }
+      }
     }
-    return { success: true }
+    return { success: false, error: 'IPC kullanılamıyor' }
   },
 
   async deleteDocument({ dosyaId, templateKey }) {
     if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
-      return await window.electron.ipcRenderer.invoke('belge:delete-document', {
-        dosyaId,
-        templateKey
-      })
+      try {
+        const res = await window.electron.ipcRenderer.invoke('belge:delete-document', {
+          dosyaId,
+          templateKey
+        })
+        if (!res?.success) {
+          return { success: false, error: res?.error || 'Belge silinemedi' }
+        }
+        return res
+      } catch (err) {
+        return { success: false, error: err?.message || 'IPC hatası' }
+      }
     }
-    return { success: true }
+    return { success: false, error: 'IPC kullanılamıyor' }
   },
 
   async executeQuery(sql: string, params: any[]) {
     if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
-      const res = await window.electron.ipcRenderer.invoke('db:query', { sql, params })
+      const res = await window.electron.ipcRenderer.invoke('db:query', sql, params)
       if (!res?.success) throw new Error(res?.error || 'Veritabanı sorgusu başarısız')
       return res.data || []
     }
-    return []
+    throw new Error('IPC kullanılamıyor')
   }
 }
 
