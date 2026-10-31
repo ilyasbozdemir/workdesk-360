@@ -1,8 +1,0 @@
-provider: github
-owner: ilyasbozdemir
-repo: workdesk-360
-updaterCacheDirName: ihale360-updater
-# İleride gizli (private) repo'ya geçilirse aşağıdaki ayarları açabilirsiniz:
-# private: true
-# token: "YOUR_GITHUB_TOKEN" # veya sistem ortam değişkenlerinden (GH_TOKEN) otomatik alınır.
-
