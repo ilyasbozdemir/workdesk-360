@@ -59,7 +59,7 @@ export class InstitutionalHeaderProvider {
     // 3. Kurum Bilgisi ve Antet Satırları
     let kurumRow: any = null
     const kurumRows = await queryExecutor(
-      `SELECT kurum_adi, ust_kurum_adi, kurum_anteti, logo_sol, logo_sag, logo_kurum, logo_url, detsis_kodu, detsis_no, dtvt_kodu FROM TANIM_Kurum LIMIT 1`,
+      `SELECT * FROM TANIM_Kurum ORDER BY is_active DESC, id ASC LIMIT 1`,
       []
     )
     if (kurumRows && kurumRows[0]) {
@@ -70,27 +70,34 @@ export class InstitutionalHeaderProvider {
     if (kurumRow?.kurum_anteti) {
       try {
         const parsed = JSON.parse(kurumRow.kurum_anteti)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          antetSatirlari = parsed.map((s) => String(s).trim()).filter(Boolean)
+        if (Array.isArray(parsed)) {
+          antetSatirlari = parsed.filter((s: string) => s && String(s).trim() !== '')
         }
       } catch {
-        antetSatirlari = [String(kurumRow.kurum_anteti).trim()]
+        if (typeof kurumRow.kurum_anteti === 'string' && kurumRow.kurum_anteti.trim()) {
+          antetSatirlari = kurumRow.kurum_anteti
+            .split('\n')
+            .map((s: string) => s.trim())
+            .filter(Boolean)
+        }
       }
     }
 
     const kurumAdiText =
       kurumRow?.ust_kurum_adi ||
       kurumRow?.kurum_adi ||
-      settings.parentInstitutionName ||
+      kurumRow?.ad ||
       settings.institutionName ||
-      'T.C.'
-
-    const effectiveMudurluk =
-      dosyaRow?.birim_adi || settings.departmentName || 'Satın Alma Şube Müdürlüğü'
+      'KAMU KURUMU'
 
     if (antetSatirlari.length === 0) {
-      antetSatirlari = ['T.C.', kurumAdiText.toUpperCase(), effectiveMudurluk.toUpperCase()]
+      antetSatirlari = ['T.C.', String(kurumAdiText).toUpperCase()]
     }
+
+    const effectiveMudurluk =
+      dosyaRow?.birim_adi ||
+      (dosyaRow?.antet_ek_satir ? String(dosyaRow.antet_ek_satir).trim() : '') ||
+      'Destek Hizmetleri Müdürlüğü'
 
     const solLogo =
       kurumRow?.logo_sol ||
