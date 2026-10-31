@@ -3,6 +3,7 @@ import { join, resolve, basename } from 'path'
 import { spawn } from 'child_process'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import fs from 'fs'
+import { resolveKnownApp, isWorkspaceAppId, isTrustedDevPackage } from './appAllowlist'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -56,48 +57,8 @@ function readDevScriptInfo(
   }
 }
 
-interface EcosystemAppConfig {
-  displayName: string
-  folderName: string
-  exeName: string
-  installedFolderNames: string[]
-}
-
-const KNOWN_APPS: Record<string, EcosystemAppConfig> = {
-  'dev.ilyasbozdemir.temin360': {
-    displayName: 'TEMİN 360',
-    folderName: 'temin360-desktop',
-    exeName: 'TEMIN360.exe',
-    installedFolderNames: ['temin360', 'TEMİN 360', 'Temin 360']
-  },
-  'dev.ilyasbozdemir.ihale360': {
-    displayName: 'İHALE 360',
-    folderName: 'ihale360-desktop',
-    exeName: 'IHALE360.exe',
-    installedFolderNames: ['ihale360', 'İHALE 360', 'Ihale 360']
-  },
-  'dev.ilyasbozdemir.personel360': {
-    displayName: 'Personel 360',
-    folderName: 'personel360-desktop',
-    exeName: 'Personel360.exe',
-    installedFolderNames: ['personel360', 'Personel 360', 'Personel360']
-  },
-  'dev.ilyasbozdemir.flowdesk360': {
-    displayName: 'FLOWDESK 360',
-    folderName: 'flowdesk-desktop',
-    exeName: 'FlowDesk360.exe',
-    installedFolderNames: ['flowdesk', 'FLOWDESK 360', 'FlowDesk 360']
-  },
-  'dev.ilyasbozdemir.diskanaliz360': {
-    displayName: 'Disk Analiz 360',
-    folderName: 'disk-analiz-360-desktop',
-    exeName: 'DiskAnaliz360.exe',
-    installedFolderNames: ['disk-analiz-360-desktop', 'Disk Analiz 360', 'DiskAnaliz360']
-  }
-}
-
-function detectApp(appId: string): AppDetectionResult {
-  if (appId === 'dev.ilyasbozdemir.workspace360') {
+function detectApp(appId: unknown): AppDetectionResult {
+  if (isWorkspaceAppId(appId)) {
     return {
       installed: true,
       isDevSource: is.dev,
@@ -106,16 +67,23 @@ function detectApp(appId: string): AppDetectionResult {
     }
   }
 
+  // Güvenilmeyen girdi: yalnızca allowlist'teki uygulamalar için dosya sistemine bakılır.
+  const known = resolveKnownApp(appId)
+  if (!known) {
+    return {
+      installed: false,
+      details: 'Uygulama henüz kurulu değil veya planlama aşamasında.'
+    }
+  }
+
   const repoRoot = getRepoRoot()
   const localAppData = process.env.LOCALAPPDATA || ''
   const programFiles = process.env.ProgramFiles || ''
   const programFilesX86 = process.env['ProgramFiles(x86)'] || ''
 
-  const known = KNOWN_APPS[appId]
-  const appSlug = appId.replace('dev.ilyasbozdemir.', '')
-  const folderName = known ? known.folderName : appSlug
-  const exeName = known ? known.exeName : `${appSlug.charAt(0).toUpperCase() + appSlug.slice(1)}.exe`
-  const folderNamesToCheck = known ? known.installedFolderNames : [appSlug]
+  const folderName = known.folderName
+  const exeName = known.exeName
+  const folderNamesToCheck = known.installedFolderNames
 
   // 1. Monorepo içinde yerel paketlenmiş (dist-local/win-unpacked) EXE kontrolü (yalnızca dev/unpacked ortamda)
   if (!app.isPackaged) {
@@ -178,7 +146,14 @@ function detectApp(appId: string): AppDetectionResult {
   }
 }
 
-async function launchApp(appId: string): Promise<{ success: boolean; message: string }> {
+async function launchApp(appId: unknown): Promise<{ success: boolean; message: string }> {
+  if (isWorkspaceAppId(appId)) {
+    return { success: false, message: 'Workspace 360 zaten çalışıyor.' }
+  }
+  const known = resolveKnownApp(appId)
+  if (!known) {
+    return { success: false, message: 'Bilinmeyen veya kayıtlı olmayan uygulama kimliği.' }
+  }
   const detection = detectApp(appId)
 
   // 1) Kurulu çalıştırılabilir dosya (yalnızca gerçek bir DOSYA ise spawn edilir)
@@ -218,7 +193,11 @@ async function launchApp(appId: string): Promise<{ success: boolean; message: st
   }
 
   // 2) Kaynak koddan geliştirici modunda başlatma (paketin kendi dev script'i ile)
-  if (detection.sourceAvailable && detection.launchable && detection.packageName) {
+  if (
+    detection.sourceAvailable &&
+    detection.launchable &&
+    isTrustedDevPackage(known, detection.packageName)
+  ) {
     return new Promise((resolvePromise) => {
       let resolved = false
       const finish = (res: { success: boolean; message: string }): void => {
@@ -229,7 +208,8 @@ async function launchApp(appId: string): Promise<{ success: boolean; message: st
       }
       try {
         const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
-        const child = spawn(pnpmCmd, ['--filter', detection.packageName!, 'dev'], {
+        // Argümanlar allowlist'ten doğrulanmış sabit değerlerdir (shell:true yalnızca pnpm.cmd için gerekli).
+        const child = spawn(pnpmCmd, ['--filter', known.folderName, 'dev'], {
           cwd: getRepoRoot(),
           shell: true,
           detached: true,
@@ -250,7 +230,7 @@ async function launchApp(appId: string): Promise<{ success: boolean; message: st
           child.unref()
           finish({
             success: true,
-            message: `${appId} geliştirici modunda (pnpm --filter ${detection.packageName} dev) başlatılıyor...`
+            message: `${appId} geliştirici modunda (pnpm --filter ${known.folderName} dev) başlatılıyor...`
           })
         }, 600)
       } catch (err: unknown) {
@@ -310,11 +290,11 @@ function createWindow(): void {
 }
 
 function registerIpcHandlers(): void {
-  ipcMain.handle('workspace:launch-app', async (_event, appId: string) => {
+  ipcMain.handle('workspace:launch-app', async (_event, appId: unknown) => {
     return await launchApp(appId)
   })
 
-  ipcMain.handle('workspace:check-app', async (_event, appId: string) => {
+  ipcMain.handle('workspace:check-app', async (_event, appId: unknown) => {
     return detectApp(appId)
   })
 
