@@ -1,0 +1,26 @@
+{
+  "name": "@workdesk/document-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WorkDesk 360 için mapping tabanlı belge snapshot motoru örneği",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "mustache": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/mustache": "^4.2.6",
+    "typescript": "^5.7.3"
+  }
+}

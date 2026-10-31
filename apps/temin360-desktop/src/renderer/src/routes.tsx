@@ -42,6 +42,9 @@ const YardimScreen = lazyRoute(() => import("./screens/system/YardimScreen"));
 const AyarlarScreen = lazyRoute(() => import("./screens/ayarlar/index.screen"));
 const TemaScreen = lazyRoute(() => import("./screens/ayarlar/TemaScreen"));
 const AmbarScreen = lazyRoute(() => import("./screens/ambar/index.screen"));
+const TestEkranlariScreen = lazyRoute(() =>
+  import("./screens/test-ekranlari/index.screen")
+);
 const BirimlerScreen = lazyRoute(() =>
   import("./screens/birimler/index.screen")
 );
@@ -431,6 +434,12 @@ const ambarRoute = createRoute({
   component: AmbarScreen,
 });
 
+const testEkranlariRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: APP_ROUTES.TEST_EKRANLARI,
+  component: TestEkranlariScreen,
+});
+
 const malzemelerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.MALZEMELER,
@@ -664,6 +673,7 @@ const routeTree = rootRoute.addChildren([
   belgeOnizlemeRoute,
   islakImzaRoute,
   ihtiyacRaporlariRoute,
+  testEkranlariRoute,
 ]);
 
 const hashHistory = createHashHistory();

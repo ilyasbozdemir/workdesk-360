@@ -1,4 +1,18 @@
 {
+<<<<<<< HEAD
+  "totalFiles": 1610,
+  "totalLines": 285808,
+  "codeLines": 266549,
+  "nonBlankLines": 266549,
+  "blankLines": 19259,
+  "testFiles": 74,
+  "testLines": 15963,
+  "testNonBlankLines": 13897,
+  "prodFiles": 1536,
+  "prodLines": 269845,
+  "prodNonBlankLines": 252652,
+  "timestamp": "2026-10-31T14:13:55.717Z",
+=======
   "totalFiles": 1647,
   "totalLines": 293254,
   "codeLines": 273413,
@@ -11,11 +25,25 @@
   "prodLines": 275808,
   "prodNonBlankLines": 258182,
   "timestamp": "2026-10-31T11:33:15.034Z",
+>>>>>>> cd2fd593900d9e394ceb4c694b0ded230eab3d9c
   "scope": "app+deps",
   "breakdown": [
     {
       "name": "temin360-desktop",
       "path": "apps/temin360-desktop",
+<<<<<<< HEAD
+      "files": 1274,
+      "totalLines": 251366,
+      "codeLines": 234128,
+      "nonBlankLines": 234128,
+      "blankLines": 17238,
+      "testFiles": 62,
+      "testLines": 13749,
+      "testNonBlankLines": 11974,
+      "prodFiles": 1212,
+      "prodLines": 237617,
+      "prodNonBlankLines": 222154
+=======
       "files": 1327,
       "totalLines": 260929,
       "codeLines": 242903,
@@ -27,6 +55,7 @@
       "prodFiles": 1258,
       "prodLines": 245479,
       "prodNonBlankLines": 229401
+>>>>>>> cd2fd593900d9e394ceb4c694b0ded230eab3d9c
     },
     {
       "name": "@dt/database",
@@ -44,19 +73,46 @@
       "prodNonBlankLines": 6700
     },
     {
+      "name": "@worksuite-360/document-engine",
+      "path": "packages/document-engine",
+      "files": 16,
+      "totalLines": 2097,
+      "codeLines": 1890,
+      "nonBlankLines": 1890,
+      "blankLines": 207,
+      "testFiles": 1,
+      "testLines": 218,
+      "testNonBlankLines": 194,
+      "prodFiles": 15,
+      "prodLines": 1879,
+      "prodNonBlankLines": 1696
+    },
+    {
       "name": "@temin360/document-templates",
       "path": "packages/document-templates",
       "files": 150,
+<<<<<<< HEAD
+      "totalLines": 25359,
+      "codeLines": 23831,
+      "nonBlankLines": 23831,
+      "blankLines": 1528,
+=======
       "totalLines": 25339,
       "codeLines": 23810,
       "nonBlankLines": 23810,
       "blankLines": 1529,
+>>>>>>> cd2fd593900d9e394ceb4c694b0ded230eab3d9c
       "testFiles": 11,
       "testLines": 1996,
       "testNonBlankLines": 1729,
       "prodFiles": 139,
+<<<<<<< HEAD
+      "prodLines": 23363,
+      "prodNonBlankLines": 22102
+=======
       "prodLines": 23343,
       "prodNonBlankLines": 22081
+>>>>>>> cd2fd593900d9e394ceb4c694b0ded230eab3d9c
     }
   ]
 }

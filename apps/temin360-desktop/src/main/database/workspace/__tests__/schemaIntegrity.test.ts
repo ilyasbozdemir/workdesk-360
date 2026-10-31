@@ -108,6 +108,7 @@ describe('Database Schema Integrity & Manifest Tests', () => {
       'DATA_TIF_Kalem',
       'DATA_AmbarStok',
       'DATA_AmbarHareket',
+      'DATA_TeminBelgeSnapshot',
       'DATA_DosyaSablonVeri',
       'DATA_NotVeGorev',
       'DATA_IhtiyacRaporu',

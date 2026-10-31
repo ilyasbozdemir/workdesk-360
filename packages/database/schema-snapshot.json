@@ -56,6 +56,20 @@
       "updated_at",
       "veri_json"
     ],
+    "DATA_TeminBelgeSnapshot": [
+      "created_at",
+      "created_by",
+      "dosya_id",
+      "id",
+      "is_active",
+      "is_deleted",
+      "sablon_id",
+      "sablon_kodu",
+      "sablon_versiyon",
+      "updated_at",
+      "updated_by",
+      "veri_json"
+    ],
     "DATA_IhaleDosyasi": [
       "aktarim_grubu_id",
       "alt_yuklenici_olacak_mi",

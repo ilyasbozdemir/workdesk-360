@@ -71,6 +71,7 @@ import { DATA_TeminKalemTeklif } from './tables/DATA_TeminKalemTeklif'
 import { DATA_TeminKomisyon } from './tables/DATA_TeminKomisyon'
 import { DATA_TeminBelge } from './tables/DATA_TeminBelge'
 import { DATA_DosyaSablonVeri } from './tables/DATA_DosyaSablonVeri'
+import { DATA_TeminBelgeSnapshot } from './tables/DATA_TeminBelgeSnapshot'
 import { DATA_DosyaRevizyon } from './tables/DATA_DosyaRevizyon'
 import { DATA_IhtiyacRaporu } from './tables/DATA_IhtiyacRaporu'
 import { DATA_IhtiyacRaporuKalem } from './tables/DATA_IhtiyacRaporuKalem'
@@ -476,6 +477,14 @@ const rawTables = [
    * - **Kritik Sütunlar:** `id` (PK), `temin_dosya_id` (FK), `sablon_kodu`, `veri_json`, `sablon_versiyon`, `updated_at`.
    * - **Bütünlük Kuralı:** `UNIQUE(temin_dosya_id, sablon_kodu)`. Her dosya ve her şablon birbirinden izole kayıt altında tutulur; İhtiyaç Listesi ile Lüzum Müzekkeresi birbirinin verisini ezmez.
    */
+  /**
+   * **DATA_TeminBelgeSnapshot**: Doğrudan Temin Belge Snapshot Verileri
+   * - **İş İhtiyacı:** TEMİN dosyasına ait her bir belgenin (sablon_kodu) anlık durum ve kullanıcı düzenleme verilerini tutar.
+   * - **Kritik Sütunlar:** `id` (PK), `dosya_id` (FK), `sablon_kodu`, `veri_json`, `sablon_versiyon`, `is_active`, `is_deleted`.
+   * - **Bütünlük Kuralı:** `UNIQUE(dosya_id, sablon_kodu)`.
+   */
+  DATA_TeminBelgeSnapshot,
+
   DATA_DosyaSablonVeri,
 
   /**
@@ -568,6 +577,7 @@ export const DOGRUDAN_TEMIN_TABLE_NAMES = new Set([
   'DATA_TeminKalemTeklif',
   'DATA_TeminKomisyon',
   'DATA_TeminBelge',
+  'DATA_TeminBelgeSnapshot',
   'DATA_DosyaSablonVeri',
   'DATA_DosyaRevizyon',
   'DATA_IhtiyacRaporu',
@@ -1028,6 +1038,7 @@ export { DATA_KutuphaneGrup } from './tables/DATA_KutuphaneGrup'
 export { DATA_KutuphaneBelge } from './tables/DATA_KutuphaneBelge'
 export { DATA_KutuphaneBelgeSurum } from './tables/DATA_KutuphaneBelgeSurum'
 export { DATA_KutuphaneYerTutucu } from './tables/DATA_KutuphaneYerTutucu'
+export { DATA_TeminBelgeSnapshot } from './tables/DATA_TeminBelgeSnapshot'
 export { DATA_IhtiyacRaporu } from './tables/DATA_IhtiyacRaporu'
 export { DATA_IhtiyacRaporuKalem } from './tables/DATA_IhtiyacRaporuKalem'
 export {

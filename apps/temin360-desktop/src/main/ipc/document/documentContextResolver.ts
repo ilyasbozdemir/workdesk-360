@@ -164,8 +164,8 @@ export function resolveDocumentPayload(
         const snapRow = db
           .prepare(
             `
-        SELECT veri_json FROM DATA_DosyaSablonVeri 
-        WHERE temin_dosya_id = ? AND (
+        SELECT veri_json FROM DATA_TeminBelgeSnapshot 
+        WHERE dosya_id = ? AND is_deleted = 0 AND (
           sablon_kodu IN (${placeholders})
           OR sablon_id IN (SELECT id FROM TANIM_Sablon WHERE dosya_adi IN (${placeholders}))
         )

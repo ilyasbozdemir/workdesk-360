@@ -1,19 +1,19 @@
-import React from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { ArrowRight, FolderOpen, Landmark, Sparkles, X } from 'lucide-react'
-import { formatDosyaNo } from '../../../utils/formatDosyaNo'
-import { cn } from '../../../utils/cn'
-import { APP_ROUTES } from '../../../constants/routeConstants'
+import React from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowRight, FolderOpen, Landmark, Sparkles, X } from "lucide-react";
+import { formatDosyaNo } from "../../../utils/formatDosyaNo";
+import { cn } from "../../../utils/cn";
+import { APP_ROUTES } from "../../../constants/routeConstants";
 
 interface ActiveDosyaCardProps {
-  activeDosya: any
-  harcamaBirimAdi?: string
-  getAsamaDetails: (asamaSira: number) => { name: string; color: string }
-  getDtFileColor: (type?: string | null) => string
-  getDtFileText: (type?: string | null) => string
-  formatCurrency: (value: number) => string
-  onOpenAi: (dosya: any) => void
-  onClose: () => void
+  activeDosya: any;
+  harcamaBirimAdi?: string;
+  getAsamaDetails: (asamaSira: number) => { name: string; color: string };
+  getDtFileColor: (type?: string | null) => string;
+  getDtFileText: (type?: string | null) => string;
+  formatCurrency: (value: number) => string;
+  onOpenAi: (dosya: any) => void;
+  onClose: () => void;
 }
 
 export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
@@ -24,51 +24,53 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
   getDtFileText,
   formatCurrency,
   onOpenAi,
-  onClose
+  onClose,
 }) => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const is2886 = Boolean(
-    activeDosya?.ihaleKayitNo || activeDosya?.islemTuru || activeDosya?.tasinmaz
-  )
-  const asama = getAsamaDetails((activeDosya as any)?.durum_asama_id || 1)
+    activeDosya?.ihaleKayitNo || activeDosya?.islemTuru ||
+      activeDosya?.tasinmaz,
+  );
+  const asama = getAsamaDetails((activeDosya as any)?.durum_asama_id || 1);
 
   // 2886 İşlem Türü Başlığı
   const get2886TurText = (tur?: string): string => {
     switch (tur) {
-      case 'satis':
-        return 'Taşınmaz Satışı'
-      case 'kiralama':
-        return 'Taşınmaz / Tesis Kiralama'
-      case 'irtifak':
-      case 'irtifak_intifa':
-      case 'irtifak_hakki':
-        return 'İrtifak Hakkı Tesisi'
-      case 'trampa':
-        return 'Trampa (Takas)'
+      case "satis":
+        return "Taşınmaz Satışı";
+      case "kiralama":
+        return "Taşınmaz / Tesis Kiralama";
+      case "irtifak":
+      case "irtifak_intifa":
+      case "irtifak_hakki":
+        return "İrtifak Hakkı Tesisi";
+      case "trampa":
+        return "Trampa (Takas)";
       default:
-        return '2886 İhale'
+        return "2886 İhale";
     }
-  }
+  };
 
   // 2886 Usul Başlığı
   const get2886UsulText = (usul?: string): string => {
     switch (usul) {
-      case 'acik_teklif_45':
-        return 'Md. 45 Açık Teklif (Açık Artırma)'
-      case 'kapali_teklif_36':
-        return 'Md. 36 Kapalı Teklif'
-      case 'pazarlik_51':
-        return 'Md. 51 Pazarlık Usulü'
+      case "acik_teklif_45":
+        return "Md. 45 Açık Teklif (Açık Artırma)";
+      case "kapali_teklif_36":
+        return "Md. 36 Kapalı Teklif";
+      case "pazarlik_51":
+        return "Md. 51 Pazarlık Usulü";
       default:
-        return '2886 Usulü'
+        return "2886 Usulü";
     }
-  }
+  };
 
   if (is2886) {
-    const muhammenBedelTutar =
-      activeDosya.muhammenBedel?.hesaplananBedel ||
+    const muhammenBedelTutar = activeDosya.muhammenBedel?.hesaplananBedel ||
       activeDosya.muhammenBedel?.takdirEdilenMuhammenBedel ||
-      (typeof activeDosya.muhammenBedel === 'number' ? activeDosya.muhammenBedel : 0)
+      (typeof activeDosya.muhammenBedel === "number"
+        ? activeDosya.muhammenBedel
+        : 0);
 
     return (
       <div className="rounded-3xl p-6 bg-linear-to-r from-slate-900 via-indigo-950 to-blue-950 text-white shadow-xl border border-indigo-500/30 relative overflow-hidden animate-in fade-in slide-in-from-top-3 duration-300">
@@ -83,7 +85,7 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
                 2886 AKTİF İHALE DOSYASI
               </span>
               <span className="text-xs font-mono font-black px-2.5 py-1 rounded-lg bg-white/10 text-white border border-white/15">
-                {activeDosya.ihaleKayitNo || '2026/2886-01'}
+                {activeDosya.ihaleKayitNo || "2026/2886-01"}
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md border bg-indigo-500/20 text-indigo-200 border-indigo-400/40">
                 {get2886TurText(activeDosya.islemTuru)}
@@ -95,23 +97,27 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
 
             <div>
               <h3 className="text-xl md:text-2xl font-black tracking-tight text-white line-clamp-1">
-                {activeDosya.ihaleAdi || activeDosya.konu || '2886 Devlet İhale Dosyası'}
+                {activeDosya.ihaleAdi || activeDosya.konu ||
+                  "2886 Devlet İhale Dosyası"}
               </h3>
               <p className="text-xs text-indigo-200/80 mt-1 flex flex-wrap items-center gap-3 font-medium">
                 {activeDosya.tasinmaz && (
                   <span>
-                    📍 Ada / Parsel:{' '}
+                    📍 Ada / Parsel:{" "}
                     <strong>
-                      {activeDosya.tasinmaz.ada || '-'} / {activeDosya.tasinmaz.parsel || '-'} (
-                      {activeDosya.tasinmaz.mahalleKoy || activeDosya.tasinmaz.ilce || 'Taşınmaz'})
+                      {activeDosya.tasinmaz.ada || "-"} /{" "}
+                      {activeDosya.tasinmaz.parsel || "-"} (
+                      {activeDosya.tasinmaz.mahalleKoy ||
+                        activeDosya.tasinmaz.ilce || "Taşınmaz"})
                     </strong>
                   </span>
                 )}
                 <span>•</span>
                 <span>
-                  📅 İhale Tarihi:{' '}
+                  📅 İhale Tarihi:{" "}
                   <strong>
-                    {activeDosya.ihaleTarihi || 'Belirlenmedi'} {activeDosya.ihaleSaati || ''}
+                    {activeDosya.ihaleTarihi || "Belirlenmedi"}{" "}
+                    {activeDosya.ihaleSaati || ""}
                   </strong>
                 </span>
                 <span>•</span>
@@ -126,8 +132,10 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
               <button
                 type="button"
                 onClick={() =>
-                  navigate({ to: APP_ROUTES.DEVLET_IHALE_2886, search: { tab: 'studyo' } as any })
-                }
+                  navigate({
+                    to: APP_ROUTES.DEVLET_IHALE_2886,
+                    search: { tab: "studyo" } as any,
+                  })}
                 className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-indigo-100 hover:text-white text-[11px] font-semibold border border-white/10 transition-colors cursor-pointer"
               >
                 1. Belge & Şablon Stüdyosu
@@ -135,8 +143,10 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
               <button
                 type="button"
                 onClick={() =>
-                  navigate({ to: APP_ROUTES.DEVLET_IHALE_2886, search: { tab: 'takdir' } as any })
-                }
+                  navigate({
+                    to: APP_ROUTES.DEVLET_IHALE_2886,
+                    search: { tab: "takdir" } as any,
+                  })}
                 className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-indigo-100 hover:text-white text-[11px] font-semibold border border-white/10 transition-colors cursor-pointer"
               >
                 2. Kıymet Takdiri
@@ -144,8 +154,10 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
               <button
                 type="button"
                 onClick={() =>
-                  navigate({ to: APP_ROUTES.DEVLET_IHALE_2886, search: { tab: 'usul' } as any })
-                }
+                  navigate({
+                    to: APP_ROUTES.DEVLET_IHALE_2886,
+                    search: { tab: "usul" } as any,
+                  })}
                 className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-indigo-100 hover:text-white text-[11px] font-semibold border border-white/10 transition-colors cursor-pointer"
               >
                 3. Encümen Usulü
@@ -153,8 +165,10 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
               <button
                 type="button"
                 onClick={() =>
-                  navigate({ to: APP_ROUTES.DEVLET_IHALE_2886, search: { tab: 'evraklar' } as any })
-                }
+                  navigate({
+                    to: APP_ROUTES.DEVLET_IHALE_2886,
+                    search: { tab: "evraklar" } as any,
+                  })}
                 className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-indigo-100 hover:text-white text-[11px] font-semibold border border-white/10 transition-colors cursor-pointer"
               >
                 4. Süreç Evrakları
@@ -164,9 +178,8 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
                 onClick={() =>
                   navigate({
                     to: APP_ROUTES.DEVLET_IHALE_2886,
-                    search: { tab: 'ihale_gunu' } as any
-                  })
-                }
+                    search: { tab: "ihale_gunu" } as any,
+                  })}
                 className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-indigo-100 hover:text-white text-[11px] font-semibold border border-white/10 transition-colors cursor-pointer"
               >
                 5. Açık Artırma & Teklifler
@@ -174,8 +187,10 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
               <button
                 type="button"
                 onClick={() =>
-                  navigate({ to: APP_ROUTES.DEVLET_IHALE_2886, search: { tab: 'tahsilat' } as any })
-                }
+                  navigate({
+                    to: APP_ROUTES.DEVLET_IHALE_2886,
+                    search: { tab: "tahsilat" } as any,
+                  })}
                 className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-indigo-100 hover:text-white text-[11px] font-semibold border border-white/10 transition-colors cursor-pointer"
               >
                 6. Kira & Tahsilat
@@ -215,7 +230,7 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // 4734 Doğrudan Temin & İhale Dosyası
@@ -234,13 +249,15 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
             <span className="text-xs font-mono font-black px-2.5 py-1 rounded-lg bg-white/10 text-white border border-white/15">
               {formatDosyaNo(activeDosya)}
             </span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${asama.color}`}>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${asama.color}`}
+            >
               {asama.name}
             </span>
             <span
               className={cn(
-                'text-[10px] font-bold px-2 py-0.5 rounded-md border',
-                getDtFileColor(activeDosya.tur)
+                "text-[10px] font-bold px-2 py-0.5 rounded-md border",
+                getDtFileColor(activeDosya.tur),
               )}
             >
               {getDtFileText(activeDosya.tur)}
@@ -249,27 +266,29 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
 
           <div>
             <h3 className="text-xl md:text-2xl font-black tracking-tight text-white line-clamp-1">
-              {activeDosya.konu || 'Konu Belirtilmemiş Dosya'}
+              {activeDosya.konu || "Konu Belirtilmemiş Dosya"}
             </h3>
             <p className="text-xs text-blue-200/80 mt-1 flex flex-wrap items-center gap-3 font-medium">
               <span>
-                🏢 Birim:{' '}
+                🏢 Birim:{" "}
                 <strong>
-                  {activeDosya.harcama_birimi || harcamaBirimAdi || 'Birim Belirtilmedi'}
+                  {activeDosya.harcama_birimi || harcamaBirimAdi ||
+                    "Birim Belirtilmedi"}
                 </strong>
               </span>
               <span>•</span>
               <span>
-                📅 Kayıt:{' '}
+                📅 Kayıt:{" "}
                 <strong>
                   {activeDosya.dosya_acilis_tarihi
                     ? activeDosya.dosya_acilis_tarihi.substring(0, 10)
-                    : 'Bugün'}
+                    : "Bugün"}
                 </strong>
               </span>
               <span>•</span>
               <span className="text-emerald-300 font-bold font-mono">
-                💰 Yaklaşık Maliyet: {formatCurrency(activeDosya.yaklasik_maliyet || 0)}
+                💰 Yaklaşık Maliyet:{" "}
+                {formatCurrency(activeDosya.yaklasik_maliyet || 0)}
               </span>
             </p>
           </div>
@@ -285,7 +304,8 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => navigate({ to: APP_ROUTES.PIYASA_FIYAT_ARASTIRMASI })}
+              onClick={() =>
+                navigate({ to: APP_ROUTES.PIYASA_FIYAT_ARASTIRMASI })}
               className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-blue-100 hover:text-white text-[11px] font-semibold border border-white/10 transition-colors cursor-pointer"
             >
               2. Piyasa Araştırması
@@ -318,7 +338,15 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
             <span>Dosya Süreç Takibini Aç</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-
+          <button
+            type="button"
+            onClick={() => navigate({ to: APP_ROUTES.TEST_EKRANLARI })}
+            className="flex-1 lg:flex-none bg-blue-600 hover:bg-blue-500 text-white font-black text-xs py-3 px-5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          >
+            <FolderOpen className="w-4 h-4" />
+            <span>Test Ekranını Aç</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
           <button
             type="button"
             onClick={() => onOpenAi(activeDosya)}
@@ -339,5 +367,5 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

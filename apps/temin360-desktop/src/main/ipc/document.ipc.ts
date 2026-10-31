@@ -215,16 +215,16 @@ export function registerDocumentIpcHandlers(): void {
         const placeholders = candidateKeys.map(() => '?').join(', ')
         const row = db
           .prepare(
-            `SELECT id, temin_dosya_id, dosya_id, sablon_kodu, veri_json, sablon_versiyon, created_at, updated_at 
-             FROM DATA_DosyaSablonVeri 
-             WHERE temin_dosya_id = ? AND sablon_kodu IN (${placeholders}) 
+            `SELECT id, dosya_id, sablon_id, sablon_kodu, veri_json, sablon_versiyon, created_at, updated_at 
+             FROM DATA_TeminBelgeSnapshot 
+             WHERE dosya_id = ? AND sablon_kodu IN (${placeholders}) AND is_deleted = 0
              ORDER BY updated_at DESC, id DESC LIMIT 1`
           )
           .get(payload.dosyaId, ...candidateKeys) as
           | {
               id: number
-              temin_dosya_id: number
-              dosya_id?: number
+              dosya_id: number
+              sablon_id?: number
               sablon_kodu: string
               veri_json: string
               sablon_versiyon?: number
@@ -249,7 +249,7 @@ export function registerDocumentIpcHandlers(): void {
           exists: true,
           record: {
             id: row.id,
-            dosyaId: row.temin_dosya_id,
+            dosyaId: row.dosya_id,
             templateKey: row.sablon_kodu,
             data: parsedData,
             sablonVersiyon: row.sablon_versiyon || 1,
@@ -318,24 +318,25 @@ export function registerDocumentIpcHandlers(): void {
 
           // Canonical key ile kaydet
           db.prepare(
-            `INSERT INTO DATA_DosyaSablonVeri (temin_dosya_id, dosya_id, sablon_id, sablon_kodu, veri_json, sablon_versiyon, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-             ON CONFLICT(temin_dosya_id, sablon_kodu)
+            `INSERT INTO DATA_TeminBelgeSnapshot (dosya_id, sablon_id, sablon_kodu, veri_json, sablon_versiyon, is_active, is_deleted, updated_at)
+             VALUES (?, ?, ?, ?, ?, 1, 0, CURRENT_TIMESTAMP)
+             ON CONFLICT(dosya_id, sablon_kodu)
              DO UPDATE SET 
                veri_json = excluded.veri_json,
-               sablon_id = COALESCE(excluded.sablon_id, DATA_DosyaSablonVeri.sablon_id),
-               dosya_id = excluded.dosya_id,
+               sablon_id = COALESCE(excluded.sablon_id, DATA_TeminBelgeSnapshot.sablon_id),
                sablon_versiyon = excluded.sablon_versiyon,
+               is_active = 1,
+               is_deleted = 0,
                updated_at = CURRENT_TIMESTAMP`
-          ).run(payload.dosyaId, payload.dosyaId, sablonId, canonicalKey, jsonStr, versiyon)
+          ).run(payload.dosyaId, sablonId, canonicalKey, jsonStr, versiyon)
 
           // Varsa eski alternatif anahtarlı yinelenen kayıtları temizle
           const otherKeys = candidateKeys.filter((k) => k !== canonicalKey)
           if (otherKeys.length > 0) {
             const otherPlaceholders = otherKeys.map(() => '?').join(', ')
             db.prepare(
-              `DELETE FROM DATA_DosyaSablonVeri 
-               WHERE temin_dosya_id = ? AND sablon_kodu IN (${otherPlaceholders})`
+              `DELETE FROM DATA_TeminBelgeSnapshot 
+               WHERE dosya_id = ? AND sablon_kodu IN (${otherPlaceholders})`
             ).run(payload.dosyaId, ...otherKeys)
           }
 
@@ -354,7 +355,7 @@ export function registerDocumentIpcHandlers(): void {
 
           const savedRow = db
             .prepare(
-              `SELECT id, updated_at FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = ? AND sablon_kodu = ?`
+              `SELECT id, updated_at FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND sablon_kodu = ?`
             )
             .get(payload.dosyaId, canonicalKey) as { id: number; updated_at: string } | undefined
 
@@ -412,8 +413,8 @@ export function registerDocumentIpcHandlers(): void {
           const placeholders = candidateKeys.map(() => '?').join(', ')
           const existing = db
             .prepare(
-              `SELECT id, veri_json FROM DATA_DosyaSablonVeri 
-               WHERE temin_dosya_id = ? AND sablon_kodu IN (${placeholders})
+              `SELECT id, veri_json FROM DATA_TeminBelgeSnapshot 
+               WHERE dosya_id = ? AND sablon_kodu IN (${placeholders})
                ORDER BY updated_at DESC, id DESC LIMIT 1`
             )
             .get(payload.dosyaId, ...candidateKeys) as { id: number; veri_json: string } | undefined
@@ -430,7 +431,7 @@ export function registerDocumentIpcHandlers(): void {
           }
 
           db.prepare(
-            `DELETE FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = ? AND sablon_kodu IN (${placeholders})`
+            `DELETE FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND sablon_kodu IN (${placeholders})`
           ).run(payload.dosyaId, ...candidateKeys)
         })
 
@@ -461,7 +462,7 @@ export function registerDocumentIpcHandlers(): void {
           .trim()
 
         db.prepare(
-          `DELETE FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = ? AND (sablon_kodu = ? OR sablon_kodu = ?)`
+          `DELETE FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND (sablon_kodu = ? OR sablon_kodu = ?)`
         ).run(payload.dosyaId, cleanKey, `${cleanKey}.html`)
 
         return { success: true, dosyaId: payload.dosyaId, templateKey: cleanKey }

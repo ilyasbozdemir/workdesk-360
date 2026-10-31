@@ -72,7 +72,7 @@ export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) 
         ),
         window.electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT * FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = ?',
+          'SELECT * FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND is_deleted = 0',
           [numId]
         )
       ])

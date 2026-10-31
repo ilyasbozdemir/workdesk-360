@@ -3,10 +3,9 @@ import { IhtiyacListesiType } from '@temin360/document-templates'
 import { useWorkspaceStore } from '../../../../../store/workspaceStore'
 import { useSettingsStore } from '../../../../../store/settingsStore'
 import { useClickOutside } from '../../../../../hooks/useClickOutside'
-import { Personel } from '../types'
+import { Personel, DocumentSource } from '../types'
 import { resolveTemplateConfig, TEMPLATE_OPTIONS, TemplateOptionItem } from '../templateResolver'
 import { documentPreloadService } from '../../../../../services/documentPreloadService'
-import { resolvers, DocumentSource } from '../document-engine'
 import {
   compileDocumentHtml,
   exportDocumentDocx,
@@ -15,7 +14,8 @@ import {
   refreshDocumentFromDb,
   saveDocumentToDb,
   useDocumentPreviewScale,
-  UseDocumentPreviewDataParams
+  UseDocumentPreviewDataParams,
+  sourceResolvers as resolvers
 } from './helpers'
 
 export function useDocumentPreviewData({
