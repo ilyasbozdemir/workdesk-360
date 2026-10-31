@@ -1,17 +1,19 @@
 import React from 'react'
 import {
-  IhtiyacListesi,
-  IhtiyacListesiType,
+  LuzumMuzekkeresi,
+  LuzumMuzekkeresiType,
   TemplateEditProvider
 } from '@temin360/document-templates'
-import { DocumentRendererComponentProps } from '../types/contracts'
-import { TemplateErrorBoundary } from './TemplateErrorBoundary'
+import { DocumentRendererComponentProps } from '../registry/types'
+import { TemplateErrorBoundary } from '../../TemplateErrorBoundary'
 
 /**
- * İhtiyaç Listesi Belge Çizicisi (IhtiyacListesiRenderer)
+ * Lüzum Müzekkeresi Belge Çizicisi (LuzumMuzekkeresiRenderer)
+ * - Yalnızca LuzumMuzekkeresi veri sözleşmesiyle çalışır.
+ * - Başka şablonlara bağımlılık barındırmaz.
  */
-export function IhtiyacListesiRenderer(
-  props: DocumentRendererComponentProps<IhtiyacListesiType>
+export function LuzumMuzekkeresiRenderer(
+  props: DocumentRendererComponentProps<LuzumMuzekkeresiType>
 ): React.JSX.Element {
   const {
     data,
@@ -32,14 +34,14 @@ export function IhtiyacListesiRenderer(
   const pageContent = (
     <div
       data-document-page="true"
-      data-template-key="ihtiyac_listesi"
+      data-template-key="luzum_muzekkeresi"
       data-orientation={orientation}
       className={`bg-white text-slate-900 box-border mx-auto ${
         isLandscape ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'
       }`}
     >
       <TemplateEditProvider isEditing={isEditing} onFieldChange={onFieldChange}>
-        <IhtiyacListesi
+        <LuzumMuzekkeresi
           data={data}
           orientation={orientation}
           firstPageLimit={resolvedFirstPageLimit}

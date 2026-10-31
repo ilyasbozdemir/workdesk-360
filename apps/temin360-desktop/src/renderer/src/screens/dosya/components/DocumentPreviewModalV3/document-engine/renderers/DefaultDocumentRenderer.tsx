@@ -4,12 +4,12 @@ import {
   TemplateEditProvider,
   TemplateKey
 } from '@temin360/document-templates'
-import { DocumentRendererComponentProps } from '../types/contracts'
-import { TemplateErrorBoundary } from './TemplateErrorBoundary'
+import { DocumentRendererComponentProps } from '../registry/types'
+import { TemplateErrorBoundary } from '../../TemplateErrorBoundary'
 
 export interface DefaultDocumentRendererProps
   extends DocumentRendererComponentProps<Record<string, unknown>> {
-  templateKey: TemplateKey | string
+  templateKey: TemplateKey
 }
 
 /**
@@ -49,7 +49,7 @@ export function DefaultDocumentRenderer(props: DefaultDocumentRendererProps): Re
       firstPageLimit={resolvedFirstPageLimit}
     >
       <DocumentPage
-        templateKey={templateKey as TemplateKey}
+        templateKey={templateKey}
         data={data as any}
         orientation={orientation}
       />
@@ -75,15 +75,18 @@ export function DefaultDocumentRenderer(props: DefaultDocumentRendererProps): Re
   return (
     <div
       ref={containerRef}
-      className={`default-document-paper select-none flex flex-col items-center gap-8 py-8 ${className}`}
-      style={{
-        transform: `scale(${scale})`,
-        transformOrigin: 'top center',
-        transition: 'transform 0.15s ease-out',
-        ...style
-      }}
+      className={`default-document-paper-container flex flex-col items-center justify-start min-h-full py-8 px-4 select-text ${className}`}
+      style={style}
     >
-      <TemplateErrorBoundary>{content}</TemplateErrorBoundary>
+      <div
+        className="origin-top transition-transform duration-150 ease-out shadow-2xl rounded-sm bg-white"
+        style={{
+          transform: `scale(${scale})`,
+          width: isLandscape ? '297mm' : '210mm'
+        }}
+      >
+        <TemplateErrorBoundary>{content}</TemplateErrorBoundary>
+      </div>
     </div>
   )
 }

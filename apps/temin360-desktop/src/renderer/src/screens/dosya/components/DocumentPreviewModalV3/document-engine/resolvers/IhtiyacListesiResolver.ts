@@ -1,5 +1,5 @@
 import { IhtiyacListesiType } from '@temin360/document-templates'
-import { DocumentDataResolver, DocumentResolutionContext } from '../types/contracts'
+import { DocumentDataResolver, DocumentResolutionContext } from '../registry/types'
 
 /**
  * İhtiyaç Listesi Belge Çözücüsü (IhtiyacListesiResolver)
@@ -99,7 +99,9 @@ export class IhtiyacListesiResolver implements DocumentDataResolver<IhtiyacListe
       hazirlayanEposta: hazirlayanMail,
       talepEdenPersonelAdi: hazirlayanAdi,
       talepEdenPersonelUnvan: hazirlayanUnvan,
-      birimAdi: headerData.mudurluk
+      olurBaslik: dosyaRow?.olur_baslik || 'UYGUNDUR',
+      olurYazisi: dosyaRow?.olur_yazisi !== false,
+      kurumIci: true
     }
 
     return result

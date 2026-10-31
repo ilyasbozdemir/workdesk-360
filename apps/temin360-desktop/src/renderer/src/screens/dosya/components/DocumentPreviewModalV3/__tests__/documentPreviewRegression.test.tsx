@@ -7,7 +7,7 @@ import {
 } from '@temin360/document-templates'
 import { DocumentPreviewCanvas } from '../components/DocumentPreviewCanvas'
 import { compileDocumentHtml } from '../hooks/helpers/previewExportUtils'
-import { DocumentRenderer } from '@worksuite-360/document-engine'
+import { DocumentRenderer } from '../document-engine/DocumentRenderer'
 
 describe('DocumentPreview & PDF Export Regression Test Suite', () => {
   // 1. Template Key Resolution: Snake_case, kebab-case, aliases & invalid

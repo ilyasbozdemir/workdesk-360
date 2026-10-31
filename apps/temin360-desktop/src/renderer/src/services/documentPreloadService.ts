@@ -1,7 +1,8 @@
 import { TemplateResolver, resolveTemplateKey } from '@temin360/document-templates'
 import { getDefaultMappingForProcess } from '../constants/mappings'
 import { resolveTemplateConfig } from '../screens/dosya/components/DocumentPreviewModalV3/templateResolver'
-import { TemplateRegistry, InstitutionalHeaderProvider } from '@worksuite-360/document-engine'
+import { TemplateRegistry } from '../screens/dosya/components/DocumentPreviewModalV3/document-engine/registry/TemplateRegistry'
+import { InstitutionalHeaderProvider } from '../screens/dosya/components/DocumentPreviewModalV3/document-engine/providers/InstitutionalHeaderProvider'
 
 export interface PreloadedDocumentData {
   payloadData: any

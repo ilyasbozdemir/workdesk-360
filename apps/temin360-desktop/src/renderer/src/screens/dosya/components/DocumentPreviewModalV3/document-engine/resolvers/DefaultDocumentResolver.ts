@@ -1,27 +1,17 @@
-import { DocumentDataResolver, DocumentResolutionContext } from '../types/contracts'
+import { DocumentDataResolver, DocumentResolutionContext } from '../registry/types'
 import { TemplateResolver } from '@temin360/document-templates'
-
-export type ProcessMappingProvider = (processPath: string) => any
+import { getDefaultMappingForProcess } from '../../../../../../constants/mappings'
 
 /**
  * Geçiş Dönemi Genel Belge Çözücüsü (DefaultDocumentResolver)
  * - Henüz özel resolver yazılmamış şablonlar için temel eşleme ve üst veri sağlar.
- * - TemplateResolver üzerinden veri derler.
+ * - Monolitik dev resolver'a bağımlı kalmadan TemplateResolver ve InstitutionalHeaderProvider üzerinden veri derler.
  */
 export class DefaultDocumentResolver implements DocumentDataResolver<Record<string, unknown>> {
-  private static mappingProvider: ProcessMappingProvider | null = null
-
-  static setMappingProvider(provider: ProcessMappingProvider | null): void {
-    this.mappingProvider = provider
-  }
-
   async resolve(context: DocumentResolutionContext): Promise<Record<string, unknown>> {
     const { dosyaId, templateKey, headerData, queryExecutor } = context
 
-    const mapping = DefaultDocumentResolver.mappingProvider
-      ? DefaultDocumentResolver.mappingProvider(templateKey)
-      : { mappings: [] }
-
+    const mapping = getDefaultMappingForProcess(templateKey)
     const resolver = new TemplateResolver(queryExecutor)
     let baseData: Record<string, unknown> = {}
 

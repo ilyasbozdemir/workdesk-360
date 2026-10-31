@@ -1,19 +1,6 @@
-<<<<<<< HEAD:packages/document-engine/src/providers/InstitutionalHeaderProvider.ts
-import { InstitutionalHeaderData } from '../types/contracts'
-import { resolveEvrakSayisi } from '@temin360/document-templates'
-
-export interface InstitutionalHeaderSettings {
-  institutionName?: string
-  departmentName?: string
-  logoLeft?: string | null
-  logoRight?: string | null
-  institutionLogo?: string | null
-}
-=======
 import { InstitutionalHeaderData } from '../registry/types'
 import { useSettingsStore } from '../../../../../../store/settingsStore'
 import { resolveEvrakSayisi } from '@temin360/document-templates'
->>>>>>> cd2fd593900d9e394ceb4c694b0ded230eab3d9c:apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/document-engine/providers/InstitutionalHeaderProvider.ts
 
 /**
  * Kurumsal ve Antet Bilgileri Sağlayıcısı (Institutional Header Provider)
@@ -23,11 +10,6 @@ import { resolveEvrakSayisi } from '@temin360/document-templates'
  */
 export class InstitutionalHeaderProvider {
   private static cache = new Map<number, InstitutionalHeaderData>()
-  private static settingsGetter: (() => InstitutionalHeaderSettings) | null = null
-
-  static setSettingsGetter(getter: () => InstitutionalHeaderSettings): void {
-    this.settingsGetter = getter
-  }
 
   /**
    * Belirtilen dosya için kurumsal antet ve başlık verilerini çözümler.
@@ -40,7 +22,7 @@ export class InstitutionalHeaderProvider {
       return this.cache.get(dosyaId)!
     }
 
-    const settings = this.settingsGetter ? this.settingsGetter() : {}
+    const settings = useSettingsStore.getState()
 
     // 1. Dosya ve Harcama Birimi Sorgusu
     let dosyaRow: any = null
@@ -115,7 +97,6 @@ export class InstitutionalHeaderProvider {
     const effectiveMudurluk =
       dosyaRow?.birim_adi ||
       (dosyaRow?.antet_ek_satir ? String(dosyaRow.antet_ek_satir).trim() : '') ||
-      settings.departmentName ||
       'Destek Hizmetleri Müdürlüğü'
 
     const solLogo =

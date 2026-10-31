@@ -6,7 +6,7 @@ import {
   TemplateKey,
   resolveTemplateKey
 } from '@temin360/document-templates'
-import { DocumentRenderer } from '@worksuite-360/document-engine'
+import { DocumentRenderer } from '../document-engine/DocumentRenderer'
 import { Personel } from '../types'
 import { TemplateOptionItem } from '../templateResolver'
 import { useSettingsStore } from '../../../../../store/settingsStore'
