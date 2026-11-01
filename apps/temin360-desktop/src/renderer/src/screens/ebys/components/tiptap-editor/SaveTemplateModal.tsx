@@ -114,7 +114,11 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-purple-500 transition appearance-none cursor-pointer"
               >
                 {CATEGORY_OPTIONS.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option
+                    key={c.id}
+                    value={c.id}
+                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                  >
                     {c.label}
                   </option>
                 ))}
