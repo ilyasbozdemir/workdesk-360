@@ -106,7 +106,7 @@ export async function resolveAntetAndBirim(
           baseData.evrakNo = computed
           try {
             await queryExecutor(
-              'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = "")',
+              'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = \'\')',
               [computed, activeDosyaId]
             )
           } catch {}

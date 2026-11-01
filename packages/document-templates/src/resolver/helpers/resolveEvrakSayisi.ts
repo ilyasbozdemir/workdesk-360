@@ -85,7 +85,7 @@ export async function resolveEvrakSayisi(
     if (!detsisNo) {
       try {
         const ayarRes = await queryExecutor(
-          'SELECT deger FROM TANIM_Ayar WHERE anahtar IN ("detsisKodu", "detsis_kodu") LIMIT 1',
+          "SELECT deger FROM TANIM_Ayar WHERE anahtar IN ('detsisKodu', 'detsis_kodu') LIMIT 1",
           []
         );
         if (ayarRes?.[0]?.deger) {
@@ -97,7 +97,7 @@ export async function resolveEvrakSayisi(
     if (!detsisNo) {
       try {
         const setRes = await queryExecutor(
-          'SELECT value FROM settings WHERE key IN ("detsisKodu", "detsis_kodu") LIMIT 1',
+          "SELECT value FROM settings WHERE key IN ('detsisKodu', 'detsis_kodu') LIMIT 1",
           []
         );
         if (setRes?.[0]?.value) {

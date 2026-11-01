@@ -533,10 +533,11 @@ export function resolveDocumentPayload(
       seqNumber = 1
     }
 
+    const paddedSayi = String(seqNumber).padStart(4, '0')
     const officialEvrakSayisi =
       detsisNo && detsisNo !== '00000000'
-        ? ${detsisNo}-/
-        : ${fileYear}/
+        ? `${detsisNo}-${sdpKodu}-${paddedSayi}`
+        : `${fileYear}/${seqNumber}`
 
     const existingEvrak = String((dosya as any)?.evrak_sayisi || '').replace(/^E-/i, '').trim()
     const resolvedEvrakSayisi =
@@ -546,7 +547,7 @@ export function resolveDocumentPayload(
 
     if (!existingEvrak && resolvedEvrakSayisi && dosyaId) {
       try {
-        db.prepare('UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = "")').run(resolvedEvrakSayisi, dosyaId)
+        db.prepare("UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = '')").run(resolvedEvrakSayisi, dosyaId)
       } catch {}
     }
 
