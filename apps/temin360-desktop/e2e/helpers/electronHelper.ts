@@ -23,7 +23,10 @@ export interface LaunchTestAppOptions {
 
 export function resolveWindowsDesktopDir(): string {
   const customDir = process.env.E2E_DESKTOP_DIR ? process.env.E2E_DESKTOP_DIR.trim() : null
-  if (customDir && fs.existsSync(customDir)) {
+  if (customDir) {
+    if (!fs.existsSync(customDir)) {
+      fs.mkdirSync(customDir, { recursive: true })
+    }
     return customDir
   }
   if (process.platform === 'win32') {
@@ -100,11 +103,14 @@ export async function launchTestApp(
     ...extraArgs
   ]
 
+  const cleanEnv = { ...process.env }
+  delete cleanEnv.ELECTRON_RUN_AS_NODE
+
   const electronApp = await electron.launch({
     args: launchArgs,
     cwd: appDir,
     env: {
-      ...process.env,
+      ...cleanEnv,
       NODE_ENV: 'test',
       ELECTRON_ENABLE_LOGGING: '1'
     }

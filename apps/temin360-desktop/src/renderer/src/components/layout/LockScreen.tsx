@@ -12,7 +12,7 @@ import {
 } from './lock-screen'
 
 export default function LockScreen(): React.JSX.Element {
-  const { fileName, setIsAuthenticated, closeWorkspace } = useWorkspaceStore()
+  const { fileName, setIsAuthenticated, closeWorkspace, activeMeta } = useWorkspaceStore()
   const { institutionName, institutionLogo, logoLeft, logoRight, loadSettings } = useSettingsStore()
 
   const [isSetupMode, setIsSetupMode] = useState(false)
@@ -239,7 +239,11 @@ export default function LockScreen(): React.JSX.Element {
     if (recoveryStep === 'send_code') return 'Şifre Kurtarma'
     if (recoveryStep === 'verify_code') return 'Kodu Doğrula'
     if (recoveryStep === 'reset_password') return 'Şifre Sıfırlama'
-    return institutionName || 'Kurum Dosyası Girişi'
+    return (
+      activeMeta?.institution ||
+      (institutionName && institutionName !== 'Kurum Bilgisi Bekleniyor...' ? institutionName : '') ||
+      'Kurum Dosyası Girişi'
+    )
   }
 
   // Pick a logo: institutionLogo fallback to logoLeft, then logoRight
