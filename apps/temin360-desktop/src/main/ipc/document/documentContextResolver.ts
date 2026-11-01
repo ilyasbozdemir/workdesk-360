@@ -544,6 +544,12 @@ export function resolveDocumentPayload(
         ? existingEvrak
         : officialEvrakSayisi
 
+    if (!existingEvrak && resolvedEvrakSayisi && dosyaId) {
+      try {
+        db.prepare('UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = "")').run(resolvedEvrakSayisi, dosyaId)
+      } catch {}
+    }
+
     const resolvedContext = {
       faturaNo: resolvedFaturaNo,
       fatura_no: resolvedFaturaNo,

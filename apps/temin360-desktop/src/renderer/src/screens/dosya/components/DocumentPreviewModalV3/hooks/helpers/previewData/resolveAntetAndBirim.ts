@@ -104,6 +104,12 @@ export async function resolveAntetAndBirim(
         if (computed) {
           baseData.evrakSayisi = computed
           baseData.evrakNo = computed
+          try {
+            await queryExecutor(
+              'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = "")',
+              [computed, activeDosyaId]
+            )
+          } catch {}
         }
       } catch (err) {
         console.warn('Failed to resolveEvrakSayisi in resolveAntetAndBirim:', err)

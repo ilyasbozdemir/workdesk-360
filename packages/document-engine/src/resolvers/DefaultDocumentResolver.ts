@@ -39,7 +39,7 @@ export class DefaultDocumentResolver implements DocumentDataResolver<Record<stri
       mudurluk: headerData.mudurluk,
       solLogo: headerData.solLogo,
       sagLogo: headerData.sagLogo,
-      evrakSayisi: baseData.evrakSayisi || headerData.evrakSayisi || '',
+      evrakSayisi: headerData.evrakSayisi || (baseData.evrakSayisi as string) || '',
       sunulacakMakamAdi:
         baseData.sunulacakMakamAdi ||
         headerData.sunulacakMakam ||

@@ -122,13 +122,29 @@ export class InstitutionalHeaderProvider {
 
     const sagLogo = kurumRow?.logo_sag || settings.logoRight || null
 
-    // 4. İhtiyaç listesi formatlı resmî evrak sayısı çözümlenmesi ([DETSIS]-[YIL]/[SIRA] veya dosyadaki evrak_sayisi)
+    // 4. Dosya Evrak Sayısı Çözümlenmesi & PRESERVE (Tüm belgelere tek kaynaktan kalıcı dağıtım)
     let detsisEvrakSayisi = ''
-    if (dosyaRow?.evrak_sayisi) {
+    if (dosyaRow?.evrak_sayisi && String(dosyaRow.evrak_sayisi).trim() !== '') {
       detsisEvrakSayisi = String(dosyaRow.evrak_sayisi).replace(/^E-/i, '').trim()
     } else if (dosyaId) {
       try {
         detsisEvrakSayisi = await resolveEvrakSayisi(dosyaId, queryExecutor)
+        // PRESERVE: Dosyada kayıtlı değilse bir kez üretip veritabanına kalıcı yaz!
+        // Böylece dosyanın altındaki tüm belgeler (İhtiyaç Listesi, Lüzum Müzekkeresi vs.)
+        // tek bir sabit sayıyı kullanır, asla birbirinden farklılaşmaz!
+        if (detsisEvrakSayisi) {
+          try {
+            await queryExecutor(
+              'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = \'\')',
+              [detsisEvrakSayisi, dosyaId]
+            )
+            if (dosyaRow) {
+              dosyaRow.evrak_sayisi = detsisEvrakSayisi
+            }
+          } catch (writeErr) {
+            console.warn('[InstitutionalHeaderProvider] Failed to preserve evrak_sayisi in DATA_TeminDosyasi:', writeErr)
+          }
+        }
       } catch (err) {
         console.warn('[InstitutionalHeaderProvider] resolveEvrakSayisi failed:', err)
       }
