@@ -377,334 +377,6 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(jsdom@30.1.1)(lightningcss@1.32.0)(supports-color@8.1.1)(tsx@4.23.13)
 
-  apps/ihale360-desktop:
-    dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.100.1
-        version: 0.100.1(zod@4.4.3)
-      '@dt/database':
-        specifier: workspace:*
-        version: link:../../packages/database
-      '@electron-toolkit/preload':
-        specifier: ^3.0.2
-        version: 3.0.2(electron@39.8.10(supports-color@8.1.1))
-      '@electron-toolkit/utils':
-        specifier: ^4.0.0
-        version: 4.0.0(electron@39.8.10(supports-color@8.1.1))
-      '@google/genai':
-        specifier: ^2.8.0
-        version: 2.8.0(supports-color@8.1.1)
-      '@monaco-editor/react':
-        specifier: ^4.7.0
-        version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@radix-ui/react-dropdown-menu':
-        specifier: ^2.1.20
-        version: 2.1.20(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@radix-ui/react-popover':
-        specifier: ^1.1.19
-        version: 1.1.19(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@radix-ui/react-slot':
-        specifier: ^1.1.1
-        version: 1.3.0(@types/react@19.2.15)(react@19.2.4)
-      '@tanstack/react-form':
-        specifier: ^1.32.0
-        version: 1.32.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@tanstack/react-query':
-        specifier: ^5.100.14
-        version: 5.100.14(react@19.2.4)
-      '@tanstack/react-router':
-        specifier: ^1.170.8
-        version: 1.170.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@tanstack/react-table':
-        specifier: ^8.21.3
-        version: 8.21.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@temin360/document-templates':
-        specifier: workspace:*
-        version: link:../../packages/document-templates
-      '@tiptap/extension-table':
-        specifier: ^3.26.0
-        version: 3.26.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/pm@3.26.0)
-      '@tiptap/extension-table-cell':
-        specifier: ^3.26.0
-        version: 3.26.0(@tiptap/extension-table@3.26.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/pm@3.26.0))
-      '@tiptap/extension-table-header':
-        specifier: ^3.26.0
-        version: 3.26.0(@tiptap/extension-table@3.26.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/pm@3.26.0))
-      '@tiptap/extension-table-row':
-        specifier: ^3.26.0
-        version: 3.26.0(@tiptap/extension-table@3.26.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/pm@3.26.0))
-      '@tiptap/extension-text-align':
-        specifier: ^3.26.0
-        version: 3.26.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))
-      '@tiptap/pm':
-        specifier: ^3.26.0
-        version: 3.26.0
-      '@tiptap/react':
-        specifier: ^3.26.0
-        version: 3.26.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/pm@3.26.0)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@tiptap/starter-kit':
-        specifier: ^3.26.0
-        version: 3.26.0
-      adm-zip:
-        specifier: ^0.5.17
-        version: 0.5.17
-      better-sqlite3:
-        specifier: ^12.10.0
-        version: 12.10.0
-      call-bind:
-        specifier: ^1.0.9
-        version: 1.0.9
-      class-variance-authority:
-        specifier: ^0.7.1
-        version: 0.7.1
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
-      cors:
-        specifier: ^2.8.6
-        version: 2.8.6
-      decimal.js:
-        specifier: ^10.6.0
-        version: 10.6.0
-      dompurify:
-        specifier: ^3.4.16
-        version: 3.4.16
-      ee-first:
-        specifier: ^1.1.1
-        version: 1.1.1
-      electron-is-dev:
-        specifier: ^3.0.1
-        version: 3.0.1
-      electron-updater:
-        specifier: ^6.8.3
-        version: 6.8.3(supports-color@8.1.1)
-      es-errors:
-        specifier: ^1.3.0
-        version: 1.3.0
-      exceljs:
-        specifier: ^4.4.0
-        version: 4.4.0
-      express:
-        specifier: ^5.2.1
-        version: 5.2.1(supports-color@8.1.1)
-      get-intrinsic:
-        specifier: ^1.2.7
-        version: 1.3.0
-      glob:
-        specifier: ^13.0.6
-        version: 13.0.6
-      html-docx-js:
-        specifier: ^0.3.1
-        version: 0.3.1
-      http-errors:
-        specifier: ^2.0.1
-        version: 2.0.1
-      js-yaml:
-        specifier: ^4.1.1
-        version: 4.1.1
-      jszip:
-        specifier: ^3.10.2
-        version: 3.10.2
-      lucide-react:
-        specifier: ^1.16.0
-        version: 1.16.0(react@19.2.4)
-      mammoth:
-        specifier: ^1.12.0
-        version: 1.12.0
-      math-intrinsics:
-        specifier: ^1.1.0
-        version: 1.1.0
-      mime-db:
-        specifier: ^1.52.0
-        version: 1.54.0
-      mime-types:
-        specifier: ^2.1.35
-        version: 2.1.35
-      monaco-editor:
-        specifier: ^0.55.1
-        version: 0.55.1
-      ms:
-        specifier: ^2.1.3
-        version: 2.1.3
-      multer:
-        specifier: ^2.2.0
-        version: 2.2.0
-      mustache:
-        specifier: ^4.2.0
-        version: 4.2.0
-      nodemailer:
-        specifier: ^8.0.8
-        version: 8.0.8
-      object-inspect:
-        specifier: ^1.13.4
-        version: 1.13.4
-      openai:
-        specifier: ^6.42.0
-        version: 6.42.0(ws@8.21.0)(zod@4.4.3)
-      qrcode:
-        specifier: ^1.5.4
-        version: 1.5.4
-      qs:
-        specifier: ^6.15.2
-        version: 6.15.2
-      react-resizable-panels:
-        specifier: ^4.11.2
-        version: 4.11.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      recharts:
-        specifier: ^3.8.1
-        version: 3.8.1(@types/react@19.2.15)(react-dom@19.2.4(react@19.2.4))(react-is@17.0.2)(react@19.2.4)(redux@5.0.1)
-      setprototypeof:
-        specifier: ^1.2.0
-        version: 1.2.0
-      side-channel:
-        specifier: ^1.1.0
-        version: 1.1.0
-      side-channel-list:
-        specifier: ^1.0.0
-        version: 1.0.1
-      side-channel-map:
-        specifier: ^1.0.1
-        version: 1.0.1
-      side-channel-weakmap:
-        specifier: ^1.0.2
-        version: 1.0.2
-      socket.io:
-        specifier: ^4.8.3
-        version: 4.8.3(supports-color@8.1.1)
-      socket.io-client:
-        specifier: ^4.8.3
-        version: 4.8.3(supports-color@8.1.1)
-      statuses:
-        specifier: ^2.0.1
-        version: 2.0.2
-      tailwind-merge:
-        specifier: ^3.6.0
-        version: 3.6.0
-      toidentifier:
-        specifier: ^1.0.1
-        version: 1.0.1
-      xlsx:
-        specifier: ^0.18.5
-        version: 0.18.5
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-      zustand:
-        specifier: ^5.0.13
-        version: 5.0.13(@types/react@19.2.15)(immer@11.1.8)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
-    devDependencies:
-      '@electron-toolkit/eslint-config-prettier':
-        specifier: ^3.0.0
-        version: 3.0.0(eslint@9.39.4(jiti@2.7.0)(supports-color@8.1.1))(prettier@3.8.3)
-      '@electron-toolkit/eslint-config-ts':
-        specifier: ^3.1.0
-        version: 3.1.0(eslint@9.39.4(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.9.3)
-      '@electron-toolkit/tsconfig':
-        specifier: ^2.0.0
-        version: 2.0.0(@types/node@22.20.1)
-      '@electron/rebuild':
-        specifier: ^4.2.0
-        version: 4.2.0(supports-color@8.1.1)
-      '@playwright/test':
-        specifier: ^1.64.1
-        version: 1.64.1
-      '@tailwindcss/postcss':
-        specifier: ^4.3.0
-        version: 4.3.3
-      '@testing-library/react':
-        specifier: ^16.3.3
-        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@types/adm-zip':
-        specifier: ^0.5.8
-        version: 0.5.8
-      '@types/cors':
-        specifier: ^2.8.19
-        version: 2.8.19
-      '@types/express':
-        specifier: ^5.0.6
-        version: 5.0.6
-      '@types/js-yaml':
-        specifier: ^4.0.9
-        version: 4.0.9
-      '@types/multer':
-        specifier: ^2.1.0
-        version: 2.1.0
-      '@types/mustache':
-        specifier: ^4.2.6
-        version: 4.2.6
-      '@types/node':
-        specifier: ^22.19.1
-        version: 22.20.1
-      '@types/nodemailer':
-        specifier: ^8.0.0
-        version: 8.0.0
-      '@types/qrcode':
-        specifier: ^1.5.6
-        version: 1.5.6
-      '@types/react':
-        specifier: ^19.2.7
-        version: 19.2.15
-      '@types/react-dom':
-        specifier: ^19.2.3
-        version: 19.2.3(@types/react@19.2.15)
-      '@vitejs/plugin-react':
-        specifier: ^5.1.1
-        version: 5.2.0(supports-color@8.1.1)(vite@7.3.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.13))
-      autoprefixer:
-        specifier: ^10.5.0
-        version: 10.5.0(postcss@8.5.31)
-      electron:
-        specifier: ^39.2.6
-        version: 39.8.10(supports-color@8.1.1)
-      electron-builder:
-        specifier: ^26.0.12
-        version: 26.8.1(electron-builder-squirrel-windows@26.8.1)(supports-color@8.1.1)
-      electron-vite:
-        specifier: ^5.0.0
-        version: 5.0.0(supports-color@8.1.1)(vite@7.3.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.13))
-      eslint:
-        specifier: ^9.39.1
-        version: 9.39.4(jiti@2.7.0)(supports-color@8.1.1)
-      eslint-plugin-react:
-        specifier: ^7.37.5
-        version: 7.37.5(eslint@9.39.4(jiti@2.7.0)(supports-color@8.1.1))
-      eslint-plugin-react-hooks:
-        specifier: ^7.0.1
-        version: 7.1.1(eslint@9.39.4(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)
-      eslint-plugin-react-refresh:
-        specifier: ^0.4.24
-        version: 0.4.26(eslint@9.39.4(jiti@2.7.0)(supports-color@8.1.1))
-      javascript-obfuscator:
-        specifier: ^5.9.0
-        version: 5.9.0
-      jsdom:
-        specifier: ^30.1.1
-        version: 30.1.1
-      postcss:
-        specifier: ^8.5.15
-        version: 8.5.31
-      prettier:
-        specifier: ^3.7.4
-        version: 3.8.3
-      react:
-        specifier: ^19.2.1
-        version: 19.2.4
-      react-dom:
-        specifier: ^19.2.1
-        version: 19.2.4(react@19.2.4)
-      tailwindcss:
-        specifier: ^4.3.0
-        version: 4.3.3
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vite:
-        specifier: ^7.2.6
-        version: 7.3.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.13)
-      vitest:
-        specifier: ^5.0.1
-        version: 5.0.1(@types/node@22.20.1)(jsdom@30.1.1)(vite@7.3.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.13))
-
   apps/personel360-desktop:
     dependencies:
       '@dt/database':
@@ -1210,6 +882,31 @@ importers:
         specifier: ^3.0.0
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(jsdom@30.1.1)(lightningcss@1.32.0)(supports-color@8.1.1)(tsx@4.23.13)
 
+  packages/document-engine-v4-nextjs-studio:
+    dependencies:
+      better-sqlite3:
+        specifier: ^11.8.1
+        version: 11.10.0
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: ^7.6.12
+        version: 7.6.13
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.15
+      tsx:
+        specifier: ^4.19.0
+        version: 4.23.13
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/document-templates:
     dependencies:
       react:
@@ -1239,6 +936,10 @@ importers:
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(jsdom@30.1.1)(lightningcss@1.32.0)(supports-color@8.1.1)(tsx@4.23.13)
 
   packages/domain:
+    dependencies:
+      decimal.js:
+        specifier: ^10.6.0
+        version: 10.6.0
     devDependencies:
       typescript:
         specifier: ^5.6.0
@@ -4256,6 +3957,9 @@ packages:
     resolution: {integrity: sha512-wbPvpyjJPC0zdfdKXxqEL3Ea+bOMD/87X4lftiJkkaBiuG6ALQy1SLmEd7BSmVCuwCQsBrCamgBoLyfFDD1EPg==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+
+  better-sqlite3@11.10.0:
+    resolution: {integrity: sha512-EwhOpyXiOEL/lKzHz9AW1msWFNzGc/z+LzeB3/jnFJpxu+th2yqvzsSWas1v9jgs9+xiXJcD5A8CJxAG2TaghQ==}
 
   better-sqlite3@12.10.0:
     resolution: {integrity: sha512-CyzaZRQKyHkB2ZInfTTl2nvT33EbDpjkLEbE8/Zck3Ll6O0qqvuGdrJ45HgtH+HykRg88ITY3AdreBGN70aBSQ==}
@@ -11020,6 +10724,11 @@ snapshots:
   base64id@2.0.0: {}
 
   baseline-browser-mapping@2.10.32: {}
+
+  better-sqlite3@11.10.0:
+    dependencies:
+      bindings: 1.5.0
+      prebuild-install: 7.1.3
 
   better-sqlite3@12.10.0:
     dependencies:

@@ -114,7 +114,7 @@ export interface DocumentStorageAdapter {
   getDocument(params: {
     dosyaId: number
     templateKey: string
-  }): Promise<{ success: boolean; exists?: boolean; record?: DocumentStorageRecord }>
+  }): Promise<{ success: boolean; exists?: boolean; record?: DocumentStorageRecord; error?: string }>
 
   saveDocument(params: {
     dosyaId: number

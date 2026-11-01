@@ -1,7 +1,0 @@
-export * from './InspectorHeader'
-export * from './InspectorDataTab'
-export * from './InspectorFormatTab'
-export * from './InspectorPropertiesTab'
-export * from './InspectorTableManager'
-export * from './InspectorSignatureManager'
-export * from './InspectorOptionsManager'

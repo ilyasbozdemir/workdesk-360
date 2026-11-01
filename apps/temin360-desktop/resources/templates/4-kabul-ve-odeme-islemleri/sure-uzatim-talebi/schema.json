@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sure Uzatim Talebi Şablon Veri Şeması",
+  "description": "Sure Uzatim Talebi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "dilekceTarihi": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "birimAdi": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "yukleniciVergiNo": {
+      "type": "string"
+    },
+    "yukleniciVergiDairesi": {
+      "type": "string"
+    },
+    "yukleniciTelefon": {
+      "type": "string"
+    },
+    "yukleniciAdresi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "teslimTarihi": {
+      "type": "string"
+    },
+    "kabulTarihi": {
+      "type": "string"
+    },
+    "ekSureGun": {
+      "type": "string"
+    },
+    "gerekce": {
+      "type": "string"
+    },
+    "isMal": {
+      "type": "boolean"
+    },
+    "ekler": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

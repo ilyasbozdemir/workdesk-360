@@ -1,8 +1,8 @@
+import { applyRefreshPolicy } from './previewData/refreshPolicy'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { TemplateKey, resolveTemplateKey } from '@temin360/document-templates'
-import { DocumentRenderer } from '../../document-engine/DocumentRenderer'
-import { DocumentEngine } from '../../document-engine/DocumentEngine'
+import { DocumentRenderer, DocumentEngine } from '@worksuite-360/document-engine'
 import { useSettingsStore } from '../../../../../../store/settingsStore'
 import { buildExportFileName } from '../../../../../../utils/exportFileName'
 import { Personel } from '../../types'
@@ -300,15 +300,36 @@ interface RefreshFromDbParams {
 
 export async function refreshDocumentFromDb({
   activeDosyaId,
-  resolvedId
-}: RefreshFromDbParams): Promise<Record<string, any> | null> {
+  resolvedId,
+  currentFormData
+}: RefreshFromDbParams & { currentFormData?: Record<string, any> }): Promise<Record<string, any> | null> {
   if (!activeDosyaId || !resolvedId) return null
 
-  // Merkezi DocumentEngine üzerinden güvenli sıfırlama (mevcut veriyi revizyona arşivler ve taze default oluşturur)
-  const docRecord = await DocumentEngine.resetToDefault({
-    dosyaId: activeDosyaId,
-    templateKey: resolvedId
-  })
+  let freshData: Record<string, any> | null = null
+  try {
+    const doc = await DocumentEngine.resolveDocumentData({
+      dosyaId: activeDosyaId,
+      templateKey: resolvedId
+    })
+    freshData = (doc?.data as Record<string, any>) || null
+  } catch (err) {
+    console.warn('[refreshDocumentFromDb] DocumentEngine.resolveDocumentData error:', err)
+  }
 
-  return (docRecord?.data as Record<string, any>) || null
+  if (!freshData) {
+    const docRecord = await DocumentEngine.resetToDefault({
+      dosyaId: activeDosyaId,
+      templateKey: resolvedId
+    })
+    freshData = (docRecord?.data as Record<string, any>) || null
+  }
+
+  if (!freshData) return null
+
+  // Smart Refresh Policy: Retain manual user edits while updating dynamic source/preserve fields
+  if (currentFormData && typeof currentFormData === 'object') {
+    return applyRefreshPolicy(freshData, currentFormData)
+  }
+
+  return freshData
 }

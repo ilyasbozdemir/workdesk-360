@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dogrudan Temin Onay Belgesi Şablon Veri Şeması",
+  "description": "Dogrudan Temin Onay Belgesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "kurumUst": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "mudurluk": {
+      "type": "string"
+    },
+    "idareAdi": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "teminNo": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "isinAciklamasi": {
+      "type": "string"
+    },
+    "teminSekli": {
+      "type": "string"
+    },
+    "alimTuru": {
+      "type": "string"
+    },
+    "yaklasikMaliyet": {
+      "type": "string"
+    },
+    "odenekTutari": {
+      "type": "string"
+    },
+    "projeNo": {
+      "type": "string"
+    },
+    "butceTertibi": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "avansSartlari": {
+      "type": "string"
+    },
+    "fiyatFarkiSartlari": {
+      "type": "string"
+    },
+    "dokumanHazirlik": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "ekler": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

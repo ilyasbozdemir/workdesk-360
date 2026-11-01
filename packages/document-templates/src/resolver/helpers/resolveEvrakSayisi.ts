@@ -1,5 +1,5 @@
 /**
- * Formats an evrak sayısı into official EBYS format (E-[DETSIS]-[SDP]-[SAYI]).
+ * Formats an evrak sayısı into official EBYS/DETSIS format ([DETSIS]-[SDP]-[SAYI]) as in İhtiyaç Listesi.
  */
 export function formatOfficialEvrakSayisi(options: {
   evrakSayisi?: string | null;
@@ -7,6 +7,7 @@ export function formatOfficialEvrakSayisi(options: {
   tur?: string | null;
   sayisi?: string | number | null;
   teminNo?: string | null;
+  yil?: number | string | null;
 }): string {
   const current = String(options.evrakSayisi || '').replace(/^E-/i, '').trim();
   if (current && !current.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(current)) {
@@ -41,7 +42,7 @@ export function formatOfficialEvrakSayisi(options: {
 }
 
 /**
- * Resolves official E-DETSIS formatted document number e.g. E-10234521-934.01-0001
+ * Resolves official document number in standard İhtiyaç Listesi format e.g. 0000000-934.01-0001
  */
 export async function resolveEvrakSayisi(
   activeDosyaId: number,
@@ -84,7 +85,7 @@ export async function resolveEvrakSayisi(
     if (!detsisNo) {
       try {
         const ayarRes = await queryExecutor(
-          'SELECT deger FROM TANIM_Ayar WHERE anahtar IN ("detsisKodu", "detsis_kodu") LIMIT 1',
+          "SELECT deger FROM TANIM_Ayar WHERE anahtar IN ('detsisKodu', 'detsis_kodu') LIMIT 1",
           []
         );
         if (ayarRes?.[0]?.deger) {
@@ -96,7 +97,7 @@ export async function resolveEvrakSayisi(
     if (!detsisNo) {
       try {
         const setRes = await queryExecutor(
-          'SELECT value FROM settings WHERE key IN ("detsisKodu", "detsis_kodu") LIMIT 1',
+          "SELECT value FROM settings WHERE key IN ('detsisKodu', 'detsis_kodu') LIMIT 1",
           []
         );
         if (setRes?.[0]?.value) {
@@ -106,16 +107,22 @@ export async function resolveEvrakSayisi(
     }
 
     if (!detsisNo) {
-      detsisNo = '00000000';
+      detsisNo = '10234521';
     }
 
     // 3. Fetch dosya details
     const dosyaRes = await queryExecutor(
-      'SELECT id, temin_no, tur, butce_yili, dosya_acilis_tarihi, created_at FROM DATA_TeminDosyasi WHERE id = ? LIMIT 1',
+      'SELECT id, temin_no, evrak_sayisi, tur, butce_yili, dosya_acilis_tarihi, created_at FROM DATA_TeminDosyasi WHERE id = ? LIMIT 1',
       [activeDosyaId]
     );
 
     const row = dosyaRes?.[0];
+
+    // Eğer dosyada önceden girilmiş resmi formatta bir evrak sayısı varsa koru
+    const existingEvrak = String(row?.evrak_sayisi || '').replace(/^E-/i, '').trim();
+    if (existingEvrak && !existingEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(existingEvrak)) {
+      return existingEvrak;
+    }
 
     const dosyaSayisi = String(row?.temin_no || '').trim();
     const rawTur = String(row?.tur || 'mal').toLowerCase();
@@ -174,6 +181,6 @@ export async function resolveEvrakSayisi(
     const paddedSayi = String(seqNumber).padStart(4, '0');
     return `${detsisNo}-${sdpKodu}-${paddedSayi}`;
   } catch (err) {
-    return '00000000-934.01-0001';
+    return '10234521-934.01-0001';
   }
 }

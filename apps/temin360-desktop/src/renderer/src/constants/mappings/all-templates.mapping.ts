@@ -249,8 +249,8 @@ export const FiyatArastirmaMektubuMapping: ProcessMapping = {
 // ===========================================================
 export const FiyatArastirmasiMapping: ProcessMapping = {
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   dosyaKonusu: { deger: 'Fiyat Araştırması', aciklama: 'Belge Başlığı / Konusu' },
@@ -378,8 +378,8 @@ export const ButceSorgusuMapping: ProcessMapping = {
   kurumAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'Kurum Adı' },
   dosyaKonusu: { deger: 'Bütçe Sorgusu', aciklama: 'Belge Başlığı / Konusu' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   butceYili: { tablo: 'DATA_TeminDosyasi', sutun: 'butce_yili', aciklama: 'Bütçe Yılı' },
@@ -439,8 +439,8 @@ export const DogrudanTeminOnayBelgesiMapping: ProcessMapping = {
   makamAdi: { tablo: 'TANIM_Kurum', sutun: 'makam_adi', aciklama: 'Sunulacak Makam' },
   idareAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'İdare Adı' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   teminNo: { tablo: 'DATA_TeminDosyasi', sutun: 'temin_no', aciklama: 'Temin Numarası' },
@@ -501,8 +501,8 @@ export const DogrudanTeminSonucOnayBelgesiMapping: ProcessMapping = {
   mudurluk: { tablo: 'TANIM_Kurum', sutun: 'makam_adi', aciklama: 'Müdürlük / Makam' },
   idareAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'İdare Adı' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   isAdi: { tablo: 'DATA_TeminDosyasi', sutun: 'konu', aciklama: 'İşin Adı' },
@@ -641,8 +641,8 @@ export const IdareOnayBelgesiMapping: ProcessMapping = {
   mudurluk: { tablo: 'TANIM_Kurum', sutun: 'makam_adi', aciklama: 'Müdürlük / Makam' },
   idareAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'İdare Adı' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   teminNo: { tablo: 'DATA_TeminDosyasi', sutun: 'temin_no', aciklama: 'Temin Numarası' },
@@ -698,8 +698,8 @@ export const KabulEdilenTeklifMapping: ProcessMapping = {
   antetSatirlari: { tablo: 'TANIM_Kurum', sutun: 'kurum_anteti', aciklama: 'Kurum Anteti' },
   kurumAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'Kurum Adı' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   hazirlayanPersonelAdi: {
@@ -748,8 +748,8 @@ export const SozlesmeyeDavetMapping: ProcessMapping = {
   antetSatirlari: { tablo: 'TANIM_Kurum', sutun: 'kurum_anteti', aciklama: 'Kurum Anteti' },
   kurumAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'Kurum Adı' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   baskanAdi: {
@@ -886,8 +886,8 @@ export const KabulEdilenTeklifOdemeMapping: ProcessMapping = {
   antetSatirlari: { tablo: 'TANIM_Kurum', sutun: 'kurum_anteti', aciklama: 'Kurum Anteti' },
   kurumAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'Kurum Adı' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   hazirlayanPersonelAdi: {
@@ -936,8 +936,8 @@ export const MuayeneKabulTutanagiMapping: ProcessMapping = {
   antetSatirlari: { tablo: 'TANIM_Kurum', sutun: 'kurum_anteti', aciklama: 'Kurum Anteti' },
   kurumAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'Kurum Adı' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   baskanAdi: {
@@ -1019,8 +1019,8 @@ export const OdemeYazisiMapping: ProcessMapping = {
   kurumAdi: { tablo: 'TANIM_Kurum', sutun: 'kurum_adi', aciklama: 'Kurum Adı' },
   dosyaKonusu: { deger: 'Ödeme Yazısı', aciklama: 'Belge Başlığı / Konusu' },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'Evrak Sayısı'
   },
   isinAdi: { tablo: 'DATA_TeminDosyasi', sutun: 'konu', aciklama: 'İşin Adı' },

@@ -1,7 +1,37 @@
 import { DocumentPreviewTab } from '../../../../store/globalDocumentPreviewStore'
-import { DocumentSource } from './document-engine/types'
+import { TemplateOptionItem } from './templateResolver'
 
-export type { DocumentSource } from './document-engine/types'
+export type DocumentSource =
+  | { kind: 'ihtiyacRaporu'; raporId: number }
+  | { kind: 'dosya'; dosyaId: number; documentId?: string }
+
+export interface DocumentResolveContext {
+  invitedFirms?: unknown[]
+  [key: string]: unknown
+}
+
+export interface DocumentResolveResult {
+  resolvedData: Record<string, unknown>
+  formData: Record<string, unknown>
+  personelListesi?: unknown[]
+  birimListesi?: unknown[]
+  firmaListesi?: unknown[]
+  dosyaRecord?: unknown
+  raporRecord?: unknown
+  activeLogoLeft?: boolean
+  activeLogoRight?: boolean
+  activeOrientation?: 'portrait' | 'landscape'
+  initialSnapshotJson?: string
+}
+
+export interface DocumentResolver {
+  templates(source: DocumentSource): Promise<TemplateOptionItem[]>
+  resolve(
+    source: DocumentSource,
+    templateId: string,
+    context?: DocumentResolveContext
+  ): Promise<DocumentResolveResult>
+}
 
 export interface DocumentPreviewModalV3Props {
   isOpen: boolean

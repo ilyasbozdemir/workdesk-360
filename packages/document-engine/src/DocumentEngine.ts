@@ -5,6 +5,7 @@ import {
   DocumentValidationService
 } from '@temin360/document-templates'
 import { TemplateRegistry, InvalidTemplateKeyError } from './TemplateRegistry'
+import { InstitutionalHeaderProvider } from './providers/InstitutionalHeaderProvider'
 import {
   DocumentRecord,
   DocumentDefinition,
@@ -54,6 +55,58 @@ export class DocumentEngine {
     return this.storageAdapter
   }
 
+  private static getEffectiveStorageAdapter(): DocumentStorageAdapter | null {
+    if (this.storageAdapter) {
+      return this.storageAdapter
+    }
+    if (typeof window !== 'undefined' && (window as any).electron?.ipcRenderer) {
+      const ipc = (window as any).electron.ipcRenderer
+      return {
+        async getDocument({ dosyaId, templateKey }) {
+          const res = await ipc.invoke('belge:get-document', { dosyaId, templateKey })
+          if (res?.success && res.exists && res.record) {
+            return {
+              success: true,
+              exists: true,
+              record: {
+                id: res.record.id,
+                data: res.record.data,
+                sablonVersiyon: res.record.sablonVersiyon,
+                createdAt: res.record.createdAt,
+                updatedAt: res.record.updatedAt
+              }
+            }
+          }
+          if (res?.success === false) {
+            return { success: false, error: res.error || 'Belge yüklenemedi' }
+          }
+          return { success: true, exists: false }
+        },
+        async saveDocument({ dosyaId, templateKey, data, sablonVersiyon }) {
+          return await ipc.invoke('belge:save-document', {
+            dosyaId,
+            templateKey,
+            data,
+            sablonVersiyon
+          })
+        },
+        async resetDocument({ dosyaId, templateKey }) {
+          return await ipc.invoke('belge:reset-document', {
+            dosyaId,
+            templateKey
+          })
+        },
+        async deleteDocument({ dosyaId, templateKey }) {
+          return await ipc.invoke('belge:delete-document', {
+            dosyaId,
+            templateKey
+          })
+        }
+      }
+    }
+    return null
+  }
+
   /**
    * Veritabanı sorgu yürütücüsünü tanımlar
    */
@@ -88,9 +141,9 @@ export class DocumentEngine {
     if (DocumentEngine.storageAdapter?.executeQuery) {
       return DocumentEngine.storageAdapter.executeQuery(sql, params)
     }
-    // Global electron ipcRenderer fallback (çalışma zamanı uyumluluğu için)
+    // Global electron ipcRenderer fallback (çalışma zamanı uyumluluğu için standart imzayı kullanır)
     if (typeof window !== 'undefined' && (window as any).electron?.ipcRenderer) {
-      const res = await (window as any).electron.ipcRenderer.invoke('db:query', { sql, params })
+      const res = await (window as any).electron.ipcRenderer.invoke('db:query', sql, params)
       if (!res?.success) {
         throw new Error(res?.error || 'Veritabanı sorgusu başarısız')
       }
@@ -124,14 +177,7 @@ export class DocumentEngine {
     if (this.headerResolver) {
       return this.headerResolver(dosyaId, this.queryExecutor)
     }
-    return {
-      antetSatirlari: [],
-      kurumUst: '',
-      kurumAdi: '',
-      mudurluk: '',
-      solLogo: null,
-      sagLogo: null
-    }
+    return InstitutionalHeaderProvider.resolve(dosyaId, this.queryExecutor)
   }
 
   /**
@@ -148,7 +194,8 @@ export class DocumentEngine {
     const definition = TemplateRegistry.get<T>(canonicalKey)
     const headerData = await this.resolveHeaderData(dosyaId)
 
-    const resolvedData = await definition.resolver.resolve({
+    const resolver = definition.resolver
+    const resolvedData = await resolver.resolve({
       dosyaId,
       templateKey: canonicalKey,
       headerData,
@@ -164,102 +211,101 @@ export class DocumentEngine {
   }
 
   /**
-   * Dosyaya ait belgeyi bulur; diskte kayıt yoksa varsayılan veriyi oluşturup kaydeder.
+   * Belgeyi disk/veritabanından yükler, yoksa ilk kez çözümler ve kaydeder.
    */
   static async loadOrCreateDocument<T = Record<string, unknown>>(
     params: LoadOrCreateDocumentParams
   ): Promise<DocumentRecord<T>> {
     const { dosyaId, templateKey, context, forceDefault = false } = params
     const canonicalKey = this.resolveKey(templateKey)
+    const headerData = await this.resolveHeaderData(dosyaId)
+    const adapter = this.getEffectiveStorageAdapter()
 
-    // 1. Önce veritabanında bu dosyaya özel kaydedilmiş snapshot var mı kontrol et
-    if (!forceDefault && this.storageAdapter) {
-      try {
-        const getRes = await this.storageAdapter.getDocument({
+    // 1. Mevcut kayıtlı snapshot kontrolü
+    if (adapter && !forceDefault) {
+      const storageRes = await adapter.getDocument({
+        dosyaId,
+        templateKey: canonicalKey
+      })
+
+      if (!storageRes?.success) {
+        throw new Error(storageRes?.error || 'Belge veritabanından yüklenirken hata oluştu')
+      }
+
+      if (storageRes.exists && storageRes.record) {
+        return {
+          id: storageRes.record.id,
           dosyaId,
-          templateKey: canonicalKey
-        })
-
-        if (getRes?.success && getRes.exists && getRes.record) {
-          const headerData = await this.resolveHeaderData(dosyaId)
-          const valReport = DocumentValidationService.validate(
-            canonicalKey,
-            getRes.record.data as Record<string, unknown>
-          )
-
-          return {
-            id: getRes.record.id,
-            dosyaId,
-            templateKey: canonicalKey,
-            data: getRes.record.data as T,
-            sablonVersiyon: getRes.record.sablonVersiyon || 1,
-            createdAt: getRes.record.createdAt,
-            updatedAt: getRes.record.updatedAt,
-            isExisting: true,
-            headerData,
-            validationReport: valReport
-          }
+          templateKey: canonicalKey,
+          data: storageRes.record.data as T,
+          sablonVersiyon: storageRes.record.sablonVersiyon || 1,
+          createdAt: storageRes.record.createdAt,
+          updatedAt: storageRes.record.updatedAt,
+          isExisting: true,
+          headerData
         }
-      } catch (err) {
-        console.warn('[DocumentEngine] Saved document fetch error, falling back to resolver:', err)
       }
     }
 
-    // 2. Kayıt yoksa veya forceDefault ise: Belgeye özel resolver ile varsayılan veriyi oluştur
-    const { data: defaultData, headerData } = await this.resolveDocumentData<T>({
+    // 2. Kayıt yoksa resolver çalıştırılarak taze veri üretilir
+    const { data: initialData } = await this.resolveDocumentData<T>({
       dosyaId,
       templateKey: canonicalKey,
       invitedFirms: context?.invitedFirms as unknown[]
     })
 
-    const valReport = DocumentValidationService.validate(
-      canonicalKey,
-      defaultData as Record<string, unknown>
-    )
-
-    // 3. Varsayılan veriyi bu dosya için depolamaya ilk kayıt olarak kaydet
-    let recordId: number | undefined = undefined
-    let updatedAt: string | undefined = undefined
-
-    if (this.storageAdapter && dosyaId) {
+    // 3. İlk snapshot'ı otomatik kaydet (İlk açılış anında kalıcılık)
+    if (adapter && !forceDefault) {
       try {
-        const saveRes = await this.storageAdapter.saveDocument({
+        const saveRes = await adapter.saveDocument({
           dosyaId,
           templateKey: canonicalKey,
-          data: defaultData as Record<string, unknown>,
+          data: initialData as Record<string, unknown>,
           sablonVersiyon: 1
         })
-        if (saveRes?.success) {
-          recordId = saveRes.id
-          updatedAt = saveRes.updatedAt
+
+        return {
+          id: saveRes.id,
+          dosyaId,
+          templateKey: canonicalKey,
+          data: initialData,
+          sablonVersiyon: 1,
+          createdAt: saveRes.updatedAt,
+          updatedAt: saveRes.updatedAt,
+          isExisting: false,
+          headerData
         }
-      } catch (err) {
-        console.warn('[DocumentEngine] Initial document auto-save error:', err)
+      } catch (saveErr) {
+        console.warn('[DocumentEngine] İlk snapshot otomatik kaydetme hatası:', saveErr)
       }
     }
 
     return {
-      id: recordId,
       dosyaId,
       templateKey: canonicalKey,
-      data: defaultData,
+      data: initialData,
       sablonVersiyon: 1,
-      updatedAt,
       isExisting: false,
-      headerData,
-      validationReport: valReport
+      headerData
     }
   }
 
   /**
-   * Belge verisini doğrular ve depolama adaptörüne yazar.
+   * Belgeyi depolar ve dinleyicilere haber verir.
    */
   static async saveDocument<T = Record<string, unknown>>(
     params: SaveDocumentParams<T>
-  ): Promise<{ success: boolean; id?: number; updatedAt?: string; error?: string }> {
-    const { dosyaId, templateKey, data, sablonVersiyon = 1, validateBeforeSave = false } = params
+  ): Promise<{ success: boolean; id?: number; updatedAt?: string }> {
+    const {
+      dosyaId,
+      templateKey,
+      data,
+      sablonVersiyon = 1,
+      validateBeforeSave = true
+    } = params
     const canonicalKey = this.resolveKey(templateKey)
 
+    // Şema ve doğrulama denetimi
     if (validateBeforeSave) {
       const report = DocumentValidationService.validate(
         canonicalKey,
@@ -271,11 +317,12 @@ export class DocumentEngine {
       }
     }
 
-    if (!this.storageAdapter) {
-      return { success: true }
+    const adapter = this.getEffectiveStorageAdapter()
+    if (!adapter) {
+      throw new Error('Depolama adaptörü tanımlanmamış, belge kaydedilemedi.')
     }
 
-    const res = await this.storageAdapter.saveDocument({
+    const res = await adapter.saveDocument({
       dosyaId,
       templateKey: canonicalKey,
       data: data as Record<string, unknown>,
@@ -314,12 +361,16 @@ export class DocumentEngine {
   ): Promise<DocumentRecord<T>> {
     const { dosyaId, templateKey, context } = params
     const canonicalKey = this.resolveKey(templateKey)
+    const adapter = this.getEffectiveStorageAdapter()
 
-    if (this.storageAdapter) {
-      await this.storageAdapter.resetDocument({
+    if (adapter) {
+      const res = await adapter.resetDocument({
         dosyaId,
         templateKey: canonicalKey
       })
+      if (!res?.success) {
+        throw new Error(res?.error || 'Belge sıfırlanırken hata oluştu.')
+      }
     }
 
     return await this.loadOrCreateDocument<T>({
@@ -376,12 +427,16 @@ export class DocumentEngine {
   static async deleteDocument(params: DeleteDocumentParams): Promise<boolean> {
     const { dosyaId, templateKey } = params
     const canonicalKey = this.resolveKey(templateKey)
+    const adapter = this.getEffectiveStorageAdapter()
 
-    if (this.storageAdapter) {
-      const res = await this.storageAdapter.deleteDocument({
+    if (adapter) {
+      const res = await adapter.deleteDocument({
         dosyaId,
         templateKey: canonicalKey
       })
+      if (!res?.success) {
+        throw new Error(res?.error || 'Belge silinirken hata oluştu.')
+      }
       return Boolean(res?.success)
     }
     return true
@@ -452,4 +507,3 @@ export class DocumentEngine {
 </html>`
   }
 }
-

@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "dilekceTarihi": "22/10/2026",
   "kurumAdi": "ÖRNEK KAMU KURUMU BAŞKANLIĞI",
   "birimAdi": "Destek Hizmetleri Dairesi Başkanlığı",
@@ -21,5 +22,8 @@
   "subeKodu": "1532",
   "iban": "TR99 0001 0015 3288 7766 5501 02",
   "hesapSahibi": "ABC BİLİŞİM TEKNOLOJİLERİ SAN. VE TİC. A.Ş.",
-  "ekler": ["Fatura Aslı (1 Adet)", "Muayene ve Kabul Tutanağı (1 Adet)"]
+  "ekler": [
+    "Fatura Aslı (1 Adet)",
+    "Muayene ve Kabul Tutanağı (1 Adet)"
+  ]
 }

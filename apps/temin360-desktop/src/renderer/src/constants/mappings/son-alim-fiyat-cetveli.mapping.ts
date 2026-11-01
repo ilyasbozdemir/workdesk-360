@@ -11,8 +11,8 @@ export const SonAlimFiyatCetveliMapping: ProcessMapping = {
     aciklama: 'Belgenin konusu'
   },
   evrakSayisi: {
-    formul:
-      '{{TANIM_Kurum.detsis_kodu}}-{{DATA_TeminDosyasi.butce_yili}}/{{DATA_TeminDosyasi.temin_no}}',
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'evrak_sayisi',
     aciklama: 'DETSİS No - Yıl - Dosya No birleşimi'
   },
   tarih: {

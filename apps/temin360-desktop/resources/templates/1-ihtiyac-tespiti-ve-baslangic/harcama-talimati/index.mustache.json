@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "evrakSayisi": "987.65.43.21-01",
   "tarih": "24/07/2026",
   "idareAdi": "KUZEYYAKA BELEDİYE BAŞKANLIĞI",
@@ -9,8 +10,12 @@
   "teminSekli": "4734 sayılı Kanun'un 22/d* maddesi gereğince Doğrudan Temin",
   "yaklasikMaliyet": "180.250,00",
   "odenekTutari": "250.000,00 TL",
-  "butceTertibi": ["46.90.02.05-03.2.9.90"],
-  "gerceklestirmeGorevlileri": ["Deniz YÜCEL (Teknisyen)"],
+  "butceTertibi": [
+    "46.90.02.05-03.2.9.90"
+  ],
+  "gerceklestirmeGorevlileri": [
+    "Deniz YÜCEL (Teknisyen)"
+  ],
   "aciklama": "Kuzeyyaka sınırlarında yer alan çocuk parkları ve yeşil alanlar için kent mobilyalarının temini, montajı ve teslimi işi.",
   "mutemetAdi": "Caner AKSOY",
   "isTutari": "212.695,00",

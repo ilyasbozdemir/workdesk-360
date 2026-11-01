@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Teklif Mektubu Dagitim Cizelgesi Şablon Veri Şeması",
+  "description": "Teklif Mektubu Dagitim Cizelgesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "kurumUst": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "mudurluk": {
+      "type": "string"
+    },
+    "belgeBasligi": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "satirlar": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sira": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "kalemSayisi": {
+      "type": "integer"
+    },
+    "kalemSayisiYazi": {
+      "type": "string"
+    },
+    "vtarih": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "komisyon": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "gorev": {
+            "type": "string"
+          },
+          "adSoyad": {
+            "type": "string"
+          },
+          "unvan": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

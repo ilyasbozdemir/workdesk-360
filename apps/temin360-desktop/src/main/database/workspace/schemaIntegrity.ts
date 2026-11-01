@@ -445,7 +445,106 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     )
   }
 
-  // 11. DATA_TeminFirma Kazanan Kolonları
+  
+
+  // 10.1. DATA_TeminBelgeSnapshot Tablosu Tesis ve Veri Migrasyonu
+  safeExec(
+    db,
+    `
+    CREATE TABLE IF NOT EXISTS DATA_TeminBelgeSnapshot (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      dosya_id INTEGER NOT NULL,
+      sablon_id INTEGER,
+      sablon_kodu TEXT NOT NULL,
+      veri_json TEXT NOT NULL,
+      sablon_versiyon INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      created_by INTEGER DEFAULT NULL,
+      updated_by INTEGER DEFAULT NULL,
+      is_active INTEGER DEFAULT 1,
+      is_deleted INTEGER DEFAULT 0,
+      FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_temin_belge_snapshot_dosya ON DATA_TeminBelgeSnapshot(dosya_id);
+    CREATE INDEX IF NOT EXISTS idx_temin_belge_snapshot_sablon ON DATA_TeminBelgeSnapshot(sablon_kodu);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_temin_belge_snapshot_unique ON DATA_TeminBelgeSnapshot(dosya_id, sablon_kodu);
+  `,
+    'DATA_TeminBelgeSnapshot Tablo ve Indeks Tesis'
+  )
+
+  // DATA_DosyaSablonVeri -> DATA_TeminBelgeSnapshot Migrasyonu
+  if (isPhysicalTable(db, 'DATA_DosyaSablonVeri')) {
+    try {
+      const oldRows = db
+        .prepare(
+          `SELECT 
+            id,
+            temin_dosya_id,
+            dosya_id,
+            sablon_id,
+            sablon_kodu,
+            veri_json,
+            sablon_versiyon,
+            created_at,
+            updated_at
+           FROM DATA_DosyaSablonVeri
+           WHERE (sablon_kodu IS NOT NULL AND sablon_kodu != '')
+             AND (dosya_id IS NOT NULL OR temin_dosya_id IS NOT NULL)
+           ORDER BY updated_at DESC, id DESC`
+        )
+        .all() as Array<{
+        id: number
+        temin_dosya_id: number
+        dosya_id?: number
+        sablon_id?: number
+        sablon_kodu: string
+        veri_json: string
+        sablon_versiyon?: number
+        created_at?: string
+        updated_at?: string
+      }>
+
+      if (oldRows.length > 0) {
+        const insertSnapshot = db.prepare(`
+          INSERT INTO DATA_TeminBelgeSnapshot (
+            dosya_id,
+            sablon_id,
+            sablon_kodu,
+            veri_json,
+            sablon_versiyon,
+            created_at,
+            updated_at,
+            is_active,
+            is_deleted
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0)
+          ON CONFLICT(dosya_id, sablon_kodu) DO NOTHING
+        `)
+
+        const migrateTx = db.transaction(() => {
+          for (const row of oldRows) {
+            const targetDosyaId = row.dosya_id || row.temin_dosya_id
+            if (!targetDosyaId) continue
+
+            insertSnapshot.run(
+              targetDosyaId,
+              row.sablon_id || null,
+              row.sablon_kodu,
+              row.veri_json,
+              row.sablon_versiyon || 1,
+              row.created_at || new Date().toISOString(),
+              row.updated_at || new Date().toISOString()
+            )
+          }
+        })
+
+        migrateTx()
+      }
+    } catch (migErr: unknown) {
+      console.warn('[ensureSchemaIntegrity] DATA_TeminBelgeSnapshot migrasyon hatasi:', migErr)
+    }
+  }
+// 11. DATA_TeminFirma Kazanan Kolonları
   safeAddColumn(db, 'DATA_TeminFirma', 'kazanan_mi', 'INTEGER DEFAULT 0')
   safeAddColumn(db, 'DATA_TeminFirma', 'kazandi_mi', 'INTEGER DEFAULT 0')
 

@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hakedis Raporu Şablon Veri Şeması",
+  "description": "Hakedis Raporu belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "antetSatir1": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "isinAdi": {
+      "type": "string"
+    },
+    "hakedisNo": {
+      "type": "string"
+    },
+    "hakedisTarihi": {
+      "type": "string"
+    },
+    "hizmetTutari": {
+      "type": "string"
+    },
+    "fiyatFarkTutari": {
+      "type": "string"
+    },
+    "toplamTutar": {
+      "type": "string"
+    },
+    "iskontoTutari": {
+      "type": "string"
+    },
+    "oncekiHakedisTutari": {
+      "type": "string"
+    },
+    "buHakedisTutari": {
+      "type": "string"
+    },
+    "kdvOrani": {
+      "type": "string"
+    },
+    "kdvTutari": {
+      "type": "string"
+    },
+    "tahakkukTutari": {
+      "type": "string"
+    },
+    "gelirVergisiOrani": {
+      "type": "string"
+    },
+    "gelirVergisiTutari": {
+      "type": "string"
+    },
+    "damgaVergisiOrani": {
+      "type": "string"
+    },
+    "damgaVergisiTutari": {
+      "type": "string"
+    },
+    "kdvTevkifatiOrani": {
+      "type": "string"
+    },
+    "kdvTevkifatTutari": {
+      "type": "string"
+    },
+    "sskKesintisi": {
+      "type": "string"
+    },
+    "idareMakineKiralari": {
+      "type": "string"
+    },
+    "gecikmeCezasi": {
+      "type": "string"
+    },
+    "avansMahsubu": {
+      "type": "string"
+    },
+    "fiyatFarkTeminatKesintisi": {
+      "type": "string"
+    },
+    "stopajTutari": {
+      "type": "string"
+    },
+    "digerKesinti1Adi": {
+      "type": "string"
+    },
+    "digerKesinti1Tutari": {
+      "type": "string"
+    },
+    "digerKesinti2Adi": {
+      "type": "string"
+    },
+    "digerKesinti2Tutari": {
+      "type": "string"
+    },
+    "kesintilerToplamTutari": {
+      "type": "string"
+    },
+    "odenecekTutar": {
+      "type": "string"
+    },
+    "notlar": {
+      "type": "string"
+    },
+    "yukleniciGoster": {
+      "type": "boolean"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "duzenleyen1Adi": {
+      "type": "string"
+    },
+    "duzenleyen1Unvan": {
+      "type": "string"
+    },
+    "duzenleyen2Adi": {
+      "type": "string"
+    },
+    "duzenleyen2Unvan": {
+      "type": "string"
+    },
+    "duzenleyen3Adi": {
+      "type": "string"
+    },
+    "duzenleyen3Unvan": {
+      "type": "string"
+    },
+    "onayTarihi": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

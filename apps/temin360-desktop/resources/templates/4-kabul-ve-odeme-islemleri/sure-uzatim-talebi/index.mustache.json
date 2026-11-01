@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "dilekceTarihi": "22/10/2026",
   "kurumAdi": "ÖRNEK KAMU KURUMU BAŞKANLIĞI",
   "birimAdi": "Destek Hizmetleri Dairesi Başkanlığı",
@@ -14,5 +15,8 @@
   "ekSureGun": "15",
   "gerekce": "Bölgede meydana gelen yoğun yağış ve elverişsiz hava koşulları nedeniyle açık alanda yürütülen çatı yapım faaliyetlerine ara verilmek zorunda kalınmıştır.",
   "isMal": true,
-  "ekler": ["Meteoroloji Genel Müdürlüğü Hava Raporu", "Şantiye Günlük Defteri Nüshası"]
+  "ekler": [
+    "Meteoroloji Genel Müdürlüğü Hava Raporu",
+    "Şantiye Günlük Defteri Nüshası"
+  ]
 }

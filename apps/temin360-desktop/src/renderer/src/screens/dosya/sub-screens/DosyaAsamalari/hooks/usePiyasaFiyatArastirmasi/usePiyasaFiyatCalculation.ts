@@ -4,6 +4,21 @@ import { BiddingFirm, BiddingKalem } from './types'
 import { emitAppEvent } from '../../../../../../utils/appEvents'
 import { documentPreloadService } from '../../../../../../services/documentPreloadService'
 
+export function calculateEstimatedCost(
+  items: BiddingKalem[],
+  isLowestBasis: boolean,
+  getLowestBidInfo: (kalemId: number) => { price: number; firmaId: number | null },
+  getAverageBid: (kalemId: number) => number
+): number {
+  let totalDecimal = new Decimal(0)
+  items.forEach((item) => {
+    const price = isLowestBasis ? getLowestBidInfo(item.id).price : getAverageBid(item.id)
+    const miktar = new Decimal(item.miktar || 0)
+    totalDecimal = totalDecimal.plus(miktar.times(price))
+  })
+  return totalDecimal.toDecimalPlaces(2).toNumber()
+}
+
 export function usePiyasaFiyatCalculation(
   activeDosyaId: number | null,
   invitedFirms: BiddingFirm[],
@@ -56,13 +71,7 @@ export function usePiyasaFiyatCalculation(
       hesaplamaEsasi?.toLowerCase().includes('en düşük') ||
       hesaplamaEsasi?.toLowerCase().includes('en dusuk')
 
-    let totalDecimal = new Decimal(0)
-    items.forEach((item) => {
-      const price = isLowestBasis ? getLowestBidInfo(item.id).price : getAverageBid(item.id)
-      const miktar = new Decimal(item.miktar || 0)
-      totalDecimal = totalDecimal.plus(miktar.times(price))
-    })
-    return totalDecimal.toDecimalPlaces(2).toNumber()
+    return calculateEstimatedCost(items, isLowestBasis, getLowestBidInfo, getAverageBid)
   }, [items, getAverageBid, getLowestBidInfo, hesaplamaEsasi])
 
   const handleSetHesaplamaEsasi = useCallback(
@@ -72,14 +81,7 @@ export function usePiyasaFiyatCalculation(
       try {
         const isLowestBasis =
           newEsas?.toLowerCase().includes('en düşük') || newEsas?.toLowerCase().includes('en dusuk')
-
-        let totalDecimal = new Decimal(0)
-        items.forEach((item) => {
-          const price = isLowestBasis ? getLowestBidInfo(item.id).price : getAverageBid(item.id)
-          const miktar = new Decimal(item.miktar || 0)
-          totalDecimal = totalDecimal.plus(miktar.times(price))
-        })
-        const total = totalDecimal.toDecimalPlaces(2).toNumber()
+        const total = calculateEstimatedCost(items, isLowestBasis, getLowestBidInfo, getAverageBid)
 
         await window.electron.ipcRenderer.invoke(
           'db:run',
@@ -107,34 +109,64 @@ export function usePiyasaFiyatCalculation(
   }, [invitedFirms])
 
   const handleSetWinnerFirma = useCallback(
-    async (firmaMasterId: number | null): Promise<void> => {
+    async (targetIdentifier: number | null): Promise<void> => {
       if (!activeDosyaId) return
       try {
-        const estTotal = getEstimatedCostTotal()
-        await window.electron.ipcRenderer.invoke(
-          'db:run',
-          'UPDATE DATA_TeminDosyasi SET firma_id = ?, yaklasik_maliyet = CASE WHEN ? > 0 THEN ? ELSE yaklasik_maliyet END WHERE id = ?',
-          [firmaMasterId, estTotal, estTotal, activeDosyaId]
-        )
+        let resolvedMasterFirmaId: number | null = null
+        let resolvedTeminFirmaId: number | null = null
 
-        if (firmaMasterId) {
-          await window.electron.ipcRenderer.invoke(
-            'db:run',
-            `UPDATE DATA_TeminFirma 
-             SET kazandi_mi = CASE WHEN firma_id = ? OR id = ? THEN 1 ELSE 0 END 
-             WHERE temin_dosya_id = ?`,
-            [firmaMasterId, firmaMasterId, activeDosyaId]
+        if (targetIdentifier !== null && targetIdentifier > 0) {
+          // TANIM_Firma (master) ile DATA_TeminFirma (satır) ID'sini veritabanından kesinleştir
+          const checkRes = await window.electron.ipcRenderer.invoke(
+            'db:query',
+            `SELECT id, firma_id FROM DATA_TeminFirma 
+             WHERE temin_dosya_id = ? AND aktif_mi = 1 AND (id = ? OR firma_id = ?) 
+             LIMIT 1`,
+            [activeDosyaId, targetIdentifier, targetIdentifier]
           )
-        } else {
-          await window.electron.ipcRenderer.invoke(
-            'db:run',
-            `UPDATE DATA_TeminFirma SET kazandi_mi = 0 WHERE temin_dosya_id = ?`,
-            [activeDosyaId]
-          )
+
+          if (checkRes?.success && Array.isArray(checkRes.data) && checkRes.data.length > 0) {
+            const row = checkRes.data[0]
+            resolvedTeminFirmaId = Number(row.id)
+            resolvedMasterFirmaId = row.firma_id ? Number(row.firma_id) : resolvedTeminFirmaId
+          } else {
+            resolvedMasterFirmaId = targetIdentifier
+            resolvedTeminFirmaId = targetIdentifier
+          }
         }
 
-        setManualWinnerFirmaId(firmaMasterId)
-        if (firmaMasterId) {
+        // Tek bir atomik transaction ile dosya ve firma bayraklarını güncelle
+        const queries: { sql: string; params?: any[] }[] = []
+
+        // 1. DATA_TeminDosyasi güncellemesi (yalnızca firma_id güncellenir, yaklasik_maliyet'e dokunulmaz!)
+        queries.push({
+          sql: 'UPDATE DATA_TeminDosyasi SET firma_id = ? WHERE id = ?',
+          params: [resolvedMasterFirmaId, activeDosyaId]
+        })
+
+        // 2. DATA_TeminFirma güncellemesi: kazandi_mi VE kazanan_mi birlikte senkronize güncellenir
+        if (resolvedTeminFirmaId !== null) {
+          queries.push({
+            sql: `UPDATE DATA_TeminFirma 
+                  SET kazandi_mi = CASE WHEN id = ? THEN 1 ELSE 0 END,
+                      kazanan_mi = CASE WHEN id = ? THEN 1 ELSE 0 END
+                  WHERE temin_dosya_id = ?`,
+            params: [resolvedTeminFirmaId, resolvedTeminFirmaId, activeDosyaId]
+          })
+        } else {
+          queries.push({
+            sql: 'UPDATE DATA_TeminFirma SET kazandi_mi = 0, kazanan_mi = 0 WHERE temin_dosya_id = ?',
+            params: [activeDosyaId]
+          })
+        }
+
+        const txRes = await window.electron.ipcRenderer.invoke('db:transaction', queries)
+        if (!txRes?.success) {
+          throw new Error(txRes?.error || 'Kazanan firma güncelleme transaction hatası')
+        }
+
+        setManualWinnerFirmaId(resolvedMasterFirmaId)
+        if (resolvedMasterFirmaId !== null) {
           setSetLowestFirmAsWinner(false)
         }
 
@@ -145,7 +177,7 @@ export function usePiyasaFiyatCalculation(
         console.error('Error setting winner firma:', err)
       }
     },
-    [activeDosyaId, getEstimatedCostTotal, setManualWinnerFirmaId, setSetLowestFirmAsWinner]
+    [activeDosyaId, setManualWinnerFirmaId, setSetLowestFirmAsWinner]
   )
 
   return {

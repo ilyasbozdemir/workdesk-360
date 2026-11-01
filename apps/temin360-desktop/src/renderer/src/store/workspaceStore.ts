@@ -1,3 +1,5 @@
+import { resolveEvrakSayisi } from '@temin360/document-templates'
+import { InstitutionalHeaderProvider } from '@worksuite-360/document-engine'
 import { create } from 'zustand'
 
 export interface WorkspaceMeta {
@@ -145,17 +147,42 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     if (id !== null) {
       sessionStorage.setItem('workspace_dosya_id', id.toString())
       localStorage.setItem('active_dosya_id', id.toString())
+      InstitutionalHeaderProvider.clearCache(id)
+
+      const queryExecutor = async (sql: string, params: any[] = []): Promise<any[]> => {
+        const res = await window.electron.ipcRenderer.invoke('db:query', sql, params)
+        return res?.data || []
+      }
+
       window.electron.ipcRenderer
-        .invoke('db:query', 'SELECT starred_docs FROM DATA_TeminDosyasi WHERE id = ?', [id])
-        .then((res: { success: boolean; data?: Array<{ starred_docs?: string }> }) => {
+        .invoke('db:query', 'SELECT starred_docs, evrak_sayisi, temin_no FROM DATA_TeminDosyasi WHERE id = ?', [id])
+        .then(async (res: { success: boolean; data?: Array<{ starred_docs?: string; evrak_sayisi?: string; temin_no?: string }> }) => {
           if (res.success && res.data && res.data.length > 0) {
+            const row = res.data[0]
             try {
-              const docs = res.data[0].starred_docs ? JSON.parse(res.data[0].starred_docs) : []
+              const docs = row.starred_docs ? JSON.parse(row.starred_docs) : []
               set({ activeDosyaId: id, activeStarredDocs: docs })
-              return
             } catch {
-              // noop
+              set({ activeDosyaId: id, activeStarredDocs: [] })
             }
+
+            // Aktif dosya seçildiğinde: evrak_sayisi kolonunu kontrol et, yoksa bir kez oluşturup kolona yaz (kalıtım için kaynak)
+            const curEvrak = String(row.evrak_sayisi || '').replace(/^E-/i, '').trim()
+            if (!curEvrak || curEvrak.includes('/') || !/^\d+-\d+\.\d+-\d+$/.test(curEvrak)) {
+              try {
+                const officialSayi = await resolveEvrakSayisi(id, queryExecutor)
+                if (officialSayi) {
+                  await queryExecutor(
+                    'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
+                    [officialSayi, id]
+                  )
+                  InstitutionalHeaderProvider.clearCache(id)
+                }
+              } catch (err) {
+                console.warn('[workspaceStore] resolveEvrakSayisi failed on setActiveDosyaId:', err)
+              }
+            }
+            return
           }
           set({ activeDosyaId: id, activeStarredDocs: [] })
         })
@@ -163,6 +190,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           set({ activeDosyaId: id, activeStarredDocs: [] })
         })
     } else {
+      InstitutionalHeaderProvider.clearCache()
       sessionStorage.removeItem('workspace_dosya_id')
       localStorage.removeItem('active_dosya_id')
       set({ activeDosyaId: null, activeStarredDocs: [] })

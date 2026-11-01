@@ -174,8 +174,8 @@ export function useDosyaAsamasiSablons() {
           : ''
       const snapshotRes = await (window as any).electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT veri_json FROM DATA_DosyaSablonVeri 
-         WHERE temin_dosya_id = ? AND (
+        `SELECT veri_json FROM DATA_TeminBelgeSnapshot 
+         WHERE dosya_id = ? AND is_deleted = 0 AND (
            sablon_id = ? 
            OR (? != '' AND (sablon_kodu = ? OR sablon_kodu = ? || '.html'))
          )
@@ -289,7 +289,7 @@ export function useDosyaAsamasiSablons() {
       // Güncel verileri almak, o şablon için kaydedilmiş (dondurulmuş) veriyi temizlemek anlamına gelir
       await (window as any).electron.ipcRenderer.invoke(
         'db:run',
-        'DELETE FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = ? AND sablon_id = ?',
+        'DELETE FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND sablon_id = ?',
         [activeDosyaId, previewData.sablonId]
       )
       setPreviewData({
@@ -309,10 +309,11 @@ export function useDosyaAsamasiSablons() {
       previewData.snapshotContext || contextsByPath[previewData.processPath] || dosyaContext
     const mergedCtx = { ...currentCtx, ...overrideData }
     try {
+      const sCode = (previewData.processPath || '').replace(/\.html$/, '') || String(previewData.sablonId)
       await (window as any).electron.ipcRenderer.invoke(
         'db:run',
-        'INSERT OR REPLACE INTO DATA_DosyaSablonVeri (temin_dosya_id, sablon_id, veri_json) VALUES (?, ?, ?)',
-        [activeDosyaId, previewData.sablonId, JSON.stringify(mergedCtx)]
+        'INSERT INTO DATA_TeminBelgeSnapshot (dosya_id, sablon_id, sablon_kodu, veri_json, is_active, is_deleted, updated_at) VALUES (?, ?, ?, ?, 1, 0, CURRENT_TIMESTAMP) ON CONFLICT(dosya_id, sablon_kodu) DO UPDATE SET veri_json = excluded.veri_json, is_active = 1, is_deleted = 0, updated_at = CURRENT_TIMESTAMP',
+        [activeDosyaId, previewData.sablonId, sCode, JSON.stringify(mergedCtx)]
       )
 
       // Eşleşen personelleri doğrudan temin dosyası ana kaydı (DATA_TeminDosyasi) ile eşleştir

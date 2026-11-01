@@ -116,7 +116,7 @@ export function ekOner(alimTuru?: string, currentDocId?: string): EvrakEkKalemi[
 }
 
 /**
- * Belge ayarlarını DATA_DosyaSablonVeri.veri_json içindeki _evrak anahtarına birleştirir.
+ * Belge ayarlarını DATA_TeminBelgeSnapshot.veri_json içindeki _evrak anahtarına birleştirir.
  */
 export function mergeEvrakSettings(
   existingVeriJson: string | Record<string, any> | undefined | null,

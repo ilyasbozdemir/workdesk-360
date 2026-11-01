@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fiyat Arastirmasi Şablon Veri Şeması",
+  "description": "Fiyat Arastirmasi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "ekNo": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "antetSatir1": {
+      "type": "string"
+    },
+    "antetSatir2": {
+      "type": "string"
+    },
+    "antetSatir3": {
+      "type": "string"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "kurumIci": {
+      "type": "boolean"
+    },
+    "kurumAdres": {
+      "type": "string"
+    },
+    "kurumTelefon": {
+      "type": "string"
+    },
+    "kurumFaks": {
+      "type": "string"
+    },
+    "kurumEposta": {
+      "type": "string"
+    },
+    "kurumKep": {
+      "type": "string"
+    },
+    "sunulacakMakamAdi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "kodu": {
+            "type": "string"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "kdvOrani": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "onaylayanlar": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "onaylayanPersonelAdi": {
+            "type": "string"
+          },
+          "onaylayanPersonelUnvan": {
+            "type": "string"
+          },
+          "dosyaTarihi": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "hazirlayanTelefon": {
+      "type": "string"
+    },
+    "hazirlayanEposta": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

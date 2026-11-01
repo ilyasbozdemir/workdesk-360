@@ -164,8 +164,8 @@ export function resolveDocumentPayload(
         const snapRow = db
           .prepare(
             `
-        SELECT veri_json FROM DATA_DosyaSablonVeri 
-        WHERE temin_dosya_id = ? AND (
+        SELECT veri_json FROM DATA_TeminBelgeSnapshot 
+        WHERE dosya_id = ? AND is_deleted = 0 AND (
           sablon_kodu IN (${placeholders})
           OR sablon_id IN (SELECT id FROM TANIM_Sablon WHERE dosya_adi IN (${placeholders}))
         )
@@ -534,13 +534,22 @@ export function resolveDocumentPayload(
     }
 
     const paddedSayi = String(seqNumber).padStart(4, '0')
-    const officialEvrakSayisi = `${detsisNo}-${sdpKodu}-${paddedSayi}`
+    const officialEvrakSayisi =
+      detsisNo && detsisNo !== '00000000'
+        ? `${detsisNo}-${sdpKodu}-${paddedSayi}`
+        : `${fileYear}/${seqNumber}`
 
     const existingEvrak = String((dosya as any)?.evrak_sayisi || '').replace(/^E-/i, '').trim()
     const resolvedEvrakSayisi =
-      existingEvrak && !existingEvrak.includes('/')
+      existingEvrak && !existingEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(existingEvrak)
         ? existingEvrak
         : officialEvrakSayisi
+
+    if (!existingEvrak && resolvedEvrakSayisi && dosyaId) {
+      try {
+        db.prepare("UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = '')").run(resolvedEvrakSayisi, dosyaId)
+      } catch {}
+    }
 
     const resolvedContext = {
       faturaNo: resolvedFaturaNo,
