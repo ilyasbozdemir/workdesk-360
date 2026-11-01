@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Luzum Muzekkeresi Onay Eki Şablon Veri Şeması",
+  "description": "Luzum Muzekkeresi Onay Eki belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ekNo": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "talepEdenPersonelAdi": {
+      "type": "string"
+    },
+    "talepEdenPersonelUnvan": {
+      "type": "string"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kodu": {
+            "type": "string"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "kdvOrani": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

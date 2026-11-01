@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Odeme Yazisi Şablon Veri Şeması",
+  "description": "Odeme Yazisi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "makamAdi": {
+      "type": "string"
+    },
+    "neyimizin": {
+      "type": "string"
+    },
+    "isinAdi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "kdvDahilToplam": {
+      "type": "string"
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "harcamaKalemi": {
+      "type": "string"
+    },
+    "butceKodu": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "olurGoster": {
+      "type": "boolean"
+    },
+    "onayTarihi": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

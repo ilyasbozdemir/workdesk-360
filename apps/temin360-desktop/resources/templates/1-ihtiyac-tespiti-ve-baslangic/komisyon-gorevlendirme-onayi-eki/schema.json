@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Komisyon Gorevlendirme Onayi Eki Şablon Veri Şeması",
+  "description": "Komisyon Gorevlendirme Onayi Eki belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "kurumUst": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "mudurluk": {
+      "type": "string"
+    },
+    "kurumumuz": {
+      "type": "string"
+    },
+    "alimTuru": {
+      "type": "string"
+    },
+    "ekNo": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "fiyatKomisyonu": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "gorevi": {
+            "type": "string"
+          },
+          "adSoyad": {
+            "type": "string"
+          },
+          "unvan": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "muayeneKomisyonu": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "gorevi": {
+            "type": "string"
+          },
+          "adSoyad": {
+            "type": "string"
+          },
+          "unvan": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "kurumIci": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}

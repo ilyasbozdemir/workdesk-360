@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Klasor Sirtligi 3cm Şablon Veri Şeması",
+  "description": "Klasor Sirtligi 3cm belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "klasorBasligi": {
+      "type": "string"
+    },
+    "konu": {
+      "type": "string"
+    },
+    "yil": {
+      "type": "string"
+    },
+    "klasorNo": {
+      "type": "string"
+    },
+    "renk": {
+      "type": "string"
+    },
+    "genislik": {
+      "type": "string"
+    },
+    "altBilgi": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

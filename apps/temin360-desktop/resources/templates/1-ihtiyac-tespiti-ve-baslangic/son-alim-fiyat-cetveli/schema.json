@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Son Alim Fiyat Cetveli Şablon Veri Şeması",
+  "description": "Son Alim Fiyat Cetveli belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "kurumIci": {
+      "type": "boolean"
+    },
+    "kurumAdres": {
+      "type": "string"
+    },
+    "kurumTelefon": {
+      "type": "string"
+    },
+    "kurumWeb": {
+      "type": "string"
+    },
+    "kurumEposta": {
+      "type": "string"
+    },
+    "kurumKep": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "kontrolEdenPersonelAdi": {
+      "type": "string"
+    },
+    "kontrolEdenPersonelUnvan": {
+      "type": "string"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "fiyatKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "malzemeKodu": {
+            "type": "string"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "kdvOrani": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "integer"
+          },
+          "birimFiyat": {
+            "type": "string"
+          },
+          "toplamTutar": {
+            "type": "string"
+          },
+          "kazananFirma": {
+            "type": "string"
+          },
+          "alimTarihi": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "olurYazisi": {
+      "type": "boolean"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    },
+    "hazirlayanTelefon": {
+      "type": "string"
+    },
+    "hazirlayanEposta": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

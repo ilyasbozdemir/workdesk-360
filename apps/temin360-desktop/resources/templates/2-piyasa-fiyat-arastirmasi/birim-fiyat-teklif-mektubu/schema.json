@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Birim Fiyat Teklif Mektubu Şablon Veri Şeması",
+  "description": "Birim Fiyat Teklif Mektubu belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "hitap": {
+      "type": "string"
+    },
+    "isinAdi": {
+      "type": "string"
+    },
+    "teklifSahibi": {
+      "type": "string"
+    },
+    "uyrugu": {
+      "type": "string"
+    },
+    "tcKimlikNo": {
+      "type": "string"
+    },
+    "ortaklarinTcNo": {
+      "type": "string"
+    },
+    "vergiNo": {
+      "type": "string"
+    },
+    "tebligatAdresi": {
+      "type": "string"
+    },
+    "telefonFaks": {
+      "type": "string"
+    },
+    "eposta": {
+      "type": "string"
+    },
+    "aciklama": {
+      "type": "string"
+    },
+    "sonTeklifVermeTarihi": {
+      "type": "string"
+    },
+    "sonTeklifVermeSaati": {
+      "type": "string"
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "kurumIci": {
+      "type": "boolean"
+    },
+    "kurumAdres": {
+      "type": "string"
+    },
+    "kurumTelefon": {
+      "type": "string"
+    },
+    "kurumWeb": {
+      "type": "string"
+    },
+    "kurumEposta": {
+      "type": "string"
+    },
+    "kurumKep": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "hazirlayanTelefon": {
+      "type": "string"
+    },
+    "hazirlayanEposta": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "kurumAdi": "T.C.\nADALET BAKANLIĞI\nAnkara Adliyesi",
   "birimAdi": "Destek Hizmetleri Şube Müdürlüğü",
   "klasorBasligi": "DOĞRUDAN TEMİN KLASÖR İNDEKSİ",

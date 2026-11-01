@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Odeme Talep Dilekcesi Şablon Veri Şeması",
+  "description": "Odeme Talep Dilekcesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "dilekceTarihi": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "birimAdi": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "yukleniciVergiNo": {
+      "type": "string"
+    },
+    "yukleniciVergiDairesi": {
+      "type": "string"
+    },
+    "yukleniciTelefon": {
+      "type": "string"
+    },
+    "yukleniciAdresi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "teslimTarihi": {
+      "type": "string"
+    },
+    "isMal": {
+      "type": "boolean"
+    },
+    "kabulTarihi": {
+      "type": "string"
+    },
+    "faturaTarihi": {
+      "type": "string"
+    },
+    "faturaNo": {
+      "type": "string"
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "kdvDahilToplam": {
+      "type": "string"
+    },
+    "bankaAdi": {
+      "type": "string"
+    },
+    "subeAdi": {
+      "type": "string"
+    },
+    "subeKodu": {
+      "type": "string"
+    },
+    "iban": {
+      "type": "string"
+    },
+    "hesapSahibi": {
+      "type": "string"
+    },
+    "ekler": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hizmet Isleri Kabul Teklif Belgesi Şablon Veri Şeması",
+  "description": "Hizmet Isleri Kabul Teklif Belgesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "sozlesmeTarihi": {
+      "type": "string"
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "sozlesmeBedeli": {
+      "type": "string"
+    },
+    "sozlesmeSuresi": {
+      "type": "string"
+    },
+    "sozlesmeBitisTarihi": {
+      "type": "string"
+    },
+    "sureUzatimlari": {
+      "type": "string"
+    },
+    "sureUzatimliBitisTarihi": {
+      "type": "string"
+    },
+    "isinBitirildigiTarih": {
+      "type": "string"
+    },
+    "dilekceTarihi": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "onIncelemeTarihi": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "muayeneKomisyonu": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "gorevi": {
+            "type": "string"
+          },
+          "adSoyad": {
+            "type": "string"
+          },
+          "unvan": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

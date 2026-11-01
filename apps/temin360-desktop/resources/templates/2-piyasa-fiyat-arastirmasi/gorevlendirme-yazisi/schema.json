@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gorevlendirme Yazisi Şablon Veri Şeması",
+  "description": "Gorevlendirme Yazisi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    }
+  },
+  "additionalProperties": true
+}

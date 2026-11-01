@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Idare Onay Belgesi Şablon Veri Şeması",
+  "description": "Idare Onay Belgesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "kurumUst": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "mudurluk": {
+      "type": "string"
+    },
+    "idareAdi": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "teminNo": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "isMiktari": {
+      "type": "string"
+    },
+    "yaklasikMaliyet": {
+      "type": "string"
+    },
+    "odenekTutari": {
+      "type": "string"
+    },
+    "projeNo": {
+      "type": "string"
+    },
+    "butceTertibi": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "avansSartlari": {
+      "type": "string"
+    },
+    "teminSekli": {
+      "type": "string"
+    },
+    "ilanSekli": {
+      "type": "string"
+    },
+    "dokumanBedeli": {
+      "type": "string"
+    },
+    "fiyatFarkiSartlari": {
+      "type": "string"
+    },
+    "isinAciklamasi": {
+      "type": "string"
+    },
+    "onIlanIsAdi": {
+      "type": "string"
+    },
+    "onIlanIsMiktari": {
+      "type": "string"
+    },
+    "onIlanYaklasikMaliyet": {
+      "type": "string"
+    },
+    "onIlanOdenekTutari": {
+      "type": "string"
+    },
+    "onIlanProjeNo": {
+      "type": "string"
+    },
+    "onIlanButceTertibi": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "onIlanIhaleUsulu": {
+      "type": "string"
+    },
+    "onIlanTarih": {
+      "type": "string"
+    },
+    "onIlanHazirlayanAdi": {
+      "type": "string"
+    },
+    "onIlanHazirlayanUnvan": {
+      "type": "string"
+    },
+    "onIlanOnaylayanAdi": {
+      "type": "string"
+    },
+    "onIlanOnaylayanUnvan": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

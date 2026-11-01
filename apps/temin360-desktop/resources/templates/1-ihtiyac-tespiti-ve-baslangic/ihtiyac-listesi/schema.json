@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ihtiyac Listesi Şablon Veri Şeması",
+  "description": "Ihtiyac Listesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "maddeNo": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "sunulacakMakamAdi": {
+      "type": "string"
+    },
+    "talepEdenPersonelAdi": {
+      "type": "string"
+    },
+    "talepEdenPersonelUnvan": {
+      "type": "string"
+    },
+    "kurumIci": {
+      "type": "boolean"
+    },
+    "kurumAdres": {
+      "type": "string"
+    },
+    "kurumTelefon": {
+      "type": "string"
+    },
+    "kurumFaks": {
+      "type": "string"
+    },
+    "kurumWeb": {
+      "type": "string"
+    },
+    "kurumEposta": {
+      "type": "string"
+    },
+    "kurumKep": {
+      "type": "string"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "ihtiyacYeri": {
+      "type": "string"
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kodu": {
+            "type": "string"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "kdvOrani": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "integer"
+          },
+          "siraNo": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "olurYazisi": {
+      "type": "boolean"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "hazirlayanTelefon": {
+      "type": "string"
+    },
+    "hazirlayanEposta": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

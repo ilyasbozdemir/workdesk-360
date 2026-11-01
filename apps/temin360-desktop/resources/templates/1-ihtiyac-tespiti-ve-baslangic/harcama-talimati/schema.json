@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harcama Talimati Şablon Veri Şeması",
+  "description": "Harcama Talimati belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "idareAdi": {
+      "type": "string"
+    },
+    "gerekce": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "miktar": {
+      "type": "string"
+    },
+    "sure": {
+      "type": "string"
+    },
+    "teminSekli": {
+      "type": "string"
+    },
+    "yaklasikMaliyet": {
+      "type": "string"
+    },
+    "odenekTutari": {
+      "type": "string"
+    },
+    "butceTertibi": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gerceklestirmeGorevlileri": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "aciklama": {
+      "type": "string"
+    },
+    "mutemetAdi": {
+      "type": "string"
+    },
+    "isTutari": {
+      "type": "string"
+    },
+    "sunumTarihi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "olurTarihi": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

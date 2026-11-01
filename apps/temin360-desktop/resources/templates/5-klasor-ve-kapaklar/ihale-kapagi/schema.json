@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ihale Kapagi Şablon Veri Şeması",
+  "description": "Ihale Kapagi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "isinAciklamasi": {
+      "type": "string"
+    },
+    "alimTuru": {
+      "type": "string"
+    },
+    "teminNo": {
+      "type": "string"
+    },
+    "yaklasikMaliyet": {
+      "type": "string"
+    },
+    "butceTertibi": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "kapakDetaylari": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isBold": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

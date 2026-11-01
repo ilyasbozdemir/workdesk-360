@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "ihaleKayitNo": "2026/194821",
   "kararNo": "2026/842",
   "kurumAdi": "Antalya Büyükşehir Belediye Başkanlığı",
@@ -9,16 +10,13 @@
   "dokumanAlanSayisi": "3",
   "toplamTeklifSayisi": "2",
   "gecerliTeklifSayisi": "2",
-
   "enAvantajliTeklifSahibi": "Kaya Peyzaj ve Mimarlık San. Tic. Ltd. Şti.",
   "enAvantajliTeklifBedeli": "540.200,00",
   "ikinciAvantajliTeklifSahibi": "Arslan İnşaat Taahhüt Tic. A.Ş.",
   "ikinciAvantajliTeklifBedeli": "589.600,00",
-
   "tutanakTarihi": "18/06/2026",
   "dosyaTarihi": "18/06/2026",
   "tutanakSaati": "14:30",
-
   "teklifler": [
     {
       "siraNo": "1",
@@ -33,9 +31,7 @@
       "yaziIle": "BEŞYÜZSEKSENDOKUZBİN ALTIYÜZ TL"
     }
   ],
-
   "gerekceler": "Komisyonumuzca yapılan değerlendirmede, idari ve teknik şartnameye uygun teklif veren isteklilerden ekonomik açıdan en avantajlı birinci teklif sahibi Kaya Peyzaj ve Mimarlık San. Tic. Ltd. Şti. firması üzerinde bırakılmasına, en avantajlı ikinci teklif sahibinin ise Arslan İnşaat Taahhüt Tic. A.Ş. olmasına oy birliği ile karar verilmiştir.",
-
   "ihaleKomisyonu": [
     {
       "gorevi": "Komisyon Başkanı",

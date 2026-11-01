@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kesin Teminat Iadesi Şablon Veri Şeması",
+  "description": "Kesin Teminat Iadesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "dilekceTarihi": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "birimAdi": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "yukleniciVergiNo": {
+      "type": "string"
+    },
+    "yukleniciVergiDairesi": {
+      "type": "string"
+    },
+    "yukleniciTelefon": {
+      "type": "string"
+    },
+    "yukleniciAdresi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "kabulTarihi": {
+      "type": "string"
+    },
+    "teminatTutari": {
+      "type": "string"
+    },
+    "bankaAdi": {
+      "type": "string"
+    },
+    "subeAdi": {
+      "type": "string"
+    },
+    "subeKodu": {
+      "type": "string"
+    },
+    "iban": {
+      "type": "string"
+    },
+    "hesapSahibi": {
+      "type": "string"
+    },
+    "ekler": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Yaklasik Maliyet Cetveli Şablon Veri Şeması",
+  "description": "Yaklasik Maliyet Cetveli belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "kurumUst": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "mudurluk": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "firmalarColspan": {
+      "type": "integer"
+    },
+    "firmalar": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "unvan": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "string"
+          },
+          "firmaTeklifleri": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fiyat": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "enDusukFiyat": {
+            "type": "string"
+          },
+          "toplamBedel": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "firmaToplamlari": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "toplam": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "komisyon": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "adSoyad": {
+            "type": "string"
+          },
+          "unvan": {
+            "type": "string"
+          },
+          "gorevi": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

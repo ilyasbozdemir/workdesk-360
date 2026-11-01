@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Odeme Emri Belgesi Şablon Veri Şeması",
+  "description": "Odeme Emri Belgesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "antetSatir1": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "muhasebeBirimKodu": {
+      "type": "string"
+    },
+    "muhasebeBirimAdi": {
+      "type": "string"
+    },
+    "butceYili": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "yevmiyeTarihi": {
+      "type": "string"
+    },
+    "yevmiyeNo": {
+      "type": "string"
+    },
+    "yukleniciVergiNo": {
+      "type": "string"
+    },
+    "yukleniciBankaSube": {
+      "type": "string"
+    },
+    "yukleniciIban": {
+      "type": "string"
+    },
+    "kurumKoduIl": {
+      "type": "string"
+    },
+    "kurumKoduIlce": {
+      "type": "string"
+    },
+    "kurumKoduKurum": {
+      "type": "string"
+    },
+    "kurumKoduBirim": {
+      "type": "string"
+    },
+    "yukleniciVergiDairesi": {
+      "type": "string"
+    },
+    "birimAdi": {
+      "type": "string"
+    },
+    "yukleniciAdres": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "hesapNo1": {
+      "type": "string"
+    },
+    "kurumsal1": {
+      "type": "string"
+    },
+    "kurumsal2": {
+      "type": "string"
+    },
+    "kurumsal3": {
+      "type": "string"
+    },
+    "kurumsal4": {
+      "type": "string"
+    },
+    "fonk1": {
+      "type": "string"
+    },
+    "fonk2": {
+      "type": "string"
+    },
+    "fonk3": {
+      "type": "string"
+    },
+    "fonk4": {
+      "type": "string"
+    },
+    "finKod": {
+      "type": "string"
+    },
+    "eko1": {
+      "type": "string"
+    },
+    "eko2": {
+      "type": "string"
+    },
+    "eko3": {
+      "type": "string"
+    },
+    "eko4": {
+      "type": "string"
+    },
+    "brutTutarTL": {
+      "type": "string"
+    },
+    "brutTutarKR": {
+      "type": "string"
+    },
+    "damgaVergisiTL": {
+      "type": "string"
+    },
+    "damgaVergisiKR": {
+      "type": "string"
+    },
+    "ihaleKarariDamgaVergisiTL": {
+      "type": "string"
+    },
+    "ihaleKarariDamgaVergisiKR": {
+      "type": "string"
+    },
+    "gelirVergisiTL": {
+      "type": "string"
+    },
+    "gelirVergisiKR": {
+      "type": "string"
+    },
+    "kdvTevkifatTL": {
+      "type": "string"
+    },
+    "kdvTevkifatKR": {
+      "type": "string"
+    },
+    "giderYansitmaTL": {
+      "type": "string"
+    },
+    "giderYansitmaKR": {
+      "type": "string"
+    },
+    "gelirYansitmaTL": {
+      "type": "string"
+    },
+    "gelirYansitmaKR": {
+      "type": "string"
+    },
+    "toplamBorcTL": {
+      "type": "string"
+    },
+    "toplamBorcKR": {
+      "type": "string"
+    },
+    "toplamAlacakTL": {
+      "type": "string"
+    },
+    "toplamAlacakKR": {
+      "type": "string"
+    },
+    "onayTarih1": {
+      "type": "string"
+    },
+    "kontrolEdenAdi": {
+      "type": "string"
+    },
+    "kontrolEdenUnvan": {
+      "type": "string"
+    },
+    "odemeEmriBelgeNo": {
+      "type": "string"
+    },
+    "cekGondermeEmirNo": {
+      "type": "string"
+    },
+    "kesintiToplamTL": {
+      "type": "string"
+    },
+    "kesintiToplamKR": {
+      "type": "string"
+    },
+    "netOdenenTL": {
+      "type": "string"
+    },
+    "netOdenenKR": {
+      "type": "string"
+    },
+    "tetkikEdenMemur": {
+      "type": "string"
+    },
+    "tetkikEdenSef": {
+      "type": "string"
+    },
+    "tetkikEdenMuhYetYrd": {
+      "type": "string"
+    },
+    "aciklamalar": {
+      "type": "string"
+    },
+    "faturaTarihi": {
+      "type": "string"
+    },
+    "faturaNo": {
+      "type": "string"
+    },
+    "netOdenenYazi": {
+      "type": "string"
+    },
+    "gerceklestirmeGorevlisiAdi": {
+      "type": "string"
+    },
+    "gerceklestirmeGorevlisiUnvan": {
+      "type": "string"
+    },
+    "olurTarihi": {
+      "type": "string"
+    },
+    "olurKisiAdi": {
+      "type": "string"
+    },
+    "olurKisiUnvan": {
+      "type": "string"
+    },
+    "odeyinizKisiAdi": {
+      "type": "string"
+    },
+    "odeyinizKisiUnvan": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
