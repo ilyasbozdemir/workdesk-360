@@ -1,0 +1,22 @@
+{
+  "name": "@example/document-engine",
+  "version": "0.3.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "demo": "tsx examples/demo.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
