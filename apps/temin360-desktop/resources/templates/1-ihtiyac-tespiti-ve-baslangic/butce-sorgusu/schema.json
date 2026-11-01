@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Butce Sorgusu Şablon Veri Şeması",
+  "description": "Butce Sorgusu belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "muhatapBirim": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "butceYili": {
+      "type": "string"
+    },
+    "butceTertibi": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "kullanilabilirOdenek": {
+      "type": "string"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

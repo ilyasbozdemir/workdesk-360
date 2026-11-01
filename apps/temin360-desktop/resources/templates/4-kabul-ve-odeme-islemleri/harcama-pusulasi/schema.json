@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Harcama Pusulasi Şablon Veri Şeması",
+  "description": "Harcama Pusulasi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "idareAdi": {
+      "type": "string"
+    },
+    "alimTuru": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "miktar": {
+      "type": "string"
+    },
+    "birimFiyat": {
+      "type": "string"
+    },
+    "tutar": {
+      "type": "string"
+    },
+    "tutarYazi": {
+      "type": "string"
+    },
+    "aciklama": {
+      "type": "string"
+    },
+    "saticiTcNo": {
+      "type": "string"
+    },
+    "saticiAdiSoyadi": {
+      "type": "string"
+    },
+    "saticiAdres": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

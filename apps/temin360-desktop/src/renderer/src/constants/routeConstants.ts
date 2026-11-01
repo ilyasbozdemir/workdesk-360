@@ -37,6 +37,7 @@ export const APP_ROUTES = {
   TEMA: '/tema',
   BIRIMLER: '/birimler',
   AMBAR: '/ambar',
+  TEST_EKRANLARI: "/test-ekranlari",
   MALZEMELER: '/malzemeler',
   YENI_MALZEME: '/malzemeler/yeni',
   TASINIR_KOD: '/tasinirkod',

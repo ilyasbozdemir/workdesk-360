@@ -1,5 +1,10 @@
-﻿{
-  "antetSatirlari": ["T.C.", "YEŞİLVADİ BELEDİYE BAŞKANLIĞI", "Mali Hizmetler Müdürlüğü"],
+{
+  "$schema": "./schema.json",
+  "antetSatirlari": [
+    "T.C.",
+    "YEŞİLVADİ BELEDİYE BAŞKANLIĞI",
+    "Mali Hizmetler Müdürlüğü"
+  ],
   "evrakSayisi": "68493012-841.02-3457",
   "dosyaKonusu": "Bütçe Sorgusu Cevabı",
   "tarih": "07/05/2026",
@@ -9,7 +14,9 @@
   "ilgiSayisi": "68493012-902.03-3456",
   "isAdi": "Belediyemiz park ve bahçelerinde kullanılmak üzere 150 adet dekoratif aydınlatma direği ve armatür alımı",
   "butceYili": "2026",
-  "butceTertibi": ["46.70.03.01.02.05-03.2.9.90"],
+  "butceTertibi": [
+    "46.70.03.01.02.05-03.2.9.90"
+  ],
   "toplamOdenek": "250.000,00",
   "kullanilanOdenek": "65.000,00",
   "kullanilabilirOdenek": "185.000,00",

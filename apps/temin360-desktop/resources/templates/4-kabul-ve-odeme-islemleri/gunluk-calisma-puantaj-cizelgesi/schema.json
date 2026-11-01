@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gunluk Calisma Puantaj Cizelgesi Şablon Veri Şeması",
+  "description": "Gunluk Calisma Puantaj Cizelgesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "belgeBasligi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "isinAdi": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "ayYil": {
+      "type": "string"
+    },
+    "hizmetYeri": {
+      "type": "string"
+    },
+    "teminNo": {
+      "type": "string"
+    },
+    "kontrolGorevlisi": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "kalemBasligi": {
+      "type": "string"
+    },
+    "ozellikBasligi": {
+      "type": "string"
+    },
+    "lejantMetni": {
+      "type": "string"
+    },
+    "kabulBeyani": {
+      "type": "string"
+    },
+    "yukleniciUnvan": {
+      "type": "string"
+    },
+    "kontrolUnvan": {
+      "type": "string"
+    },
+    "komisyonUnvan": {
+      "type": "string"
+    },
+    "hizmetKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "kalemAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "d1": {
+            "type": "string"
+          },
+          "d2": {
+            "type": "string"
+          },
+          "d3": {
+            "type": "string"
+          },
+          "d4": {
+            "type": "string"
+          },
+          "d5": {
+            "type": "string"
+          },
+          "d6": {
+            "type": "string"
+          },
+          "d7": {
+            "type": "string"
+          },
+          "d8": {
+            "type": "string"
+          },
+          "d9": {
+            "type": "string"
+          },
+          "d10": {
+            "type": "string"
+          },
+          "d11": {
+            "type": "string"
+          },
+          "d12": {
+            "type": "string"
+          },
+          "d13": {
+            "type": "string"
+          },
+          "d14": {
+            "type": "string"
+          },
+          "d15": {
+            "type": "string"
+          },
+          "d16": {
+            "type": "string"
+          },
+          "d17": {
+            "type": "string"
+          },
+          "d18": {
+            "type": "string"
+          },
+          "d19": {
+            "type": "string"
+          },
+          "d20": {
+            "type": "string"
+          },
+          "d21": {
+            "type": "string"
+          },
+          "d22": {
+            "type": "string"
+          },
+          "d23": {
+            "type": "string"
+          },
+          "d24": {
+            "type": "string"
+          },
+          "d25": {
+            "type": "string"
+          },
+          "d26": {
+            "type": "string"
+          },
+          "d27": {
+            "type": "string"
+          },
+          "d28": {
+            "type": "string"
+          },
+          "d29": {
+            "type": "string"
+          },
+          "d30": {
+            "type": "string"
+          },
+          "d31": {
+            "type": "string"
+          },
+          "toplamMiktar": {
+            "type": "string"
+          },
+          "birim": {
+            "type": "string"
+          },
+          "aciklama": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

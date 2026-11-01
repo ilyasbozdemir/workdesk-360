@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Muayene Kabul Tutanagi Şablon Veri Şeması",
+  "description": "Muayene Kabul Tutanagi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "sozlesmeTarihi": {
+      "type": "string"
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "sozlesmeBedeli": {
+      "type": "string"
+    },
+    "faturaTarihi": {
+      "type": "string"
+    },
+    "faturaNo": {
+      "type": "string"
+    },
+    "kabulTarihi": {
+      "type": "string"
+    },
+    "olurGoster": {
+      "type": "boolean"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "muayeneKomisyonu": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "adSoyad": {
+            "type": "string"
+          },
+          "unvan": {
+            "type": "string"
+          },
+          "gorevi": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

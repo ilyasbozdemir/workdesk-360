@@ -1,0 +1,1 @@
+{"compilerOptions":{"target":"ES2022","module":"NodeNext","moduleResolution":"NodeNext","jsx":"react-jsx","strict":true,"esModuleInterop":true,"skipLibCheck":true,"lib":["ES2022","DOM"],"types":["node","react"]},"include":["src","examples"]}

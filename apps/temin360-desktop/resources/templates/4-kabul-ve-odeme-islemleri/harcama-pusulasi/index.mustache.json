@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "tarih": "10/05/2026",
   "idareAdi": "ÇAMLIPINAR BELEDİYE BAŞKANLIĞI",
   "alimTuru": "Hizmet Alımı",

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { useTabStore } from './tabStore'
 import { APP_ROUTES } from '../constants/routeConstants'
 
-import { DocumentSource } from '../screens/dosya/components/DocumentPreviewModalV3/document-engine/types'
+import { DocumentSource } from '../screens/dosya/components/DocumentPreviewModalV3/types'
 
 export type { DocumentSource }
 

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Yaklasik Maliyet Teklif Mektubu Şablon Veri Şeması",
+  "description": "Yaklasik Maliyet Teklif Mektubu belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    },
+    "kurumUstBirim": {
+      "type": "string"
+    },
+    "kurumBirim": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "sonTeklifTarihi": {
+      "type": "string"
+    },
+    "sonTeklifSaati": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "kurumAdres": {
+      "type": "string"
+    },
+    "kurumTelefon": {
+      "type": "string"
+    },
+    "kurumFax": {
+      "type": "string"
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "integer"
+          },
+          "birimFiyati": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "teklifTarihi": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

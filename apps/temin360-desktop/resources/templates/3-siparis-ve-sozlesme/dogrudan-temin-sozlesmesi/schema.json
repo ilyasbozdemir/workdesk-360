@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dogrudan Temin Sozlesmesi Şablon Veri Şeması",
+  "description": "Dogrudan Temin Sozlesmesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "isinAdi": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "idareAdresi": {
+      "type": "string"
+    },
+    "idareTelefon": {
+      "type": "string"
+    },
+    "idareFaks": {
+      "type": "string"
+    },
+    "idareEposta": {
+      "type": "string"
+    },
+    "yukleniciAdresi": {
+      "type": "string"
+    },
+    "yukleniciIlce": {
+      "type": "string"
+    },
+    "yukleniciIl": {
+      "type": "string"
+    },
+    "yukleniciTelefon": {
+      "type": "string"
+    },
+    "yukleniciFaks": {
+      "type": "string"
+    },
+    "yukleniciEposta": {
+      "type": "string"
+    },
+    "kalemSayisi": {
+      "type": "string"
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "sozlesmeSuresi": {
+      "type": "string"
+    },
+    "odemeYeri": {
+      "type": "string"
+    },
+    "odemeSartlari": {
+      "type": "string"
+    },
+    "avansSartlari": {
+      "type": "string"
+    },
+    "destekHizmetleri": {
+      "type": "string"
+    },
+    "iadeSartlari": {
+      "type": "string"
+    },
+    "gecikmeCezaOrani": {
+      "type": "string"
+    },
+    "digerHususlar": {
+      "type": "string"
+    },
+    "sozlesmeTarihi": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "kurumIlce": {
+      "type": "string"
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

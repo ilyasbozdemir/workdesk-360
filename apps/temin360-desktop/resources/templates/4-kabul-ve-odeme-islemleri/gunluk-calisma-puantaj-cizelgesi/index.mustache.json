@@ -1,6 +1,11 @@
 {
+  "$schema": "./schema.json",
   "kurumAdi": "T.C. ANKARA VALİLİĞİ İl Milli Eğitim Müdürlüğü",
-  "antetSatirlari": ["T.C.", "ANKARA VALİLİĞİ", "İl Milli Eğitim Müdürlüğü"],
+  "antetSatirlari": [
+    "T.C.",
+    "ANKARA VALİLİĞİ",
+    "İl Milli Eğitim Müdürlüğü"
+  ],
   "belgeBasligi": "İŞ MAKİNESİ / HİZMET İŞLERİ GÜNLÜK ÇALIŞMA PUANTAJ ÇİZELGESİ",
   "dosyaKonusu": "Okul Bahçesi Zemin Tesviyesi ve Kazı Hizmet Alımı",
   "isinAdi": "Okul Bahçesi Zemin Tesviyesi ve Kazı Hizmet Alımı",

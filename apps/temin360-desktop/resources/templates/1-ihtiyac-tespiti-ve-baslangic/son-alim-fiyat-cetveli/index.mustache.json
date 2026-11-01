@@ -1,4 +1,5 @@
-﻿{
+{
+  "$schema": "./schema.json",
   "antetSatirlari": [
     "T.C.",
     "SAĞLIK BAKANLIĞI",
@@ -66,9 +67,6 @@
   "dosyaTarihi": "28.06.2026",
   "onaylayanPersonelAdi": "Dr. Mehmet Demir",
   "onaylayanPersonelUnvan": "İl Sağlık Müdürü",
-  "hazirlayanPersonelUnvan": "V.H.K.İ.",
   "hazirlayanTelefon": "0312 555 44 33",
-  "hazirlayanTelefon": "0312 555 44 33",
-  "hazirlayanEposta": "hazirlayan@kurum.gov.tr",
   "hazirlayanEposta": "hazirlayan@kurum.gov.tr"
 }

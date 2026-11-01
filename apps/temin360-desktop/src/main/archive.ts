@@ -168,13 +168,14 @@ export function registerArchiveHandlers() {
             'DATA_TeminKalem',
             'DATA_TeminKalemTeklif',
             'DATA_TeminKomisyon',
-            'DATA_DosyaSablonVeri'
+            'DATA_TeminBelgeSnapshot'
           ]
 
           for (const table of relatedTables) {
             try {
+              const fkCol = table === 'DATA_TeminBelgeSnapshot' ? 'dosya_id' : 'temin_dosya_id'
               const tableRows = db
-                .prepare(`SELECT * FROM ${table} WHERE temin_dosya_id IN (${inClause})`)
+                .prepare(`SELECT * FROM ${table} WHERE ${fkCol} IN (${inClause})`)
                 .all(...dosyaIds)
               if (tableRows.length > 0) {
                 const keys = Object.keys(tableRows[0])

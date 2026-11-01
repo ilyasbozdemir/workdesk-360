@@ -1,5 +1,9 @@
-﻿{
-  "antetSatirlari": ["T.C.", "YILDIZTEPE BELEDİYE BAŞKANLIĞI"],
+{
+  "$schema": "./schema.json",
+  "antetSatirlari": [
+    "T.C.",
+    "YILDIZTEPE BELEDİYE BAŞKANLIĞI"
+  ],
   "solLogo": "https://raw.githubusercontent.com/ilyasbozdemir/workdesk-360/main/public/icon.png",
   "sagLogo": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Logo_of_100th_years_of_the_Republic_of_T%C3%BCrkiye.svg",
   "kurumAdi": "Yıldıztepe Belediye Başkanlığı",
@@ -70,11 +74,7 @@
   "kurumEposta": "info@yildiztepe.bel.tr",
   "kurumKep": "yildiztepebel@hs01.kep.tr",
   "hazirlayanPersonelAdi": "Veli Özkan",
-  "hazirlayanPersonelAdi": "Veli Özkan",
-  "hazirlayanPersonelUnvan": "Fen İşleri Müdürü",
   "hazirlayanPersonelUnvan": "Fen İşleri Müdürü",
   "hazirlayanTelefon": "0312 555 44 33",
-  "hazirlayanTelefon": "0312 555 44 33",
-  "hazirlayanEposta": "hazirlayan@kurum.gov.tr",
   "hazirlayanEposta": "hazirlayan@kurum.gov.tr"
 }

@@ -23,7 +23,9 @@ export function registerDbCoreHandlers(): void {
    * @param params Sorgu parametreleri
    * @returns İşlem sonucu ve veri satırları listesi
    */
-  ipcMain.handle('db:query', async (_, sql: string, params: any[] = []) => {
+  ipcMain.handle('db:query', async (_, sqlOrPayload: any, maybeParams: any[] = []) => {
+    const sql = typeof sqlOrPayload === 'string' ? sqlOrPayload : sqlOrPayload?.sql
+    const params = typeof sqlOrPayload === 'string' ? maybeParams : (sqlOrPayload?.params || maybeParams || [])
     try {
       validateSqlQuery(sql, params)
       const executeQuery = async () => {

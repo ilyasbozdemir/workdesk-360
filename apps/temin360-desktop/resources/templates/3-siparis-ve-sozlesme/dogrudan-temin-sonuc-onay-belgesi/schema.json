@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dogrudan Temin Sonuc Onay Belgesi Şablon Veri Şeması",
+  "description": "Dogrudan Temin Sonuc Onay Belgesi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "kurumUst": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "mudurluk": {
+      "type": "string"
+    },
+    "idareAdi": {
+      "type": "string"
+    },
+    "vmakamina": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "isinAciklamasi": {
+      "type": "string"
+    },
+    "teminSekli": {
+      "type": "string"
+    },
+    "alimTuru": {
+      "type": "string"
+    },
+    "yaklasikMaliyet": {
+      "type": "string"
+    },
+    "teklifler": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "unvan": {
+            "type": "string"
+          },
+          "fiyat": {
+            "type": "string"
+          },
+          "uygunMu": {
+            "type": "string"
+          },
+          "aciklama": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "uygunGorulenler": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "unvan": {
+            "type": "string"
+          },
+          "adres": {
+            "type": "string"
+          },
+          "fiyat": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "vonayasunustarihi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelAdi": {
+      "type": "string"
+    },
+    "hazirlayanPersonelUnvan": {
+      "type": "string"
+    },
+    "vonaytarihi": {
+      "type": "string"
+    },
+    "onaylayanPersonelAdi": {
+      "type": "string"
+    },
+    "onaylayanPersonelUnvan": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "ekler": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

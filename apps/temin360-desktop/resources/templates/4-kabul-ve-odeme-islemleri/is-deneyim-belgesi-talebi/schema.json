@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Is Deneyim Belgesi Talebi Şablon Veri Şeması",
+  "description": "Is Deneyim Belgesi Talebi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "dilekceTarihi": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "birimAdi": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "yukleniciVergiNo": {
+      "type": "string"
+    },
+    "yukleniciVergiDairesi": {
+      "type": "string"
+    },
+    "yukleniciTelefon": {
+      "type": "string"
+    },
+    "yukleniciAdresi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "kabulTarihi": {
+      "type": "string"
+    },
+    "ekler": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true
+}

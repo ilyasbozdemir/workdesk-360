@@ -75,7 +75,12 @@ export const PersonelInlineSelect: React.FC<PersonelInlineSelectProps> = ({
   placeholder = "Personel Seçiniz...",
 }) => {
   const { isEditing, onFieldChange, personelListesi } = useTemplateEdit();
-  const personelList = personelListesi || [];
+  const personelList =
+    (personelListesi && personelListesi.length > 0
+      ? personelListesi
+      : typeof window !== "undefined"
+      ? (window as any)?.__activePersonelListesi
+      : []) || [];
   const cleanVal = typeof value === "string" ? value.split("(")[0].trim() : "";
   const matched = personelList.find(
     (p: any) =>
@@ -274,8 +279,18 @@ export const PersonelCard: React.FC<PersonelCardProps> = ({
 }) => {
   const { isEditing, onFieldChange, personelListesi, firmaListesi } =
     useTemplateEdit();
-  const personelList = personelListesi || [];
-  const rawFirmaList = firmaListesi || [];
+  const personelList =
+    (personelListesi && personelListesi.length > 0
+      ? personelListesi
+      : typeof window !== "undefined"
+      ? (window as any)?.__activePersonelListesi
+      : []) || [];
+  const rawFirmaList =
+    (firmaListesi && firmaListesi.length > 0
+      ? firmaListesi
+      : typeof window !== "undefined"
+      ? (window as any)?.__activeFirmaListesi
+      : []) || [];
 
   const normalizedFirmaList = rawFirmaList.map((item: any) => {
     if (item && item.firm) {
@@ -499,7 +514,12 @@ export const ApprovalSignature: React.FC<ApprovalSignatureProps> = ({
   dateField = "onayTarihi",
 }) => {
   const { isEditing, onFieldChange, personelListesi } = useTemplateEdit();
-  const personelList = personelListesi || [];
+  const personelList =
+    (personelListesi && personelListesi.length > 0
+      ? personelListesi
+      : typeof window !== "undefined"
+      ? (window as any)?.__activePersonelListesi
+      : []) || [];
   const matched = personelList.find(
     (p: any) =>
       p.ad_soyad &&

@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "kurumUst": "T.C.",
   "kurumAdi": "ASİ KÖRFEZ BELEDİYE BAŞKANLIĞI",
   "mudurluk": "Destek Hizmetleri Müdürlüğü",
@@ -27,5 +28,9 @@
   "onaylayanPersonelUnvan": "Belediye Başkanı",
   "baskanAdi": "Kemal SOYDAN",
   "baskanUnvan": "Belediye Başkanı",
-  "ekler": ["Komisyon Listesi", "Lüzum Müzekkeresi", "Yaklaşık Maliyet Cetveli"]
+  "ekler": [
+    "Komisyon Listesi",
+    "Lüzum Müzekkeresi",
+    "Yaklaşık Maliyet Cetveli"
+  ]
 }

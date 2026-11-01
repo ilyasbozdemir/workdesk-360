@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Kapak Ici Indeks Sablonu Şablon Veri Şeması",
+  "description": "Kapak Ici Indeks Sablonu belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "birimAdi": {
+      "type": "string"
+    },
+    "klasorBasligi": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "kararNo": {
+      "type": "string"
+    },
+    "klasorNo": {
+      "type": "string"
+    },
+    "arsivNo": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "tabloBasliklar": {
+      "type": "object",
+      "properties": {
+        "siraNo": {
+          "type": "string"
+        },
+        "evrakTarihi": {
+          "type": "string"
+        },
+        "evrakSayisi": {
+          "type": "string"
+        },
+        "konu": {
+          "type": "string"
+        },
+        "sayfaNo": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "evraklar": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sira": {
+            "type": "string"
+          },
+          "tarih": {
+            "type": "string"
+          },
+          "sayi": {
+            "type": "string"
+          },
+          "konu": {
+            "type": "string"
+          },
+          "sayfa": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

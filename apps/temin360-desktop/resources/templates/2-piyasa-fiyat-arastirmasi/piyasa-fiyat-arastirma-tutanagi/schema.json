@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Piyasa Fiyat Arastirma Tutanagi Şablon Veri Şeması",
+  "description": "Piyasa Fiyat Arastirma Tutanagi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "antetSatirlari": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "kurumUst": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "mudurluk": {
+      "type": "string"
+    },
+    "idareAdi": {
+      "type": "string"
+    },
+    "tarih": {
+      "type": "string"
+    },
+    "isAdi": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "evrakSayisi": {
+      "type": "string"
+    },
+    "firmalar": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "unvan": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "integer"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "ozelligi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "string"
+          },
+          "firmaTeklifleriDetay": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "birimFiyat": {
+                  "type": "string"
+                },
+                "tutar": {
+                  "type": "string"
+                },
+                "hasPrice": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "enUygunFirmaAdi": {
+            "type": "string"
+          },
+          "enDusukFiyat": {
+            "type": "string"
+          },
+          "toplamBedel": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "firmaToplamlariDetay": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "toplam": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "komisyon": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "adSoyad": {
+            "type": "string"
+          },
+          "unvan": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    },
+    "solLogo": {
+      "type": "string"
+    },
+    "sagLogo": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

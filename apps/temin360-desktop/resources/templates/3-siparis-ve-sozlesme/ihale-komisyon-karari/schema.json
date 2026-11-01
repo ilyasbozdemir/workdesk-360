@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ihale Komisyon Karari Şablon Veri Şeması",
+  "description": "Ihale Komisyon Karari belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "ihaleKayitNo": {
+      "type": "string"
+    },
+    "kararNo": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "isinAdi": {
+      "type": "string"
+    },
+    "dosyaKonusu": {
+      "type": "string"
+    },
+    "ihaleTarihiVeSaati": {
+      "type": "string"
+    },
+    "ihaleUsulu": {
+      "type": "string"
+    },
+    "dokumanAlanSayisi": {
+      "type": "string"
+    },
+    "toplamTeklifSayisi": {
+      "type": "string"
+    },
+    "gecerliTeklifSayisi": {
+      "type": "string"
+    },
+    "enAvantajliTeklifSahibi": {
+      "type": "string"
+    },
+    "enAvantajliTeklifBedeli": {
+      "type": "string"
+    },
+    "ikinciAvantajliTeklifSahibi": {
+      "type": "string"
+    },
+    "ikinciAvantajliTeklifBedeli": {
+      "type": "string"
+    },
+    "tutanakTarihi": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "tutanakSaati": {
+      "type": "string"
+    },
+    "teklifler": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "string"
+          },
+          "istekliUnvani": {
+            "type": "string"
+          },
+          "teklifBedeli": {
+            "type": "string"
+          },
+          "yaziIle": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "gerekceler": {
+      "type": "string"
+    },
+    "ihaleKomisyonu": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "gorevi": {
+            "type": "string"
+          },
+          "adSoyad": {
+            "type": "string"
+          },
+          "unvan": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

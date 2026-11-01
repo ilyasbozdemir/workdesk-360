@@ -1,6 +1,5 @@
 import { Personel } from '../../types'
-
-import { DocumentSource } from '../../document-engine/types'
+import { DocumentSource } from '../../types'
 
 export interface UseDocumentPreviewDataParams {
   isOpen: boolean

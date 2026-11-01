@@ -1,4 +1,5 @@
-﻿{
+{
+  "$schema": "./schema.json",
   "solLogo": "https://raw.githubusercontent.com/ilyasbozdemir/workdesk-360/main/public/icon.png",
   "sagLogo": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Logo_of_100th_years_of_the_Republic_of_T%C3%BCrkiye.svg",
   "antetSatir1": "SEFERİHİSAR BELEDİYE BAŞKANLIĞI",

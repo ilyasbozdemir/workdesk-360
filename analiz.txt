@@ -1,0 +1,115 @@
+﻿apps/flowdesk-desktop/src/__tests__/flowdeskDatabase.test.ts:301:    expect(res1.computedData?.['hesaplanan_idari_para_cezasi']).toBe(216000)
+apps/flowdesk-desktop/src/main/database/index.ts:669:                  hedefAlan: 'hesaplanan_idari_para_cezasi',
+apps/flowdesk-desktop/src/main/database/index.ts:1627:            hesaplananAlanlar: Object.keys(computedData)
+apps/temin360-desktop/src/main/database/workspace/templateSeeder.ts:48:  'harcama-pusulasi': '/dosya/harcama/pusula',
+apps/temin360-desktop/src/renderer/src/components/layout/temin-selector/components/TeminSelectorActive2886.tsx:27:    active2886Dosya.muhammenBedel?.hesaplananBedel
+apps/temin360-desktop/src/renderer/src/components/layout/temin-selector/components/TeminSelectorList2886.tsx:42:          dosya.muhammenBedel?.takdirEdilenMuhammenBedel || dosya.muhammenBedel?.hesaplananBedel
+apps/temin360-desktop/src/renderer/src/components/layout/temin-selector/teminSelector.types.ts:57:    hesaplananBedel?: number
+apps/temin360-desktop/src/renderer/src/constants/mappings/all-templates.mapping.ts:808:export const HarcamaPusulasiMapping: ProcessMapping = {
+apps/temin360-desktop/src/renderer/src/constants/mappings/index.ts:42:  '/dosya/harcama/pusula': allOther.HarcamaPusulasiMapping,
+apps/temin360-desktop/src/renderer/src/constants/mappings/index.ts:76:  'harcama-pusulasi': allOther.HarcamaPusulasiMapping,
+apps/temin360-desktop/src/renderer/src/constants/mappings/index.ts:219:    case 'harcama-pusulasi':
+apps/temin360-desktop/src/renderer/src/constants/mappings/index.ts:221:      return allOther.HarcamaPusulasiMapping
+apps/temin360-desktop/src/renderer/src/constants/sablonKategorileri.ts:71:      'harcama-pusulasi',
+apps/temin360-desktop/src/renderer/src/screens/araclar/components/FiyatFarkiTab.tsx:16:  // Manuel override veya dinamik hesaplanan endeks de─şerleri
+apps/temin360-desktop/src/renderer/src/screens/araclar/components/ResmiTatilVeSureTab.tsx:10:  const hesaplananIsGunuTarihi = ekleIsGunu(sureBaslangic, sureIsGunu)
+apps/temin360-desktop/src/renderer/src/screens/araclar/components/ResmiTatilVeSureTab.tsx:49:            {hesaplananIsGunuTarihi.toLocaleDateString('tr-TR', {
+apps/temin360-desktop/src/renderer/src/screens/araclar/components/VergiVeKesintiTab.tsx:162:              {formatTL(vergiSonuc.hesaplananKdv)}
+apps/temin360-desktop/src/renderer/src/screens/dashboard/components/ActiveDosyaCard.tsx:69:    const muhammenBedelTutar = activeDosya.muhammenBedel?.hesaplananBedel ||
+apps/temin360-desktop/src/renderer/src/screens/dashboard/components/LivePipelineSection.tsx:124:              ? dosya.muhammenBedel?.hesaplananBedel ||
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/DosyaYonetimi2886Tab.tsx:111:        dosya.muhammenBedel?.takdirEdilenMuhammenBedel || dosya.muhammenBedel?.hesaplananBedel || 0,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/DosyaYonetimi2886Tab.tsx:159:          hesaplananBedel: bedel,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/DosyaYonetimi2886Tab.tsx:189:          hesaplananBedel: bedel,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/MuhammenBedelVeTakdirTab.tsx:83:    hesaplananBedel: (islemTuru === 'kiralama' ? 465 : 36500) * 450,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/MuhammenBedelVeTakdirTab.tsx:100:      hesaplananBedel: calculated,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/MuhammenBedelVeTakdirTab.tsx:130:      hesaplananBedel: calc,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/SurecEvraklariTab.tsx:59:      d?.muhammenBedel?.hesaplananBedel ||
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/dosya-yonetimi/DosyaYonetimi2886Grid.tsx:53:          d.muhammenBedel?.takdirEdilenMuhammenBedel || d.muhammenBedel?.hesaplananBedel || 0
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/dosya-yonetimi/DosyaYonetimi2886Stats.tsx:12:    const val = d.muhammenBedel?.takdirEdilenMuhammenBedel || d.muhammenBedel?.hesaplananBedel || 0
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/dosya-yonetimi/DosyaYonetimi2886Table.tsx:40:                d.muhammenBedel?.takdirEdilenMuhammenBedel || d.muhammenBedel?.hesaplananBedel || 0
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/muhammen-bedel/MuhammenBedelHesaplamaSection.tsx:108:            Ôé║{formatMoney(hesap.hesaplananBedel)}
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/studyo/__tests__/studyo.test.ts:39:        hesaplananBedel: 1200000,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/studyo/studyoHelpers.ts:14:        d.muhammenBedel?.takdirEdilenMuhammenBedel || d.muhammenBedel?.hesaplananBedel || 2500000,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/components/studyo/useBelgeVeSablonStudyo.ts:273:        hesaplananBedel: bedel,
+apps/temin360-desktop/src/renderer/src/screens/devlet-ihale-2886/types/devletIhale2886.types.ts:41:  hesaplananBedel: number
+apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/constants.ts:15:  HarcamaPusulasi: Templates.HarcamaPusulasi as TemplateComponentType,
+apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/stages.ts:146:      'harcama-pusulasi',
+apps/temin360-desktop/src/renderer/src/screens/dosya/components/tek-tik-yazdir/ciktiWizardFieldMapping.ts:146:  'harcama-pusulasi': {
+apps/temin360-desktop/src/renderer/src/screens/dosya/components/tek-tik-yazdir/ciktiWizardFieldMapping.ts:272:  'harcama-pusulasi': [
+apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/DosyaAsamalari/components/PiyasaFiyatArastirmasi/SonucBelgesiKartlari.tsx:62:              Al─▒ma ait kalemlerin piyasa teklifleri ortalamas─▒na g├Âre hesaplanan resmi yakla┼ş─▒k
+apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/DosyaAsamalari/useDosyaAsamasiSablons.ts:45:  'harcama-pusulasi',
+apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/components/MalzemeListesi/components/malzeme-tablosu/MalzemeTablosuToolbar.tsx:171:          onHarcamaPusulasi={() => handleOpenSablonByDosyaAdi('harcama-pusulasi')}
+apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/components/MalzemeListesi/constants/documentCategories.tsx:54:    onHarcamaPusulasi,
+apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/components/MalzemeListesi/types.ts:22:  onHarcamaPusulasi?: () => void
+apps/temin360-desktop/src/renderer/src/screens/modul-magazasi/constants/hazirMetinler.constants.ts:164:        '─░daremiz Do─şrudan Temin sipari┼şi kapsam─▒nda [Y├£KLEN─░C─░ F─░RMA] taraf─▒ndan taahh├╝t edilen teslim s├╝resi [S├ûZLE┼ŞME TAR─░H─░] olmas─▒na ra─şmen, teslimat [GEC─░KME G├£N] g├╝n gecikmeyle [F─░─░L─░ TESL─░M TAR─░H─░] tarihinde yap─▒lm─▒┼şt─▒r. ┼Şartname/s├Âzle┼şme h├╝km├╝ gere─şi g├╝nl├╝k % [CEZA ORANI] oran─▒nda hesaplanan toplam [CEZA TUTARI] TL gecikme cezas─▒n─▒n firman─▒n hakedi┼şinden mahsup edilerek irat kaydedilmesini arz ederim.',
+apps/temin360-desktop/src/renderer/src/screens/modul-magazasi/constants/hazirMetinler.constants.ts:174:      kisaAciklama: 'T├£─░K veya EPDK fiyat endeksleri do─şrultusunda hesaplanan fiyat fark─▒ ┼şerhi.',
+apps/temin360-desktop/src/renderer/src/screens/modul-magazasi/constants/hazirMetinler.constants.ts:298:        '─░daremizce 2886 Say─▒l─▒ Devlet ─░hale Kanunu uyar─▒nca ger├ğekle┼ştirilen ihale, ─░ta Amirinin onay─▒yla kesinle┼şmi┼ş olup uhdenizde kalm─▒┼şt─▒r. Kanunun 57. maddesi gere─şince, tebligat tarihinden itibaren 15 (on be┼ş) g├╝n i├ğerisinde ihale bedeli ├╝zerinden hesaplanan kesin teminat─▒ yat─▒rarak noter tasdikli kira/sat─▒┼ş s├Âzle┼şmesini imzalamak ├╝zere ─░daremize m├╝racaat etmeniz hususu tebli─ş olunur.',
+apps/temin360-desktop/src/renderer/src/screens/modul-magazasi/data/moduller.data.ts:364:        aciklama: '─░┼ş g├╝n├╝ esas─▒na g├Âre hesaplanan s├╝rekli i┼ş├ği izin belgesi.',
+apps/temin360-desktop/src/renderer/src/screens/playground/components/KdvTevkifatTool.tsx:191:                    {formatCurrency(kdvTevkifatSonuc.hesaplananKdv)}
+apps/temin360-desktop/src/renderer/src/screens/system/surec-akisi/constants/surecAsamalariConfig.ts:195:      { kod: 'harcama-pusulasi', ad: 'Harcama Pusulas─▒' }
+apps/temin360-desktop/src/renderer/src/screens/system/surec-akisi/hooks/useSurecAkisi.ts:64:          SUM(t.birim_fiyat * k.miktar) as hesaplanan_toplam
+apps/temin360-desktop/src/renderer/src/screens/system/surec-akisi/hooks/useSurecAkisi.ts:109:              bidsMap.set(b.temin_firma_id, Number(b.hesaplanan_toplam) || 0)
+apps/temin360-desktop/src/renderer/src/screens/system/surec-akisi/utils/helpers.ts:147:  if (n.includes('harcama pusula')) return 'harcama-pusulasi'
+apps/temin360-desktop/src/renderer/src/services/excelExport/sheets/sablonSheet.ts:163:            'harcama-pusulasi.html',
+apps/temin360-desktop/src/renderer/src/utils/engine/ruleEngine.ts:10: * 4. DEGER_ATA: Hedef alana/de─şi┼şkene hesaplanan de─şeri otomatik yazar.
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:29:  hesaplananKdv: number
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:86:  const hesaplananKdv = roundKurus(kdvHaric * kdvOrani)
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:87:  const tevkifatTutari = roundKurus(hesaplananKdv * tevkifatOrani)
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:88:  const saticiyaOdenecekKdv = roundKurus(hesaplananKdv - tevkifatTutari)
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:106:  const brutHakedisTutari = roundKurus(kdvHaric + hesaplananKdv)
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:111:    `Hesaplanan KDV (%${kdvOrani * 100}): ${formatTL(hesaplananKdv)}`,
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:128:    hesaplananKdv,
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:155:  hesaplananToplamCeza: number
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:171:  const hesaplananToplamCeza = roundKurus(gunlukCezaTutari * Math.max(0, input.gecikilenGunSayisi))
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:174:  const tavanAsildiMi = hesaplananToplamCeza > tavanCezaTutari
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:175:  const uygulananToplamCeza = tavanAsildiMi ? tavanCezaTutari : hesaplananToplamCeza
+apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:182:    hesaplananToplamCeza,
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:287:  hesaplananKdv: number
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:300:      hesaplananKdv: 0,
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:309:  let hesaplananKdv = 0
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:313:    hesaplananKdv = matrah * (kdvOrani / 100)
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:317:    hesaplananKdv = tutar - matrah
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:321:  const tevkifEdilenKdv = hesaplananKdv * tevkifatOrani
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:322:  const saticiyaOdenecekKdv = hesaplananKdv - tevkifEdilenKdv
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:324:  const genelToplam = matrah + hesaplananKdv
+apps/temin360-desktop/src/renderer/src/utils/turkishCalculationUtils.ts:328:    hesaplananKdv,
+apps/temin360-desktop/src/shared/constants/templateConstants.ts:71:  'harcama-pusulasi': 'STANDART FORM (MYHBY ├ûRNEK NO: 3): HARCAMA PUSULASI VE KLAS├ûR D─░Z─░ F─░HR─░ST─░',
+apps/temin360-desktop/src/shared/constants/templateConstants.ts:152:      { dosya_adi: 'harcama-pusulasi', etiket: 'Harcama Pusulas─▒' }
+apps/temin360-desktop/src/shared/constants/templateConstants.ts:262:  'harcama-pusulasi',
+apps/temin360-desktop/src/shared/types/templates/4-kabul-ve-odeme-islemleri/harcama-pusulasi.ts:1:// Kaynak: resources/templates/4-kabul-ve-odeme-islemleri\harcama-pusulasi\index.html.json
+apps/temin360-desktop/src/shared/types/templates/4-kabul-ve-odeme-islemleri/harcama-pusulasi.ts:2:export interface IHarcamaPusulasi {
+apps/temin360-desktop/src/shared/types/templates/index.ts:20:export * from './4-kabul-ve-odeme-islemleri/harcama-pusulasi'
+packages/database/src/audit-trail.ts:649:      // 4c. Yeniden hesaplanan hash veritaban─▒ndaki current_hash ile e┼şle┼şiyor mu?
+packages/document-templates/src/constants/editable-fields.ts:27:  'harcama-pusulasi': [
+packages/document-templates/src/constants/template-constants.ts:173:  'harcama-pusulasi': 'harcama-pusulasi',
+packages/document-templates/src/constants/template-constants.ts:174:  'harcamapusulasi': 'harcama-pusulasi',
+packages/document-templates/src/constants/template-constants.ts:175:  'pusula': 'harcama-pusulasi',
+packages/document-templates/src/constants/template-registry.ts:578:    id: "harcama-pusulasi",
+packages/document-templates/src/constants/template-registry.ts:579:    name: "HarcamaPusulasi",
+packages/document-templates/src/constants/templateIds.ts:19:  FaturaveHarcamaPusulasi: 'FaturaveHarcamaPusulasi',
+packages/document-templates/src/constants/templateIds.ts:21:  HARCAMA_PUSULASI: 'harcama-pusulasi',
+packages/document-templates/src/index.ts:19:export * from "./templates/harcama-pusulasi";
+packages/document-templates/src/registry.ts:28:import { HarcamaPusulasi } from './templates/harcama-pusulasi';
+packages/document-templates/src/registry.ts:565:    id: 'harcama-pusulasi',
+packages/document-templates/src/registry.ts:566:    name: 'HarcamaPusulasi',
+packages/document-templates/src/registry.ts:571:    component: HarcamaPusulasi,
+packages/document-templates/src/registry.ts:686:  'harcama-pusulasi': 'harcama_pusulasi',
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.schema.ts:4:export const HarcamaPusulasiSchema = BaseTemplateSchema.extend({
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.schema.ts:23:export type HarcamaPusulasiType = z.infer<typeof HarcamaPusulasiSchema>;
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:8:import { HarcamaPusulasiType } from "./HarcamaPusulasi.schema";
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:11:interface HarcamaPusulasiProps {
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:12:  data?: Partial<HarcamaPusulasiType> & Record<string, any>;
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:19:export function HarcamaPusulasi({
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:25:}: HarcamaPusulasiProps) {
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:321:                          kalem.teslimMiktari ??
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:430:                      const hesaplanan = (data.ihtiyacKalemleri as any[]).reduce((acc: number, k: any) => {
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:432:                          k.teslimMiktari ??
+packages/document-templates/src/templates/harcama-pusulasi/HarcamaPusulasi.template.tsx:442:                      return hesaplanan > 0 ? formatCurrency(hesaplanan) : "";
+packages/document-templates/src/templates/harcama-pusulasi/index.ts:1:export * from "./HarcamaPusulasi.schema";
+packages/document-templates/src/templates/harcama-pusulasi/index.ts:2:export * from "./HarcamaPusulasi.template";
+packages/domain/src/kik/yuzde10.ts:31:  /** Y─▒ll─▒k ├Âdene─şin %10'u olarak hesaplanan azami izin verilen harcama limiti. */
+packages/ecosystem-contracts/src/__tests__/engine.test.ts:250:    expect(aggregatedAfterStep1.hesaplanan_idari_para_cezasi).toBe(225000)
+packages/ecosystem-contracts/src/statutoryProcessModules.ts:192:      <p><strong>Toplam Hesaplanan ─░dari Para Cezas─▒:</strong> {{hesaplanan_idari_para_cezasi}} TL</p>
+packages/ecosystem-contracts/src/statutoryProcessModules.ts:207:      placeholder: 'hesaplanan_idari_para_cezasi',
+packages/ecosystem-contracts/src/statutoryProcessModules.ts:209:      sourceKey: 'hesaplanan_idari_para_cezasi'
+packages/ecosystem-contracts/src/statutoryProcessModules.ts:299:                targetField: 'hesaplanan_idari_para_cezasi',

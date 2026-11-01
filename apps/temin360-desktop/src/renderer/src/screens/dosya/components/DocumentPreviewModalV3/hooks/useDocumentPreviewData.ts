@@ -3,10 +3,9 @@ import { IhtiyacListesiType } from '@temin360/document-templates'
 import { useWorkspaceStore } from '../../../../../store/workspaceStore'
 import { useSettingsStore } from '../../../../../store/settingsStore'
 import { useClickOutside } from '../../../../../hooks/useClickOutside'
-import { Personel } from '../types'
+import { Personel, DocumentSource } from '../types'
 import { resolveTemplateConfig, TEMPLATE_OPTIONS, TemplateOptionItem } from '../templateResolver'
 import { documentPreloadService } from '../../../../../services/documentPreloadService'
-import { resolvers, DocumentSource } from '../document-engine'
 import {
   compileDocumentHtml,
   exportDocumentDocx,
@@ -15,7 +14,8 @@ import {
   refreshDocumentFromDb,
   saveDocumentToDb,
   useDocumentPreviewScale,
-  UseDocumentPreviewDataParams
+  UseDocumentPreviewDataParams,
+  sourceResolvers as resolvers
 } from './helpers'
 
 export function useDocumentPreviewData({
@@ -402,11 +402,6 @@ export function useDocumentPreviewData({
 
   // Reset and refresh data from database or resolver
   const handleRefreshFromDb = async (): Promise<void> => {
-    const isConfirmed = confirm(
-      'Belge üzerindeki tüm verileri veritabanındaki güncel değerlerle sıfırlamak istiyor musunuz? Canlı düzenlemeleriniz kaybolabilir.'
-    )
-    if (!isConfirmed) return
-
     if (resolvedSource.kind === 'dosya') {
       if (!activeDosyaId || !resolvedId) return
 
@@ -414,7 +409,8 @@ export function useDocumentPreviewData({
         setIsLoading(true)
         const baseData = await refreshDocumentFromDb({
           activeDosyaId,
-          resolvedId
+          resolvedId,
+          currentFormData: formData
         })
 
         if (baseData) {

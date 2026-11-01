@@ -1,6 +1,7 @@
 import { resolveTemplateKey } from '@temin360/document-templates'
 import { useGlobalDocumentPreviewStore } from '../../../../../../../store/globalDocumentPreviewStore'
 import { applyRolePolicy } from './previewDataUtils'
+import { applyRefreshPolicy } from './refreshPolicy'
 import type { LoadPreviewDataResult } from '../types'
 
 export async function resolveSnapshotOverlay(
@@ -44,8 +45,8 @@ export async function resolveSnapshotOverlay(
       )
       const placeholders = candidateKeys.map(() => '?').join(', ')
       const dbSnap = await queryExecutor(
-        `SELECT veri_json FROM DATA_DosyaSablonVeri 
-         WHERE temin_dosya_id = ? AND (
+        `SELECT veri_json FROM DATA_TeminBelgeSnapshot 
+         WHERE dosya_id = ? AND is_deleted = 0 AND (
            sablon_kodu IN (${placeholders})
            OR sablon_id IN (SELECT id FROM TANIM_Sablon WHERE dosya_adi IN (${placeholders}))
          )
@@ -74,63 +75,16 @@ export async function resolveSnapshotOverlay(
   let activeLogoRight = showLogoRight
   let activeOrientation: 'portrait' | 'landscape' = 'portrait'
 
-  // DB Snapshot Data represents user-saved state and takes highest precedence
+  // DB Snapshot Data merged with Smart Refresh Policy (preserve + source + manual)
   if (snapshotData && typeof snapshotData === 'object') {
     try {
-      for (const [key, val] of Object.entries(snapshotData)) {
+      const mergedByPolicy = applyRefreshPolicy(finalData, snapshotData)
+      for (const [key, val] of Object.entries(mergedByPolicy)) {
         if (val !== undefined && val !== null) {
-          if (key === 'solLogo' && (!val || String(val).trim() === '')) {
-            continue
-          }
-          if (key === 'sagLogo' && (!val || String(val).trim() === '')) {
-            continue
-          }
-          if (
-            (key === 'mutemetAdi' ||
-              key === 'muhasebeYetkilisiAdi' ||
-              key === 'muhasebeYetkilisi') &&
-            (!val ||
-              val === '......' ||
-              val === 'Mutemet / Muhasebe Yetkilisi' ||
-              String(val).trim() === '') &&
-            baseData.mutemetAdi
-          ) {
-            continue
-          }
-          if (
-            (key === 'onaylayanPersonelAdi' || key === 'harcamaYetkilisiAdi') &&
-            (!val || val === '......' || String(val).trim() === '') &&
-            baseData.onaylayanPersonelAdi
-          ) {
-            continue
-          }
-          if (
-            (key === 'hazirlayanPersonelAdi' || key === 'gerceklestirmeGorevlisiAdi') &&
-            (!val || val === '......' || String(val).trim() === '') &&
-            baseData.hazirlayanPersonelAdi
-          ) {
-            continue
-          }
           finalData[key] = val
         }
       }
-      const explicitMakam = snapshotData.sunulacakMakamAdi || snapshotData.sunulacakMakam
-      if (explicitMakam) {
-        finalData.sunulacakMakamAdi = explicitMakam
-        finalData.sunulacakMakam = explicitMakam
-      }
-      const explicitTarih =
-        snapshotData.tarih || snapshotData.onayaSunulanTarih || snapshotData.belgeTarihi
-      if (explicitTarih) {
-        if (!finalData.tarih) finalData.tarih = explicitTarih
-        if (!finalData.onayaSunulanTarih) finalData.onayaSunulanTarih = explicitTarih
-        if (!finalData.belgeTarihi) finalData.belgeTarihi = explicitTarih
-      }
-      const explicitOnayTarih = snapshotData.onayTarihi || snapshotData.olurTarihi
-      if (explicitOnayTarih) {
-        finalData.onayTarihi = explicitOnayTarih
-        finalData.olurTarihi = explicitOnayTarih
-      }
+
       if (snapshotData.showLogoLeft !== undefined) {
         activeLogoLeft = Boolean(snapshotData.showLogoLeft)
       }
@@ -144,7 +98,7 @@ export async function resolveSnapshotOverlay(
         finalData.kurumIci = Boolean(snapshotData.kurumIci)
       }
     } catch (e) {
-      console.error('Failed to merge saved snapshot JSON', e)
+      console.error('Failed to merge saved snapshot with refresh policy', e)
     }
   }
 

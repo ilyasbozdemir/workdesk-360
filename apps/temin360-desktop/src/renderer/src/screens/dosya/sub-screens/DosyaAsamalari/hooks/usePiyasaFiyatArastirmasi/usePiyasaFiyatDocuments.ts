@@ -354,8 +354,8 @@ export function usePiyasaFiyatDocuments(
 
         await window.electron.ipcRenderer.invoke(
           'db:run',
-          'INSERT OR REPLACE INTO DATA_DosyaSablonVeri (temin_dosya_id, sablon_id, veri_json) VALUES (?, ?, ?)',
-          [activeDosyaId, sablon.id, mergedCtxStr]
+          'INSERT INTO DATA_TeminBelgeSnapshot (dosya_id, sablon_id, sablon_kodu, veri_json, is_active, is_deleted, updated_at) VALUES (?, ?, ?, ?, 1, 0, CURRENT_TIMESTAMP) ON CONFLICT(dosya_id, sablon_kodu) DO UPDATE SET veri_json = excluded.veri_json, is_active = 1, is_deleted = 0, updated_at = CURRENT_TIMESTAMP',
+          [activeDosyaId, sablon.id, sablon.route_path || sablon.dosya_adi || String(sablon.id), mergedCtxStr]
         )
       }
 
@@ -435,7 +435,7 @@ export function usePiyasaFiyatDocuments(
 
         const snapshotRes = await window.electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT veri_json FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = ? AND sablon_id = ?',
+          'SELECT veri_json FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND sablon_id = ? AND is_deleted = 0',
           [activeDosyaId, sablon.id]
         )
 
@@ -456,8 +456,8 @@ export function usePiyasaFiyatDocuments(
 
         await window.electron.ipcRenderer.invoke(
           'db:run',
-          'INSERT OR REPLACE INTO DATA_DosyaSablonVeri (temin_dosya_id, sablon_id, veri_json) VALUES (?, ?, ?)',
-          [activeDosyaId, sablon.id, JSON.stringify(mergedCtx)]
+          'INSERT INTO DATA_TeminBelgeSnapshot (dosya_id, sablon_id, sablon_kodu, veri_json, is_active, is_deleted, updated_at) VALUES (?, ?, ?, ?, 1, 0, CURRENT_TIMESTAMP) ON CONFLICT(dosya_id, sablon_kodu) DO UPDATE SET veri_json = excluded.veri_json, is_active = 1, is_deleted = 0, updated_at = CURRENT_TIMESTAMP',
+          [activeDosyaId, sablon.id, sablon.route_path || sablon.dosya_adi || String(sablon.id), JSON.stringify(mergedCtx)]
         )
       }
 

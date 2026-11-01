@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tasinir Islem Fisi Şablon Veri Şeması",
+  "description": "Tasinir Islem Fisi belgesi için Mustache veri bağlamı (context) ve snapshot veri modeli.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema referansı"
+    },
+    "fisNo": {
+      "type": "string"
+    },
+    "fisTarihi": {
+      "type": "string"
+    },
+    "dosyaTarihi": {
+      "type": "string"
+    },
+    "ilIlce": {
+      "type": "string"
+    },
+    "ilIlceKodu": {
+      "type": "string"
+    },
+    "kurumAdi": {
+      "type": "string"
+    },
+    "harcamaBirimiAdi": {
+      "type": "string"
+    },
+    "harcamaBirimiKodu": {
+      "type": "string"
+    },
+    "tasinirAmbariAdi": {
+      "type": "string"
+    },
+    "tasinirAmbariKodu": {
+      "type": "string"
+    },
+    "muhasebeBirimiAdi": {
+      "type": "string"
+    },
+    "muhasebeBirimiKodu": {
+      "type": "string"
+    },
+    "muayeneTarihi": {
+      "type": "string"
+    },
+    "muayeneSayisi": {
+      "type": "string"
+    },
+    "faturaTarihi": {
+      "type": "string"
+    },
+    "faturaNo": {
+      "type": "string"
+    },
+    "islemCesidi": {
+      "type": "string"
+    },
+    "neredenGeldigi": {
+      "type": "string"
+    },
+    "kimeVerildigi": {
+      "type": "string"
+    },
+    "nereyeVerildigi": {
+      "type": "string"
+    },
+    "gonderHarcamaBirimiAdi": {
+      "type": "string"
+    },
+    "gonderHarcamaBirimiKodu": {
+      "type": "string"
+    },
+    "gonderTasinirAmbariAdi": {
+      "type": "string"
+    },
+    "gonderTasinirAmbariKodu": {
+      "type": "string"
+    },
+    "gonderMuhasebeBirimiAdi": {
+      "type": "string"
+    },
+    "gonderMuhasebeBirimiKodu": {
+      "type": "string"
+    },
+    "kalemSayisi": {
+      "type": "string"
+    },
+    "toplamMiktar": {
+      "type": "string"
+    },
+    "genelToplam": {
+      "type": "string"
+    },
+    "yukleniciFirma": {
+      "type": "string"
+    },
+    "ihtiyacKalemleri": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "siraNo": {
+            "type": "string"
+          },
+          "kodu": {
+            "type": "string"
+          },
+          "sicilNo": {
+            "type": "string"
+          },
+          "malzemeAdi": {
+            "type": "string"
+          },
+          "birimi": {
+            "type": "string"
+          },
+          "miktar": {
+            "type": "string"
+          },
+          "birimFiyat": {
+            "type": "string"
+          },
+          "toplamBedel": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "girisKayitTarihi": {
+      "type": "string"
+    },
+    "girisKontrolYetkilisiAdi": {
+      "type": "string"
+    },
+    "girisKontrolYetkilisiUnvan": {
+      "type": "string"
+    },
+    "cikisKayitTarihi": {
+      "type": "string"
+    },
+    "cikisKontrolYetkilisiAdi": {
+      "type": "string"
+    },
+    "cikisKontrolYetkilisiUnvan": {
+      "type": "string"
+    },
+    "teslimEdenTarihi": {
+      "type": "string"
+    },
+    "teslimEdenAdi": {
+      "type": "string"
+    },
+    "teslimEdenUnvan": {
+      "type": "string"
+    },
+    "teslimAlanTarihi": {
+      "type": "string"
+    },
+    "teslimAlanAdi": {
+      "type": "string"
+    },
+    "teslimAlanUnvan": {
+      "type": "string"
+    },
+    "onayTarihi": {
+      "type": "string"
+    },
+    "baskanAdi": {
+      "type": "string"
+    },
+    "baskanUnvan": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}

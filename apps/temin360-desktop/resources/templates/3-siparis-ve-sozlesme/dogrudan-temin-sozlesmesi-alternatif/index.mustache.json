@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "kurumAdi": "ÖRNEK KAMU KURUMU BAŞKANLIĞI",
   "isinAdi": "Destek Hizmetleri Kapsamında Çatı Yapımı Malzeme Alımı İşi",
   "yukleniciFirma": "ABC İNŞAAT TİCARET VE SANAYİ A.Ş.",

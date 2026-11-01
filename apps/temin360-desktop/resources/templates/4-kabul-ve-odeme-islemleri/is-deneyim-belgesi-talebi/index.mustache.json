@@ -1,4 +1,5 @@
 {
+  "$schema": "./schema.json",
   "dilekceTarihi": "22/10/2026",
   "kurumAdi": "ÖRNEK KAMU KURUMU BAŞKANLIĞI",
   "birimAdi": "Destek Hizmetleri Dairesi Başkanlığı",
@@ -10,5 +11,8 @@
   "dosyaKonusu": "Destek Hizmetleri Kapsamında Çatı Yapımı Malzeme Alımı İşi",
   "dosyaTarihi": "12/10/2026",
   "kabulTarihi": "20/10/2026",
-  "ekler": ["Muayene ve Kabul Tutanağı Sureti", "Fatura Örneği"]
+  "ekler": [
+    "Muayene ve Kabul Tutanağı Sureti",
+    "Fatura Örneği"
+  ]
 }
