@@ -100,10 +100,14 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
           <select
             value={templateKey}
             onChange={(e) => handlePresetChange(e.target.value as 'arastirma' | 'bos')}
-            className="text-xs font-semibold py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-2xs cursor-pointer"
+            className="text-xs font-semibold py-1 px-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer outline-none"
           >
-            <option value="arastirma">Şablon: Fiyat Araştırması</option>
-            <option value="bos">Şablon: Boş Standart Üst Yazı</option>
+            <option value="arastirma" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+              Şablon: Fiyat Araştırması
+            </option>
+            <option value="bos" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+              Şablon: Boş Standart Üst Yazı
+            </option>
           </select>
         </div>
       </div>
@@ -130,7 +134,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                   rows={4}
                   value={antet}
                   onChange={(e) => setAntet(e.target.value)}
-                  className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-mono"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -212,7 +216,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                     type="text"
                     value={detsis}
                     onChange={(e) => setDetsis(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -221,7 +225,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                     type="text"
                     value={yil}
                     onChange={(e) => setYil(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -232,7 +236,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                     type="text"
                     value={sayisi}
                     onChange={(e) => setSayisi(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -243,7 +247,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                     type="text"
                     value={konu}
                     onChange={(e) => setKonu(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -252,7 +256,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                     type="date"
                     value={tarih}
                     onChange={(e) => setTarih(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -291,7 +295,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                     value={muhatap}
                     onChange={(e) => setMuhatap(e.target.value)}
                     placeholder="Örn: ANKARA İL SAĞLIK MÜDÜRLÜĞÜNE"
-                    className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                    className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 )}
               </div>
@@ -304,7 +308,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                   value={ilgi}
                   onChange={(e) => setIlgi(e.target.value)}
                   placeholder="Örn: 12.01.2026 tarihli ve 456 sayılı yazınız."
-                  className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs"
                 />
               </div>
               <div>
@@ -315,7 +319,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                   rows={6}
                   value={aciklama}
                   onChange={(e) => setAciklama(e.target.value)}
-                  className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs"
                 />
               </div>
             </div>
@@ -343,7 +347,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                   value={imzalar}
                   onChange={(e) => setImzalar(e.target.value)}
                   placeholder="Komisyon Başkanı | Ahmet YILMAZ | Mühendis"
-                  className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-mono"
                 />
               </div>
               <div className="flex items-center justify-between pt-1">
@@ -384,7 +388,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                     type="text"
                     value={kod}
                     onChange={(e) => setKod(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-mono text-xs"
+                    className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-mono text-xs"
                   />
                 </div>
               )}
@@ -413,7 +417,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                   value={kalemler}
                   onChange={(e) => setKalemler(e.target.value)}
                   placeholder="A4 Kağıdı | 80 gr | Kutu | 50"
-                  className="w-full p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs font-mono"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1">
@@ -465,7 +469,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                   value={ek}
                   onChange={(e) => setEk(e.target.value)}
                   placeholder="Teknik Şartname (4 sayfa)"
-                  className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs"
                 />
               </div>
               <div>
@@ -477,7 +481,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                   value={gereg}
                   onChange={(e) => setGereg(e.target.value)}
                   placeholder="Mali Hizmetler Birimi"
-                  className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs"
                 />
               </div>
               <div>
@@ -489,7 +493,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                   value={bilgi}
                   onChange={(e) => setBilgi(e.target.value)}
                   placeholder="İl Sağlık Müdürlüğü"
-                  className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-xs"
                 />
               </div>
             </div>
@@ -530,7 +534,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                       type="text"
                       value={adres}
                       onChange={(e) => setAdres(e.target.value)}
-                      className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -542,7 +546,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                         type="text"
                         value={web}
                         onChange={(e) => setWeb(e.target.value)}
-                        className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                     </div>
                     <div>
@@ -553,7 +557,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                         type="text"
                         value={eposta}
                         onChange={(e) => setEposta(e.target.value)}
-                        className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -563,7 +567,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                       type="text"
                       value={kep}
                       onChange={(e) => setKep(e.target.value)}
-                      className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -575,7 +579,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                         type="text"
                         value={hazad}
                         onChange={(e) => setHazad(e.target.value)}
-                        className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                     </div>
                     <div>
@@ -586,7 +590,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                         type="text"
                         value={hazun}
                         onChange={(e) => setHazun(e.target.value)}
-                        className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                     </div>
                     <div>
@@ -597,7 +601,7 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
                         type="text"
                         value={haztel}
                         onChange={(e) => setHaztel(e.target.value)}
-                        className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                       />
                     </div>
                   </div>
