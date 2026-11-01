@@ -476,7 +476,7 @@ export function resolveAllCiktiData(
         ? `${detsisNo}-${sdpKodu}-${paddedSayi}`
         : `${fileYear}/${seqNumber}`
 
-    const existingEvrak = String((dosya as any)?.evrak_sayisi || '').replace(/^E-/i, '').trim()
+    const existingEvrak = String((activeDosya as any)?.evrak_sayisi || '').replace(/^E-/i, '').trim()
     const resolvedEvrakSayisi =
       existingEvrak && !existingEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(existingEvrak)
         ? existingEvrak

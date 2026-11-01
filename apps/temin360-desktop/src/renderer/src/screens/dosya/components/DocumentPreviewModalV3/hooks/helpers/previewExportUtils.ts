@@ -307,13 +307,13 @@ export async function refreshDocumentFromDb({
 
   let freshData: Record<string, any> | null = null
   try {
-    const doc = await DocumentEngine.resolveDocument({
+    const doc = await DocumentEngine.resolveDocumentData({
       dosyaId: activeDosyaId,
       templateKey: resolvedId
     })
     freshData = (doc?.data as Record<string, any>) || null
   } catch (err) {
-    console.warn('[refreshDocumentFromDb] DocumentEngine.resolveDocument error:', err)
+    console.warn('[refreshDocumentFromDb] DocumentEngine.resolveDocumentData error:', err)
   }
 
   if (!freshData) {
