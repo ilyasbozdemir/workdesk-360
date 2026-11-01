@@ -17,6 +17,10 @@
   - Kazanan firma seçimi ile `yaklasik_maliyet` hesabı birbirinden tamamen ayrıldı.
 - [x] **`decimalUtils.ts` Global Kirlilik İzolasyonu:**
   - Global `Decimal.set(...)` çağrısı kaldırılarak `Decimal.clone()` ile modüle özel `ToolDecimal` izole edildi.
+- [x] **E2E Testleri ve CI/CD Başlatma Zaman Aşımı (Timeout) Kök Neden Çözümü:**
+  - `javascript-obfuscator` Vite eklentisi Rollup'ın `generateBundle` aşamasındaki henüz çözümlenmemiş dinamik import yer tutucularını (`!~{...}~`) base64 string dizisine dönüştürerek Rollup'ın yer tutucu çözümlemesini engelliyordu. Bu durum çalışma zamanında `PageWrapper` altında `DisclaimerModal-!~{021}~.js` 404 hatasına ve tüm ekranların çökmesine yol açıyordu. Obfuscation `writeBundle` aşamasına taşındı, test/CI ortamında gereksiz obfuscation atlandı ve `DisclaimerModal` statik import'a geçirildi.
+  - GitHub Actions `windows-2022` gibi sanal/headless CI koşucularında fiziksel GPU bulunmadığından `ignore-gpu-blocklist` ve `enable-gpu-rasterization` bayraklarının Chromium GPU compositor sürecini kilitlemesi engellendi; test/CI modunda `app.disableHardwareAcceleration()` devreye alındı ve `createWindow()` içine güvenlik fallback zamanlayıcısı eklendi.
+  - `electronHelper.ts` başlatma argümanlarına test modunda `--disable-gpu`, `--disable-dev-shm-usage`, `--no-sandbox` bayrakları entegre edildi.
 
 ---
 

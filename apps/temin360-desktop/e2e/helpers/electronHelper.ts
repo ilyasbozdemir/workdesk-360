@@ -22,6 +22,10 @@ export interface LaunchTestAppOptions {
 }
 
 export function resolveWindowsDesktopDir(): string {
+  const customDir = process.env.E2E_DESKTOP_DIR ? process.env.E2E_DESKTOP_DIR.trim() : null
+  if (customDir && fs.existsSync(customDir)) {
+    return customDir
+  }
   if (process.platform === 'win32') {
     try {
       const psOutput = execSync(
@@ -82,10 +86,17 @@ export async function launchTestApp(
   const consoleLogs: { type: string; text: string; location?: string }[] = []
   const pageErrors: Error[] = []
 
+  const defaultHeadlessFlags = [
+    '--disable-gpu',
+    '--disable-dev-shm-usage',
+    '--no-sandbox'
+  ]
+
   const launchArgs = [
     mainScript,
     ...(enableSingleInstanceLock ? [] : ['--multi-instance']),
     `--user-data-dir=${userDataDir}`,
+    ...defaultHeadlessFlags,
     ...extraArgs
   ]
 

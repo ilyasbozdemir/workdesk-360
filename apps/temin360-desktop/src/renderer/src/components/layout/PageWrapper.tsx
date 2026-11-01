@@ -18,9 +18,7 @@ import { WorkspaceCloseModal } from './WorkspaceCloseModal'
 import { ShutdownOverlay } from './ShutdownOverlay'
 import { GlobalDocumentPreviewHost } from './GlobalDocumentPreviewHost'
 
-const DisclaimerModal = React.lazy(() =>
-  import('../modals/DisclaimerModal').then((m) => ({ default: m.DisclaimerModal }))
-)
+import { DisclaimerModal } from '../modals/DisclaimerModal'
 const GoogleDriveModal = React.lazy(() =>
   import('../ui/GoogleDriveModal').then((m) => ({ default: m.GoogleDriveModal }))
 )

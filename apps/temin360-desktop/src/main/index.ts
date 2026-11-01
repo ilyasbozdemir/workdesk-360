@@ -77,14 +77,25 @@ if (process.platform === 'win32') {
   } catch {}
 }
 
-// Donanım Hızlandırma & Düşük Donanımlı Bilgisayarlar İçin Performans Optimizasyonları
-try {
-  app.commandLine.appendSwitch('enable-gpu-rasterization')
-  app.commandLine.appendSwitch('enable-zero-copy')
-  app.commandLine.appendSwitch('ignore-gpu-blocklist')
-  app.commandLine.appendSwitch('enable-smooth-scrolling')
-  app.commandLine.appendSwitch('high-dpi-support', '1')
-} catch {}
+// Donanım Hızlandırma & Düşük Donanımlı Bilgisayarlar / CI Ortamları İçin Optimizasyonlar
+const isTestOrCI =
+  process.env.NODE_ENV === 'test' ||
+  Boolean(process.env.CI) ||
+  process.argv.includes('--disable-gpu')
+
+if (isTestOrCI) {
+  try {
+    app.disableHardwareAcceleration()
+  } catch {}
+} else {
+  try {
+    app.commandLine.appendSwitch('enable-gpu-rasterization')
+    app.commandLine.appendSwitch('enable-zero-copy')
+    app.commandLine.appendSwitch('ignore-gpu-blocklist')
+    app.commandLine.appendSwitch('enable-smooth-scrolling')
+    app.commandLine.appendSwitch('high-dpi-support', '1')
+  } catch {}
+}
 import { workspaceManager } from './database/workspace'
 import { CURRENT_SCHEMA_VERSION, manifests } from '@dt/database'
 import nodemailer from 'nodemailer'
@@ -343,7 +354,10 @@ function createWindow(): void {
     }
   })
 
-  mainWindow.on('ready-to-show', () => {
+  let isShown = false
+  const showWindow = (): void => {
+    if (isShown || mainWindow.isDestroyed()) return
+    isShown = true
     if (winIcon) {
       try {
         mainWindow.setIcon(winIcon)
@@ -353,6 +367,19 @@ function createWindow(): void {
     if (process.argv.includes('--new-dosya')) {
       mainWindow.webContents.send('app:navigate', '/dosyalar/yeni')
     }
+  }
+
+  mainWindow.on('ready-to-show', showWindow)
+
+  // Headless CI veya sanal ekranlarda ready-to-show gecikirse güvenlik fallback'i
+  const fallbackShowTimer = setTimeout(() => {
+    if (!isShown && !mainWindow.isDestroyed()) {
+      showWindow()
+    }
+  }, 3000)
+
+  mainWindow.once('closed', () => {
+    clearTimeout(fallbackShowTimer)
   })
 
   let quitRequestTimeout: NodeJS.Timeout | null = null
