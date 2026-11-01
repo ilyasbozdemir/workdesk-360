@@ -80,7 +80,7 @@ export class LuzumMuzekkeresiResolver implements DocumentDataResolver<LuzumMuzek
       mudurluk: headerData.mudurluk,
       solLogo: headerData.solLogo,
       sagLogo: headerData.sagLogo,
-      evrakSayisi: dosyaRow?.temin_no || headerData.dosyaNo || '',
+      evrakSayisi: headerData.evrakSayisi || dosyaRow?.temin_no || headerData.dosyaNo || '',
       dosyaKonusu: dosyaRow?.konu || headerData.konu || '',
       maddeNo: dosyaRow?.madde_no || '22/d',
       tarih: effectiveDate,

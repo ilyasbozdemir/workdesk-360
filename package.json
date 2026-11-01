@@ -51,7 +51,7 @@
     "typecheck:desktop": "pnpm --filter temin360-desktop typecheck:node && pnpm --filter temin360-desktop typecheck:web",
     "typecheck:workspace": "pnpm --filter app-workspace typecheck",
     "typecheck:web": "pnpm --filter app-web build",
-    "typecheck:packages": "pnpm --filter @dt/database build && pnpm --filter @temin360/document-templates typecheck && pnpm --filter @worksuite-360/contracts typecheck",
+    "typecheck:packages": "pnpm --filter @dt/database build && pnpm --filter @temin360/document-templates typecheck && pnpm --filter @worksuite-360/contracts typecheck && pnpm --filter @worksuite-360/document-engine typecheck",
     "typecheck": "pnpm typecheck:temin && pnpm typecheck:web",
     "typecheck:all": "pnpm typecheck:packages && pnpm typecheck:temin && pnpm typecheck:ihale && pnpm typecheck:personel && pnpm typecheck:flowdesk && pnpm typecheck:workspace",
     "test:temin": "pnpm --filter temin360-desktop test",

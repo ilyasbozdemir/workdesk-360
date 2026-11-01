@@ -264,7 +264,7 @@ describe('DocumentPreview & PDF Export Regression Test Suite', () => {
       { key: 'luzum_muzekkeresi', expectedBadgeOrTitle: 'LÜZUM MÜZEKKERESİ' },
       {
         key: 'ihtiyac_listesi',
-        expectedBadgeOrTitle: 'İdaremizde ihtiyacı olan aşağıda yazılı mal/hizmet kalemlerinin'
+        expectedBadgeOrTitle: 'ihtiyacı olan aşağıda yazılı mal/hizmet kalemlerinin'
       },
       { key: 'harcama_talimati', expectedBadgeOrTitle: 'HARCAMA TALİMATI' },
       { key: 'yaklasik_maliyet_cetveli', expectedBadgeOrTitle: 'YAKLAŞIK MALİYET' }

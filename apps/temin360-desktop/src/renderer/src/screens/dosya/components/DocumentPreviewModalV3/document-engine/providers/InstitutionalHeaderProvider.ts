@@ -1,5 +1,6 @@
 import { InstitutionalHeaderData } from '../registry/types'
 import { useSettingsStore } from '../../../../../../store/settingsStore'
+import { resolveEvrakSayisi } from '@temin360/document-templates'
 
 /**
  * Kurumsal ve Antet Bilgileri Sağlayıcısı (Institutional Header Provider)
@@ -108,6 +109,16 @@ export class InstitutionalHeaderProvider {
 
     const sagLogo = kurumRow?.logo_sag || settings.logoRight || null
 
+    // 4. DETSİS formatlı resmî evrak sayısı çözümlenmesi
+    let detsisEvrakSayisi = ''
+    if (dosyaId) {
+      try {
+        detsisEvrakSayisi = await resolveEvrakSayisi(dosyaId, queryExecutor)
+      } catch (err) {
+        console.warn('[InstitutionalHeaderProvider] resolveEvrakSayisi failed:', err)
+      }
+    }
+
     const result: InstitutionalHeaderData = {
       antetSatirlari,
       kurumUst: kurumAdiText,
@@ -116,6 +127,7 @@ export class InstitutionalHeaderProvider {
       solLogo,
       sagLogo,
       dosyaNo: dosyaRow?.temin_no || '',
+      evrakSayisi: detsisEvrakSayisi || dosyaRow?.temin_no || '',
       butceYili: dosyaRow?.butce_yili ? Number(dosyaRow.butce_yili) : new Date().getFullYear(),
       dosyaTarihi: dosyaRow?.tarih || '',
       konu: dosyaRow?.konu || '',
