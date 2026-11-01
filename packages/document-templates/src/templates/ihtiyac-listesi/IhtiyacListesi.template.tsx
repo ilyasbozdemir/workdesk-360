@@ -17,10 +17,6 @@ import {
   paginateData,
 } from "../../document/DynamicPaginatedTable";
 import { IhtiyacListesiType } from "./IhtiyacListesi.schema";
-import {
-  toLocativeSuffix,
-  toPossessiveSuffix,
-} from "../../resolver/mappingResolver";
 
 interface IhtiyacListesiProps {
   data?: Partial<IhtiyacListesiType>;
@@ -68,6 +64,8 @@ export function IhtiyacListesi({
   };
   const items = data.ihtiyacKalemleri || [];
   const pages = paginateData(items, limits);
+
+  console.log("data", data);
 
   return (
     <>
@@ -125,25 +123,7 @@ export function IhtiyacListesi({
                 >
                   <EditableField
                     name="ihtiyacYeri"
-                    value={(!data.ihtiyacYeri || data.ihtiyacYeri === "[]"
-                      ? ""
-                      : data.ihtiyacYeri) ||
-                      (!((data as any).ihtiyac_yeri) ||
-                          (data as any).ihtiyac_yeri === "[]"
-                        ? ""
-                        : (data as any).ihtiyac_yeri) ||
-                      (!((data as any).ihtiyac_yeri_eki) ||
-                          (data as any).ihtiyac_yeri_eki === "[]"
-                        ? ""
-                        : (data as any).ihtiyac_yeri_eki) ||
-                      (data as any).altKurumBulunma ||
-                      (data as any).alt_kurum_bulunma ||
-                      toLocativeSuffix(
-                        (data as any).altKurumBizim ||
-                          (data as any).kurumumuz ||
-                          (data as any).mudurluk ||
-                          "",
-                      )}
+                    value={data.ihtiyacYeri}
                     placeholder="İhtiyaç Yeri"
                   />{" "}
                   ihtiyacı olan aşağıda yazılı mal/hizmet kalemlerinin temin
