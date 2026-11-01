@@ -936,6 +936,10 @@ importers:
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.1)(jiti@2.7.0)(jsdom@30.1.1)(lightningcss@1.32.0)(supports-color@8.1.1)(tsx@4.23.13)
 
   packages/domain:
+    dependencies:
+      decimal.js:
+        specifier: ^10.6.0
+        version: 10.6.0
     devDependencies:
       typescript:
         specifier: ^5.6.0
