@@ -476,7 +476,10 @@ export function resolveAllCiktiData(
         : ${fileYear}/
 
     const existingEvrak = String((dosya as any)?.evrak_sayisi || '').replace(/^E-/i, '').trim()
-    const resolvedEvrakSayisi = existingEvrak || officialEvrakSayisi
+    const resolvedEvrakSayisi =
+      existingEvrak && !existingEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(existingEvrak)
+        ? existingEvrak
+        : officialEvrakSayisi
 
     const dosyaContext: any = {
       ...masterJson,

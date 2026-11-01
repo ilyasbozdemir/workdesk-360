@@ -1,5 +1,5 @@
 /**
- * Formats an evrak sayısı into İhtiyaç Listesi official format ([DETSIS]-[YIL]/[SAYI]).
+ * Formats an evrak sayısı into official EBYS/DETSIS format ([DETSIS]-[SDP]-[SAYI]) as in İhtiyaç Listesi.
  */
 export function formatOfficialEvrakSayisi(options: {
   evrakSayisi?: string | null;
@@ -10,15 +10,22 @@ export function formatOfficialEvrakSayisi(options: {
   yil?: number | string | null;
 }): string {
   const current = String(options.evrakSayisi || '').replace(/^E-/i, '').trim();
-  if (current) {
+  if (current && !current.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(current)) {
     return current;
   }
 
-  const detsis = String(options.detsisNo || '').trim();
-  const fileYear = options.yil || new Date().getFullYear();
+  const detsis = String(options.detsisNo || '').trim() || '10234521';
+  const rawTur = String(options.tur || 'mal').toLowerCase();
+  let sdpAltKodu = '01';
+  if (rawTur.includes('hizmet') || rawTur.includes('danismanlik')) {
+    sdpAltKodu = '02';
+  } else if (rawTur.includes('yapim')) {
+    sdpAltKodu = '03';
+  }
+  const sdpKodu = `934.${sdpAltKodu}`;
 
   let seqNumber = 1;
-  const numSource = String(options.sayisi || options.teminNo || '');
+  const numSource = String(options.sayisi || options.teminNo || current || '');
   if (numSource) {
     const parts = numSource.split(/[/_ -]+/);
     for (let i = parts.length - 1; i >= 0; i--) {
@@ -30,13 +37,12 @@ export function formatOfficialEvrakSayisi(options: {
     }
   }
 
-  return detsis && detsis !== '00000000'
-    ? `${detsis}-${fileYear}/${seqNumber}`
-    : `${fileYear}/${seqNumber}`;
+  const padded = String(seqNumber).padStart(4, '0');
+  return `${detsis}-${sdpKodu}-${padded}`;
 }
 
 /**
- * Resolves official document number in İhtiyaç Listesi format e.g. 95240212-2026/123 or 2026/123
+ * Resolves official document number in standard İhtiyaç Listesi format e.g. 0000000-934.01-0001
  */
 export async function resolveEvrakSayisi(
   activeDosyaId: number,
@@ -100,6 +106,10 @@ export async function resolveEvrakSayisi(
       } catch {}
     }
 
+    if (!detsisNo) {
+      detsisNo = '10234521';
+    }
+
     // 3. Fetch dosya details
     const dosyaRes = await queryExecutor(
       'SELECT id, temin_no, evrak_sayisi, tur, butce_yili, dosya_acilis_tarihi, created_at FROM DATA_TeminDosyasi WHERE id = ? LIMIT 1',
@@ -108,15 +118,27 @@ export async function resolveEvrakSayisi(
 
     const row = dosyaRes?.[0];
 
-    // Eğer dosyada kayıtlı evrak_sayisi varsa doğrudan onu koru
+    // Eğer dosyada önceden girilmiş resmi formatta bir evrak sayısı varsa koru
     const existingEvrak = String(row?.evrak_sayisi || '').replace(/^E-/i, '').trim();
-    if (existingEvrak) {
+    if (existingEvrak && !existingEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(existingEvrak)) {
       return existingEvrak;
     }
 
     const dosyaSayisi = String(row?.temin_no || '').trim();
+    const rawTur = String(row?.tur || 'mal').toLowerCase();
 
-    // Yıla göre sıra numarası hesaplama (Her yıl 1'den başlar)
+    // SDP Standart Dosya Planı Kodu: 934.01 (Mal Alımı), 934.02 (Hizmet/Danışmanlık), 934.03 (Yapım İşi)
+    let sdpAltKodu = '01';
+    if (rawTur.includes('hizmet') || rawTur.includes('danismanlik')) {
+      sdpAltKodu = '02';
+    } else if (rawTur.includes('yapim')) {
+      sdpAltKodu = '03';
+    } else {
+      sdpAltKodu = '01';
+    }
+    const sdpKodu = `934.${sdpAltKodu}`;
+
+    // Yıla göre sıra numarası hesaplama (Her yıl 0001'den başlar)
     const fileYear =
       row?.butce_yili ||
       (row?.dosya_acilis_tarihi ? new Date(row.dosya_acilis_tarihi).getFullYear() : null) ||
@@ -156,14 +178,9 @@ export async function resolveEvrakSayisi(
       seqNumber = 1;
     }
 
-    // İhtiyaç listesi formatı: [DETSIS]-[YIL]/[SIRA] (örn: 95240212-2026/123 veya 2026/123)
-    if (detsisNo && detsisNo !== '00000000') {
-      return `${detsisNo}-${fileYear}/${seqNumber}`;
-    }
-
-    return `${fileYear}/${seqNumber}`;
+    const paddedSayi = String(seqNumber).padStart(4, '0');
+    return `${detsisNo}-${sdpKodu}-${paddedSayi}`;
   } catch (err) {
-    const currentYear = new Date().getFullYear();
-    return `${currentYear}/1`;
+    return '10234521-934.01-0001';
   }
 }

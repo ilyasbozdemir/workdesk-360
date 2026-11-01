@@ -49,11 +49,11 @@ export const StandartDosyaPlaniRehberi: React.FC = () => {
             <div className="space-y-1 text-slate-300">
               <div>
                 • E-imzalı yazı:{' '}
-                <span className="text-emerald-400 font-extrabold">E-56383307-934.01-0001</span>
+                <span className="text-emerald-400 font-extrabold">E-0000000-934.01-0001</span>
               </div>
               <div>
                 • Islak imzalı yazı:{' '}
-                <span className="text-amber-300 font-extrabold">56383307-934.01-0001</span>{' '}
+                <span className="text-amber-300 font-extrabold">0000000-934.01-0001</span>{' '}
                 <span className="text-slate-400 text-[11px]">(başında E- olmaz)</span>
               </div>
             </div>
@@ -64,7 +64,7 @@ export const StandartDosyaPlaniRehberi: React.FC = () => {
                 ekidir.
               </div>
               <div>
-                • <strong className="text-slate-250">56383307:</strong> Birim/Kurum DETSİS Kodu
+                • <strong className="text-slate-250">0000000:</strong> Birim/Kurum DETSİS Kodu
               </div>
               <div>
                 • <strong className="text-slate-250">934.01:</strong> Standart Dosya Planı (SDP)
