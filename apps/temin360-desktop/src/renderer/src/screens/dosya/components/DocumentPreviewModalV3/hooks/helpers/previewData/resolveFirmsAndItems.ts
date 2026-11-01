@@ -45,12 +45,10 @@ export function resolveFirmsAndItems(
           (f.id === winnerFirmaId ||
             f.temin_firma_id === winnerFirmaId ||
             f.firma_id === winnerFirmaId)) ||
+        f.kazandi_mi === 1 ||
         f.kazanan_mi === 1 ||
         f.isWinner
-    ) ||
-    safeFileFirms[0] ||
-    activeFirms[0] ||
-    safeCombinedFirms[0]
+    )
 
   if (winnerFirm && (winnerFirm.unvan || winnerFirm.firma_adi)) {
     const resolvedUnvan = winnerFirm.unvan || winnerFirm.firma_adi

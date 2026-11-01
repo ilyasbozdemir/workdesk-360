@@ -4,6 +4,7 @@ import { formatDateString } from '../../../../CiktiMerkezi.contextBuilder'
 import { paraYaziyaCevir } from '../../../../../../constants/sayiEslesmeleri'
 import { emitAppEvent } from '../../../../../../utils/appEvents'
 import { resolveCommissionCategory } from '@temin360/document-templates'
+import { executeSetWinnerTransaction } from '../../../../../../services/dossier/winnerSyncService'
 
 export function usePiyasaFiyatDocuments(
   activeDosyaId: number | null,
@@ -92,23 +93,16 @@ export function usePiyasaFiyatDocuments(
         const winnerToSet =
           !setLowestFirmAsWinner && manualWinnerFirmaId
             ? manualWinnerFirmaId
-            : lowestBidFirmMasterId ||
-              (invitedFirms[0] ? invitedFirms[0].firma_id || invitedFirms[0].id : null)
+            : lowestBidFirmMasterId || null
 
-        if (winnerToSet) {
-          await window.electron.ipcRenderer.invoke(
-            'db:run',
-            'UPDATE DATA_TeminDosyasi SET firma_id = ? WHERE id = ?',
-            [winnerToSet, activeDosyaId]
-          )
-          await window.electron.ipcRenderer.invoke(
-            'db:run',
-            `UPDATE DATA_TeminFirma 
-             SET kazandi_mi = CASE WHEN firma_id = ? OR id = ? THEN 1 ELSE 0 END 
-             WHERE temin_dosya_id = ?`,
-            [winnerToSet, winnerToSet, activeDosyaId]
-          )
-          setManualWinnerFirmaId(winnerToSet)
+        if (winnerToSet && activeDosyaId) {
+          const syncRes = await executeSetWinnerTransaction({
+            activeDosyaId,
+            teminFirmaId: winnerToSet
+          })
+          if (syncRes.success) {
+            setManualWinnerFirmaId(syncRes.masterFirmaId)
+          }
         }
       }
 

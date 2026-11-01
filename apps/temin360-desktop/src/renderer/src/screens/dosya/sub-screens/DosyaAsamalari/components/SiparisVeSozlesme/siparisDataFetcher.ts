@@ -113,17 +113,7 @@ export async function fetchSiparisVeSozlesmeData(
     )
   }
 
-  if (!winner) {
-    const firmsWithBids = enhancedFirms.filter((f: any) => f.calculated_teklif > 0)
-    if (firmsWithBids.length > 0) {
-      firmsWithBids.sort((a: any, b: any) => a.calculated_teklif - b.calculated_teklif)
-      winner = firmsWithBids[0]
-    }
-  }
-
-  if (!winner && enhancedFirms.length > 0) {
-    winner = enhancedFirms[0]
-  }
+  
 
   if (!winner) return null
 
@@ -133,24 +123,7 @@ export async function fetchSiparisVeSozlesmeData(
   const teklifToplami = winner.calculated_teklif > 0 ? winner.calculated_teklif : null
   const yasaklilikDurumu = winner.yasaklilik_durumu || null
 
-  if (Number(dosyaRow.firma_id) !== effectiveFirmaId || Number(winner.kazandi_mi) !== 1) {
-    try {
-      await window.electron.ipcRenderer.invoke(
-        'db:run',
-        'UPDATE DATA_TeminDosyasi SET firma_id = ? WHERE id = ?',
-        [effectiveFirmaId, activeDosyaId]
-      )
-      await window.electron.ipcRenderer.invoke(
-        'db:run',
-        `UPDATE DATA_TeminFirma 
-         SET kazandi_mi = (CASE WHEN firma_id = ? OR id = ? THEN 1 ELSE 0 END) 
-         WHERE temin_dosya_id = ?`,
-        [effectiveFirmaId, winner.temin_firma_id, activeDosyaId]
-      )
-    } catch (syncErr) {
-      console.warn('Winner auto-sync warning:', syncErr)
-    }
-  }
+  
 
   let formattedDate = ''
   let teslimGunu =

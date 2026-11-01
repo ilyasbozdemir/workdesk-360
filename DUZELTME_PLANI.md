@@ -21,6 +21,13 @@
   - `javascript-obfuscator` Vite eklentisi Rollup'ın `generateBundle` aşamasındaki henüz çözümlenmemiş dinamik import yer tutucularını (`!~{...}~`) base64 string dizisine dönüştürerek Rollup'ın yer tutucu çözümlemesini engelliyordu. Bu durum çalışma zamanında `PageWrapper` altında `DisclaimerModal-!~{021}~.js` 404 hatasına ve tüm ekranların çökmesine yol açıyordu. Obfuscation `writeBundle` aşamasına taşındı, test/CI ortamında gereksiz obfuscation atlandı ve `DisclaimerModal` statik import'a geçirildi.
   - GitHub Actions `windows-2022` gibi sanal/headless CI koşucularında fiziksel GPU bulunmadığından `ignore-gpu-blocklist` ve `enable-gpu-rasterization` bayraklarının Chromium GPU compositor sürecini kilitlemesi engellendi; test/CI modunda `app.disableHardwareAcceleration()` devreye alındı ve `createWindow()` içine güvenlik fallback zamanlayıcısı eklendi.
   - `electronHelper.ts` başlatma argümanlarına test modunda `--disable-gpu`, `--disable-dev-shm-usage`, `--no-sandbox` bayrakları entegre edildi.
+- [x] **Faz 1.2: Kazanan Firma Senkronizasyonunun ve Veri Bütünlüğünün Güvenli Uygulanması:**
+  - `schemaIntegrity.ts` içindeki belirsiz veya çelişkili eski kayıtları körlemesine çift kazanana dönüştüren iki adet `safeExec(UPDATE DATA_TeminFirma ...)` çağrısı kaldırıldı; yerine salt okunur uyumsuzluk tespiti ve loglama getirildi.
+  - Yeni `winnerSyncService.ts` servisi oluşturuldu; `executeSetWinnerTransaction` ile hem master (`TANIM_Firma.id`) hem de satır (`DATA_TeminFirma.id`) doğrulaması yapıldı, `DATA_TeminDosyasi.firma_id` ile `kazandi_mi` / `kazanan_mi` bayrakları atomik `db:transaction` içinde senkronize edildi.
+  - `usePiyasaFiyatCalculation.ts` ve `usePiyasaFiyatDocuments.ts` içindeki doğrudan ve dağınık SQL güncellemeleri `executeSetWinnerTransaction` servisine bağlandı.
+  - `siparisDataFetcher.ts` ve `useKabulVeOdemeData.ts` içindeki veri okuma sırasında sessizce en düşük teklifliyi veya ilk firmayı kazanan seçen ve arka planda `UPDATE` çalıştıran tehlikeli fallback mekanizmaları kaldırıldı; kazanan yokken veri tabanına dokunulmadan `null` dönülmesi ve kullanıcıya halihazırda var olan koruma uyarısının (`<SiparisGuardWarning />`, `<KabulGuardWarning />`) gösterilmesi sağlandı.
+  - `resolveFirmsAndItems.ts` belge önizleme çözümleyicisinde kazanan firma seçilmemişken ilk firmayı yüklenici olarak belirleyen fallback (`|| safeFileFirms[0] ...`) kaldırıldı; `kazandi_mi === 1` bayrağı doğrulandı.
+  - Kapsamlı Vitest birim testleri (`winnerSyncService.test.ts` 8/8) ve tüm test paketi (67/67 dosya, 611/611 test) ile typecheck ve üretim derlemesi (`electron-vite build`) sıfır hata ile başarıyla doğrulandı.
 
 ---
 
@@ -32,11 +39,6 @@
   - **Sorun:** `calculateLineTotal.ts` dosyasında `import Decimal from 'decimal.js'` var ancak `package.json` içinde `decimal.js` tanımlı değil. Ayrıca bu fonksiyon kod tabanında hiçbir yer tarafından çağrılmıyor.
   - **Yapılacak:** Domain paketine ya `decimal.js` bağımlılığı resmi olarak eklenecek ya da mevcut saf BigInt tabanlı `Money` sınıfı üzerinden uygulanacak; öksüz durum giderilecek.
   - **Etkilenen Dosyalar:** `packages/domain/package.json`, `packages/domain/src/procurement/calculations/calculateLineTotal.ts`
-
-- [ ] **1.2. Kazanan Firma Senkronizasyonunun Diğer Modüllere Yayılması:**
-  - **Sorun:** Sipariş ve Kabul/Ödeme aşamalarında da (`siparisDataFetcher.ts`, `useKabulVeOdemeData.ts`) benzer şekilde yalnızca `kazandi_mi` güncelleniyor.
-  - **Yapılacak:** Bu ekranlardaki güncellemeler de `kazandi_mi` ve `kazanan_mi` ikilisini birlikte güncelleyecek ortak bir servise/fonksiyona bağlanacak.
-  - **Etkilenen Dosyalar:** `apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/...`
 
 ---
 
@@ -73,4 +75,3 @@
 1. **Tek Seferde Tek Odak:** Her adım bağımsız bir dalda veya commit'te ele alınacak; çalışan ekranlar toplu refactoring ile riske atılmayacak.
 2. **Önce Test, Sonra Değişiklik:** Değiştirilen her fonksiyonun mevcut vitest entegrasyon testleri çalıştırılacak (`pnpm test`).
 3. **Mevcut Veri Uyumluluğu:** `.temin` arşiv dosyalarındaki eski kayıtları bozacak şema veya sözleşme değişiklikleri yapılmayacak.
-
