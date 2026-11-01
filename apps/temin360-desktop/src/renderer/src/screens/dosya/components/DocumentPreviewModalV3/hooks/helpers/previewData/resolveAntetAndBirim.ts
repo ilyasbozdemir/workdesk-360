@@ -92,11 +92,10 @@ export async function resolveAntetAndBirim(
     baseData.sunulacakMakam = rawMakam
   }
 
-  // Resolve official evrakSayisi if missing or slash-separated
+  // Resolve official evrakSayisi if missing
   if (
     !baseData.evrakSayisi ||
-    String(baseData.evrakSayisi).trim() === '' ||
-    String(baseData.evrakSayisi).includes('/')
+    String(baseData.evrakSayisi).trim() === ''
   ) {
     const activeDosyaId = Number(dosyaObj.id || dosyaRecord?.id || 0)
     if (activeDosyaId) {

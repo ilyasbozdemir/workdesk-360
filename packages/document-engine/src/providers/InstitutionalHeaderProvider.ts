@@ -122,9 +122,11 @@ export class InstitutionalHeaderProvider {
 
     const sagLogo = kurumRow?.logo_sag || settings.logoRight || null
 
-    // 4. DETSİS formatlı resmî evrak sayısı çözümlenmesi
+    // 4. İhtiyaç listesi formatlı resmî evrak sayısı çözümlenmesi ([DETSIS]-[YIL]/[SIRA] veya dosyadaki evrak_sayisi)
     let detsisEvrakSayisi = ''
-    if (dosyaId) {
+    if (dosyaRow?.evrak_sayisi) {
+      detsisEvrakSayisi = String(dosyaRow.evrak_sayisi).replace(/^E-/i, '').trim()
+    } else if (dosyaId) {
       try {
         detsisEvrakSayisi = await resolveEvrakSayisi(dosyaId, queryExecutor)
       } catch (err) {

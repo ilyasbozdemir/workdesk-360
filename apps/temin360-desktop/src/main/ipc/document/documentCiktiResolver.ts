@@ -470,14 +470,13 @@ export function resolveAllCiktiData(
       seqNumber = 1
     }
 
-    const paddedSayi = String(seqNumber).padStart(4, '0')
-    const officialEvrakSayisi = `${detsisNo}-${sdpKodu}-${paddedSayi}`
+    const officialEvrakSayisi =
+      detsisNo && detsisNo !== '00000000'
+        ? ${detsisNo}-/
+        : ${fileYear}/
 
-    const existingEvrak = String((activeDosya as any)?.evrak_sayisi || '').replace(/^E-/i, '').trim()
-    const resolvedEvrakSayisi =
-      existingEvrak && !existingEvrak.includes('/')
-        ? existingEvrak
-        : officialEvrakSayisi
+    const existingEvrak = String((dosya as any)?.evrak_sayisi || '').replace(/^E-/i, '').trim()
+    const resolvedEvrakSayisi = existingEvrak || officialEvrakSayisi
 
     const dosyaContext: any = {
       ...masterJson,
