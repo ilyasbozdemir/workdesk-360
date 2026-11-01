@@ -73,7 +73,7 @@ export default function TestEkranlariScreen({
            WHERE dosya_id = ?
              AND is_deleted = 0
            ORDER BY updated_at DESC`,
-          [activeDosyaId]
+          [activeDosyaId],
         );
 
         if (cancelled) return;

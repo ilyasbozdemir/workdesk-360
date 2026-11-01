@@ -1,5 +1,5 @@
 import { LuzumMuzekkeresiType } from '@temin360/document-templates'
-import { DocumentDataResolver, DocumentResolutionContext } from '../registry/types'
+import { DocumentDataResolver, DocumentResolutionContext } from '../types/contracts'
 
 /**
  * Lüzum Müzekkeresi Belge Çözücüsü (LuzumMuzekkeresiResolver)
@@ -99,9 +99,7 @@ export class LuzumMuzekkeresiResolver implements DocumentDataResolver<LuzumMuzek
       hazirlayanEposta: hazirlayanMail,
       talepEdenPersonelAdi: hazirlayanAdi,
       talepEdenPersonelUnvan: hazirlayanUnvan,
-      olurBaslik: dosyaRow?.olur_baslik || 'UYGUNDUR',
-      olurYazisi: dosyaRow?.olur_yazisi !== false,
-      kurumIci: true
+      birimAdi: headerData.mudurluk
     }
 
     return result

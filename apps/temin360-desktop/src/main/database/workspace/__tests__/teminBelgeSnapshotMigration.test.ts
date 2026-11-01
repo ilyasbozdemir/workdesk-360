@@ -1,11 +1,12 @@
+// @vitest-environment node
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import Database from 'better-sqlite3'
+import { DatabaseSync } from 'node:sqlite'
 
 describe('DATA_TeminBelgeSnapshot Schema & Migration Tests', () => {
-  let db: Database.Database
+  let db: any
 
   beforeEach(() => {
-    db = new Database(':memory:')
+    db = new DatabaseSync(':memory:')
     db.exec(`
       CREATE TABLE DATA_TeminDosyasi (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -202,7 +203,8 @@ describe('DATA_TeminBelgeSnapshot Schema & Migration Tests', () => {
       ON CONFLICT(dosya_id, sablon_kodu) DO NOTHING
     `)
 
-    const tx = db.transaction(() => {
+    db.exec('BEGIN')
+    try {
       for (const row of oldRows) {
         insertSnapshot.run(
           row.dosya_id || row.temin_dosya_id,
@@ -214,8 +216,11 @@ describe('DATA_TeminBelgeSnapshot Schema & Migration Tests', () => {
           row.updated_at
         )
       }
-    })
-    tx()
+      db.exec('COMMIT')
+    } catch (e) {
+      db.exec('ROLLBACK')
+      throw e
+    }
 
     const migrated = db.prepare('SELECT * FROM DATA_TeminBelgeSnapshot WHERE dosya_id = 275').all() as any[]
     expect(migrated.length).toBe(1)

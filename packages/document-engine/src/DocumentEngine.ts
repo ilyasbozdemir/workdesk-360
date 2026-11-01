@@ -5,6 +5,7 @@ import {
   DocumentValidationService
 } from '@temin360/document-templates'
 import { TemplateRegistry, InvalidTemplateKeyError } from './TemplateRegistry'
+import { InstitutionalHeaderProvider } from './providers/InstitutionalHeaderProvider'
 import {
   DocumentRecord,
   DocumentDefinition,
@@ -52,6 +53,58 @@ export class DocumentEngine {
 
   static getStorageAdapter(): DocumentStorageAdapter | null {
     return this.storageAdapter
+  }
+
+  private static getEffectiveStorageAdapter(): DocumentStorageAdapter | null {
+    if (this.storageAdapter) {
+      return this.storageAdapter
+    }
+    if (typeof window !== 'undefined' && (window as any).electron?.ipcRenderer) {
+      const ipc = (window as any).electron.ipcRenderer
+      return {
+        async getDocument({ dosyaId, templateKey }) {
+          const res = await ipc.invoke('belge:get-document', { dosyaId, templateKey })
+          if (res?.success && res.exists && res.record) {
+            return {
+              success: true,
+              exists: true,
+              record: {
+                id: res.record.id,
+                data: res.record.data,
+                sablonVersiyon: res.record.sablonVersiyon,
+                createdAt: res.record.createdAt,
+                updatedAt: res.record.updatedAt
+              }
+            }
+          }
+          if (res?.success === false) {
+            return { success: false, error: res.error || 'Belge yüklenemedi' }
+          }
+          return { success: true, exists: false }
+        },
+        async saveDocument({ dosyaId, templateKey, data, sablonVersiyon }) {
+          return await ipc.invoke('belge:save-document', {
+            dosyaId,
+            templateKey,
+            data,
+            sablonVersiyon
+          })
+        },
+        async resetDocument({ dosyaId, templateKey }) {
+          return await ipc.invoke('belge:reset-document', {
+            dosyaId,
+            templateKey
+          })
+        },
+        async deleteDocument({ dosyaId, templateKey }) {
+          return await ipc.invoke('belge:delete-document', {
+            dosyaId,
+            templateKey
+          })
+        }
+      }
+    }
+    return null
   }
 
   /**
@@ -124,14 +177,7 @@ export class DocumentEngine {
     if (this.headerResolver) {
       return this.headerResolver(dosyaId, this.queryExecutor)
     }
-    return {
-      antetSatirlari: [],
-      kurumUst: '',
-      kurumAdi: '',
-      mudurluk: '',
-      solLogo: null,
-      sagLogo: null
-    }
+    return InstitutionalHeaderProvider.resolve(dosyaId, this.queryExecutor)
   }
 
   /**
@@ -173,10 +219,11 @@ export class DocumentEngine {
     const { dosyaId, templateKey, context, forceDefault = false } = params
     const canonicalKey = this.resolveKey(templateKey)
     const headerData = await this.resolveHeaderData(dosyaId)
+    const adapter = this.getEffectiveStorageAdapter()
 
     // 1. Mevcut kayıtlı snapshot kontrolü
-    if (this.storageAdapter && !forceDefault) {
-      const storageRes = await this.storageAdapter.getDocument({
+    if (adapter && !forceDefault) {
+      const storageRes = await adapter.getDocument({
         dosyaId,
         templateKey: canonicalKey
       })
@@ -208,9 +255,9 @@ export class DocumentEngine {
     })
 
     // 3. İlk snapshot'ı otomatik kaydet (İlk açılış anında kalıcılık)
-    if (this.storageAdapter && !forceDefault) {
+    if (adapter && !forceDefault) {
       try {
-        const saveRes = await this.storageAdapter.saveDocument({
+        const saveRes = await adapter.saveDocument({
           dosyaId,
           templateKey: canonicalKey,
           data: initialData as Record<string, unknown>,
@@ -270,11 +317,12 @@ export class DocumentEngine {
       }
     }
 
-    if (!this.storageAdapter) {
+    const adapter = this.getEffectiveStorageAdapter()
+    if (!adapter) {
       throw new Error('Depolama adaptörü tanımlanmamış, belge kaydedilemedi.')
     }
 
-    const res = await this.storageAdapter.saveDocument({
+    const res = await adapter.saveDocument({
       dosyaId,
       templateKey: canonicalKey,
       data: data as Record<string, unknown>,
@@ -313,9 +361,10 @@ export class DocumentEngine {
   ): Promise<DocumentRecord<T>> {
     const { dosyaId, templateKey, context } = params
     const canonicalKey = this.resolveKey(templateKey)
+    const adapter = this.getEffectiveStorageAdapter()
 
-    if (this.storageAdapter) {
-      const res = await this.storageAdapter.resetDocument({
+    if (adapter) {
+      const res = await adapter.resetDocument({
         dosyaId,
         templateKey: canonicalKey
       })
@@ -378,9 +427,10 @@ export class DocumentEngine {
   static async deleteDocument(params: DeleteDocumentParams): Promise<boolean> {
     const { dosyaId, templateKey } = params
     const canonicalKey = this.resolveKey(templateKey)
+    const adapter = this.getEffectiveStorageAdapter()
 
-    if (this.storageAdapter) {
-      const res = await this.storageAdapter.deleteDocument({
+    if (adapter) {
+      const res = await adapter.deleteDocument({
         dosyaId,
         templateKey: canonicalKey
       })

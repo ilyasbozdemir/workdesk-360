@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   TemplateRegistry,
-  InvalidTemplateKeyError
-} from '../registry/TemplateRegistry'
-import { InstitutionalHeaderProvider } from '../providers/InstitutionalHeaderProvider'
-import { LuzumMuzekkeresiResolver } from '../resolvers/LuzumMuzekkeresiResolver'
-import { IhtiyacListesiResolver } from '../resolvers/IhtiyacListesiResolver'
-import { DocumentEngine } from '../DocumentEngine'
+  InvalidTemplateKeyError,
+  InstitutionalHeaderProvider,
+  LuzumMuzekkeresiResolver,
+  IhtiyacListesiResolver,
+  DocumentEngine
+} from '@worksuite-360/document-engine'
 
 describe('Mimari Refaktör - Modüler Belge Çözümleme ve Tip Güvenli Engine', () => {
   beforeEach(() => {
@@ -227,3 +227,4 @@ describe('Mimari Refaktör - Modüler Belge Çözümleme ve Tip Güvenli Engine'
     })
   })
 })
+

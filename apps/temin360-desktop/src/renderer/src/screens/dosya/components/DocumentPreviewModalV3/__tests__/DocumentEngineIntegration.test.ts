@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { DocumentValidationService } from '@temin360/document-templates'
-import { DocumentEngine } from '../DocumentEngine'
+import { DocumentEngine } from '@worksuite-360/document-engine'
 
 describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () => {
   let mockDbStore: Map<string, any>
@@ -255,32 +255,32 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
     if (isNativeSqliteAvailable) {
       const db = new Database(':memory:')
       db.exec(`
-        CREATE TABLE DATA_DosyaSablonVeri (
+        CREATE TABLE DATA_TeminBelgeSnapshot (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          temin_dosya_id INTEGER NOT NULL,
+          dosya_id INTEGER NOT NULL,
           sablon_kodu TEXT NOT NULL,
           sablon_adi TEXT,
-          veri TEXT,
+          veri_json TEXT,
           sablon_versiyon INTEGER DEFAULT 1,
-          olusturma_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
-          guncelleme_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP,
-          CONSTRAINT uq_dosya_sablon UNIQUE (temin_dosya_id, sablon_kodu)
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT uq_dosya_sablon UNIQUE (dosya_id, sablon_kodu)
         );
       `)
 
       const upsertStmt = db.prepare(`
-        INSERT INTO DATA_DosyaSablonVeri (
-          temin_dosya_id,
+        INSERT INTO DATA_TeminBelgeSnapshot (
+          dosya_id,
           sablon_kodu,
           sablon_adi,
-          veri,
+          veri_json,
           sablon_versiyon,
-          guncelleme_tarihi
+          updated_at
         ) VALUES (?, ?, ?, ?, ?, datetime('now'))
-        ON CONFLICT(temin_dosya_id, sablon_kodu) DO UPDATE SET
-          veri = excluded.veri,
+        ON CONFLICT(dosya_id, sablon_kodu) DO UPDATE SET
+          veri_json = excluded.veri_json,
           sablon_versiyon = excluded.sablon_versiyon,
-          guncelleme_tarihi = excluded.guncelleme_tarihi;
+          updated_at = excluded.updated_at;
       `)
 
       for (let i = 1; i <= 5; i++) {
@@ -293,9 +293,9 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
         )
       }
 
-      const rows = db.prepare('SELECT * FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = 999').all()
+      const rows = db.prepare('SELECT * FROM DATA_TeminBelgeSnapshot WHERE dosya_id = 999').all()
       expect(rows.length).toBe(1)
-      expect(JSON.parse((rows[0] as any).veri).versiyon).toBe(5)
+      expect(JSON.parse((rows[0] as any).veri_json).versiyon).toBe(5)
       db.close()
     }
   })
@@ -482,13 +482,13 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
     if (isNativeSqliteAvailable) {
       const db = new Database(':memory:')
       db.exec(`
-        CREATE TABLE DATA_DosyaSablonVeri (
+        CREATE TABLE DATA_TeminBelgeSnapshot (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          temin_dosya_id INTEGER NOT NULL,
+          dosya_id INTEGER NOT NULL,
           sablon_kodu TEXT NOT NULL,
           sablon_adi TEXT,
-          veri TEXT,
-          guncelleme_tarihi DATETIME
+          veri_json TEXT,
+          updated_at DATETIME
         );
 
         CREATE TABLE DATA_DosyaRevizyon (
@@ -504,7 +504,7 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
       `)
 
       const insertStmt = db.prepare(`
-        INSERT INTO DATA_DosyaSablonVeri (temin_dosya_id, sablon_kodu, veri, guncelleme_tarihi)
+        INSERT INTO DATA_TeminBelgeSnapshot (dosya_id, sablon_kodu, veri_json, updated_at)
         VALUES (?, ?, ?, ?)
       `)
 
@@ -515,13 +515,13 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
       const duplicates = db
         .prepare(
           `
-        SELECT temin_dosya_id, sablon_kodu, COUNT(*) as cnt
-        FROM DATA_DosyaSablonVeri
-        GROUP BY temin_dosya_id, sablon_kodu
+        SELECT dosya_id, sablon_kodu, COUNT(*) as cnt
+        FROM DATA_TeminBelgeSnapshot
+        GROUP BY dosya_id, sablon_kodu
         HAVING cnt > 1
       `
         )
-        .all() as Array<{ temin_dosya_id: number; sablon_kodu: string }>
+        .all() as Array<{ dosya_id: number; sablon_kodu: string }>
 
       expect(duplicates.length).toBe(1)
 
@@ -530,13 +530,13 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
           const rows = db
             .prepare(
               `
-            SELECT id, veri, guncelleme_tarihi
-            FROM DATA_DosyaSablonVeri
-            WHERE temin_dosya_id = ? AND sablon_kodu = ?
-            ORDER BY COALESCE(guncelleme_tarihi, '') DESC, id DESC
+            SELECT id, veri_json, updated_at
+            FROM DATA_TeminBelgeSnapshot
+            WHERE dosya_id = ? AND sablon_kodu = ?
+            ORDER BY COALESCE(updated_at, '') DESC, id DESC
           `
             )
-            .all(dup.temin_dosya_id, dup.sablon_kodu) as Array<{ id: number; veri: string }>
+            .all(dup.dosya_id, dup.sablon_kodu) as Array<{ id: number; veri_json: string }>
 
           const toArchiveSql = rows.slice(1)
           for (const arch of toArchiveSql) {
@@ -547,27 +547,27 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
               ) VALUES (?, ?, ?, ?, ?)
             `
             ).run(
-              dup.temin_dosya_id,
+              dup.dosya_id,
               'BELGE_YONETIMI',
               'MIGRATION_DEDUP',
               `Şablon tekillik migration sırasında mükerrer kayıt arşivlendi (ID: ${arch.id})`,
-              arch.veri
+              arch.veri_json
             )
-            db.prepare('DELETE FROM DATA_DosyaSablonVeri WHERE id = ?').run(arch.id)
+            db.prepare('DELETE FROM DATA_TeminBelgeSnapshot WHERE id = ?').run(arch.id)
           }
         }
       })()
 
       db.exec(`
-        CREATE UNIQUE INDEX idx_data_dosyasablonveri_unique
-        ON DATA_DosyaSablonVeri(temin_dosya_id, sablon_kodu);
+        CREATE UNIQUE INDEX idx_data_teminbelgesnapshot_unique
+        ON DATA_TeminBelgeSnapshot(dosya_id, sablon_kodu);
       `)
 
       const remaining = db
-        .prepare('SELECT * FROM DATA_DosyaSablonVeri WHERE temin_dosya_id = 701')
+        .prepare('SELECT * FROM DATA_TeminBelgeSnapshot WHERE dosya_id = 701')
         .all()
       expect(remaining.length).toBe(1)
-      expect(JSON.parse((remaining[0] as any).veri).v).toBe(3)
+      expect(JSON.parse((remaining[0] as any).veri_json).v).toBe(3)
 
       db.close()
     }
@@ -597,3 +597,4 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
     expect(htmlOutput).toContain('@page')
   })
 })
+
