@@ -40,7 +40,7 @@ export class InstitutionalHeaderProvider {
     let dosyaRow: any = null
     if (dosyaId) {
       const rows = await queryExecutor(
-        `SELECT d.id, d.temin_no, d.konu, d.butce_yili, d.tarih, d.sunulacak_makam, d.birim_id,
+        `SELECT d.id, d.temin_no, d.evrak_sayisi, d.konu, d.butce_yili, d.tarih, d.sunulacak_makam, d.birim_id,
                 b.birim_adi, b.antet_ek_satir, b.harcama_yetkilisi_id, b.harcama_yetkilisi_unvan
          FROM DATA_TeminDosyasi d
          LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
@@ -122,20 +122,22 @@ export class InstitutionalHeaderProvider {
 
     const sagLogo = kurumRow?.logo_sag || settings.logoRight || null
 
-    // 4. Dosya Evrak Sayısı Çözümlenmesi & PRESERVE (Tüm belgelere tek kaynaktan kalıcı dağıtım)
+    // 4. Dosya Evrak Sayısı Çözümlenmesi & PRESERVE (Tüm belgelere tek kaynaktan kalıcı kalıtım)
     let detsisEvrakSayisi = ''
-    if (dosyaRow?.evrak_sayisi && String(dosyaRow.evrak_sayisi).trim() !== '') {
-      detsisEvrakSayisi = String(dosyaRow.evrak_sayisi).replace(/^E-/i, '').trim()
+    const currentEvrak = String(dosyaRow?.evrak_sayisi || '').replace(/^E-/i, '').trim()
+    if (currentEvrak && !currentEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(currentEvrak)) {
+      // Dosyada zaten resmi DETSİS formatında sayı varsa doğrudan miras/kalıtım al!
+      detsisEvrakSayisi = currentEvrak
     } else if (dosyaId) {
       try {
         detsisEvrakSayisi = await resolveEvrakSayisi(dosyaId, queryExecutor)
-        // PRESERVE: Dosyada kayıtlı değilse bir kez üretip veritabanına kalıcı yaz!
+        // PRESERVE: Dosyada kayıtlı değilse veya eski/hatalı formattaysa bir kez üretip veritabanına kalıcı yaz!
         // Böylece dosyanın altındaki tüm belgeler (İhtiyaç Listesi, Lüzum Müzekkeresi vs.)
         // tek bir sabit sayıyı kullanır, asla birbirinden farklılaşmaz!
         if (detsisEvrakSayisi) {
           try {
             await queryExecutor(
-              'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ? AND (evrak_sayisi IS NULL OR trim(evrak_sayisi) = \'\')',
+              'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
               [detsisEvrakSayisi, dosyaId]
             )
             if (dosyaRow) {
