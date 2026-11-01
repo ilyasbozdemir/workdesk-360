@@ -1,9 +1,9 @@
 import Decimal from 'decimal.js'
 
-// decimal.js ayarları
-Decimal.set({ precision: 50, toExpNeg: -40, toExpPos: 40 })
+// İzole edilmiş Decimal yapılandırması (global Decimal constructor'ını kirletmez)
+export const ToolDecimal = Decimal.clone({ precision: 50, toExpNeg: -40, toExpPos: 40 })
 
-export const D = (x: Decimal.Value): Decimal => new Decimal(x)
+export const D = (x: Decimal.Value): Decimal => new ToolDecimal(x)
 export const H = D(100)
 
 export const parseDec = (s: unknown): Decimal | null => {
