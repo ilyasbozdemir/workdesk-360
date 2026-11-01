@@ -29,6 +29,19 @@ export function LuzumMuzekkeresiRenderer(
   const isLandscape = orientation === 'landscape'
   const resolvedFirstPageLimit = firstPageLimit ?? (data as any)?.firstPageLimit
 
+  const resolvedPersonelListesi =
+    (props.personelListesi && (props.personelListesi as any[]).length > 0
+      ? props.personelListesi
+      : (data as any)?.personelListesi || (typeof window !== 'undefined' ? (window as any)?.__activePersonelListesi : [])) || []
+  const resolvedFirmaListesi =
+    (props.firmaListesi && (props.firmaListesi as any[]).length > 0
+      ? props.firmaListesi
+      : (data as any)?.firmaListesi || (typeof window !== 'undefined' ? (window as any)?.__activeFirmaListesi : [])) || []
+  const resolvedBirimListesi =
+    (props.birimListesi && (props.birimListesi as any[]).length > 0
+      ? props.birimListesi
+      : (data as any)?.birimListesi || (typeof window !== 'undefined' ? (window as any)?.__activeBirimListesi : [])) || []
+
   const pageContent = (
     <div
       data-document-page="true"
@@ -38,7 +51,14 @@ export function LuzumMuzekkeresiRenderer(
         isLandscape ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'
       }`}
     >
-      <TemplateEditProvider isEditing={isEditing} onFieldChange={onFieldChange}>
+      <TemplateEditProvider
+        isEditing={isEditing}
+        onFieldChange={onFieldChange}
+        personelListesi={resolvedPersonelListesi as any[]}
+        firmaListesi={resolvedFirmaListesi as any[]}
+        birimListesi={resolvedBirimListesi as any[]}
+        firstPageLimit={resolvedFirstPageLimit}
+      >
         <LuzumMuzekkeresi
           data={data}
           orientation={orientation}

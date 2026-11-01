@@ -30,6 +30,39 @@ export const IHTIYAC_RAPORU_TEMPLATES: TemplateOptionItem[] = [
   }
 ]
 
+
+async function queryRows(sql: string, params: unknown[] = []): Promise<any[]> {
+  try {
+    if (!window.electron?.ipcRenderer) return []
+    const res = await window.electron.ipcRenderer.invoke('db:query', sql, params)
+    return res && res.success && Array.isArray(res.data) ? res.data : []
+  } catch (err) {
+    console.warn('[sourceResolvers] liste sorgusu hatası:', err)
+    return []
+  }
+}
+
+async function loadDosyaLists(dosyaId: number) {
+  const [personel, birim, firma] = await Promise.all([
+    queryRows(
+      "SELECT id, ad_soyad, unvan, telefon, eposta, birim, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' ORDER BY ad_soyad ASC"
+    ),
+    queryRows(
+      'SELECT id, ad, birim_adi, kisa_ad, sunum_makami, antet_ek_satir, harcama_yetkilisi_id, harcama_yetkilisi_unvan FROM TANIM_Birim WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY birim_adi ASC'
+    ),
+    queryRows(
+      'SELECT f.id, f.unvan, f.vergi_no, f.adres, f.telefon, f.email FROM DATA_TeminFirma tf JOIN TANIM_Firma f ON tf.firma_id = f.id WHERE tf.temin_dosya_id = ? ORDER BY tf.id ASC',
+      [dosyaId]
+    )
+  ])
+  const firmaFinal = firma.length
+    ? firma
+    : await queryRows(
+        'SELECT id, unvan, vergi_no, adres, telefon, email FROM TANIM_Firma ORDER BY unvan ASC LIMIT 200'
+      )
+  return { personel, birim, firma: firmaFinal }
+}
+
 export const dosyaResolver: DocumentResolver = {
   async templates(_source: DocumentSource): Promise<TemplateOptionItem[]> {
     void _source
@@ -54,13 +87,15 @@ export const dosyaResolver: DocumentResolver = {
     })
 
     const dataObj = (docRecord.data || {}) as Record<string, unknown>
+    const lists = await loadDosyaLists(source.dosyaId)
+    const pick = (a: unknown[] | undefined, b: unknown[]) => (a && a.length > 0 ? a : b)
 
     return {
       resolvedData: dataObj,
       formData: dataObj,
-      personelListesi: docRecord.personelListesi,
-      birimListesi: docRecord.birimListesi,
-      firmaListesi: docRecord.firmaListesi,
+      personelListesi: pick(docRecord.personelListesi, lists.personel),
+      birimListesi: pick(docRecord.birimListesi, lists.birim),
+      firmaListesi: pick(docRecord.firmaListesi, lists.firma),
       dosyaRecord: docRecord.dosyaRecord,
       activeLogoLeft: docRecord.headerData?.solLogo ? true : false,
       activeLogoRight: docRecord.headerData?.sagLogo ? true : false,

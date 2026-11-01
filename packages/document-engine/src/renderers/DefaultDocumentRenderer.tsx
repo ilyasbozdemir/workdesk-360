@@ -39,13 +39,26 @@ export function DefaultDocumentRenderer(props: DefaultDocumentRendererProps): Re
       ? Number((data as any).firstPageLimit)
       : undefined)
 
+  const resolvedPersonelListesi =
+    (personelListesi && personelListesi.length > 0
+      ? personelListesi
+      : (data as any)?.personelListesi || (typeof window !== 'undefined' ? (window as any)?.__activePersonelListesi : [])) || []
+  const resolvedFirmaListesi =
+    (firmaListesi && firmaListesi.length > 0
+      ? firmaListesi
+      : (data as any)?.firmaListesi || (typeof window !== 'undefined' ? (window as any)?.__activeFirmaListesi : [])) || []
+  const resolvedBirimListesi =
+    (birimListesi && birimListesi.length > 0
+      ? birimListesi
+      : (data as any)?.birimListesi || (typeof window !== 'undefined' ? (window as any)?.__activeBirimListesi : [])) || []
+
   const content = (
     <TemplateEditProvider
       isEditing={isEditing}
       onFieldChange={onFieldChange}
-      personelListesi={personelListesi}
-      firmaListesi={firmaListesi}
-      birimListesi={birimListesi}
+      personelListesi={resolvedPersonelListesi}
+      firmaListesi={resolvedFirmaListesi}
+      birimListesi={resolvedBirimListesi}
       firstPageLimit={resolvedFirstPageLimit}
     >
       <DocumentPage
