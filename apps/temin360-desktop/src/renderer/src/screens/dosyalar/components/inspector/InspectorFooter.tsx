@@ -24,8 +24,8 @@ export const InspectorFooter: React.FC<InspectorFooterProps> = ({
     if (mode === 'modal' && onClose) {
       onClose()
     }
-    addTab('/takip')
-    navigate({ to: APP_ROUTES.TAKIP })
+    addTab(APP_ROUTES.DOSYA_DETAY)
+    navigate({ to: APP_ROUTES.DOSYA_DETAY })
   }
 
   const handleOpenArastirmaMektubu = () => {

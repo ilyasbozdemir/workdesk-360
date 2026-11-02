@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from '@tanstack/react-router'
-import { ClipboardList, Layers, Printer } from 'lucide-react'
+import { Layers, Printer } from 'lucide-react'
 import { TeminSelector } from '../TeminSelector'
 
 interface HeaderBottomRowProps {
@@ -38,16 +38,6 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
       {/* Sağ: Süreç & Çıktı Butonları (Temin 360 - Doğrudan Temin Odaklı) */}
       {activeDosyaId ? (
         <div className="flex items-center gap-1 shrink-0 justify-end">
-          <Link
-            to="/takip"
-            title="Doğrudan Temin Süreç Takibi (Md. 22)"
-            className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold rounded-md transition-all shadow-2xs hover:shadow-xs border text-blue-700 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 border-blue-200/50 dark:border-blue-900/30"
-          >
-            <ClipboardList className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden 2xl:inline">Doğrudan Temin Takip</span>
-            <span className="hidden xl:inline 2xl:hidden">DT Takip</span>
-            <span className="hidden sm:inline xl:hidden">Takip</span>
-          </Link>
           <Link
             to="/surec-akisi"
             title="Doğrudan Temin Süreç Akış Haritası"

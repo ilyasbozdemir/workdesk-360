@@ -75,7 +75,7 @@ export const LivePipelineSection: React.FC<LivePipelineSectionProps> = ({
               <span>Yeni Alım</span>
             </button>
           </Link>
-          <Link to="/takip">
+          <Link to="/dosya">
             <button
               type="button"
               className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold py-1.5 px-3 rounded-xl cursor-pointer flex items-center gap-1 border border-slate-200 dark:border-slate-700 shadow-xs"

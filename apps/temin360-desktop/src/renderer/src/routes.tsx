@@ -3,6 +3,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  Navigate,
 } from "@tanstack/react-router";
 import { PageWrapper } from "./components/layout/PageWrapper";
 import { APP_ROUTES } from "./constants/routeConstants";
@@ -311,7 +312,7 @@ const surecAkisiRoute = createRoute({
 const takipRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.TAKIP,
-  component: TakipScreen,
+  component: () => <Navigate to={APP_ROUTES.DOSYA_DETAY} replace />,
 });
 
 const taslakYonetimiRoute = createRoute({
