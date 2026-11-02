@@ -856,9 +856,6 @@ importers:
 
   packages/document-engine:
     dependencies:
-      '@temin360/document-templates':
-        specifier: workspace:*
-        version: link:../document-templates
       react:
         specifier: ^19.0.0
         version: 19.2.4
@@ -909,6 +906,9 @@ importers:
 
   packages/document-templates:
     dependencies:
+      '@worksuite-360/document-engine':
+        specifier: workspace:*
+        version: link:../document-engine
       react:
         specifier: ^19.0.0
         version: 19.2.4

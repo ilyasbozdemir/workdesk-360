@@ -136,7 +136,7 @@ class DocumentPreloadService {
           try {
             const definition = TemplateRegistry.get(resolvedId)
             const headerData = await InstitutionalHeaderProvider.resolve(dosyaId, queryExecutor)
-            resolvedData = await definition.resolver.resolve({
+            if (!definition?.resolver) { throw new Error('No resolver'); } resolvedData = await definition.resolver.resolve({
               dosyaId,
               templateKey: resolvedId,
               headerData,

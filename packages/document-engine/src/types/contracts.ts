@@ -1,5 +1,22 @@
 import type React from 'react'
-import type { TemplateKey, ValidationReport } from '@temin360/document-templates'
+
+/**
+ * Validasyon Hata Elemanı
+ */
+export interface ValidationErrorItem {
+  path: string
+  message: string
+  code?: string
+}
+
+/**
+ * Validasyon Raporu Sözleşmesi
+ */
+export interface ValidationReport {
+  isValid: boolean
+  errors: ValidationErrorItem[]
+  warnings?: ValidationErrorItem[]
+}
 
 /**
  * Ortak Kurumsal ve Antet Bilgileri Sözleşmesi
@@ -66,16 +83,18 @@ export interface DocumentRendererComponentProps<TData = Record<string, unknown>>
  * Belge Tanım Sözleşmesi (Document Definition in Template Registry)
  */
 export interface DocumentDefinition<TData = Record<string, unknown>> {
-  templateKey: TemplateKey | string
+  templateKey: string
   name: string
   title: string
   category: string
   categoryLabel: string
   description?: string
   orientation: 'portrait' | 'landscape'
-  resolver: DocumentDataResolver<TData>
+  resolver?: DocumentDataResolver<TData>
   renderer: React.ComponentType<DocumentRendererComponentProps<TData>>
+  validate?: (data: TData) => ValidationReport
   requiredProviders?: Array<'institutionalHeader' | 'items' | 'firms' | 'commissions'>
+  meta?: Record<string, unknown>
 }
 
 /**

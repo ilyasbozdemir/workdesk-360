@@ -98,13 +98,14 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                 <select
                   value={step.t}
                   onChange={(e) => handleUpdateRotaStep(idx, 't', e.target.value as RotaAdimi['t'])}
+                  style={{ colorScheme: 'light dark' }}
                   className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-semibold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 >
                   {TURLER.map((tur) => (
                     <option
                       key={tur}
                       value={tur}
-                      className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 py-1"
+                      className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 py-1"
                     >
                       {tur}
                     </option>
@@ -118,6 +119,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                   value={step.a}
                   onChange={(e) => handleUpdateRotaStep(idx, 'a', e.target.value)}
                   placeholder="Ad SOYAD"
+                  style={{ colorScheme: 'light dark' }}
                   className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 />
               </div>
@@ -128,6 +130,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                   value={step.u}
                   onChange={(e) => handleUpdateRotaStep(idx, 'u', e.target.value)}
                   placeholder="Unvan (Örn: Şube Müdürü)"
+                  style={{ colorScheme: 'light dark' }}
                   className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 />
               </div>

@@ -100,12 +100,13 @@ export function UstYaziFormPanel(props: FormProps): React.JSX.Element {
           <select
             value={templateKey}
             onChange={(e) => handlePresetChange(e.target.value as 'arastirma' | 'bos')}
+            style={{ colorScheme: 'light dark' }}
             className="text-xs font-semibold py-1 px-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs cursor-pointer outline-none"
           >
-            <option value="arastirma" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+            <option value="arastirma" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
               Şablon: Fiyat Araştırması
             </option>
-            <option value="bos" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+            <option value="bos" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
               Şablon: Boş Standart Üst Yazı
             </option>
           </select>

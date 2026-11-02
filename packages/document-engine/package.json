@@ -8,7 +8,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@temin360/document-templates": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -24,4 +23,3 @@
     "typecheck": "tsc --noEmit"
   }
 }
-

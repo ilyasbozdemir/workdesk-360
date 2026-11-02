@@ -1,5 +1,5 @@
-import { IhtiyacListesiType } from '@temin360/document-templates'
-import { DocumentDataResolver, DocumentResolutionContext } from '../types/contracts'
+import { IhtiyacListesiType } from '../../templates/ihtiyac-listesi'
+import { DocumentDataResolver, DocumentResolutionContext } from '@worksuite-360/document-engine'
 
 /**
  * İhtiyaç Listesi Belge Çözücüsü (IhtiyacListesiResolver)
@@ -99,9 +99,11 @@ export class IhtiyacListesiResolver implements DocumentDataResolver<IhtiyacListe
       hazirlayanEposta: hazirlayanMail,
       talepEdenPersonelAdi: hazirlayanAdi,
       talepEdenPersonelUnvan: hazirlayanUnvan,
-      birimAdi: headerData.mudurluk
+      talepEdenTelefon: hazirlayanTel,
+      talepEdenEposta: hazirlayanMail
     }
 
     return result
   }
 }
+

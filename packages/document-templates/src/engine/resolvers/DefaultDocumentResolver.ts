@@ -1,5 +1,5 @@
-import { DocumentDataResolver, DocumentResolutionContext } from '../types/contracts'
-import { TemplateResolver } from '@temin360/document-templates'
+import { DocumentDataResolver, DocumentResolutionContext } from '@worksuite-360/document-engine'
+import { TemplateResolver } from '../../resolver/TemplateResolver'
 
 export type ProcessMappingProvider = (processPath: string) => any
 
@@ -51,3 +51,4 @@ export class DefaultDocumentResolver implements DocumentDataResolver<Record<stri
     }
   }
 }
+

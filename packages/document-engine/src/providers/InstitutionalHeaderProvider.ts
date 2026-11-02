@@ -1,5 +1,4 @@
 import { InstitutionalHeaderData } from '../types/contracts'
-import { resolveEvrakSayisi } from '@temin360/document-templates'
 
 export interface InstitutionalHeaderSettings {
   institutionName?: string
@@ -8,6 +7,11 @@ export interface InstitutionalHeaderSettings {
   logoRight?: string | null
   institutionLogo?: string | null
 }
+
+export type EvrakSayisiResolverFn = (
+  dosyaId: number,
+  queryExecutor: (sql: string, params: any[]) => Promise<any[]>
+) => Promise<string>
 
 /**
  * Kurumsal ve Antet Bilgileri Sağlayıcısı (Institutional Header Provider)
@@ -18,9 +22,14 @@ export interface InstitutionalHeaderSettings {
 export class InstitutionalHeaderProvider {
   private static cache = new Map<number, InstitutionalHeaderData>()
   private static settingsGetter: (() => InstitutionalHeaderSettings) | null = null
+  private static evrakSayisiResolver: EvrakSayisiResolverFn | null = null
 
   static setSettingsGetter(getter: () => InstitutionalHeaderSettings): void {
     this.settingsGetter = getter
+  }
+
+  static setEvrakSayisiResolver(resolver: EvrakSayisiResolverFn | null): void {
+    this.evrakSayisiResolver = resolver
   }
 
   /**
@@ -128,9 +137,9 @@ export class InstitutionalHeaderProvider {
     if (currentEvrak && !currentEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(currentEvrak)) {
       // Dosyada zaten resmi DETSİS formatında sayı varsa doğrudan miras/kalıtım al!
       detsisEvrakSayisi = currentEvrak
-    } else if (dosyaId) {
+    } else if (dosyaId && this.evrakSayisiResolver) {
       try {
-        detsisEvrakSayisi = await resolveEvrakSayisi(dosyaId, queryExecutor)
+        detsisEvrakSayisi = await this.evrakSayisiResolver(dosyaId, queryExecutor)
         // PRESERVE: Dosyada kayıtlı değilse veya eski/hatalı formattaysa bir kez üretip veritabanına kalıcı yaz!
         // Böylece dosyanın altındaki tüm belgeler (İhtiyaç Listesi, Lüzum Müzekkeresi vs.)
         // tek bir sabit sayıyı kullanır, asla birbirinden farklılaşmaz!
@@ -148,7 +157,7 @@ export class InstitutionalHeaderProvider {
           }
         }
       } catch (err) {
-        console.warn('[InstitutionalHeaderProvider] resolveEvrakSayisi failed:', err)
+        console.warn('[InstitutionalHeaderProvider] evrakSayisiResolver failed:', err)
       }
     }
 
@@ -188,4 +197,3 @@ export class InstitutionalHeaderProvider {
     }
   }
 }
-
