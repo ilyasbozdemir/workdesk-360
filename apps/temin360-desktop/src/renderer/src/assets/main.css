@@ -5,6 +5,7 @@
 @custom-variant short (@media (max-height: 720px));
 
 :root {
+  color-scheme: light;
   /* Dynamic CSS variable mappings for Light Mode (Crisp Grayscale Default) */
   --theme-primary: var(--accent-200, #18181b);
   --theme-primary-hover: var(--accent-100, #27272a);
@@ -39,6 +40,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   /* Dynamic CSS variable mappings for Dark Mode */
   --theme-primary: var(--accent-100, #3b82f6);
   --theme-primary-hover: var(--accent-200, #2563eb);
@@ -103,7 +105,7 @@ select,
 option,
 input,
 textarea {
-  color-scheme: light dark;
+  color-scheme: inherit;
 }
 
 button:not(:disabled),

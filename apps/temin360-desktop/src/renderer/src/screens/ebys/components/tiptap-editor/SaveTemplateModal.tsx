@@ -111,7 +111,6 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as EbysCategory)}
-                style={{ colorScheme: 'light dark' }}
                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-purple-500 transition appearance-none cursor-pointer"
               >
                 {CATEGORY_OPTIONS.map((c) => (

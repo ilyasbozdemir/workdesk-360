@@ -3,7 +3,9 @@ import {
   applyPassword,
   savePasswordToHistory,
   scrubPasswordHistory,
-  resolveSystemUserDisplayName
+  resolveSystemUserDisplayName,
+  isDeviceKnown,
+  pairDeviceForUser
 } from '../dbAuthHandlers'
 
 // Mock for better-sqlite3 Database supporting transactions and atomic rollbacks
@@ -73,6 +75,17 @@ class MockDb {
         return undefined
       },
       all(...args: any[]) {
+        if (sql.includes("key LIKE 'pcPass!_%!_' || ?")) {
+          const rawHost = args[1] || (args[0] ? args[0].replace(/!(.)/g, '$1') : '')
+          return Array.from(self.store.keys())
+            .filter((k) => k.endsWith(`_${rawHost}`) || k === `pcPass_${rawHost}`)
+            .map((key) => ({ key }))
+        }
+        if (sql.includes("key LIKE 'userDevices!_%'")) {
+          return Array.from(self.store.entries())
+            .filter(([k]) => k.startsWith('userDevices_'))
+            .map(([key, value]) => ({ key, value }))
+        }
         if (sql.includes('SELECT key FROM settings WHERE')) {
           if (sql.includes('userDevices')) {
             return Array.from(self.store.keys())
@@ -313,6 +326,44 @@ describe('dbAuthHandlers password management and multi-device invalidation', () 
     // admin_backup's key on the same multi-underscore PC must be strictly preserved!
     expect(store.has('pcPass_admin_backup_PC_WORK_1_OFFICE')).toBe(true)
     expect(store.get('pcPass_admin_backup_PC_WORK_1_OFFICE')).toBe('backupHash')
+  })
+
+  it('correctly detects unknown and known workstations with isDeviceKnown', () => {
+    const db = new MockDb()
+    const store = db.getRawStore()
+
+    // Initially unknown
+    expect(isDeviceKnown(db, 'NEW-WORKSTATION-X')).toBe(false)
+
+    // Pair a device for admin
+    pairDeviceForUser(db, 'admin', 'NEW-WORKSTATION-X', 'hashedSecretPass')
+
+    // Now known
+    expect(isDeviceKnown(db, 'NEW-WORKSTATION-X')).toBe(true)
+    expect(store.get('pcPass_admin_NEW-WORKSTATION-X')).toBe('hashedSecretPass')
+
+    // userDevices array contains NEW-WORKSTATION-X
+    const devList = JSON.parse(store.get('userDevices_admin') || '[]')
+    expect(devList).toContain('NEW-WORKSTATION-X')
+
+    // Still unknown for another device
+    expect(isDeviceKnown(db, 'ANOTHER-PC')).toBe(false)
+  })
+
+  it('pairDeviceForUser is idempotent and adds new devices incrementally without losing existing ones', () => {
+    const db = new MockDb()
+    const store = db.getRawStore()
+
+    pairDeviceForUser(db, 'operator1', 'PC-DESK-A', 'hashA')
+    pairDeviceForUser(db, 'operator1', 'PC-LAPTOP-B', 'hashB')
+    // Repeated call on existing device updates hash and keeps list unique
+    pairDeviceForUser(db, 'operator1', 'PC-DESK-A', 'hashA2')
+
+    const devList = JSON.parse(store.get('userDevices_operator1') || '[]')
+    expect(devList).toHaveLength(2)
+    expect(devList).toEqual(['PC-DESK-A', 'PC-LAPTOP-B'])
+    expect(store.get('pcPass_operator1_PC-DESK-A')).toBe('hashA2')
+    expect(store.get('pcPass_operator1_PC-LAPTOP-B')).toBe('hashB')
   })
 })
 

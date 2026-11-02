@@ -6,6 +6,7 @@ import crypto from 'crypto'
 import { workspaceManager } from '../../database/workspace'
 import { getSetting } from '../../utils/settingsHelper'
 import { hashPassword, verifyPassword, isHashedPassword } from './authCrypto'
+import { initSessionContext } from '@dt/database'
 
 const RECOVERY_TTL_MS = 10 * 60 * 1000
 const RECOVERY_MAX_ATTEMPTS = 5
@@ -291,6 +292,73 @@ function upgradeLegacyKey(db: any, key: string, pass: string): void {
 }
 
 /**
+ * Belirtilen hostname'in bu dosya/veritabanında önceden yetkilendirilmiş bir cihaz olup olmadığını kontrol eder.
+ */
+export function isDeviceKnown(db: any, hostname: string): boolean {
+  if (!db || !hostname) return false
+  try {
+    const escapedHost = hostname.replace(/([%_!])/g, '!$1')
+    const pcRows = db
+      .prepare(
+        "SELECT key FROM settings WHERE (key LIKE 'pcPass!_%!_' || ? ESCAPE '!') OR (key = 'pcPass_' || ?)"
+      )
+      .all(escapedHost, hostname) as { key: string }[]
+    if (pcRows && pcRows.length > 0) return true
+
+    const devRows = db
+      .prepare("SELECT value FROM settings WHERE key LIKE 'userDevices!_%' ESCAPE '!'")
+      .all() as { value?: string }[]
+    for (const d of devRows) {
+      if (d?.value) {
+        try {
+          const list = JSON.parse(d.value)
+          if (Array.isArray(list) && list.includes(hostname)) return true
+        } catch {}
+      }
+    }
+  } catch {}
+  return false
+}
+
+/**
+ * Bir kullanıcı ve çalışma istasyonu (hostname) arasındaki eşleştirmeyi güvenli ve kalıcı olarak kaydeder.
+ */
+export function pairDeviceForUser(
+  db: any,
+  username: string,
+  hostname: string,
+  hashedPass: string
+): void {
+  if (!db || !username || !hostname) return
+  try {
+    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+      `pcPass_${username}_${hostname}`,
+      hashedPass
+    )
+    const devKey = `userDevices_${username}`
+    const devRow = db.prepare('SELECT value FROM settings WHERE key = ?').get(devKey) as
+      | { value?: string }
+      | undefined
+    let devList: string[] = []
+    if (devRow?.value) {
+      try {
+        const parsed = JSON.parse(devRow.value)
+        if (Array.isArray(parsed)) devList = parsed
+      } catch {}
+    }
+    if (!devList.includes(hostname)) {
+      devList.push(hostname)
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+        devKey,
+        JSON.stringify(devList)
+      )
+    }
+  } catch (err) {
+    console.error('pairDeviceForUser error:', err)
+  }
+}
+
+/**
  * Kullanıcının işletim sistemindeki görünen/tam adını (Display Name) güvenli şekilde tespit eder.
  * Shell enjeksiyonu riskini önlemek için execFileSync kullanılır (kabuk kullanılmaz).
  * Windows (net user), macOS (id -F), Linux (GECOS) ve homedir/username yedeklerini kapsar.
@@ -428,13 +496,14 @@ export function registerDbAuthHandlers(): void {
 
   /**
    * <summary>
-   * Kimlik Doğrulama Kurulum Kontrolü
+   * Kimlik Doğrulama Kurulum Kontrolü & Cihaz Tanıma
    * </summary>
-   * <returns>Admin kullanıcı adı ve şifresi tanımlı mı bilgisi</returns>
+   * <returns>Admin kullanıcı adı, şifresi ve mevcut çalışma istasyonunun tanınıp tanınmadığı bilgisi</returns>
    */
   ipcMain.handle('db:check-auth-setup', async () => {
     try {
       const db = workspaceManager.getDb()
+      const hostname = os.hostname()
       const userRow = db.prepare("SELECT value FROM settings WHERE key = 'adminUsername'").get() as
         | { value: string }
         | undefined
@@ -444,11 +513,20 @@ export function registerDbAuthHandlers(): void {
 
       const hasUser = !!userRow?.value
       const hasPass = !!passRow?.value
+      const hasCredentials = hasUser && hasPass
 
-      return { hasCredentials: hasUser && hasPass }
+      const isKnown = hasCredentials ? isDeviceKnown(db, hostname) : false
+
+      return {
+        hasCredentials,
+        isKnownDevice: isKnown,
+        hostname,
+        osUsername: os.userInfo().username,
+        expectedUser: userRow?.value || 'admin'
+      }
     } catch (error: any) {
       console.error('Check auth setup error:', error)
-      return { hasCredentials: false, error: error.message }
+      return { hasCredentials: false, isKnownDevice: false, error: error.message }
     }
   })
 
@@ -508,8 +586,9 @@ export function registerDbAuthHandlers(): void {
 
   /**
    * <summary>
-   * Kullanıcı Giriş İşleyicisi — yalnızca güncel parola geçerlidir; eski parolalar kabul edilmez.
-   * Eski düz metin kayıtlar başarılı girişte otomatik olarak hash'e yükseltilir.
+   * Kullanıcı Giriş İşleyicisi & Çoklu Bilgisayar Eşleştirme (Workstation Pairing)
+   * Başarılı girişte kullanıcının kimliği veritabanı denetim bağlamına (sys_session_context) mühürlenir.
+   * Başka bir bilgisayarda açıldığında cihazı yetkilendirir ve audit günlüğünde ilgili PC ile eşleştirir.
    * </summary>
    */
   ipcMain.handle('db:login', async (_, _code: string, user: string, pass: string) => {
@@ -518,6 +597,15 @@ export function registerDbAuthHandlers(): void {
       const hostname = os.hostname()
       const finish = <T extends Record<string, unknown>>(result: T): T => {
         scrubPasswordHistory(db)
+        const loggedUser = String(result.username || user || 'admin')
+        try {
+          initSessionContext(db, {
+            userId: loggedUser,
+            macHash: `${hostname} [${os.userInfo().username}]`
+          })
+        } catch (ctxErr) {
+          console.warn('[AuditTrail] Failed to set session context on login:', ctxErr)
+        }
         return result
       }
 
@@ -534,49 +622,96 @@ export function registerDbAuthHandlers(): void {
         | undefined
       if (pcPassRow?.value && verifyPassword(pass, pcPassRow.value)) {
         if (!isHashedPassword(pcPassRow.value)) upgradeLegacyKey(db, pcKey, pass)
-        return finish({ success: true, username: user, hostname })
+        return finish({ success: true, username: user, hostname, isKnownDevice: true })
       }
 
       const expectedUser = userRow?.value || 'admin'
+      // 1. Yönetici hesabı ile giriş ve yeni cihaz eşleştirme
       if (user === expectedUser && passRow?.value && verifyPassword(pass, passRow.value)) {
         if (!isHashedPassword(passRow.value)) upgradeLegacyKey(db, 'adminPassword', pass)
-        return finish({ success: true, username: expectedUser })
+        const hashed = isHashedPassword(passRow.value) ? passRow.value : hashPassword(pass)
+        pairDeviceForUser(db, expectedUser, hostname, hashed)
+        workspaceManager.recordMutation('SETTINGS')
+        workspaceManager.save()
+        return finish({ success: true, username: expectedUser, hostname, isNewDevicePairing: true })
       }
 
+      // 2. Ek kullanıcılar (additionalUsers) kontrolü
       const additionalUsersRow = db
         .prepare("SELECT value FROM settings WHERE key = 'additionalUsers'")
         .get() as { value: string } | undefined
+      let additionalList: any[] = []
       if (additionalUsersRow?.value) {
         try {
           const list = JSON.parse(additionalUsersRow.value)
-          if (Array.isArray(list)) {
-            const matched = list.find(
-              (u: any) => u.username === user && verifyPassword(pass, u.password)
-            )
-            if (matched) {
-              if (!isHashedPassword(matched.password)) {
-                const upgraded = list.map((u: any) =>
-                  u.password && !isHashedPassword(u.password)
-                    ? { ...u, password: hashPassword(String(u.password)) }
-                    : u
-                )
-                db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
-                  'additionalUsers',
-                  JSON.stringify(upgraded)
-                )
-                workspaceManager.recordMutation('SETTINGS')
-                workspaceManager.save()
-              }
-              return finish({
-                success: true,
-                username: matched.username,
-                role: matched.role || 'user'
-              })
-            }
-          }
+          if (Array.isArray(list)) additionalList = list
         } catch (e) {
           console.error('Failed to parse additionalUsers:', e)
         }
+      }
+
+      const matched = additionalList.find(
+        (u: any) => u.username === user && verifyPassword(pass, u.password)
+      )
+      if (matched) {
+        if (!isHashedPassword(matched.password)) {
+          const upgraded = additionalList.map((u: any) =>
+            u.password && !isHashedPassword(u.password)
+              ? { ...u, password: hashPassword(String(u.password)) }
+              : u
+          )
+          db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+            'additionalUsers',
+            JSON.stringify(upgraded)
+          )
+        }
+        pairDeviceForUser(db, matched.username, hostname, matched.password)
+        workspaceManager.recordMutation('SETTINGS')
+        workspaceManager.save()
+        return finish({
+          success: true,
+          username: matched.username,
+          role: matched.role || 'user',
+          hostname,
+          isNewDevicePairing: true
+        })
+      }
+
+      // 3. Başka PC'de yeni kullanıcı adı + master yönetici parolasıyla ilk oturum açma & eşleştirme
+      if (
+        user &&
+        user !== expectedUser &&
+        passRow?.value &&
+        verifyPassword(pass, passRow.value) &&
+        typeof pass === 'string' &&
+        pass.length >= MIN_PASSWORD_LENGTH
+      ) {
+        const hashed = isHashedPassword(passRow.value) ? passRow.value : hashPassword(pass)
+        const existingIdx = additionalList.findIndex((u: any) => u.username === user)
+        if (existingIdx === -1) {
+          additionalList.push({
+            username: user,
+            password: hashed,
+            role: 'operator',
+            createdAt: new Date().toISOString(),
+            hostname
+          })
+          db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+            'additionalUsers',
+            JSON.stringify(additionalList)
+          )
+        }
+        pairDeviceForUser(db, user, hostname, hashed)
+        workspaceManager.recordMutation('SETTINGS')
+        workspaceManager.save()
+        return finish({
+          success: true,
+          username: user,
+          role: 'operator',
+          hostname,
+          isNewDevicePairing: true,
+          isNewUserCreated: true
+        })
       }
 
       return { success: false, error: 'Kullanıcı adı veya şifre hatalı!' }

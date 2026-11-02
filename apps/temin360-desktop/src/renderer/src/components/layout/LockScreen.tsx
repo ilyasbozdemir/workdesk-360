@@ -16,6 +16,7 @@ export default function LockScreen(): React.JSX.Element {
   const { institutionName, institutionLogo, logoLeft, logoRight, loadSettings } = useSettingsStore()
 
   const [isSetupMode, setIsSetupMode] = useState(false)
+  const [isKnownDevice, setIsKnownDevice] = useState(true)
   const [rememberMe, setRememberMe] = useState(false)
   const [recoveryStep, setRecoveryStep] = useState<
     'login' | 'send_code' | 'verify_code' | 'reset_password'
@@ -59,6 +60,9 @@ export default function LockScreen(): React.JSX.Element {
         const isFresh = res && !res.hasCredentials
         if (isFresh) {
           setIsSetupMode(true)
+        }
+        if (res && typeof res.isKnownDevice === 'boolean') {
+          setIsKnownDevice(res.isKnownDevice)
         }
         const info = await window.electron.ipcRenderer.invoke('system:get-pc-info')
         if (info) {
@@ -283,6 +287,7 @@ export default function LockScreen(): React.JSX.Element {
         {recoveryStep === 'login' && (
           <LockScreenLoginForm
             isSetupMode={isSetupMode}
+            isKnownDevice={isKnownDevice}
             username={username}
             setUsername={setUsername}
             password={password}

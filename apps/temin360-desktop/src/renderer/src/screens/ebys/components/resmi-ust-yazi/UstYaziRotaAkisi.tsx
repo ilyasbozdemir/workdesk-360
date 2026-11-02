@@ -98,7 +98,6 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                 <select
                   value={step.t}
                   onChange={(e) => handleUpdateRotaStep(idx, 't', e.target.value as RotaAdimi['t'])}
-                  style={{ colorScheme: 'light dark' }}
                   className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-semibold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 >
                   {TURLER.map((tur) => (
@@ -119,8 +118,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                   value={step.a}
                   onChange={(e) => handleUpdateRotaStep(idx, 'a', e.target.value)}
                   placeholder="Ad SOYAD"
-                  style={{ colorScheme: 'light dark' }}
-                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 />
               </div>
 
@@ -130,8 +128,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                   value={step.u}
                   onChange={(e) => handleUpdateRotaStep(idx, 'u', e.target.value)}
                   placeholder="Unvan (Örn: Şube Müdürü)"
-                  style={{ colorScheme: 'light dark' }}
-                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 />
               </div>
 
@@ -140,7 +137,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                   type="button"
                   onClick={() => handleDeleteRotaStep(idx)}
                   disabled={rota.length <= 1}
-                  className="p-1.5 text-slate-400 hover:text-red-600 disabled:opacity-30 cursor-pointer"
+                  className="p-1.5 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 disabled:opacity-30 cursor-pointer"
                   title="Adımı Sil"
                 >
                   <Trash2 size={15} />
