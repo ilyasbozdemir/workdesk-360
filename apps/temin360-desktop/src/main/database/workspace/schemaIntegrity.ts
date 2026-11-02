@@ -566,6 +566,46 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     } catch (checkErr) {
       console.warn('[schemaIntegrity] DATA_TeminFirma kazanan bayrakları kontrolü hatası:', checkErr)
     }
+
+    // 11b. DATA_TeminFirma firma_id Otomatik Eşleştirme & Onarım
+    // unvan veya vergi_no üzerinden TANIM_Firma ile eşleştiği halde firma_id = 0 veya NULL kalmış kayıtları bağla
+    if (isPhysicalTable(db, 'TANIM_Firma')) {
+      try {
+        db.prepare(`
+          UPDATE DATA_TeminFirma
+          SET firma_id = (
+            SELECT id FROM TANIM_Firma
+            WHERE LOWER(TRIM(TANIM_Firma.unvan)) = LOWER(TRIM(DATA_TeminFirma.unvan))
+            LIMIT 1
+          )
+          WHERE (firma_id IS NULL OR firma_id = 0)
+            AND unvan IS NOT NULL
+            AND TRIM(unvan) != ''
+            AND EXISTS (
+              SELECT 1 FROM TANIM_Firma
+              WHERE LOWER(TRIM(TANIM_Firma.unvan)) = LOWER(TRIM(DATA_TeminFirma.unvan))
+            )
+        `).run()
+
+        db.prepare(`
+          UPDATE DATA_TeminFirma
+          SET firma_id = (
+            SELECT id FROM TANIM_Firma
+            WHERE vergi_no IS NOT NULL AND vergi_no != '' AND vergi_no = DATA_TeminFirma.vergi_no
+            LIMIT 1
+          )
+          WHERE (firma_id IS NULL OR firma_id = 0)
+            AND vergi_no IS NOT NULL
+            AND TRIM(vergi_no) != ''
+            AND EXISTS (
+              SELECT 1 FROM TANIM_Firma
+              WHERE vergi_no IS NOT NULL AND vergi_no != '' AND vergi_no = DATA_TeminFirma.vergi_no
+            )
+        `).run()
+      } catch (firmRepairErr) {
+        console.warn('[schemaIntegrity] DATA_TeminFirma firma_id eşleştirme uyarısı:', firmRepairErr)
+      }
+    }
   }
 
   // 12. Çocuk Tablolar dosya_id Senkronizasyonu ve Tetikleyicileri

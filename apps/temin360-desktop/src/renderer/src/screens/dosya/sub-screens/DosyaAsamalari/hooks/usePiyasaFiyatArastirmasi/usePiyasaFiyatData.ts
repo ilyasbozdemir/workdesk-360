@@ -232,11 +232,24 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     }
     try {
       let existingId: number | null = null
+      // 1. Önce vergi numarası ile eşleşen var mı kontrol et
       if (firmaData.vergi_no?.trim()) {
         const checkRes = await window.electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT id FROM TANIM_Firma WHERE vergi_no = ? LIMIT 1',
+          'SELECT id FROM TANIM_Firma WHERE vergi_no = ? AND vergi_no != \'\' LIMIT 1',
           [firmaData.vergi_no.trim()]
+        )
+        if (checkRes.success && checkRes.data?.length > 0) {
+          existingId = checkRes.data[0].id
+        }
+      }
+
+      // 2. VKN yoksa veya eşleşmediyse, gelen unvan metni ile havuzdaki firmayı case-insensitive eşle
+      if (!existingId && firmaData.unvan?.trim()) {
+        const checkRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT id, unvan FROM TANIM_Firma WHERE LOWER(TRIM(unvan)) = LOWER(TRIM(?)) LIMIT 1',
+          [firmaData.unvan.trim()]
         )
         if (checkRes.success && checkRes.data?.length > 0) {
           existingId = checkRes.data[0].id
