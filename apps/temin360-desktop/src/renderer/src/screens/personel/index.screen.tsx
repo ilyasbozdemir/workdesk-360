@@ -232,8 +232,6 @@ export default function PersonelScreen({
         isSubComponent ? 'w-full' : 'p-6 max-w-[1600px] mx-auto flex flex-col gap-6 w-full'
       }
     >
-
-
       <PersonelListView
         personelList={personelList}
         rollerList={rollerList}
@@ -245,7 +243,6 @@ export default function PersonelScreen({
         handleViewClick={handleViewClick}
         handleDelete={handleDelete}
       />
-
     </div>
   )
 }

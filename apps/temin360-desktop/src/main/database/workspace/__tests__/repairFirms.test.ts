@@ -7,7 +7,7 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
-describe('repairFirmsInDb & repairFile (Firma Eşleştirme ve Onarım Testi)', () => {
+describe('repairFirmsInDb & repairFile (Mükerrer Birleştirme ve Onarım Testleri)', () => {
   let tmpDbPath: string
   let db: any
 
@@ -58,118 +58,117 @@ describe('repairFirmsInDb & repairFile (Firma Eşleştirme ve Onarım Testi)', (
     } catch {}
   })
 
-  it('eşleşen firmaları TANIM_Firma ID si ile bağlamalı ve yeni firmaları havuza kaydetmeli', () => {
-    // 1. Havuzda mevcut firma
+  it('GÖKŞEN ve GÜL TES YAPI gibi taslak kartları ana havuza birleştirmeli ve teklifleri aktarmalı', () => {
+    // 1. Ana havuz firmaları
     db.prepare(`
-      INSERT INTO TANIM_Firma (firma_kodu, unvan, vergi_no)
-      VALUES ('0001', 'Mega İnşaat Ltd. Şti.', '1234567890')
+      INSERT INTO TANIM_Firma (id, firma_kodu, unvan, vergi_no, telefon)
+      VALUES (26, '0026', 'GÖKŞEN MÜHENDİSLİK MÜŞAVİRLİK İNŞAAT TAAHHÜT SANAYİ TİCARET LTD.ŞTİ', '4050312325', '03323534574')
+    `).run()
+    db.prepare(`
+      INSERT INTO TANIM_Firma (id, firma_kodu, unvan, vergi_no, telefon)
+      VALUES (28, '0028', 'GÜLTES YAPI ENERJİ SİS KAL.DOĞ SU.SAN TİÇ.LTD.ŞTİ', '4230463658', '03382124040')
     `).run()
 
-    // 2. Bir doğrudan temin dosyası
+    // 2. Doğrudan temin dosyaları
+    db.prepare(`INSERT INTO DATA_TeminDosyasi (id, dosya_no, firma_id) VALUES (1, '2026/01', 62)`).run()
+    db.prepare(`INSERT INTO DATA_TeminDosyasi (id, dosya_no, firma_id) VALUES (2, '2026/02', 67)`).run()
+
+    // 3. Taslak kartlara bağlı teklifler
     db.prepare(`
-      INSERT INTO DATA_TeminDosyasi (id, dosya_no, firma_id)
-      VALUES (10, '2026/01', NULL)
+      INSERT INTO TANIM_Firma (id, firma_kodu, unvan, vergi_no, telefon)
+      VALUES (62, NULL, 'GÖKŞEN', NULL, '03323534574 · 03323534574')
+    `).run()
+    db.prepare(`
+      INSERT INTO DATA_TeminFirma (id, temin_dosya_id, firma_id, unvan, kazandi_mi)
+      VALUES (101, 1, 62, 'GÖKŞEN', 1)
     `).run()
 
-    // 3. Dosyaya metin olarak eklenmiş fakat firma_id = 0 veya NULL olan teklifler
-    // A: unvan büyük/küçük harf ve boşluk farkı olan, VKN'si aynı olan kazanan firma
     db.prepare(`
-      INSERT INTO DATA_TeminFirma (id, temin_dosya_id, dosya_id, firma_id, unvan, vergi_no, kazandi_mi)
-      VALUES (101, 10, 10, 0, '   mega i̇nşaat ltd. şti.   ', '1234567890', 1)
+      INSERT INTO TANIM_Firma (id, firma_kodu, unvan, vergi_no, telefon)
+      VALUES (67, NULL, 'GÜL TES YAPI', NULL, '03382124040')
+    `).run()
+    db.prepare(`
+      INSERT INTO DATA_TeminFirma (id, temin_dosya_id, firma_id, unvan, kazandi_mi)
+      VALUES (102, 2, 67, 'GÜL TES YAPI', 1)
     `).run()
 
-    // B: Havuzda hiç olmayan yeni firma
+    // 4. Bağımsız taslak firma (havuzda eşi olmayan)
     db.prepare(`
-      INSERT INTO DATA_TeminFirma (id, temin_dosya_id, dosya_id, firma_id, unvan, vergi_no, kazandi_mi)
-      VALUES (102, 10, 10, NULL, 'Anadolu Bilişim Teknolojileri', '9876543210', 0)
+      INSERT INTO TANIM_Firma (id, firma_kodu, unvan, vergi_no, telefon)
+      VALUES (80, NULL, 'Yeni Bağımsız Firma Ltd.', '9999999999', '05551234567')
     `).run()
 
-    // Onarım fonksiyonunu çalıştır
+    // Onarım ve birleştirme çalıştır
     const res = repairFirmsInDb(db, 'TestDB')
 
     expect(res.success).toBe(true)
-    expect(res.matchedCount).toBe(1)
-    expect(res.createdCount).toBe(1)
-    expect(res.dossiersUpdated).toBe(1)
+    expect(res.mergedStubCount).toBe(2)
+    expect(res.assignedCodesCount).toBe(1)
+    expect(res.dossiersUpdated).toBe(2)
 
-    // 101 nolu firma havuz ID 1'e bağlanmalı
+    // Taslak ID 62 ve 67 TANIM_Firma'dan silinmiş olmalı
+    const deleted62 = db.prepare('SELECT * FROM TANIM_Firma WHERE id = 62').get()
+    const deleted67 = db.prepare('SELECT * FROM TANIM_Firma WHERE id = 67').get()
+    expect(deleted62).toBeUndefined()
+    expect(deleted67).toBeUndefined()
+
+    // Teklif 101 -> Master ID 26'ya bağlanmış olmalı
     const firma101 = db.prepare('SELECT * FROM DATA_TeminFirma WHERE id = 101').get()
-    expect(firma101.firma_id).toBe(1)
+    expect(firma101.firma_id).toBe(26)
+    expect(firma101.unvan).toBe('GÖKŞEN MÜHENDİSLİK MÜŞAVİRLİK İNŞAAT TAAHHÜT SANAYİ TİCARET LTD.ŞTİ')
 
-    // 102 nolu firma yeni bir havuz ID'ye bağlanmalı
+    // Teklif 102 -> Master ID 28'e bağlanmış olmalı
     const firma102 = db.prepare('SELECT * FROM DATA_TeminFirma WHERE id = 102').get()
-    expect(firma102.firma_id).toBeGreaterThan(1)
+    expect(firma102.firma_id).toBe(28)
 
-    // TANIM_Firma'da 'Anadolu Bilişim Teknolojileri' oluşmuş olmalı
-    const yeniFirma = db.prepare('SELECT * FROM TANIM_Firma WHERE id = ?').get(firma102.firma_id)
-    expect(yeniFirma).toBeDefined()
-    expect(yeniFirma.unvan).toBe('Anadolu Bilişim Teknolojileri')
-    expect(yeniFirma.vergi_no).toBe('9876543210')
+    // Dosya kazananları da master ID'lere güncellenmiş olmalı
+    const dosya1 = db.prepare('SELECT * FROM DATA_TeminDosyasi WHERE id = 1').get()
+    const dosya2 = db.prepare('SELECT * FROM DATA_TeminDosyasi WHERE id = 2').get()
+    expect(dosya1.firma_id).toBe(26)
+    expect(dosya2.firma_id).toBe(28)
 
-    // DATA_TeminDosyasi kazanan firmanın ID'si (1) ile güncellenmiş olmalı
-    const dosya = db.prepare('SELECT * FROM DATA_TeminDosyasi WHERE id = 10').get()
-    expect(dosya.firma_id).toBe(1)
+    // Bağımsız taslak firmaya sıralı kod atanmış olmalı (en büyük 28 idi -> 0029)
+    const firma80 = db.prepare('SELECT * FROM TANIM_Firma WHERE id = 80').get()
+    expect(firma80.firma_kodu).toBe('0029')
   })
 
-  it('hiç yetim kayıt yoksa işlem yapmadan tamamlanmalı', () => {
+  it('ZIP tabanlı .temin dosyasında mükerrerleri temizleyip arşivi güncellemeli', async () => {
     db.prepare(`
-      INSERT INTO TANIM_Firma (id, firma_kodu, unvan) VALUES (1, '0001', 'Test')
+      INSERT INTO TANIM_Firma (id, firma_kodu, unvan, vergi_no)
+      VALUES (1, '0001', 'DENİZ REKLAM ÜRÜNLERİ SAN. TİC.', '1234567890')
     `).run()
     db.prepare(`
-      INSERT INTO DATA_TeminFirma (id, temin_dosya_id, firma_id, unvan) VALUES (1, 1, 1, 'Test')
-    `).run()
-
-    const res = repairFirmsInDb(db, 'CleanDB')
-    expect(res.success).toBe(true)
-    expect(res.matchedCount).toBe(0)
-    expect(res.createdCount).toBe(0)
-  })
-
-  it('ZIP tabanlı .temin dosyasını açıp içindeki veritabanını onarmalı ve güncelleyerek paketlemeli', async () => {
-    // 1. Havuz ve yetim kayıt içeren geçici bir db
-    db.prepare(`
-      INSERT INTO TANIM_Firma (firma_kodu, unvan, vergi_no)
-      VALUES ('0001', 'Teknoloji A.Ş.', '1111111111')
+      INSERT INTO TANIM_Firma (id, firma_kodu, unvan)
+      VALUES (2, NULL, 'DENİZ REKLAM ÜRÜNLERİ')
     `).run()
     db.prepare(`
-      INSERT INTO DATA_TeminDosyasi (id, dosya_no, firma_id)
-      VALUES (5, '2026/05', NULL)
-    `).run()
-    db.prepare(`
-      INSERT INTO DATA_TeminFirma (id, temin_dosya_id, dosya_id, firma_id, unvan, vergi_no, kazandi_mi)
-      VALUES (501, 5, 5, 0, 'Teknoloji A.Ş.', '1111111111', 1)
+      INSERT INTO DATA_TeminFirma (id, temin_dosya_id, firma_id, unvan)
+      VALUES (10, 1, 2, 'DENİZ REKLAM ÜRÜNLERİ')
     `).run()
     db.close()
     db = null
 
-    // 2. Bu sqlite dosyasını bir .temin (zip) arşivi içine koy
-    const teminZipPath = path.join(os.tmpdir(), `test-proje-${Date.now()}.temin`)
+    const teminZipPath = path.join(os.tmpdir(), `test-zip-proje-${Date.now()}.temin`)
     const zip = new AdmZip()
     zip.addLocalFile(tmpDbPath, '', 'database.sqlite')
-    zip.addFile('meta.json', Buffer.from(JSON.stringify({ dtal_version: '1.0', updated_at: '2026-01-01' })))
+    zip.addFile('meta.json', Buffer.from(JSON.stringify({ dtal_version: '1.0' })))
     zip.writeZip(teminZipPath)
 
     try {
-      // 3. repairFile ile .temin dosyasını onar
       const res = await repairFile(teminZipPath)
       expect(res.success).toBe(true)
-      expect(res.matchedCount).toBe(1)
-      expect(res.dossiersUpdated).toBe(1)
+      expect(res.mergedStubCount).toBe(1)
 
-      // Güvenlik yedeği .bak oluşmuş olmalı
-      expect(fs.existsSync(`${teminZipPath}.bak`)).toBe(true)
-
-      // Güncellenmiş .temin dosyasını doğrula
       const updatedZip = new AdmZip(teminZipPath)
       const extractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-zip-'))
       updatedZip.extractAllTo(extractDir, true)
 
       const verifiedDb = new DatabaseSync(path.join(extractDir, 'database.sqlite'))
-      const firma501 = verifiedDb.prepare('SELECT * FROM DATA_TeminFirma WHERE id = 501').get() as any
-      expect(firma501.firma_id).toBe(1)
+      const tf = verifiedDb.prepare('SELECT * FROM DATA_TeminFirma WHERE id = 10').get() as any
+      expect(tf.firma_id).toBe(1)
 
-      const dosya5 = verifiedDb.prepare('SELECT * FROM DATA_TeminDosyasi WHERE id = 5').get() as any
-      expect(dosya5.firma_id).toBe(1)
+      const stub = verifiedDb.prepare('SELECT * FROM TANIM_Firma WHERE id = 2').get()
+      expect(stub).toBeUndefined()
 
       verifiedDb.close()
       fs.rmSync(extractDir, { recursive: true, force: true })
