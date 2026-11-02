@@ -93,7 +93,7 @@ export default defineConfig(({ mode, command }) => {
         bytecode: !isTestOrCI,
         sourcemap: false,
         externalizeDeps: {
-          exclude: ['@temin360/document-templates']
+          exclude: ['@temin360/document-templates', '@worksuite-360/document-engine']
         }
       }
     },
