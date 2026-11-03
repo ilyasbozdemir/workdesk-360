@@ -1,5 +1,10 @@
+<<<<<<<< HEAD:packages/document-templates/src/engine/resolvers/IhtiyacListesiResolver.ts
 import { IhtiyacListesiType } from '../../templates/ihtiyac-listesi'
 import { DocumentDataResolver, DocumentResolutionContext } from '@worksuite-360/document-engine'
+========
+import { IhtiyacListesiType } from '@temin360/document-templates'
+import { DocumentDataResolver, DocumentResolutionContext } from '../types/contracts'
+>>>>>>>> origin/main:packages/document-engine/src/resolvers/IhtiyacListesiResolver.ts
 
 /**
  * İhtiyaç Listesi Belge Çözücüsü (IhtiyacListesiResolver)
@@ -99,8 +104,12 @@ export class IhtiyacListesiResolver implements DocumentDataResolver<IhtiyacListe
       hazirlayanEposta: hazirlayanMail,
       talepEdenPersonelAdi: hazirlayanAdi,
       talepEdenPersonelUnvan: hazirlayanUnvan,
+<<<<<<<< HEAD:packages/document-templates/src/engine/resolvers/IhtiyacListesiResolver.ts
       talepEdenTelefon: hazirlayanTel,
       talepEdenEposta: hazirlayanMail
+========
+      birimAdi: headerData.mudurluk
+>>>>>>>> origin/main:packages/document-engine/src/resolvers/IhtiyacListesiResolver.ts
     }
 
     return result

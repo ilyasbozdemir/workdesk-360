@@ -1,5 +1,10 @@
+<<<<<<<< HEAD:packages/document-templates/src/engine/resolvers/LuzumMuzekkeresiResolver.ts
 import { LuzumMuzekkeresiType } from '../../templates/luzum-muzekkeresi'
 import { DocumentDataResolver, DocumentResolutionContext } from '@worksuite-360/document-engine'
+========
+import { LuzumMuzekkeresiType } from '@temin360/document-templates'
+import { DocumentDataResolver, DocumentResolutionContext } from '../types/contracts'
+>>>>>>>> origin/main:packages/document-engine/src/resolvers/LuzumMuzekkeresiResolver.ts
 
 /**
  * Lüzum Müzekkeresi Belge Çözücüsü (LuzumMuzekkeresiResolver)
@@ -99,8 +104,12 @@ export class LuzumMuzekkeresiResolver implements DocumentDataResolver<LuzumMuzek
       hazirlayanEposta: hazirlayanMail,
       talepEdenPersonelAdi: hazirlayanAdi,
       talepEdenPersonelUnvan: hazirlayanUnvan,
+<<<<<<<< HEAD:packages/document-templates/src/engine/resolvers/LuzumMuzekkeresiResolver.ts
       talepEdenTelefon: hazirlayanTel,
       talepEdenEposta: hazirlayanMail
+========
+      birimAdi: headerData.mudurluk
+>>>>>>>> origin/main:packages/document-engine/src/resolvers/LuzumMuzekkeresiResolver.ts
     }
 
     return result
