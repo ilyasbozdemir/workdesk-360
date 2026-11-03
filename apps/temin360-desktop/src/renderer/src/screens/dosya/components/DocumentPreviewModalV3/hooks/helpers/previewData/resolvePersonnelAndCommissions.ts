@@ -54,7 +54,7 @@ export async function resolvePersonnelAndCommissions(
     baseData.hazirlayanPersonelUnvan = ctx.hazirlayanPersonelUnvan || ''
   }
 
-  if (!baseData.talepEdenPersonelAdi && talepPolicy !== 'hide') {
+  if (!baseData.talepEdenPersonelAdi) {
     baseData.talepEdenPersonelAdi = ctx.talepEdenPersonelAdi || ''
     baseData.talepEdenPersonelUnvan = ctx.talepEdenPersonelUnvan || ''
     if (!baseData.talepEdenPersonelAdi && dosyaObj.talep_eden_personel_id) {

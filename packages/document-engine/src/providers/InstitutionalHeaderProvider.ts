@@ -50,6 +50,7 @@ export class InstitutionalHeaderProvider {
     if (dosyaId) {
       const rows = await queryExecutor(
         `SELECT d.id, d.temin_no, d.evrak_sayisi, d.konu, d.butce_yili, d.tarih, d.sunulacak_makam, d.birim_id,
+                d.hazirlayan_personel_id, d.talep_eden_personel_id, d.onay_personel_id, d.sunan_personel_id,
                 b.birim_adi, b.antet_ek_satir, b.harcama_yetkilisi_id, b.harcama_yetkilisi_unvan
          FROM DATA_TeminDosyasi d
          LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
@@ -61,19 +62,73 @@ export class InstitutionalHeaderProvider {
       }
     }
 
-    // 2. Harcama Yetkilisi Adı
+    // 2. Personel Çözümlemeleri (Hazırlayan, Talep Eden, Onaylayan / Harcama Yetkilisi)
+    let hazirlayanPersonelAdi = ''
+    let hazirlayanPersonelUnvan = ''
+    let hazirlayanTelefon = ''
+    let hazirlayanEposta = ''
+
+    let talepEdenPersonelAdi = ''
+    let talepEdenPersonelUnvan = ''
+    let talepEdenTelefon = ''
+    let talepEdenEposta = ''
+
+    let onaylayanPersonelAdi = ''
+    let onaylayanPersonelUnvan = ''
+
     let harcamaYetkilisiAdi = ''
-    let harcamaYetkilisiUnvan = dosyaRow?.harcama_yetkilisi_unvan || ''
-    if (dosyaRow?.harcama_yetkilisi_id) {
+    let harcamaYetkilisiUnvan = dosyaRow?.harcama_yetkilisi_unvan || 'Harcama Yetkilisi'
+
+    const targetHazirlayanId = dosyaRow?.hazirlayan_personel_id || dosyaRow?.sunan_personel_id
+    const targetTalepEdenId = dosyaRow?.talep_eden_personel_id || dosyaRow?.hazirlayan_personel_id
+    const targetOnaylayanId = dosyaRow?.onay_personel_id || dosyaRow?.harcama_yetkilisi_id
+
+    const personelIdsToFetch = Array.from(
+      new Set([targetHazirlayanId, targetTalepEdenId, targetOnaylayanId].filter(Boolean))
+    )
+
+    if (personelIdsToFetch.length > 0) {
+      const placeholders = personelIdsToFetch.map(() => '?').join(', ')
       const pRows = await queryExecutor(
-        `SELECT ad_soyad, unvan FROM TANIM_Personel WHERE id = ?`,
-        [dosyaRow.harcama_yetkilisi_id]
+        `SELECT id, ad_soyad, unvan, telefon, eposta FROM TANIM_Personel WHERE id IN (${placeholders})`,
+        personelIdsToFetch
       )
-      if (pRows && pRows[0]) {
-        harcamaYetkilisiAdi = pRows[0].ad_soyad || ''
-        if (!harcamaYetkilisiUnvan) {
-          harcamaYetkilisiUnvan = pRows[0].unvan || ''
+
+      const pMap = new Map<number, any>()
+      pRows.forEach((p: any) => {
+        if (p.id !== undefined && p.id !== null) {
+          pMap.set(Number(p.id), p)
         }
+      })
+
+      const getPersonel = (id: any) => {
+        if (id && pMap.has(Number(id))) return pMap.get(Number(id))
+        if (pRows.length === 1) return pRows[0]
+        return null
+      }
+
+      const hazPersonel = getPersonel(targetHazirlayanId)
+      if (hazPersonel) {
+        hazirlayanPersonelAdi = hazPersonel.ad_soyad || ''
+        hazirlayanPersonelUnvan = hazPersonel.unvan || ''
+        hazirlayanTelefon = hazPersonel.telefon || ''
+        hazirlayanEposta = hazPersonel.eposta || ''
+      }
+
+      const talPersonel = getPersonel(targetTalepEdenId)
+      if (talPersonel) {
+        talepEdenPersonelAdi = talPersonel.ad_soyad || ''
+        talepEdenPersonelUnvan = talPersonel.unvan || ''
+        talepEdenTelefon = talPersonel.telefon || ''
+        talepEdenEposta = talPersonel.eposta || ''
+      }
+
+      const onPersonel = getPersonel(targetOnaylayanId)
+      if (onPersonel) {
+        onaylayanPersonelAdi = onPersonel.ad_soyad || ''
+        onaylayanPersonelUnvan = onPersonel.unvan || harcamaYetkilisiUnvan
+        harcamaYetkilisiAdi = onPersonel.ad_soyad || ''
+        if (onPersonel.unvan) harcamaYetkilisiUnvan = onPersonel.unvan
       }
     }
 
@@ -175,6 +230,16 @@ export class InstitutionalHeaderProvider {
       konu: dosyaRow?.konu || '',
       harcamaYetkilisiAdi,
       harcamaYetkilisiUnvan,
+      hazirlayanPersonelAdi,
+      hazirlayanPersonelUnvan,
+      hazirlayanTelefon,
+      hazirlayanEposta,
+      talepEdenPersonelAdi,
+      talepEdenPersonelUnvan,
+      talepEdenTelefon,
+      talepEdenEposta,
+      onaylayanPersonelAdi,
+      onaylayanPersonelUnvan,
       birimId: dosyaRow?.birim_id,
       sunulacakMakam: dosyaRow?.sunulacak_makam || ''
     }

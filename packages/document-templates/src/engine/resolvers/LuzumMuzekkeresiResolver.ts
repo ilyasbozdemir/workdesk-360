@@ -47,22 +47,80 @@ export class LuzumMuzekkeresiResolver implements DocumentDataResolver<LuzumMuzek
       }
     }
 
-    // 3. İlgili Personel (Hazırlayan / Talep Eden)
-    let hazirlayanAdi = ''
-    let hazirlayanUnvan = ''
-    let hazirlayanTel = ''
-    let hazirlayanMail = ''
+    // 3. Personel Çözümlemesi (Dosyada seçilen Hazırlayan, Talep Eden, Onaylayan)
+    let hazirlayanAdi: string = String(headerData.hazirlayanPersonelAdi || '')
+    let hazirlayanUnvan: string = String(headerData.hazirlayanPersonelUnvan || '')
+    let hazirlayanTel: string = String(headerData.hazirlayanTelefon || '')
+    let hazirlayanMail: string = String(headerData.hazirlayanEposta || '')
 
-    const pRows = await queryExecutor(
-      `SELECT ad_soyad, unvan, telefon, eposta FROM TANIM_Personel 
-       WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY id ASC LIMIT 1`,
-      []
-    )
-    if (pRows && pRows[0]) {
-      hazirlayanAdi = pRows[0].ad_soyad || ''
-      hazirlayanUnvan = pRows[0].unvan || ''
-      hazirlayanTel = pRows[0].telefon || ''
-      hazirlayanMail = pRows[0].eposta || ''
+    let talepEdenAdi: string = String(headerData.talepEdenPersonelAdi || hazirlayanAdi || '')
+    let talepEdenUnvan: string = String(headerData.talepEdenPersonelUnvan || hazirlayanUnvan || '')
+    let talepEdenTel: string = String(headerData.talepEdenTelefon || hazirlayanTel || '')
+    let talepEdenMail: string = String(headerData.talepEdenEposta || hazirlayanMail || '')
+
+    let onaylayanAdi: string = String(headerData.onaylayanPersonelAdi || headerData.harcamaYetkilisiAdi || '')
+    let onaylayanUnvan: string = String(headerData.onaylayanPersonelUnvan || headerData.harcamaYetkilisiUnvan || 'Harcama Yetkilisi')
+
+    // Dosyada spesifik ID'ler varsa ve headerData'da henüz çözümlenmemişse doğrudan çek
+    if (!hazirlayanAdi || !onaylayanAdi || !talepEdenAdi) {
+      const pIds = [
+        dosyaRow?.hazirlayan_personel_id || dosyaRow?.sunan_personel_id,
+        dosyaRow?.talep_eden_personel_id,
+        dosyaRow?.onay_personel_id
+      ].filter(Boolean)
+
+      if (pIds.length > 0) {
+        const placeholders = pIds.map(() => '?').join(', ')
+        const pRows = await queryExecutor(
+          `SELECT id, ad_soyad, unvan, telefon, eposta FROM TANIM_Personel WHERE id IN (${placeholders})`,
+          pIds
+        )
+        const pMap = new Map<number, any>()
+        pRows.forEach((p: any) => pMap.set(Number(p.id), p))
+
+        const hazId = dosyaRow?.hazirlayan_personel_id || dosyaRow?.sunan_personel_id
+        if (hazId && pMap.has(Number(hazId))) {
+          const p = pMap.get(Number(hazId))
+          hazirlayanAdi = p.ad_soyad || hazirlayanAdi
+          hazirlayanUnvan = p.unvan || hazirlayanUnvan
+          hazirlayanTel = p.telefon || hazirlayanTel
+          hazirlayanMail = p.eposta || hazirlayanMail
+        }
+
+        const talId = dosyaRow?.talep_eden_personel_id
+        if (talId && pMap.has(Number(talId))) {
+          const p = pMap.get(Number(talId))
+          talepEdenAdi = p.ad_soyad || talepEdenAdi
+          talepEdenUnvan = p.unvan || talepEdenUnvan
+          talepEdenTel = p.telefon || talepEdenTel
+          talepEdenMail = p.eposta || talepEdenMail
+        }
+
+        const onId = dosyaRow?.onay_personel_id
+        if (onId && pMap.has(Number(onId))) {
+          const p = pMap.get(Number(onId))
+          onaylayanAdi = p.ad_soyad || onaylayanAdi
+          onaylayanUnvan = p.unvan || onaylayanUnvan
+        }
+      }
+    }
+
+    // Fallback: Hala boşsa ilk aktif personeli al
+    if (!hazirlayanAdi) {
+      const pFallback = await queryExecutor(
+        `SELECT ad_soyad, unvan, telefon, eposta FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY id ASC LIMIT 1`,
+        []
+      )
+      if (pFallback && pFallback[0]) {
+        hazirlayanAdi = pFallback[0].ad_soyad || ''
+        hazirlayanUnvan = pFallback[0].unvan || ''
+        hazirlayanTel = pFallback[0].telefon || ''
+        hazirlayanMail = pFallback[0].eposta || ''
+        if (!talepEdenAdi) {
+          talepEdenAdi = hazirlayanAdi
+          talepEdenUnvan = hazirlayanUnvan
+        }
+      }
     }
 
     const effectiveDate = dosyaRow?.tarih || new Date().toISOString().split('T')[0]
@@ -91,16 +149,16 @@ export class LuzumMuzekkeresiResolver implements DocumentDataResolver<LuzumMuzek
       ihtiyacYeri: headerData.mudurluk,
       ihtiyacKalemleri: kalemler,
       isinAciklamasi: dosyaRow?.aciklama || dosyaRow?.konu || '',
-      onaylayanPersonelAdi: headerData.harcamaYetkilisiAdi || '',
-      onaylayanPersonelUnvan: headerData.harcamaYetkilisiUnvan || 'Harcama Yetkilisi',
+      onaylayanPersonelAdi: onaylayanAdi,
+      onaylayanPersonelUnvan: onaylayanUnvan,
       hazirlayanPersonelAdi: hazirlayanAdi,
       hazirlayanPersonelUnvan: hazirlayanUnvan,
       hazirlayanTelefon: hazirlayanTel,
       hazirlayanEposta: hazirlayanMail,
-      talepEdenPersonelAdi: hazirlayanAdi,
-      talepEdenPersonelUnvan: hazirlayanUnvan,
-      talepEdenTelefon: hazirlayanTel,
-      talepEdenEposta: hazirlayanMail,
+      talepEdenPersonelAdi: talepEdenAdi,
+      talepEdenPersonelUnvan: talepEdenUnvan,
+      talepEdenTelefon: talepEdenTel,
+      talepEdenEposta: talepEdenMail,
       birimAdi: headerData.mudurluk
     }
 
