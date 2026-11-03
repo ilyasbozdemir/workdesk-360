@@ -1,5 +1,5 @@
 import { TemplateRegistryService, resolveCommissionCategory } from '@temin360/document-templates'
-import { dedupeMembers } from './previewDataUtils'
+import { dedupeMembers, cleanPersonelName } from './previewDataUtils'
 
 export async function resolvePersonnelAndCommissions(
   baseData: any,
@@ -23,7 +23,7 @@ export async function resolvePersonnelAndCommissions(
       (p: any) => Number(p.id) === Number(dosyaObj.hazirlayan_personel_id)
     )
     if (hp) {
-      baseData.hazirlayanPersonelAdi = hp.ad_soyad
+      baseData.hazirlayanPersonelAdi = cleanPersonelName(hp.ad_soyad)
       baseData.hazirlayanPersonelUnvan = hp.unvan || ''
     }
   }
@@ -60,7 +60,7 @@ export async function resolvePersonnelAndCommissions(
     if (!baseData.talepEdenPersonelAdi && dosyaObj.talep_eden_personel_id) {
       const tp = (personelList || []).find((p: any) => p.id === dosyaObj.talep_eden_personel_id)
       if (tp) {
-        baseData.talepEdenPersonelAdi = tp.ad_soyad
+        baseData.talepEdenPersonelAdi = cleanPersonelName(tp.ad_soyad)
         baseData.talepEdenPersonelUnvan = tp.unvan || ''
       }
     }
@@ -202,7 +202,7 @@ export async function resolvePersonnelAndCommissions(
         if (maliyetMembers.length > 0) {
           const deduplicatedMaliyet = dedupeMembers(maliyetMembers)
           const formattedMaliyet = deduplicatedMaliyet.map((m: any) => ({
-            adSoyad: m.ad_soyad || '',
+            adSoyad: cleanPersonelName(m.ad_soyad || m.adSoyad),
             unvan: m.unvan || '',
             gorev: m.gorev || 'Fiyat Araştırma Görevlisi',
             gorevi: m.gorev || 'Fiyat Araştırma Görevlisi',
@@ -319,10 +319,10 @@ export async function resolvePersonnelAndCommissions(
         TemplateRegistryService.isMemberVisibleInDocument(hRow, targetDocIds) &&
         hRow.ad_soyad
       ) {
-        baseData.onaylayanPersonelAdi = baseData.onaylayanPersonelAdi || hRow.ad_soyad
+        baseData.onaylayanPersonelAdi = baseData.onaylayanPersonelAdi || cleanPersonelName(hRow.ad_soyad)
         baseData.onaylayanPersonelUnvan =
           baseData.onaylayanPersonelUnvan || hRow.unvan || 'Harcama Yetkilisi'
-        baseData.harcamaYetkilisiAdi = baseData.harcamaYetkilisiAdi || hRow.ad_soyad
+        baseData.harcamaYetkilisiAdi = baseData.harcamaYetkilisiAdi || cleanPersonelName(hRow.ad_soyad)
         baseData.harcamaYetkilisiUnvan =
           baseData.harcamaYetkilisiUnvan || hRow.unvan || 'Harcama Yetkilisi'
       }
@@ -352,10 +352,10 @@ export async function resolvePersonnelAndCommissions(
         TemplateRegistryService.isMemberVisibleInDocument(gRow, targetDocIds) &&
         gRow.ad_soyad
       ) {
-        baseData.hazirlayanPersonelAdi = baseData.hazirlayanPersonelAdi || gRow.ad_soyad
+        baseData.hazirlayanPersonelAdi = baseData.hazirlayanPersonelAdi || cleanPersonelName(gRow.ad_soyad)
         baseData.hazirlayanPersonelUnvan =
           baseData.hazirlayanPersonelUnvan || gRow.unvan || 'Gerçekleştirme Görevlisi'
-        baseData.gerceklestirmeGorevlisiAdi = baseData.gerceklestirmeGorevlisiAdi || gRow.ad_soyad
+        baseData.gerceklestirmeGorevlisiAdi = baseData.gerceklestirmeGorevlisiAdi || cleanPersonelName(gRow.ad_soyad)
         baseData.gerceklestirmeGorevlisiUnvan =
           baseData.gerceklestirmeGorevlisiUnvan || gRow.unvan || 'Gerçekleştirme Görevlisi'
       }

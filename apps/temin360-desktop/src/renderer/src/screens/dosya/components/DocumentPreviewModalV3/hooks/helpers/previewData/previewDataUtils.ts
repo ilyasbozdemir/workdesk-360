@@ -1,4 +1,6 @@
-import { TemplateRegistryService } from '@temin360/document-templates'
+import { TemplateRegistryService, cleanPersonelName } from '@temin360/document-templates'
+
+export { cleanPersonelName }
 
 export function applyRolePolicy(
   baseData: any,
@@ -10,14 +12,33 @@ export function applyRolePolicy(
 
 export function dedupeMembers(members: any[]) {
   if (!Array.isArray(members)) return []
-  const seen = new Set<string>()
+  const seenNames = new Set<string>()
+  const seenIds = new Set<string>()
+
   return members.filter((m: any) => {
-    const rawName = (m.ad_soyad || m.adSoyad || '').trim().toLowerCase()
-    const pid = m.personel_id ? `pid_${m.personel_id}` : null
-    const key = pid || (rawName ? `name_${rawName}` : null)
-    if (!key) return true
-    if (seen.has(key)) return false
-    seen.add(key)
+    if (!m) return false
+    const pid = m.personel_id || m.personelId || m.id
+    const raw = m.adSoyad || m.ad_soyad || ''
+    const clean = cleanPersonelName(raw)
+    const lower = clean.toLowerCase()
+
+    if (!lower && !pid) return false
+
+    if (pid && seenIds.has(String(pid))) {
+      return false
+    }
+
+    if (lower && seenNames.has(lower)) {
+      return false
+    }
+
+    if (pid) seenIds.add(String(pid))
+    if (lower) seenNames.add(lower)
+
+    // Üye üzerindeki adı da temizlenmiş isimle güncelle
+    if (m.ad_soyad) m.ad_soyad = clean
+    if (m.adSoyad) m.adSoyad = clean
+
     return true
   })
 }

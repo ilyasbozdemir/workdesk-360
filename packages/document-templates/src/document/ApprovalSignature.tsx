@@ -1,9 +1,9 @@
 import React from "react";
 import { EditableField, FIELD_SOURCE_INFO } from "./EditableField";
 import { useTemplateEdit } from "./TemplateEditContext";
-import { toIsoDate, toTrDate } from "../utils/textHelpers";
+import { toIsoDate, toTrDate, cleanPersonelName } from "../utils/textHelpers";
 
-export { toIsoDate, toTrDate };
+export { toIsoDate, toTrDate, cleanPersonelName };
 
 export interface DateEditableFieldProps {
   name: string;
@@ -81,7 +81,7 @@ export const PersonelInlineSelect: React.FC<PersonelInlineSelectProps> = ({
       : typeof window !== "undefined"
       ? (window as any)?.__activePersonelListesi
       : []) || [];
-  const cleanVal = typeof value === "string" ? value.split("(")[0].trim() : "";
+  const cleanVal = cleanPersonelName(value);
   const matched = personelList.find(
     (p: any) =>
       p.ad_soyad &&
@@ -342,7 +342,7 @@ export const PersonelCard: React.FC<PersonelCardProps> = ({
       (f: any) =>
         f.unvan &&
         String(f.unvan).trim().toLowerCase() ===
-          String(adSoyad || "").trim().toLowerCase(),
+          cleanPersonelName(adSoyad).toLowerCase(),
     )
     : personelList.find(
       (p: any) =>
@@ -458,7 +458,7 @@ export const PersonelCard: React.FC<PersonelCardProps> = ({
         <div style={{ fontWeight: "bold", fontSize: "11pt" }}>
           <EditableField
             name={nameField}
-            value={adSoyad || ""}
+            value={cleanPersonelName(adSoyad) || ""}
             placeholder={namePlaceholder}
           />
         </div>
@@ -667,7 +667,7 @@ export const CommissionList: React.FC<CommissionListProps> = ({
       {members.map((member, idx) => (
         <div key={idx} style={{ marginBottom: "12px", lineHeight: 1.6 }}>
           <div style={{ fontSize: "11pt" }}>
-            <strong>{member.adSoyad}</strong>
+            <strong>{cleanPersonelName(member.adSoyad)}</strong>
           </div>
           <div style={{ fontSize: "10pt" }}>{member.unvan}</div>
           {member.gorevi && (
@@ -857,7 +857,7 @@ export const RotaKoordinasyonBlock: React.FC<RotaKoordinasyonBlockProps> = ({
     rota.forEach((r) => {
       items.push({
         tur: r.t || "Paraf",
-        adSoyad: r.a || "",
+        adSoyad: cleanPersonelName(r.a) || "",
         unvan: r.u || "",
         tarih: r.tarih || toTrDate(new Date()),
       });
@@ -868,7 +868,7 @@ export const RotaKoordinasyonBlock: React.FC<RotaKoordinasyonBlockProps> = ({
     koordinasyon.forEach((k) => {
       items.push({
         tur: k.rol || "Koordinasyon",
-        adSoyad: k.adSoyad || "",
+        adSoyad: cleanPersonelName(k.adSoyad) || "",
         unvan: k.unvan || "",
         tarih: k.tarih || toTrDate(new Date()),
       });

@@ -12,7 +12,7 @@ import {
   CheckCircle2,
   HelpCircle
 } from 'lucide-react'
-import { toTrDate } from '@temin360/document-templates'
+import { toTrDate, cleanPersonelName } from '@temin360/document-templates'
 
 export type BelgeModuType = 'standart' | 'koordinasyonlu' | 'hizli_onay'
 
@@ -77,7 +77,7 @@ export function DocumentPreviewRotaSection({
         } else if (personelListesi.length > 0) {
           initialRota.push({
             t: 'Hazırlayan',
-            a: (personelListesi[0].ad_soyad || '').split('(')[0].trim(),
+            a: cleanPersonelName(personelListesi[0].ad_soyad),
             u: personelListesi[0].unvan || 'Görevli Personel',
             tarih: today
           })
@@ -94,7 +94,7 @@ export function DocumentPreviewRotaSection({
           t: 'Paraf',
           a:
             personelListesi.length > 1
-              ? (personelListesi[1].ad_soyad || '').split('(')[0].trim()
+              ? cleanPersonelName(personelListesi[1].ad_soyad)
               : '',
           u: personelListesi.length > 1 ? personelListesi[1].unvan || 'Şube Müdürü' : 'Birim Yetkilisi',
           tarih: today
@@ -164,7 +164,7 @@ export function DocumentPreviewRotaSection({
   const handleSelectPersonel = (index: number, personelId: string) => {
     const p = personelListesi.find((item) => String(item.id) === personelId)
     if (!p) return
-    const cleanName = (p.ad_soyad || '').split('(')[0].trim()
+    const cleanName = cleanPersonelName(p.ad_soyad)
     const updated = [...rota]
     updated[index] = {
       ...updated[index],
@@ -228,7 +228,7 @@ export function DocumentPreviewRotaSection({
     const hazirlayan =
       formData.hazirlayanPersonelAdi ||
       formData.talepEdenPersonelAdi ||
-      (personelListesi.length > 0 ? (personelListesi[0].ad_soyad || '').split('(')[0].trim() : '')
+      (personelListesi.length > 0 ? cleanPersonelName(personelListesi[0].ad_soyad) : "")
     const hazirlayanUnvan =
       formData.hazirlayanPersonelUnvan ||
       formData.talepEdenPersonelUnvan ||
@@ -244,7 +244,7 @@ export function DocumentPreviewRotaSection({
     // 2. Adım: Paraf / Koordinasyon (Birim Yetkilisi / Şube Müdürü)
     const parafPersonel =
       personelListesi.length > 1
-        ? (personelListesi[1].ad_soyad || '').split('(')[0].trim()
+        ? cleanPersonelName(personelListesi[1].ad_soyad)
         : ''
     const parafUnvan =
       personelListesi.length > 1 ? personelListesi[1].unvan : 'Birim Yetkilisi / Şube Müdürü'
@@ -260,7 +260,7 @@ export function DocumentPreviewRotaSection({
     const onaylayan =
       formData.onaylayanPersonelAdi ||
       formData.baskanAdi ||
-      (personelListesi.length > 2 ? (personelListesi[2].ad_soyad || '').split('(')[0].trim() : '')
+      (personelListesi.length > 2 ? cleanPersonelName(personelListesi[2].ad_soyad) : "")
     const onaylayanUnvan =
       formData.onaylayanPersonelUnvan ||
       formData.baskanUnvan ||
@@ -536,3 +536,4 @@ export function DocumentPreviewRotaSection({
     </div>
   )
 }
+

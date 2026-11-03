@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyRolePolicy, dedupeMembers, parseNumericPrice, resolveFirmsAndItems } from '../index'
+import { applyRolePolicy, dedupeMembers, parseNumericPrice, resolveFirmsAndItems, cleanPersonelName } from '../index'
 
 describe('DocumentPreviewModalV3 - previewData modular helpers', () => {
   it('parseNumericPrice handles numbers, strings with commas and dots correctly', () => {
@@ -11,6 +11,15 @@ describe('DocumentPreviewModalV3 - previewData modular helpers', () => {
     expect(parseNumericPrice(null)).toBe(0)
     expect(parseNumericPrice(undefined)).toBe(0)
     expect(parseNumericPrice('')).toBe(0)
+  })
+
+  it('cleanPersonelName cleans duplicate names, paranthesis titles and double surnames', () => {
+    expect(cleanPersonelName('Ahmet Yılmaz Ahmet Yılmaz')).toBe('Ahmet Yılmaz')
+    expect(cleanPersonelName('Ali Veli (Ali Veli)')).toBe('Ali Veli')
+    expect(cleanPersonelName('Mustafa Kaya (Mühendis)')).toBe('Mustafa Kaya')
+    expect(cleanPersonelName('Mehmet Demir Demir')).toBe('Mehmet Demir')
+    expect(cleanPersonelName('İlyas Bozdemir / İlyas Bozdemir')).toBe('İlyas Bozdemir')
+    expect(cleanPersonelName('Ayşe Demir')).toBe('Ayşe Demir')
   })
 
   it('dedupeMembers removes duplicates based on personel_id or clean ad_soyad', () => {
