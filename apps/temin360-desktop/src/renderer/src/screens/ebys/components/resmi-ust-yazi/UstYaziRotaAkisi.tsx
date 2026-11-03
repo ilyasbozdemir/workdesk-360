@@ -53,7 +53,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
             <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 z-10 shadow-xs">
               ✓
             </div>
-            <div className="bg-emerald-50/50 dark:bg-emerald-950/20 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40 flex-1">
+            <div className="bg-emerald-50/50 dark:emerald-950/20 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40 flex-1">
               <div className="font-bold text-xs text-emerald-800 dark:text-emerald-300">
                 Dosyaya Kayıt &amp; Onaylı Arşiv
               </div>
