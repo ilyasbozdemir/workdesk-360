@@ -150,7 +150,7 @@ export function getSistemTanimlariMenu(
       },
       { divider: true },
       {
-        label: '🏛️ İhale İsteklileri & Müteahhit Firmalar',
+        label: '🏢 Doğrudan Temin İsteklileri & Firmalar',
         onClick: (): Promise<void> => navigate({ to: APP_ROUTES.FIRMALAR })
       },
       {

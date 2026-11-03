@@ -238,22 +238,7 @@ export default function FirmalarScreen(): React.JSX.Element {
 
     if (procurementFilter === "all") return true;
     const text = `${f.istigal_konusu || ""} ${f.unvan || ""}`.toLowerCase();
-    if (procurementFilter === "ihale") {
-      // İhale Müteahhitleri / Yüklenicileri
-      return (
-        text.includes("inşaat") ||
-        text.includes("taahhüt") ||
-        text.includes("yapı") ||
-        text.includes("mühendislik") ||
-        text.includes("mimarlık") ||
-        text.includes("ihale") ||
-        text.includes("proje") ||
-        text.includes("hafriyat") ||
-        text.includes("aş") ||
-        text.includes("a.ş") ||
-        text.includes("sanayi")
-      );
-    }
+
     if (procurementFilter === "dogrudan_temin") {
       // Doğrudan Temin Tedarikçileri / Esnaf / Hizmet
       return (
@@ -288,12 +273,7 @@ export default function FirmalarScreen(): React.JSX.Element {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-slate-855 dark:text-slate-100">
             <Building2 className="w-8 h-8 text-blue-600" />
-            İstekli & Yüklenici Firma Yönetimi{" "}
-            {procurementFilter === "dogrudan_temin"
-              ? "(Doğrudan Temin)"
-              : procurementFilter === "ihale"
-              ? "(İhale Müteahhitleri)"
-              : ""}
+            Doğrudan Temin İsteklileri &amp; Firma Yönetimi
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
             Tedarikçi firmaların performans skoru, KİK kara liste durumları ve
@@ -443,17 +423,7 @@ export default function FirmalarScreen(): React.JSX.Element {
           >
             <span>🛒 Doğrudan Temin İsteklileri</span>
           </button>
-          <button
-            type="button"
-            onClick={() => setProcurementFilter("ihale")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-              procurementFilter === "ihale"
-                ? "bg-indigo-600 text-white shadow-xs font-bold"
-                : "text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
-            }`}
-          >
-            <span>🏛️ İhale Müteahhitleri</span>
-          </button>
+
         </div>
 
         <ViewToggle viewMode={dataViewMode} onChange={setDataViewMode} />
