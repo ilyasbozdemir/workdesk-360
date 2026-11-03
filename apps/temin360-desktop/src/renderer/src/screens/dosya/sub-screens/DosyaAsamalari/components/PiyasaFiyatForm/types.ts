@@ -5,6 +5,7 @@ export interface PiyasaFiyatFormHeaderProps {
   estimatedCostTotal: number
   setIsFormOpen: (val: boolean) => void
   handleSaveToDosya: (docType?: 'maliyet' | 'tutanak' | 'save_only') => void
+  onOpenFirmDocuments?: () => void
 }
 
 export interface PiyasaFiyatFormSettingsBarProps {

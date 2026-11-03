@@ -18,15 +18,14 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
       className="min-h-9 py-1 flex items-center justify-between gap-1 sm:gap-2.5 bg-slate-100/50 dark:bg-slate-950/20 border-t border-slate-200/30 dark:border-slate-800/30 select-none px-2 sm:px-3 relative z-20 w-full"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
-      {/* Sol: Doğrudan Temin Rozeti (Temin 360 - Sabit & Şık) */}
-      <div className="shrink-0 flex items-center">
+      {/* Sol: KİK Md. 22 Kompakt Rozeti */}
+      <div className="shrink-0 flex items-center pl-1">
         <div
-          title="Temin 360 - Doğrudan Temin Kapsamı (4734 Sayılı Kanun Md. 22)"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border select-none bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200/60 dark:border-blue-900/40 shadow-2xs"
+          title="Temin 360 - 4734 Sayılı Kamu İhale Kanunu Madde 22 Doğrudan Temin Masası"
+          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border select-none bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-2xs"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0" />
-          <span className="hidden xl:inline font-semibold">Doğrudan Temin (Md. 22)</span>
-          <span className="xl:hidden font-semibold">DT (Md. 22)</span>
+          <span>KİK Md. 22</span>
         </div>
       </div>
 
