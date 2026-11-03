@@ -1,0 +1,27 @@
+appId: dev.ilyasbozdemir.arsiv360
+productName: Arsiv360
+directories:
+  output: dist-local
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+
+asar: true
+asarUnpack:
+  - '**/node_modules/better-sqlite3/**/*'
+
+win:
+  executableName: Arsiv360
+  target:
+    - target: portable
+      arch:
+        - x64
+
+portable:
+  artifactName: Arsiv360-${version}-portable.exe
+  requestExecutionLevel: user
+

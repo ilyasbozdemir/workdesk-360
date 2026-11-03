@@ -16,6 +16,7 @@
     "dev:personel": "pnpm --filter personel360-desktop dev",
     "dev:flowdesk": "pnpm --filter flowdesk-desktop dev",
     "dev:disk-analiz": "pnpm --filter disk-analiz-360-desktop dev",
+    "dev:archive": "pnpm --filter app-archive dev",
     "dev:web": "pnpm --filter app-web dev",
     "dev:website": "pnpm --filter app-landing dev",
     "analyze": "node scripts/analyze-codebase.mjs",
