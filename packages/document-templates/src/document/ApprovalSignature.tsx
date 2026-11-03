@@ -815,3 +815,142 @@ export const MetadataBlock: React.FC<MetadataBlockProps> = ({
     </div>
   );
 };
+
+
+export interface RotaItem {
+  t?: string; // Tür: Hazırlayan, Paraf, Koordinasyon, İmza, Olur
+  a?: string; // Ad Soyad
+  u?: string; // Unvan
+  sira?: number;
+  tarih?: string;
+}
+
+export interface KoordinasyonItem {
+  adSoyad?: string;
+  unvan?: string;
+  tarih?: string;
+  rol?: string;
+}
+
+export interface RotaKoordinasyonBlockProps {
+  rota?: RotaItem[];
+  koordinasyon?: KoordinasyonItem[];
+  belgeModu?: "standart" | "koordinasyonlu" | "hizli_onay";
+  marginTop?: number;
+}
+
+export const RotaKoordinasyonBlock: React.FC<RotaKoordinasyonBlockProps> = ({
+  rota,
+  koordinasyon,
+  belgeModu,
+  marginTop = 24,
+}) => {
+  // Birleştirilmiş paraf/koordinasyon listesi
+  const items: Array<{
+    tur: string;
+    adSoyad: string;
+    unvan: string;
+    tarih: string;
+  }> = [];
+
+  if (Array.isArray(rota) && rota.length > 0) {
+    rota.forEach((r) => {
+      items.push({
+        tur: r.t || "Paraf",
+        adSoyad: r.a || "",
+        unvan: r.u || "",
+        tarih: r.tarih || toTrDate(new Date()),
+      });
+    });
+  }
+
+  if (Array.isArray(koordinasyon) && koordinasyon.length > 0) {
+    koordinasyon.forEach((k) => {
+      items.push({
+        tur: k.rol || "Koordinasyon",
+        adSoyad: k.adSoyad || "",
+        unvan: k.unvan || "",
+        tarih: k.tarih || toTrDate(new Date()),
+      });
+    });
+  }
+
+  // Eğer koordinasyonlu mod aktif değilse ve liste boşsa render etme
+  if (items.length === 0 && belgeModu !== "koordinasyonlu") {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: `${marginTop}px`,
+        pageBreakInside: "avoid",
+        breakInside: "avoid",
+        width: "100%",
+        borderTop: "1px dashed #cbd5e1",
+        paddingTop: "8px",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "8pt",
+          fontWeight: "bold",
+          color: "#475569",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          marginBottom: "4px",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <span>Resmî Paraf &amp; Koordinasyon Akışı</span>
+      </div>
+
+      {items.length === 0 ? (
+        <div
+          style={{
+            fontSize: "8pt",
+            color: "#94a3b8",
+            fontStyle: "italic",
+            padding: "4px 0",
+          }}
+        >
+          Sol menüdeki "Belge Modu &amp; Rota Akışı" alanından paraf/koordinasyon adımları ekleyebilirsiniz.
+        </div>
+      ) : (
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: "7.5pt",
+            lineHeight: 1.35,
+          }}
+        >
+          <thead>
+            <tr style={{ borderBottom: "1px solid #e2e8f0", color: "#64748b" }}>
+              <th style={{ textAlign: "left", padding: "2px 4px", width: "80px" }}>Tarih</th>
+              <th style={{ textAlign: "left", padding: "2px 4px", width: "90px" }}>İşlem / Rol</th>
+              <th style={{ textAlign: "left", padding: "2px 4px" }}>Unvanı</th>
+              <th style={{ textAlign: "left", padding: "2px 4px" }}>Adı Soyadı</th>
+              <th style={{ textAlign: "center", padding: "2px 4px", width: "70px" }}>Paraf / İmza</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it, idx) => (
+              <tr key={idx} style={{ borderBottom: "1px dotted #f1f5f9" }}>
+                <td style={{ padding: "2px 4px", color: "#334155" }}>{it.tarih}</td>
+                <td style={{ padding: "2px 4px", fontWeight: "600", color: "#1e293b" }}>{it.tur}</td>
+                <td style={{ padding: "2px 4px", color: "#475569" }}>{it.unvan || "-"}</td>
+                <td style={{ padding: "2px 4px", fontWeight: "500", color: "#0f172a" }}>{it.adSoyad || "-"}</td>
+                <td style={{ padding: "2px 4px", textAlign: "center", color: "#94a3b8", fontSize: "7pt" }}>
+                  (Paraf)
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+};

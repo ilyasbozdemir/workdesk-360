@@ -191,6 +191,7 @@ export function DocumentPreviewModalV3(props: DocumentPreviewModalV3Props): Reac
           sourceKind={source?.kind}
           nextTemplate={nextTemplate}
           prevTemplate={prevTemplate}
+          personelListesi={personelListesi}
         />
 
         <DocumentPreviewCanvas

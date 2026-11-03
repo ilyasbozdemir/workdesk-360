@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { IhtiyacListesiType, TemplateCapabilities } from '@temin360/document-templates'
 import { TemplateOptionItem } from '../templateResolver'
+import { DocumentPreviewRotaSection } from './DocumentPreviewRotaSection'
 import { useSettingsStore } from '../../../../../store/settingsStore'
 import { getTemplateFieldMapping } from '../../tek-tik-yazdir/ciktiWizardFieldMapping'
 import {
@@ -45,6 +46,7 @@ interface DocumentPreviewSidebarProps {
   sourceKind?: string
   nextTemplate?: TemplateOptionItem
   prevTemplate?: TemplateOptionItem
+  personelListesi?: any[]
 }
 
 export function DocumentPreviewSidebar({
@@ -69,7 +71,8 @@ export function DocumentPreviewSidebar({
   stageInfo,
   disableDocumentGuidance = true,
   sourceKind,
-  nextTemplate
+  nextTemplate,
+  personelListesi = []
 }: DocumentPreviewSidebarProps): React.JSX.Element {
   const [activeSidebarTab, setActiveSidebarTab] = useState<'asamalar' | 'ayarlar'>('asamalar')
   const [selectedStageId, setSelectedStageId] = useState<number>(() => stageInfo?.id ?? 1)
@@ -709,6 +712,16 @@ export function DocumentPreviewSidebar({
               </p>
             </div>
           </div>
+
+          {/* ========================================================= */}
+          {/* BELGE ÇALIŞMA MODU & ROTA / PARAF / KOORDİNASYON AKIŞI */}
+          {/* ========================================================= */}
+          <DocumentPreviewRotaSection
+            formData={formData}
+            setFormData={setFormData}
+            personelListesi={personelListesi}
+            supportsOlur={supportsOlur}
+          />
 
           {/* ========================================================= */}
           {/* BELGE EVRAK AYARLARI (Muhatap, İlgi, Ek, Dağıtım) */}
