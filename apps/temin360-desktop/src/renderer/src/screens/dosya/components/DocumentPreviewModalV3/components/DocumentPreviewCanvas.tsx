@@ -160,7 +160,7 @@ export function DocumentPreviewCanvas({
   return (
     <div
       ref={previewContainerRef}
-      className="flex-1 bg-slate-200/50 dark:bg-slate-950 flex justify-center overflow-auto h-full py-8 custom-scrollbar min-h-0 min-w-0"
+      className="flex-1 bg-slate-200/50 dark:bg-slate-950 flex justify-center overflow-auto h-full py-8 custom-scrollbar min-h-0 min-w-0 select-text"
     >
       <DocumentRenderer
         templateKey={effectiveTemplateKey}

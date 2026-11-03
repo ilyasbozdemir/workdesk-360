@@ -43,12 +43,7 @@ export function LuzumMuzekkeresiRenderer(
       data-document-page="true"
       data-template-key="luzum_muzekkeresi"
       data-orientation={orientation}
-      className={`bg-white text-slate-900 box-border mx-auto ${
-        isLandscape ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'
-      }`}
-      style={{
-        padding: '12mm 15mm 15mm 15mm'
-      }}
+      className="luzum-muzekkeresi-wrapper select-text mx-auto"
     >
       <TemplateEditProvider
         isEditing={isEditing}

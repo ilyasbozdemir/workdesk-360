@@ -120,3 +120,7 @@ export function saveConfig(newConfig: AppConfig): { success: boolean; error?: st
   }
 }
 
+export const loadAppConfig = loadConfig
+export const saveAppConfig = saveConfig
+
+

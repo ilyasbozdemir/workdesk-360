@@ -60,7 +60,7 @@ kurulabilen** modern bir masaüstü çalışma süitidir.
 | **Harita 360**    |            Planlandı            | `dev.ilyasbozdemir.harita360`    | ITRF96/ED50/WGS84 koordinat dönüşümü, parsel haritalandırma, saha fotoğrafları ve taşınmaz envanteri.                            |
 | **Personel 360**  |            Planlandı            | `dev.ilyasbozdemir.personel360`  | Muayene kabul heyetleri, kontrol teşkilatı ve personel görev matrisi.                                                            |
 | **Belge 360**     |            Planlandı            | `dev.ilyasbozdemir.belge360`     | Resmi yazışma kurallarına uygun evrak editörü, şablon motoru ve barkodlama.                                                      |
-| **Arşiv 360**     |            Planlandı            | `dev.ilyasbozdemir.arsiv360`     | Dijital arşivleme, kutu/klasör barkodlama ve geçmiş proje kayıtlarına hızlı erişim.                                              |
+| **Arşiv 360**     | **Hazır (v1.0.0 / Portable)**   | `dev.ilyasbozdemir.arsiv360`     | Karışık duran belgeleri fiziksel olarak taşımadan kural motoruyla sanal klasörler halinde düzenleme, canlı chokidar izleme ve SQLite arşivi. |
 
 ---
 
@@ -102,6 +102,7 @@ kullanıcıyı yanıltıcı sahte butonlar sunmaz.
 ```text
 workdesk-360/
 ├── apps/
+│   ├── app-archive/          # Arşiv 360 (Portable Electron + React + SQLite)
 │   ├── app-desktop/          # TEMİN 360 (Electron + React + SQLite)
 │   ├── app-workspace/        # Workspace 360 (Vite + React + Tailwind + Catalog)
 │   ├── app-web/              # Web Portalı & Bulut Yönetimi

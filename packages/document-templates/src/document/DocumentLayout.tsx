@@ -73,6 +73,10 @@ export const DocumentLayout = React.forwardRef<
     return (
       <div
         ref={ref}
+        data-document-page="true"
+        data-orientation={orientation}
+        data-page-number={pageNumber}
+        data-total-pages={totalPages}
         className="document-container"
         style={{
           width: "100%",
