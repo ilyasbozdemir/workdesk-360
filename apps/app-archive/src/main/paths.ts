@@ -67,7 +67,16 @@ export function getStoragePaths(): StoragePaths {
   }
 
   const configPath = path.join(dataDir, 'arsiv360.config.json')
-  const dbPath = path.join(dataDir, 'arsiv360.db')
+  const dbPath = path.join(dataDir, 'arsiv360.arsiv')
+  const legacyDbPath = path.join(dataDir, 'arsiv360.db')
+
+  try {
+    if (!fs.existsSync(dbPath) && fs.existsSync(legacyDbPath)) {
+      fs.renameSync(legacyDbPath, dbPath)
+    }
+  } catch (err) {
+    console.warn('Eski arsiv360.db -> arsiv360.arsiv tasinamadi:', err)
+  }
 
   cachedPaths = {
     baseDir,

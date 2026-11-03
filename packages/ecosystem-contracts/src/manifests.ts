@@ -321,7 +321,20 @@ export const ARSIV_360_MANIFEST: AppManifest = {
   category: 'archive',
   appId: 'dev.ilyasbozdemir.arsiv360',
   executableName: 'Arsiv360.exe',
-  fileAssociations: [],
+  fileAssociations: [
+    {
+      ext: 'arsiv',
+      name: 'Arşiv 360 İndeks Dosyası',
+      description: 'Arşiv 360 Akıllı İndeks ve Sanal Klasör Dosyası',
+      mimeType: 'application/x-arsiv'
+    },
+    {
+      ext: 'arsiv360',
+      name: 'Arşiv 360 Veritabanı',
+      description: 'Arşiv 360 Taşınabilir Veritabanı ve Proje Dosyası',
+      mimeType: 'application/x-arsiv360'
+    }
+  ],
   installState: 'installed',
   modules: [
     'Sanal Klasör Kural Motoru',

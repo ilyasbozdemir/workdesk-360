@@ -34,3 +34,6 @@ YapimIhalesiBirimFiyatli.ods
 dosyalar.json
 *.local.json
 yedek/
+*.arsiv
+*.arsiv360
+arsiv360.db
