@@ -312,7 +312,7 @@ const surecAkisiRoute = createRoute({
 const takipRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.TAKIP,
-  component: () => <Navigate to={APP_ROUTES.DOSYA_DETAY} replace />,
+  component: TakipScreen,
 });
 
 const taslakYonetimiRoute = createRoute({
