@@ -467,8 +467,8 @@ const profilRoute = createRoute({
 
 const dosyaRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: APP_ROUTES.DOSYA_DETAY,
-  component: TakipScreen,
+  path: '/dosya',
+  component: () => <Navigate to={APP_ROUTES.TAKIP} replace />,
 });
 
 const dosyaKunyeRoute = createRoute({

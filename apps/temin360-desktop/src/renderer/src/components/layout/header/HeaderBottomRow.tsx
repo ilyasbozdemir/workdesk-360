@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "@tanstack/react-router";
 import { ClipboardList, Layers, Printer } from "lucide-react";
 import { TeminSelector } from "../TeminSelector";
+import { APP_ROUTES } from "../../../constants/routeConstants";
 
 interface HeaderBottomRowProps {
   isDt?: boolean;
@@ -41,7 +42,7 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
         ? (
           <div className="flex items-center gap-1.5 shrink-0 justify-end">
             <Link
-              to="/takip"
+              to={APP_ROUTES.TAKIP}
               title="Doğrudan Temin Süreç & Dosya Takip Masası (Kanban, Liste, Grid, Detay)"
               className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all shadow-2xs hover:shadow-xs border text-blue-700 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 border-blue-200/50 dark:border-blue-900/30"
             >
@@ -51,7 +52,7 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
               <span className="hidden sm:inline xl:hidden">Takip</span>
             </Link>
             <Link
-              to="/surec-akisi"
+              to={APP_ROUTES.SUREC_AKISI}
               title="Doğrudan Temin Süreç Akış Haritası"
               className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-purple-700 bg-purple-50/80 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/50 border border-purple-200/50 dark:border-purple-900/30 rounded-md transition-colors shadow-2xs hover:shadow-xs"
             >
@@ -60,7 +61,7 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
               <span className="hidden xl:inline 2xl:hidden">Akış</span>
             </Link>
             <Link
-              to="/cikti-merkezi"
+              to={APP_ROUTES.CIKTI_MERKEZI_DASHBOARD}
               title="Çıktı Merkezi & Yazdırma"
               className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50 border border-emerald-100/50 dark:border-emerald-900/30 rounded-md transition-colors shadow-2xs hover:shadow-xs"
             >
