@@ -676,8 +676,29 @@ if (!gotTheLock && !isMultiInstance) {
     })
 
     // Güvenlik: Tüm donanım (kamera, mikrofon) izinlerini varsayılan olarak reddet
-    session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+    session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+      if (
+        permission === 'clipboard-sanitized-write' ||
+        permission === 'clipboard-read' ||
+        (permission as string) === 'clipboard' ||
+        (permission as string) === 'clipboard-write'
+      ) {
+        callback(true)
+        return
+      }
       callback(false)
+    })
+
+    session.defaultSession.setPermissionCheckHandler((_webContents, permission) => {
+      if (
+        permission === 'clipboard-sanitized-write' ||
+        permission === 'clipboard-read' ||
+        (permission as string) === 'clipboard' ||
+        (permission as string) === 'clipboard-write'
+      ) {
+        return true
+      }
+      return false
     })
 
     // Güvenlik: Production'da DevTools açılmasını tamamen engelle

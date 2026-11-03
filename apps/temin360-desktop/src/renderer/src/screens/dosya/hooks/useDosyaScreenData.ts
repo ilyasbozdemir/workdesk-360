@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
+import { copyToClipboard } from '../../../utils/copyToClipboard'
 
 export interface TableStat {
   tableName: string
@@ -338,7 +339,7 @@ export function useDosyaScreenData() {
 
   const handleCopyPath = (): void => {
     if (!activeFilePath) return
-    navigator.clipboard.writeText(activeFilePath)
+    void copyToClipboard(activeFilePath)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

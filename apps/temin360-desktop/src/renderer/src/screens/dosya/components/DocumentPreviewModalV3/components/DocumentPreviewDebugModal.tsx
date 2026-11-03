@@ -1,4 +1,5 @@
 import React from 'react'
+import { copyToClipboard } from '../../../../../utils/copyToClipboard'
 
 function escapeDebugRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -98,7 +99,7 @@ export function DocumentPreviewDebugModal({
             <button
               type="button"
               className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-medium text-slate-100 hover:bg-slate-700"
-              onClick={() => void navigator.clipboard.writeText(debugJson)}
+              onClick={() => void copyToClipboard(debugJson)}
             >
               JSON Kopyala
             </button>

@@ -219,7 +219,7 @@ export function useGoogleDrive(isOpen: boolean, onClose: () => void) {
     setIsUploading(true)
     notify('Aktif dosya tarih damgasıyla Google Drive bulutuna yükleniyor...', 'info')
     try {
-      const res = await ipc('workspace:backup-gdrive', tokenPayload(cToken))
+      const res = await ipc('workspace:backup-gdrive', { ...tokenPayload(cToken), force: true })
       if (!res.success) return notify(res.error || 'Yükleme başarısız.', 'error')
       if (res.fileId) {
         localStorage.setItem('lastGdriveUploadedFileId', res.fileId)

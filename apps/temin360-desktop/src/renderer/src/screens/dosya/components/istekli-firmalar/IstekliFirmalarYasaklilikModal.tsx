@@ -1,6 +1,7 @@
 import React from 'react'
 import { Compass, Copy, Eye, FileText, Trash2, Upload, X } from 'lucide-react'
 import { cn } from '../../../../utils/cn'
+import { copyToClipboard } from '../../../../utils/copyToClipboard'
 import { TeminFirmaItem } from './useIstekliFirmalarLogic'
 
 interface IstekliFirmalarYasaklilikModalProps {
@@ -48,8 +49,8 @@ export function IstekliFirmalarYasaklilikModal({
                   {activeFirma.unvan}
                 </span>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(activeFirma.unvan)
+                  onClick={async () => {
+                    await copyToClipboard(activeFirma.unvan)
                     alert('Ünvan kopyalandı.')
                   }}
                   className="px-2 py-1 text-[9px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-400 rounded-lg font-bold flex items-center gap-1 shrink-0 cursor-pointer"
@@ -70,8 +71,8 @@ export function IstekliFirmalarYasaklilikModal({
                   </span>
                   {activeFirma.vergi_no && (
                     <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(activeFirma.vergi_no!)
+                      onClick={async () => {
+                        await copyToClipboard(activeFirma.vergi_no!)
                         alert('Vergi numarası kopyalandı.')
                       }}
                       className="px-2 py-1 text-[9px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-400 rounded-lg font-bold flex items-center gap-1 shrink-0 cursor-pointer"

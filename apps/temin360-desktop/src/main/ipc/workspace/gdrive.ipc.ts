@@ -1,4 +1,4 @@
-import { ipcMain, app } from 'electron'
+import { ipcMain, app, BrowserWindow } from 'electron'
 import { basename, join, dirname } from 'path'
 import { homedir, tmpdir } from 'os'
 import fs from 'fs'
@@ -167,6 +167,22 @@ async function pruneOldBackups(
   } catch (err) {
     console.error('Google Drive backup pruning error:', err)
   }
+}
+
+function broadcastGdriveStatus(payload: {
+  status: 'uploading' | 'synced' | 'skipped' | 'error'
+  message?: string
+  error?: string
+  fileId?: string
+  fileName?: string
+}): void {
+  try {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send('workspace:gdrive-status', payload)
+      }
+    }
+  } catch {}
 }
 
 let cachedAppFolderId: string | null = null
@@ -625,11 +641,16 @@ export function registerGdriveIpcHandlers(closeAllSecondaryWindows: () => void):
         if (!filePath) {
           return { success: false, error: 'Aktif bir çalışma dosyası bulunamadı!' }
         }
+        const hadUnsavedChanges = workspaceManager.isDirty() || workspaceManager.hasChanges('gdrive')
         workspaceManager.save()
 
         // Dosyada güncelleme/değişiklik yoksa gereksiz Google Drive yüklemesi yapma
-        if (!args?.force && !workspaceManager.hasChanges('gdrive')) {
+        if (!args?.force && !hadUnsavedChanges && !workspaceManager.hasChanges('gdrive')) {
           console.log('[Google Drive] Dosyada değişiklik bulunmadığı için yükleme atlandı.')
+          broadcastGdriveStatus({
+            status: 'skipped',
+            message: 'Dosyada değişiklik bulunmadığı için yükleme atlandı.'
+          })
           return {
             success: true,
             skipped: true,
@@ -637,6 +658,11 @@ export function registerGdriveIpcHandlers(closeAllSecondaryWindows: () => void):
               'Dosyada son yedeklemeden bu yana herhangi bir değişiklik yapılmadığı için Google Drive yüklemesi atlandı.'
           }
         }
+
+        broadcastGdriveStatus({
+          status: 'uploading',
+          message: 'Google Drive bulutuna yükleniyor...'
+        })
 
         const db = workspaceManager.getDb()
         let token = args?.token
@@ -925,6 +951,14 @@ export function registerGdriveIpcHandlers(closeAllSecondaryWindows: () => void):
           workspaceManager.markSynced('gdrive')
 
           const successMsg = `${backupFileName} ve manifesti başarıyla Google Drive 'TEMIN_360_YEDEKLER' klasörüne yüklendi.`
+          console.log(`[Google Drive] ${successMsg}`)
+
+          broadcastGdriveStatus({
+            status: 'synced',
+            message: successMsg,
+            fileId: uploadedFile.id,
+            fileName: backupFileName
+          })
 
           return {
             success: true,
@@ -943,7 +977,12 @@ export function registerGdriveIpcHandlers(closeAllSecondaryWindows: () => void):
         }
       } catch (error: any) {
         console.error('Google Drive backup error:', error)
-        return { success: false, error: error.message }
+        const errMsg = error?.message || String(error)
+        broadcastGdriveStatus({
+          status: 'error',
+          error: errMsg
+        })
+        return { success: false, error: errMsg }
       }
     }
   )
