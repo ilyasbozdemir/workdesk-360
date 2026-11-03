@@ -83,6 +83,10 @@ export default defineConfig(({ mode, command }) => {
     process.env.VITE_TEST === 'true' ||
     process.env.VITE_BYTECODE === 'false'
 
+  const isBytecode =
+    Boolean(process.env.BUILD_BYTECODE === 'true') ||
+    (isReleaseWorkflow && process.env.VITE_BYTECODE !== 'false' && !isTestOrCI)
+
   const isProduction = (command === 'build' || process.env.NODE_ENV === 'production') && !isTestOrCI
   const obfuscator = controlledRendererObfuscator(isProduction)
 
@@ -90,7 +94,7 @@ export default defineConfig(({ mode, command }) => {
     main: {
       define,
       build: {
-        bytecode: !isTestOrCI,
+        bytecode: isBytecode,
         sourcemap: false,
         externalizeDeps: {
           exclude: ['@temin360/document-templates', '@worksuite-360/document-engine']
@@ -100,7 +104,7 @@ export default defineConfig(({ mode, command }) => {
     preload: {
       define,
       build: {
-        bytecode: !isTestOrCI,
+        bytecode: isBytecode,
         sourcemap: false
       }
     },

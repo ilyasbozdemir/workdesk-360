@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { FirmaInput, useFirmalarHooks } from './firmalar.hooks'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
-import { Building2, Plus, Search } from 'lucide-react'
+import { Building2, Plus, Search, Sparkles } from 'lucide-react'
 import { DataViewMode, ViewToggle } from '../../components/ui/ViewToggle'
 
 // Sub-components
@@ -10,6 +10,7 @@ import { FirmaDetail } from './components/FirmaDetail'
 import { FirmaGrid } from './components/FirmaGrid'
 import { FirmaList } from './components/FirmaList'
 import { FirmaModal } from './components/FirmaModal'
+import { FirmaEslestirmeModal } from './components/FirmaEslestirmeModal'
 import { ExcelActions } from '../../components/ui/ExcelActions'
 
 const emptyFirma: FirmaInput = {
@@ -49,9 +50,14 @@ export default function FirmalarScreen(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState('')
   const [showExtraFields, setShowExtraFields] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isEslestirmeModalOpen, setIsEslestirmeModalOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [dataViewMode, setDataViewMode] = useState<DataViewMode>('grid')
   const [viewingFirma, setViewingFirma] = useState<any | null>(null)
+
+  const candidateCount = firmalar.filter(
+    (f: any) => !f.firma_kodu || String(f.firma_kodu).trim() === '' || String(f.firma_kodu).trim() === '0000'
+  ).length
 
   const openAddModal = () => {
     setForm({ ...emptyFirma })
@@ -204,6 +210,19 @@ export default function FirmalarScreen(): React.JSX.Element {
               Listelenen Firma
             </div>
           </div>
+          <Button
+            onClick={() => setIsEslestirmeModalOpen(true)}
+            variant="outline"
+            className="gap-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 flex items-center px-3.5 py-2 text-sm font-semibold shadow-xs cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
+            <span>Eşleştirme & Birleştirme</span>
+            {candidateCount > 0 && (
+              <span className="px-2 py-0.5 text-xs font-bold bg-amber-500 text-white rounded-full">
+                {candidateCount}
+              </span>
+            )}
+          </Button>
           <ExcelActions tableName="TANIM_Firma" title="Firmalar" uniqueCol="id" />
           <Button
             onClick={openAddModal}
@@ -213,6 +232,30 @@ export default function FirmalarScreen(): React.JSX.Element {
           </Button>
         </div>
       </div>
+
+      {/* KODSUZ / TASLAK FİRMA UYARI VE EŞLEŞTİRME ÇAĞRISI */}
+      {candidateCount > 0 && (
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 dark:from-amber-950/30 dark:via-orange-950/20 dark:to-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                {candidateCount} Adet Eşleştirme Bekleyen Taslak Firma Kaydı Bulundu
+              </h4>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                Doğrudan temin dosyalarından aktarılan kısa unvanlı veya kodu eksik firmaları ana firma havuzuyla
+                eşleştirebilir, teklif geçmişlerini ilişkisel ID bazlı birleştirebilirsiniz.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setIsEslestirmeModalOpen(true)}
+            className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-4 py-2 shadow-xs cursor-pointer"
+          >
+            Eşleştirme Merkezini Aç
+          </Button>
+        </div>
+      )}
 
       {/* ARAMA, USUL SEÇİCİ VE GÖRÜNÜM KONTROLLERİ */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -329,6 +372,11 @@ export default function FirmalarScreen(): React.JSX.Element {
         handleSubmit={handleSubmit}
         showExtraFields={showExtraFields}
         setShowExtraFields={setShowExtraFields}
+      />
+
+      <FirmaEslestirmeModal
+        isOpen={isEslestirmeModalOpen}
+        onClose={() => setIsEslestirmeModalOpen(false)}
       />
     </div>
   )
