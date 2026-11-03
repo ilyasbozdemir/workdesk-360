@@ -28,7 +28,7 @@ export const routeComponents: Record<string, () => React.ReactElement> = {
   '/komisyonlar': lazyRoute(() => import('../../screens/komisyonlar/index.v2.screen')),
   '/komisyonlar/detay': lazyRoute(() => import('../../screens/komisyonlar/detay.screen')),
   '/komisyon-gorevleri': lazyRoute(() => import('../../screens/komisyon-gorevleri/index.screen')),
-  '/takip': lazyRoute(() => import('../../screens/system/surec-akisi/surec-akisi.screen'), 'SurecAkisiScreen'),
+  '/takip': lazyRoute(() => import('../../screens/system/surec-akisi/SurecAkisiScreen'), 'SurecAkisiScreen'),
   '/taslakyonetim': lazyRoute(() => import('../../screens/system/TaslakYoneticisi')),
   '/raporlar': lazyRoute(() => import('../../screens/raporlar/index.screen')),
   '/okaskod': lazyRoute(() => import('../../screens/okaskod/index.screen')),
