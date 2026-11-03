@@ -19,8 +19,8 @@ export function DateEditableField({
   defaultDate,
 }: DateEditableFieldProps) {
   const { isEditing, onFieldChange } = useTemplateEdit();
-  const displayVal = value || defaultDate ||
-    toTrDate(new Date().toISOString().split("T")[0]);
+  const rawVal = value || defaultDate;
+  const displayVal = rawVal ? toTrDate(rawVal) : toTrDate(new Date());
   const isoVal = toIsoDate(displayVal);
 
   if (!isEditing || !onFieldChange) {
@@ -696,7 +696,7 @@ export const MetadataBlock: React.FC<MetadataBlockProps> = ({
   dosyaKonusu,
   showBorder = false,
 }) => {
-  const displayTarih = tarih || onayaSunulanTarih;
+  const displayTarih = toTrDate(tarih || onayaSunulanTarih);
 
   // Sanitize dosyaKonusu if it contains accidental JSON string keys or quotes
   let cleanKonu = dosyaKonusu;
@@ -797,7 +797,7 @@ export const MetadataBlock: React.FC<MetadataBlockProps> = ({
         </table>
       </div>
 
-      {displayTarih !== undefined && (
+      {Boolean(displayTarih) && (
         <div
           style={{
             fontSize: "11pt",

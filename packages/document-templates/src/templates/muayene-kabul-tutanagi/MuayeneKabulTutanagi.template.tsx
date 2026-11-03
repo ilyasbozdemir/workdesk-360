@@ -2,6 +2,7 @@ import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
 import { DateEditableField } from "../../document/ApprovalSignature";
+import { toTrDate } from "../../utils/textHelpers";
 import { MuayeneKabulTutanagiData } from "./MuayeneKabulTutanagi.schema";
 
 interface Props {
@@ -22,7 +23,7 @@ export const MuayeneKabulTutanagi: React.FC<Props> = ({
   // Evrak numarası & tarih
   const evrakNo =
     data.evrakSayisi || (data as any).tutanakNo || "................";
-  const tarih = data.kabulTarihi || data.dosyaTarihi || data.tarih || "";
+  const tarih = toTrDate(data.kabulTarihi || data.dosyaTarihi || data.tarih || "");
 
   // Kalemler
   const items = data.ihtiyacKalemleri || [];
@@ -30,10 +31,10 @@ export const MuayeneKabulTutanagi: React.FC<Props> = ({
   // Firma, fatura & irsaliye
   const firma = data.yukleniciFirma || "................";
   const faturaNo = data.faturaNo || "";
-  const faturaTarihi = data.faturaTarihi || "";
+  const faturaTarihi = toTrDate(data.faturaTarihi) || "";
   const irsaliyeNo = data.irsaliyeNo || "";
-  const irsaliyeTarihi = data.irsaliyeTarihi || "";
-  const kabulTarihi = data.kabulTarihi || tarih || "..../..../20....";
+  const irsaliyeTarihi = toTrDate(data.irsaliyeTarihi) || "";
+  const kabulTarihi = toTrDate(data.kabulTarihi || tarih) || "..../..../20....";
   const tutar =
     data.genelToplam ||
     data.kdvDahilToplam ||
@@ -399,18 +400,20 @@ export const MuayeneKabulTutanagi: React.FC<Props> = ({
           <EditableField name="yukleniciFirma" value={firma} /> tarafından{" "}
           {faturaNo ? (
             <>
-              <EditableField
+              <DateEditableField
                 name="faturaTarihi"
-                value={faturaTarihi || "..../..../20...."}
+                value={faturaTarihi}
+                placeholder="GG.AA.YYYY"
               />{" "}
               tarih ve <EditableField name="faturaNo" value={faturaNo} /> no’lu
               faturayla
               {irsaliyeNo ? (
                 <>
                   {" "}ve{" "}
-                  <EditableField
+                  <DateEditableField
                     name="irsaliyeTarihi"
-                    value={irsaliyeTarihi || "..../..../20...."}
+                    value={irsaliyeTarihi}
+                    placeholder="GG.AA.YYYY"
                   />{" "}
                   tarih ve{" "}
                   <EditableField name="irsaliyeNo" value={irsaliyeNo} /> no’lu
@@ -420,9 +423,10 @@ export const MuayeneKabulTutanagi: React.FC<Props> = ({
             </>
           ) : irsaliyeNo ? (
             <>
-              <EditableField
+              <DateEditableField
                 name="irsaliyeTarihi"
-                value={irsaliyeTarihi || "..../..../20...."}
+                value={irsaliyeTarihi}
+                placeholder="GG.AA.YYYY"
               />{" "}
               tarih ve <EditableField name="irsaliyeNo" value={irsaliyeNo} />{" "}
               no’lu sevk irsaliyesiyle
@@ -432,7 +436,7 @@ export const MuayeneKabulTutanagi: React.FC<Props> = ({
           )}{" "}
           KDV hariç <EditableField name="genelToplam" value={tutar} /> TL ye
           doğrudan temin yoluyla alınan,{" "}
-          <EditableField name="kabulTarihi" value={kabulTarihi} /> tarihinde
+          <DateEditableField name="kabulTarihi" value={kabulTarihi} placeholder="GG.AA.YYYY" /> tarihinde
           teslim edilen ve yukarıda cins, birim ve miktarı belirtilen
           mal/hizmet kalemleri, doğrudan temin kapsamında istenilen şartlara
           göre tarafımızca muayene edilmiştir. Söz konusu mal kalemlerinden

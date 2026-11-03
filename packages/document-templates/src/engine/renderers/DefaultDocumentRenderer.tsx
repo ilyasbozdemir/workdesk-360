@@ -85,7 +85,7 @@ export function DefaultDocumentRenderer(props: DefaultDocumentRendererProps): Re
   return (
     <div
       ref={containerRef}
-      className={`document-renderer-paper default-document-paper select-none flex flex-col items-center gap-8 py-8 ${className}`}
+      className={`document-renderer-paper default-document-paper flex flex-col items-center gap-8 ${className}`}
       style={{
         transform: `scale(${scale})`,
         transformOrigin: 'top center',

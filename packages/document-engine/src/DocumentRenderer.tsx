@@ -1,11 +1,11 @@
-import React from 'react'
-import { TemplateRegistry, InvalidTemplateKeyError } from './TemplateRegistry'
-import { DocumentRendererComponentProps } from './types/contracts'
+import React from "react";
+import { InvalidTemplateKeyError, TemplateRegistry } from "./TemplateRegistry";
+import { DocumentRendererComponentProps } from "./types/contracts";
 
 export interface DocumentRendererProps<K extends string = string>
   extends DocumentRendererComponentProps {
-  templateKey: K
-  registry?: TemplateRegistry
+  templateKey: K;
+  registry?: TemplateRegistry;
 }
 
 /**
@@ -15,15 +15,17 @@ export interface DocumentRendererProps<K extends string = string>
  * - Bilinmeyen şablon kimlikleri için sessizce başka belgeye yönlendirmez; açık hata fırlatır.
  * - İsteğe bağlı olarak instance tabanlı özel bir TemplateRegistry örneği kabul eder.
  */
-export function DocumentRenderer(props: DocumentRendererProps): React.JSX.Element {
-  const { templateKey, registry = TemplateRegistry.default } = props
+export function DocumentRenderer(
+  props: DocumentRendererProps,
+): React.JSX.Element {
+  const { templateKey, registry = TemplateRegistry.default } = props;
 
   if (!registry.has(templateKey)) {
-    throw new InvalidTemplateKeyError(templateKey)
+    throw new InvalidTemplateKeyError(templateKey);
   }
 
-  const definition = registry.get(templateKey)
-  const SpecificRenderer = definition.renderer
+  const definition = registry.get(templateKey);
+  const SpecificRenderer = definition.renderer;
 
   return React.createElement(SpecificRenderer, {
     data: props.data as any,
@@ -38,6 +40,6 @@ export function DocumentRenderer(props: DocumentRendererProps): React.JSX.Elemen
     firstPageLimit: props.firstPageLimit,
     className: props.className,
     style: props.style,
-    containerRef: props.containerRef
-  })
+    containerRef: props.containerRef,
+  });
 }

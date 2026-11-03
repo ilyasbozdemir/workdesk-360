@@ -1,5 +1,6 @@
 import { useGlobalDocumentPreviewStore } from '../../../../../../../store/globalDocumentPreviewStore'
 import { parseNumericPrice } from './previewDataUtils'
+import { formatDateString } from '../../../../../contextBuilder/dateHelpers'
 
 export function resolveFirmsAndItems(
   baseData: any,
@@ -151,7 +152,7 @@ export function resolveFirmsAndItems(
   }
 
   if (dosyaObj.teslim_tarihi) {
-    baseData.teslimTarihi = dosyaObj.teslim_tarihi
+    baseData.teslimTarihi = formatDateString(dosyaObj.teslim_tarihi) || dosyaObj.teslim_tarihi
   }
 
   if (dosyaObj.sozlesme_yapilacak_mi !== undefined) {
@@ -385,10 +386,10 @@ export function resolveFirmsAndItems(
         toplamTutar: toplamTutarStr,
         kazananFirma: k.kazananFirma || winnerFirm?.unvan || k.enUygunFirmaAdi || '-',
         alimTarihi:
-          k.alimTarihi ||
-          dosyaObj.sozlesme_tarihi ||
-          dosyaObj.dosya_acilis_tarihi ||
-          dosyaObj.tarih ||
+          formatDateString(k.alimTarihi) ||
+          formatDateString(dosyaObj.sozlesme_tarihi) ||
+          formatDateString(dosyaObj.dosya_acilis_tarihi) ||
+          formatDateString(dosyaObj.tarih) ||
           '-'
       }
     })

@@ -1,6 +1,7 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
+import { DateEditableField } from "../../document/ApprovalSignature";
 import { DogrudanTeminSozlesmesiType } from "./DogrudanTeminSozlesmesi.schema";
 
 interface DogrudanTeminSozlesmesiProps {
@@ -174,7 +175,7 @@ export function DogrudanTeminSozlesmesi({
         {/* Madde 9 */}
         <p style={{ textAlign: "justify", marginTop: 0, marginBottom: "16px" }}>
           <b>Madde 9 - Yürürlük:</b><br />
-          İşbu sözleşme taraflarca tam olarak okunup anlaşıldıktan sonra <b><EditableField name="sozlesmeTarihi" value={data.sozlesmeTarihi || data.dosyaTarihi || data.tarih} placeholder="GG.AA.YYYY" /></b> tarihinde imza altına alınmıştır.
+          İşbu sözleşme taraflarca tam olarak okunup anlaşıldıktan sonra <b><DateEditableField name="sozlesmeTarihi" value={data.sozlesmeTarihi || data.dosyaTarihi || data.tarih} placeholder="GG.AA.YYYY" /></b> tarihinde imza altına alınmıştır.
         </p>
 
         {/* Signatures */}

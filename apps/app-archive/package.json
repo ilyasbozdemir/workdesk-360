@@ -1,6 +1,7 @@
 {
   "name": "app-archive",
   "version": "1.0.0",
+  "type": "module",
   "description": "Arşiv 360 - Taşınabilir Akıllı Sanal Klasör ve Belge Yönetim Sistemi",
   "main": "./out/main/index.js",
   "author": "ilyasbozdemir.dev",

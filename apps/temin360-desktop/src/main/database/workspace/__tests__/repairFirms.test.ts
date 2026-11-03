@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+// @ts-ignore
 import { repairFirmsInDb, repairFile } from '@scripts/repair-firms.mjs'
 import { DatabaseSync } from 'node:sqlite'
 import AdmZip from 'adm-zip'

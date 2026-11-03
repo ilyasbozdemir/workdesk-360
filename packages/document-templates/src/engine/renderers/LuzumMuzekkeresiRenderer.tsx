@@ -86,7 +86,7 @@ export function LuzumMuzekkeresiRenderer(
   return (
     <div
       ref={containerRef}
-      className={`document-renderer-paper luzum-muzekkeresi-paper select-none flex flex-col items-center gap-8 py-8 ${className}`}
+      className={`document-renderer-paper luzum-muzekkeresi-paper flex flex-col items-center gap-8 ${className}`}
       style={{
         transform: `scale(${scale})`,
         transformOrigin: 'top center',
@@ -94,14 +94,7 @@ export function LuzumMuzekkeresiRenderer(
         ...style
       }}
     >
-      <div
-        className="document-paper-shadow bg-white text-black"
-        style={{
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-        }}
-      >
-        <TemplateErrorBoundary>{pageContent}</TemplateErrorBoundary>
-      </div>
+      <TemplateErrorBoundary>{pageContent}</TemplateErrorBoundary>
     </div>
   )
 }
