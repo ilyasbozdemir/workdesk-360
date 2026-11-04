@@ -103,8 +103,7 @@ export const ModulMagazasiHeader: React.FC<ModulMagazasiHeaderProps> = ({
                 Modül Mağazası
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Kamu ihale, doğrudan temin, personel, EBYS ve süreç paketleri
-                mağazası
+                4734 Sayılı KİK Madde 22 Doğrudan Temin, Piyasa Araştırması, Dinamik Formlar, EBYS ve Mali Analiz Paketleri
               </p>
             </div>
           </div>

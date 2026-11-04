@@ -24,7 +24,11 @@ import {
   Sparkles,
   Users,
   PackageSearch,
-  FolderTree
+  FolderTree,
+  Building2,
+  Scale,
+  Boxes,
+  FileCheck2
 } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { cn } from '../../../utils/cn'
@@ -58,7 +62,12 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Puzzle: <Puzzle className="w-6 h-6" />,
   Users: <Users className="w-6 h-6" />,
   PackageSearch: <PackageSearch className="w-6 h-6" />,
-  FolderTree: <FolderTree className="w-6 h-6" />
+  FolderTree: <FolderTree className="w-6 h-6" />,
+  Building2: <Building2 className="w-6 h-6" />,
+  Scale: <Scale className="w-6 h-6" />,
+  Boxes: <Boxes className="w-6 h-6" />,
+  FileCheck2: <FileCheck2 className="w-6 h-6" />,
+  CheckCircle2: <CheckCircle2 className="w-6 h-6" />
 }
 
 const COLOR_MAP: Record<

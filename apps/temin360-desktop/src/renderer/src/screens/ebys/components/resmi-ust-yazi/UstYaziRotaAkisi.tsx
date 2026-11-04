@@ -34,8 +34,8 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                       step.t === 'İmza'
                         ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
                         : step.t === 'Hazırlayan'
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                          : 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                        : 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300'
                     }`}
                   >
                     {step.t}

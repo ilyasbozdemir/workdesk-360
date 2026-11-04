@@ -31,6 +31,7 @@ export interface ToolGroup {
 export interface HesapAraclariViewProps {
   onOpenSayiYaziModal?: () => void
   onClose?: () => void
+  hideHeader?: boolean
 }
 
 export interface HesapAraclariModalProps {

@@ -10,9 +10,10 @@ import {
   Landmark,
   ShieldCheck,
   Sparkles,
-  ArrowRight,
   Layers,
-  CheckCircle2
+  Building2,
+  Scale,
+  FileSpreadsheet
 } from 'lucide-react'
 import defaultAppIcon from '../../assets/icon.png'
 import { useSettingsStore } from '../../store/settingsStore'
@@ -27,36 +28,36 @@ interface SplashScreenProps {
 const LOADING_STEPS = [
   {
     progress: 15,
-    title: 'Sistem Çekirdeği Başlatılıyor',
-    subtitle: 'Bellek ve Electron IPC iletişim kanalları yapılandırılıyor...',
+    title: 'Sistem Çekirdeği & IPC Başlatılıyor',
+    subtitle: 'Electron çalışma motoru, bellek optimizasyonu ve yerel IPC kanalları yapılandırılıyor...',
     icon: Cpu,
-    color: 'from-blue-500 via-sky-400 to-cyan-400'
+    color: 'from-blue-600 via-sky-500 to-cyan-400'
   },
   {
-    progress: 40,
-    title: 'Veritabanı & Şema Bütünlüğü',
-    subtitle: 'SQLite yerel çalışma alanı, tablolar ve göç adımları denetleniyor...',
+    progress: 35,
+    title: 'SQLite Veritabanı & Çalışma Alanı',
+    subtitle: 'Yerel dosya şeması, bütçe kodları, firma havuzu ve veri bütünlüğü doğrulanıyor...',
     icon: Database,
-    color: 'from-indigo-500 via-blue-500 to-sky-400'
+    color: 'from-indigo-600 via-blue-600 to-sky-400'
   },
   {
-    progress: 70,
-    title: '4734 KİK Doğrudan Temin Mevzuat Motoru',
-    subtitle: 'Doğrudan temin standart formülleri, hesaplama cetvelleri yükleniyor...',
+    progress: 60,
+    title: '4734 KİK Madde 22 & Parasal Limit Motoru',
+    subtitle: '22/d harcama tavanı, %10 bütçe denetleyicisi ve Decimal.js finans motoru yükleniyor...',
     icon: FileCheck,
     color: 'from-sky-500 via-indigo-500 to-violet-500'
   },
   {
-    progress: 90,
-    title: 'Modül & Arayüz Katmanları Hazır',
-    subtitle: 'Birim fiyat modülleri, komisyon yönetimi ve şablonlar doğrulanıyor...',
-    icon: Code2,
-    color: 'from-violet-500 via-purple-500 to-indigo-500'
+    progress: 85,
+    title: 'Modül Ekosistemi & Belge Stüdyosu',
+    subtitle: 'Piyasa araştırması, EBYS şablonları, kabul heyetleri ve dinamik form motoru hazırlandı...',
+    icon: Layers,
+    color: 'from-violet-600 via-purple-600 to-indigo-600'
   },
   {
     progress: 100,
-    title: 'Temin 360 Başlamaya Hazır',
-    subtitle: 'Arayüz açılıyor, keyifli ve verimli çalışmalar dileriz!',
+    title: 'Temin 360 Başlamaya Hazır!',
+    subtitle: 'Çalışma alanı ve belgeleriniz hazır. Verimli ve hatasız çalışmalar dileriz!',
     icon: Sparkles,
     color: 'from-emerald-500 via-teal-400 to-cyan-400'
   }
@@ -64,7 +65,7 @@ const LOADING_STEPS = [
 
 export function SplashScreen({
   onComplete,
-  durationMs = 4500,
+  durationMs = 4000,
   autoHide = true
 }: SplashScreenProps): React.JSX.Element | null {
   const [visible, setVisible] = useState(true)
@@ -80,7 +81,7 @@ export function SplashScreen({
     loadSettings().catch(() => null)
   }, [loadSettings])
 
-  // Institution identification
+  // Kurum ve çalışma alanı tespiti
   const currentInstitutionName =
     activeMeta?.institution ||
     (institutionName && institutionName !== 'Kurum Bilgisi Bekleniyor...' ? institutionName : null)
@@ -133,7 +134,7 @@ export function SplashScreen({
               setVisible(false)
               if (onComplete) onComplete()
             }, 450)
-          }, 350)
+          }, 300)
         }
       }
     }, 25)
@@ -179,14 +180,14 @@ export function SplashScreen({
         <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-xs backdrop-blur-md">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
           <span className="text-xs font-bold tracking-tight text-slate-700 dark:text-slate-300">
-            4734/4735 KİK Mevzuatı • Doğrudan Temin ve Hakediş Sistemi
+            4734 Sayılı KİK m.22 • Doğrudan Temin, Piyasa Araştırması & Akıllı Belge Süiti
           </span>
         </div>
 
         {/* Right: Version & Quick Skip */}
         <div className="flex items-center gap-3">
-          <span className="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-sky-300 text-xs font-mono font-bold border border-blue-200/80 dark:border-blue-800/60 shadow-xs">
-            v2.0 PRO
+          <span className="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-sky-300 text-xs font-mono font-extrabold border border-blue-200/80 dark:border-blue-800/60 shadow-xs">
+            v2.4.0 PRO
           </span>
 
           <button
@@ -204,7 +205,7 @@ export function SplashScreen({
 
       {/* ================= HERO CENTER (BREATHABLE & LUXURIOUS) ================= */}
       <main
-        className="relative z-10 w-full max-w-6xl mx-auto my-auto py-8 flex flex-col items-center text-center"
+        className="relative z-10 w-full max-w-6xl mx-auto my-auto py-6 flex flex-col items-center text-center"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Brand Showcase with Dual Identity (App Master Brand + User Workspace) */}
@@ -230,11 +231,11 @@ export function SplashScreen({
                   TEMİN 360
                 </h1>
                 <span className="px-2 py-0.5 rounded-md bg-linear-to-r from-blue-600 to-indigo-600 text-white text-[11px] font-black tracking-wider uppercase shadow-xs">
-                  PRO
+                  DOĞRUDAN TEMİN
                 </span>
               </div>
               <p className="mt-1.5 text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-400 max-w-md">
-                Kamu Satınalma, Doğrudan Temin ve Hakediş Yönetim Sistemi
+                Kamu Satın Alma, Doğrudan Temin ve Akıllı Belge Üretim Süiti
               </p>
             </div>
           </div>
@@ -275,8 +276,51 @@ export function SplashScreen({
           </div>
         </div>
 
+        {/* ================= CORE CAPABILITIES PILLARS ================= */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-4xl mt-7">
+          <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md flex items-center gap-3 text-left shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/80 border border-blue-200/60 dark:border-blue-800/60 flex items-center justify-center shrink-0 text-blue-600 dark:text-sky-400">
+              <FileCheck className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">4734 m.22/d Süreci</h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">7 Aşamalı Uçtan Uca Takip</p>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md flex items-center gap-3 text-left shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/80 border border-cyan-200/60 dark:border-cyan-800/60 flex items-center justify-center shrink-0 text-cyan-600 dark:text-cyan-400">
+              <Building2 className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Piyasa Fiyat Havuzu</h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">İstekli & Teklif Kıyaslama</p>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md flex items-center gap-3 text-left shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/80 border border-amber-200/60 dark:border-amber-800/60 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400">
+              <Scale className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">KİK Limit & %10 Tavanı</h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">Bütçe Aşım Risk Uyarısı</p>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md flex items-center gap-3 text-left shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center justify-center shrink-0 text-emerald-600 dark:text-emerald-400">
+              <FileSpreadsheet className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Dinamik Belge Stüdyosu</h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">A4 Baskı & EYP 2.0 EBYS</p>
+            </div>
+          </div>
+        </div>
+
         {/* ================= LOADING PIPELINE (WIDE & SLEEK) ================= */}
-        <div className="w-full max-w-3xl mt-12 sm:mt-16">
+        <div className="w-full max-w-3xl mt-8 sm:mt-10">
           {/* Active Step Indicator Banner */}
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="flex items-center gap-3 min-w-0">
@@ -371,6 +415,18 @@ export function SplashScreen({
 
               <button
                 type="button"
+                onClick={(e) => handleOpenLink(e, 'https://github.com/ilyasbozdemir/workdesk-360')}
+                className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-sky-400 transition-colors cursor-pointer"
+              >
+                <Code2 className="w-3 h-3" />
+                <span>workdesk-360</span>
+                <ExternalLink className="w-2.5 h-2.5 opacity-50" />
+              </button>
+
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+
+              <button
+                type="button"
                 onClick={(e) => handleOpenLink(e, 'https://ilyasbozdemir.dev')}
                 className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-blue-600 dark:text-sky-400 hover:underline transition-colors cursor-pointer"
               >
@@ -385,7 +441,7 @@ export function SplashScreen({
         {/* Right: Security & Storage Assurance */}
         <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
           <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <span>Yerel SQLite Mimarisi • %100 Çevrimdışı Veri Güvenliği</span>
+          <span>Yerel SQLite Mimarisi • %100 Çevrimdışı & KVKK Uyumlu Güvenlik</span>
         </div>
       </footer>
     </div>

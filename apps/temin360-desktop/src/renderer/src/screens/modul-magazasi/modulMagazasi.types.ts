@@ -109,9 +109,12 @@ export interface ModulPaketi {
   silinebilir?: boolean
 }
 
-/** Modülün kaldırılabilir olup olmadığını belirleyen kontrol - Tüm modüller kullanıcı tercihine göre kaldırılabilir */
+/** Modülün kaldırılabilir olup olmadığını belirleyen kontrol - Çekirdek 4734 doğrudan temin modülü korumalıdır */
 export const isModulRemovable = (modul?: ModulPaketi | null): boolean => {
-  return Boolean(modul || true)
+  if (!modul) return false
+  if (modul.id === 'kik-dogrudan-temin-22d') return false
+  if (modul.removable === false || modul.silinebilir === false) return false
+  return true
 }
 
 export type ModulKategoriFiltresi =

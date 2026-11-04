@@ -330,7 +330,13 @@ function resolveSafeDtaResPath(requestUrl: string): string | null {
 function createWindow(): void {
   const winIcon = getAppIcon()
   // Çalışma alanına (görev çubuğu hariç) göre boyutla; küçük ekranlarda pencere dışarı taşmasın.
-  const workArea = screen.getPrimaryDisplay().workAreaSize
+  let workArea = { width: 1280, height: 800 }
+  try {
+    const primary = screen.getPrimaryDisplay()
+    if (primary && primary.workAreaSize) {
+      workArea = primary.workAreaSize
+    }
+  } catch {}
   const MIN_WIDTH = 800
   const MIN_HEIGHT = 420
   // Create the browser window.
