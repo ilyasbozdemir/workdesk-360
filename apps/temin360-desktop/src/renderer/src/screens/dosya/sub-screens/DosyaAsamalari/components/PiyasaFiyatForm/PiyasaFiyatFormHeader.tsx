@@ -1,5 +1,5 @@
 import React from 'react'
-import { ArrowLeft, ChevronDown, FileSpreadsheet, FileText, Save } from 'lucide-react'
+import { ArrowLeft, ChevronDown, FileSpreadsheet, FileText, Mail, Save } from 'lucide-react'
 import { cn } from '@renderer/utils/cn'
 import {
   DropdownMenu,
@@ -16,7 +16,8 @@ export function PiyasaFiyatFormHeader({
   invitedFirmsCount,
   estimatedCostTotal,
   setIsFormOpen,
-  handleSaveToDosya
+  handleSaveToDosya,
+  onOpenFirmDocuments
 }: PiyasaFiyatFormHeaderProps): React.JSX.Element {
   const isMaliyetMode = formMode === 'maliyet'
 
@@ -75,6 +76,19 @@ export function PiyasaFiyatFormHeader({
             })}
           </strong>
         </div>
+
+        {/* Firmalara Teklif Mektubu Çıkar Butonu */}
+        {onOpenFirmDocuments && (
+          <button
+            type="button"
+            onClick={onOpenFirmDocuments}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer h-10 shrink-0 shadow-md active:scale-95 whitespace-nowrap"
+            title="Firmalara gönderilecek Fiyat İsteme Mektubu ve Cetvelleri tek tıkla yazdırın veya PDF olarak indirin"
+          >
+            <Mail className="w-4 h-4 text-violet-100 shrink-0" />
+            <span>Firmalara Teklif Mektubu Çıkar</span>
+          </button>
+        )}
 
         {/* Split Action Dropdown Button */}
         <div className="flex items-center shadow-md rounded-xl overflow-hidden">

@@ -23,6 +23,13 @@ const AdmZip = require('adm-zip')
 const { initializeDatabase, CURRENT_SCHEMA_VERSION } = require('@dt/database')
 
 function resolveWindowsDesktopDir() {
+  const customDir = process.env.E2E_DESKTOP_DIR ? process.env.E2E_DESKTOP_DIR.trim() : null
+  if (customDir) {
+    if (!fs.existsSync(customDir)) {
+      fs.mkdirSync(customDir, { recursive: true })
+    }
+    return customDir
+  }
   if (process.platform === 'win32') {
     try {
       const { execSync } = require('child_process')

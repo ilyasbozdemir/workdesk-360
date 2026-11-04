@@ -549,14 +549,63 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   safeAddColumn(db, 'DATA_TeminFirma', 'kazandi_mi', 'INTEGER DEFAULT 0')
 
   if (isPhysicalTable(db, 'DATA_TeminFirma')) {
-    safeExec(
-      db,
-      `
-      UPDATE DATA_TeminFirma SET kazanan_mi = kazandi_mi WHERE (kazanan_mi IS NULL OR kazanan_mi = 0) AND kazandi_mi = 1;
-      UPDATE DATA_TeminFirma SET kazandi_mi = kazanan_mi WHERE (kazandi_mi IS NULL OR kazandi_mi = 0) AND kazanan_mi = 1;
-    `,
-      'DATA_TeminFirma kazanan_mi senkronizasyonu'
-    )
+    // Faz 1.2: Eski verileri sessizce ezmeden çelişkili veya tek taraflı kayıtları tespit et ve raporla
+    try {
+      const discrepancies = db
+        .prepare(
+          'SELECT temin_dosya_id, id, firma_id, kazandi_mi, kazanan_mi FROM DATA_TeminFirma WHERE COALESCE(kazandi_mi, 0) != COALESCE(kazanan_mi, 0)'
+        )
+        .all() as { temin_dosya_id: number; id: number; firma_id: number | null; kazandi_mi: number; kazanan_mi: number }[]
+
+      if (discrepancies.length > 0) {
+        console.warn(
+          `[schemaIntegrity] DATA_TeminFirma tablosunda ${discrepancies.length} adet kazanan bayrak uyumsuzluğu tespit edildi (sessizce ezilmedi):`,
+          discrepancies
+        )
+      }
+    } catch (checkErr) {
+      console.warn('[schemaIntegrity] DATA_TeminFirma kazanan bayrakları kontrolü hatası:', checkErr)
+    }
+
+    // 11b. DATA_TeminFirma firma_id Otomatik Eşleştirme & Onarım
+    // unvan veya vergi_no üzerinden TANIM_Firma ile eşleştiği halde firma_id = 0 veya NULL kalmış kayıtları bağla
+    if (isPhysicalTable(db, 'TANIM_Firma')) {
+      try {
+        db.prepare(`
+          UPDATE DATA_TeminFirma
+          SET firma_id = (
+            SELECT id FROM TANIM_Firma
+            WHERE LOWER(TRIM(TANIM_Firma.unvan)) = LOWER(TRIM(DATA_TeminFirma.unvan))
+            LIMIT 1
+          )
+          WHERE (firma_id IS NULL OR firma_id = 0)
+            AND unvan IS NOT NULL
+            AND TRIM(unvan) != ''
+            AND EXISTS (
+              SELECT 1 FROM TANIM_Firma
+              WHERE LOWER(TRIM(TANIM_Firma.unvan)) = LOWER(TRIM(DATA_TeminFirma.unvan))
+            )
+        `).run()
+
+        db.prepare(`
+          UPDATE DATA_TeminFirma
+          SET firma_id = (
+            SELECT id FROM TANIM_Firma
+            WHERE vergi_no IS NOT NULL AND vergi_no != '' AND vergi_no = DATA_TeminFirma.vergi_no
+            LIMIT 1
+          )
+          WHERE (firma_id IS NULL OR firma_id = 0)
+            AND vergi_no IS NOT NULL
+            AND TRIM(vergi_no) != ''
+            AND EXISTS (
+              SELECT 1 FROM TANIM_Firma
+              WHERE vergi_no IS NOT NULL AND vergi_no != '' AND vergi_no = DATA_TeminFirma.vergi_no
+            )
+        `).run()
+      } catch (firmRepairErr) {
+        console.warn('[schemaIntegrity] DATA_TeminFirma firma_id eşleştirme uyarısı:', firmRepairErr)
+      }
+    }
   }
 
   // 12. Çocuk Tablolar dosya_id Senkronizasyonu ve Tetikleyicileri

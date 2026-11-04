@@ -199,6 +199,11 @@ export class DtmWorkspace {
   private meta: WorkspaceMeta | null = null
   private initialHash: string = ''
   private initialDataVersion: number = 0
+  private lastSyncedGdriveRevision: number | null = null
+  private lastSyncedGdriveHash: string | null = null
+  private lastSyncedEmailRevision: number | null = null
+  private lastSyncedEmailHash: string | null = null
+  private sessionMutationCount: number = 0
   private userMutationCount: number = 0
   private isDirty: boolean = false
   private mutationMap: Map<string, MutationSummaryItem> = new Map()
@@ -527,10 +532,37 @@ export class DtmWorkspace {
       this.initialHash = this.calculateCurrentHash()
       this.initialDataVersion = this.getDataVersion()
       this.userMutationCount = 0
+      this.sessionMutationCount = 0
       this.mutationMap.clear()
       this.lastMutationTime = null
       this.isDirty = false
       this.notifyDirtyChange(false)
+
+      try {
+        if (this.db) {
+          const gRev = this.db
+            .prepare("SELECT value FROM settings WHERE key = 'lastGdriveSyncRevision'")
+            .get() as { value?: string } | undefined
+          this.lastSyncedGdriveRevision = gRev?.value
+            ? parseInt(gRev.value, 10)
+            : (meta?.data_revision ?? null)
+          const gHash = this.db
+            .prepare("SELECT value FROM settings WHERE key = 'lastGdriveSyncHash'")
+            .get() as { value?: string } | undefined
+          this.lastSyncedGdriveHash = gHash?.value || null
+
+          const eRev = this.db
+            .prepare("SELECT value FROM settings WHERE key = 'lastEmailSyncRevision'")
+            .get() as { value?: string } | undefined
+          this.lastSyncedEmailRevision = eRev?.value
+            ? parseInt(eRev.value, 10)
+            : (meta?.data_revision ?? null)
+          const eHash = this.db
+            .prepare("SELECT value FROM settings WHERE key = 'lastEmailSyncHash'")
+            .get() as { value?: string } | undefined
+          this.lastSyncedEmailHash = eHash?.value || null
+        }
+      } catch {}
       return meta
     } catch (openErr: any) {
       this.releaseFileLock(filePath)
@@ -927,6 +959,7 @@ export class DtmWorkspace {
       return
     }
     this.userMutationCount += count
+    this.sessionMutationCount += count
     this.isDirty = true
     const nowIso = new Date().toISOString()
     if (this.meta) {
@@ -1035,37 +1068,109 @@ export class DtmWorkspace {
 
   public hasChanges(target: 'gdrive' | 'email' | 'any' = 'any'): boolean {
     if (!this.db || !this.currentFilePath) return false
-    // Sadece şema bakımı veya okuma amaçlı açılan dosyalarda kullanıcı değişikliği yoksa
-    // kapanışta veya arka planda gereksiz yedekleme/yükleme tetiklenmesini engelle.
-    if (!this.isDirtyState() && this.userMutationCount === 0) {
-      return false
-    }
-    const current = this.calculateCurrentHash()
-    if (!current) return false
-    if (target === 'gdrive' || target === 'email') {
-      try {
-        const key = target === 'gdrive' ? 'lastGdriveSyncHash' : 'lastEmailSyncHash'
-        const row = this.db.prepare(`SELECT value FROM settings WHERE key = ?`).get(key) as {
-          value?: string
-        }
-        if (row?.value) return row.value !== current
-      } catch {}
+
+    // 1. Henüz diske kaydedilmemiş bellek içi kullanıcı mutasyonları varsa değişiklik var
+    if (this.isDirtyState() || this.userMutationCount > 0) {
       return true
     }
-    if (this.isDirtyState()) return true
+
+    if (target === 'gdrive' || target === 'email') {
+      const isGdrive = target === 'gdrive'
+      const syncedRev = isGdrive ? this.lastSyncedGdriveRevision : this.lastSyncedEmailRevision
+      const currentRev = this.meta?.data_revision
+
+      // Kullanıcı veritabanında düzenleme yapıp diske kaydettiyse data_revision artmıştır
+      if (typeof currentRev === 'number' && typeof syncedRev === 'number') {
+        if (currentRev !== syncedRev) {
+          return true
+        }
+      }
+
+      // Bu oturumda kullanıcı mutasyonu gerçekleşmişse buluta aktarılacak değişiklik vardır
+      if (this.sessionMutationCount > 0) {
+        return true
+      }
+
+      // SQLite settings tablosunda kayıtlı son senkronize revizyonu kontrol et
+      try {
+        const revKey = isGdrive ? 'lastGdriveSyncRevision' : 'lastEmailSyncRevision'
+        const row = this.db.prepare(`SELECT value FROM settings WHERE key = ?`).get(revKey) as {
+          value?: string
+        }
+        if (row?.value && typeof currentRev === 'number') {
+          const parsed = parseInt(row.value, 10)
+          if (!isNaN(parsed) && parsed !== currentRev) {
+            return true
+          }
+        }
+      } catch {}
+
+      // Hash bazlı kontrol
+      const current = this.calculateCurrentHash()
+      if (!current) return false
+
+      const syncedHash = isGdrive ? this.lastSyncedGdriveHash : this.lastSyncedEmailHash
+      if (syncedHash && syncedHash !== current) {
+        return true
+      }
+
+      try {
+        const hashKey = isGdrive ? 'lastGdriveSyncHash' : 'lastEmailSyncHash'
+        const row = this.db.prepare(`SELECT value FROM settings WHERE key = ?`).get(hashKey) as {
+          value?: string
+        }
+        if (row?.value) {
+          return row.value !== current
+        }
+      } catch {}
+
+      // Dosya hiç senkronize edilmemişse ve bu oturumda işlem yapıldıysa
+      if (syncedRev === null && !syncedHash && this.sessionMutationCount > 0) {
+        return true
+      }
+
+      return false
+    }
+
+    // target === 'any'
+    const current = this.calculateCurrentHash()
+    if (!current) return false
     return current !== this.initialHash
   }
 
   public markSynced(target: 'gdrive' | 'email'): void {
     if (!this.db) return
-    const current = this.calculateCurrentHash()
-    if (!current) return
     try {
-      const key = target === 'gdrive' ? 'lastGdriveSyncHash' : 'lastEmailSyncHash'
+      const isGdrive = target === 'gdrive'
+      const currentRev = this.meta?.data_revision ?? 1
+      if (isGdrive) {
+        this.lastSyncedGdriveRevision = currentRev
+      } else {
+        this.lastSyncedEmailRevision = currentRev
+      }
+
+      const revKey = isGdrive ? 'lastGdriveSyncRevision' : 'lastEmailSyncRevision'
       this.db
         .prepare(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`)
-        .run(key, current)
-    } catch {}
+        .run(revKey, String(currentRev))
+
+      const currentHash = this.calculateCurrentHash()
+      if (currentHash) {
+        if (isGdrive) {
+          this.lastSyncedGdriveHash = currentHash
+        } else {
+          this.lastSyncedEmailHash = currentHash
+        }
+        const hashKey = isGdrive ? 'lastGdriveSyncHash' : 'lastEmailSyncHash'
+        this.db
+          .prepare(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`)
+          .run(hashKey, currentHash)
+      }
+
+      this.sessionMutationCount = 0
+    } catch (err) {
+      console.warn(`[DtmWorkspace] markSynced(${target}) uyarısı:`, err)
+    }
   }
 
   public isOpen(): boolean {

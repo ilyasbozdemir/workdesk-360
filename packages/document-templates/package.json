@@ -5,6 +5,7 @@
   "types": "src/index.ts",
   "private": true,
   "dependencies": {
+    "@worksuite-360/document-engine": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^3.0.0"

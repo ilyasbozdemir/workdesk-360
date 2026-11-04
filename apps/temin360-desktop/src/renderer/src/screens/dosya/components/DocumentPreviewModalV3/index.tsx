@@ -1,58 +1,41 @@
-import React, { useState, useMemo } from 'react'
+import React from 'react'
 import { DocumentPreviewModalV3Props } from './types'
-import { useDocumentPreviewData } from './hooks/useDocumentPreviewData'
+import { useDocumentPreviewModal } from '../../hooks/useDocumentPreviewModal'
 import { DocumentPreviewHeader } from './components/DocumentPreviewHeader'
 import { DocumentPreviewTabBar } from './components/DocumentPreviewTabBar'
 import { DocumentPreviewSidebar } from './components/DocumentPreviewSidebar'
 import { DocumentPreviewCanvas } from './components/DocumentPreviewCanvas'
 import { FloatingDocumentBubble } from './components/FloatingDocumentBubble'
-import { useSettingsStore } from '../../../../store/settingsStore'
-import {
-  getStageById,
-  getStageForTemplate,
-  getAdjacentStageTemplate,
-  IHTIYAC_RAPORU_STAGE
-} from './stages'
+import { DocumentPreviewDebugModal } from './components/DocumentPreviewDebugModal'
 
-export function DocumentPreviewModalV3({
-  isOpen,
-  documentId,
-  dosyaId: propDosyaId,
-  source,
-  initialTemplateId,
-  invitedFirms: propInvitedFirms,
-  onClose,
-  isModal = false,
-  tabs,
-  activeTabId,
-  onSwitchTab,
-  onCloseTab,
-  onAddTab,
-  currentStage: propCurrentStage,
-  stage: propStage,
-  isBalloon: propIsBalloon,
-  onToggleBalloon: propOnToggleBalloon
-}: DocumentPreviewModalV3Props): React.JSX.Element | null {
-  const [internalBalloon, setInternalBalloon] = useState(false)
-  const isBalloon = propIsBalloon !== undefined ? propIsBalloon : internalBalloon
-  const setIsBalloon = React.useCallback(
-    (val: boolean) => {
-      if (propOnToggleBalloon) {
-        propOnToggleBalloon()
-      } else {
-        setInternalBalloon(val)
-      }
-    },
-    [propOnToggleBalloon]
-  )
-  const currentDocKey =
-    initialTemplateId ||
-    documentId ||
-    (source?.kind === 'ihtiyacRaporu' ? `rapor_${source.raporId}` : null)
-  const [prevDocKey, setPrevDocKey] = useState<string | null>(currentDocKey)
-  const [prevIsOpen, setPrevIsOpen] = useState<boolean>(isOpen)
+export function DocumentPreviewModalV3(props: DocumentPreviewModalV3Props): React.JSX.Element | null {
+  const {
+    isOpen,
+    dosyaId: propDosyaId,
+    source,
+    onClose,
+    isModal = false,
+    tabs,
+    activeTabId,
+    onSwitchTab,
+    onCloseTab,
+    onAddTab
+  } = props
 
   const {
+    isBalloon,
+    setIsBalloon,
+    docTitle,
+    stageInfo,
+    disableDocumentGuidance,
+    nextTemplate,
+    prevTemplate,
+    handleClose,
+    showDebugPanel,
+    setShowDebugPanel,
+    debugSearch,
+    setDebugSearch,
+    debugJson,
     isLoading,
     selectedDocId,
     setSelectedDocId,
@@ -96,62 +79,9 @@ export function DocumentPreviewModalV3({
     handleDocx,
     handleOpenPdfInNewTab,
     handleRefreshFromDb
-  } = useDocumentPreviewData({
-    isOpen,
-    documentId,
-    dosyaId: propDosyaId,
-    source,
-    initialTemplateId,
-    invitedFirms: propInvitedFirms
-  })
-
-  // Belge değiştiğinde veya modal yeniden açıldığında yüzen balon durumunu sıfırla
-  if (currentDocKey !== prevDocKey || (!prevIsOpen && isOpen)) {
-    setPrevDocKey(currentDocKey)
-    setPrevIsOpen(isOpen)
-    if (isBalloon) {
-      setIsBalloon(false)
-    }
-  } else if (prevIsOpen !== isOpen) {
-    setPrevIsOpen(isOpen)
-  }
-
-  const rawStage = propCurrentStage ?? propStage
-  const { disableDocumentGuidance } = useSettingsStore()
-
-  const stageInfo = useMemo(() => {
-    if (source?.kind === 'ihtiyacRaporu') return IHTIYAC_RAPORU_STAGE
-    if (rawStage !== undefined && rawStage !== null) {
-      const found = getStageById(rawStage)
-      if (found) return found
-    }
-    return getStageForTemplate(selectedDocId, activeTemplateConf?.category, source?.kind)
-  }, [source?.kind, rawStage, selectedDocId, activeTemplateConf?.category])
-
-  const nextTemplate = useMemo(() => {
-    return getAdjacentStageTemplate(selectedDocId, stageInfo.id, templateOptions, 'next')
-  }, [selectedDocId, stageInfo.id, templateOptions])
-
-  const prevTemplate = useMemo(() => {
-    return getAdjacentStageTemplate(selectedDocId, stageInfo.id, templateOptions, 'prev')
-  }, [selectedDocId, stageInfo.id, templateOptions])
-
-  const handleClose = React.useCallback(() => {
-    if (isDirty) {
-      const confirmClose = window.confirm(
-        'Belgede kaydedilmemiş değişiklikler var. Kaydetmeden çıkmak istediğinizden emin misiniz?'
-      )
-      if (!confirmClose) {
-        return
-      }
-    }
-    setIsBalloon(false)
-    onClose()
-  }, [onClose, isDirty, setIsBalloon])
+  } = useDocumentPreviewModal(props)
 
   if (!isOpen) return null
-
-  const docTitle = activeTemplateConf?.name.replace(/([A-Z])/g, ' $1').trim()
 
   // If in floating balloon mode, render only the floating bubble
   if (isBalloon) {
@@ -235,7 +165,7 @@ export function DocumentPreviewModalV3({
         onSelectTemplate={setSelectedDocId}
       />
 
-      {/* Main Area: Sidebar + Canvas */}
+      {/* 3. Ana Gövde: Sidebar + Belge Tuvali */}
       <div className="flex-1 flex overflow-hidden min-h-0 relative">
         <DocumentPreviewSidebar
           sidebarOpen={sidebarOpen}
@@ -261,6 +191,7 @@ export function DocumentPreviewModalV3({
           sourceKind={source?.kind}
           nextTemplate={nextTemplate}
           prevTemplate={prevTemplate}
+          personelListesi={personelListesi}
         />
 
         <DocumentPreviewCanvas
@@ -280,6 +211,25 @@ export function DocumentPreviewModalV3({
           localShowLogoRight={localShowLogoRight}
           onSelectTemplate={setSelectedDocId}
           templateOptions={templateOptions}
+        />
+
+        {/* JSON Debug Butonu */}
+        <button
+          type="button"
+          className="absolute bottom-4 right-4 z-[60] flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xl hover:bg-indigo-500"
+          onClick={() => setShowDebugPanel(true)}
+        >
+          <span aria-hidden="true">{`{ }`}</span>
+          JSON Debug
+        </button>
+
+        {/* JSON Debug Modalı */}
+        <DocumentPreviewDebugModal
+          isOpen={showDebugPanel}
+          onClose={() => setShowDebugPanel(false)}
+          debugJson={debugJson}
+          debugSearch={debugSearch}
+          setDebugSearch={setDebugSearch}
         />
       </div>
     </div>

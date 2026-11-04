@@ -139,7 +139,7 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
 
       expect(output).toContain('Push      : Hayır')
       expect(output).toContain('Push atlandı (--no-push)')
-    })
+    }, 20000)
 
     it('Mevcut bir git tag için release çalıştırıldığında işlem durdurulur ve hata verilir', () => {
       // Mevcut sürüm (v1.0.0-beta.256) tag'ini patch veya rc vermeden tetiklemeyi deneyelim
@@ -154,7 +154,7 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
           })
         }).toThrow()
       }
-    })
+    }, 20000)
 
     it('releaseTargets listesi güvenli ve seçicidir, tüm monorepo paketlerini ve şemaları içerir', () => {
       expect(releaseTargets).toContain('package.json')

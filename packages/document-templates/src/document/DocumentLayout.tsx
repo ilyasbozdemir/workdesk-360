@@ -3,6 +3,7 @@ import { BaseTemplate } from "../base.schema";
 import { DocumentThemeConfig, GLOBAL_THEME, createDocumentTheme } from "../theme.config";
 import { DocumentHeader } from "./DocumentHeader";
 import { DocumentFooter } from "./DocumentFooter";
+import { RotaKoordinasyonBlock } from "./ApprovalSignature";
 
 interface DocumentLayoutProps {
   children: ReactNode;
@@ -73,6 +74,10 @@ export const DocumentLayout = React.forwardRef<
     return (
       <div
         ref={ref}
+        data-document-page="true"
+        data-orientation={orientation}
+        data-page-number={pageNumber}
+        data-total-pages={totalPages}
         className="document-container"
         style={{
           width: "100%",
@@ -166,6 +171,18 @@ export const DocumentLayout = React.forwardRef<
               />
             )}
           {children}
+
+          {/* ROTA / KOORDİNASYON / PARAF AKIŞI (Son sayfada veya tek sayfada) */}
+          {(pageNumber === undefined || isLastPage) &&
+            (data?.belgeModu === "koordinasyonlu" ||
+              (Array.isArray(data?.rota) && data!.rota.length > 0) ||
+              (Array.isArray(data?.koordinasyon) && data!.koordinasyon.length > 0)) && (
+              <RotaKoordinasyonBlock
+                rota={data?.rota}
+                koordinasyon={data?.koordinasyon}
+                belgeModu={data?.belgeModu}
+              />
+            )}
         </div>
 
         {/* FOOTER */}

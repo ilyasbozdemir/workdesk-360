@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { cn } from '../../../../../utils/cn'
 import { PiyasaFiyatArastirmasiMatrixTab } from './PiyasaFiyatArastirmasiMatrixTab'
 import { PiyasaFiyatKarsilastirmaTab } from './PiyasaFiyatKarsilastirmaTab'
+import { FirmalaraTeklifMektubuModal } from './FirmalaraTeklifMektubuModal'
 import {
   PiyasaFiyatFormHeader,
   PiyasaFiyatFormSettingsBar,
@@ -69,6 +70,7 @@ export function PiyasaFiyatArastirmasiForm({
   formMode
 }: PiyasaFiyatArastirmasiFormProps): React.JSX.Element {
   const estimatedCostTotal = getEstimatedCostTotal()
+  const [isFirmDocModalOpen, setIsFirmDocModalOpen] = useState(false)
 
   return (
     <div
@@ -92,6 +94,7 @@ export function PiyasaFiyatArastirmasiForm({
           estimatedCostTotal={estimatedCostTotal}
           setIsFormOpen={setIsFormOpen}
           handleSaveToDosya={handleSaveToDosya}
+          onOpenFirmDocuments={() => setIsFirmDocModalOpen(true)}
         />
 
         <PiyasaFiyatFormSettingsBar
@@ -139,6 +142,14 @@ export function PiyasaFiyatArastirmasiForm({
           />
         )}
       </div>
+
+      {/* Firmalara Teklif Mektubu & Cetvel Çıkarma Modalı */}
+      <FirmalaraTeklifMektubuModal
+        isOpen={isFirmDocModalOpen}
+        onClose={() => setIsFirmDocModalOpen(false)}
+        invitedFirms={invitedFirms}
+        liveItems={items}
+      />
     </div>
   )
 }

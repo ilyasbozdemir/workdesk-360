@@ -10,7 +10,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
   const { rota, handleAddRotaStep, handleDeleteRotaStep, handleUpdateRotaStep } = props
 
   return (
-    <div className="flex-1 overflow-auto p-6 md:p-8 space-y-6 bg-slate-50 dark:bg-slate-950 custom-scrollbar max-w-4xl mx-auto w-full">
+    <div className="flex-1 overflow-auto p-6 md:p-8 space-y-6 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 custom-scrollbar max-w-4xl mx-auto w-full">
       {/* Akış Görselleştirici */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
@@ -41,7 +41,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                     {step.t}
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {step.u || 'Unvan belirtilmedi'}
                 </div>
               </div>
@@ -53,11 +53,11 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
             <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 z-10 shadow-xs">
               ✓
             </div>
-            <div className="bg-emerald-50/50 dark:bg-emerald-950/20 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40 flex-1">
+            <div className="bg-emerald-50/50 dark:emerald-950/20 p-3.5 rounded-xl border border-emerald-200 dark:border-emerald-900/40 flex-1">
               <div className="font-bold text-xs text-emerald-800 dark:text-emerald-300">
                 Dosyaya Kayıt &amp; Onaylı Arşiv
               </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
+              <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
                 Belge doğrudan temin dosyası içinde arşivlenir, paraflar ve imzalar tamamlanarak
                 dosya çıktısı alınır (Harici EBYS gönderimi yapılmaz).
               </div>
@@ -73,7 +73,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               Rota Adımları Düzenleme
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Süreçteki imza ve paraf yetkililerini sıralayın veya yeni adım ekleyin.
             </p>
           </div>
@@ -98,10 +98,14 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                 <select
                   value={step.t}
                   onChange={(e) => handleUpdateRotaStep(idx, 't', e.target.value as RotaAdimi['t'])}
-                  className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-semibold focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 >
                   {TURLER.map((tur) => (
-                    <option key={tur} value={tur}>
+                    <option
+                      key={tur}
+                      value={tur}
+                      className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 py-1"
+                    >
                       {tur}
                     </option>
                   ))}
@@ -114,7 +118,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                   value={step.a}
                   onChange={(e) => handleUpdateRotaStep(idx, 'a', e.target.value)}
                   placeholder="Ad SOYAD"
-                  className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 />
               </div>
 
@@ -124,7 +128,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                   value={step.u}
                   onChange={(e) => handleUpdateRotaStep(idx, 'u', e.target.value)}
                   placeholder="Unvan (Örn: Şube Müdürü)"
-                  className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  className="w-full p-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none"
                 />
               </div>
 
@@ -133,7 +137,7 @@ export function UstYaziRotaAkisi(props: RotaProps): React.JSX.Element {
                   type="button"
                   onClick={() => handleDeleteRotaStep(idx)}
                   disabled={rota.length <= 1}
-                  className="p-1.5 text-slate-400 hover:text-red-600 disabled:opacity-30 cursor-pointer"
+                  className="p-1.5 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 disabled:opacity-30 cursor-pointer"
                   title="Adımı Sil"
                 >
                   <Trash2 size={15} />

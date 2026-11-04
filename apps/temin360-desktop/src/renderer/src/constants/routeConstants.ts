@@ -9,7 +9,7 @@ export const APP_ROUTES = {
   YENI_DOSYA: '/dosyalar/yeni',
   DOSYA_SIHIRBAZ: '/dosyalar/sihirbaz',
   DOSYA_MANAGE: '/dosyalar/manage',
-  DOSYA_DETAY: '/dosya',
+  DOSYA_DETAY: '/takip',
   CIKTI_MERKEZI_DASHBOARD: '/cikti-merkezi',
 
   // Modüller

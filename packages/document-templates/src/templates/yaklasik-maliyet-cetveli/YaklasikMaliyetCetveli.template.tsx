@@ -1,6 +1,7 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
+import { DateEditableField } from "../../document/ApprovalSignature";
 import { TableRowSplitDivider } from "../../document/TableRowSplitDivider";
 import { YaklasikMaliyetCetveliData } from "./YaklasikMaliyetCetveli.schema";
 import { useYaklasikMaliyetCetveli } from "./YaklasikMaliyetCetveli.hook";
@@ -178,7 +179,7 @@ export const YaklasikMaliyetCetveli: React.FC<Props> = ({
             </td>
             <td style={{ textAlign: "right", width: "30%" }}>
               <strong>Düzenleme Tarihi :</strong>{" "}
-              <EditableField name="tarih" value={tarih} placeholder="Tarih" />
+              <DateEditableField name="tarih" value={tarih} placeholder="GG.AA.YYYY" />
             </td>
           </tr>
         </tbody>
@@ -222,7 +223,7 @@ export const YaklasikMaliyetCetveli: React.FC<Props> = ({
             </td>
             <td style={{ textAlign: "right", width: "30%" }}>
               <strong>Düzenleme Tarihi :</strong>{" "}
-              <EditableField name="tarih" value={tarih} placeholder="Tarih" />
+              <DateEditableField name="tarih" value={tarih} placeholder="GG.AA.YYYY" />
             </td>
           </tr>
         </tbody>
@@ -772,7 +773,7 @@ export const YaklasikMaliyetCetveli: React.FC<Props> = ({
               <EditableField name="olurBaslik" value={olurBaslik} />
             </div>
             <div style={{ fontSize: "9.5pt", marginBottom: "12px" }}>
-              <EditableField name="olurTarihi" value={olurTarihi} />
+              <DateEditableField name="olurTarihi" value={olurTarihi} placeholder="GG.AA.YYYY" />
             </div>
             <div style={{ fontWeight: "bold", fontSize: "10pt" }}>
               <EditableField name="baskanAdi" value={baskanAdi} />

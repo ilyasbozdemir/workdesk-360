@@ -1,8 +1,9 @@
 import React from 'react'
-import { Eye, EyeOff, KeyRound, ShieldAlert, User } from 'lucide-react'
+import { Eye, EyeOff, KeyRound, Laptop, ShieldAlert, User } from 'lucide-react'
 
 interface LockScreenLoginFormProps {
   isSetupMode: boolean
+  isKnownDevice?: boolean
   username: string
   setUsername: (val: string) => void
   password: string
@@ -27,6 +28,7 @@ interface LockScreenLoginFormProps {
 
 export function LockScreenLoginForm({
   isSetupMode,
+  isKnownDevice = true,
   username,
   setUsername,
   password,
@@ -145,6 +147,18 @@ export function LockScreenLoginForm({
         </div>
       )}
 
+      {!isSetupMode && !isKnownDevice && (
+        <div className="flex gap-2.5 p-3.5 bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 rounded-xl text-indigo-900 dark:text-indigo-200 text-xs leading-relaxed">
+          <Laptop className="w-5 h-5 shrink-0 text-indigo-600 dark:text-indigo-400 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-bold">Yeni Çalışma İstasyonu Algılandı</div>
+            <div className="text-[11px] text-indigo-700 dark:text-indigo-300">
+              Bu dosya bu bilgisayarda ({pcInfo?.hostname || 'Yeni Cihaz'}) ilk kez açılıyor. Kullanıcı adınızı ve şifrenizi girerek bu bilgisayarı eşleştirebilirsiniz. Yapacağınız tüm işlemler bu kullanıcı ve bilgisayar adı üzerinden denetim günlüğüne (audit log) kaydedilecektir.
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mt-2 px-1">
         <label className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
           <input
@@ -177,7 +191,9 @@ export function LockScreenLoginForm({
             : 'Doğrulanıyor...'
           : isSetupMode
             ? 'Şifre Belirle ve Giriş Yap'
-            : 'Giriş Yap ve Kilidi Aç'}
+            : !isKnownDevice
+              ? 'Çalışma İstasyonunu Eşleştir ve Giriş Yap'
+              : 'Giriş Yap ve Kilidi Aç'}
       </button>
     </form>
   )

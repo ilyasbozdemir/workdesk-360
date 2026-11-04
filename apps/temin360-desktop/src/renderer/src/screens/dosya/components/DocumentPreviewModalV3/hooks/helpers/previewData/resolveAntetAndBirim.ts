@@ -52,20 +52,32 @@ export async function resolveAntetAndBirim(
 
   baseData.dosyaAcilisTarihi =
     formatDateString(dosyaObj.dosya_acilis_tarihi) ||
-    baseData.dosyaAcilisTarihi ||
+    formatDateString(baseData.dosyaAcilisTarihi) ||
     formattedAcilisTarihi
   baseData.acilisTarihi =
-    formatDateString(dosyaObj.dosya_acilis_tarihi) || baseData.acilisTarihi || formattedAcilisTarihi
+    formatDateString(dosyaObj.dosya_acilis_tarihi) ||
+    formatDateString(baseData.acilisTarihi) ||
+    formattedAcilisTarihi
   baseData.dosyaTarihi =
-    formatDateString(dosyaObj.dosya_acilis_tarihi) || baseData.dosyaTarihi || formattedAcilisTarihi
+    formatDateString(dosyaObj.dosya_acilis_tarihi) ||
+    formatDateString(dosyaObj.tarih) ||
+    formatDateString(baseData.dosyaTarihi) ||
+    formattedAcilisTarihi
   baseData.onayaSunulanTarih =
     formatDateString(dosyaObj.temin_tarihi) ||
     formatDateString(dosyaObj.dosya_acilis_tarihi) ||
-    baseData.onayaSunulanTarih ||
+    formatDateString(baseData.onayaSunulanTarih) ||
     formattedAcilisTarihi
-  baseData.tarih = baseData.tarih || formattedAcilisTarihi || baseData.onayaSunulanTarih || ''
+  baseData.tarih =
+    formatDateString(baseData.tarih) ||
+    formatDateString(dosyaObj.tarih) ||
+    formattedAcilisTarihi ||
+    baseData.onayaSunulanTarih ||
+    ''
   baseData.onayTarihi =
-    formatDateString(dosyaObj.onay_tarihi) || baseData.onayTarihi || formattedAcilisTarihi
+    formatDateString(dosyaObj.onay_tarihi) ||
+    formatDateString(baseData.onayTarihi) ||
+    formattedAcilisTarihi
 
   baseData.kurumumuz = baseData.kurumumuz || ctx.kurumumuz || ctx.altKurumBizim || 'İdaremiz'
   const rawIhtiyac =

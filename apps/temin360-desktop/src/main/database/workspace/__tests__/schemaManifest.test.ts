@@ -16,9 +16,10 @@ describe('Uygulama Bazlı Şema Manifestleri (Multi-Desktop Architecture)', () =
 
   it('temin360-desktop için doğru şema ve sürüm bilgisi döner', () => {
     const manifest = getAppManifest('temin360-desktop')
+    const pkg = require('../../../../../package.json')
     expect(manifest.app).toBe('temin360-desktop')
     expect(manifest.target_scope).toBe('dogrudan-temin')
-    expect(manifest.version).toBe('1.0.0-rc.10')
+    expect(manifest.version).toBe(pkg.version)
     expect(manifest.schema_max).toBe(46)
     expect(getAppSchemaMax('temin360-desktop')).toBe(46)
   })

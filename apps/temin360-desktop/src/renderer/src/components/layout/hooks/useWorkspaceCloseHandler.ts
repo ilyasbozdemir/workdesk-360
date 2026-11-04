@@ -205,7 +205,14 @@ export function useWorkspaceCloseHandler(
           console.log(
             '[Auto-Sync] Veri değişikliği algılandı, Google Drive bulutuna arka planda eşitleniyor...'
           )
-          await window.electron?.ipcRenderer?.invoke('workspace:backup-gdrive')
+          const syncRes = await window.electron?.ipcRenderer?.invoke('workspace:backup-gdrive')
+          if (syncRes?.fileId) {
+            localStorage.setItem('lastGdriveUploadedFileId', syncRes.fileId)
+          }
+          if (syncRes?.backupFileName) {
+            localStorage.setItem('lastGdriveUploadedFileName', syncRes.backupFileName)
+          }
+          window.dispatchEvent(new CustomEvent('workspace-saved'))
         }
       } catch (e) {
         console.warn('[Auto-Sync] Arka plan senkronizasyonu ertelendi:', e)

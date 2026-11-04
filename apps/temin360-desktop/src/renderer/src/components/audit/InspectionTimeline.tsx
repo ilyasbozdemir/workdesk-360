@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
+import { copyToClipboard } from '../../utils/copyToClipboard'
 import {
   ShieldAlert,
   ShieldCheck,
@@ -160,13 +161,13 @@ export const InspectionTimeline: React.FC<InspectionTimelineProps> = ({
   }, [recordId, tableName])
 
   const copyMacHash = (id: number, hash: string): void => {
-    navigator.clipboard.writeText(hash)
+    void copyToClipboard(hash)
     setCopiedHashId(id)
     setTimeout(() => setCopiedHashId(null), 2000)
   }
 
   const copyBlockHash = (id: number, hash: string): void => {
-    navigator.clipboard.writeText(hash)
+    void copyToClipboard(hash)
     setCopiedBlockHashId(id)
     setTimeout(() => setCopiedBlockHashId(null), 2000)
   }
