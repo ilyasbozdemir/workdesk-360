@@ -52,3 +52,4 @@ Commit yapılan ilgili monorepo projesi parantez içinde açıkça belirtilmelid
 - `fix(temin360): recharts responsive container boyutlandırma uyarısı giderildi`
 - `feat(personel360): yıllık izin hakediş ve bakiye hesabı eklendi`
 - `refactor(document-engine): şablon render motoru optimize edildi`
+
