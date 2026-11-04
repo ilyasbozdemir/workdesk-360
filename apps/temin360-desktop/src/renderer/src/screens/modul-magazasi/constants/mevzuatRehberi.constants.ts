@@ -140,5 +140,101 @@ export const REHBERLER_DATA: Record<string, RehberMaddesi[]> = {
         '4857 Sayılı Kanun kapsamındaki işçilerin yıllık izinleri takvim günü değil iş günü esasına göre hesaplanır; genel tatil ve hafta tatili günleri izin gün sayısına dahil edilmez.',
       tip: 'mevzuat'
     }
+  ],
+
+  // =========================================================================
+  // 5. PİYASA FİYAT ARAŞTIRMASI & İSTEKLİ HAVUZU
+  // =========================================================================
+  'piyasa-fiyat-istekli-havuzu': [
+    {
+      baslik: 'Piyasa Araştırma Tutanağı Şekil Şartları',
+      icerik:
+        'MYHBY m.4/e uyarınca piyasa fiyat araştırması tutanağında teklif veren tüm isteklilerin ad/unvanları, vergi numaraları, verdikleri birim ve toplam fiyatlar açıkça listelenmelidir.',
+      tip: 'mevzuat'
+    },
+    {
+      baslik: 'EKAP Doğrudan Temin Yasaklılık Teyidi',
+      icerik:
+        'Doğrudan temin alımlarında ihalelere katılmaktan yasaklı olan firmalardan alım yapılmaması esastır. Sipariş öncesi EKAP üzerinden yasaklılık teyit sorgulaması yapılmalıdır.',
+      tip: 'onemli'
+    },
+    {
+      baslik: 'Teklif Mektuplarında Kaşe & İmza Zorunluluğu',
+      icerik:
+        'Faks veya e-posta yoluyla alınan tekliflerin asılları veya ıslak kaşe/imzalı nüshaları dosyasında muhafaza edilmelidir.',
+      tip: 'ipucu'
+    }
+  ],
+
+  // =========================================================================
+  // 6. DİNAMİK FORM BUILDER & ŞABLON STÜDYOSU
+  // =========================================================================
+  'dinamik-form-builder-studyosu': [
+    {
+      baslik: 'Mevzuat Standart Form Bütünlüğü',
+      icerik:
+        'Kamu İhale Tebliği ve Standart İhale Formları yönetmeliğinde zorunlu tutulan alanların (DETSİS no, ihale yetkilisi unvanı vb.) silinmemesi gerekir.',
+      tip: 'mevzuat'
+    },
+    {
+      baslik: 'Dinamik Alan Değişkenleri Eşleştirmesi',
+      icerik:
+        'Dosya No, Yüklenici Adı, Onay Tarihi gibi alanlar değişken olarak tanımlandığında sistem tarafından otomatik doldurularak insan hatası önlenir.',
+      tip: 'ipucu'
+    }
+  ],
+
+  // =========================================================================
+  // 7. MUAYENE KABUL, TAŞINIR (TİF) & HAKEDİŞ MASASI
+  // =========================================================================
+  'muayene-kabul-tasinir-tif': [
+    {
+      baslik: 'Kabul Komisyonu Teşkili & Asgari Üye Sayısı',
+      icerik:
+        'Muayene ve Kabul Komisyonları en az 3 (üç) veya tek sayıda üyeden oluşmalı, üyelerden biri işin uzmanı (teknik eleman) olmalıdır.',
+      tip: 'mevzuat'
+    },
+    {
+      baslik: 'Taşınır İşlem Fişi (TİF) Düzenleme Süresi',
+      icerik:
+        'Taşınır Mal Yönetmeliği gereğince satın alınan mallar muayene kabul yapıldıktan sonra ambar girişine alınmalı ve TİF kesilerek ödeme emrine bağlanmalıdır.',
+      tip: 'onemli'
+    }
+  ],
+
+  // =========================================================================
+  // 8. HARCAMA MERKEZİ & KİK PARASAL LİMİT TAKİBİ
+  // =========================================================================
+  'harcama-kik-limit-takibi': [
+    {
+      baslik: '%10 Bütçe Tavanı Kuralı (KİK m.62/ı)',
+      icerik:
+        '4734 Sayılı Kanun 22/d bendi kapsamında yapılacak harcamaların yıllık toplamı, idarenin bütçesine konulan mal ve hizmet alımı ödeneğinin %10’unu Kurul izni olmadan aşamaz.',
+      tip: 'onemli'
+    },
+    {
+      baslik: 'Kısımlara Bölme Yasağı (Zimmet Riski)',
+      icerik:
+        'Aynı mahiyetteki ihtiyaçların yıllık periyotta tek seferde ihale edilmesi gerekir; limit altında kalmak amacıyla alımların parçalara bölünmesi Sayıştay denetiminde zimmet sebebidir.',
+      tip: 'mevzuat'
+    }
+  ],
+
+  // =========================================================================
+  // 9. MALİ HESAPLAR, FİYAT FARKI & TEVKİFAT MASASI
+  // =========================================================================
+  'mali-analiz-hakedis-fiyat-farki': [
+    {
+      baslik: 'KDV Tevkifatı Genel Uygulama Tebliği',
+      icerik:
+        'Kamu idareleri belirlenmiş alıcılar kapsamındadır. Bakım, onarım, danışmanlık, yemek ve temizlik hizmetlerinde tebliğde belirtilen tevkifat oranları (5/10, 7/10, 9/10) zorunludur.',
+      tip: 'mevzuat'
+    },
+    {
+      baslik: 'Damga Vergisi Kesintisi (488 Sayılı Kanun)',
+      icerik:
+        'Doğrudan temin sözleşmesi imzalanması durumunda binde 9,48, doğrudan temin komisyon kararı veya harcama onayı üzerinden ise binde 5,69 damga vergisi kesilir.',
+      tip: 'onemli'
+    }
   ]
 }

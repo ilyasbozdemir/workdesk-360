@@ -545,6 +545,10 @@ export function TakipScreen(): React.JSX.Element {
           activeDosya={activeDosya}
           dosyalar={dosyalar}
           allBelgeler={allBelgeler}
+          kalemler={kalemler}
+          firmalar={firmalar}
+          dbBelgeler={dbBelgeler}
+          komisyonlar={komisyonlar}
           stages={stages}
           dbAsamalar={dbAsamalar}
           formatCurrency={formatCurrency}

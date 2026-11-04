@@ -21,10 +21,13 @@ export const IS_DT_EDITION: boolean = APP_EDITION === 'dogrudan-temin'
 /** Doğrudan Temin sürümünde kullanılabilen modül paketleri (ModulPaketi.id). */
 export const DT_EDITION_MODULE_IDS: readonly string[] = [
   'kik-dogrudan-temin-22d',
+  'piyasa-fiyat-istekli-havuzu',
+  'modul-personel-izin',
   'dinamik-form-builder-studyosu',
+  'muayene-kabul-tasinir-tif',
   'ebys-resmi-yazisma-studyosu',
   'harcama-kik-limit-takibi',
-  'modul-personel-izin'
+  'mali-analiz-hakedis-fiyat-farki'
 ]
 
 /** Doğrudan Temin sürümünde kullanılamayan rotalar (yalnızca 2886 satış ve kiralama). */

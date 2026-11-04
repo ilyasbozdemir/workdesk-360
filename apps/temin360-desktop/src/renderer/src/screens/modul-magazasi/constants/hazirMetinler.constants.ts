@@ -649,5 +649,126 @@ export const HAZIR_METINLER_DATA: Record<string, HazirMetinKalibi[]> = {
       etiket: 'Disiplin',
       formTipi: 'ust_yazi'
     }
+  ],
+
+  // =========================================================================
+  // 5. PİYASA FİYAT ARAŞTIRMASI & İSTEKLİ HAVUZU
+  // =========================================================================
+  'piyasa-fiyat-istekli-havuzu': [
+    {
+      id: 'dt-piyasa-fiyat-isteme-yazisi',
+      kategori: 'Piyasa Araştırması',
+      baslik: 'İstekli Firmaya Birim Fiyat Teklif İsteme Mektubu',
+      kisaAciklama: 'Firmalardan kaşeli/imzalı teklif almak için gönderilen resmi mektup.',
+      varsayilanHitap: '[FİRMA UNVANI VE ADRESİ]',
+      varsayilanKonu: 'Doğrudan Temin Usulü İle Fiyat Teklifi İstemi',
+      tamMetin:
+        'İdaremiz ihtiyacı olan ve ekli teknik şartnamede/listede cins ve miktarları belirtilen mal/hizmet/yapım işi 4734 Sayılı Kanun m.22 uyarınca satın alınacaktır. KDV hariç birim ve toplam teklifinizi en geç [TARİH / SAAT] mesai bitimine kadar idaremize iletmenizi rica ederiz.',
+      rehberNotu: 'Teklif isteme mektubuna teknik şartname veya mahal listesi eklenmelidir.',
+      etiket: 'Teklif İsteme',
+      formTipi: 'ust_yazi'
+    },
+    {
+      id: 'dt-piyasa-tutanak-ozeti',
+      kategori: 'Piyasa Tutanağı',
+      baslik: 'Piyasa Fiyat Araştırma Tutanağı Görevli Karar Özeti',
+      kisaAciklama: 'En avantajlı teklifin gerekçeli seçim kararı metni.',
+      varsayilanHitap: 'HARCAMA YETKİLİSİ MAKAMINA',
+      varsayilanKonu: 'Piyasa Fiyat Araştırması Sonuç Özeti',
+      tamMetin:
+        '4734 Sayılı Kamu İhale Kanununun 22. maddesi kapsamında yapılan piyasa fiyat araştırmasında; şartnameye uygun en avantajlı teklifin [KAZANAN FİRMA] tarafından KDV hariç [TUTAR] TL bedelle verildiği tespit edilmiş olup, alımın anılan firmadan yapılması tensiplerinize arz olunur.',
+      rehberNotu: 'En az iki piyasa araştırma görevlisinin ıslak imzası bulunmalıdır.',
+      etiket: 'Piyasa Kararı',
+      formTipi: 'tutanak'
+    }
+  ],
+
+  // =========================================================================
+  // 6. DİNAMİK FORM BUILDER & ŞABLON STÜDYOSU
+  // =========================================================================
+  'dinamik-form-builder-studyosu': [
+    {
+      id: 'df-ozel-ihtiyac-gerekcesi',
+      kategori: 'Özel Gerekçe',
+      baslik: 'Dinamik İhtiyaç ve Teknik Gerekçe Raporu',
+      kisaAciklama: 'Teknik birimler tarafından hazırlanan ayrıntılı ihtiyaç ve gerekçe metni.',
+      varsayilanHitap: 'HARCAMA YETKİLİSİNE',
+      varsayilanKonu: 'Teknik İhtiyaç ve Alım Gerekçesi',
+      tamMetin:
+        'Birimimizde yürütülen [HİZMET/PROJE ADI] işlerinde kullanılmak üzere acil ihtiyaç duyulan malzemelerin teknik özellikleri incelenmiş olup, işin aksamadan yürütülebilmesi için ekli listedeki kalemlerin doğrudan temin usulüyle ivedilikle tedarik edilmesi gerekmektedir.',
+      rehberNotu: 'Dinamik form alanları ile dosya bilgileri otomatik bağlanır.',
+      etiket: 'Gerekçe Raporu',
+      formTipi: 'dilekce'
+    }
+  ],
+
+  // =========================================================================
+  // 7. MUAYENE KABUL, TAŞINIR (TİF) & HAKEDİŞ MASASI
+  // =========================================================================
+  'muayene-kabul-tasinir-tif': [
+    {
+      id: 'kabul-mal-inceleme-metni',
+      kategori: 'Muayene & Kabul',
+      baslik: 'Mal Alımı Muayene ve Kabul Heyeti İnceleme Kararı',
+      kisaAciklama: 'Malın şartname ve numuneye uygun teslim alındığını teyit eden karar metni.',
+      varsayilanHitap: 'HARCAMA YETKİLİSİ MAKAMINA',
+      varsayilanKonu: 'Mal Alımı Muayene ve Kabul Tutanağı Kararı',
+      tamMetin:
+        'Yüklenici [FİRMA ADI] tarafından teslim edilen mallar, Muayene ve Kabul Komisyonumuzca fiziki ve teknik kontrole tabi tutulmuş; sözleşme ve teknik şartname hükümlerine tam uygun olduğu, ayıplı veya eksik parça bulunmadığı tespit edilerek kabulüne oybirliği ile karar verilmiştir.',
+      rehberNotu: 'Heyet üyelerinin tamamı tarafından imzalanmalı ve ambar memuruna sevk edilmelidir.',
+      etiket: 'Kabul Tutanağı',
+      formTipi: 'tutanak'
+    },
+    {
+      id: 'kabul-tahakkuk-sevk-yazisi',
+      kategori: 'Tahakkuk & Ödeme',
+      baslik: 'Ödeme Emri Belgesi Tahakkuk Teslim Müzekkeresi',
+      kisaAciklama: 'Kabul tutanağı ve faturanın muhasebeye sevki için üst yazı.',
+      varsayilanHitap: 'MALİ HİZMETLER DAİRESİ BAŞKANLIĞINA (MUHASEBE MÜDÜRLÜĞÜ)',
+      varsayilanKonu: 'Tahakkuk Evraklarının Teslimi ve Ödeme Emri',
+      tamMetin:
+        'Birimimizce 4734 Sayılı Kanun m.22 kapsamında temin edilen mal/hizmete ait fatura, muayene kabul tutanağı, piyasa araştırma tutanağı ve onay belgesi ekte sunulmuş olup, yükleniciye hak ediş ödemesinin yapılması hususunu arz ederim.',
+      rehberNotu: 'Ekler kısmında dizi pusulası ile evrak adetleri belirtilmelidir.',
+      etiket: 'Ödeme Sevki',
+      formTipi: 'ust_yazi'
+    }
+  ],
+
+  // =========================================================================
+  // 8. HARCAMA MERKEZİ & KİK PARASAL LİMİT TAKİBİ
+  // =========================================================================
+  'harcama-kik-limit-takibi': [
+    {
+      id: 'harc-limit-denetim-ozeti',
+      kategori: 'Limit Denetimi',
+      baslik: '22/d Kümülatif Limit ve Bütçe Denetim Bildirimi',
+      kisaAciklama: 'Harcama yetkilisi için hazırlanan doğrudan temin bütçe tavanı raporu.',
+      varsayilanHitap: 'HARCAMA YETKİLİSİNE',
+      varsayilanKonu: '22/d Yıllık Parasal Limit Tüketim Durumu',
+      tamMetin:
+        'İdaremiz harcama birimlerince cari yılda 4734 Sayılı Kanunun 22/d maddesi kapsamında gerçekleştirilen alımların kümülatif toplamı [KÜMÜLATİF TUTAR] TL olup, KİK parasal tavanının %[ORAN]’ına ulaşmıştır. Bütçe tavan aşımı riski bulunmamaktadır.',
+      rehberNotu: '%10 tavanı yaklaşırken Sayıştay ve KİK mevzuat uyarıları aktif olur.',
+      etiket: 'Limit Raporu',
+      formTipi: 'onay_belgesi'
+    }
+  ],
+
+  // =========================================================================
+  // 9. MALİ HESAPLAR, FİYAT FARKI & TEVKİFAT MASASI
+  // =========================================================================
+  'mali-analiz-hakedis-fiyat-farki': [
+    {
+      id: 'mali-tevkifat-aciklama-notu',
+      kategori: 'Mali Hesap',
+      baslik: 'KDV Tevkifatı ve Yasal Kesinti Açıklama Şerhi',
+      kisaAciklama: 'Fatura ve hakediş tahakkukunda uygulanan tevkifat ve damga vergisi şerhi.',
+      varsayilanHitap: 'MUHASEBE YETKİLİSİNE',
+      varsayilanKonu: 'Tevkifat ve Yasal Kesinti Dökümü',
+      tamMetin:
+        'Ekteki faturaya ilişkin olarak KDV Genel Uygulama Tebliği uyarınca [ORAN] oranında KDV tevkifatı ile 488 Sayılı Damga Vergisi Kanunu uyarınca karar ve sözleşme damga vergisi kesintisi yapılmış olup, net ödenecek tutar tahakkuk müzekkeresinde gösterilmiştir.',
+      rehberNotu: 'Decimal.js yüksek hassasiyetli matrah dökümü ile tam uyumludur.',
+      etiket: 'Kesinti Şerhi',
+      formTipi: 'ust_yazi'
+    }
   ]
 }
