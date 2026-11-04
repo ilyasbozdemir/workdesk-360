@@ -593,7 +593,7 @@ export function TakipGenelMetrikView({
           {/* ========================================================================= */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* 1. GRAFİK: AŞAMALARA GÖRE DOSYA VE MALİYET DAĞILIMI (BAR CHART) */}
-            <div className="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="lg:col-span-8 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -606,8 +606,8 @@ export function TakipGenelMetrikView({
                 </div>
               </div>
 
-              <div className="h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-72 w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                   <BarChart data={stageChartData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
                     <XAxis
@@ -644,7 +644,7 @@ export function TakipGenelMetrikView({
             </div>
 
             {/* 2. GRAFİK: ALIM TÜRÜ DAĞILIMI (DONUT / PIE CHART) */}
-            <div className="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4 flex flex-col justify-between">
+            <div className="lg:col-span-4 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4 flex flex-col justify-between">
               <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <PieChartIcon size={16} className="text-purple-600" />
@@ -653,9 +653,9 @@ export function TakipGenelMetrikView({
                 <p className="text-xs text-slate-400 mt-0.5">Mal, Hizmet ve Yapım oranları</p>
               </div>
 
-              <div className="h-56 w-full flex items-center justify-center">
+              <div className="h-56 w-full min-w-0 flex items-center justify-center">
                 {turChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
                     <PieChart>
                       <Pie
                         data={turChartData}
