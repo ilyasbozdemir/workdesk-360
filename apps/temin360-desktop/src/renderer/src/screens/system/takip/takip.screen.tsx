@@ -9,7 +9,8 @@ import {
   LayoutDashboard,
   Package,
   Trash2,
-  Users
+  Users,
+  Workflow
 } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { APP_ROUTES } from '../../../constants/routeConstants'
@@ -366,8 +367,8 @@ export function TakipScreen(): React.JSX.Element {
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-600 dark:hover:text-white border border-purple-200 dark:border-purple-800/60 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
                     title="Süreç Akışı ve Belge Stüdyosu Ekranını Aç"
                   >
-                    <Layers size={13} />
-                    Süreç Akışı & Stüdyo
+                    <Workflow size={13} />
+                    Süreç Akış Haritası
                   </button>
 
                   <button

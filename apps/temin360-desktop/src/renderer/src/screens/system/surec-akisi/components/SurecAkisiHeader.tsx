@@ -51,14 +51,6 @@ export const SurecAkisiHeader: React.FC<SurecAkisiHeaderProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => (onOpenStudio ? onOpenStudio() : onSelectTab('studyo'))}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl font-bold text-xs bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-indigo-500/20 transition-all cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Belge & Yazışma Stüdyosu</span>
-          </button>
           <span className="text-xs px-3 py-1.5 rounded-xl border font-bold bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800 shrink-0">
             {dosya.durum}
           </span>

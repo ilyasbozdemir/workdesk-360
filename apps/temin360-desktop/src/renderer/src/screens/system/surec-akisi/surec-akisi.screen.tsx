@@ -9,7 +9,6 @@ import { FirmalarTab } from './components/tabs/FirmalarTab'
 import { KomisyonTab } from './components/tabs/KomisyonTab'
 import { BelgelerTab } from './components/tabs/BelgelerTab'
 import { SurecTab } from './components/tabs/SurecTab'
-import { DTEbysStudyosuTab } from './components/DTEbysStudyosuTab'
 import { YeniNesilBelgeStudyosuTab } from './components/YeniNesilBelgeStudyosuTab'
 import { APP_ROUTES } from '../../../constants/routeConstants'
 
@@ -199,16 +198,6 @@ export default function SurecAkisiScreen(): React.JSX.Element {
           />
         )}
 
-        {selectedTab === 'ebys' && (
-          <DTEbysStudyosuTab
-            dosya={dosya || activeDosya || {}}
-            kalemler={kalemler || []}
-            firmalar={firmalar || []}
-            komisyonlar={komisyonlar || []}
-            toplamBedel={toplamBedel || 0}
-            dosyaContext={dosyaContext}
-          />
-        )}
       </div>
 
       {/* Document Preview & Print Modal */}
@@ -224,26 +213,6 @@ export default function SurecAkisiScreen(): React.JSX.Element {
         onBelgeOlustur={belgeOlustur}
         onDosyalariEkle={dosyalariEkle}
       />
-
-      {/* Belge & Resmî Yazışma Stüdyosu - Tam Ekran Stüdyo Modu */}
-      {isStudioOpen && (
-        <div className="dark fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col p-3 md:p-6 overflow-y-auto animate-in fade-in duration-200 text-slate-100">
-          <div className="w-full max-w-7xl mx-auto flex-1">
-            <YeniNesilBelgeStudyosuTab
-              dosya={dosya}
-              belgeler={normalizedBelgeler}
-              kalemler={kalemler}
-              firmalar={firmalar}
-              komisyonlar={komisyonlar}
-              toplamBedel={toplamBedel}
-              dosyaContext={dosyaContext}
-              onBelgeOlustur={handleBelgeOlustur}
-              onPreviewBelge={setPreviewBelge}
-              onClose={() => setIsStudioOpen(false)}
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
