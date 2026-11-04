@@ -12,44 +12,99 @@ import {
 import { Button } from '../../../../components/ui/Button'
 
 interface TakipGenelMetrikViewProps {
+  activeDosya?: any
   dosyalar: any[]
   allBelgeler: any[]
   stages: any[]
   dbAsamalar: any[]
   formatCurrency: (val: number) => string
   setActiveDosyaId: (id: number) => void
+  onGoToDetail?: () => void
+  onOpenKanban?: () => void
 }
 
 export function TakipGenelMetrikView({
+  activeDosya,
   dosyalar,
   allBelgeler,
   stages,
   dbAsamalar,
   formatCurrency,
-  setActiveDosyaId
+  setActiveDosyaId,
+  onGoToDetail,
+  onOpenKanban
 }: TakipGenelMetrikViewProps): React.JSX.Element {
   return (
     <div className="flex flex-col gap-6 max-w-[1600px] mx-auto my-6 w-full">
-      <div className="p-8 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 text-center flex flex-col items-center justify-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-955/50 text-blue-600 dark:text-blue-450 flex items-center justify-center">
-          <ClipboardList className="w-8 h-8" />
+      {/* AKTİF DOSYA BANNER'I YA DA SEÇİM ÇAĞRISI */}
+      {activeDosya ? (
+        <div className="p-5 rounded-2xl border border-blue-200/80 dark:border-blue-800/60 bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white dark:from-blue-950/40 dark:via-slate-900/40 dark:to-slate-900 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-center gap-3.5 min-w-[260px]">
+            <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+              <ClipboardList className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-widest bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-md">
+                  Aktif Dosya: {activeDosya.temin_no || 'Dosya No Belirsiz'}
+                </span>
+                <span className="text-[10px] font-bold text-slate-500 capitalize">
+                  {activeDosya.tur} Alımı
+                </span>
+                {activeDosya.yaklasik_maliyet ? (
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200/50">
+                    {formatCurrency(activeDosya.yaklasik_maliyet)}
+                  </span>
+                ) : null}
+              </div>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
+                {activeDosya.konu}
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onGoToDetail}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+            >
+              <FileCheck className="w-4 h-4" />
+              <span>Bu Dosyanın Detayına Git</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenKanban}
+              className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+            >
+              Dosya Değiştir (Kanban)
+            </button>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-105">
-            Takip Edilecek Aktif Dosya Seçilmedi
-          </h2>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-2 leading-relaxed">
-            Süreçlerin aşama aşama takibini ve evrak kontrolünü görmek için listeden bir dosya
-            seçerek aktif hale getirin veya aşağıdaki genel durumu inceleyin.
-          </p>
-        </div>
-        <Link to="/dosyalar">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-xs font-semibold py-2 px-5 flex items-center gap-2 mt-2">
+      ) : (
+        <div className="p-8 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 text-center flex flex-col items-center justify-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-955/50 text-blue-600 dark:text-blue-450 flex items-center justify-center">
+            <ClipboardList className="w-8 h-8" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-105">
+              Takip Edilecek Aktif Dosya Seçilmedi
+            </h2>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-2 leading-relaxed">
+              Süreçlerin aşama aşama takibini ve evrak kontrolünü görmek için listeden bir dosya
+              seçerek aktif hale getirin veya aşağıdaki genel durumu inceleyin.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenKanban}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 px-5 rounded-xl flex items-center gap-2 mt-2 cursor-pointer"
+          >
             <Building className="w-4 h-4" />
-            Tüm Dosyaları Gör
-          </Button>
-        </Link>
-      </div>
+            Dosya Listesini Gör (Kanban)
+          </button>
+        </div>
+      )}
 
       {/* GENEL METRİK KARTLARI */}
       {dosyalar.length > 0 && (

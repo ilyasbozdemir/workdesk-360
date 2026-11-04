@@ -542,11 +542,14 @@ export function TakipScreen(): React.JSX.Element {
       {/* GÖRÜNÜM 3: GENEL METRİK VE DAĞILIM GÖRÜNÜMÜ */}
       {viewMode === 'metrik' && (
         <TakipGenelMetrikView
+          activeDosya={activeDosya}
           dosyalar={dosyalar}
           allBelgeler={allBelgeler}
           stages={stages}
           dbAsamalar={dbAsamalar}
           formatCurrency={formatCurrency}
+          onGoToDetail={() => setViewMode('detay')}
+          onOpenKanban={() => setViewMode('kanban')}
           setActiveDosyaId={(id) => {
             setActiveDosyaId(id)
             setViewMode('detay')
