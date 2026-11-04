@@ -326,13 +326,19 @@ export const ARSIV_360_MANIFEST: AppManifest = {
       ext: 'arsiv',
       name: 'Arşiv 360 İndeks Dosyası',
       description: 'Arşiv 360 Akıllı İndeks ve Sanal Klasör Dosyası',
-      mimeType: 'application/x-arsiv'
+      mimeType: 'application/x-arsiv',
+      progId: 'Arsiv360.Document',
+      perceivedType: 'document',
+      isPrimary: true
     },
     {
       ext: 'arsiv360',
       name: 'Arşiv 360 Veritabanı',
       description: 'Arşiv 360 Taşınabilir Veritabanı ve Proje Dosyası',
-      mimeType: 'application/x-arsiv360'
+      mimeType: 'application/x-arsiv360',
+      progId: 'Arsiv360.Document',
+      perceivedType: 'document',
+      isPrimary: false
     }
   ],
   installState: 'installed',
