@@ -1,0 +1,36 @@
+appId: dev.ilyasbozdemir.arsiv360
+productName: Arsiv360
+directories:
+  output: dist-local
+
+files:
+  - out/**/*
+  - package.json
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+
+asar: true
+asarUnpack:
+  - '**/node_modules/better-sqlite3/**/*'
+
+fileAssociations:
+  - ext: arsiv
+    name: Arsiv 360 İndeks Dosyası
+    description: Arşiv 360 Akıllı İndeks ve Sanal Klasör Dosyası
+    role: Editor
+  - ext: arsiv360
+    name: Arsiv 360 Veritabanı
+    description: Arşiv 360 Taşınabilir Veritabanı ve Proje Dosyası
+    role: Editor
+
+win:
+  executableName: Arsiv360
+  target:
+    - target: portable
+      arch:
+        - x64
+
+portable:
+  artifactName: Arsiv360-${version}-portable.exe
+  requestExecutionLevel: user

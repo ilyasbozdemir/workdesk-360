@@ -5,6 +5,7 @@ import { TemplateKey, resolveTemplateKey } from '@temin360/document-templates'
 import { DocumentRenderer, DocumentEngine } from '@worksuite-360/document-engine'
 import { useSettingsStore } from '../../../../../../store/settingsStore'
 import { buildExportFileName } from '../../../../../../utils/exportFileName'
+import { formatDateString } from '../../../../contextBuilder/dateHelpers'
 import { Personel } from '../../types'
 
 interface CompileHtmlParams {
@@ -60,8 +61,10 @@ export function compileDocumentHtml({
     ...formData,
     personelListesi,
     firmaListesi,
-    tarih: formData.tarih || formData.onayaSunulanTarih || '',
-    onayTarihi: formData.onayTarihi || formData.dosyaTarihi || '',
+    tarih: formatDateString(formData.tarih) || formatDateString(formData.onayaSunulanTarih) || '',
+    onayaSunulanTarih: formatDateString(formData.onayaSunulanTarih) || formatDateString(formData.tarih) || '',
+    onayTarihi: formatDateString(formData.onayTarihi) || formatDateString(formData.olurTarihi) || formatDateString(formData.dosyaTarihi) || '',
+    dosyaTarihi: formatDateString((formData as any).dosyaTarihi) || '',
     solLogo: localShowLogoLeft ? activeSolLogo : null,
     sagLogo: localShowLogoRight ? activeSagLogo : null,
     olurYazisi: formData.olurYazisi !== false,

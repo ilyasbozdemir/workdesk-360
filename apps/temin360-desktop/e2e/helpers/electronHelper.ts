@@ -22,6 +22,13 @@ export interface LaunchTestAppOptions {
 }
 
 export function resolveWindowsDesktopDir(): string {
+  const customDir = process.env.E2E_DESKTOP_DIR ? process.env.E2E_DESKTOP_DIR.trim() : null
+  if (customDir) {
+    if (!fs.existsSync(customDir)) {
+      fs.mkdirSync(customDir, { recursive: true })
+    }
+    return customDir
+  }
   if (process.platform === 'win32') {
     try {
       const psOutput = execSync(
@@ -82,24 +89,36 @@ export async function launchTestApp(
   const consoleLogs: { type: string; text: string; location?: string }[] = []
   const pageErrors: Error[] = []
 
+  const defaultHeadlessFlags = [
+    '--disable-gpu',
+    '--disable-dev-shm-usage',
+    '--no-sandbox'
+  ]
+
   const launchArgs = [
     mainScript,
     ...(enableSingleInstanceLock ? [] : ['--multi-instance']),
     `--user-data-dir=${userDataDir}`,
+    ...defaultHeadlessFlags,
     ...extraArgs
   ]
+
+  const cleanEnv = { ...process.env }
+  delete cleanEnv.ELECTRON_RUN_AS_NODE
 
   const electronApp = await electron.launch({
     args: launchArgs,
     cwd: appDir,
     env: {
-      ...process.env,
+      ...cleanEnv,
       NODE_ENV: 'test',
       ELECTRON_ENABLE_LOGGING: '1'
     }
   })
 
+  console.log('[launchTestApp] Waiting for firstWindow()...')
   const page = await electronApp.firstWindow()
+  console.log('[launchTestApp] firstWindow() resolved!')
 
   // Track console logs and errors
   page.on('console', (msg) => {

@@ -191,8 +191,8 @@ export function ActiveFileShortcuts(): React.JSX.Element {
 
   const secondaryItems: ShortcutItem[] = [
     {
-      name: 'Süreç Takip & Durum',
-      path: '/takip',
+      name: 'Doğrudan Temin Süreci',
+      path: '/dosya',
       icon: ClipboardList,
       color: 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20'
     },

@@ -3,6 +3,7 @@ import { useGlobalDocumentPreviewStore } from '../../../../../../../store/global
 import { applyRolePolicy } from './previewDataUtils'
 import { applyRefreshPolicy } from './refreshPolicy'
 import type { LoadPreviewDataResult } from '../types'
+import { formatDateString } from '../../../../../contextBuilder/dateHelpers'
 
 export async function resolveSnapshotOverlay(
   baseData: any,
@@ -127,7 +128,7 @@ export async function resolveSnapshotOverlay(
 
   const tabInit = activeTab?.initialData as Record<string, any> | undefined
   if (dosyaObj.teslim_tarihi && !tabInit?.teslimTarihi) {
-    finalData.teslimTarihi = dosyaObj.teslim_tarihi
+    finalData.teslimTarihi = formatDateString(dosyaObj.teslim_tarihi) || dosyaObj.teslim_tarihi
   }
 
   if (!finalData.solLogo && resolvedSolLogo) {

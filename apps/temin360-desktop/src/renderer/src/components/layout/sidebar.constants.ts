@@ -340,7 +340,7 @@ export function getSidebarMenuGroups(
               { name: 'Görev Tanımları', path: APP_ROUTES.KOMISYON_GOREVLERI, icon: Settings }
             ]
           },
-          { name: 'Müteahhit & İstekli Firmalar', path: APP_ROUTES.FIRMALAR, icon: Building2 },
+          { name: 'Doğrudan Temin İsteklileri', path: APP_ROUTES.FIRMALAR, icon: Building2 },
           {
             name: 'Pozlar & OKAS Kodları',
             icon: PackageSearch,

@@ -9,8 +9,13 @@ export function getDogrudanTeminMenus(
   return [
     {
       name: 'Doğrudan Temin (KİK 22)',
-      onClick: (): Promise<void> => navigate({ to: APP_ROUTES.DOSYALAR }),
+      onClick: (): Promise<void> => navigate({ to: APP_ROUTES.TAKIP }),
       items: [
+        {
+          label: '📋 Doğrudan Temin Süreç Takip Masası (Kanban & Liste)',
+          route: APP_ROUTES.TAKIP,
+          onClick: (): Promise<void> => navigate({ to: APP_ROUTES.TAKIP })
+        },
         {
           label: 'Tüm Doğrudan Temin Dosyaları',
           route: APP_ROUTES.DOSYALAR,

@@ -29,6 +29,10 @@ export function GoogleDriveFooterWidget(): React.JSX.Element | null {
   const [isConflict, setIsConflict] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showPopover, setShowPopover] = useState(false)
+  const [syncActivity, setSyncActivity] = useState<{
+    status: 'idle' | 'uploading' | 'synced' | 'error'
+    message?: string
+  }>({ status: 'idle' })
   const popoverRef = useRef<HTMLDivElement>(null)
   const isCheckingRef = useRef(false)
 
@@ -134,6 +138,30 @@ export function GoogleDriveFooterWidget(): React.JSX.Element | null {
       }, 2000)
     }
 
+    const removeStatusListener = window.electron?.ipcRenderer?.on?.(
+      'workspace:gdrive-status',
+      (_, payload: { status: 'uploading' | 'synced' | 'skipped' | 'error'; message?: string; error?: string }) => {
+        if (!active) return
+        if (payload?.status === 'uploading') {
+          setSyncActivity({ status: 'uploading', message: payload.message || "Drive'a yedekleniyor..." })
+        } else if (payload?.status === 'synced') {
+          setSyncActivity({ status: 'synced', message: "Drive'a yedeklendi" })
+          setLastSyncTime(new Date().toISOString())
+          setTimeout(() => {
+            if (active) setSyncActivity({ status: 'idle' })
+          }, 3500)
+          void checkGoogleDriveUpdates(true)
+        } else if (payload?.status === 'error') {
+          setSyncActivity({ status: 'error', message: payload.error || 'Yedekleme hatası' })
+          setTimeout(() => {
+            if (active) setSyncActivity({ status: 'idle' })
+          }, 6000)
+        } else if (payload?.status === 'skipped') {
+          setSyncActivity({ status: 'idle' })
+        }
+      }
+    )
+
     window.addEventListener('workspace-saved', handleSaved)
 
     return () => {
@@ -141,6 +169,9 @@ export function GoogleDriveFooterWidget(): React.JSX.Element | null {
       clearTimeout(timer)
       clearInterval(interval)
       window.removeEventListener('workspace-saved', handleSaved)
+      if (typeof removeStatusListener === 'function') {
+        removeStatusListener()
+      }
     }
   }, [fileName, activeMeta?.updated_at, activeMeta?.last_user_mutation_at])
 
@@ -193,8 +224,29 @@ export function GoogleDriveFooterWidget(): React.JSX.Element | null {
   return (
     <>
       <div className="flex items-center gap-2 relative" ref={popoverRef}>
-        {/* Durum 1: Bulutta Daha Güncel Bir Sürüm Var! (Öncelikli Dikkat Çekici Uyarı) */}
-        {hasNewerVersion && newerFile ? (
+        {/* Canlı Eşitleme / Yükleme / Hata Bildirimi */}
+        {syncActivity.status === 'uploading' ? (
+          <div className="flex items-center gap-1.5 text-[11px] text-blue-600 dark:text-blue-400 font-medium px-2 py-0.5 rounded-full bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 animate-pulse">
+            <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
+            <span>Drive&apos;a Yedekleniyor...</span>
+          </div>
+        ) : syncActivity.status === 'synced' ? (
+          <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium px-2 py-0.5 rounded-full bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <Cloud className="w-3 h-3 text-emerald-500" />
+            <span>Drive&apos;a Yedeklendi</span>
+          </div>
+        ) : syncActivity.status === 'error' ? (
+          <button
+            type="button"
+            onClick={openGDriveSettings}
+            className="flex items-center gap-1 text-[11px] text-rose-600 dark:text-rose-400 font-semibold hover:underline cursor-pointer px-1.5 py-0.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/30"
+            title={syncActivity.message}
+          >
+            <AlertTriangle className="w-3 h-3 text-rose-500" />
+            <span>Drive Hatası</span>
+          </button>
+        ) : hasNewerVersion && newerFile ? (
           <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-linear-to-r from-amber-500/20 via-emerald-500/20 to-blue-500/20 border border-emerald-500/50 text-emerald-800 dark:text-emerald-300 font-bold text-[11px] shadow-xs animate-pulse">
             <CloudDownload className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span className="truncate max-w-[220px]">

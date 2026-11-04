@@ -1,11 +1,8 @@
 import React from 'react'
-import {
-  DocumentPage,
-  TemplateEditProvider,
-  TemplateKey
-} from '@temin360/document-templates'
-import { DocumentRendererComponentProps } from '../types/contracts'
-import { TemplateErrorBoundary } from './TemplateErrorBoundary'
+import { DocumentPage } from '../../DocumentPage'
+import { TemplateEditProvider } from '../../document/TemplateEditContext'
+import { TemplateKey } from '../../registry'
+import { DocumentRendererComponentProps, TemplateErrorBoundary } from '@worksuite-360/document-engine'
 
 export interface DefaultDocumentRendererProps
   extends DocumentRendererComponentProps<Record<string, unknown>> {
@@ -72,7 +69,7 @@ export function DefaultDocumentRenderer(props: DefaultDocumentRendererProps): Re
   if (chrome === 'bare') {
     return (
       <div
-        className={`default-document-bare ${className}`}
+        className={`document-renderer-bare default-document-bare ${className}`}
         style={{
           width: isLandscape ? '297mm' : '210mm',
           backgroundColor: '#ffffff',
@@ -88,7 +85,7 @@ export function DefaultDocumentRenderer(props: DefaultDocumentRendererProps): Re
   return (
     <div
       ref={containerRef}
-      className={`default-document-paper select-none flex flex-col items-center gap-8 py-8 ${className}`}
+      className={`document-renderer-paper default-document-paper flex flex-col items-center gap-8 ${className}`}
       style={{
         transform: `scale(${scale})`,
         transformOrigin: 'top center',

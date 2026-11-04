@@ -3,6 +3,7 @@ import Decimal from 'decimal.js'
 import { BiddingFirm, BiddingKalem } from './types'
 import { emitAppEvent } from '../../../../../../utils/appEvents'
 import { documentPreloadService } from '../../../../../../services/documentPreloadService'
+import { executeSetWinnerTransaction } from '../../../../../../services/dossier/winnerSyncService'
 
 export function calculateEstimatedCost(
   items: BiddingKalem[],
@@ -112,61 +113,18 @@ export function usePiyasaFiyatCalculation(
     async (targetIdentifier: number | null): Promise<void> => {
       if (!activeDosyaId) return
       try {
-        let resolvedMasterFirmaId: number | null = null
-        let resolvedTeminFirmaId: number | null = null
-
-        if (targetIdentifier !== null && targetIdentifier > 0) {
-          // TANIM_Firma (master) ile DATA_TeminFirma (satır) ID'sini veritabanından kesinleştir
-          const checkRes = await window.electron.ipcRenderer.invoke(
-            'db:query',
-            `SELECT id, firma_id FROM DATA_TeminFirma 
-             WHERE temin_dosya_id = ? AND aktif_mi = 1 AND (id = ? OR firma_id = ?) 
-             LIMIT 1`,
-            [activeDosyaId, targetIdentifier, targetIdentifier]
-          )
-
-          if (checkRes?.success && Array.isArray(checkRes.data) && checkRes.data.length > 0) {
-            const row = checkRes.data[0]
-            resolvedTeminFirmaId = Number(row.id)
-            resolvedMasterFirmaId = row.firma_id ? Number(row.firma_id) : resolvedTeminFirmaId
-          } else {
-            resolvedMasterFirmaId = targetIdentifier
-            resolvedTeminFirmaId = targetIdentifier
-          }
-        }
-
-        // Tek bir atomik transaction ile dosya ve firma bayraklarını güncelle
-        const queries: { sql: string; params?: any[] }[] = []
-
-        // 1. DATA_TeminDosyasi güncellemesi (yalnızca firma_id güncellenir, yaklasik_maliyet'e dokunulmaz!)
-        queries.push({
-          sql: 'UPDATE DATA_TeminDosyasi SET firma_id = ? WHERE id = ?',
-          params: [resolvedMasterFirmaId, activeDosyaId]
+        const result = await executeSetWinnerTransaction({
+          activeDosyaId,
+          teminFirmaId: targetIdentifier
         })
 
-        // 2. DATA_TeminFirma güncellemesi: kazandi_mi VE kazanan_mi birlikte senkronize güncellenir
-        if (resolvedTeminFirmaId !== null) {
-          queries.push({
-            sql: `UPDATE DATA_TeminFirma 
-                  SET kazandi_mi = CASE WHEN id = ? THEN 1 ELSE 0 END,
-                      kazanan_mi = CASE WHEN id = ? THEN 1 ELSE 0 END
-                  WHERE temin_dosya_id = ?`,
-            params: [resolvedTeminFirmaId, resolvedTeminFirmaId, activeDosyaId]
-          })
-        } else {
-          queries.push({
-            sql: 'UPDATE DATA_TeminFirma SET kazandi_mi = 0, kazanan_mi = 0 WHERE temin_dosya_id = ?',
-            params: [activeDosyaId]
-          })
+        if (!result.success) {
+          console.error('Kazanan firma güncellenemedi:', result.error)
+          return
         }
 
-        const txRes = await window.electron.ipcRenderer.invoke('db:transaction', queries)
-        if (!txRes?.success) {
-          throw new Error(txRes?.error || 'Kazanan firma güncelleme transaction hatası')
-        }
-
-        setManualWinnerFirmaId(resolvedMasterFirmaId)
-        if (resolvedMasterFirmaId !== null) {
+        setManualWinnerFirmaId(result.masterFirmaId)
+        if (result.masterFirmaId !== null) {
           setSetLowestFirmAsWinner(false)
         }
 

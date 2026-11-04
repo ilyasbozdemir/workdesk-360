@@ -103,7 +103,29 @@ export const BaseTemplateSchema = z.object({
   isMal: z.boolean().optional(),
   isHizmet: z.boolean().optional(),
   isYapim: z.boolean().optional(),
-  sunulacakMakamAdi: z.string().optional()
+  sunulacakMakamAdi: z.string().optional(),
+  belgeModu: z.enum(['standart', 'koordinasyonlu', 'hizli_onay']).optional(),
+  rota: z
+    .array(
+      z.object({
+        t: z.string().optional(),
+        a: z.string().optional(),
+        u: z.string().optional(),
+        sira: z.number().optional(),
+        tarih: z.string().optional()
+      })
+    )
+    .optional(),
+  koordinasyon: z
+    .array(
+      z.object({
+        adSoyad: z.string().optional(),
+        unvan: z.string().optional(),
+        tarih: z.string().optional(),
+        rol: z.string().optional()
+      })
+    )
+    .optional()
 });
 
 export type BaseTemplate = z.infer<typeof BaseTemplateSchema>;

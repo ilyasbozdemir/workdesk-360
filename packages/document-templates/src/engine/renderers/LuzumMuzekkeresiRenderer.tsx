@@ -1,11 +1,7 @@
 import React from 'react'
-import {
-  LuzumMuzekkeresi,
-  LuzumMuzekkeresiType,
-  TemplateEditProvider
-} from '@temin360/document-templates'
-import { DocumentRendererComponentProps } from '../types/contracts'
-import { TemplateErrorBoundary } from './TemplateErrorBoundary'
+import { LuzumMuzekkeresi, LuzumMuzekkeresiType } from '../../templates/luzum-muzekkeresi'
+import { TemplateEditProvider } from '../../document/TemplateEditContext'
+import { DocumentRendererComponentProps, TemplateErrorBoundary } from '@worksuite-360/document-engine'
 
 /**
  * Lüzum Müzekkeresi Belge Çizicisi (LuzumMuzekkeresiRenderer)
@@ -47,16 +43,14 @@ export function LuzumMuzekkeresiRenderer(
       data-document-page="true"
       data-template-key="luzum_muzekkeresi"
       data-orientation={orientation}
-      className={`bg-white text-slate-900 box-border mx-auto ${
-        isLandscape ? 'w-[297mm] min-h-[210mm]' : 'w-[210mm] min-h-[297mm]'
-      }`}
+      className="luzum-muzekkeresi-wrapper select-text mx-auto"
     >
       <TemplateEditProvider
         isEditing={isEditing}
         onFieldChange={onFieldChange}
-        personelListesi={resolvedPersonelListesi as any[]}
-        firmaListesi={resolvedFirmaListesi as any[]}
-        birimListesi={resolvedBirimListesi as any[]}
+        personelListesi={resolvedPersonelListesi}
+        firmaListesi={resolvedFirmaListesi}
+        birimListesi={resolvedBirimListesi}
         firstPageLimit={resolvedFirstPageLimit}
       >
         <LuzumMuzekkeresi
@@ -71,8 +65,7 @@ export function LuzumMuzekkeresiRenderer(
   if (chrome === 'bare') {
     return (
       <div
-        ref={containerRef}
-        className={`document-renderer-bare inline-block ${className}`.trim()}
+        className={`document-renderer-bare luzum-muzekkeresi-bare ${className}`}
         style={{
           width: isLandscape ? '297mm' : '210mm',
           backgroundColor: '#ffffff',
@@ -85,53 +78,18 @@ export function LuzumMuzekkeresiRenderer(
     )
   }
 
-  const baseWidth = isLandscape ? 1131 : 800
-  const baseHeight = isLandscape ? 800 : 1131
-
-  if (scale !== 1) {
-    return (
-      <div
-        ref={containerRef}
-        className={`flex-1 bg-slate-200/50 dark:bg-slate-950 flex justify-center items-start overflow-x-hidden overflow-y-auto shadow-inner h-full py-8 custom-scrollbar min-h-0 min-w-0 ${className}`.trim()}
-        style={style}
-      >
-        <div
-          style={{
-            width: `${baseWidth * scale}px`,
-            minHeight: `${baseHeight * scale}px`,
-            position: 'relative',
-            flexShrink: 0
-          }}
-        >
-          <div
-            className="bg-white shadow-2xl transition-transform duration-200 ease-out origin-top"
-            style={{
-              transform: `scale(${scale})`,
-              transformOrigin: 'top center',
-              width: `${baseWidth}px`,
-              minHeight: `${baseHeight}px`,
-              position: 'absolute',
-              top: 0,
-              left: '50%',
-              translate: '-50% 0'
-            }}
-          >
-            <TemplateErrorBoundary>{pageContent}</TemplateErrorBoundary>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div
       ref={containerRef}
-      className={`w-full flex justify-center items-start overflow-auto bg-slate-200/50 dark:bg-slate-950 p-4 sm:p-8 custom-scrollbar ${className}`.trim()}
-      style={style}
+      className={`document-renderer-paper luzum-muzekkeresi-paper flex flex-col items-center gap-8 ${className}`}
+      style={{
+        transform: `scale(${scale})`,
+        transformOrigin: 'top center',
+        transition: 'transform 0.15s ease-out',
+        ...style
+      }}
     >
-      <div className="bg-white shadow-2xl rounded-sm overflow-hidden shrink-0">
-        <TemplateErrorBoundary>{pageContent}</TemplateErrorBoundary>
-      </div>
+      <TemplateErrorBoundary>{pageContent}</TemplateErrorBoundary>
     </div>
   )
 }

@@ -1,7 +1,8 @@
 import {
   isMemberVisibleInDocument,
   resolveCommissionCategory,
-  resolveTemplateKey
+  resolveTemplateKey,
+  cleanPersonelName
 } from '@temin360/document-templates'
 import { formatTurkishDate, getIpcKurumBizimText, getIpcKurumIhtiyacYeri } from './documentUtils'
 
@@ -644,16 +645,16 @@ export function resolveDocumentPayload(
       projeAdi: (dosya as any)?.proje_adi || '',
       proje_adi: (dosya as any)?.proje_adi || '',
       antetSatirlari,
-      hazirlayanPersonelAdi: hazirlayanPersonel?.ad_soyad || '',
+      hazirlayanPersonelAdi: cleanPersonelName(hazirlayanPersonel?.ad_soyad),
       hazirlayanPersonelUnvan: hazirlayanPersonel?.unvan || '',
       hazirlayanTelefon: hazirlayanPersonel?.telefon || '',
-      talepEdenPersonelAdi: talepEdenPersonel?.ad_soyad || '',
+      talepEdenPersonelAdi: cleanPersonelName(talepEdenPersonel?.ad_soyad),
       talepEdenPersonelUnvan: talepEdenPersonel?.unvan || '',
       talepEdenTelefon: talepEdenPersonel?.telefon || '',
-      onaylayanPersonelAdi: onaylayanPersonel?.ad_soyad || '',
+      onaylayanPersonelAdi: cleanPersonelName(onaylayanPersonel?.ad_soyad),
       onaylayanPersonelUnvan: onaylayanPersonel?.unvan || '',
       harcamaYetkilisiAdi:
-        onaylayanPersonel?.ad_soyad ||
+        cleanPersonelName(onaylayanPersonel?.ad_soyad) ||
         ((birimListesi as any[]).find((b: any) => b.id === (dosya as any)?.birim_id)
           ?.harcama_yetkilisi_id
           ? (personelListesi as any[]).find(
@@ -794,14 +795,14 @@ export function resolveDocumentPayload(
       komisyon: (() => {
         const eligible = komisyonlar.filter((k: any) => isMemberVisibleInDocument(k, documentId))
         const mapped = eligible.map((k: any) => ({
-          adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
+          adSoyad: cleanPersonelName(k.resolved_ad_soyad || k.ad_soyad),
           unvan: k.resolved_unvan || k.unvan || '',
           gorevi: k.gorev || k.gorevi || 'Üye',
           pozisyonu: k.resolved_unvan || k.unvan || ''
         }))
         const seen = new Set<string>()
         return mapped.filter((item: any) => {
-          const name = (item.adSoyad || '').trim().toLowerCase()
+          const name = cleanPersonelName(item.adSoyad).toLowerCase()
           if (!name || seen.has(name)) return false
           seen.add(name)
           return true
@@ -813,14 +814,14 @@ export function resolveDocumentPayload(
             resolveCommissionCategory(k) === 'maliyet' && isMemberVisibleInDocument(k, documentId)
         )
         const mapped = eligible.map((k: any) => ({
-          adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
+          adSoyad: cleanPersonelName(k.resolved_ad_soyad || k.ad_soyad),
           unvan: k.resolved_unvan || k.unvan || '',
           gorevi: k.gorev || k.gorevi || 'Üye',
           pozisyonu: k.resolved_unvan || k.unvan || ''
         }))
         const seen = new Set<string>()
         return mapped.filter((item: any) => {
-          const name = (item.adSoyad || '').trim().toLowerCase()
+          const name = cleanPersonelName(item.adSoyad).toLowerCase()
           if (!name || seen.has(name)) return false
           seen.add(name)
           return true
@@ -847,14 +848,14 @@ export function resolveDocumentPayload(
         })
         const listToUse = activeOfficers.length > 0 ? activeOfficers : eligible
         const mapped = listToUse.map((k: any) => ({
-          adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
+          adSoyad: cleanPersonelName(k.resolved_ad_soyad || k.ad_soyad),
           unvan: k.resolved_unvan || k.unvan || '',
           gorevi: k.gorev || k.gorevi || 'Fiyat Araştırma Görevlisi',
           pozisyonu: k.resolved_unvan || k.unvan || ''
         }))
         const seen = new Set<string>()
         return mapped.filter((item: any) => {
-          const name = (item.adSoyad || '').trim().toLowerCase()
+          const name = cleanPersonelName(item.adSoyad).toLowerCase()
           if (!name || seen.has(name)) return false
           seen.add(name)
           return true
@@ -881,14 +882,14 @@ export function resolveDocumentPayload(
         })
         const listToUse = activeOfficers.length > 0 ? activeOfficers : eligible
         const mapped = listToUse.map((k: any) => ({
-          adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
+          adSoyad: cleanPersonelName(k.resolved_ad_soyad || k.ad_soyad),
           unvan: k.resolved_unvan || k.unvan || '',
           gorevi: k.gorev || k.gorevi || 'Fiyat Araştırma Görevlisi',
           pozisyonu: k.resolved_unvan || k.unvan || ''
         }))
         const seen = new Set<string>()
         return mapped.filter((item: any) => {
-          const name = (item.adSoyad || '').trim().toLowerCase()
+          const name = cleanPersonelName(item.adSoyad).toLowerCase()
           if (!name || seen.has(name)) return false
           seen.add(name)
           return true
@@ -915,14 +916,14 @@ export function resolveDocumentPayload(
         })
         const listToUse = activeOfficers.length > 0 ? activeOfficers : eligible
         const mapped = listToUse.map((k: any) => ({
-          adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
+          adSoyad: cleanPersonelName(k.resolved_ad_soyad || k.ad_soyad),
           unvan: k.resolved_unvan || k.unvan || '',
           gorevi: k.gorev || k.gorevi || 'Fiyat Araştırma Görevlisi',
           pozisyonu: k.resolved_unvan || k.unvan || ''
         }))
         const seen = new Set<string>()
         return mapped.filter((item: any) => {
-          const name = (item.adSoyad || '').trim().toLowerCase()
+          const name = cleanPersonelName(item.adSoyad).toLowerCase()
           if (!name || seen.has(name)) return false
           seen.add(name)
           return true
@@ -934,14 +935,14 @@ export function resolveDocumentPayload(
             resolveCommissionCategory(k) === 'muayene' && isMemberVisibleInDocument(k, documentId)
         )
         const mapped = eligible.map((k: any) => ({
-          adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
+          adSoyad: cleanPersonelName(k.resolved_ad_soyad || k.ad_soyad),
           unvan: k.resolved_unvan || k.unvan || '',
           gorevi: k.gorev || k.gorevi || 'Üye',
           pozisyonu: k.resolved_unvan || k.unvan || ''
         }))
         const seen = new Set<string>()
         return mapped.filter((item: any) => {
-          const name = (item.adSoyad || '').trim().toLowerCase()
+          const name = cleanPersonelName(item.adSoyad).toLowerCase()
           if (!name || seen.has(name)) return false
           seen.add(name)
           return true

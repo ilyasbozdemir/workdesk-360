@@ -3,6 +3,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  Navigate,
 } from "@tanstack/react-router";
 import { PageWrapper } from "./components/layout/PageWrapper";
 import { APP_ROUTES } from "./constants/routeConstants";
@@ -466,8 +467,8 @@ const profilRoute = createRoute({
 
 const dosyaRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: APP_ROUTES.DOSYA_DETAY,
-  component: TakipScreen,
+  path: '/dosya',
+  component: () => <Navigate to={APP_ROUTES.TAKIP} replace />,
 });
 
 const dosyaKunyeRoute = createRoute({

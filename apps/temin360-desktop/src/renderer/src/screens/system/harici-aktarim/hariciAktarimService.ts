@@ -747,12 +747,26 @@ export async function executeDossierEzmeSync(
           const firmaAdi = t.firma.trim()
 
           // TANIM_Firma.unvan gerçek şemada UNIQUE değil; INSERT OR IGNORE her aktarımda mükerrer
-          // kayıt üretirdi. Bu yüzden yalnızca aynı unvan yoksa ekleniyor.
+          // kayıt üretirdi. Bu yüzden vergi_no veya case-insensitive unvan eşleşmesi yoksa ekleniyor.
+          const cleanVergiNo = t.vergiNo ? t.vergiNo.trim() : null
           txQueries.push({
             sql: `INSERT INTO TANIM_Firma (unvan, vergi_no, telefon, adres)
                   SELECT ?, ?, ?, ?
-                  WHERE NOT EXISTS (SELECT 1 FROM TANIM_Firma WHERE unvan = ?)`,
-            params: [firmaAdi, t.vergiNo || null, t.iletisim || null, t.yer || null, firmaAdi]
+                  WHERE NOT EXISTS (
+                    SELECT 1 FROM TANIM_Firma
+                    WHERE LOWER(TRIM(unvan)) = LOWER(TRIM(?))
+                       OR (? IS NOT NULL AND TRIM(?) != '' AND vergi_no = TRIM(?))
+                  )`,
+            params: [
+              firmaAdi,
+              cleanVergiNo,
+              t.iletisim || null,
+              t.yer || null,
+              firmaAdi,
+              cleanVergiNo,
+              cleanVergiNo,
+              cleanVergiNo
+            ]
           })
 
           const isKazanan =
@@ -774,15 +788,24 @@ export async function executeDossierEzmeSync(
               davet_tarihi, teklif_tarihi
             ) VALUES (
               ?, ?,
-              COALESCE((SELECT id FROM TANIM_Firma WHERE unvan = ? LIMIT 1), 0),
+              COALESCE(
+                (SELECT id FROM TANIM_Firma
+                 WHERE (? IS NOT NULL AND TRIM(?) != '' AND vergi_no = TRIM(?))
+                    OR LOWER(TRIM(unvan)) = LOWER(TRIM(?))
+                 ORDER BY id ASC LIMIT 1),
+                0
+              ),
               ?, ?, ?, 1, ?, ?, ?, ?, ?, ?
             )`,
             params: [
               targetDosyaParam,
               targetDosyaParam,
+              cleanVergiNo,
+              cleanVergiNo,
+              cleanVergiNo,
               firmaAdi,
               firmaAdi,
-              t.vergiNo || null,
+              cleanVergiNo,
               t.iletisim || null,
               t.tutarKdvHaric || 0,
               isKazanan,

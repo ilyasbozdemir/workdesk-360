@@ -12,10 +12,11 @@ import {
 } from './lock-screen'
 
 export default function LockScreen(): React.JSX.Element {
-  const { fileName, setIsAuthenticated, closeWorkspace } = useWorkspaceStore()
+  const { fileName, setIsAuthenticated, closeWorkspace, activeMeta } = useWorkspaceStore()
   const { institutionName, institutionLogo, logoLeft, logoRight, loadSettings } = useSettingsStore()
 
   const [isSetupMode, setIsSetupMode] = useState(false)
+  const [isKnownDevice, setIsKnownDevice] = useState(true)
   const [rememberMe, setRememberMe] = useState(false)
   const [recoveryStep, setRecoveryStep] = useState<
     'login' | 'send_code' | 'verify_code' | 'reset_password'
@@ -59,6 +60,9 @@ export default function LockScreen(): React.JSX.Element {
         const isFresh = res && !res.hasCredentials
         if (isFresh) {
           setIsSetupMode(true)
+        }
+        if (res && typeof res.isKnownDevice === 'boolean') {
+          setIsKnownDevice(res.isKnownDevice)
         }
         const info = await window.electron.ipcRenderer.invoke('system:get-pc-info')
         if (info) {
@@ -239,7 +243,11 @@ export default function LockScreen(): React.JSX.Element {
     if (recoveryStep === 'send_code') return 'Şifre Kurtarma'
     if (recoveryStep === 'verify_code') return 'Kodu Doğrula'
     if (recoveryStep === 'reset_password') return 'Şifre Sıfırlama'
-    return institutionName || 'Kurum Dosyası Girişi'
+    return (
+      activeMeta?.institution ||
+      (institutionName && institutionName !== 'Kurum Bilgisi Bekleniyor...' ? institutionName : '') ||
+      'Kurum Dosyası Girişi'
+    )
   }
 
   // Pick a logo: institutionLogo fallback to logoLeft, then logoRight
@@ -279,6 +287,7 @@ export default function LockScreen(): React.JSX.Element {
         {recoveryStep === 'login' && (
           <LockScreenLoginForm
             isSetupMode={isSetupMode}
+            isKnownDevice={isKnownDevice}
             username={username}
             setUsername={setUsername}
             password={password}

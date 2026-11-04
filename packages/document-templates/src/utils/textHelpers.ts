@@ -230,11 +230,11 @@ export function toIsoDate(trDateStr?: string | null): string {
   if (!trDateStr) return new Date().toISOString().split("T")[0];
   const clean = String(trDateStr).trim();
   if (/^\d{4}-\d{2}-\d{2}/.test(clean)) {
-    return clean.split(" ")[0];
+    return clean.split("T")[0].split(" ")[0];
   }
   if (/^\d{2}\.\d{2}\.\d{4}/.test(clean)) {
-    const [d, m, y] = clean.split(".");
-    return `${y}-${m}-${d}`;
+    const [d, m, y] = clean.substring(0, 10).split(".");
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
   }
   try {
     const dt = new Date(clean);
@@ -246,7 +246,8 @@ export function toIsoDate(trDateStr?: string | null): string {
 }
 
 /**
- * Tarihi Türkçe GG.AA.YYYY formatına dönüştürür (String, Date veya timestamp kabul eder).
+ * Tarihi Türkçe GG.AA.YYYY (resmi yazışma mevzuatına uygun) formatına dönüştürür.
+ * Yıl-ay-gün (YYYY-MM-DD) veya ISO formatlarını kesinlikle Türk resmi formatına çevirir.
  */
 export function toTrDate(isoOrStr?: any): string {
   if (!isoOrStr) return "";
@@ -259,11 +260,14 @@ export function toTrDate(isoOrStr?: any): string {
   }
   const clean = String(isoOrStr).trim();
   if (/^\d{4}-\d{2}-\d{2}/.test(clean)) {
-    const [y, m, d] = clean.split(" ")[0].split("-");
-    return `${d}.${m}.${y}`;
+    const datePart = clean.split("T")[0].split(" ")[0];
+    const [y, m, d] = datePart.split("-");
+    if (y && m && d) {
+      return `${d.padStart(2, "0")}.${m.padStart(2, "0")}.${y}`;
+    }
   }
   if (/^\d{2}\.\d{2}\.\d{4}/.test(clean)) {
-    return clean;
+    return clean.substring(0, 10);
   }
   try {
     const dt = new Date(clean);
@@ -290,4 +294,59 @@ export function formatUnvan(unvan?: string): string {
     return trimmed;
   }
   return `(${trimmed})`;
+}
+
+
+/**
+ * Personel Ad ve Soyadını temizler, olası çift isim ve parantezli unvan tekrarlarını giderir.
+ * Örnekler:
+ * - "Ahmet Yılmaz (Ahmet Yılmaz)" -> "Ahmet Yılmaz"
+ * - "Ahmet Yılmaz (Mühendis)" -> "Ahmet Yılmaz"
+ * - "Ahmet Yılmaz Ahmet Yılmaz" -> "Ahmet Yılmaz"
+ * - "Ali Veli Kaya Ali Veli Kaya" -> "Ali Veli Kaya"
+ * - "Mehmet Demir / Mehmet Demir" -> "Mehmet Demir"
+ * - "Ahmet Yılmaz Yılmaz" -> "Ahmet Yılmaz"
+ */
+export function cleanPersonelName(name?: string | null): string {
+  if (!name || typeof name !== "string") return "";
+  let cleaned = name.trim();
+
+  // 1. Parantez içi temizliği: parantez içini kaldır
+  if (cleaned.includes("(")) {
+    cleaned = cleaned.split("(")[0].trim();
+  }
+
+  // 2. Çoklu boşlukları teke indir
+  cleaned = cleaned.replace(/\s+/g, " ");
+
+  // 3. / veya - ile ayrılmış çift isim tekrarı: "Ahmet Yılmaz / Ahmet Yılmaz"
+  if (cleaned.includes("/") || cleaned.includes(" - ")) {
+    const parts = cleaned.split(/[/]|(\s+-\s+)/).filter(Boolean).map((p) => p.trim());
+    if (parts.length >= 2 && parts[0].toLowerCase() === parts[parts.length - 1].toLowerCase()) {
+      cleaned = parts[0];
+    }
+  }
+
+  // 4. Birebir çift tekrarlanan isimler:
+  // "Ahmet Yılmaz Ahmet Yılmaz" -> 4 kelime -> 2 + 2 eşit -> "Ahmet Yılmaz"
+  // "Ali Veli Ali Veli" -> 4 kelime -> 2 + 2 eşit -> "Ali Veli"
+  // "Ali Ali" -> 2 kelime -> 1 + 1 eşit -> "Ali"
+  const words = cleaned.split(" ").filter(Boolean);
+  if (words.length >= 2 && words.length % 2 === 0) {
+    const half = words.length / 2;
+    const firstHalf = words.slice(0, half).join(" ");
+    const secondHalf = words.slice(half).join(" ");
+    if (firstHalf.localeCompare(secondHalf, "tr", { sensitivity: "accent" }) === 0) {
+      cleaned = firstHalf;
+    }
+  } else if (words.length >= 3) {
+    // Son kelime (soyad) iki kere tekrarlanmışsa: "Ahmet Yılmaz Yılmaz"
+    const lastWord = words[words.length - 1];
+    const prevWord = words[words.length - 2];
+    if (lastWord.toLowerCase() === prevWord.toLowerCase()) {
+      cleaned = words.slice(0, -1).join(" ");
+    }
+  }
+
+  return cleaned.trim();
 }

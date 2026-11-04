@@ -18,15 +18,15 @@ export function ResmiUstYaziTab(props: ResmiUstYaziTabProps = {}): React.JSX.Ele
   const { activeRightTab, setActiveRightTab } = ustYazi
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl text-slate-100 shadow-xl">
+    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-slate-100 shadow-xl">
       {/* SOL: DÜZENLEME & FORM PANELİ */}
       <UstYaziFormPanel {...ustYazi} />
 
       {/* SAĞ: ÖNİZLEME & ROTA AKIŞI GÖRÜNÜMÜ */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Görünüm Sekmeleri */}
-        <div className="px-6 py-3 border-b border-slate-800 bg-slate-950/70 flex items-center justify-between shrink-0">
-          <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+        <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 flex items-center justify-between shrink-0">
+          <div className="flex bg-slate-200/70 dark:bg-slate-950 p-1 rounded-xl border border-slate-300/80 dark:border-slate-800 text-xs font-semibold">
             <button
               type="button"
               onClick={() => setActiveRightTab('onizleme')}
@@ -52,7 +52,7 @@ export function ResmiUstYaziTab(props: ResmiUstYaziTabProps = {}): React.JSX.Ele
             </button>
           </div>
 
-          <div className="text-xs text-slate-500 flex items-center gap-1.5">
+          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <ShieldCheck size={14} className="text-emerald-500" />
             <span>Resmî Yazışma Yönetmeliği Esaslarına Uygun</span>
           </div>

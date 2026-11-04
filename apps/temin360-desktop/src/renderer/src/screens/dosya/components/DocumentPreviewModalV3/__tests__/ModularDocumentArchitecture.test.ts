@@ -3,13 +3,17 @@ import {
   TemplateRegistry,
   InvalidTemplateKeyError,
   InstitutionalHeaderProvider,
-  LuzumMuzekkeresiResolver,
-  IhtiyacListesiResolver,
   DocumentEngine
 } from '@worksuite-360/document-engine'
+import {
+  registerTeminTemplates,
+  LuzumMuzekkeresiResolver,
+  IhtiyacListesiResolver
+} from '@temin360/document-templates'
 
 describe('Mimari Refaktör - Modüler Belge Çözümleme ve Tip Güvenli Engine', () => {
   beforeEach(() => {
+    registerTeminTemplates()
     InstitutionalHeaderProvider.clearCache()
     vi.restoreAllMocks()
   })
@@ -227,4 +231,3 @@ describe('Mimari Refaktör - Modüler Belge Çözümleme ve Tip Güvenli Engine'
     })
   })
 })
-

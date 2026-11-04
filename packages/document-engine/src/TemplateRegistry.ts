@@ -1,132 +1,117 @@
-import React from 'react'
-import {
-  TemplateKey,
-  resolveTemplateKey,
-  templateRegistry as baseTemplateRegistry
-} from '@temin360/document-templates'
 import { DocumentDefinition } from './types/contracts'
-import { LuzumMuzekkeresiResolver } from './resolvers/LuzumMuzekkeresiResolver'
-import { LuzumMuzekkeresiRenderer } from './renderers/LuzumMuzekkeresiRenderer'
-import { IhtiyacListesiResolver } from './resolvers/IhtiyacListesiResolver'
-import { IhtiyacListesiRenderer } from './renderers/IhtiyacListesiRenderer'
-import { DefaultDocumentResolver } from './resolvers/DefaultDocumentResolver'
-import { DefaultDocumentRenderer } from './renderers/DefaultDocumentRenderer'
 
-export class InvalidTemplateKeyError extends Error {
+/**
+ * Mükerrer Şablon Kayıt Hatası
+ */
+export class DuplicateTemplateRegistrationError extends Error {
+  readonly templateKey: string
+
   constructor(templateKey: string) {
-    super(`Bilinmeyen veya geçersiz şablon kimliği: "${templateKey}". Kayıtlı bir şablon bulunamadı.`)
-    this.name = 'InvalidTemplateKeyError'
+    super(
+      `Şablon zaten kayıtlı: "${templateKey}". Aynı anahtarla mükerrer kayıt yapılamaz. Yeniden yazmak için { allowOverride: true } seçeneğini kullanınız.`
+    )
+    this.name = 'DuplicateTemplateRegistrationError'
+    this.templateKey = templateKey
   }
 }
 
 /**
- * Bağımsız Belge Şablon Kayıt Defteri (TemplateRegistry)
- * - Her şablonun kendine ait resolver, renderer ve metadata kaydını tutar.
- * - Bilinmeyen anahtarlar için açık hata fırlatır; sessiz yönlendirme yapmaz.
+ * Geçersiz veya Bilinmeyen Şablon Hatası
+ */
+export class InvalidTemplateKeyError extends Error {
+  readonly templateKey: string
+
+  constructor(templateKey: string) {
+    super(`Bilinmeyen veya geçersiz şablon kimliği: "${templateKey}". Kayıtlı bir şablon bulunamadı.`)
+    this.name = 'InvalidTemplateKeyError'
+    this.templateKey = templateKey
+  }
+}
+
+/**
+ * Kayıt Seçenekleri
+ */
+export interface RegisterOptions {
+  /**
+   * Zaten kayıtlı bir şablon anahtarı varsa üzerine yazmaya izin verir.
+   * Varsayılan: false (DuplicateTemplateRegistrationError fırlatılır).
+   */
+  allowOverride?: boolean
+}
+
+/**
+ * Bağımsız, Instance Tabanlı ve Duplicate Korumalı Şablon Kayıt Defteri (TemplateRegistry)
+ * - Herhangi bir sektörel veya uygulamaya özgü şablon bilgisi içermez.
+ * - Çoklu uygulama izolasyonu için 'new TemplateRegistry()' ile örneklenebilir.
+ * - Varsayılan küresel tekil deftere 'TemplateRegistry.default' üzerinden erişilebilir.
+ * - Aynı anahtarla mükerrer kayıt yapılmasını varsayılan olarak engeller.
  */
 export class TemplateRegistry {
-  private static definitions = new Map<string, DocumentDefinition<any>>()
-  private static isInitialized = false
+  private definitions = new Map<string, DocumentDefinition<any>>()
 
   /**
-   * Varsayılan şablonları kayıt defterine yükler (Lazy initialization)
+   * Şablon anahtarlarını kanonik formata normalize eder (.html silinir, kırpılır, küçük harfe dönüştürülür).
    */
-  static init(): void {
-    if (this.isInitialized) return
+  static normalizeKey(key: string): string {
+    if (!key || typeof key !== 'string') return ''
+    return key
+      .trim()
+      .toLowerCase()
+      .replace(/\.html$/i, '')
+      .replace(/\.mustache$/i, '')
+  }
 
-    // 1. Pilot Belge: Lüzum Müzekkeresi (Tam İzolasyon)
-    this.registerInternal({
-      templateKey: 'luzum_muzekkeresi',
-      name: 'LuzumMuzekkeresi',
-      title: 'Standart Form: Lüzum Müzekkeresi',
-      category: '1-ihtiyac-tespiti-ve-baslangic',
-      categoryLabel: 'Hazırlık & İhtiyaç',
-      description: 'Harcama yetkilisinden alım onayının talep edildiği resmî başlangıç müzekkeresi',
-      orientation: 'portrait',
-      resolver: new LuzumMuzekkeresiResolver(),
-      renderer: LuzumMuzekkeresiRenderer,
-      requiredProviders: ['institutionalHeader', 'items']
-    })
-
-    // 2. Çekirdek Belge: İhtiyaç Listesi (Tam İzolasyon)
-    this.registerInternal({
-      templateKey: 'ihtiyac_listesi',
-      name: 'IhtiyacListesi',
-      title: 'Standart Form: İhtiyaç Listesi Cetveli',
-      category: '1-ihtiyac-tespiti-ve-baslangic',
-      categoryLabel: 'Hazırlık & İhtiyaç',
-      description: 'Alımı yapılacak mal/hizmet kalemlerinin detaylı ihtiyaç tablosu',
-      orientation: 'portrait',
-      resolver: new IhtiyacListesiResolver(),
-      renderer: IhtiyacListesiRenderer,
-      requiredProviders: ['institutionalHeader', 'items']
-    })
-
-    // 3. Diğer Şablonlar (Kademeli Geçiş Adaptörü)
-    if (baseTemplateRegistry) {
-      const baseKeys = Object.keys(baseTemplateRegistry) as TemplateKey[]
-      for (const key of baseKeys) {
-        const canonicalKey = (resolveTemplateKey(key) as string) || key
-        if (!this.definitions.has(canonicalKey)) {
-          const baseDef = (baseTemplateRegistry as any)[key]
-          if (baseDef) {
-            const defaultResolver = new DefaultDocumentResolver()
-            const defaultRenderer = (props: any) =>
-              React.createElement(DefaultDocumentRenderer, { ...props, templateKey: key })
-
-            this.registerInternal({
-              templateKey: key,
-              name: baseDef.name || key,
-              title: baseDef.title || key,
-              category: baseDef.category || 'diger',
-              categoryLabel: baseDef.categoryLabel || 'Diğer',
-              description: baseDef.description || '',
-              orientation: baseDef.orientation || 'portrait',
-              resolver: defaultResolver,
-              renderer: defaultRenderer
-            })
-          }
-        }
-      }
+  /**
+   * Yeni bir belge tanımı kaydeder.
+   * Mükerrer kayıt durumunda allowOverride: true verilmedikçe DuplicateTemplateRegistrationError fırlatır.
+   */
+  register<TData = any>(def: DocumentDefinition<TData>, options: RegisterOptions = {}): void {
+    if (!def || !def.templateKey) {
+      throw new Error('Geçersiz şablon tanımı: templateKey zorunludur.')
     }
 
-    this.isInitialized = true
-  }
+    const canonical = TemplateRegistry.normalizeKey(def.templateKey)
+    if (!canonical) {
+      throw new Error(`Geçersiz şablon anahtarı: "${def.templateKey}"`)
+    }
 
-  private static registerInternal<TData>(def: DocumentDefinition<TData>): void {
-    const canonicalKey = (resolveTemplateKey(def.templateKey) as string) || def.templateKey
-    this.definitions.set(canonicalKey, def)
-    this.definitions.set(def.templateKey, def)
-    this.definitions.set(def.templateKey.replace(/_/g, '-'), def)
-    this.definitions.set(def.templateKey.replace(/-/g, '_'), def)
+    if (this.has(canonical) && !options.allowOverride) {
+      throw new DuplicateTemplateRegistrationError(def.templateKey)
+    }
+
+    // Ana tanımı sakla
+    this.definitions.set(canonical, def)
+
+    // snake_case ve kebab-case alternatiflerini bağla
+    const snake = canonical.replace(/-/g, '_')
+    const kebab = canonical.replace(/_/g, '-')
+    this.definitions.set(snake, def)
+    this.definitions.set(kebab, def)
   }
 
   /**
-   * Yeni bir belge tanımı kaydeder
+   * Birden fazla belge tanımını topluca kaydeder.
    */
-  static register<TData>(def: DocumentDefinition<TData>): void {
-    this.init()
-    this.registerInternal(def)
+  registerMany(defs: DocumentDefinition<any>[], options: RegisterOptions = {}): void {
+    for (const def of defs) {
+      this.register(def, options)
+    }
   }
 
   /**
-   * Şablon anahtarına göre belge tanımını getirir.
-   * Bilinmeyen anahtarlarda açık InvalidTemplateKeyError fırlatır.
+   * Belirtilen şablon anahtarına ait belge tanımını getirir.
+   * Şablon bulunamazsa InvalidTemplateKeyError fırlatır.
    */
-  static get<TData = any>(templateKey: string): DocumentDefinition<TData> {
-    this.init()
+  get<TData = any>(templateKey: string): DocumentDefinition<TData> {
     if (!templateKey || typeof templateKey !== 'string' || templateKey.trim() === '') {
       throw new InvalidTemplateKeyError(String(templateKey))
     }
 
-    const cleanKey = templateKey.replace(/\.html$/i, '').trim()
-    const canonical = (resolveTemplateKey(cleanKey) as string) || cleanKey
-
+    const canonical = TemplateRegistry.normalizeKey(templateKey)
     const found =
       this.definitions.get(canonical) ||
-      this.definitions.get(cleanKey) ||
-      this.definitions.get(cleanKey.replace(/-/g, '_')) ||
-      this.definitions.get(cleanKey.replace(/_/g, '-'))
+      this.definitions.get(canonical.replace(/-/g, '_')) ||
+      this.definitions.get(canonical.replace(/_/g, '-'))
 
     if (!found) {
       throw new InvalidTemplateKeyError(templateKey)
@@ -136,38 +121,115 @@ export class TemplateRegistry {
   }
 
   /**
-   * Şablonun kayıtlı olup olmadığını kontrol eder
+   * Belirtilen şablonun kayıtlı olup olmadığını kontrol eder.
    */
-  static has(templateKey: string): boolean {
-    this.init()
-    if (!templateKey) return false
-    const cleanKey = templateKey.replace(/\.html$/i, '').trim()
-    const canonical = (resolveTemplateKey(cleanKey) as string) || cleanKey
+  has(templateKey: string): boolean {
+    if (!templateKey || typeof templateKey !== 'string' || templateKey.trim() === '') {
+      return false
+    }
+
+    const canonical = TemplateRegistry.normalizeKey(templateKey)
     return (
       this.definitions.has(canonical) ||
-      this.definitions.has(cleanKey) ||
-      this.definitions.has(cleanKey.replace(/-/g, '_')) ||
-      this.definitions.has(cleanKey.replace(/_/g, '-'))
+      this.definitions.has(canonical.replace(/-/g, '_')) ||
+      this.definitions.has(canonical.replace(/_/g, '-'))
     )
   }
 
   /**
-   * Tüm kayıtlı belge tanımlarını döner
+   * Kayıtlı tüm tekil belge tanımlarını döner.
    */
-  static getAll(): DocumentDefinition[] {
-    this.init()
-    const unique = new Map<TemplateKey | string, DocumentDefinition>()
-    this.definitions.forEach((def) => {
-      unique.set(def.templateKey, def)
-    })
+  getAll(): DocumentDefinition[] {
+    const unique = new Map<string, DocumentDefinition>()
+    for (const def of this.definitions.values()) {
+      unique.set(TemplateRegistry.normalizeKey(def.templateKey), def)
+    }
     return Array.from(unique.values())
   }
 
   /**
-   * Testler ve sıfırlama için defteri temizler
+   * Belirtilen şablonu kayıt defterinden kaldırır.
+   */
+  unregister(templateKey: string): boolean {
+    const canonical = TemplateRegistry.normalizeKey(templateKey)
+    if (!canonical) return false
+
+    const snake = canonical.replace(/-/g, '_')
+    const kebab = canonical.replace(/_/g, '-')
+
+    const had = this.definitions.has(canonical)
+    this.definitions.delete(canonical)
+    this.definitions.delete(snake)
+    this.definitions.delete(kebab)
+    return had
+  }
+
+  /**
+   * Kayıt defterini tamamen temizler.
+   */
+  clear(): void {
+    this.definitions.clear()
+  }
+
+  // =========================================================================
+  // KÜRESEL VARSAYILAN TEKİL ERİŞİM VE GERİYE DÖNÜK UYUMLULUK KÖPRÜSÜ
+  // =========================================================================
+
+  private static defaultInstance: TemplateRegistry = new TemplateRegistry()
+
+  /**
+   * Küresel varsayılan kayıt defteri örneğini döner.
+   */
+  static get default(): TemplateRegistry {
+    return this.defaultInstance
+  }
+
+  /**
+   * Varsayılan kayıt defterine şablon ekler.
+   */
+  static register<TData = any>(def: DocumentDefinition<TData>, options?: RegisterOptions): void {
+    this.defaultInstance.register(def, options)
+  }
+
+  /**
+   * Varsayılan kayıt defterine topluca şablon ekler.
+   */
+  static registerMany(defs: DocumentDefinition<any>[], options?: RegisterOptions): void {
+    this.defaultInstance.registerMany(defs, options)
+  }
+
+  /**
+   * Varsayılan kayıt defterinden şablon çeker.
+   */
+  static get<TData = any>(templateKey: string): DocumentDefinition<TData> {
+    return this.defaultInstance.get(templateKey)
+  }
+
+  /**
+   * Varsayılan kayıt defterinde şablonun varlığını kontrol eder.
+   */
+  static has(templateKey: string): boolean {
+    return this.defaultInstance.has(templateKey)
+  }
+
+  /**
+   * Varsayılan kayıt defterindeki tüm şablonları döner.
+   */
+  static getAll(): DocumentDefinition[] {
+    return this.defaultInstance.getAll()
+  }
+
+  /**
+   * Varsayılan kayıt defterinden şablon siler.
+   */
+  static unregister(templateKey: string): boolean {
+    return this.defaultInstance.unregister(templateKey)
+  }
+
+  /**
+   * Varsayılan kayıt defterini sıfırlar.
    */
   static clear(): void {
-    this.isInitialized = false
-    this.definitions.clear()
+    this.defaultInstance.clear()
   }
 }

@@ -5,6 +5,7 @@
 @custom-variant short (@media (max-height: 720px));
 
 :root {
+  color-scheme: light;
   /* Dynamic CSS variable mappings for Light Mode (Crisp Grayscale Default) */
   --theme-primary: var(--accent-200, #18181b);
   --theme-primary-hover: var(--accent-100, #27272a);
@@ -39,16 +40,17 @@
 }
 
 .dark {
+  color-scheme: dark;
   /* Dynamic CSS variable mappings for Dark Mode */
   --theme-primary: var(--accent-100, #3b82f6);
   --theme-primary-hover: var(--accent-200, #2563eb);
-  --theme-bg-100: var(--bg-100, #09090b);
-  --theme-bg-200: var(--bg-200, #18181b);
-  --theme-bg-300: var(--bg-300, #09090b);
-  --theme-text-100: var(--text-100, #f4f4f5);
-  --theme-text-200: var(--text-200, #a1a1aa);
-  --theme-border-100: var(--primary-100, #27272a);
-  --theme-border-200: var(--primary-200, #3f3f46);
+  --theme-bg-100: var(--bg-100-dark, #09090b);
+  --theme-bg-200: var(--bg-200-dark, #18181b);
+  --theme-bg-300: var(--bg-300-dark, #09090b);
+  --theme-text-100: var(--text-100-dark, #f4f4f5);
+  --theme-text-200: var(--text-200-dark, #a1a1aa);
+  --theme-border-100: var(--primary-100-dark, #27272a);
+  --theme-border-200: var(--primary-200-dark, #3f3f46);
 
   /* Sidebar styling variables (Customizable dark defaults if not overridden) */
   --theme-sidebar-bg: var(--sidebar-bg, #09090b);
@@ -59,10 +61,6 @@
   --theme-sidebar-active-bg: var(--sidebar-active-bg, rgba(255, 255, 255, 0.08));
   --theme-sidebar-active-text: var(--sidebar-active-text, #ffffff);
   --theme-sidebar-active-border: var(--theme-sidebar-active-border, rgba(255, 255, 255, 0.15));
-
-  --color-slate-900: var(--theme-bg-100);
-  --color-slate-950: var(--theme-bg-300);
-  --color-slate-800: var(--theme-bg-200);
 }
 
 @layer utilities {
@@ -101,6 +99,13 @@ select:not(:disabled),
   user-select: text !important;
   -webkit-user-select: text !important;
   pointer-events: auto !important;
+}
+
+select,
+option,
+input,
+textarea {
+  color-scheme: inherit;
 }
 
 button:not(:disabled),

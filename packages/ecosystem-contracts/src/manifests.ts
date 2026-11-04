@@ -308,23 +308,48 @@ export const BELGE_360_MANIFEST: AppManifest = {
 }
 
 /**
- * Arşiv 360: Bağımsız katalog uygulaması yerine Evraktron bünyesinde bir
- * "Arşiv Modülü" olarak konumlandırılmıştır.
+ * Arşiv 360: Karışık duran dosyaları taşımadan/yeniden adlandırmadan
+ * kurallara göre "sanal klasörler" halinde gösteren portable Windows masaüstü uygulaması.
  */
 export const ARSIV_360_MANIFEST: AppManifest = {
   id: 'arsiv-360',
   name: 'Arşiv 360',
-  version: '0.1.0-planned',
-  summary: 'Dosya ve Kayıt Arşivleme, Arama ve Güvenli Saklama (Evraktron Arşiv Modülü)',
+  version: '1.0.0',
+  summary: 'Taşınabilir Akıllı Sanal Klasör ve Belge Yönetim Sistemi',
   description:
-    'Evraktron bünyesindeki Arşiv Modülü ile tamamlanan ihale, doğrudan temin ve mali belgelerin dijital arşiv standartlarında (.etap) saklanması, indekslenmesi ve hızlı erişimi.',
+    'Dosyaları taşımadan ve yeniden adlandırmadan kurallara dayalı sanal klasörler halinde düzenleyen, canlı izleme ve Fuse.js arama özellikli portable Windows masaüstü uygulaması.',
   category: 'archive',
   appId: 'dev.ilyasbozdemir.arsiv360',
   executableName: 'Arsiv360.exe',
-  fileAssociations: [],
-  installState: 'planned',
-  modules: ['Dijital Arşiv (.etap)', 'Kutu/Klasör Barkodlama', 'Tarihsel Erişim'],
-  releaseChannel: 'planned',
+  fileAssociations: [
+    {
+      ext: 'arsiv',
+      name: 'Arşiv 360 İndeks Dosyası',
+      description: 'Arşiv 360 Akıllı İndeks ve Sanal Klasör Dosyası',
+      mimeType: 'application/x-arsiv',
+      progId: 'Arsiv360.Document',
+      perceivedType: 'document',
+      isPrimary: true
+    },
+    {
+      ext: 'arsiv360',
+      name: 'Arşiv 360 Veritabanı',
+      description: 'Arşiv 360 Taşınabilir Veritabanı ve Proje Dosyası',
+      mimeType: 'application/x-arsiv360',
+      progId: 'Arsiv360.Document',
+      perceivedType: 'document',
+      isPrimary: false
+    }
+  ],
+  installState: 'installed',
+  modules: [
+    'Sanal Klasör Kural Motoru',
+    'Chokidar Canlı Klasör İzleme',
+    'Tembel SHA-256 & Duplicate Tespiti',
+    'Fuse.js Anlık Filtreleme & Arama',
+    'Etiketleme & SQLite İndeksi'
+  ],
+  releaseChannel: 'stable',
   minEcosystemVersion: '1.0.0',
   author: 'ilyasbozdemir.dev',
   repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360'
@@ -379,6 +404,7 @@ export const DEFAULT_ECOSYSTEM_MANIFESTS: AppManifest[] = [
   HARITA_360_MANIFEST,
   PERSONEL_360_MANIFEST,
   BELGE_360_MANIFEST,
+  ARSIV_360_MANIFEST,
   EVRAKTRON_MANIFEST
 ]
 

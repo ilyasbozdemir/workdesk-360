@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { YaklasikMaliyetCetveliData } from "./YaklasikMaliyetCetveli.schema";
-import { formatMoney } from "../../utils/textHelpers";
+import { formatMoney, toTrDate } from "../../utils/textHelpers";
 
 export interface ProcessedKalem {
   siraNo: number;
@@ -108,14 +108,15 @@ export function useYaklasikMaliyetCetveli(
       raw.isinTanimi ||
       raw.dosyaKonusu ||
       "";
-    const tarih =
+    const tarih = toTrDate(
       raw.tarih ||
       raw.dosyaTarihi ||
       raw.acilisTarihi ||
       raw.dosyaAcilisTarihi ||
       raw.onayTarihi ||
       raw.onayaSunulanTarih ||
-      "";
+      ""
+    );
 
     // 3. Antet satırları
     const antetLines: string[] = (raw.antetSatirlari &&
@@ -499,12 +500,13 @@ export function useYaklasikMaliyetCetveli(
         : "en düşük fiyatlar");
 
     const olurBaslik = raw.olurBaslik || "O L U R";
-    const olurTarihi =
+    const olurTarihi = toTrDate(
       raw.olurTarihi ||
       raw.onayTarihi ||
       raw.tarih ||
       raw.dosyaTarihi ||
-      "";
+      ""
+    );
     const baskanAdi =
       raw.baskanAdi ||
       raw.onaylayanPersonelAdi ||

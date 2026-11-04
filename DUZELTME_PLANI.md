@@ -17,6 +17,17 @@
   - Kazanan firma seçimi ile `yaklasik_maliyet` hesabı birbirinden tamamen ayrıldı.
 - [x] **`decimalUtils.ts` Global Kirlilik İzolasyonu:**
   - Global `Decimal.set(...)` çağrısı kaldırılarak `Decimal.clone()` ile modüle özel `ToolDecimal` izole edildi.
+- [x] **E2E Testleri ve CI/CD Başlatma Zaman Aşımı (Timeout) Kök Neden Çözümü:**
+  - `javascript-obfuscator` Vite eklentisi Rollup'ın `generateBundle` aşamasındaki henüz çözümlenmemiş dinamik import yer tutucularını (`!~{...}~`) base64 string dizisine dönüştürerek Rollup'ın yer tutucu çözümlemesini engelliyordu. Bu durum çalışma zamanında `PageWrapper` altında `DisclaimerModal-!~{021}~.js` 404 hatasına ve tüm ekranların çökmesine yol açıyordu. Obfuscation `writeBundle` aşamasına taşındı, test/CI ortamında gereksiz obfuscation atlandı ve `DisclaimerModal` statik import'a geçirildi.
+  - GitHub Actions `windows-2022` gibi sanal/headless CI koşucularında fiziksel GPU bulunmadığından `ignore-gpu-blocklist` ve `enable-gpu-rasterization` bayraklarının Chromium GPU compositor sürecini kilitlemesi engellendi; test/CI modunda `app.disableHardwareAcceleration()` devreye alındı ve `createWindow()` içine güvenlik fallback zamanlayıcısı eklendi.
+  - `electronHelper.ts` başlatma argümanlarına test modunda `--disable-gpu`, `--disable-dev-shm-usage`, `--no-sandbox` bayrakları entegre edildi.
+- [x] **Faz 1.2: Kazanan Firma Senkronizasyonunun ve Veri Bütünlüğünün Güvenli Uygulanması:**
+  - `schemaIntegrity.ts` içindeki belirsiz veya çelişkili eski kayıtları körlemesine çift kazanana dönüştüren iki adet `safeExec(UPDATE DATA_TeminFirma ...)` çağrısı kaldırıldı; yerine salt okunur uyumsuzluk tespiti ve loglama getirildi.
+  - Yeni `winnerSyncService.ts` servisi oluşturuldu; `executeSetWinnerTransaction` ile hem master (`TANIM_Firma.id`) hem de satır (`DATA_TeminFirma.id`) doğrulaması yapıldı, `DATA_TeminDosyasi.firma_id` ile `kazandi_mi` / `kazanan_mi` bayrakları atomik `db:transaction` içinde senkronize edildi.
+  - `usePiyasaFiyatCalculation.ts` ve `usePiyasaFiyatDocuments.ts` içindeki doğrudan ve dağınık SQL güncellemeleri `executeSetWinnerTransaction` servisine bağlandı.
+  - `siparisDataFetcher.ts` ve `useKabulVeOdemeData.ts` içindeki veri okuma sırasında sessizce en düşük teklifliyi veya ilk firmayı kazanan seçen ve arka planda `UPDATE` çalıştıran tehlikeli fallback mekanizmaları kaldırıldı; kazanan yokken veri tabanına dokunulmadan `null` dönülmesi ve kullanıcıya halihazırda var olan koruma uyarısının (`<SiparisGuardWarning />`, `<KabulGuardWarning />`) gösterilmesi sağlandı.
+  - `resolveFirmsAndItems.ts` belge önizleme çözümleyicisinde kazanan firma seçilmemişken ilk firmayı yüklenici olarak belirleyen fallback (`|| safeFileFirms[0] ...`) kaldırıldı; `kazandi_mi === 1` bayrağı doğrulandı.
+  - Kapsamlı Vitest birim testleri (`winnerSyncService.test.ts` 8/8) ve tüm test paketi (67/67 dosya, 611/611 test) ile typecheck ve üretim derlemesi (`electron-vite build`) sıfır hata ile başarıyla doğrulandı.
 
 ---
 
@@ -29,36 +40,60 @@
   - **Yapılacak:** Domain paketine ya `decimal.js` bağımlılığı resmi olarak eklenecek ya da mevcut saf BigInt tabanlı `Money` sınıfı üzerinden uygulanacak; öksüz durum giderilecek.
   - **Etkilenen Dosyalar:** `packages/domain/package.json`, `packages/domain/src/procurement/calculations/calculateLineTotal.ts`
 
-- [ ] **1.2. Kazanan Firma Senkronizasyonunun Diğer Modüllere Yayılması:**
-  - **Sorun:** Sipariş ve Kabul/Ödeme aşamalarında da (`siparisDataFetcher.ts`, `useKabulVeOdemeData.ts`) benzer şekilde yalnızca `kazandi_mi` güncelleniyor.
-  - **Yapılacak:** Bu ekranlardaki güncellemeler de `kazandi_mi` ve `kazanan_mi` ikilisini birlikte güncelleyecek ortak bir servise/fonksiyona bağlanacak.
-  - **Etkilenen Dosyalar:** `apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/...`
-
 ---
 
-### Faz 2: Belge Çözümleme ve Veri Akışı [Öncelik: P0 - P1]
+### Faz 2: Belge Motoru (Document Engine) Bağımsızlaştırma, Eşdeğerlik ve Veri Akışı [Öncelik: P0 - P1]
 
-- [ ] **2.1. Çift Belge Çözümleyici (Split-Brain Resolver) Tekilleştirmesi:**
-  - **Sorun:** Main process'teki `documentContextResolver.ts` veri setini hazırladıktan sonra, Renderer process'teki `previewDataLoader.ts` ve `sourceResolvers.ts` aynı personel, birim ve firma listelerini `db:query` ile bağımsız olarak ikinci kez çekiyor. İki taraftaki filtre farkları (ör. `aktif_mi`) eksik veri sorunlarına yol açıyor.
-  - **Yapılacak:** Renderer tarafındaki gereksiz ikinci sorgu döngüleri temizlenecek; Main process'ten gelen `belge:get-document-payload` tek otorite veri kaynağı kılınacak.
+- [ ] **2.1. Document Engine Bağımsızlaştırma & Tersine Bağımlılık (Inversion of Control) [P0]:**
+  - **Sorun:** `@worksuite-360/document-engine` paketi, doğrudan `@temin360/document-templates` paketine bağımlıdır. Engine'in `TemplateRegistry.ts` dosyası `IhtiyacListesiResolver` ve `LuzumMuzekkeresiResolver` gibi Temin 360'a özgü şablonları doğrudan import etmektedir. Bu durum Engine'in diğer uygulamalarda (İhale 360, Hakediş 360) genel amaçlı bir motor olarak kullanılmasını engellemektedir.
+  - **Yapılacak:** 
+    1. `packages/document-engine/package.json` içinden `@temin360/document-templates` bağımlılığı kaldırılacak.
+    2. Engine yalnızca jenerik sözleşmeleri (`DocumentDefinition<T>`, `DocumentResolver<T>`, `TemplateRegistry`, `SnapshotRepository`) barındıracak.
+    3. Şablonlar (`@temin360/document-templates`), Engine sözleşmelerini uygulayacak ve `registerTeminTemplates(registry)` fonksiyonu ile uygulama ayağa kalkarken (IoC) dışarıdan enjekte edilecek.
+  - **Kısıtlar:** Mevcut belge kodları, SQLite şeması ve çalışan Mustache çıktısı bozulmayacak.
+  - **Etkilenen Dosyalar:** `packages/document-engine/`, `packages/document-templates/`, `apps/temin360-desktop/`
+
+- [ ] **2.2. Tek Otorite Belge Veri Akışı (Split-Brain Resolver Tekilleştirmesi) [P0]:**
+  - **Sorun:** Main process'teki `documentContextResolver.ts` veri setini hazırladıktan sonra, Renderer process'teki `previewDataLoader.ts` ve `sourceResolvers.ts` aynı personel, birim ve firma listelerini `db:query` ile bağımsız olarak ikinci kez çekiyor. İki taraftaki filtre farkları (ör. `aktif_mi`) eksik veri ve tutarsızlık sorunlarına yol açıyor. Eşdeğerlik testlerinden önce tek otorite veri kaynağı sağlanmalıdır.
+  - **Yapılacak:** Renderer tarafındaki gereksiz ikinci sorgu döngüleri temizlenecek; Main process'ten gelen `belge:get-document-payload` tek otorite veri kaynağı (*single source of truth*) kılınacak.
   - **Etkilenen Dosyalar:** `previewDataLoader.ts`, `sourceResolvers.ts`, `documentContextResolver.ts`
 
-- [ ] **2.2. Hukuki Belge Arşiv Koruması (Snapshot Immutable Kuralı):**
-  - **Sorun:** `refreshPolicy.ts` içindeki `SOURCE` kuralı, onaylanmış veya kesinleşmiş resmi belgelerde dahi komisyon üyelerini ve kalemleri canlı veritabanından eziyor. 3 ay önce imzalanmış bir belgenin komisyonu personel tayiniyle bozulabiliyor.
-  - **Yapılacak:** Belge durumu "Kesinleşti / Onaylandı (Sealed)" olduğunda komisyon ve kalemlerin canlı DB ile güncellenmesini engelleyen `IMMUTABLE` kilidi eklenecek.
-  - **Etkilenen Dosyalar:** `apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewData/refreshPolicy.ts`
+- [ ] **2.3. Canlı A4 Önizleme (Live Reactive) vs Mühürlü Arşiv (Tam Metadata & Snapshot) Ayrımı [P0]:**
+  - **Sorun:** Canlı önizleme sırasında gereksiz yere veritabanı revizyonu üretilmesi engellenmeli; mühürlü arşivde ise salt JSON saklamak ileride JSX/CSS değiştiğinde aynı çıktıyı üretmeyi garanti etmez.
+  - **Yapılacak:**
+    1. **Canlı Önizleme:** Kullanıcı formda değişiklik yaptıkça `DocumentRenderer` doğrudan in-memory state (`mergedData`) ile render edilecek; veritabanında snapshot üretilmeyecek.
+    2. **Mühürlü Arşiv (Snapshot & Hukuki İkiz):** Belge "Onaylandı / Mühürlendi (Sealed)" durumuna geçtiğinde yalnızca JSON verisi değil; `templateCode`, `templateVersion`, `schemaVersion`, `snapshotData`, `createdAt`, `sealedAt`, `contentHash` (SHA-256) ve kesinleşmiş PDF çıktısı / hash referansı birlikte saklanacak (`IMMUTABLE` garantisi).
+  - **Etkilenen Dosyalar:** `DocumentPreviewCanvas.tsx`, `refreshPolicy.ts`, `DATA_TeminBelgeSnapshot.ts`
+
+- [ ] **2.4. Belge Eşdeğerlik Test Paketi (Equivalence Test Suite: Mustache vs React Engine) [P0]:**
+  - **Sorun:** 611 birim testinin geçmesi, yeni React tabanlı şablonların eski Mustache şablonlarıyla %100 birebir aynı hukuki ve hesaplama çıktısını ürettiğini tek başına garanti etmez.
+  - **Yapılacak:** Tek otorite veri kaynağından beslenen pilot belgelerden (Piyasa Fiyat Araştırma Tutanağı, İhtiyaç Listesi, Lüzum Müzekkeresi) başlayarak otomatik eşdeğerlik testleri yazılacak:
+    1. **Metin & Hesaplama Eşdeğerliği:** Birim fiyatlar, toplam tutarlar, KDV, indirim oranları ve sayıların yazıya çevrilmesi.
+    2. **Tablo & Sütun Dinamikliği:** Firma ve kalem sayılarına göre dinamik satır/sütun genişlemeleri.
+    3. **Yetki & İmza Blokları:** Komisyon üyelerinin unvanları, asil/yedek durumları ve imza kutuları.
+  - **Etkilenen Dosyalar:** `packages/document-templates/src/__tests__/equivalence/`
+
+- [ ] **2.5. PDF Pipeline Entegrasyonu (Motor Bağımsız `PdfAdapter` Mimarisi) [P1]:**
+  - **Sorun:** Document Engine doğrudan Electron'a bağımlı olmamalı; hem masaüstünde hem sunucu/Next.js ortamında çalışabilmelidir.
+  - **Yapılacak:**
+    1. `DocumentEngine` içinde jenerik `PdfAdapter` arayüzü tanımlanacak.
+    2. Masaüstü için `ElectronPrintToPdfAdapter`, sunucu/CLI için `PuppeteerPdfAdapter` implementasyonları sağlanacak.
+    3. `packages/pdf-generator` paketindeki yararlı PDF yetenekleri (font yönetimi, sayfalama stilleri, A4 CSS kuralları) `PdfAdapter` altyapısına aktarılacak, ardından eski paket değerlendirilecektir.
+  - **Etkilenen Dosyalar:** `packages/document-engine/src/export/`, `previewExportUtils.ts`, `packages/pdf-generator/`
 
 ---
 
 ### Faz 3: Temizlik ve Monorepo Bakımı [Öncelik: P2]
 
-- [ ] **3.1. Atıl `packages/pdf-generator` Paketinin Temizliği:**
-  - **Sorun:** Masaüstü uygulaması Puppeteer tabanlı bu paketi hiç kullanmıyor; doğrudan Electron yerel `printToPDF` motorunu kullanıyor.
-  - **Yapılacak:** Paket bağımsız CLI/web kullanımı için belgelenecek veya monorepo derleme zincirinden çıkarılarak hafifleme sağlanacak.
+- [ ] **3.1. Yetenek Aktarımı Sonrası Eski PDF Paketinin Arşivlenmesi:**
+  - **Sorun:** `packages/pdf-generator` paketindeki yetenekler Document Engine'e aktarıldıktan sonra atıl kalacak.
+  - **Yapılacak:** Uyumluluk testleri tamamlandıktan sonra paket güvenli şekilde arşivlenecek ve monorepo derleme zincirinden çıkarılacak.
   - **Etkilenen Dosyalar:** `packages/pdf-generator/`
 
 - [ ] **3.2. 1000+ Satırlık JSX Ekranlarının Okunabilirlik Refactoring'i:**
   - **Sorun:** `HariciDosyaAktarScreen.tsx` ve `all-templates.mapping.ts` dosyaları devasa JSX ağaçları içeriyor.
+  - **Yapılacak:** State ve iş kurallarına dokunulmadan, yalnızca sekmeler (`GenelTab`, `KalemlerTab`) alt bileşenlere çıkarılacak.
+  - **Etkilenen Dosyalar:** `HariciDosyaAktarScreen.tsx`, `all-templates.mapping.ts`
   - **Yapılacak:** State ve iş kurallarına dokunulmadan, yalnızca sekmeler (`GenelTab`, `KalemlerTab`) alt bileşenlere çıkarılacak.
   - **Etkilenen Dosyalar:** `HariciDosyaAktarScreen.tsx`, `all-templates.mapping.ts`
 
@@ -69,4 +104,3 @@
 1. **Tek Seferde Tek Odak:** Her adım bağımsız bir dalda veya commit'te ele alınacak; çalışan ekranlar toplu refactoring ile riske atılmayacak.
 2. **Önce Test, Sonra Değişiklik:** Değiştirilen her fonksiyonun mevcut vitest entegrasyon testleri çalıştırılacak (`pnpm test`).
 3. **Mevcut Veri Uyumluluğu:** `.temin` arşiv dosyalarındaki eski kayıtları bozacak şema veya sözleşme değişiklikleri yapılmayacak.
-

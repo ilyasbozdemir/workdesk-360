@@ -1,9 +1,5 @@
 import React from 'react'
 import { renderToString } from 'react-dom/server'
-import {
-  resolveTemplateKey,
-  DocumentValidationService
-} from '@temin360/document-templates'
 import { TemplateRegistry, InvalidTemplateKeyError } from './TemplateRegistry'
 import { InstitutionalHeaderProvider } from './providers/InstitutionalHeaderProvider'
 import {
@@ -11,6 +7,7 @@ import {
   DocumentDefinition,
   InstitutionalHeaderData,
   DocumentStorageAdapter,
+  ValidationReport,
   LoadOrCreateDocumentParams,
   SaveDocumentParams,
   ResetDocumentParams,
@@ -24,6 +21,11 @@ export type HeaderResolverFn = (
   dosyaId: number,
   queryExecutor: (sql: string, params: any[]) => Promise<any[]>
 ) => Promise<InstitutionalHeaderData>
+
+export type DocumentValidatorFn = (
+  templateKey: string,
+  data: Record<string, unknown>
+) => ValidationReport
 
 export type DocumentSavedListener = (record: {
   dosyaId: number
@@ -42,6 +44,7 @@ export class DocumentEngine {
   private static storageAdapter: DocumentStorageAdapter | null = null
   private static customQueryExecutor: ((sql: string, params: any[]) => Promise<any[]>) | null = null
   private static headerResolver: HeaderResolverFn | null = null
+  private static validator: DocumentValidatorFn | null = null
   private static savedListeners: Set<DocumentSavedListener> = new Set()
 
   /**
@@ -53,6 +56,29 @@ export class DocumentEngine {
 
   static getStorageAdapter(): DocumentStorageAdapter | null {
     return this.storageAdapter
+  }
+
+  /**
+   * Doğrulama motorunu enjekte eder (IoC)
+   */
+  static setValidator(validator: DocumentValidatorFn | null): void {
+    this.validator = validator
+  }
+
+  /**
+   * Belgeyi doğrular (Önce şablonun kendi validate metoduna, yoksa enjekte edilmiş validatöre bakar)
+   */
+  static validate(templateKey: string, data: Record<string, unknown>): ValidationReport {
+    if (TemplateRegistry.has(templateKey)) {
+      const def = TemplateRegistry.get(templateKey)
+      if (def?.validate) {
+        return def.validate(data)
+      }
+    }
+    if (this.validator) {
+      return this.validator(templateKey, data)
+    }
+    return { isValid: true, errors: [] }
   }
 
   private static getEffectiveStorageAdapter(): DocumentStorageAdapter | null {
@@ -159,15 +185,13 @@ export class DocumentEngine {
     if (!templateKey || typeof templateKey !== 'string') {
       throw new InvalidTemplateKeyError(String(templateKey))
     }
-    const cleanKey = templateKey.replace(/\.html$/i, '').trim()
-    const resolved = resolveTemplateKey(cleanKey) as string
-    const canonicalKey = resolved || cleanKey
+    const cleanKey = TemplateRegistry.normalizeKey(templateKey)
 
-    if (!TemplateRegistry.has(canonicalKey)) {
+    if (!TemplateRegistry.has(cleanKey)) {
       throw new InvalidTemplateKeyError(templateKey)
     }
 
-    return canonicalKey
+    return TemplateRegistry.get(cleanKey).templateKey
   }
 
   /**
@@ -194,8 +218,11 @@ export class DocumentEngine {
     const definition = TemplateRegistry.get<T>(canonicalKey)
     const headerData = await this.resolveHeaderData(dosyaId)
 
-    const resolver = definition.resolver
-    const resolvedData = await resolver.resolve({
+    if (!definition.resolver) {
+      throw new Error(`Şablon için veri çözümleyicisi (resolver) tanımlanmamış: "${canonicalKey}"`)
+    }
+
+    const resolvedData = await definition.resolver.resolve({
       dosyaId,
       templateKey: canonicalKey,
       headerData,
@@ -307,11 +334,8 @@ export class DocumentEngine {
 
     // Şema ve doğrulama denetimi
     if (validateBeforeSave) {
-      const report = DocumentValidationService.validate(
-        canonicalKey,
-        data as Record<string, unknown>
-      )
-      if (report.hasErrors) {
+      const report = this.validate(canonicalKey, data as Record<string, unknown>)
+      if (!report.isValid && report.errors.length > 0) {
         const errorMsgs = report.errors.map((e) => e.message).join(', ')
         throw new Error(`Belge doğrulama hataları nedeniyle kaydedilemedi: ${errorMsgs}`)
       }
@@ -405,10 +429,7 @@ export class DocumentEngine {
       freshData as Record<string, unknown>
     ) as T
 
-    const valReport = DocumentValidationService.validate(
-      canonicalKey,
-      mergedData as Record<string, unknown>
-    )
+    const valReport = this.validate(canonicalKey, mergedData as Record<string, unknown>)
 
     return {
       dosyaId,
