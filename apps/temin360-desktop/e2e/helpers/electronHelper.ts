@@ -116,7 +116,9 @@ export async function launchTestApp(
     }
   })
 
+  console.log('[launchTestApp] Waiting for firstWindow()...')
   const page = await electronApp.firstWindow()
+  console.log('[launchTestApp] firstWindow() resolved!')
 
   // Track console logs and errors
   page.on('console', (msg) => {
