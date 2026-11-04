@@ -162,7 +162,13 @@ export async function launchTestApp(
     } finally {
       try {
         if (electronApp) {
-          await electronApp.close()
+          const proc = electronApp.process()
+          await electronApp.close().catch(() => {})
+          if (proc && !proc.killed) {
+            try {
+              proc.kill('SIGKILL')
+            } catch {}
+          }
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
