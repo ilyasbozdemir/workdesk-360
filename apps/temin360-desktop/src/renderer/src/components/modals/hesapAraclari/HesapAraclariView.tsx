@@ -5,7 +5,10 @@ import { parseDec } from './decimalUtils'
 import { TOOLS } from './toolsData'
 import { HesapAraclariViewProps } from './types'
 
-export function HesapAraclariView({ onClose }: HesapAraclariViewProps): React.JSX.Element {
+export function HesapAraclariView({
+  onClose,
+  hideHeader = false
+}: HesapAraclariViewProps): React.JSX.Element {
   const [selectedToolId, setSelectedToolId] = useState<string>('temel')
   const [precision, setPrecision] = useState<string>('2')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -68,29 +71,65 @@ export function HesapAraclariView({ onClose }: HesapAraclariViewProps): React.JS
   }
 
   return (
-    <div className="w-full flex flex-col bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200/80 dark:border-slate-800 overflow-hidden font-sans">
+    <div className="w-full flex flex-col bg-white dark:bg-slate-900 rounded-3xl shadow-xs border border-slate-200/80 dark:border-slate-800 overflow-hidden font-sans">
       {/* ÜST BAŞLIK BAR */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/70 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
-            <Calculator className="w-5 h-5" />
+      {!hideHeader ? (
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/70 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+              <Calculator className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                Hesap & Yüzde Araçları Süiti
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                  Decimal.js High Precision
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Kamu ihale, KDV, indirim, kâr marjı, tarih farkı ve %100 hassas finansal hesaplama
+                araçları.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Hesap & Yüzde Araçları Süiti
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                Decimal.js High Precision
-              </span>
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Kamu ihale, KDV, indirim, kâr marjı, tarih farkı ve %100 hassas finansal hesaplama
-              araçları.
-            </p>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-semibold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl">
+              <span>Hassasiyet:</span>
+              <select
+                value={precision}
+                onChange={(e) => setPrecision(e.target.value)}
+                className="bg-transparent font-bold text-blue-600 dark:text-blue-400 focus:outline-none cursor-pointer"
+              >
+                <option value="auto">Otomatik</option>
+                <option value="0">0</option>
+                <option value="2">2 (Kuruş)</option>
+                <option value="4">4 (Hassas)</option>
+              </select>
+            </div>
+
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
+      ) : (
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              Hesap & Yüzde Araçları
+            </span>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+              Decimal.js High Precision
+            </span>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-semibold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-xl">
+          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-semibold bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <span>Hassasiyet:</span>
             <select
               value={precision}
@@ -103,17 +142,8 @@ export function HesapAraclariView({ onClose }: HesapAraclariViewProps): React.JS
               <option value="4">4 (Hassas)</option>
             </select>
           </div>
-
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
         </div>
-      </div>
+      )}
 
       {/* GÖVDE: SOL MENÜ + SAĞ HESAPLAMA ALANI */}
       <div className="flex-1 flex flex-col md:flex-row min-h-[500px] divide-y md:divide-y-0 md:divide-x divide-slate-200/60 dark:divide-slate-800">
