@@ -84,30 +84,6 @@ export interface CommonDocumentItem {
 }
 
 /**
- * Alım Usulleri Sabitleri
- */
-export const ALIM_USULLERI = {
-  DOGRUDAN_TEMIN: 'Doğrudan Temin',
-  PAZARLIK: 'Pazarlık',
-  ACIK_IHALE: 'Açık İhale',
-  BELLI_ISTEKLILER: 'Belli İstekliler Arasında İhale'
-} as const;
-
-/**
- * Mevzuat Kanun Maddeleri Sabitleri
- */
-export const KANUN_MADDELERI = {
-  GENEL: 'ilgili',
-  MADDE_22_D: '22/d',
-  MADDE_22_A: '22/a',
-  MADDE_22_B: '22/b',
-  MADDE_22_C: '22/c',
-  MADDE_22_E: '22/e',
-  MADDE_22_F: '22/f',
-  MADDE_21_F: '21/f'
-} as const;
-
-/**
  * Alan Tanımlayıcı Sabitleri (Key Paths)
  */
 export const DOCUMENT_FIELDS = {

@@ -161,8 +161,15 @@ export function useIhtiyacListesi(
 
   return useMemo(() => {
     const ALIM_USULU = data.alimUsulu?.trim() || ALIM_USULLERI.DOGRUDAN_TEMIN;
+
     const MADDE_NO = data.maddeNo?.trim() || KANUN_MADDELERI.GENEL;
-    const KANUN_DAYANAGI = MADDE_NO.toLowerCase() === "ilgili" ? "" : MADDE_NO;
+
+    //const KANUN_DAYANAGI = MADDE_NO === KANUN_MADDELERI.GENEL ? "" : MADDE_NO;
+    const KANUN_DAYANAGI = "ilgili"; // default oalrka bu olucak
+
+    const ALIM_USULU_METNI = ALIM_USULU === ALIM_USULLERI.DOGRUDAN_TEMIN
+      ? ALIM_USULLERI.DOGRUDAN_TEMIN
+      : ALIM_USULU;
 
     const tableColumns = columns && columns.length > 0
       ? columns
@@ -183,7 +190,7 @@ export function useIhtiyacListesi(
 
     // Standart CommonDocumentFields kullanımı
     const tarih = data.dosyaTarihi || data.tarih || "";
-    const dosyaKonusu = data.dosyaKonusu || (data as any).konu || "";
+    const dosyaKonusu = data.dosyaKonusu || (data as any).konu || "İhtiyaç Listesi";
     const sunulacakMakam = data.sunulacakMakamAdi ||
       (data as any).sunulacakMakam || "";
     const onayTarihi = data.onayTarihi || data.dosyaTarihi || data.tarih || "";
