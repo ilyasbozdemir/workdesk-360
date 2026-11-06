@@ -1,9 +1,6 @@
+import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
-import {
-  ColumnDef,
-  DocumentTable,
-  getTemplateTableColumns,
-} from "../../document/DocumentTable";
+import { ColumnDef, DocumentTable } from "../../document/DocumentTable";
 import {
   ApprovalSignature,
   EditableOlurPlaceholder,
@@ -11,15 +8,11 @@ import {
   PersonelCard,
 } from "../../document/ApprovalSignature";
 import { EditableField } from "../../document/EditableField";
-import {
-  DEFAULT_LIMITS,
-  LANDSCAPE_LIMITS,
-  paginateData,
-} from "../../document/DynamicPaginatedTable";
 import { IhtiyacListesiType } from "./IhtiyacListesi.schema";
+import { useIhtiyacListesi } from "./IhtiyacListesi.hook";
 
 interface IhtiyacListesiProps {
-  data?: Partial<IhtiyacListesiType>;
+  data?: Partial<IhtiyacListesiType> & Record<string, any>;
   columns?: ColumnDef[];
   pageSize?: "A4" | "A3";
   orientation?: "portrait" | "landscape";
@@ -28,43 +21,23 @@ interface IhtiyacListesiProps {
   lastPageLimit?: number;
 }
 
-export function IhtiyacListesi({
-  data = {},
-  columns,
-  pageSize = "A4",
-  orientation = "portrait",
-  firstPageLimit,
-  middlePageLimit,
-  lastPageLimit,
-}: IhtiyacListesiProps) {
-  const tableColumns = columns && columns.length > 0
-    ? columns
-    : getTemplateTableColumns("ihtiyac-listesi");
+export function IhtiyacListesi(props: IhtiyacListesiProps) {
+  const {
+    data = {},
+    pageSize = "A4",
+    orientation = "portrait",
+  } = props;
 
-  const fLimit = firstPageLimit ?? (data as any).firstPageLimit;
-  const mLimit = middlePageLimit ?? (data as any).middlePageLimit;
-  const lLimit = lastPageLimit ?? (data as any).lastPageLimit;
-
-  const limits = {
-    firstPage: fLimit !== undefined && fLimit !== null
-      ? Number(fLimit)
-      : (orientation === "landscape"
-        ? LANDSCAPE_LIMITS.firstPage
-        : DEFAULT_LIMITS.firstPage),
-    middle: mLimit !== undefined && mLimit !== null
-      ? Number(mLimit)
-      : (orientation === "landscape"
-        ? LANDSCAPE_LIMITS.middle
-        : DEFAULT_LIMITS.middle),
-    lastPage: lLimit !== undefined && lLimit !== null
-      ? Number(lLimit)
-      : (orientation === "landscape"
-        ? LANDSCAPE_LIMITS.lastPage
-        : DEFAULT_LIMITS.lastPage),
-  };
-
-  const items = data.ihtiyacKalemleri || [];
-  const pages = paginateData(items, limits);
+  const {
+    tableColumns,
+    limits,
+    pages,
+    tarih,
+    sunulacakMakam,
+    onayTarihi,
+    fLimit,
+    getStartIndex,
+  } = useIhtiyacListesi(props);
 
   return (
     <>
@@ -87,9 +60,8 @@ export function IhtiyacListesi({
               <>
                 <MetadataBlock
                   evrakSayisi={data.evrakSayisi}
-                  tarih={data.tarih || (data as any).dosya_acilis_tarihi ||
-                    data.dosyaAcilisTarihi || data.dosyaTarihi}
-                  dosyaKonusu={(data as any).konu}
+                  tarih={tarih}
+                  dosyaKonusu={(data as any).konu || data.dosyaKonusu}
                   showBorder={false}
                 />
 
@@ -105,8 +77,7 @@ export function IhtiyacListesi({
                 >
                   <EditableField
                     name="sunulacakMakamAdi"
-                    value={data.sunulacakMakamAdi ||
-                      (data as any).sunulacakMakam}
+                    value={sunulacakMakam}
                     placeholder="SUNULACAK MAKAM ADI"
                   />
                 </div>
@@ -141,7 +112,7 @@ export function IhtiyacListesi({
                   Söz konusu ihtiyacın 4734 sayılı Kamu İhale Kanununun{" "}
                   <EditableField
                     name="maddeNo"
-                    value={"ilgili"}
+                    value={data.maddeNo || "ilgili"}
                     placeholder="ilgili"
                   />{" "}
                   maddesine göre temini için gereğini olurlarınıza arz ederim.
@@ -162,9 +133,7 @@ export function IhtiyacListesi({
               data={pageItems}
               emptyMessage="Kalem bulunamadı"
               striped={false}
-              startIndex={pageIdx === 0
-                ? 0
-                : limits.firstPage + (pageIdx - 1) * limits.middle}
+              startIndex={getStartIndex(pageIdx)}
               currentSplitIndex={fLimit ? Number(fLimit) : null}
             />
 
@@ -174,9 +143,7 @@ export function IhtiyacListesi({
                   <div style={{ marginTop: "auto" }}>
                     <ApprovalSignature
                       title={(data as any).olurBaslik || "OLUR"}
-                      date={data.onayTarihi || data.tarih ||
-                        (data as any).dosya_acilis_tarihi ||
-                        data.dosyaTarihi}
+                      date={onayTarihi}
                       adSoyad={data.onaylayanPersonelAdi}
                       unvan={data.onaylayanPersonelUnvan}
                       showSpace={true}
