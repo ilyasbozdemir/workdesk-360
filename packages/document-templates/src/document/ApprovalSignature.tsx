@@ -1,9 +1,9 @@
 import React from "react";
 import { EditableField, FIELD_SOURCE_INFO } from "./EditableField";
 import { useTemplateEdit } from "./TemplateEditContext";
-import { toIsoDate, toTrDate, cleanPersonelName } from "../utils/textHelpers";
+import { cleanPersonelName, toIsoDate, toTrDate } from "../utils/textHelpers";
 
-export { toIsoDate, toTrDate, cleanPersonelName };
+export { cleanPersonelName, toIsoDate, toTrDate };
 
 export interface DateEditableFieldProps {
   name: string;
@@ -816,7 +816,6 @@ export const MetadataBlock: React.FC<MetadataBlockProps> = ({
   );
 };
 
-
 export interface RotaItem {
   t?: string; // Tür: Hazırlayan, Paraf, Koordinasyon, İmza, Olur
   a?: string; // Ad Soyad
@@ -907,50 +906,110 @@ export const RotaKoordinasyonBlock: React.FC<RotaKoordinasyonBlockProps> = ({
         <span>Resmî Paraf &amp; Koordinasyon Akışı</span>
       </div>
 
-      {items.length === 0 ? (
-        <div
-          style={{
-            fontSize: "8pt",
-            color: "#94a3b8",
-            fontStyle: "italic",
-            padding: "4px 0",
-          }}
-        >
-          Sol menüdeki "Belge Modu &amp; Rota Akışı" alanından paraf/koordinasyon adımları ekleyebilirsiniz.
-        </div>
-      ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            fontSize: "7.5pt",
-            lineHeight: 1.35,
-          }}
-        >
-          <thead>
-            <tr style={{ borderBottom: "1px solid #e2e8f0", color: "#64748b" }}>
-              <th style={{ textAlign: "left", padding: "2px 4px", width: "80px" }}>Tarih</th>
-              <th style={{ textAlign: "left", padding: "2px 4px", width: "90px" }}>İşlem / Rol</th>
-              <th style={{ textAlign: "left", padding: "2px 4px" }}>Unvanı</th>
-              <th style={{ textAlign: "left", padding: "2px 4px" }}>Adı Soyadı</th>
-              <th style={{ textAlign: "center", padding: "2px 4px", width: "70px" }}>Paraf / İmza</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it, idx) => (
-              <tr key={idx} style={{ borderBottom: "1px dotted #f1f5f9" }}>
-                <td style={{ padding: "2px 4px", color: "#334155" }}>{it.tarih}</td>
-                <td style={{ padding: "2px 4px", fontWeight: "600", color: "#1e293b" }}>{it.tur}</td>
-                <td style={{ padding: "2px 4px", color: "#475569" }}>{it.unvan || "-"}</td>
-                <td style={{ padding: "2px 4px", fontWeight: "500", color: "#0f172a" }}>{it.adSoyad || "-"}</td>
-                <td style={{ padding: "2px 4px", textAlign: "center", color: "#94a3b8", fontSize: "7pt" }}>
-                  (Paraf)
-                </td>
+      {items.length === 0
+        ? (
+          <div
+            style={{
+              fontSize: "8pt",
+              color: "#94a3b8",
+              fontStyle: "italic",
+              padding: "4px 0",
+            }}
+          >
+            Sol menüdeki "Belge Modu &amp; Rota Akışı" alanından
+            paraf/koordinasyon adımları ekleyebilirsiniz.
+          </div>
+        )
+        : (
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "7.5pt",
+              lineHeight: 1.35,
+            }}
+          >
+            <thead>
+              <tr
+                style={{ borderBottom: "1px solid #e2e8f0", color: "#64748b" }}
+              >
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "2px 4px",
+                    width: "80px",
+                  }}
+                >
+                  Tarih
+                </th>
+                <th
+                  style={{
+                    textAlign: "left",
+                    padding: "2px 4px",
+                    width: "90px",
+                  }}
+                >
+                  İşlem / Rol
+                </th>
+                <th style={{ textAlign: "left", padding: "2px 4px" }}>
+                  Unvanı
+                </th>
+                <th style={{ textAlign: "left", padding: "2px 4px" }}>
+                  Adı Soyadı
+                </th>
+                <th
+                  style={{
+                    textAlign: "center",
+                    padding: "2px 4px",
+                    width: "70px",
+                  }}
+                >
+                  Paraf / İmza
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {items.map((it, idx) => (
+                <tr key={idx} style={{ borderBottom: "1px dotted #f1f5f9" }}>
+                  <td style={{ padding: "2px 4px", color: "#334155" }}>
+                    {it.tarih}
+                  </td>
+                  <td
+                    style={{
+                      padding: "2px 4px",
+                      fontWeight: "600",
+                      color: "#1e293b",
+                    }}
+                  >
+                    {it.tur}
+                  </td>
+                  <td style={{ padding: "2px 4px", color: "#475569" }}>
+                    {it.unvan || "-"}
+                  </td>
+                  <td
+                    style={{
+                      padding: "2px 4px",
+                      fontWeight: "500",
+                      color: "#0f172a",
+                    }}
+                  >
+                    {it.adSoyad || "-"}
+                  </td>
+                  <td
+                    style={{
+                      padding: "2px 4px",
+                      textAlign: "center",
+                      color: "#94a3b8",
+                      fontSize: "7pt",
+                    }}
+                  >
+                    (Paraf)
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
     </div>
   );
 };

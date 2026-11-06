@@ -62,10 +62,9 @@ export function IhtiyacListesi({
         ? LANDSCAPE_LIMITS.lastPage
         : DEFAULT_LIMITS.lastPage),
   };
+
   const items = data.ihtiyacKalemleri || [];
   const pages = paginateData(items, limits);
-
-  console.log("data", data);
 
   return (
     <>
