@@ -6,9 +6,11 @@ import {
   Compass,
   Edit3,
   FileText,
+  GitFork,
   Layers,
   Sliders,
-  Sparkles
+  Sparkles,
+  Users
 } from 'lucide-react'
 import { IhtiyacListesiType, TemplateCapabilities } from '@temin360/document-templates'
 import { TemplateOptionItem } from '../templateResolver'
@@ -150,7 +152,8 @@ export function DocumentPreviewSidebar({
       </div>
 
       {activeSidebarTab === 'asamalar' ? (
-        <div className="flex-1 overflow-y-auto p-3.5 space-y-4 custom-scrollbar min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-3.5 space-y-4 custom-scrollbar min-h-0">
           {/* Yönlendirme Modu Durum Kartı (Image 2 bağlantısı) */}
           {!disableDocumentGuidance ? (
             <div className="p-3 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 rounded-xl space-y-1.5">
@@ -296,9 +299,124 @@ export function DocumentPreviewSidebar({
             </div>
           </div>
         </div>
+
+        {/* Alt Sabit Yapı: Aktif Belge, Personel ve Rota Durum Özeti */}
+        <div className="shrink-0 p-3 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 space-y-2 shadow-2xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate">
+              <GitFork className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+              <span className="truncate">Aktif Belge &amp; Rota Özeti</span>
+            </span>
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                (formData as any).belgeModu === 'koordinasyonlu'
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300'
+                  : (formData as any).belgeModu === 'hizli_onay'
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                    : 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
+              }`}
+            >
+              {(formData as any).belgeModu === 'koordinasyonlu'
+                ? '🔀 Koordinasyonlu'
+                : (formData as any).belgeModu === 'hizli_onay'
+                  ? '⚡ Hızlı Olur'
+                  : '📄 Standart'}
+            </span>
+          </div>
+
+          <div className="p-2 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200/70 dark:border-slate-800 text-[10px] space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-slate-500">Hazırlayan:</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                {formData.hazirlayanPersonelAdi || 'Seçilmedi'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-slate-500">Onaylayan:</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                {formData.onaylayanPersonelAdi || 'Seçilmedi'}
+              </span>
+            </div>
+            {Array.isArray((formData as any).rota) && (formData as any).rota.length > 0 && (
+              <div className="flex items-center justify-between gap-2 pt-0.5 border-t border-slate-200/60 dark:border-slate-800">
+                <span className="text-slate-500">Rota Akışı:</span>
+                <span className="font-bold text-purple-600 dark:text-purple-400">
+                  {(formData as any).rota.length} Adım Tanımlı
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => setActiveSidebarTab('ayarlar')}
+              className="px-2 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg text-[11px] font-bold text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <Sliders className="w-3 h-3" />
+              <span>Belge Ayarları</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSidebarTab('ayarlar')
+                setTimeout(() => {
+                  document
+                    .getElementById('sidebar-ayarlar-rota')
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }, 60)
+              }}
+              className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <Users className="w-3 h-3" />
+              <span>Rota &amp; Personel</span>
+            </button>
+          </div>
+        </div>
+      </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar min-h-0">
-          <div className="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 rounded-xl text-xs text-blue-900 dark:text-blue-300 leading-relaxed">
+          {/* Hızlı Bölüm Atlama Çubuğu */}
+          <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl sticky top-0 z-10 border border-slate-200/80 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById('sidebar-ayarlar-duzen')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              className="px-2 py-1 rounded-lg text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              📐 Düzen
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById('sidebar-ayarlar-rota')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              className="px-2 py-1 rounded-lg text-[10px] font-bold text-purple-700 dark:text-purple-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              🔀 Rota &amp; Onay
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById('sidebar-ayarlar-evrak')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              className="px-2 py-1 rounded-lg text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              📋 Evrak
+            </button>
+          </div>
+
+          <div
+            id="sidebar-ayarlar-duzen"
+            className="p-3 bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 rounded-xl text-xs text-blue-900 dark:text-blue-300 leading-relaxed"
+          >
             💡 <strong>Canlı Düzenleme:</strong> Belge üzerindeki metin, sayı, tarih ve imza
             alanlarını sağdaki A4 sayfasında doğrudan tıklayarak düzenleyebilirsiniz.
           </div>
@@ -716,12 +834,16 @@ export function DocumentPreviewSidebar({
           {/* ========================================================= */}
           {/* BELGE ÇALIŞMA MODU & ROTA / PARAF / KOORDİNASYON AKIŞI */}
           {/* ========================================================= */}
-          <DocumentPreviewRotaSection
-            formData={formData}
-            setFormData={setFormData}
-            personelListesi={personelListesi}
-            supportsOlur={supportsOlur}
-          />
+          <div id="sidebar-ayarlar-rota">
+            <DocumentPreviewRotaSection
+              formData={formData}
+              setFormData={setFormData}
+              personelListesi={personelListesi}
+              supportsOlur={supportsOlur}
+              templateId={selectedDocId}
+              dosyaId={(formData as any)?.dosyaId}
+            />
+          </div>
 
           {/* ========================================================= */}
           {/* BELGE EVRAK AYARLARI (Muhatap, İlgi, Ek, Dağıtım) */}
@@ -757,7 +879,10 @@ export function DocumentPreviewSidebar({
             }
 
             return (
-              <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+              <div
+                id="sidebar-ayarlar-evrak"
+                className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800"
+              >
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                   <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">

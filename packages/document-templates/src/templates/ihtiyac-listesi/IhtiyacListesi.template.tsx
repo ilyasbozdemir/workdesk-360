@@ -1,4 +1,3 @@
-import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { ColumnDef, DocumentTable } from "../../document/DocumentTable";
 import {
@@ -30,7 +29,6 @@ export function IhtiyacListesi(props: IhtiyacListesiProps) {
 
   const {
     tableColumns,
-    limits,
     pages,
     tarih,
     dosyaKonusu,
@@ -121,6 +119,9 @@ export function IhtiyacListesi(props: IhtiyacListesiProps) {
                 </div>
 
                 <PersonelCard
+                  nameField="hazirlayanPersonelAdi"
+                  unvanField="hazirlayanPersonelUnvan"
+                  role="Hazırlayan"
                   adSoyad={data.hazirlayanPersonelAdi}
                   unvan={data.hazirlayanPersonelUnvan}
                   align="right"

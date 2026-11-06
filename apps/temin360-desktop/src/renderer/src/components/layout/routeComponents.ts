@@ -116,7 +116,8 @@ export const routeComponents: Record<string, () => React.ReactElement> = {
   '/belgelerim': lazyRoute(() => import('../../screens/belgelerim/BelgelerimScreen')),
   '/ihtiyac-raporlari': lazyRoute(
     () => import('../../screens/ihtiyac-raporlari/IhtiyacRaporlariScreen')
-  )
+  ),
+  '/rota-yonetimi': lazyRoute(() => import('../../screens/rota-yonetimi/index.screen'))
 }
 
 // Doğrudan Temin (4734 m.22) sürümünde kapsam dışı ekranlar (2886, EBYS) kayıt edilmez

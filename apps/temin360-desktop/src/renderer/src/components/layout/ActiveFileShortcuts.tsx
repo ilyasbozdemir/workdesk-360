@@ -6,6 +6,7 @@ import {
   ClipboardList,
   FileSpreadsheet,
   FolderKanban,
+  GitFork,
   HelpCircle,
   Home,
   LayoutGrid,
@@ -174,6 +175,15 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       path: '/komisyonlar',
       icon: UserCheck,
       color: 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20'
+    },
+    {
+      name: activeDosyaId
+        ? `Belge Rota & Onay Akışı (Dosya #${activeDosyaId})`
+        : 'Belge Rota & Onay Akışı (Varsayılan)',
+      path: '/rota-yonetimi',
+      icon: GitFork,
+      color: 'hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/20',
+      badge: 'ROTA'
     },
     {
       name: 'Ambar Yönetimi',

@@ -77,7 +77,8 @@ export const APP_ROUTES = {
   BELGE_ONIZLEME: '/dosya/belge-onizleme',
   MODUL_MAGAZASI: '/modul-magazasi',
   SUREC_STUDYOSU: '/surec-studyosu',
-  ISLAK_IMZA: '/islak-imza'
+  ISLAK_IMZA: '/islak-imza',
+  ROTA_YONETIMI: '/rota-yonetimi'
 } as const
 
 export type AppRoute = (typeof APP_ROUTES)[keyof typeof APP_ROUTES]

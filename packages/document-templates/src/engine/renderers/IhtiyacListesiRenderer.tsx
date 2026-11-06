@@ -52,6 +52,7 @@ export function IhtiyacListesiRenderer(
         firmaListesi={resolvedFirmaListesi}
         birimListesi={resolvedBirimListesi}
         firstPageLimit={resolvedFirstPageLimit}
+        data={data as any}
       >
         <IhtiyacListesi
           data={data}

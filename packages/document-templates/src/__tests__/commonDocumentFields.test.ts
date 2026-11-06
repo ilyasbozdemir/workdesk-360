@@ -5,7 +5,11 @@ import {
   DocumentMetadata,
   MetadataBlock,
   CommonDocumentFields,
-  DefaultDocumentResolver
+  DefaultDocumentResolver,
+  buildMergedPersonelList,
+  PersonelCard,
+  RotaKoordinasyonBlock,
+  TemplateEditProvider
 } from '../index';
 import { IhtiyacListesi } from '../templates/ihtiyac-listesi';
 import { COMMON_DOCUMENT_MAPPING } from '../../../contracts/document-source.mapping';
@@ -118,6 +122,81 @@ describe('Common Document Fields & Standardization', () => {
       expect(resolved.kurumAdi).toBe('ÖRNEK BELEDİYESİ');
       expect(resolved.onaylayanPersonelAdi).toBe('Hasan Yılmaz');
       expect(resolved.onaylayanPersonelUnvan).toBe('Fen İşleri Müdürü');
+    });
+  });
+
+  describe('5. Personel Havuzu Birleştirme (buildMergedPersonelList — Firmalar Mantığı)', () => {
+    it('global personelListesi, komisyon üyeleri, rota adımları ve mevcut personel bilgisini tekilleştirerek birleştirir', () => {
+      const globalList = [
+        { id: 1, ad_soyad: 'Ahmet Yılmaz', unvan: 'Müdür' },
+        { id: 2, adSoyad: 'Zeynep Kaya', gorev: 'Uzman' }
+      ];
+      const docData = {
+        komisyonUyeleri: [
+          { id: 3, ad_soyad: 'Mustafa Demir', unvan: 'Başkan' },
+          { id: 99, ad_soyad: 'Ahmet Yılmaz', unvan: 'Müdür' } // Mükerrer isim -> elenmeli
+        ],
+        rota: [
+          { r: 'Paraf', a: 'Elif Çelik', u: 'Şube Müdürü' }
+        ],
+        onaylayanPersonelAdi: 'Kemal Öztürk',
+        onaylayanPersonelUnvan: 'Genel Müdür'
+      };
+
+      const merged = buildMergedPersonelList(globalList, docData, 'Dışarıdan Eklenen Kişi', 'Danışman');
+
+      // Mevcut seçili ama listede olmayan kişi en başa custom_ olarak eklenmeli
+      expect(merged[0].ad_soyad).toBe('Dışarıdan Eklenen Kişi');
+      expect(merged[0].unvan).toBe('Danışman');
+      expect(String(merged[0].id)).toContain('custom_');
+
+      // Diğer tüm kaynaklardan gelen kişiler tekilleştirilmiş olarak listede yer almalı
+      const names = merged.map((p) => p.ad_soyad);
+      expect(names).toContain('Ahmet Yılmaz');
+      expect(names).toContain('Zeynep Kaya');
+      expect(names).toContain('Mustafa Demir');
+      expect(names).toContain('Elif Çelik');
+      expect(names).toContain('Kemal Öztürk');
+
+      // Ahmet Yılmaz yalnızca 1 kez bulunmalı
+      expect(names.filter((n) => n === 'Ahmet Yılmaz').length).toBe(1);
+    });
+
+    it('isEditing modunda PersonelCard ve RotaKoordinasyonBlock belge içi rota kontrollerini render eder', () => {
+      const mockData = {
+        belgeModu: 'koordinasyonlu',
+        rota: [{ r: 'Koordinasyon', a: 'Elif Çelik', u: 'Şube Müdürü' }]
+      };
+      const html = renderToString(
+        React.createElement(
+          TemplateEditProvider,
+          {
+            isEditing: true,
+            onFieldChange: () => {},
+            personelListesi: [{ id: 1, ad_soyad: 'Ayşe Kaya', unvan: 'Biyolog' }],
+            data: mockData
+          },
+          React.createElement(
+            'div',
+            null,
+            React.createElement(PersonelCard, {
+              adSoyad: 'Ayşe Kaya',
+              unvan: 'Biyolog',
+              nameField: 'hazirlayanPersonelAdi',
+              unvanField: 'hazirlayanPersonelUnvan',
+              role: 'Hazırlayan'
+            }),
+            React.createElement(RotaKoordinasyonBlock, {
+              rota: mockData.rota
+            })
+          )
+        )
+      );
+
+      expect(html).toContain('Ayşe Kaya');
+      expect(html).toContain('🔀 Rota Aktif');
+      expect(html).toContain('Elif Çelik');
+      expect(html).toContain('+ Adım Ekle');
     });
   });
 });

@@ -31,7 +31,8 @@ import {
   Store,
   Sparkles,
   FileSpreadsheet,
-  FileDown
+  FileDown,
+  GitFork
 } from 'lucide-react'
 import { APP_ROUTES } from '../../constants/routeConstants'
 import { useModuleStore } from '../../store/moduleStore'
@@ -474,6 +475,12 @@ export function getSidebarMenuGroups(
                     name: 'Süreç Akış Haritası',
                     path: APP_ROUTES.SUREC_AKISI,
                     icon: Layers
+                  },
+                  {
+                    name: 'Belge Rota & Onay Akışı',
+                    path: APP_ROUTES.ROTA_YONETIMI,
+                    icon: GitFork,
+                    badge: 'ROTA'
                   }
                 ]
               }

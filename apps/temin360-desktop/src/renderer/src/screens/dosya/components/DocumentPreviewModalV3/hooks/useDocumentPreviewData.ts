@@ -6,6 +6,7 @@ import { useClickOutside } from '../../../../../hooks/useClickOutside'
 import { Personel, DocumentSource } from '../types'
 import { resolveTemplateConfig, TEMPLATE_OPTIONS, TemplateOptionItem } from '../templateResolver'
 import { documentPreloadService } from '../../../../../services/documentPreloadService'
+import { getRotaConfigForTemplate } from '../../../../../services/rotaDefaultsService'
 import {
   compileDocumentHtml,
   exportDocumentDocx,
@@ -92,22 +93,62 @@ export function useDocumentPreviewData({
       initialPreloaded?.payloadData?.savedSnapshot
   )
 
+  const applyDefaultRotaToFormData = (
+    baseData: Record<string, any>,
+    tplId?: string,
+    dId?: number | string | null
+  ): Partial<IhtiyacListesiType> => {
+    const defaultRotaConf = getRotaConfigForTemplate(tplId, dId)
+    if (!defaultRotaConf) return baseData
+
+    const enriched: Record<string, any> = { ...baseData }
+    if (!enriched.belgeModu) {
+      enriched.belgeModu = defaultRotaConf.belgeModu
+    }
+    if (
+      (!Array.isArray(enriched.rota) || enriched.rota.length === 0) &&
+      Array.isArray(defaultRotaConf.rota) &&
+      defaultRotaConf.rota.length > 0
+    ) {
+      enriched.rota = defaultRotaConf.rota
+      enriched.koordinasyon = defaultRotaConf.rota.map((r) => ({
+        adSoyad: r.a,
+        unvan: r.u,
+        tarih: r.tarih,
+        rol: r.t
+      }))
+    }
+    if (!enriched.hazirlayanPersonelAdi && defaultRotaConf.hazirlayanPersonelAdi) {
+      enriched.hazirlayanPersonelAdi = defaultRotaConf.hazirlayanPersonelAdi
+      enriched.hazirlayanPersonelUnvan =
+        defaultRotaConf.hazirlayanPersonelUnvan || enriched.hazirlayanPersonelUnvan
+    }
+    if (!enriched.onaylayanPersonelAdi && defaultRotaConf.onaylayanPersonelAdi) {
+      enriched.onaylayanPersonelAdi = defaultRotaConf.onaylayanPersonelAdi
+      enriched.onaylayanPersonelUnvan =
+        defaultRotaConf.onaylayanPersonelUnvan || enriched.onaylayanPersonelUnvan
+    }
+    if (enriched.olurYazisi === undefined && defaultRotaConf.olurYazisi !== undefined) {
+      enriched.olurYazisi = defaultRotaConf.olurYazisi
+    }
+    return enriched
+  }
+
   const [formData, setFormData] = useState<Partial<IhtiyacListesiType>>(() => {
+    let base: Record<string, any> = {}
     if (initialPreloaded?.resolvedData && Object.keys(initialPreloaded.resolvedData).length > 0) {
-      return initialPreloaded.resolvedData
-    }
-    if (initialPreloaded?.payloadData?.savedSnapshot) {
-      return initialPreloaded.payloadData.savedSnapshot
-    }
-    if (propInvitedFirms && propInvitedFirms.length > 0) {
-      return {
+      base = initialPreloaded.resolvedData
+    } else if (initialPreloaded?.payloadData?.savedSnapshot) {
+      base = initialPreloaded.payloadData.savedSnapshot
+    } else if (propInvitedFirms && propInvitedFirms.length > 0) {
+      base = {
         firmalar: propInvitedFirms.map((f: any) => ({
           unvan: f.unvan || f.firma_adi || 'İstekli Firma',
           yetkili_ad_soyad: f.yetkili_ad_soyad || ''
         }))
       }
     }
-    return {}
+    return applyDefaultRotaToFormData(base, resolvedId || selectedDocId, activeDosyaId)
   })
 
   const [personelListesi, setPersonelListesi] = useState<Personel[]>(() => {
@@ -236,9 +277,14 @@ export function useDocumentPreviewData({
         if (result.activeLogoLeft !== undefined) setLocalShowLogoLeft(result.activeLogoLeft)
         if (result.activeLogoRight !== undefined) setLocalShowLogoRight(result.activeLogoRight)
         if (result.activeOrientation) setOrientation(result.activeOrientation)
-        setFormData(result.formData || result.resolvedData || {})
+        const enrichedFormData = applyDefaultRotaToFormData(
+          result.formData || result.resolvedData || {},
+          resolvedId || selectedDocId,
+          activeDosyaId
+        )
+        setFormData(enrichedFormData)
         initialSnapshotRef.current =
-          result.initialSnapshotJson || JSON.stringify(result.formData || result.resolvedData || {})
+          result.initialSnapshotJson || JSON.stringify(enrichedFormData)
       } catch (err) {
         console.error('Error loading template preview data via resolver:', err)
       } finally {
@@ -250,6 +296,43 @@ export function useDocumentPreviewData({
 
     loadInitialData()
   }, [isOpen, sourceDependencyKey, selectedDocId, resolvedId, propInvitedFirms])
+
+  // Rota varsayılanları değiştiğinde açık olan belgenin rotasını senkronize et
+  useEffect(() => {
+    const handleRotaDefaultsUpdated = () => {
+      const conf = getRotaConfigForTemplate(resolvedId || selectedDocId, activeDosyaId)
+      if (!conf) return
+      setFormData((prev: any) => ({
+        ...prev,
+        belgeModu: conf.belgeModu,
+        rota: conf.rota,
+        koordinasyon: (conf.rota || []).map((r) => ({
+          adSoyad: r.a,
+          unvan: r.u,
+          tarih: r.tarih,
+          rol: r.t
+        })),
+        ...(conf.hazirlayanPersonelAdi
+          ? {
+              hazirlayanPersonelAdi: conf.hazirlayanPersonelAdi,
+              hazirlayanPersonelUnvan:
+                conf.hazirlayanPersonelUnvan || prev.hazirlayanPersonelUnvan
+            }
+          : {}),
+        ...(conf.onaylayanPersonelAdi
+          ? {
+              onaylayanPersonelAdi: conf.onaylayanPersonelAdi,
+              onaylayanPersonelUnvan:
+                conf.onaylayanPersonelUnvan || prev.onaylayanPersonelUnvan
+            }
+          : {})
+      }))
+    }
+    window.addEventListener('temin360:rota-defaults-updated', handleRotaDefaultsUpdated)
+    return () => {
+      window.removeEventListener('temin360:rota-defaults-updated', handleRotaDefaultsUpdated)
+    }
+  }, [resolvedId, selectedDocId, activeDosyaId])
 
   // Dropdown outside click handler
   useClickOutside(dropdownRef, () => setDownloadOpen(false))

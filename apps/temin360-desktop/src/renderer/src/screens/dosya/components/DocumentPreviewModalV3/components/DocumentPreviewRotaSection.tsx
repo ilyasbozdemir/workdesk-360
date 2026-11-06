@@ -12,7 +12,11 @@ import {
   CheckCircle2,
   HelpCircle
 } from 'lucide-react'
-import { toTrDate, cleanPersonelName } from '@temin360/document-templates'
+import { toTrDate, cleanPersonelName, buildMergedPersonelList } from '@temin360/document-templates'
+import {
+  saveRotaConfigForTemplate,
+  GLOBAL_ROTA_KEY
+} from '../../../../../services/rotaDefaultsService'
 
 export type BelgeModuType = 'standart' | 'koordinasyonlu' | 'hizli_onay'
 
@@ -29,14 +33,23 @@ interface DocumentPreviewRotaSectionProps {
   setFormData: React.Dispatch<React.SetStateAction<any>>
   personelListesi?: Array<{ id?: number | string; ad_soyad?: string; unvan?: string }>
   supportsOlur?: boolean
+  templateId?: string
+  dosyaId?: number | string | null
 }
 
 export function DocumentPreviewRotaSection({
   formData,
   setFormData,
   personelListesi = [],
-  supportsOlur = false
+  supportsOlur = false,
+  templateId,
+  dosyaId
 }: DocumentPreviewRotaSectionProps): React.JSX.Element {
+  const [savedFeedback, setSavedFeedback] = React.useState<string | null>(null)
+  const mergedPersonelList = React.useMemo(
+    () => buildMergedPersonelList(personelListesi, formData),
+    [personelListesi, formData]
+  )
   const currentMode: BelgeModuType = (formData.belgeModu as BelgeModuType) || 'standart'
   const rota: RotaAdimItem[] = Array.isArray(formData.rota)
     ? formData.rota
@@ -162,7 +175,9 @@ export function DocumentPreviewRotaSection({
 
   // Personel Seçimiyle Adımı Doldurma
   const handleSelectPersonel = (index: number, personelId: string) => {
-    const p = personelListesi.find((item) => String(item.id) === personelId)
+    const p = mergedPersonelList.find(
+      (item) => String(item.id || item.ad_soyad) === personelId
+    )
     if (!p) return
     const cleanName = cleanPersonelName(p.ad_soyad)
     const updated = [...rota]
@@ -351,6 +366,8 @@ export function DocumentPreviewRotaSection({
           </button>
         </div>
 
+        
+
         <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
           {currentMode === 'koordinasyonlu'
             ? 'EBYS & Koordinasyon: Belge altında resmi paraf/koordinasyon tablosu basılır.'
@@ -470,21 +487,36 @@ export function DocumentPreviewRotaSection({
                     </div>
                   </div>
 
-                  {/* Personel Listesi Dropdown (Varsa Hızlı Seçim) */}
-                  {personelListesi.length > 0 && (
-                    <select
-                      value=""
-                      onChange={(e) => handleSelectPersonel(idx, e.target.value)}
-                      className="w-full text-[11px] px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
-                    >
-                      <option value="">👤 Personel Listesinden Seç...</option>
-                      {personelListesi.map((p) => (
-                        <option key={p.id} value={String(p.id)}>
-                          {p.ad_soyad} {p.unvan ? `(${p.unvan})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  {/* Personel Listesi Dropdown (Birleştirilmiş Havuz) */}
+                  {(() => {
+                    const stepPersonelList = buildMergedPersonelList(
+                      personelListesi,
+                      formData,
+                      step.a,
+                      step.u
+                    )
+                    if (stepPersonelList.length === 0) return null
+                    const matchedP = stepPersonelList.find(
+                      (p) =>
+                        cleanPersonelName(p.ad_soyad).toLowerCase() ===
+                        cleanPersonelName(step.a).toLowerCase()
+                    )
+                    const selectedVal = matchedP ? String(matchedP.id || matchedP.ad_soyad) : ''
+                    return (
+                      <select
+                        value={selectedVal}
+                        onChange={(e) => handleSelectPersonel(idx, e.target.value)}
+                        className="w-full text-[11px] px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
+                      >
+                        <option value="">👤 Personel Listesinden Seç...</option>
+                        {stepPersonelList.map((p, pIdx) => (
+                          <option key={p.id || pIdx} value={String(p.id || p.ad_soyad)}>
+                            {p.label || `${p.ad_soyad} ${p.unvan ? `(${p.unvan})` : ''}`}
+                          </option>
+                        ))}
+                      </select>
+                    )
+                  })()}
 
                   {/* Ad Soyad ve Unvan Inputları */}
                   <div className="grid grid-cols-2 gap-1.5">
@@ -530,6 +562,65 @@ export function DocumentPreviewRotaSection({
               <Plus className="w-3.5 h-3.5" />
               <span>Yeni Adım Ekle</span>
             </button>
+          )}
+        </div>
+
+        {/* Varsayılan Olarak Kaydet Aksiyonları */}
+        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                saveRotaConfigForTemplate(
+                  templateId || GLOBAL_ROTA_KEY,
+                  {
+                    belgeModu: currentMode,
+                    rota,
+                    hazirlayanPersonelAdi: formData.hazirlayanPersonelAdi,
+                    hazirlayanPersonelUnvan: formData.hazirlayanPersonelUnvan,
+                    onaylayanPersonelAdi: formData.onaylayanPersonelAdi,
+                    onaylayanPersonelUnvan: formData.onaylayanPersonelUnvan,
+                    olurYazisi: formData.olurYazisi
+                  },
+                  dosyaId
+                )
+                setSavedFeedback('Bu şablon için varsayılan olarak kaydedildi')
+                setTimeout(() => setSavedFeedback(null), 2500)
+              }}
+              className="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+              title="Bu rotayı seçili belge şablonu için varsayılan yap"
+            >
+              📌 Şablon Varsayılanı Yap
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                saveRotaConfigForTemplate(
+                  GLOBAL_ROTA_KEY,
+                  {
+                    belgeModu: currentMode,
+                    rota,
+                    hazirlayanPersonelAdi: formData.hazirlayanPersonelAdi,
+                    hazirlayanPersonelUnvan: formData.hazirlayanPersonelUnvan,
+                    onaylayanPersonelAdi: formData.onaylayanPersonelAdi,
+                    onaylayanPersonelUnvan: formData.onaylayanPersonelUnvan,
+                    olurYazisi: formData.olurYazisi
+                  },
+                  dosyaId
+                )
+                setSavedFeedback('Tüm belgeler için genel varsayılan yapıldı')
+                setTimeout(() => setSavedFeedback(null), 2500)
+              }}
+              className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+              title="Bu rotayı tüm belgeler için genel varsayılan yap"
+            >
+              🌐 Genel Varsayılan Yap
+            </button>
+          </div>
+          {savedFeedback && (
+            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 text-center bg-emerald-50 dark:bg-emerald-950/40 py-1 rounded-lg">
+              ✓ {savedFeedback}
+            </div>
           )}
         </div>
       </div>
