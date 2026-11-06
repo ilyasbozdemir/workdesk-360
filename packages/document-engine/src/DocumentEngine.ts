@@ -9,6 +9,7 @@ import {
   DocumentStorageAdapter,
   ValidationReport,
   LoadOrCreateDocumentParams,
+  PrepareDocumentParams,
   SaveDocumentParams,
   ResetDocumentParams,
   DeleteDocumentParams,
@@ -235,6 +236,28 @@ export class DocumentEngine {
       headerData,
       definition
     }
+  }
+
+    /**
+   * Tekil ve Standart Belge Hazırlama Metodu (Unified Document Preparation Flow)
+   * prompt: documentEngine.prepare({ templateId, documentId })
+   * 1. Belge tanımını bulur.
+   * 2. Ortak ve belgeye özel mapping alanlarını çözer.
+   * 3. Gerekli relation ve computed alanlarını hesaplar.
+   * 4. Varsa kaydedilmiş snapshot ile kurallara göre harmanlar.
+   * 5. Tipli ve React şablonuna hazır veri döndürür.
+   */
+  static async prepare<T = Record<string, unknown>>(
+    params: PrepareDocumentParams
+  ): Promise<DocumentRecord<T>> {
+    const { templateId, documentId, context, forceDefault = false } = params
+    const dosyaId = typeof documentId === 'number' ? documentId : Number(documentId) || 0
+    return await this.loadOrCreateDocument<T>({
+      dosyaId,
+      templateKey: templateId,
+      context,
+      forceDefault
+    })
   }
 
   /**

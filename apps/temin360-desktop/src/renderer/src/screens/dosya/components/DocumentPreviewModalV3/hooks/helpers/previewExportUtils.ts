@@ -187,7 +187,8 @@ export async function saveDocumentToDb({
   await DocumentEngine.saveDocument({
     dosyaId: activeDosyaId,
     templateKey: resolvedId,
-    data: dataToSave
+    data: dataToSave,
+    validateBeforeSave: false
   })
 
   // Dosya genelinde de sunulacak makamı senkronize et

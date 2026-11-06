@@ -33,9 +33,11 @@ export function IhtiyacListesi(props: IhtiyacListesiProps) {
     limits,
     pages,
     tarih,
+    dosyaKonusu,
     sunulacakMakam,
     onayTarihi,
     fLimit,
+    KANUN_DAYANAGI,
     getStartIndex,
   } = useIhtiyacListesi(props);
 
@@ -61,7 +63,7 @@ export function IhtiyacListesi(props: IhtiyacListesiProps) {
                 <MetadataBlock
                   evrakSayisi={data.evrakSayisi}
                   tarih={tarih}
-                  dosyaKonusu={(data as any).konu || data.dosyaKonusu}
+                  dosyaKonusu={dosyaKonusu}
                   showBorder={false}
                 />
 
@@ -112,7 +114,7 @@ export function IhtiyacListesi(props: IhtiyacListesiProps) {
                   Söz konusu ihtiyacın 4734 sayılı Kamu İhale Kanununun{" "}
                   <EditableField
                     name="maddeNo"
-                    value={data.maddeNo || "ilgili"}
+                    value={KANUN_DAYANAGI}
                     placeholder="ilgili"
                   />{" "}
                   maddesine göre temini için gereğini olurlarınıza arz ederim.
@@ -142,7 +144,7 @@ export function IhtiyacListesi(props: IhtiyacListesiProps) {
                 ? (
                   <div style={{ marginTop: "auto" }}>
                     <ApprovalSignature
-                      title={(data as any).olurBaslik || "OLUR"}
+                      title={data.olurBaslik || "OLUR"}
                       date={onayTarihi}
                       adSoyad={data.onaylayanPersonelAdi}
                       unvan={data.onaylayanPersonelUnvan}

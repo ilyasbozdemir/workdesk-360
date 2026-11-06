@@ -27,6 +27,7 @@ export const IhtiyacListesiSchema = z
     standartFormAdi: z.string().optional(),
     evrakSayisi: z.string().optional(),
     konu: z.string().optional(),
+    dosyaKonusu: z.string().optional(),
     maddeNo: z.string().optional(),
     tarih: z.string().optional(),
     dosyaTarihi: z.string().optional(),

@@ -1,5 +1,8 @@
 import React from 'react';
 import type { RoleCode, Scope } from './constants/roles';
+import type { CommonDocumentFields, PrepareDocumentParams } from '@worksuite-360/document-engine';
+
+export type { CommonDocumentFields, PrepareDocumentParams };
 
 export type { RoleCode, Scope };
 

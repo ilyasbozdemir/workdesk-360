@@ -72,7 +72,7 @@ export function SonAlimFiyatCetveli({
               <>
                 <MetadataBlock
                   evrakSayisi={data.evrakSayisi}
-                  tarih={data.tarih || data.dosya_acilis_tarihi || data.dosyaAcilisTarihi || data.dosyaTarihi}
+                  tarih={data.dosyaTarihi || data.tarih}
                   dosyaKonusu={data.dosyaKonusu || data.isinAdi || 'Mal Alımı'}
                   showBorder={false}
                 />

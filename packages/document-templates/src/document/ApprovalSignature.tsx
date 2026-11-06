@@ -1,4 +1,5 @@
 import React from "react";
+import type { CommonDocumentFields } from "@worksuite-360/document-engine";
 import { EditableField, FIELD_SOURCE_INFO } from "./EditableField";
 import { useTemplateEdit } from "./TemplateEditContext";
 import { cleanPersonelName, toIsoDate, toTrDate } from "../utils/textHelpers";
@@ -813,6 +814,30 @@ export const MetadataBlock: React.FC<MetadataBlockProps> = ({
         </div>
       )}
     </div>
+  );
+};
+
+export interface DocumentMetadataProps {
+  data: Partial<CommonDocumentFields> & Record<string, any>;
+  showBorder?: boolean;
+}
+
+/**
+ * Merkezi Ortak Belge Üst Bilgi Bileşeni (DocumentMetadata)
+ * MetadataBlock üzerine kurulu, CommonDocumentFields modelini doğrudan tüketen yardımcı bileşen.
+ */
+export const DocumentMetadata: React.FC<DocumentMetadataProps> = ({
+  data,
+  showBorder = false,
+}) => {
+  return (
+    <MetadataBlock
+      evrakSayisi={data?.evrakSayisi}
+      tarih={data?.dosyaTarihi || data?.tarih}
+      onayaSunulanTarih={data?.onayaSunulanTarih}
+      dosyaKonusu={data?.dosyaKonusu || (data as any)?.konu}
+      showBorder={showBorder}
+    />
   );
 };
 

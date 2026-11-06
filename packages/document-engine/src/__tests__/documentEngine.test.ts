@@ -215,4 +215,51 @@ describe('@worksuite-360/document-engine', () => {
       expect(html).toContain('Orijinal Başlık')
     })
   })
+
+  describe('4. DocumentEngine.prepare (Tek Veri Çözümleme Akışı)', () => {
+    it('belge tanımını bulur, resolver verisini yükler ve standart DocumentRecord döndürür', async () => {
+      const mockResolver = {
+        resolve: vi.fn(async ({ dosyaId, headerData }: any) => ({
+          dosyaId,
+          dosyaKonusu: 'Yazıcı Toner Alımı',
+          dosyaTarihi: '2026-11-06',
+          evrakSayisi: 'E-10234521-934.01-0042',
+          kurumAdi: headerData.kurumAdi,
+          sunulacakMakamAdi: 'BİLGİ İŞLEM DAİRE BAŞKANLIĞINA',
+          ihtiyacYeri: 'Yazılım Şube Müdürlüğü',
+          hazirlayanPersonelAdi: 'Ahmet Yılmaz',
+          hazirlayanPersonelUnvan: 'Mühendis',
+          onaylayanPersonelAdi: 'Mehmet Demir',
+          onaylayanPersonelUnvan: 'Daire Başkanı',
+          onayTarihi: '2026-11-06'
+        }))
+      }
+
+      TemplateRegistry.register({
+        templateKey: 'ihtiyac_listesi',
+        name: 'IhtiyacListesi',
+        title: 'İhtiyaç Listesi',
+        category: 'test',
+        categoryLabel: 'Test',
+        orientation: 'portrait',
+        resolver: mockResolver,
+        renderer: () => React.createElement('div', null, 'Test')
+      })
+
+      const document = await DocumentEngine.prepare({
+        templateId: 'ihtiyac-listesi',
+        documentId: 125
+      })
+
+      expect(document.dosyaId).toBe(125)
+      expect(document.templateKey).toBe('ihtiyac_listesi')
+      expect(document.data.dosyaKonusu).toBe('Yazıcı Toner Alımı')
+      expect(document.data.evrakSayisi).toBe('E-10234521-934.01-0042')
+      expect(document.data.sunulacakMakamAdi).toBe('BİLGİ İŞLEM DAİRE BAŞKANLIĞINA')
+      expect(document.data.hazirlayanPersonelAdi).toBe('Ahmet Yılmaz')
+      expect(document.data.onaylayanPersonelAdi).toBe('Mehmet Demir')
+      expect(document.headerData?.kurumAdi).toBe('TEST KURUMU')
+    })
+  })
+
 })

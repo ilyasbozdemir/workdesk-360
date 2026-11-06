@@ -624,6 +624,9 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@temin360/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@temin360/document-templates':
         specifier: workspace:*
         version: link:../../packages/document-templates
@@ -920,6 +923,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(@types/node@22.20.1)(jsdom@30.1.1)(vite@7.3.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.13))
 
+  packages/contracts: {}
+
   packages/database:
     dependencies:
       better-sqlite3:
@@ -969,6 +974,9 @@ importers:
 
   packages/document-templates:
     dependencies:
+      '@temin360/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@worksuite-360/document-engine':
         specifier: workspace:*
         version: link:../document-engine
