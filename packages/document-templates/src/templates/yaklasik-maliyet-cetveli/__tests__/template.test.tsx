@@ -27,7 +27,7 @@ describe("Yaklaşık Maliyet Hesap Cetveli — Render, Hesaplama ve Şema Testle
   it("sentetik veriyle YaklasikMaliyetCetveli şablonunu hatasız render eder", () => {
     const data = createSyntheticDocumentData();
     const html = renderToStaticMarkup(
-      <YaklasikMaliyetCetveli data={data} isEditing={false} />,
+      <YaklasikMaliyetCetveli data={data} />,
     );
 
     expect(html).toContain("A4 Fotokopi Kağıdı");

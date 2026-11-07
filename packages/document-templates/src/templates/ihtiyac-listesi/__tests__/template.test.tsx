@@ -21,8 +21,6 @@ describe("İhtiyaç Listesi — Render, Schema ve PDF Uyumluluk Testleri", () =>
     const html = renderToStaticMarkup(
       <IhtiyacListesi
         data={data}
-        isEditing={false}
-        personelListesi={SYNTHETIC_PERSONEL_LIST}
       />,
     );
 
@@ -78,7 +76,6 @@ describe("İhtiyaç Listesi — Render, Schema ve PDF Uyumluluk Testleri", () =>
     const html = renderToStaticMarkup(
       <IhtiyacListesi
         data={data}
-        isEditing={false}
         firstPageLimit={8}
         middlePageLimit={8}
         lastPageLimit={8}
@@ -100,7 +97,6 @@ describe("İhtiyaç Listesi — Render, Schema ve PDF Uyumluluk Testleri", () =>
           sunulacakMakamAdi: "",
           ihtiyacKalemleri: [],
         }}
-        isEditing={false}
       />,
     );
 

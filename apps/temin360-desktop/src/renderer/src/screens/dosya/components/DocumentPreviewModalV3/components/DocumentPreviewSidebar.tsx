@@ -49,6 +49,7 @@ interface DocumentPreviewSidebarProps {
   nextTemplate?: TemplateOptionItem
   prevTemplate?: TemplateOptionItem
   personelListesi?: any[]
+  birimListesi?: any[]
 }
 
 export function DocumentPreviewSidebar({
@@ -74,7 +75,8 @@ export function DocumentPreviewSidebar({
   disableDocumentGuidance = true,
   sourceKind,
   nextTemplate,
-  personelListesi = []
+  personelListesi = [],
+  birimListesi = []
 }: DocumentPreviewSidebarProps): React.JSX.Element {
   const [activeSidebarTab, setActiveSidebarTab] = useState<'asamalar' | 'ayarlar'>('asamalar')
   const [selectedStageId, setSelectedStageId] = useState<number>(() => stageInfo?.id ?? 1)
@@ -814,6 +816,7 @@ export function DocumentPreviewSidebar({
               formData={formData}
               setFormData={setFormData}
               personelListesi={personelListesi}
+              birimListesi={birimListesi}
               supportsOlur={supportsOlur}
               templateId={selectedDocId}
               dosyaId={(formData as any)?.dosyaId}

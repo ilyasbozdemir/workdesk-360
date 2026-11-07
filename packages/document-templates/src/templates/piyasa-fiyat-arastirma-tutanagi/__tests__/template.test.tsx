@@ -33,7 +33,7 @@ describe("Piyasa Fiyat Araştırma Tutanağı — Render, Schema ve PDF Uyumlulu
     });
 
     const html = renderToStaticMarkup(
-      <PiyasaFiyatArastirmaTutanagi data={data} isEditing={false} />,
+      <PiyasaFiyatArastirmaTutanagi data={data} />,
     );
 
     expect(html).toContain("Alfa Kırtasiye Ltd. Şti.");
@@ -53,7 +53,6 @@ describe("Piyasa Fiyat Araştırma Tutanağı — Render, Schema ve PDF Uyumlulu
           kalemler: [],
           fiyatArastirmaGorevlileri: [],
         }}
-        isEditing={false}
       />,
     );
 

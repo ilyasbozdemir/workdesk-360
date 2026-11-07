@@ -50,7 +50,7 @@ describe("Tüm Kayıtlı Belge Şablonları (32 Şablon) — Parametrik Sözleş
     ] as const),
   )("Şablon [%s]", (templateKey, def) => {
     it("1. Render & PDF: Sentetik veriyle ve boş veriyle hatasız render edilir, A4 compileHtml çıktısı üretir", () => {
-      const Component = def.component;
+      const Component = def.component as React.ComponentType<any>;
       const syntheticData = createSyntheticDocumentData();
 
       // Sentetik veriyle render

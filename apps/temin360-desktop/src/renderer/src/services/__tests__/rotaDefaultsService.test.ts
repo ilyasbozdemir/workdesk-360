@@ -26,7 +26,7 @@ describe('rotaDefaultsService — Merkezi Belge Rota ve Onay Akışı Varsayıla
     expect(resolved).not.toBeNull()
     expect(resolved?.belgeModu).toBe('koordinasyonlu')
     expect(resolved?.rota).toHaveLength(1)
-    expect(resolved?.rota[0].a).toBe('Ahmet Yılmaz')
+    expect(resolved?.rota?.[0].a).toBe('Ahmet Yılmaz')
     expect(resolved?.hazirlayanPersonelAdi).toBe('Zeynep Kaya')
   })
 
@@ -43,7 +43,7 @@ describe('rotaDefaultsService — Merkezi Belge Rota ve Onay Akışı Varsayıla
 
     expect(getRotaConfigForTemplate('ihtiyac-listesi')?.belgeModu).toBe('standart')
     expect(getRotaConfigForTemplate('luzum-muzekkeresi')?.belgeModu).toBe('koordinasyonlu')
-    expect(getRotaConfigForTemplate('luzum-muzekkeresi')?.rota[0].a).toBe('Mehmet Demir')
+    expect(getRotaConfigForTemplate('luzum-muzekkeresi')?.rota?.[0].a).toBe('Mehmet Demir')
   })
 
   it('aktif dosyaya (dosyaId) özel şablon ayarı, global şablon ayarını ezer ve silindiğinde globale döner', () => {
@@ -62,7 +62,7 @@ describe('rotaDefaultsService — Merkezi Belge Rota ve Onay Akışı Varsayıla
     )
 
     expect(getDirectRotaConfig('yaklasik-maliyet-cetveli', 42)?.belgeModu).toBe('koordinasyonlu')
-    expect(getRotaConfigForTemplate('yaklasik-maliyet-cetveli', 42)?.rota[0].a).toBe(
+    expect(getRotaConfigForTemplate('yaklasik-maliyet-cetveli', 42)?.rota?.[0].a).toBe(
       'Dosya Özel Personel'
     )
     expect(getRotaConfigForTemplate('yaklasik-maliyet-cetveli', 99)?.belgeModu).toBe('standart')
@@ -103,7 +103,7 @@ describe('rotaDefaultsService — Merkezi Belge Rota ve Onay Akışı Varsayıla
 
     const { resolvedRoute, enrichedData } = resolveTemplateRouteForDocument(
       'piyasa-fiyat-arastirma-tutanagi',
-      {},
+      {} as Record<string, any>,
       null,
       [{ slotId: 'onaylayan', value: { id: 'p5', name: 'Fatma Ak', title: 'Daire Başkanı' } }]
     )
@@ -114,6 +114,62 @@ describe('rotaDefaultsService — Merkezi Belge Rota ve Onay Akışı Varsayıla
     expect(enrichedData.fiyatArastirmaGorevlileri[0].adSoyad).toBe('Zeynep Kaya')
     expect(enrichedData.onaylayanPersonelAdi).toBe('Fatma Ak')
     expect(enrichedData.onaylayanPersonelUnvan).toBe('Daire Başkanı')
+  })
+
+  it('birimId ve antetSatirlari için Genel < Şablon < Dosya öncelik sırasını korur ve manuel snapshot verisini ezmez', () => {
+    saveRotaConfigForTemplate(GLOBAL_ROTA_KEY, {
+      birimId: 10,
+      birimAdi: 'Destek Hizmetleri Müdürlüğü',
+      antetSatirlari: ['T.C.', 'KURUM', 'Destek Hizmetleri Müdürlüğü']
+    })
+
+    saveRotaConfigForTemplate('ihtiyac-listesi', {
+      birimId: 20,
+      birimAdi: 'Fen İşleri Müdürlüğü',
+      antetSatirlari: ['T.C.', 'KURUM', 'Fen İşleri Müdürlüğü']
+    })
+
+    saveRotaConfigForTemplate(
+      'ihtiyac-listesi',
+      {
+        birimId: 30,
+        birimAdi: 'Bilgi İşlem Müdürlüğü',
+        antetSatirlari: ['T.C.', 'KURUM', 'Bilgi İşlem Müdürlüğü']
+      },
+      77
+    )
+
+    // 1. Özel ayarı olmayan şablon genel (birimId: 10) ayarı alır
+    const globalRes = resolveTemplateRouteForDocument('luzum-muzekkeresi', {}, null)
+    expect((globalRes.enrichedData as any).birimId).toBe(10)
+    expect((globalRes.enrichedData as any).antetSatirlari).toEqual([
+      'T.C.',
+      'KURUM',
+      'Destek Hizmetleri Müdürlüğü'
+    ])
+
+    // 2. Şablona özel ayar genel ayarı ezer (birimId: 20)
+    const tplRes = resolveTemplateRouteForDocument('ihtiyac-listesi', {}, null)
+    expect((tplRes.enrichedData as any).birimId).toBe(20)
+    expect((tplRes.enrichedData as any).birimAdi).toBe('Fen İşleri Müdürlüğü')
+
+    // 3. Dosyaya özel ayar şablon ayarını ezer (dosyaId: 77 -> birimId: 30)
+    const dosyaRes = resolveTemplateRouteForDocument('ihtiyac-listesi', {}, 77)
+    expect((dosyaRes.enrichedData as any).birimId).toBe(30)
+    expect((dosyaRes.enrichedData as any).birimAdi).toBe('Bilgi İşlem Müdürlüğü')
+
+    // 4. Belgede/snapshot'ta zaten tanımlı birimId ve antetSatirlari varsa sessizce EZİLMEZ
+    const manualDocRes = resolveTemplateRouteForDocument(
+      'ihtiyac-listesi',
+      {
+        birimId: 99,
+        birimAdi: 'Manuel Seçilen Birim',
+        antetSatirlari: ['T.C.', 'MANUEL ANTET SATIRI']
+      },
+      77
+    )
+    expect(manualDocRes.enrichedData.birimId).toBe(99)
+    expect(manualDocRes.enrichedData.antetSatirlari).toEqual(['T.C.', 'MANUEL ANTET SATIRI'])
   })
 })
 

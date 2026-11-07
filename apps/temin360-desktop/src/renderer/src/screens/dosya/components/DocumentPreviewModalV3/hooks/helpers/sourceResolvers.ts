@@ -175,11 +175,14 @@ export const ihtiyacRaporuResolver: DocumentResolver = {
 
       if (!savedSnapshotOverlay && rapor.temin_dosya_id && Number(rapor.temin_dosya_id) > 0) {
         try {
-          const adapter = DocumentEngine.getAdapter()
+          const adapter = DocumentEngine.getStorageAdapter()
           if (adapter) {
-            const snap = await adapter.loadSnapshot(Number(rapor.temin_dosya_id), templateId)
-            if (snap?.data && typeof snap.data === 'object') {
-              savedSnapshotOverlay = snap.data as Record<string, any>
+            const snap = await adapter.getDocument({
+              dosyaId: Number(rapor.temin_dosya_id),
+              templateKey: templateId
+            })
+            if (snap?.record?.data && typeof snap.record.data === 'object') {
+              savedSnapshotOverlay = snap.record.data as Record<string, any>
             }
           }
         } catch {

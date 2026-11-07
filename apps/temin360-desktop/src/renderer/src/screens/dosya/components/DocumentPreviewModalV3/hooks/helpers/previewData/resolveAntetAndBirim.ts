@@ -1,5 +1,6 @@
 import { formatDateString } from '../../../../../contextBuilder/dateHelpers'
 import { resolveEvrakSayisi } from '@temin360/document-templates'
+import { InstitutionalHeaderProvider } from '@worksuite-360/document-engine'
 
 export async function resolveAntetAndBirim(
   baseData: any,
@@ -9,6 +10,7 @@ export async function resolveAntetAndBirim(
   birimList: any[],
   queryExecutor: (sql: string, params: any[]) => Promise<any[]>
 ): Promise<void> {
+  let kurumRow: Record<string, any> | null = null
   if (
     resolved.antetSatirlari &&
     Array.isArray(resolved.antetSatirlari) &&
@@ -20,18 +22,8 @@ export async function resolveAntetAndBirim(
       const kurumRows = await queryExecutor('SELECT * FROM TANIM_Kurum LIMIT 1', [])
       if (kurumRows && kurumRows[0]) {
         const kRow = kurumRows[0]
-        if (kRow.kurum_anteti) {
-          try {
-            const parsed = JSON.parse(kRow.kurum_anteti)
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              baseData.antetSatirlari = parsed.filter((s: string) => s && s.trim() !== '')
-            } else {
-              baseData.antetSatirlari = [kRow.kurum_anteti]
-            }
-          } catch {
-            baseData.antetSatirlari = [kRow.kurum_anteti]
-          }
-        }
+        kurumRow = kRow
+        baseData.antetSatirlari = InstitutionalHeaderProvider.parseKurumBaseAntetLines(kRow)
         if (!baseData.kurumAdi && kRow.kurum_adi) baseData.kurumAdi = kRow.kurum_adi
         if (!baseData.mudurluk && (kRow.harcama_birim_adi || kRow.mudurluk)) {
           baseData.mudurluk = kRow.harcama_birim_adi || kRow.mudurluk
@@ -137,7 +129,22 @@ export async function resolveAntetAndBirim(
     baseData.evrakNo = String(baseData.evrakNo).replace(/^E-/i, '').trim()
   }
 
-  let matchedBirimName =
+  if (typeof baseData.antetSatirlari === 'string') {
+    try {
+      baseData.antetSatirlari = JSON.parse(baseData.antetSatirlari)
+    } catch {
+      baseData.antetSatirlari = [baseData.antetSatirlari]
+    }
+  }
+
+  const effectiveBirimId =
+    baseData.birimId ??
+    baseData.birim_id ??
+    dosyaObj.birim_id ??
+    ctx.birimId ??
+    undefined
+
+  const fallbackBirimName =
     dosyaObj.islem_yapan_birim ||
     dosyaObj.islemYapanBirim ||
     dosyaObj.birim ||
@@ -146,12 +153,29 @@ export async function resolveAntetAndBirim(
     ctx.birimAdi ||
     ctx.mudurluk ||
     ''
-  if (!matchedBirimName && dosyaObj.birim_id && Array.isArray(birimList) && birimList.length > 0) {
-    const foundBirim = birimList.find((b: any) => Number(b.id) === Number(dosyaObj.birim_id))
-    if (foundBirim) {
-      matchedBirimName = foundBirim.birim_adi || foundBirim.ad || foundBirim.kisa_ad || ''
-    }
+
+  const birimResolution = InstitutionalHeaderProvider.resolveBirimSelection({
+    birimId: effectiveBirimId,
+    birimAdi: fallbackBirimName,
+    birimList: Array.isArray(birimList) ? birimList : [],
+    kurumRow,
+    baseAntetLines:
+      Array.isArray(baseData.antetSatirlari) && baseData.antetSatirlari.length > 0
+        ? baseData.antetSatirlari
+        : undefined,
+    dosyaAntetEkSatir: dosyaObj.antet_ek_satir,
+    fallbackInstitutionName: baseData.kurumAdi || 'BELEDİYE BAŞKANLIĞI'
+  })
+
+  if (birimResolution.birimId !== undefined) {
+    baseData.birimId = birimResolution.birimId
+    baseData.birim_id = birimResolution.birimId
   }
+  if (birimResolution.warning) {
+    baseData.birimWarning = birimResolution.warning
+  }
+
+  const matchedBirimName = birimResolution.birimAdi || fallbackBirimName
   if (matchedBirimName) {
     baseData.birim = baseData.birim || matchedBirimName
     baseData.birimAdi = baseData.birimAdi || matchedBirimName
@@ -161,28 +185,11 @@ export async function resolveAntetAndBirim(
     baseData.harcamaBirimi = baseData.harcamaBirimi || matchedBirimName
     baseData.harcama_birimi = baseData.harcama_birimi || matchedBirimName
     baseData.mudurluk = baseData.mudurluk || matchedBirimName
+    baseData.antetSatirlari = birimResolution.antetSatirlari
+  }
 
-    if (typeof baseData.antetSatirlari === 'string') {
-      try {
-        baseData.antetSatirlari = JSON.parse(baseData.antetSatirlari)
-      } catch {
-        baseData.antetSatirlari = [baseData.antetSatirlari]
-      }
-    }
-
-    if (Array.isArray(baseData.antetSatirlari) && baseData.antetSatirlari.length > 0) {
-      const exists = baseData.antetSatirlari.some(
-        (s: string) => s && String(s).trim().toUpperCase() === matchedBirimName.toUpperCase()
-      )
-      if (!exists) {
-        baseData.antetSatirlari.push(matchedBirimName)
-      }
-    } else {
-      baseData.antetSatirlari = [
-        'T.C.',
-        baseData.kurumAdi || 'BELEDİYE BAŞKANLIĞI',
-        matchedBirimName
-      ]
-    }
+  if (!baseData.sunulacakMakamAdi && birimResolution.sunulacakMakamAdi) {
+    baseData.sunulacakMakamAdi = birimResolution.sunulacakMakamAdi
+    baseData.sunulacakMakam = birimResolution.sunulacakMakamAdi
   }
 }

@@ -1,6 +1,10 @@
 import React, { ReactNode } from "react";
 import { BaseTemplate } from "../base.schema";
-import { DocumentThemeConfig, GLOBAL_THEME, createDocumentTheme } from "../theme.config";
+import {
+  createDocumentTheme,
+  DocumentThemeConfig,
+  GLOBAL_THEME,
+} from "../theme.config";
 import { DocumentHeader } from "./DocumentHeader";
 import { DocumentFooter } from "./DocumentFooter";
 
@@ -86,7 +90,9 @@ export const DocumentLayout = React.forwardRef<
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-start",
-          margin: totalPages && totalPages > 1 && !isLastPage ? "0 auto 40px auto" : "0 auto",
+          margin: totalPages && totalPages > 1 && !isLastPage
+            ? "0 auto 40px auto"
+            : "0 auto",
           padding:
             `${margins.top}cm ${margins.right}cm ${margins.bottom}cm ${margins.left}cm`,
           fontFamily: activeTheme.typography.fontFamily,
@@ -106,7 +112,8 @@ export const DocumentLayout = React.forwardRef<
         <style dangerouslySetInnerHTML={{ __html: dynamicPrintStyles }} />
 
         {/* ON SCREEN PAGE BADGE */}
-        {pageNumber !== undefined && totalPages !== undefined && totalPages > 1 && (
+        {pageNumber !== undefined && totalPages !== undefined &&
+          totalPages > 1 && (
           <div
             className="screen-page-badge"
             style={{
@@ -160,15 +167,15 @@ export const DocumentLayout = React.forwardRef<
           {/* EKSTRA BOŞLUK (KAYDIRMA / MARGIN PUSH) */}
           {(pageNumber === undefined || pageNumber === 1) &&
             Number((data as any)?.ekstraBosluk || 0) > 0 && (
-              <div
-                style={{
-                  height: `${Number((data as any).ekstraBosluk)}px`,
-                  width: "100%",
-                  transition: "height 0.2s ease",
-                }}
-                aria-hidden="true"
-              />
-            )}
+            <div
+              style={{
+                height: `${Number((data as any).ekstraBosluk)}px`,
+                width: "100%",
+                transition: "height 0.2s ease",
+              }}
+              aria-hidden="true"
+            />
+          )}
           {children}
         </div>
 
@@ -180,7 +187,8 @@ export const DocumentLayout = React.forwardRef<
         )}
 
         {/* DİNAMİK SAYFA NUMARASI (Yalnızca 1 sayfadan fazla ise gösterilir) */}
-        {pageNumber !== undefined && totalPages !== undefined && totalPages > 1 && (
+        {pageNumber !== undefined && totalPages !== undefined &&
+          totalPages > 1 && (
           <div
             style={{
               position: "absolute",

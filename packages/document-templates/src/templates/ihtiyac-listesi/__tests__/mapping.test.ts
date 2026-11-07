@@ -141,8 +141,11 @@ describe("İhtiyaç Listesi — Mapping ve Veri Hazırlama Testleri", () => {
       templateKey: "ihtiyac-listesi",
       headerData: {
         antetSatirlari: ["T.C."],
+        kurumUst: "T.C.",
         kurumAdi: "Kurum",
         mudurluk: "Birim",
+        solLogo: null,
+        sagLogo: null,
       },
       queryExecutor: mockQueryExecutor,
     });

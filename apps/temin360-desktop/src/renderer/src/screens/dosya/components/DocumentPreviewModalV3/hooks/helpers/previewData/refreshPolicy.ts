@@ -15,6 +15,8 @@ export const PRESERVE_FIELDS = new Set([
   'kurumAdi',
   'mudurluk',
   'harcamaBirimi',
+  'birimId',
+  'birim_id',
   'birimAdi',
   'birimAnteti',
   'antetSatirlari',

@@ -238,7 +238,7 @@ describe('Common Document Fields & Standardization', () => {
       expect(piyasaResolved.steps.find((s) => s.id === 'komisyon')?.origin).toBe('document');
       expect(piyasaResolved.steps.find((s) => s.id === 'onaylayan')?.origin).toBe('override');
 
-      const mappedDoc = applyResolvedRouteToDocumentData({}, piyasaResolved);
+      const mappedDoc = applyResolvedRouteToDocumentData({} as Record<string, any>, piyasaResolved);
       expect(mappedDoc.fiyatArastirmaGorevlileri).toHaveLength(2);
       expect(mappedDoc.fiyatArastirmaGorevlileri[0].adSoyad).toBe('Zeynep Kaya');
       expect(mappedDoc.onaylayanPersonelAdi).toBe('Fatma Ak');

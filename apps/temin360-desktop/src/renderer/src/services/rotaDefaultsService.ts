@@ -23,6 +23,11 @@ export interface TemplateRotaConfig {
   rota?: RotaAdimItem[]
   /** Şablon bazlı slot atamaları (hazirlayan, onaylayan, komisyon, muayeneKomisyonu, sunulacakMakam vb.) */
   slots?: RouteValues
+  /** Seçili harcama/işlem birimi (TANIM_Birim.id) */
+  birimId?: number | string | null
+  birimAdi?: string
+  /** Kurum + Birim resmi antet satırları */
+  antetSatirlari?: string[]
   hazirlayanPersonelAdi?: string
   hazirlayanPersonelUnvan?: string
   gerceklestirmeGorevlisiAdi?: string
@@ -276,5 +281,30 @@ export function resolveTemplateRouteForDocument<T extends Record<string, any>>(
   })
 
   const enrichedData = applyResolvedRouteToDocumentData(documentData, resolvedRoute)
+  const effectiveConf = getRotaConfigForTemplate(templateId, dosyaId)
+  if (effectiveConf) {
+    if (
+      (enrichedData.birimId === undefined || enrichedData.birimId === null || enrichedData.birimId === '') &&
+      (enrichedData.birim_id === undefined || enrichedData.birim_id === null || enrichedData.birim_id === '') &&
+      effectiveConf.birimId !== undefined &&
+      effectiveConf.birimId !== null &&
+      String(effectiveConf.birimId).trim() !== ''
+    ) {
+      ;(enrichedData as any).birimId = effectiveConf.birimId
+      ;(enrichedData as any).birim_id = effectiveConf.birimId
+    }
+    if (!enrichedData.birimAdi && effectiveConf.birimAdi) {
+      ;(enrichedData as any).birimAdi = effectiveConf.birimAdi
+      ;(enrichedData as any).birim = enrichedData.birim || effectiveConf.birimAdi
+      ;(enrichedData as any).mudurluk = enrichedData.mudurluk || effectiveConf.birimAdi
+    }
+    if (
+      (!Array.isArray(enrichedData.antetSatirlari) || enrichedData.antetSatirlari.length === 0) &&
+      Array.isArray(effectiveConf.antetSatirlari) &&
+      effectiveConf.antetSatirlari.length > 0
+    ) {
+      ;(enrichedData as any).antetSatirlari = [...effectiveConf.antetSatirlari]
+    }
+  }
   return { resolvedRoute, enrichedData }
 }
