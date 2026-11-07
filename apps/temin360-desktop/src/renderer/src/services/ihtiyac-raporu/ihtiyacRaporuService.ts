@@ -17,6 +17,7 @@ export const ihtiyacRaporuService = {
   saveKalemler: ihtiyacRaporuRepository.saveKalemler.bind(ihtiyacRaporuRepository),
   deleteRapor: ihtiyacRaporuRepository.deleteRapor.bind(ihtiyacRaporuRepository),
   duplicateRapor: ihtiyacRaporuRepository.duplicateRapor.bind(ihtiyacRaporuRepository),
+  saveBelgeSnapshot: ihtiyacRaporuRepository.saveBelgeSnapshot.bind(ihtiyacRaporuRepository),
 
   // Link Manager (Dosyaya Bağlama, Kalem Aktarımı, Bağlantı Çözme)
   linkToDosya: ihtiyacRaporuLinkManager.linkToDosya.bind(ihtiyacRaporuLinkManager),

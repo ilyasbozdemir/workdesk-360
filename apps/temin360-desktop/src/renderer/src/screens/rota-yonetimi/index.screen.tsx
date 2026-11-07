@@ -13,21 +13,27 @@ import {
   Sparkles,
   Users
 } from 'lucide-react'
-import { buildMergedPersonelList, cleanPersonelName, toTrDate } from '@temin360/document-templates'
+import type { RouteAssignee, RouteOverride, RouteValues } from '@temin360/contracts'
+import {
+  buildMergedPersonelList,
+  getTemplateRouteDefinition
+} from '@temin360/document-templates'
+import {
+  resolveRoute,
+  extractDocumentRouteValues,
+  applyResolvedRouteToDocumentData
+} from '@worksuite-360/document-engine'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { TEMPLATE_OPTIONS } from '../dosya/components/DocumentPreviewModalV3/templateResolver'
 import {
   DOCUMENT_STAGES,
   filterTemplatesByStage
 } from '../dosya/components/DocumentPreviewModalV3/stages'
-import {
-  DocumentPreviewRotaSection,
-  BelgeModuType,
-  RotaAdimItem
-} from '../dosya/components/DocumentPreviewModalV3/components/DocumentPreviewRotaSection'
+import { DocumentPreviewRotaSection } from '../dosya/components/DocumentPreviewModalV3/components/DocumentPreviewRotaSection'
 import {
   GLOBAL_ROTA_KEY,
   applyRotaConfigToAllTemplates,
+  buildSettingsRouteValues,
   getAllSavedRotaConfigs,
   getDirectRotaConfig,
   getRotaConfigForTemplate,
@@ -105,32 +111,47 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     return () => window.removeEventListener('temin360:rota-defaults-updated', refresh)
   }, [])
 
-  // Seçili şablon veya kapsam değiştiğinde formData'yı yükle
-  const [formData, setFormData] = useState<any>(() => {
-    const initial = getRotaConfigForTemplate(GLOBAL_ROTA_KEY, effectiveDosyaId)
-    return {
-      belgeModu: initial?.belgeModu || 'standart',
-      rota: initial?.rota || [],
-      hazirlayanPersonelAdi: initial?.hazirlayanPersonelAdi || '',
-      hazirlayanPersonelUnvan: initial?.hazirlayanPersonelUnvan || '',
-      onaylayanPersonelAdi: initial?.onaylayanPersonelAdi || '',
-      onaylayanPersonelUnvan: initial?.onaylayanPersonelUnvan || '',
-      olurYazisi: initial?.olurYazisi ?? true
-    }
-  })
+  const activeDefinition = useMemo(
+    () => getTemplateRouteDefinition(selectedTemplateId),
+    [selectedTemplateId]
+  )
+
+  const [formData, setFormData] = useState<any>({})
 
   useEffect(() => {
     const conf = getRotaConfigForTemplate(selectedTemplateId, effectiveDosyaId)
-    setFormData({
-      belgeModu: conf?.belgeModu || 'standart',
-      rota: conf?.rota || [],
-      hazirlayanPersonelAdi: conf?.hazirlayanPersonelAdi || '',
-      hazirlayanPersonelUnvan: conf?.hazirlayanPersonelUnvan || '',
-      onaylayanPersonelAdi: conf?.onaylayanPersonelAdi || '',
-      onaylayanPersonelUnvan: conf?.onaylayanPersonelUnvan || '',
-      olurYazisi: conf?.olurYazisi ?? true
+    const settingsValues = buildSettingsRouteValues(selectedTemplateId, effectiveDosyaId)
+    const baseDocData: Record<string, any> = {
+      hazirlayanPersonelAdi:
+        conf?.hazirlayanPersonelAdi || dosyaInfo?.hazirlayan_ad_soyad || '',
+      hazirlayanPersonelUnvan:
+        conf?.hazirlayanPersonelUnvan || dosyaInfo?.hazirlayan_unvan || '',
+      gerceklestirmeGorevlisiAdi:
+        conf?.gerceklestirmeGorevlisiAdi || dosyaInfo?.gerceklestirme_gorevlisi_ad_soyad || '',
+      gerceklestirmeGorevlisiUnvani:
+        conf?.gerceklestirmeGorevlisiUnvani || dosyaInfo?.gerceklestirme_gorevlisi_unvan || '',
+      onaylayanPersonelAdi:
+        conf?.onaylayanPersonelAdi || dosyaInfo?.harcama_yetkilisi_ad_soyad || '',
+      onaylayanPersonelUnvan:
+        conf?.onaylayanPersonelUnvan || dosyaInfo?.harcama_yetkilisi_unvan || '',
+      sunulacakMakamAdi:
+        conf?.sunulacakMakamAdi || dosyaInfo?.sunulacak_makam || '',
+      komisyonUyeleri: conf?.komisyonUyeleri || [],
+      olurYazisi: conf?.olurYazisi ?? true,
+      routeOverrides: []
+    }
+
+    const docValues = extractDocumentRouteValues(baseDocData, activeDefinition)
+    const resolved = resolveRoute({
+      definition: activeDefinition,
+      settings: settingsValues,
+      document: docValues,
+      overrides: [],
+      strict: false
     })
-  }, [selectedTemplateId, effectiveDosyaId, savedConfigs])
+
+    setFormData(applyResolvedRouteToDocumentData(baseDocData, resolved))
+  }, [selectedTemplateId, effectiveDosyaId, savedConfigs, dosyaInfo, activeDefinition])
 
   const mergedPersonel = useMemo(
     () =>
@@ -138,11 +159,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
         personelListesi,
         {
           ...dosyaInfo,
-          hazirlayanPersonelAdi: formData.hazirlayanPersonelAdi,
-          hazirlayanPersonelUnvan: formData.hazirlayanPersonelUnvan,
-          onaylayanPersonelAdi: formData.onaylayanPersonelAdi,
-          onaylayanPersonelUnvan: formData.onaylayanPersonelUnvan,
-          rota: formData.rota
+          ...formData
         },
         null,
         null
@@ -163,20 +180,65 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     return found?.title || selectedTemplateId
   }, [selectedTemplateId])
 
+  const buildCurrentConfigToSave = () => {
+    const docValues = extractDocumentRouteValues(formData, activeDefinition)
+    const settingsValues = buildSettingsRouteValues(selectedTemplateId, effectiveDosyaId)
+    const rawOverrides: RouteOverride[] = Array.isArray(formData?.routeOverrides)
+      ? formData.routeOverrides
+      : []
+    const allowed = new Set(activeDefinition.slots.map((s) => s.id))
+    const validOverrides = rawOverrides.filter((o) => o && allowed.has(o.slotId))
+
+    const resolved = resolveRoute({
+      definition: activeDefinition,
+      settings: settingsValues,
+      document: docValues,
+      overrides: validOverrides,
+      strict: false
+    })
+
+    const slots: RouteValues = {}
+    for (const step of resolved.steps) {
+      if (step.value !== null) {
+        slots[step.id] = step.value
+      }
+    }
+
+    const hazirlayanVal = slots.hazirlayan as RouteAssignee | undefined
+    const gerceklestirmeVal = slots.gerceklestirmeGorevlisi as RouteAssignee | undefined
+    const onaylayanVal = slots.onaylayan as RouteAssignee | undefined
+    const makamVal = slots.sunulacakMakam as RouteAssignee | undefined
+    const komisyonVal = (slots.komisyon ||
+      slots.fiyatArastirmaGorevlileri ||
+      slots.muayeneKomisyonu) as RouteAssignee[] | undefined
+
+    return {
+      belgeModu: 'standart' as const,
+      rota: [],
+      slots,
+      hazirlayanPersonelAdi: hazirlayanVal?.name || formData.hazirlayanPersonelAdi,
+      hazirlayanPersonelUnvan: hazirlayanVal?.title || formData.hazirlayanPersonelUnvan,
+      gerceklestirmeGorevlisiAdi:
+        gerceklestirmeVal?.name || formData.gerceklestirmeGorevlisiAdi,
+      gerceklestirmeGorevlisiUnvani:
+        gerceklestirmeVal?.title || formData.gerceklestirmeGorevlisiUnvani,
+      onaylayanPersonelAdi: onaylayanVal?.name || formData.onaylayanPersonelAdi,
+      onaylayanPersonelUnvan: onaylayanVal?.title || formData.onaylayanPersonelUnvan,
+      sunulacakMakamAdi: makamVal?.name || formData.sunulacakMakamAdi,
+      komisyonUyeleri: Array.isArray(komisyonVal)
+        ? komisyonVal.map((m) => ({
+            id: m.id,
+            adSoyad: m.name,
+            unvan: m.title,
+            gorevi: m.role
+          }))
+        : undefined,
+      olurYazisi: formData.olurYazisi ?? true
+    }
+  }
+
   const handleSaveCurrent = () => {
-    saveRotaConfigForTemplate(
-      selectedTemplateId,
-      {
-        belgeModu: (formData.belgeModu as BelgeModuType) || 'standart',
-        rota: (formData.rota as RotaAdimItem[]) || [],
-        hazirlayanPersonelAdi: formData.hazirlayanPersonelAdi,
-        hazirlayanPersonelUnvan: formData.hazirlayanPersonelUnvan,
-        onaylayanPersonelAdi: formData.onaylayanPersonelAdi,
-        onaylayanPersonelUnvan: formData.onaylayanPersonelUnvan,
-        olurYazisi: formData.olurYazisi
-      },
-      effectiveDosyaId
-    )
+    saveRotaConfigForTemplate(selectedTemplateId, buildCurrentConfigToSave(), effectiveDosyaId)
     showToast(
       selectedTemplateId === GLOBAL_ROTA_KEY
         ? 'Genel varsayılan rota kaydedildi'
@@ -187,18 +249,10 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
   const handleApplyToAll = () => {
     applyRotaConfigToAllTemplates(
       TEMPLATE_OPTIONS.map((t) => t.id),
-      {
-        belgeModu: (formData.belgeModu as BelgeModuType) || 'standart',
-        rota: (formData.rota as RotaAdimItem[]) || [],
-        hazirlayanPersonelAdi: formData.hazirlayanPersonelAdi,
-        hazirlayanPersonelUnvan: formData.hazirlayanPersonelUnvan,
-        onaylayanPersonelAdi: formData.onaylayanPersonelAdi,
-        onaylayanPersonelUnvan: formData.onaylayanPersonelUnvan,
-        olurYazisi: formData.olurYazisi
-      },
+      buildCurrentConfigToSave(),
       effectiveDosyaId
     )
-    showToast('Rota ve personel ayarları tüm 30 belge şablonuna varsayılan olarak uygulandı!')
+    showToast('Rota ve görevli ayarları tüm 30 belge şablonuna varsayılan olarak uygulandı!')
   }
 
   const handleResetCurrent = () => {
@@ -216,14 +270,14 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
           </div>
           <div>
             <h1 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <span>Merkezi Belge Rota &amp; Onay Akışı Yönetimi</span>
+              <span>Şablon Bazlı Belge Rota &amp; Görevli Yönetimi</span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 font-bold">
-                OTOMATİK VARSAYILAN
+                SLOT ROTA SİSTEMİ
               </span>
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Belgeler açıldığında otomatik gelecek olan varsayılan imza, paraf, koordinasyon rotası
-              ve görevli personelleri şablon bazında yapılandırın.
+              Her belgenin kendi şablonundaki Hazırlayan, Onaylayan, Komisyon / Araştırma Görevlileri
+              (`person-list`) ve Sunulacak Makam (`unit`) alanlarını merkezi olarak yapılandırın.
             </p>
           </div>
         </div>
@@ -241,7 +295,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>Genel Varsayılan</span>
+              <span>Genel Varsayılan (Settings)</span>
             </button>
             {activeDosyaId && (
               <button
@@ -269,7 +323,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
         </div>
       )}
 
-      {/* Ana İçerik: Sol Şablon Listesi + Sağ Rota ve Personel Yapılandırma */}
+      {/* Ana İçerik: Sol Şablon Listesi + Sağ Dinamik Slot Yapılandırma */}
       <div className="flex-1 min-h-0 grid grid-cols-12 gap-6 p-6 overflow-hidden">
         {/* SOL PANEL: Şablon Seçici */}
         <div className="col-span-5 flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
@@ -293,7 +347,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
                     🌐 Tüm Belgeler İçin Genel Varsayılan Rota
                   </div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                    Özel ayarı olmayan tüm şablonlar bu rotayı otomatik kullanır
+                    Özel ayarı olmayan tüm şablonlar buradaki görevli/makam atamalarını kullanır
                   </div>
                 </div>
               </div>
@@ -342,8 +396,8 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
             {filteredTemplates.map((tpl) => {
               const isSelected = tpl.id === selectedTemplateId
               const directConf = getDirectRotaConfig(tpl.id, effectiveDosyaId)
-              const resolvedConf = getRotaConfigForTemplate(tpl.id, effectiveDosyaId)
-              const mode = resolvedConf?.belgeModu || 'standart'
+              const tplDef = getTemplateRouteDefinition(tpl.id)
+              const hasListSlot = tplDef.slots.some((s) => s.kind === 'person-list')
 
               return (
                 <button
@@ -364,18 +418,21 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
                     />
                     <div className="min-w-0">
                       <div className="text-xs font-bold truncate">{tpl.title}</div>
-                      <div className="text-[10px] text-slate-400 truncate">{tpl.categoryLabel}</div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {tpl.categoryLabel} &bull; {tplDef.slots.length} Slot
+                        {hasListSlot ? ' (Komisyon/Liste)' : ''}
+                      </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     {directConf ? (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">
-                        Özel ({directConf.belgeModu === 'koordinasyonlu' ? 'Rotalı' : directConf.belgeModu})
+                        Özel Tanımlı
                       </span>
                     ) : (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
-                        {mode === 'koordinasyonlu' ? '🔀 Genel Rotalı' : 'Standart'}
+                        Varsayılan
                       </span>
                     )}
                   </div>
@@ -385,14 +442,20 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
           </div>
         </div>
 
-        {/* SAĞ PANEL: Seçili Şablon İçin Varsayılan Personel & Rota Düzenleyici */}
+        {/* SAĞ PANEL: Seçili Şablon İçin Dinamik Slot & Görevli Düzenleyici */}
         <div className="col-span-7 flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
           {/* Sağ Üst Başlık ve Kaydet Aksiyonları */}
           <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 block">
-                Yapılandırılan Hedef
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                  Şablon Rota Şeması ({activeDefinition.slots.length} Slot)
+                </span>
+                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                  &bull; <Users className="w-3 h-3" /> {mergedPersonel.length} Personel &bull;{' '}
+                  <Building2 className="w-3 h-3" /> {birimListesi.length} Birim
+                </span>
+              </div>
               <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
                 {activeTemplateTitle}
               </h2>
@@ -428,160 +491,13 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
             </div>
           </div>
 
-          {/* Sağ Gövde: Varsayılan İmza Personelleri + DocumentPreviewRotaSection */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar min-h-0">
-            {/* Varsayılan Hazırlayan ve Onaylayan Personel Seçimi (Birleştirilmiş Havuz) */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Belge Varsayılan İmza &amp; Onay Görevlileri
-                  </span>
-                </div>
-                {birimListesi.length > 0 && (
-                  <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                    <Building2 className="w-3 h-3" />
-                    {birimListesi.length} Aktif Birim &bull; {mergedPersonel.length} Birleştirilmiş
-                    Personel
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Hazırlayan Personel */}
-                <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
-                    1. Hazırlayan / Düzenleyen Personel
-                  </label>
-                  <select
-                    value={
-                      mergedPersonel.find(
-                        (p) =>
-                          cleanPersonelName(p.ad_soyad).toLowerCase() ===
-                          cleanPersonelName(formData.hazirlayanPersonelAdi).toLowerCase()
-                      )?.id || ''
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value
-                      const p = mergedPersonel.find(
-                        (item) => String(item.id || item.ad_soyad) === val
-                      )
-                      if (p) {
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          hazirlayanPersonelAdi: p.ad_soyad,
-                          hazirlayanPersonelUnvan: p.unvan || prev.hazirlayanPersonelUnvan
-                        }))
-                      }
-                    }}
-                    className="w-full text-xs px-2.5 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <option value="">👤 Birleştirilmiş Havuzdan Seç...</option>
-                    {mergedPersonel.map((p, idx) => (
-                      <option key={p.id || idx} value={String(p.id || p.ad_soyad)}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <input
-                      type="text"
-                      value={formData.hazirlayanPersonelAdi || ''}
-                      onChange={(e) =>
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          hazirlayanPersonelAdi: e.target.value
-                        }))
-                      }
-                      placeholder="Adı Soyadı"
-                      className="px-2 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg"
-                    />
-                    <input
-                      type="text"
-                      value={formData.hazirlayanPersonelUnvan || ''}
-                      onChange={(e) =>
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          hazirlayanPersonelUnvan: e.target.value
-                        }))
-                      }
-                      placeholder="Unvanı"
-                      className="px-2 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                {/* Onaylayan Personel */}
-                <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                  <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
-                    2. Onaylayan / Harcama Yetkilisi (OLUR)
-                  </label>
-                  <select
-                    value={
-                      mergedPersonel.find(
-                        (p) =>
-                          cleanPersonelName(p.ad_soyad).toLowerCase() ===
-                          cleanPersonelName(formData.onaylayanPersonelAdi).toLowerCase()
-                      )?.id || ''
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value
-                      const p = mergedPersonel.find(
-                        (item) => String(item.id || item.ad_soyad) === val
-                      )
-                      if (p) {
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          onaylayanPersonelAdi: p.ad_soyad,
-                          onaylayanPersonelUnvan: p.unvan || prev.onaylayanPersonelUnvan
-                        }))
-                      }
-                    }}
-                    className="w-full text-xs px-2.5 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <option value="">👤 Birleştirilmiş Havuzdan Seç...</option>
-                    {mergedPersonel.map((p, idx) => (
-                      <option key={p.id || idx} value={String(p.id || p.ad_soyad)}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <input
-                      type="text"
-                      value={formData.onaylayanPersonelAdi || ''}
-                      onChange={(e) =>
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          onaylayanPersonelAdi: e.target.value
-                        }))
-                      }
-                      placeholder="Adı Soyadı"
-                      className="px-2 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg"
-                    />
-                    <input
-                      type="text"
-                      value={formData.onaylayanPersonelUnvan || ''}
-                      onChange={(e) =>
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          onaylayanPersonelUnvan: e.target.value
-                        }))
-                      }
-                      placeholder="Unvanı"
-                      className="px-2 py-1 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Rota ve Koordinasyon Yapılandırıcı */}
+          {/* Sağ Gövde: Şablonun Slotlarına Göre Dinamik Rota Formu */}
+          <div className="flex-1 overflow-y-auto p-5 custom-scrollbar min-h-0">
             <DocumentPreviewRotaSection
               formData={formData}
               setFormData={setFormData}
               personelListesi={mergedPersonel}
+              birimListesi={birimListesi}
               supportsOlur={true}
               templateId={selectedTemplateId}
               dosyaId={effectiveDosyaId}
@@ -592,4 +508,3 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     </div>
   )
 }
-

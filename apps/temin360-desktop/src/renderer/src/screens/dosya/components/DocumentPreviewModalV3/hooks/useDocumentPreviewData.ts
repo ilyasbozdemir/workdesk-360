@@ -1,12 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { IhtiyacListesiType } from '@temin360/document-templates'
+import { DocumentEngine } from '@worksuite-360/document-engine'
 import { useWorkspaceStore } from '../../../../../store/workspaceStore'
 import { useSettingsStore } from '../../../../../store/settingsStore'
 import { useClickOutside } from '../../../../../hooks/useClickOutside'
 import { Personel, DocumentSource } from '../types'
 import { resolveTemplateConfig, TEMPLATE_OPTIONS, TemplateOptionItem } from '../templateResolver'
 import { documentPreloadService } from '../../../../../services/documentPreloadService'
-import { getRotaConfigForTemplate } from '../../../../../services/rotaDefaultsService'
+import { ihtiyacRaporuService } from '../../../../../services/ihtiyacRaporuService'
+import {
+  getRotaConfigForTemplate,
+  resolveTemplateRouteForDocument
+} from '../../../../../services/rotaDefaultsService'
+import { applyRefreshPolicy } from './helpers/previewData/refreshPolicy'
 import {
   compileDocumentHtml,
   exportDocumentDocx,
@@ -18,6 +24,23 @@ import {
   UseDocumentPreviewDataParams,
   sourceResolvers as resolvers
 } from './helpers'
+
+export function buildComparableSnapshot(
+  data: Record<string, any> | null | undefined,
+  showLeft: boolean,
+  showRight: boolean,
+  orient: 'portrait' | 'landscape'
+): string {
+  const { resolvedRoute: _ignoreResolvedRoute, ...rest } = data || {}
+  return JSON.stringify({
+    ...rest,
+    showLogoLeft: Boolean(showLeft),
+    showLogoRight: Boolean(showRight),
+    olurYazisi: rest.olurYazisi !== false,
+    kurumIci: Boolean(rest.kurumIci),
+    orientation: orient || 'portrait'
+  })
+}
 
 export function useDocumentPreviewData({
   isOpen,
@@ -98,40 +121,13 @@ export function useDocumentPreviewData({
     tplId?: string,
     dId?: number | string | null
   ): Partial<IhtiyacListesiType> => {
-    const defaultRotaConf = getRotaConfigForTemplate(tplId, dId)
-    if (!defaultRotaConf) return baseData
-
-    const enriched: Record<string, any> = { ...baseData }
-    if (!enriched.belgeModu) {
-      enriched.belgeModu = defaultRotaConf.belgeModu
+    const targetTemplate = tplId || resolvedId || selectedDocId
+    const { enrichedData } = resolveTemplateRouteForDocument(targetTemplate, baseData, dId)
+    const defaultRotaConf = getRotaConfigForTemplate(targetTemplate, dId)
+    if (defaultRotaConf && enrichedData.olurYazisi === undefined && defaultRotaConf.olurYazisi !== undefined) {
+      enrichedData.olurYazisi = defaultRotaConf.olurYazisi
     }
-    if (
-      (!Array.isArray(enriched.rota) || enriched.rota.length === 0) &&
-      Array.isArray(defaultRotaConf.rota) &&
-      defaultRotaConf.rota.length > 0
-    ) {
-      enriched.rota = defaultRotaConf.rota
-      enriched.koordinasyon = defaultRotaConf.rota.map((r) => ({
-        adSoyad: r.a,
-        unvan: r.u,
-        tarih: r.tarih,
-        rol: r.t
-      }))
-    }
-    if (!enriched.hazirlayanPersonelAdi && defaultRotaConf.hazirlayanPersonelAdi) {
-      enriched.hazirlayanPersonelAdi = defaultRotaConf.hazirlayanPersonelAdi
-      enriched.hazirlayanPersonelUnvan =
-        defaultRotaConf.hazirlayanPersonelUnvan || enriched.hazirlayanPersonelUnvan
-    }
-    if (!enriched.onaylayanPersonelAdi && defaultRotaConf.onaylayanPersonelAdi) {
-      enriched.onaylayanPersonelAdi = defaultRotaConf.onaylayanPersonelAdi
-      enriched.onaylayanPersonelUnvan =
-        defaultRotaConf.onaylayanPersonelUnvan || enriched.onaylayanPersonelUnvan
-    }
-    if (enriched.olurYazisi === undefined && defaultRotaConf.olurYazisi !== undefined) {
-      enriched.olurYazisi = defaultRotaConf.olurYazisi
-    }
-    return enriched
+    return enrichedData
   }
 
   const [formData, setFormData] = useState<Partial<IhtiyacListesiType>>(() => {
@@ -201,28 +197,44 @@ export function useDocumentPreviewData({
 
   const initialSnapshotRef = useRef<string>(
     initialDataForSnapshot
-      ? JSON.stringify({
-          ...initialDataForSnapshot,
+      ? buildComparableSnapshot(
+          applyDefaultRotaToFormData(
+            initialDataForSnapshot,
+            resolvedId || selectedDocId,
+            activeDosyaId
+          ),
           showLogoLeft,
           showLogoRight,
-          olurYazisi: initialDataForSnapshot.olurYazisi !== false,
-          kurumIci: Boolean(initialDataForSnapshot.kurumIci),
-          orientation: 'portrait'
-        })
+          'portrait'
+        )
       : ''
   )
 
-  const currentSnapshot = JSON.stringify({
-    ...formData,
-    showLogoLeft: localShowLogoLeft,
-    showLogoRight: localShowLogoRight,
-    olurYazisi: formData.olurYazisi !== false,
-    kurumIci: Boolean(formData.kurumIci),
+  const currentSnapshot = buildComparableSnapshot(
+    formData,
+    localShowLogoLeft,
+    localShowLogoRight,
     orientation
-  })
+  )
 
   const isDirty = Boolean(
     initialSnapshotRef.current && currentSnapshot !== initialSnapshotRef.current && !isLoading
+  )
+
+  const handleSelectDocId = useCallback(
+    (nextValue: React.SetStateAction<string>) => {
+      const nextDocId =
+        typeof nextValue === 'function' ? nextValue(selectedDocId) : nextValue
+      if (nextDocId === selectedDocId) return
+      if (isDirty) {
+        const confirmed = window.confirm(
+          'Belgede kaydedilmemiş değişiklikler var. Kaydetmeden başka belgeye geçmek istediğinize emin misiniz?'
+        )
+        if (!confirmed) return
+      }
+      setSelectedDocId(nextDocId)
+    },
+    [isDirty, selectedDocId]
   )
 
   // Auto-scale calculation using custom hook
@@ -274,6 +286,11 @@ export function useDocumentPreviewData({
         if (result.personelListesi) setPersonelListesi(result.personelListesi as Personel[])
         if (result.firmaListesi) setFirmaListesi(result.firmaListesi)
         if (result.birimListesi) setBirimListesi(result.birimListesi)
+        const resolvedLeftLogo =
+          result.activeLogoLeft !== undefined ? result.activeLogoLeft : localShowLogoLeft
+        const resolvedRightLogo =
+          result.activeLogoRight !== undefined ? result.activeLogoRight : localShowLogoRight
+        const resolvedOrientation = result.activeOrientation || orientation
         if (result.activeLogoLeft !== undefined) setLocalShowLogoLeft(result.activeLogoLeft)
         if (result.activeLogoRight !== undefined) setLocalShowLogoRight(result.activeLogoRight)
         if (result.activeOrientation) setOrientation(result.activeOrientation)
@@ -283,8 +300,12 @@ export function useDocumentPreviewData({
           activeDosyaId
         )
         setFormData(enrichedFormData)
-        initialSnapshotRef.current =
-          result.initialSnapshotJson || JSON.stringify(enrichedFormData)
+        initialSnapshotRef.current = buildComparableSnapshot(
+          enrichedFormData,
+          resolvedLeftLogo,
+          resolvedRightLogo,
+          resolvedOrientation
+        )
       } catch (err) {
         console.error('Error loading template preview data via resolver:', err)
       } finally {
@@ -359,7 +380,12 @@ export function useDocumentPreviewData({
         })
 
         if (jsonStr) {
-          initialSnapshotRef.current = jsonStr
+          initialSnapshotRef.current = buildComparableSnapshot(
+            formData,
+            localShowLogoLeft,
+            localShowLogoRight,
+            orientation
+          )
         }
 
         setSaveSuccess(true)
@@ -375,18 +401,53 @@ export function useDocumentPreviewData({
     } else {
       setIsSaving(true)
       try {
-        initialSnapshotRef.current = JSON.stringify({
+        const raporId = resolvedSource.raporId
+        if (!raporId || Number(raporId) <= 0) {
+          throw new Error('Geçerli bir İhtiyaç Raporu kimliği bulunamadı.')
+        }
+
+        const dataToSave: Record<string, any> = {
           ...formData,
           showLogoLeft: localShowLogoLeft,
           showLogoRight: localShowLogoRight,
+          olurYazisi: formData.olurYazisi !== false,
+          kurumIci: Boolean(formData.kurumIci),
           orientation
-        })
+        }
+
+        const { linkedDosyaId } = await ihtiyacRaporuService.saveBelgeSnapshot(
+          raporId,
+          resolvedId || selectedDocId,
+          dataToSave
+        )
+
+        if (linkedDosyaId && linkedDosyaId > 0) {
+          await DocumentEngine.saveDocument({
+            dosyaId: linkedDosyaId,
+            templateKey: resolvedId || selectedDocId,
+            data: dataToSave,
+            validateBeforeSave: false
+          })
+          documentPreloadService.updateCachedResolvedData(
+            resolvedId || selectedDocId,
+            linkedDosyaId,
+            dataToSave
+          )
+        }
+
+        initialSnapshotRef.current = buildComparableSnapshot(
+          formData,
+          localShowLogoLeft,
+          localShowLogoRight,
+          orientation
+        )
         setSaveSuccess(true)
         setSaveError(null)
         setTimeout(() => setSaveSuccess(false), 2000)
       } catch (e: unknown) {
-        console.error('Belge kaydetme hatası:', e)
-        const errorMsg = e instanceof Error ? e.message : 'Belge kaydedilirken bir hata oluştu.'
+        console.error('İhtiyaç raporu belge kaydetme hatası:', e)
+        const errorMsg =
+          e instanceof Error ? e.message : 'İhtiyaç raporu kaydedilirken bir hata oluştu.'
         setSaveError(errorMsg)
       } finally {
         setIsSaving(false)
@@ -497,14 +558,18 @@ export function useDocumentPreviewData({
         })
 
         if (baseData) {
-          setFormData(baseData)
-          initialSnapshotRef.current = JSON.stringify({
-            ...baseData,
-            showLogoLeft: localShowLogoLeft,
-            showLogoRight: localShowLogoRight,
-            olurYazisi: baseData.olurYazisi !== false,
+          const enriched = applyDefaultRotaToFormData(
+            baseData,
+            resolvedId || selectedDocId,
+            activeDosyaId
+          )
+          setFormData(enriched)
+          initialSnapshotRef.current = buildComparableSnapshot(
+            enriched,
+            localShowLogoLeft,
+            localShowLogoRight,
             orientation
-          })
+          )
         }
       } catch (e) {
         console.error('Failed to refresh template resolution:', e)
@@ -516,12 +581,24 @@ export function useDocumentPreviewData({
         setIsLoading(true)
         const resolver = resolvers[resolvedSource.kind]
         if (resolver) {
-          const result = await resolver.resolve(resolvedSource, resolvedId)
+          const result = await resolver.resolve(resolvedSource, resolvedId, {
+            forceDefault: true
+          })
           if (result) {
-            setFormData(result.formData || result.resolvedData || {})
-            initialSnapshotRef.current =
-              result.initialSnapshotJson ||
-              JSON.stringify(result.formData || result.resolvedData || {})
+            const freshBase = result.formData || result.resolvedData || {}
+            const merged = applyRefreshPolicy(freshBase, formData)
+            const enriched = applyDefaultRotaToFormData(
+              merged,
+              resolvedId || selectedDocId,
+              activeDosyaId
+            )
+            setFormData(enriched)
+            initialSnapshotRef.current = buildComparableSnapshot(
+              enriched,
+              localShowLogoLeft,
+              localShowLogoRight,
+              orientation
+            )
           }
         }
       } catch (e) {
@@ -537,7 +614,7 @@ export function useDocumentPreviewData({
     activeDosyaId,
     dosyaRecord,
     selectedDocId,
-    setSelectedDocId,
+    setSelectedDocId: handleSelectDocId,
     resolvedId,
     templateOptions,
     activeTemplateConf,

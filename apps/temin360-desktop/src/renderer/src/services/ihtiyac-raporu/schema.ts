@@ -26,6 +26,7 @@ export async function ensureIhtiyacRaporuTables(): Promise<void> {
       tahmini_butce REAL DEFAULT 0,
       notlar TEXT,
       evrak_sayisi TEXT,
+      belge_snapshot_json TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(temin_dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE SET NULL,
@@ -62,6 +63,13 @@ export async function ensureIhtiyacRaporuTables(): Promise<void> {
     await dbClient.run(
       `CREATE INDEX IF NOT EXISTS idx_ihtiyac_raporu_kalem_rapor ON DATA_IhtiyacRaporuKalem(rapor_id)`
     )
+    try {
+      await dbClient.run(
+        `ALTER TABLE DATA_IhtiyacRaporu ADD COLUMN belge_snapshot_json TEXT`
+      )
+    } catch {
+      // Sütun zaten mevcutsa sessizce geç
+    }
     tablesChecked = true
   } catch (e) {
     console.warn('[ihtiyacRaporu] Auto-init tables warning:', e)

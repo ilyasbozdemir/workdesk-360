@@ -230,6 +230,7 @@ export interface LoadOrCreateDocumentParams {
   templateKey: string
   context?: DocumentResolveContext
   forceDefault?: boolean
+  persistIfMissing?: boolean
 }
 
 export interface PrepareDocumentParams {
@@ -237,6 +238,7 @@ export interface PrepareDocumentParams {
   documentId: number | string
   context?: DocumentResolveContext
   forceDefault?: boolean
+  persistIfMissing?: boolean
 }
 
 export interface SaveDocumentParams<T = Record<string, unknown>> {

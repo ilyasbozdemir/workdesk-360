@@ -5,6 +5,7 @@ import {
   saveRotaConfigForTemplate,
   removeRotaConfigForTemplate,
   applyRotaConfigToAllTemplates,
+  resolveTemplateRouteForDocument,
   GLOBAL_ROTA_KEY
 } from '../rotaDefaultsService'
 
@@ -88,6 +89,31 @@ describe('rotaDefaultsService — Merkezi Belge Rota ve Onay Akışı Varsayıla
     expect(getRotaConfigForTemplate('fiyat-arastirma-tutanagi')?.onaylayanPersonelUnvan).toBe(
       'Başhekim'
     )
+  })
+
+  it('resolveTemplateRouteForDocument: settings, document ve override kaynaklarını çözüp şablon alanlarına yazar', () => {
+    saveRotaConfigForTemplate('piyasa-fiyat-arastirma-tutanagi', {
+      onaylayanPersonelAdi: 'Ayşe Demir',
+      onaylayanPersonelUnvan: 'Birim Yetkilisi',
+      komisyonUyeleri: [
+        { id: 'p3', adSoyad: 'Zeynep Kaya', unvan: 'Memur' },
+        { id: 'p4', adSoyad: 'Ali Çelik', unvan: 'Tekniker' }
+      ]
+    })
+
+    const { resolvedRoute, enrichedData } = resolveTemplateRouteForDocument(
+      'piyasa-fiyat-arastirma-tutanagi',
+      {},
+      null,
+      [{ slotId: 'onaylayan', value: { id: 'p5', name: 'Fatma Ak', title: 'Daire Başkanı' } }]
+    )
+
+    expect(resolvedRoute.steps.find((s) => s.id === 'komisyon')?.origin).toBe('settings')
+    expect(resolvedRoute.steps.find((s) => s.id === 'onaylayan')?.origin).toBe('override')
+    expect(enrichedData.fiyatArastirmaGorevlileri).toHaveLength(2)
+    expect(enrichedData.fiyatArastirmaGorevlileri[0].adSoyad).toBe('Zeynep Kaya')
+    expect(enrichedData.onaylayanPersonelAdi).toBe('Fatma Ak')
+    expect(enrichedData.onaylayanPersonelUnvan).toBe('Daire Başkanı')
   })
 })
 

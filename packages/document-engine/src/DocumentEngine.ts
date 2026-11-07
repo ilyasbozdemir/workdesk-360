@@ -1,38 +1,38 @@
-import React from 'react'
-import { renderToString } from 'react-dom/server'
-import { TemplateRegistry, InvalidTemplateKeyError } from './TemplateRegistry'
-import { InstitutionalHeaderProvider } from './providers/InstitutionalHeaderProvider'
+import React from "react";
+import { renderToString } from "react-dom/server";
+import { InvalidTemplateKeyError, TemplateRegistry } from "./TemplateRegistry";
+import { InstitutionalHeaderProvider } from "./providers/InstitutionalHeaderProvider";
 import {
-  DocumentRecord,
+  CompileHtmlParams,
+  DeleteDocumentParams,
   DocumentDefinition,
-  InstitutionalHeaderData,
+  DocumentRecord,
   DocumentStorageAdapter,
-  ValidationReport,
+  InstitutionalHeaderData,
   LoadOrCreateDocumentParams,
   PrepareDocumentParams,
-  SaveDocumentParams,
   ResetDocumentParams,
-  DeleteDocumentParams,
+  SaveDocumentParams,
   SyncDocumentParams,
-  CompileHtmlParams
-} from './types/contracts'
-import { smartMergeDocumentData } from './mergers/smartMerge'
+  ValidationReport,
+} from "./types/contracts";
+import { smartMergeDocumentData } from "./mergers/smartMerge";
 
 export type HeaderResolverFn = (
   dosyaId: number,
-  queryExecutor: (sql: string, params: any[]) => Promise<any[]>
-) => Promise<InstitutionalHeaderData>
+  queryExecutor: (sql: string, params: any[]) => Promise<any[]>,
+) => Promise<InstitutionalHeaderData>;
 
 export type DocumentValidatorFn = (
   templateKey: string,
-  data: Record<string, unknown>
-) => ValidationReport
+  data: Record<string, unknown>,
+) => ValidationReport;
 
 export type DocumentSavedListener = (record: {
-  dosyaId: number
-  templateKey: string
-  data: Record<string, unknown>
-}) => void
+  dosyaId: number;
+  templateKey: string;
+  data: Record<string, unknown>;
+}) => void;
 
 /**
  * Bağımsız Belge Yönetim ve Çıktı Motoru (DocumentEngine)
@@ -42,55 +42,65 @@ export type DocumentSavedListener = (record: {
  * - UI bağımlılığı yoktur; FlowDesk veya diğer modüller tarafından doğrudan tüketilebilir.
  */
 export class DocumentEngine {
-  private static storageAdapter: DocumentStorageAdapter | null = null
-  private static customQueryExecutor: ((sql: string, params: any[]) => Promise<any[]>) | null = null
-  private static headerResolver: HeaderResolverFn | null = null
-  private static validator: DocumentValidatorFn | null = null
-  private static savedListeners: Set<DocumentSavedListener> = new Set()
+  private static storageAdapter: DocumentStorageAdapter | null = null;
+  private static customQueryExecutor:
+    | ((sql: string, params: any[]) => Promise<any[]>)
+    | null = null;
+  private static headerResolver: HeaderResolverFn | null = null;
+  private static validator: DocumentValidatorFn | null = null;
+  private static savedListeners: Set<DocumentSavedListener> = new Set();
 
   /**
    * Depolama adaptörünü tanımlar (Masaüstü IPC veya Mock)
    */
   static setStorageAdapter(adapter: DocumentStorageAdapter | null): void {
-    this.storageAdapter = adapter
+    this.storageAdapter = adapter;
   }
 
   static getStorageAdapter(): DocumentStorageAdapter | null {
-    return this.storageAdapter
+    return this.storageAdapter;
   }
 
   /**
    * Doğrulama motorunu enjekte eder (IoC)
    */
   static setValidator(validator: DocumentValidatorFn | null): void {
-    this.validator = validator
+    this.validator = validator;
   }
 
   /**
    * Belgeyi doğrular (Önce şablonun kendi validate metoduna, yoksa enjekte edilmiş validatöre bakar)
    */
-  static validate(templateKey: string, data: Record<string, unknown>): ValidationReport {
+  static validate(
+    templateKey: string,
+    data: Record<string, unknown>,
+  ): ValidationReport {
     if (TemplateRegistry.has(templateKey)) {
-      const def = TemplateRegistry.get(templateKey)
+      const def = TemplateRegistry.get(templateKey);
       if (def?.validate) {
-        return def.validate(data)
+        return def.validate(data);
       }
     }
     if (this.validator) {
-      return this.validator(templateKey, data)
+      return this.validator(templateKey, data);
     }
-    return { isValid: true, errors: [] }
+    return { isValid: true, errors: [] };
   }
 
   private static getEffectiveStorageAdapter(): DocumentStorageAdapter | null {
     if (this.storageAdapter) {
-      return this.storageAdapter
+      return this.storageAdapter;
     }
-    if (typeof window !== 'undefined' && (window as any).electron?.ipcRenderer) {
-      const ipc = (window as any).electron.ipcRenderer
+    if (
+      typeof window !== "undefined" && (window as any).electron?.ipcRenderer
+    ) {
+      const ipc = (window as any).electron.ipcRenderer;
       return {
         async getDocument({ dosyaId, templateKey }) {
-          const res = await ipc.invoke('belge:get-document', { dosyaId, templateKey })
+          const res = await ipc.invoke("belge:get-document", {
+            dosyaId,
+            templateKey,
+          });
           if (res?.success && res.exists && res.record) {
             return {
               success: true,
@@ -100,62 +110,64 @@ export class DocumentEngine {
                 data: res.record.data,
                 sablonVersiyon: res.record.sablonVersiyon,
                 createdAt: res.record.createdAt,
-                updatedAt: res.record.updatedAt
-              }
-            }
+                updatedAt: res.record.updatedAt,
+              },
+            };
           }
           if (res?.success === false) {
-            return { success: false, error: res.error || 'Belge yüklenemedi' }
+            return { success: false, error: res.error || "Belge yüklenemedi" };
           }
-          return { success: true, exists: false }
+          return { success: true, exists: false };
         },
         async saveDocument({ dosyaId, templateKey, data, sablonVersiyon }) {
-          return await ipc.invoke('belge:save-document', {
+          return await ipc.invoke("belge:save-document", {
             dosyaId,
             templateKey,
             data,
-            sablonVersiyon
-          })
+            sablonVersiyon,
+          });
         },
         async resetDocument({ dosyaId, templateKey }) {
-          return await ipc.invoke('belge:reset-document', {
+          return await ipc.invoke("belge:reset-document", {
             dosyaId,
-            templateKey
-          })
+            templateKey,
+          });
         },
         async deleteDocument({ dosyaId, templateKey }) {
-          return await ipc.invoke('belge:delete-document', {
+          return await ipc.invoke("belge:delete-document", {
             dosyaId,
-            templateKey
-          })
-        }
-      }
+            templateKey,
+          });
+        },
+      };
     }
-    return null
+    return null;
   }
 
   /**
    * Veritabanı sorgu yürütücüsünü tanımlar
    */
-  static setQueryExecutor(executor: (sql: string, params: any[]) => Promise<any[]>): void {
-    this.customQueryExecutor = executor
+  static setQueryExecutor(
+    executor: (sql: string, params: any[]) => Promise<any[]>,
+  ): void {
+    this.customQueryExecutor = executor;
   }
 
   /**
    * Kurumsal başlık / antet çözümleyicisini tanımlar
    */
   static setHeaderResolver(resolver: HeaderResolverFn): void {
-    this.headerResolver = resolver
+    this.headerResolver = resolver;
   }
 
   /**
    * Belge kaydedildiğinde bildirim dinleyicisi ekler
    */
   static onDocumentSaved(listener: DocumentSavedListener): () => void {
-    this.savedListeners.add(listener)
+    this.savedListeners.add(listener);
     return () => {
-      this.savedListeners.delete(listener)
-    }
+      this.savedListeners.delete(listener);
+    };
   }
 
   /**
@@ -163,64 +175,80 @@ export class DocumentEngine {
    */
   static queryExecutor = async (sql: string, params: any[]): Promise<any[]> => {
     if (DocumentEngine.customQueryExecutor) {
-      return DocumentEngine.customQueryExecutor(sql, params)
+      return DocumentEngine.customQueryExecutor(sql, params);
     }
     if (DocumentEngine.storageAdapter?.executeQuery) {
-      return DocumentEngine.storageAdapter.executeQuery(sql, params)
+      return DocumentEngine.storageAdapter.executeQuery(sql, params);
     }
     // Global electron ipcRenderer fallback (çalışma zamanı uyumluluğu için standart imzayı kullanır)
-    if (typeof window !== 'undefined' && (window as any).electron?.ipcRenderer) {
-      const res = await (window as any).electron.ipcRenderer.invoke('db:query', sql, params)
+    if (
+      typeof window !== "undefined" && (window as any).electron?.ipcRenderer
+    ) {
+      const res = await (window as any).electron.ipcRenderer.invoke(
+        "db:query",
+        sql,
+        params,
+      );
       if (!res?.success) {
-        throw new Error(res?.error || 'Veritabanı sorgusu başarısız')
+        throw new Error(res?.error || "Veritabanı sorgusu başarısız");
       }
-      return res.data || []
+      return res.data || [];
     }
-    return []
-  }
+    return [];
+  };
 
   /**
    * Şablon anahtarını kanonik biçime dönüştürür ve varlığını doğrular
    */
   static resolveKey(templateKey: string): string {
-    if (!templateKey || typeof templateKey !== 'string') {
-      throw new InvalidTemplateKeyError(String(templateKey))
+    if (!templateKey || typeof templateKey !== "string") {
+      throw new InvalidTemplateKeyError(String(templateKey));
     }
-    const cleanKey = TemplateRegistry.normalizeKey(templateKey)
+    const cleanKey = TemplateRegistry.normalizeKey(templateKey);
 
     if (!TemplateRegistry.has(cleanKey)) {
-      throw new InvalidTemplateKeyError(templateKey)
+      throw new InvalidTemplateKeyError(templateKey);
     }
 
-    return TemplateRegistry.get(cleanKey).templateKey
+    return TemplateRegistry.get(cleanKey).templateKey;
   }
 
   /**
    * Belgeye ait kurumsal üst veriyi çözer
    */
-  private static async resolveHeaderData(dosyaId: number): Promise<InstitutionalHeaderData> {
+  private static async resolveHeaderData(
+    dosyaId: number,
+  ): Promise<InstitutionalHeaderData> {
     if (this.headerResolver) {
-      return this.headerResolver(dosyaId, this.queryExecutor)
+      return this.headerResolver(dosyaId, this.queryExecutor);
     }
-    return InstitutionalHeaderProvider.resolve(dosyaId, this.queryExecutor)
+    return InstitutionalHeaderProvider.resolve(dosyaId, this.queryExecutor);
   }
 
   /**
    * Belgeye ait verileri TemplateRegistry ve ilişkili özel resolver ile çözümler.
    */
   static async resolveDocumentData<T = Record<string, unknown>>(params: {
-    dosyaId: number
-    templateKey: string
-    invitedFirms?: unknown[]
-  }): Promise<{ data: T; headerData: InstitutionalHeaderData; definition: DocumentDefinition<T> }> {
-    const { dosyaId, templateKey, invitedFirms } = params
-    const canonicalKey = this.resolveKey(templateKey)
+    dosyaId: number;
+    templateKey: string;
+    invitedFirms?: unknown[];
+  }): Promise<
+    {
+      data: T;
+      headerData: InstitutionalHeaderData;
+      definition: DocumentDefinition<T>;
+    }
+  > {
+    const { dosyaId, templateKey, invitedFirms } = params;
+    const canonicalKey = this.resolveKey(templateKey);
 
-    const definition = TemplateRegistry.get<T>(canonicalKey)
-    const headerData = await this.resolveHeaderData(dosyaId)
+    const definition = TemplateRegistry.get<T>(canonicalKey);
+    const headerData = await this.resolveHeaderData(dosyaId);
 
     if (!definition.resolver) {
-      throw new Error(`Şablon için veri çözümleyicisi (resolver) tanımlanmamış: "${canonicalKey}"`)
+      throw new Error(
+        `Şablon için veri çözümleyicisi (resolver) tanımlanmamış: "${canonicalKey}"`,
+      );
     }
 
     const resolvedData = await definition.resolver.resolve({
@@ -228,17 +256,17 @@ export class DocumentEngine {
       templateKey: canonicalKey,
       headerData,
       queryExecutor: this.queryExecutor,
-      invitedFirms
-    })
+      invitedFirms,
+    });
 
     return {
       data: resolvedData,
       headerData,
-      definition
-    }
+      definition,
+    };
   }
 
-    /**
+  /**
    * Tekil ve Standart Belge Hazırlama Metodu (Unified Document Preparation Flow)
    * prompt: documentEngine.prepare({ templateId, documentId })
    * 1. Belge tanımını bulur.
@@ -248,38 +276,55 @@ export class DocumentEngine {
    * 5. Tipli ve React şablonuna hazır veri döndürür.
    */
   static async prepare<T = Record<string, unknown>>(
-    params: PrepareDocumentParams
+    params: PrepareDocumentParams,
   ): Promise<DocumentRecord<T>> {
-    const { templateId, documentId, context, forceDefault = false } = params
-    const dosyaId = typeof documentId === 'number' ? documentId : Number(documentId) || 0
+    const {
+      templateId,
+      documentId,
+      context,
+      forceDefault = false,
+      persistIfMissing = false,
+    } = params;
+    const dosyaId = typeof documentId === "number"
+      ? documentId
+      : Number(documentId) || 0;
     return await this.loadOrCreateDocument<T>({
       dosyaId,
       templateKey: templateId,
       context,
-      forceDefault
-    })
+      forceDefault,
+      persistIfMissing,
+    });
   }
 
   /**
    * Belgeyi disk/veritabanından yükler, yoksa ilk kez çözümler ve kaydeder.
    */
   static async loadOrCreateDocument<T = Record<string, unknown>>(
-    params: LoadOrCreateDocumentParams
+    params: LoadOrCreateDocumentParams,
   ): Promise<DocumentRecord<T>> {
-    const { dosyaId, templateKey, context, forceDefault = false } = params
-    const canonicalKey = this.resolveKey(templateKey)
-    const headerData = await this.resolveHeaderData(dosyaId)
-    const adapter = this.getEffectiveStorageAdapter()
+    const {
+      dosyaId,
+      templateKey,
+      context,
+      forceDefault = false,
+      persistIfMissing = false,
+    } = params;
+    const canonicalKey = this.resolveKey(templateKey);
+    const headerData = await this.resolveHeaderData(dosyaId);
+    const adapter = this.getEffectiveStorageAdapter();
 
     // 1. Mevcut kayıtlı snapshot kontrolü
     if (adapter && !forceDefault) {
       const storageRes = await adapter.getDocument({
         dosyaId,
-        templateKey: canonicalKey
-      })
+        templateKey: canonicalKey,
+      });
 
       if (!storageRes?.success) {
-        throw new Error(storageRes?.error || 'Belge veritabanından yüklenirken hata oluştu')
+        throw new Error(
+          storageRes?.error || "Belge veritabanından yüklenirken hata oluştu",
+        );
       }
 
       if (storageRes.exists && storageRes.record) {
@@ -292,8 +337,8 @@ export class DocumentEngine {
           createdAt: storageRes.record.createdAt,
           updatedAt: storageRes.record.updatedAt,
           isExisting: true,
-          headerData
-        }
+          headerData,
+        };
       }
     }
 
@@ -301,18 +346,18 @@ export class DocumentEngine {
     const { data: initialData } = await this.resolveDocumentData<T>({
       dosyaId,
       templateKey: canonicalKey,
-      invitedFirms: context?.invitedFirms as unknown[]
-    })
+      invitedFirms: context?.invitedFirms as unknown[],
+    });
 
-    // 3. İlk snapshot'ı otomatik kaydet (İlk açılış anında kalıcılık)
-    if (adapter && !forceDefault) {
+    // 3. Yalnızca persistIfMissing === true istendiğinde ilk snapshot'ı otomatik kaydet
+    if (adapter && !forceDefault && persistIfMissing) {
       try {
         const saveRes = await adapter.saveDocument({
           dosyaId,
           templateKey: canonicalKey,
           data: initialData as Record<string, unknown>,
-          sablonVersiyon: 1
-        })
+          sablonVersiyon: 1,
+        });
 
         return {
           id: saveRes.id,
@@ -323,10 +368,13 @@ export class DocumentEngine {
           createdAt: saveRes.updatedAt,
           updatedAt: saveRes.updatedAt,
           isExisting: false,
-          headerData
-        }
+          headerData,
+        };
       } catch (saveErr) {
-        console.warn('[DocumentEngine] İlk snapshot otomatik kaydetme hatası:', saveErr)
+        console.warn(
+          "[DocumentEngine] İlk snapshot otomatik kaydetme hatası:",
+          saveErr,
+        );
       }
     }
 
@@ -336,48 +384,53 @@ export class DocumentEngine {
       data: initialData,
       sablonVersiyon: 1,
       isExisting: false,
-      headerData
-    }
+      headerData,
+    };
   }
 
   /**
    * Belgeyi depolar ve dinleyicilere haber verir.
    */
   static async saveDocument<T = Record<string, unknown>>(
-    params: SaveDocumentParams<T>
+    params: SaveDocumentParams<T>,
   ): Promise<{ success: boolean; id?: number; updatedAt?: string }> {
     const {
       dosyaId,
       templateKey,
       data,
       sablonVersiyon = 1,
-      validateBeforeSave = true
-    } = params
-    const canonicalKey = this.resolveKey(templateKey)
+      validateBeforeSave = true,
+    } = params;
+    const canonicalKey = this.resolveKey(templateKey);
 
     // Şema ve doğrulama denetimi
     if (validateBeforeSave) {
-      const report = this.validate(canonicalKey, data as Record<string, unknown>)
+      const report = this.validate(
+        canonicalKey,
+        data as Record<string, unknown>,
+      );
       if (!report.isValid && report.errors.length > 0) {
-        const errorMsgs = report.errors.map((e) => e.message).join(', ')
-        throw new Error(`Belge doğrulama hataları nedeniyle kaydedilemedi: ${errorMsgs}`)
+        const errorMsgs = report.errors.map((e) => e.message).join(", ");
+        throw new Error(
+          `Belge doğrulama hataları nedeniyle kaydedilemedi: ${errorMsgs}`,
+        );
       }
     }
 
-    const adapter = this.getEffectiveStorageAdapter()
+    const adapter = this.getEffectiveStorageAdapter();
     if (!adapter) {
-      throw new Error('Depolama adaptörü tanımlanmamış, belge kaydedilemedi.')
+      throw new Error("Depolama adaptörü tanımlanmamış, belge kaydedilemedi.");
     }
 
     const res = await adapter.saveDocument({
       dosyaId,
       templateKey: canonicalKey,
       data: data as Record<string, unknown>,
-      sablonVersiyon
-    })
+      sablonVersiyon,
+    });
 
     if (!res?.success) {
-      throw new Error(res?.error || 'Belge kaydedilirken hata oluştu.')
+      throw new Error(res?.error || "Belge kaydedilirken hata oluştu.");
     }
 
     // Dinleyicileri bilgilendir
@@ -386,37 +439,37 @@ export class DocumentEngine {
         listener({
           dosyaId,
           templateKey: canonicalKey,
-          data: data as Record<string, unknown>
-        })
+          data: data as Record<string, unknown>,
+        });
       } catch (err) {
-        console.warn('[DocumentEngine] onDocumentSaved listener error:', err)
+        console.warn("[DocumentEngine] onDocumentSaved listener error:", err);
       }
     }
 
     return {
       success: true,
       id: res.id,
-      updatedAt: res.updatedAt
-    }
+      updatedAt: res.updatedAt,
+    };
   }
 
   /**
    * Kullanıcı açıkça talep ettiğinde belgeyi varsayılan durumuna sıfırlar.
    */
   static async resetToDefault<T = Record<string, unknown>>(
-    params: ResetDocumentParams
+    params: ResetDocumentParams,
   ): Promise<DocumentRecord<T>> {
-    const { dosyaId, templateKey, context } = params
-    const canonicalKey = this.resolveKey(templateKey)
-    const adapter = this.getEffectiveStorageAdapter()
+    const { dosyaId, templateKey, context } = params;
+    const canonicalKey = this.resolveKey(templateKey);
+    const adapter = this.getEffectiveStorageAdapter();
 
     if (adapter) {
       const res = await adapter.resetDocument({
         dosyaId,
-        templateKey: canonicalKey
-      })
+        templateKey: canonicalKey,
+      });
       if (!res?.success) {
-        throw new Error(res?.error || 'Belge sıfırlanırken hata oluştu.')
+        throw new Error(res?.error || "Belge sıfırlanırken hata oluştu.");
       }
     }
 
@@ -424,8 +477,8 @@ export class DocumentEngine {
       dosyaId,
       templateKey: canonicalKey,
       context,
-      forceDefault: true
-    })
+      forceDefault: true,
+    });
   }
 
   /**
@@ -434,25 +487,28 @@ export class DocumentEngine {
    * - Kaydedilmiş mevcut snapshot ile akıllıca birleştirir (kullanıcı notları korunur, yeni kalemler eklenir).
    */
   static async syncWithSource<T = Record<string, unknown>>(
-    params: SyncDocumentParams<T>
+    params: SyncDocumentParams<T>,
   ): Promise<DocumentRecord<T>> {
-    const { dosyaId, templateKey, existingData, context } = params
-    const canonicalKey = this.resolveKey(templateKey)
+    const { dosyaId, templateKey, existingData, context } = params;
+    const canonicalKey = this.resolveKey(templateKey);
 
     // Resolver'dan en taze kaynak veriyi çek
     const { data: freshData, headerData } = await this.resolveDocumentData<T>({
       dosyaId,
       templateKey: canonicalKey,
-      invitedFirms: context?.invitedFirms as unknown[]
-    })
+      invitedFirms: context?.invitedFirms as unknown[],
+    });
 
     // Akıllı birleştirici ile snapshot + kaynak veriyi harmanla
     const mergedData = smartMergeDocumentData(
       existingData as Record<string, unknown>,
-      freshData as Record<string, unknown>
-    ) as T
+      freshData as Record<string, unknown>,
+    ) as T;
 
-    const valReport = this.validate(canonicalKey, mergedData as Record<string, unknown>)
+    const valReport = this.validate(
+      canonicalKey,
+      mergedData as Record<string, unknown>,
+    );
 
     return {
       dosyaId,
@@ -461,29 +517,29 @@ export class DocumentEngine {
       sablonVersiyon: 1,
       isExisting: true,
       headerData,
-      validationReport: valReport
-    }
+      validationReport: valReport,
+    };
   }
 
   /**
    * Belirli bir dosyanın belirli belge kaydını siler.
    */
   static async deleteDocument(params: DeleteDocumentParams): Promise<boolean> {
-    const { dosyaId, templateKey } = params
-    const canonicalKey = this.resolveKey(templateKey)
-    const adapter = this.getEffectiveStorageAdapter()
+    const { dosyaId, templateKey } = params;
+    const canonicalKey = this.resolveKey(templateKey);
+    const adapter = this.getEffectiveStorageAdapter();
 
     if (adapter) {
       const res = await adapter.deleteDocument({
         dosyaId,
-        templateKey: canonicalKey
-      })
+        templateKey: canonicalKey,
+      });
       if (!res?.success) {
-        throw new Error(res?.error || 'Belge silinirken hata oluştu.')
+        throw new Error(res?.error || "Belge silinirken hata oluştu.");
       }
-      return Boolean(res?.success)
+      return Boolean(res?.success);
     }
-    return true
+    return true;
   }
 
   /**
@@ -493,33 +549,33 @@ export class DocumentEngine {
     const {
       templateKey,
       data,
-      orientation = 'portrait',
+      orientation = "portrait",
       personelListesi = [],
       firmaListesi = [],
       birimListesi = [],
-      firstPageLimit
-    } = params
+      firstPageLimit,
+    } = params;
 
-    const canonicalKey = this.resolveKey(templateKey)
-    const definition = TemplateRegistry.get(canonicalKey)
-    const SpecificRenderer = definition.renderer
+    const canonicalKey = this.resolveKey(templateKey);
+    const definition = TemplateRegistry.get(canonicalKey);
+    const SpecificRenderer = definition.renderer;
 
     const renderedBody = renderToString(
       React.createElement(SpecificRenderer, {
         data,
         orientation,
-        chrome: 'bare',
+        chrome: "bare",
         scale: 1,
         isEditing: false,
         personelListesi,
         firmaListesi,
         birimListesi,
-        firstPageLimit
-      })
-    )
+        firstPageLimit,
+      }),
+    );
 
-    const isLandscape = orientation === 'landscape'
-    const pageSize = isLandscape ? '297mm 210mm' : '210mm 297mm'
+    const isLandscape = orientation === "landscape";
+    const pageSize = isLandscape ? "297mm 210mm" : "210mm 297mm";
 
     return `<!DOCTYPE html>
 <html lang="tr">
@@ -548,6 +604,6 @@ export class DocumentEngine {
 <body>
   ${renderedBody}
 </body>
-</html>`
+</html>`;
   }
 }

@@ -4,6 +4,7 @@ import { renderToString } from 'react-dom/server'
 import { TemplateKey, resolveTemplateKey } from '@temin360/document-templates'
 import { DocumentRenderer, DocumentEngine } from '@worksuite-360/document-engine'
 import { useSettingsStore } from '../../../../../../store/settingsStore'
+import { documentPreloadService } from '../../../../../../services/documentPreloadService'
 import { buildExportFileName } from '../../../../../../utils/exportFileName'
 import { formatDateString } from '../../../../contextBuilder/dateHelpers'
 import { Personel } from '../../types'
@@ -191,6 +192,12 @@ export async function saveDocumentToDb({
     validateBeforeSave: false
   })
 
+  // Önbelleği güncel kaydetme verisiyle senkronize et ve eski önbelleğin yeni veriyi ezmesini önle
+  documentPreloadService.updateCachedResolvedData(resolvedId, activeDosyaId, dataToSave)
+  if (selectedDocId && selectedDocId !== resolvedId) {
+    documentPreloadService.updateCachedResolvedData(selectedDocId, activeDosyaId, dataToSave)
+  }
+
   // Dosya genelinde de sunulacak makamı senkronize et
   if (activeDosyaId && explicitMakam && window.electron?.ipcRenderer) {
     try {
@@ -331,9 +338,11 @@ export async function refreshDocumentFromDb({
   if (!freshData) return null
 
   // Smart Refresh Policy: Retain manual user edits while updating dynamic source/preserve fields
-  if (currentFormData && typeof currentFormData === 'object') {
-    return applyRefreshPolicy(freshData, currentFormData)
-  }
+  const mergedData =
+    currentFormData && typeof currentFormData === 'object'
+      ? applyRefreshPolicy(freshData, currentFormData)
+      : freshData
 
-  return freshData
+  documentPreloadService.updateCachedResolvedData(resolvedId, activeDosyaId, mergedData)
+  return mergedData
 }

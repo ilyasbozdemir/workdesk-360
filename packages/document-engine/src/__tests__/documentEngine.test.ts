@@ -162,11 +162,11 @@ describe('@worksuite-360/document-engine', () => {
           React.createElement('div', { className: 'test-doc' }, props.data.baslik)
       })
 
-      // 1. İLK AÇILIŞ (Load): Snapshot yok, resolver çalışır ve otomatik kaydeder
+      // 1. İLK AÇILIŞ (Load): Snapshot yok, resolver çalışır; yalnızca önizleme açılışında (persistIfMissing=false) otomatik kayıt yapmaz
       const doc1 = await DocumentEngine.loadOrCreateDocument({ dosyaId: 1, templateKey: 'test_doc' })
       expect(doc1.isExisting).toBe(false)
       expect(doc1.data.baslik).toBe('Orijinal Başlık')
-      expect(mockStorage.saveDocument).toHaveBeenCalledTimes(1)
+      expect(mockStorage.saveDocument).toHaveBeenCalledTimes(0)
 
       // 2. KULLANICI DÜZENLEMESİ VE KAYDET (Save)
       const editedData = {

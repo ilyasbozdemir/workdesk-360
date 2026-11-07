@@ -23,23 +23,39 @@ export const PRESERVE_FIELDS = new Set([
   'solLogo',
   'sagLogo',
   'harcamaYetkilisiAdi',
-  'harcamaYetkilisiUnvan'
+  'harcamaYetkilisiUnvan',
+  'onaylayanPersonelAdi',
+  'onaylayanPersonelUnvan',
+  'hazirlayanPersonelAdi',
+  'hazirlayanPersonelUnvan',
+  'gerceklestirmeGorevlisiAdi',
+  'gerceklestirmeGorevlisiUnvani',
+  'sunulacakMakamAdi',
+  'ihtiyacYeri',
+  'fiyatArastirmaGorevlileri',
+  'fiyatKomisyonu',
+  'muayeneKomisyonu',
+  'komisyonUyeleri'
 ])
 
 export const SOURCE_FIELDS = new Set([
   'ihtiyacKalemleri',
   'kalemler',
   'items',
+  'malzemeler',
+  'fiyatKalemleri',
   'teklifler',
   'bids',
-  'fiyatKomisyonu',
-  'muayeneKomisyonu',
-  'komisyonUyeleri',
+  'firmaTeklifleri',
   'firmaListesi',
+  'firmalar',
+  'invitedFirms',
   'fileFirms',
   'kazananFirma',
   'yaklasikMaliyet',
   'toplamTutar',
+  'kdvTutari',
+  'genelToplam',
   'grandTotal',
   'paraBirimi'
 ])
@@ -50,6 +66,13 @@ export function getFieldRefreshPolicy(fieldKey: string): RefreshPolicyType {
   if (PRESERVE_FIELDS.has(fieldKey)) return 'preserve'
   if (SOURCE_FIELDS.has(fieldKey)) return 'source'
   return 'manual'
+}
+
+function isNonEmptyValue(value: unknown): boolean {
+  if (value === undefined || value === null) return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (Array.isArray(value)) return value.length > 0
+  return true
 }
 
 /**
@@ -74,19 +97,26 @@ export function applyRefreshPolicy(
     const policy = getFieldRefreshPolicy(key)
 
     if (policy === 'preserve') {
-      // PRESERVE: Dosyadan gelen güncel değer önceliklidir (kalıtım)
-      // Ancak dosyada henüz yoksa snapshot'taki değeri koru
-      if (!merged[key] || String(merged[key]).trim() === '') {
+      // PRESERVE: Kullanıcının belge üzerinde veya rotada yaptığı dolu düzenlemeler senkronizasyonda korunur.
+      // Snapshot'taki değer boş string ("") veya boş dizi ([]) ise kaynak verideki değer muhafaza edilir.
+      if (isNonEmptyValue(val)) {
         merged[key] = val
       }
     } else if (policy === 'source') {
-      // SOURCE: Veritabanındaki güncel kalem/teklif listesi esastır.
-      // Yalnızca kaynak veride hiç kalem yoksa snapshot'takini fallback olarak al
-      if (Array.isArray(merged[key]) && merged[key].length === 0 && Array.isArray(val) && val.length > 0) {
+      // SOURCE: Veritabanındaki güncel kalem/teklif/tutar verisi esastır.
+      // Yalnızca kaynak veride değer boşsa (ör. [], "", null, undefined) snapshot'taki dolu değer fallback olarak alınır.
+      if (!isNonEmptyValue(merged[key]) && isNonEmptyValue(val)) {
         merged[key] = val
       }
     } else {
-      // MANUAL: Kullanıcının özel girdiği metinler, gerekçeler, tarihler, şerhler KORUNUR
+      // MANUAL: Kullanıcının özel girdiği metinler, gerekçeler, tarihler, şerhler ve görünüm ayarları KORUNUR.
+      // Ancak snapshot'ta boş string ("") veya boş dizi ([]) varken kaynakta dolu değer varsa kaynak ezilmez.
+      if (
+        (typeof val === 'string' && val.trim() === '' && isNonEmptyValue(merged[key])) ||
+        (Array.isArray(val) && val.length === 0 && isNonEmptyValue(merged[key]))
+      ) {
+        continue
+      }
       merged[key] = val
     }
   }

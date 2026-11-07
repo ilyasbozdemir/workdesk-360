@@ -8,9 +8,15 @@ import {
   DefaultDocumentResolver,
   buildMergedPersonelList,
   PersonelCard,
-  RotaKoordinasyonBlock,
-  TemplateEditProvider
+  TemplateEditProvider,
+  getTemplateRouteDefinition
 } from '../index';
+import {
+  resolveRoute,
+  validateRoute,
+  mergeRouteOverrides,
+  applyResolvedRouteToDocumentData
+} from '@worksuite-360/document-engine';
 import { IhtiyacListesi } from '../templates/ihtiyac-listesi';
 import { COMMON_DOCUMENT_MAPPING } from '../../../contracts/document-source.mapping';
 
@@ -162,10 +168,10 @@ describe('Common Document Fields & Standardization', () => {
       expect(names.filter((n) => n === 'Ahmet Yılmaz').length).toBe(1);
     });
 
-    it('isEditing modunda PersonelCard ve RotaKoordinasyonBlock belge içi rota kontrollerini render eder', () => {
+    it('isEditing modunda PersonelCard personelList seçicisini gösterir ve A4 şablonunu ekstra rota tablosuyla bozmaz', () => {
       const mockData = {
         belgeModu: 'koordinasyonlu',
-        rota: [{ r: 'Koordinasyon', a: 'Elif Çelik', u: 'Şube Müdürü' }]
+        rota: [{ t: 'Koordinasyon', a: 'Elif Çelik', u: 'Şube Müdürü' }]
       };
       const html = renderToString(
         React.createElement(
@@ -176,27 +182,72 @@ describe('Common Document Fields & Standardization', () => {
             personelListesi: [{ id: 1, ad_soyad: 'Ayşe Kaya', unvan: 'Biyolog' }],
             data: mockData
           },
-          React.createElement(
-            'div',
-            null,
-            React.createElement(PersonelCard, {
-              adSoyad: 'Ayşe Kaya',
-              unvan: 'Biyolog',
-              nameField: 'hazirlayanPersonelAdi',
-              unvanField: 'hazirlayanPersonelUnvan',
-              role: 'Hazırlayan'
-            }),
-            React.createElement(RotaKoordinasyonBlock, {
-              rota: mockData.rota
-            })
-          )
+          React.createElement(IhtiyacListesi, {
+            data: {
+              ...mockData,
+              hazirlayanPersonelAdi: 'Ayşe Kaya',
+              hazirlayanPersonelUnvan: 'Biyolog',
+              onaylayanPersonelAdi: 'Dr. Mehmet Demir',
+              onaylayanPersonelUnvan: 'Başhekim'
+            } as any
+          })
         )
       );
 
       expect(html).toContain('Ayşe Kaya');
-      expect(html).toContain('🔀 Rota Aktif');
-      expect(html).toContain('Elif Çelik');
-      expect(html).toContain('+ Adım Ekle');
+      expect(html).toContain('👤 Personel Seç...');
+      expect(html).not.toContain('Belge Koordinasyon / Paraf Akışı');
+      expect(html).not.toContain('🔀 Rota Aktif');
+    });
+
+    it('Şablon bazlı slot rota sistemi (resolveRoute) person ve person-list slotlarını doğru öncelikle çözer', () => {
+      const settings = {
+        onaylayan: { id: 'p1', name: 'Ayşe Demir', title: 'Birim Yetkilisi' }
+      };
+
+      // 1) ihtiyac-listesi: hazirlayan (document) + onaylayan (settings)
+      const ihtiyacDef = getTemplateRouteDefinition('ihtiyac-listesi');
+      const ihtiyacResolved = resolveRoute({
+        definition: ihtiyacDef,
+        settings,
+        document: {
+          hazirlayan: { id: 'p2', name: 'Mehmet Yılmaz', title: 'Personel' }
+        },
+        overrides: []
+      });
+
+      expect(validateRoute(ihtiyacResolved)).toEqual([]);
+      expect(ihtiyacResolved.steps.find((s) => s.id === 'hazirlayan')?.origin).toBe('document');
+      expect(ihtiyacResolved.steps.find((s) => s.id === 'onaylayan')?.origin).toBe('settings');
+
+      // 2) piyasa-fiyat-arastirma: komisyon (person-list) + onaylayan (override)
+      const piyasaDef = getTemplateRouteDefinition('piyasa-fiyat-arastirma');
+      const piyasaResolved = resolveRoute({
+        definition: piyasaDef,
+        settings,
+        document: {
+          komisyon: [
+            { id: 'p3', name: 'Zeynep Kaya', title: 'Uzman' },
+            { id: 'p4', name: 'Ali Çelik', title: 'Memur' }
+          ]
+        },
+        overrides: [{ slotId: 'onaylayan', value: { id: 'p5', name: 'Fatma Ak', title: 'Müdür' } }]
+      });
+
+      expect(validateRoute(piyasaResolved)).toEqual([]);
+      expect(piyasaResolved.steps.find((s) => s.id === 'komisyon')?.origin).toBe('document');
+      expect(piyasaResolved.steps.find((s) => s.id === 'onaylayan')?.origin).toBe('override');
+
+      const mappedDoc = applyResolvedRouteToDocumentData({}, piyasaResolved);
+      expect(mappedDoc.fiyatArastirmaGorevlileri).toHaveLength(2);
+      expect(mappedDoc.fiyatArastirmaGorevlileri[0].adSoyad).toBe('Zeynep Kaya');
+      expect(mappedDoc.onaylayanPersonelAdi).toBe('Fatma Ak');
+      expect(mappedDoc.onaylayanPersonelUnvan).toBe('Müdür');
+
+      const merged = mergeRouteOverrides(settings, [
+        { slotId: 'onaylayan', value: { id: 'p5', name: 'Fatma Ak' } }
+      ]);
+      expect((merged.onaylayan as any).name).toBe('Fatma Ak');
     });
   });
 });

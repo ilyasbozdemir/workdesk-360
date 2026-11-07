@@ -1,19 +1,38 @@
 import React from 'react'
 import {
-  FileText,
-  GitCommit,
+  Building2,
+  CheckCircle2,
+  FolderOpen,
   GitFork,
   MoveDown,
   MoveUp,
   Plus,
+  RotateCcw,
+  Settings,
   Sparkles,
   Trash2,
-  Users,
-  CheckCircle2,
-  HelpCircle
+  UserCheck,
+  Users
 } from 'lucide-react'
-import { toTrDate, cleanPersonelName, buildMergedPersonelList } from '@temin360/document-templates'
+import type {
+  ResolvedRouteStep,
+  RouteAssignee,
+  RouteOverride,
+  RouteValue,
+  RouteValues
+} from '@temin360/contracts'
 import {
+  cleanPersonelName,
+  buildMergedPersonelList,
+  getTemplateRouteDefinition
+} from '@temin360/document-templates'
+import {
+  resolveRoute,
+  extractDocumentRouteValues,
+  applyResolvedRouteToDocumentData
+} from '@worksuite-360/document-engine'
+import {
+  buildSettingsRouteValues,
   saveRotaConfigForTemplate,
   GLOBAL_ROTA_KEY
 } from '../../../../../services/rotaDefaultsService'
@@ -22,9 +41,9 @@ export type BelgeModuType = 'standart' | 'koordinasyonlu' | 'hizli_onay'
 
 export interface RotaAdimItem {
   t?: 'Hazırlayan' | 'Paraf' | 'Koordinasyon' | 'İmza' | 'Olur' | string
-  a?: string // Ad Soyad
-  u?: string // Unvan
-  tarih?: string // GG.AA.YYYY
+  a?: string
+  u?: string
+  tarih?: string
   sira?: number
 }
 
@@ -32,599 +51,683 @@ interface DocumentPreviewRotaSectionProps {
   formData: any
   setFormData: React.Dispatch<React.SetStateAction<any>>
   personelListesi?: Array<{ id?: number | string; ad_soyad?: string; unvan?: string }>
+  birimListesi?: Array<{ id?: number | string; birim_adi?: string; sunum_makami?: string; ad?: string }>
   supportsOlur?: boolean
   templateId?: string
   dosyaId?: number | string | null
+}
+
+function getOriginMeta(origin: ResolvedRouteStep['origin']): {
+  label: string
+  className: string
+} {
+  switch (origin) {
+    case 'override':
+      return {
+        label: '✏️ Manuel Seçim',
+        className:
+          'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+      }
+    case 'document':
+      return {
+        label: '📁 Dosyadan',
+        className:
+          'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800'
+      }
+    case 'settings':
+      return {
+        label: '⚙️ Varsayılan Ayar',
+        className:
+          'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800'
+      }
+    default:
+      return {
+        label: 'Atanmadı',
+        className:
+          'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+      }
+  }
 }
 
 export function DocumentPreviewRotaSection({
   formData,
   setFormData,
   personelListesi = [],
-  supportsOlur = false,
+  birimListesi = [],
   templateId,
   dosyaId
 }: DocumentPreviewRotaSectionProps): React.JSX.Element {
   const [savedFeedback, setSavedFeedback] = React.useState<string | null>(null)
+  const [settingsVersion, setSettingsVersion] = React.useState(0)
+
+  React.useEffect(() => {
+    const onUpdated = () => setSettingsVersion((v) => v + 1)
+    window.addEventListener('temin360:rota-defaults-updated', onUpdated)
+    return () => window.removeEventListener('temin360:rota-defaults-updated', onUpdated)
+  }, [])
+
+  const definition = React.useMemo(
+    () => getTemplateRouteDefinition(templateId || GLOBAL_ROTA_KEY),
+    [templateId]
+  )
+
   const mergedPersonelList = React.useMemo(
     () => buildMergedPersonelList(personelListesi, formData),
     [personelListesi, formData]
   )
-  const currentMode: BelgeModuType = (formData.belgeModu as BelgeModuType) || 'standart'
-  const rota: RotaAdimItem[] = Array.isArray(formData.rota)
-    ? formData.rota
-    : Array.isArray(formData.koordinasyon)
-      ? formData.koordinasyon.map((k: any) => ({
-          t: k.rol || 'Koordinasyon',
-          a: k.adSoyad || '',
-          u: k.unvan || '',
-          tarih: k.tarih || toTrDate(new Date())
-        }))
+
+  const activeBirimList = React.useMemo(() => {
+    if (birimListesi && birimListesi.length > 0) return birimListesi
+    if (Array.isArray(formData?.birimListesi) && formData.birimListesi.length > 0) {
+      return formData.birimListesi
+    }
+    if (typeof window !== 'undefined' && Array.isArray((window as any).__activeBirimListesi)) {
+      return (window as any).__activeBirimListesi
+    }
+    return []
+  }, [birimListesi, formData?.birimListesi])
+
+  const resolvedRoute = React.useMemo(() => {
+    const documentValues = extractDocumentRouteValues(formData, definition)
+    const settingsValues = buildSettingsRouteValues(templateId || GLOBAL_ROTA_KEY, dosyaId)
+    const rawOverrides: RouteOverride[] = Array.isArray(formData?.routeOverrides)
+      ? formData.routeOverrides
       : []
+    const allowed = new Set(definition.slots.map((s) => s.id))
+    const validOverrides = rawOverrides.filter((o) => o && allowed.has(o.slotId))
 
-  // Mod Değiştirme
-  const handleModeChange = (newMode: BelgeModuType) => {
+    return resolveRoute({
+      definition,
+      settings: settingsValues,
+      document: documentValues,
+      overrides: validOverrides,
+      strict: false
+    })
+  }, [definition, formData, templateId, dosyaId, settingsVersion])
+
+  // Bir slotun değerini güncelle ve formData'daki şablon alanlarına uygula
+  const updateSlotOverride = (slotId: string, newValue: RouteValue) => {
     setFormData((prev: any) => {
-      const updated: any = {
-        ...prev,
-        belgeModu: newMode
-      }
+      const existingOverrides: RouteOverride[] = Array.isArray(prev?.routeOverrides)
+        ? prev.routeOverrides.filter((o: RouteOverride) => o.slotId !== slotId)
+        : []
+      const nextOverrides: RouteOverride[] = [...existingOverrides, { slotId, value: newValue }]
 
-      // Hızlı Olur moduna geçilirse Olur Yazısı toggle'ını da aç
-      if (newMode === 'hizli_onay') {
-        updated.olurYazisi = true
-      }
+      const documentValues = extractDocumentRouteValues(prev, definition)
+      const settingsValues = buildSettingsRouteValues(templateId || GLOBAL_ROTA_KEY, dosyaId)
+      const allowed = new Set(definition.slots.map((s) => s.id))
+      const validOverrides = nextOverrides.filter((o) => o && allowed.has(o.slotId))
 
-      // Koordinasyonlu moda geçilirse ve rota boşsa akıllı başlangıç rotası ata
-      if (newMode === 'koordinasyonlu' && (!prev.rota || prev.rota.length === 0)) {
-        const today = toTrDate(new Date())
-        const initialRota: RotaAdimItem[] = []
+      const nextResolved = resolveRoute({
+        definition,
+        settings: settingsValues,
+        document: documentValues,
+        overrides: validOverrides,
+        strict: false
+      })
 
-        if (prev.hazirlayanPersonelAdi) {
-          initialRota.push({
-            t: 'Hazırlayan',
-            a: prev.hazirlayanPersonelAdi,
-            u: prev.hazirlayanPersonelUnvan || 'Görevli Personel',
-            tarih: today
-          })
-        } else if (personelListesi.length > 0) {
-          initialRota.push({
-            t: 'Hazırlayan',
-            a: cleanPersonelName(personelListesi[0].ad_soyad),
-            u: personelListesi[0].unvan || 'Görevli Personel',
-            tarih: today
-          })
-        } else {
-          initialRota.push({
-            t: 'Hazırlayan',
-            a: '',
-            u: '',
-            tarih: today
-          })
-        }
-
-        initialRota.push({
-          t: 'Paraf',
-          a:
-            personelListesi.length > 1
-              ? cleanPersonelName(personelListesi[1].ad_soyad)
-              : '',
-          u: personelListesi.length > 1 ? personelListesi[1].unvan || 'Şube Müdürü' : 'Birim Yetkilisi',
-          tarih: today
-        })
-
-        if (prev.onaylayanPersonelAdi) {
-          initialRota.push({
-            t: 'İmza',
-            a: prev.onaylayanPersonelAdi,
-            u: prev.onaylayanPersonelUnvan || 'Harcama Yetkilisi',
-            tarih: today
-          })
-        }
-
-        updated.rota = initialRota
-        updated.koordinasyon = initialRota.map((r) => ({
-          adSoyad: r.a,
-          unvan: r.u,
-          tarih: r.tarih,
-          rol: r.t
-        }))
-      }
-
-      return updated
+      const updatedData = applyResolvedRouteToDocumentData(
+        {
+          ...prev,
+          routeOverrides: validOverrides
+        },
+        nextResolved
+      )
+      return updatedData
     })
   }
 
-  // Yeni Rota Adımı Ekleme
-  const handleAddStep = () => {
-    const today = toTrDate(new Date())
-    const newStep: RotaAdimItem = {
-      t: rota.length === 0 ? 'Hazırlayan' : 'Paraf',
-      a: '',
-      u: '',
-      tarih: today
+  // Bir slotun manuel override'ını kaldırıp dosya/ayar varsayılanına döndür
+  const clearSlotOverride = (slotId: string) => {
+    setFormData((prev: any) => {
+      const nextOverrides: RouteOverride[] = Array.isArray(prev?.routeOverrides)
+        ? prev.routeOverrides.filter((o: RouteOverride) => o.slotId !== slotId)
+        : []
+      const documentValues = extractDocumentRouteValues(prev, definition)
+      const settingsValues = buildSettingsRouteValues(templateId || GLOBAL_ROTA_KEY, dosyaId)
+      const allowed = new Set(definition.slots.map((s) => s.id))
+      const validOverrides = nextOverrides.filter((o) => o && allowed.has(o.slotId))
+
+      const nextResolved = resolveRoute({
+        definition,
+        settings: settingsValues,
+        document: documentValues,
+        overrides: validOverrides,
+        strict: false
+      })
+
+      return applyResolvedRouteToDocumentData(
+        {
+          ...prev,
+          routeOverrides: validOverrides
+        },
+        nextResolved
+      )
+    })
+  }
+
+  // Mevcut çözülmüş slotları varsayılan ayar (settings) olarak kaydet
+  const handleSaveAsDefault = (targetKey: string, successText: string) => {
+    const slotsToSave: RouteValues = {}
+    for (const step of resolvedRoute.steps) {
+      if (step.value !== null) {
+        slotsToSave[step.id] = step.value
+      }
     }
-    const updated = [...rota, newStep]
-    setFormData((prev: any) => ({
-      ...prev,
-      rota: updated,
-      koordinasyon: updated.map((r) => ({
-        adSoyad: r.a,
-        unvan: r.u,
-        tarih: r.tarih,
-        rol: r.t
-      }))
-    }))
-  }
 
-  // Adım Güncelleme
-  const handleUpdateStep = (index: number, field: keyof RotaAdimItem, val: string) => {
-    const updated = [...rota]
-    updated[index] = { ...updated[index], [field]: val }
-    setFormData((prev: any) => ({
-      ...prev,
-      rota: updated,
-      koordinasyon: updated.map((r) => ({
-        adSoyad: r.a,
-        unvan: r.u,
-        tarih: r.tarih,
-        rol: r.t
-      }))
-    }))
-  }
+    const hazirlayanVal = slotsToSave.hazirlayan as RouteAssignee | undefined
+    const gerceklestirmeVal = slotsToSave.gerceklestirmeGorevlisi as RouteAssignee | undefined
+    const onaylayanVal = slotsToSave.onaylayan as RouteAssignee | undefined
+    const makamVal = slotsToSave.sunulacakMakam as RouteAssignee | undefined
+    const komisyonVal = (slotsToSave.komisyon ||
+      slotsToSave.fiyatArastirmaGorevlileri ||
+      slotsToSave.muayeneKomisyonu) as RouteAssignee[] | undefined
 
-  // Personel Seçimiyle Adımı Doldurma
-  const handleSelectPersonel = (index: number, personelId: string) => {
-    const p = mergedPersonelList.find(
-      (item) => String(item.id || item.ad_soyad) === personelId
+    saveRotaConfigForTemplate(
+      targetKey,
+      {
+        belgeModu: 'standart',
+        rota: [],
+        slots: slotsToSave,
+        hazirlayanPersonelAdi: hazirlayanVal?.name || formData?.hazirlayanPersonelAdi,
+        hazirlayanPersonelUnvan: hazirlayanVal?.title || formData?.hazirlayanPersonelUnvan,
+        gerceklestirmeGorevlisiAdi:
+          gerceklestirmeVal?.name || formData?.gerceklestirmeGorevlisiAdi,
+        gerceklestirmeGorevlisiUnvani:
+          gerceklestirmeVal?.title || formData?.gerceklestirmeGorevlisiUnvani,
+        onaylayanPersonelAdi: onaylayanVal?.name || formData?.onaylayanPersonelAdi,
+        onaylayanPersonelUnvan: onaylayanVal?.title || formData?.onaylayanPersonelUnvan,
+        sunulacakMakamAdi: makamVal?.name || formData?.sunulacakMakamAdi,
+        komisyonUyeleri: Array.isArray(komisyonVal)
+          ? komisyonVal.map((m) => ({
+              id: m.id,
+              adSoyad: m.name,
+              unvan: m.title,
+              gorevi: m.role
+            }))
+          : undefined,
+        olurYazisi: formData?.olurYazisi
+      },
+      dosyaId
     )
-    if (!p) return
-    const cleanName = cleanPersonelName(p.ad_soyad)
-    const updated = [...rota]
-    updated[index] = {
-      ...updated[index],
-      a: cleanName,
-      u: p.unvan || updated[index].u || ''
-    }
-    setFormData((prev: any) => ({
-      ...prev,
-      rota: updated,
-      koordinasyon: updated.map((r) => ({
-        adSoyad: r.a,
-        unvan: r.u,
-        tarih: r.tarih,
-        rol: r.t
-      }))
-    }))
-  }
-
-  // Adım Silme
-  const handleDeleteStep = (index: number) => {
-    const updated = rota.filter((_, idx) => idx !== index)
-    setFormData((prev: any) => ({
-      ...prev,
-      rota: updated,
-      koordinasyon: updated.map((r) => ({
-        adSoyad: r.a,
-        unvan: r.u,
-        tarih: r.tarih,
-        rol: r.t
-      }))
-    }))
-  }
-
-  // Yukarı / Aşağı Taşıma
-  const handleMoveStep = (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index === 0) return
-    if (direction === 'down' && index === rota.length - 1) return
-    const targetIdx = direction === 'up' ? index - 1 : index + 1
-    const updated = [...rota]
-    const temp = updated[index]
-    updated[index] = updated[targetIdx]
-    updated[targetIdx] = temp
-    setFormData((prev: any) => ({
-      ...prev,
-      rota: updated,
-      koordinasyon: updated.map((r) => ({
-        adSoyad: r.a,
-        unvan: r.u,
-        tarih: r.tarih,
-        rol: r.t
-      }))
-    }))
-  }
-
-  // Otomatik Rota Oluşturucu
-  const handleAutoGenerateRota = () => {
-    const today = toTrDate(new Date())
-    const newRota: RotaAdimItem[] = []
-
-    // 1. Adım: Hazırlayan
-    const hazirlayan =
-      formData.hazirlayanPersonelAdi ||
-      formData.talepEdenPersonelAdi ||
-      (personelListesi.length > 0 ? cleanPersonelName(personelListesi[0].ad_soyad) : "")
-    const hazirlayanUnvan =
-      formData.hazirlayanPersonelUnvan ||
-      formData.talepEdenPersonelUnvan ||
-      (personelListesi.length > 0 ? personelListesi[0].unvan : 'Görevli Personel')
-
-    newRota.push({
-      t: 'Hazırlayan',
-      a: hazirlayan,
-      u: hazirlayanUnvan || '',
-      tarih: today
-    })
-
-    // 2. Adım: Paraf / Koordinasyon (Birim Yetkilisi / Şube Müdürü)
-    const parafPersonel =
-      personelListesi.length > 1
-        ? cleanPersonelName(personelListesi[1].ad_soyad)
-        : ''
-    const parafUnvan =
-      personelListesi.length > 1 ? personelListesi[1].unvan : 'Birim Yetkilisi / Şube Müdürü'
-
-    newRota.push({
-      t: 'Paraf',
-      a: parafPersonel,
-      u: parafUnvan || '',
-      tarih: today
-    })
-
-    // 3. Adım: İmza / Olur Makamı
-    const onaylayan =
-      formData.onaylayanPersonelAdi ||
-      formData.baskanAdi ||
-      (personelListesi.length > 2 ? cleanPersonelName(personelListesi[2].ad_soyad) : "")
-    const onaylayanUnvan =
-      formData.onaylayanPersonelUnvan ||
-      formData.baskanUnvan ||
-      (personelListesi.length > 2 ? personelListesi[2].unvan : 'Harcama Yetkilisi')
-
-    newRota.push({
-      t: 'İmza',
-      a: onaylayan,
-      u: onaylayanUnvan || '',
-      tarih: today
-    })
-
-    setFormData((prev: any) => ({
-      ...prev,
-      belgeModu: 'koordinasyonlu',
-      rota: newRota,
-      koordinasyon: newRota.map((r) => ({
-        adSoyad: r.a,
-        unvan: r.u,
-        tarih: r.tarih,
-        rol: r.t
-      }))
-    }))
+    setSavedFeedback(successText)
+    setTimeout(() => setSavedFeedback(null), 2500)
   }
 
   return (
-    <div className="space-y-4 pt-3 border-t border-slate-200 dark:border-slate-800">
-      {/* 1. BÖLÜM: BELGE ÇALIŞMA MODU (MODES) */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-            <GitFork className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>Belge Çalışma Modu</span>
-          </span>
-          <span
-            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-              currentMode === 'koordinasyonlu'
-                ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300'
-                : currentMode === 'hizli_onay'
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                  : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-            }`}
-          >
-            {currentMode === 'koordinasyonlu'
-              ? 'Koordinasyonlu'
-              : currentMode === 'hizli_onay'
-                ? 'Hızlı Olur'
-                : 'Standart'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
-          <button
-            type="button"
-            onClick={() => handleModeChange('standart')}
-            className={`py-1.5 px-1 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
-              currentMode === 'standart'
-                ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-            title="Standart mevzuat belgesi (tek imza/onay)"
-          >
-            Standart
-          </button>
-          <button
-            type="button"
-            onClick={() => handleModeChange('koordinasyonlu')}
-            className={`py-1.5 px-1 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
-              currentMode === 'koordinasyonlu'
-                ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-            title="Resmî EBYS / Paraf ve Koordinasyon akışı aktif"
-          >
-            Koordinasyon
-          </button>
-          <button
-            type="button"
-            onClick={() => handleModeChange('hizli_onay')}
-            className={`py-1.5 px-1 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer ${
-              currentMode === 'hizli_onay'
-                ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-2xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
-            }`}
-            title="Harcama Yetkilisi Olur/Onay makamı odaklı"
-          >
-            Hızlı Onay
-          </button>
-        </div>
-
-        
-
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-          {currentMode === 'koordinasyonlu'
-            ? 'EBYS & Koordinasyon: Belge altında resmi paraf/koordinasyon tablosu basılır.'
-            : currentMode === 'hizli_onay'
-              ? 'Hızlı Onay: Makam OLUR bloğu vurgulanır, doğrudan onaya sunulur.'
-              : 'Standart: Kurum içi olağan mevzuat düzeninde imza ve onay blokları kullanılır.'}
-        </p>
+    <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+      {/* Üst Başlık */}
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+          <GitFork className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+          <span>Belge Görevli &amp; Rota Alanları ({resolvedRoute.steps.length})</span>
+        </span>
+        <span className="text-[10px] font-medium text-slate-400">
+          v{resolvedRoute.definitionVersion}
+        </span>
       </div>
 
-      {/* 2. BÖLÜM: ROTA & KOORDİNASYON AKIŞI LİSTESİ */}
+      {/* Şablonun Slotları Üzerinden Dinamik Form */}
       <div className="space-y-2.5">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-            <GitCommit className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-            <span>İmza & Rota Akışı ({rota.length})</span>
-          </span>
+        {resolvedRoute.steps.map((step) => {
+          const originMeta = getOriginMeta(step.origin)
 
-          <button
-            type="button"
-            onClick={handleAutoGenerateRota}
-            className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 hover:underline cursor-pointer flex items-center gap-1"
-            title="Belgedeki ve kayıtlı personellerden 3 adımlı resmi rota oluştur"
-          >
-            <Sparkles className="w-3 h-3" />
-            <span>⚡ Otomatik Rota</span>
-          </button>
-        </div>
+          if (step.kind === 'person') {
+            const currentPerson: RouteAssignee | null =
+              step.value && !Array.isArray(step.value) ? step.value : null
+            const stepPersonelList = buildMergedPersonelList(
+              personelListesi,
+              formData,
+              currentPerson?.name,
+              currentPerson?.title
+            )
+            const matchedP = stepPersonelList.find(
+              (p) =>
+                cleanPersonelName(p.ad_soyad).toLowerCase() ===
+                cleanPersonelName(currentPerson?.name).toLowerCase()
+            )
+            const selectedVal = matchedP ? String(matchedP.id || matchedP.ad_soyad) : ''
 
-        {/* Adımlar Listesi */}
-        <div className="space-y-2">
-          {rota.length === 0 ? (
-            <div className="p-3 bg-white dark:bg-slate-950 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-center space-y-1.5">
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Henüz paraf veya koordinasyon adımı eklenmedi.
-              </p>
-              <div className="flex items-center justify-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={handleAddStep}
-                  className="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded-lg text-xs font-bold hover:bg-purple-100 transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Adım Ekle</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAutoGenerateRota}
-                  className="px-2.5 py-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors cursor-pointer flex items-center gap-1"
-                >
-                  <Sparkles className="w-3 h-3 text-purple-500" />
-                  <span>Önerilen Rota</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            rota.map((step, idx) => {
-              const badgeColor =
-                step.t === 'Hazırlayan'
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                  : step.t === 'İmza'
-                    ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300'
-                    : step.t === 'Olur'
-                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                      : 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300'
-
-              return (
-                <div
-                  key={idx}
-                  className="p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2 text-xs shadow-2xs"
-                >
-                  {/* Başlık: Sıra No + Tür Seçimi + Aksiyonlar */}
-                  <div className="flex items-center justify-between gap-1.5">
-                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                      <span className="w-4 h-4 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] flex items-center justify-center shrink-0">
-                        {idx + 1}
+            return (
+              <div
+                key={step.id}
+                className="p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2 text-xs shadow-2xs"
+              >
+                <div className="flex items-center justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <UserCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {step.label}
+                    </span>
+                    {step.required && (
+                      <span className="text-[9px] text-rose-500 font-bold" title="Zorunlu alan">
+                        *
                       </span>
-                      <select
-                        value={step.t || 'Paraf'}
-                        onChange={(e) => handleUpdateStep(idx, 't', e.target.value)}
-                        className={`text-[11px] font-bold px-1.5 py-0.5 rounded border border-transparent cursor-pointer ${badgeColor}`}
-                      >
-                        <option value="Hazırlayan">Hazırlayan</option>
-                        <option value="Paraf">Paraf</option>
-                        <option value="Koordinasyon">Koordinasyon</option>
-                        <option value="İmza">İmza</option>
-                        <option value="Olur">Olur</option>
-                      </select>
-                    </div>
-
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleMoveStep(idx, 'up')}
-                        disabled={idx === 0}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 disabled:opacity-30 cursor-pointer"
-                        title="Yukarı Taşı"
-                      >
-                        <MoveUp className="w-3 h-3" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleMoveStep(idx, 'down')}
-                        disabled={idx === rota.length - 1}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 disabled:opacity-30 cursor-pointer"
-                        title="Aşağı Taşı"
-                      >
-                        <MoveDown className="w-3 h-3" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteStep(idx)}
-                        className="p-1 hover:bg-red-50 dark:hover:bg-red-950/50 rounded text-red-500 cursor-pointer"
-                        title="Adımı Sil"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Personel Listesi Dropdown (Birleştirilmiş Havuz) */}
-                  {(() => {
-                    const stepPersonelList = buildMergedPersonelList(
-                      personelListesi,
-                      formData,
-                      step.a,
-                      step.u
-                    )
-                    if (stepPersonelList.length === 0) return null
-                    const matchedP = stepPersonelList.find(
-                      (p) =>
-                        cleanPersonelName(p.ad_soyad).toLowerCase() ===
-                        cleanPersonelName(step.a).toLowerCase()
-                    )
-                    const selectedVal = matchedP ? String(matchedP.id || matchedP.ad_soyad) : ''
-                    return (
-                      <select
-                        value={selectedVal}
-                        onChange={(e) => handleSelectPersonel(idx, e.target.value)}
-                        className="w-full text-[11px] px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${originMeta.className}`}
+                    >
+                      {originMeta.label}
+                    </span>
+                    {step.origin === 'override' && (
+                      <button
+                        type="button"
+                        onClick={() => clearSlotOverride(step.id)}
+                        className="p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-600 cursor-pointer"
+                        title="Manuel seçimi kaldır, varsayılana dön"
                       >
-                        <option value="">👤 Personel Listesinden Seç...</option>
-                        {stepPersonelList.map((p, pIdx) => (
-                          <option key={p.id || pIdx} value={String(p.id || p.ad_soyad)}>
-                            {p.label || `${p.ad_soyad} ${p.unvan ? `(${p.unvan})` : ''}`}
-                          </option>
-                        ))}
-                      </select>
-                    )
-                  })()}
-
-                  {/* Ad Soyad ve Unvan Inputları */}
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <input
-                      type="text"
-                      value={step.a || ''}
-                      onChange={(e) => handleUpdateStep(idx, 'a', e.target.value)}
-                      placeholder="Adı Soyadı"
-                      className="px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500"
-                    />
-                    <input
-                      type="text"
-                      value={step.u || ''}
-                      onChange={(e) => handleUpdateStep(idx, 'u', e.target.value)}
-                      placeholder="Unvanı / Görevi"
-                      className="px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500"
-                    />
-                  </div>
-
-                  {/* Tarih Alanı (GG.AA.YYYY mevzuata uygun) */}
-                  <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-0.5">
-                    <span>Tarih:</span>
-                    <input
-                      type="text"
-                      value={step.tarih || toTrDate(new Date())}
-                      onChange={(e) => handleUpdateStep(idx, 'tarih', e.target.value)}
-                      placeholder="GG.AA.YYYY"
-                      className="w-24 text-right px-1.5 py-0.5 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 text-[10px] text-slate-700 dark:text-slate-200 font-mono focus:outline-hidden"
-                    />
+                        <RotateCcw className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                 </div>
+
+                {step.description && (
+                  <p className="text-[10px] text-slate-400 leading-tight">{step.description}</p>
+                )}
+
+                {stepPersonelList.length > 0 && (
+                  <select
+                    value={selectedVal}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (!val) {
+                        updateSlotOverride(step.id, null)
+                        return
+                      }
+                      const p = stepPersonelList.find(
+                        (item) => String(item.id || item.ad_soyad) === val
+                      )
+                      if (p) {
+                        updateSlotOverride(step.id, {
+                          id: String(p.id || p.ad_soyad),
+                          name: cleanPersonelName(p.ad_soyad),
+                          title: p.unvan || currentPerson?.title || ''
+                        })
+                      }
+                    }}
+                    className="w-full text-[11px] px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
+                  >
+                    <option value="">👤 Personel Havuzundan Seç...</option>
+                    {stepPersonelList.map((p, pIdx) => (
+                      <option key={p.id || pIdx} value={String(p.id || p.ad_soyad)}>
+                        {p.label || `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                <div className="grid grid-cols-2 gap-1.5">
+                  <input
+                    type="text"
+                    value={currentPerson?.name || ''}
+                    onChange={(e) => {
+                      const name = e.target.value
+                      updateSlotOverride(step.id, {
+                        id: currentPerson?.id || `person_${name}`,
+                        name,
+                        title: currentPerson?.title || ''
+                      })
+                    }}
+                    placeholder="Adı Soyadı"
+                    className="px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                  />
+                  <input
+                    type="text"
+                    value={currentPerson?.title || ''}
+                    onChange={(e) => {
+                      const title = e.target.value
+                      updateSlotOverride(step.id, {
+                        id: currentPerson?.id || `person_${currentPerson?.name || 'custom'}`,
+                        name: currentPerson?.name || '',
+                        title
+                      })
+                    }}
+                    placeholder="Unvanı"
+                    className="px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
+            )
+          }
+
+          if (step.kind === 'person-list') {
+            const currentList: RouteAssignee[] = Array.isArray(step.value) ? step.value : []
+
+            const handleAddMember = () => {
+              const unusedPerson = mergedPersonelList.find(
+                (p) =>
+                  !currentList.some(
+                    (m) =>
+                      cleanPersonelName(m.name).toLowerCase() ===
+                      cleanPersonelName(p.ad_soyad).toLowerCase()
+                  )
               )
-            })
-          )}
+              const nextMember: RouteAssignee = unusedPerson
+                ? {
+                    id: String(unusedPerson.id || unusedPerson.ad_soyad),
+                    name: cleanPersonelName(unusedPerson.ad_soyad),
+                    title: unusedPerson.unvan || '',
+                    role: currentList.length === 0 ? 'Başkan' : 'Üye'
+                  }
+                : {
+                    id: `member_${Date.now()}`,
+                    name: '',
+                    title: '',
+                    role: currentList.length === 0 ? 'Başkan' : 'Üye'
+                  }
+              updateSlotOverride(step.id, [...currentList, nextMember])
+            }
 
-          {/* Adım Ekle Butonu */}
-          {rota.length > 0 && (
-            <button
-              type="button"
-              onClick={handleAddStep}
-              className="w-full py-1.5 border border-dashed border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Yeni Adım Ekle</span>
-            </button>
-          )}
-        </div>
+            const handleUpdateMember = (idx: number, patch: Partial<RouteAssignee>) => {
+              const next = currentList.map((item, i) => (i === idx ? { ...item, ...patch } : item))
+              updateSlotOverride(step.id, next)
+            }
 
-        {/* Varsayılan Olarak Kaydet Aksiyonları */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
-          <div className="grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                saveRotaConfigForTemplate(
-                  templateId || GLOBAL_ROTA_KEY,
-                  {
-                    belgeModu: currentMode,
-                    rota,
-                    hazirlayanPersonelAdi: formData.hazirlayanPersonelAdi,
-                    hazirlayanPersonelUnvan: formData.hazirlayanPersonelUnvan,
-                    onaylayanPersonelAdi: formData.onaylayanPersonelAdi,
-                    onaylayanPersonelUnvan: formData.onaylayanPersonelUnvan,
-                    olurYazisi: formData.olurYazisi
-                  },
-                  dosyaId
-                )
-                setSavedFeedback('Bu şablon için varsayılan olarak kaydedildi')
-                setTimeout(() => setSavedFeedback(null), 2500)
-              }}
-              className="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-              title="Bu rotayı seçili belge şablonu için varsayılan yap"
+            const handleRemoveMember = (idx: number) => {
+              const next = currentList.filter((_, i) => i !== idx)
+              updateSlotOverride(step.id, next)
+            }
+
+            const handleMoveMember = (idx: number, dir: 'up' | 'down') => {
+              if (dir === 'up' && idx === 0) return
+              if (dir === 'down' && idx === currentList.length - 1) return
+              const target = dir === 'up' ? idx - 1 : idx + 1
+              const next = [...currentList]
+              const tmp = next[idx]
+              next[idx] = next[target]
+              next[target] = tmp
+              updateSlotOverride(step.id, next)
+            }
+
+            return (
+              <div
+                key={step.id}
+                className="p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2 text-xs shadow-2xs"
+              >
+                <div className="flex items-center justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Users className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                      {step.label} ({currentList.length})
+                    </span>
+                    {step.required && (
+                      <span className="text-[9px] text-rose-500 font-bold" title="Zorunlu liste">
+                        *
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${originMeta.className}`}
+                    >
+                      {originMeta.label}
+                    </span>
+                    {step.origin === 'override' && (
+                      <button
+                        type="button"
+                        onClick={() => clearSlotOverride(step.id)}
+                        className="p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-600 cursor-pointer"
+                        title="Manuel seçimi kaldır, varsayılana dön"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {step.description && (
+                  <p className="text-[10px] text-slate-400 leading-tight">{step.description}</p>
+                )}
+
+                {currentList.length === 0 ? (
+                  <div className="p-2.5 bg-slate-50 dark:bg-slate-900/60 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg text-center space-y-1.5">
+                    <p className="text-[11px] text-slate-500">
+                      Henüz bu liste için görevli/komisyon üyesi atanmadı.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleAddMember}
+                      className="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Görevli / Üye Ekle</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {currentList.map((member, idx) => {
+                      const memberPool = buildMergedPersonelList(
+                        personelListesi,
+                        formData,
+                        member.name,
+                        member.title
+                      )
+                      const matched = memberPool.find(
+                        (p) =>
+                          cleanPersonelName(p.ad_soyad).toLowerCase() ===
+                          cleanPersonelName(member.name).toLowerCase()
+                      )
+                      const selectedVal = matched ? String(matched.id || matched.ad_soyad) : ''
+
+                      return (
+                        <div
+                          key={member.id || idx}
+                          className="p-2 bg-slate-50/80 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 rounded-lg space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-[10px] font-bold text-slate-500">
+                              #{idx + 1}. Görevli / Üye
+                            </span>
+                            <div className="flex items-center gap-0.5">
+                              <button
+                                type="button"
+                                onClick={() => handleMoveMember(idx, 'up')}
+                                disabled={idx === 0}
+                                className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 disabled:opacity-30 cursor-pointer"
+                              >
+                                <MoveUp className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMoveMember(idx, 'down')}
+                                disabled={idx === currentList.length - 1}
+                                className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 disabled:opacity-30 cursor-pointer"
+                              >
+                                <MoveDown className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMember(idx)}
+                                className="p-0.5 hover:bg-red-50 dark:hover:bg-red-950/50 rounded text-red-500 cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {memberPool.length > 0 && (
+                            <select
+                              value={selectedVal}
+                              onChange={(e) => {
+                                const val = e.target.value
+                                const p = memberPool.find(
+                                  (item) => String(item.id || item.ad_soyad) === val
+                                )
+                                if (p) {
+                                  handleUpdateMember(idx, {
+                                    id: String(p.id || p.ad_soyad),
+                                    name: cleanPersonelName(p.ad_soyad),
+                                    title: p.unvan || member.title || ''
+                                  })
+                                }
+                              }}
+                              className="w-full text-[11px] px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md cursor-pointer"
+                            >
+                              <option value="">👤 Personel Seç...</option>
+                              {memberPool.map((p, pIdx) => (
+                                <option key={p.id || pIdx} value={String(p.id || p.ad_soyad)}>
+                                  {p.label || `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-1">
+                            <input
+                              type="text"
+                              value={member.name || ''}
+                              onChange={(e) => handleUpdateMember(idx, { name: e.target.value })}
+                              placeholder="Adı Soyadı"
+                              className="px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px]"
+                            />
+                            <input
+                              type="text"
+                              value={member.title || ''}
+                              onChange={(e) => handleUpdateMember(idx, { title: e.target.value })}
+                              placeholder="Unvanı"
+                              className="px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px]"
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={handleAddMember}
+                      className="w-full py-1 border border-dashed border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>+ Görevli / Üye Ekle</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          }
+
+          // step.kind === 'unit'
+          const currentUnit: RouteAssignee | null =
+            step.value && !Array.isArray(step.value) ? step.value : null
+
+          return (
+            <div
+              key={step.id}
+              className="p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2 text-xs shadow-2xs"
             >
-              📌 Şablon Varsayılanı Yap
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                saveRotaConfigForTemplate(
-                  GLOBAL_ROTA_KEY,
-                  {
-                    belgeModu: currentMode,
-                    rota,
-                    hazirlayanPersonelAdi: formData.hazirlayanPersonelAdi,
-                    hazirlayanPersonelUnvan: formData.hazirlayanPersonelUnvan,
-                    onaylayanPersonelAdi: formData.onaylayanPersonelAdi,
-                    onaylayanPersonelUnvan: formData.onaylayanPersonelUnvan,
-                    olurYazisi: formData.olurYazisi
-                  },
-                  dosyaId
-                )
-                setSavedFeedback('Tüm belgeler için genel varsayılan yapıldı')
-                setTimeout(() => setSavedFeedback(null), 2500)
-              }}
-              className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-              title="Bu rotayı tüm belgeler için genel varsayılan yap"
-            >
-              🌐 Genel Varsayılan Yap
-            </button>
-          </div>
-          {savedFeedback && (
-            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 text-center bg-emerald-50 dark:bg-emerald-950/40 py-1 rounded-lg">
-              ✓ {savedFeedback}
+              <div className="flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Building2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                    {step.label}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <span
+                    className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${originMeta.className}`}
+                  >
+                    {originMeta.label}
+                  </span>
+                  {step.origin === 'override' && (
+                    <button
+                      type="button"
+                      onClick={() => clearSlotOverride(step.id)}
+                      className="p-0.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-600 cursor-pointer"
+                      title="Manuel seçimi kaldır"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {activeBirimList.length > 0 && (
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (!val) return
+                    updateSlotOverride(step.id, {
+                      id: `unit_${val}`,
+                      name: val
+                    })
+                  }}
+                  className="w-full text-[11px] px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
+                  <option value="">🏢 Kayıtlı Birim / Makam Seç...</option>
+                  {activeBirimList.map((b: any, bIdx: number) => {
+                    const label = (b.sunum_makami || b.birim_adi || b.ad || '').trim().toUpperCase()
+                    if (!label) return null
+                    return (
+                      <option key={b.id || bIdx} value={label}>
+                        {label}
+                      </option>
+                    )
+                  })}
+                </select>
+              )}
+
+              <input
+                type="text"
+                value={currentUnit?.name || ''}
+                onChange={(e) => {
+                  const val = e.target.value
+                  updateSlotOverride(
+                    step.id,
+                    val.trim() ? { id: `unit_${val}`, name: val } : null
+                  )
+                }}
+                placeholder="Örn: DESTEK HİZMETLERİ MÜDÜRLÜĞÜNE"
+                className="w-full px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100"
+              />
             </div>
-          )}
+          )
+        })}
+      </div>
+
+      {/* Varsayılan Olarak Kaydet Aksiyonları */}
+      <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+        <div className="grid grid-cols-2 gap-1.5">
+          <button
+            type="button"
+            onClick={() =>
+              handleSaveAsDefault(
+                templateId || GLOBAL_ROTA_KEY,
+                'Bu şablon için varsayılan rota kaydedildi'
+              )
+            }
+            className="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+            title="Bu görevli/rota atamalarını seçili şablon için varsayılan yap"
+          >
+            📌 Şablon Varsayılanı Yap
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              handleSaveAsDefault(
+                GLOBAL_ROTA_KEY,
+                'Tüm belgeler için genel varsayılan yapıldı'
+              )
+            }
+            className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+            title="Bu görevli/rota atamalarını tüm belgeler için genel varsayılan yap"
+          >
+            🌐 Genel Varsayılan Yap
+          </button>
         </div>
+        {savedFeedback && (
+          <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 text-center bg-emerald-50 dark:bg-emerald-950/40 py-1 rounded-lg flex items-center justify-center gap-1">
+            <CheckCircle2 className="w-3 h-3" />
+            <span>{savedFeedback}</span>
+          </div>
+        )}
       </div>
     </div>
   )
 }
-
