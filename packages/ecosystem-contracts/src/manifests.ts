@@ -393,9 +393,47 @@ export const EVRAKTRON_MANIFEST: AppManifest = {
   repositoryUrl: 'https://github.com/ilyasbozdemir/evraktron'
 }
 
+export const HAKEDIS_360_MANIFEST: AppManifest = {
+  id: 'hakedis-360',
+  name: 'HAKEDİŞ 360',
+  version: '1.0.0-rc.1',
+  summary: 'Yeşil Defter, Metraj & Hakediş.org Kamu Tahakkuk Masası',
+  description:
+    '4734 Sayılı Kamu İhale Kanunu ve 5018 Sayılı Kanun standartlarında imalat metrajları, yeşil defter, Yİ-ÜFE fiyat farkı hesabı, yasal kesintiler ve dizi pusulası.',
+  category: 'procurement',
+  appId: 'dev.ilyasbozdemir.hakedis360',
+  executableName: 'HAKEDIS360.exe',
+  fileAssociations: [
+    {
+      ext: 'hakedis',
+      name: 'Hakediş 360 Metraj Dosyası',
+      description: 'Hakediş 360 Yeşil Defter ve İcmal Projesi (*.hakedis)',
+      mimeType: 'application/x-hakedis',
+      progId: 'Hakedis360.Document',
+      perceivedType: 'document',
+      isPrimary: true
+    }
+  ],
+  installState: 'installed',
+  modules: [
+    'Yeşil Defter & Metraj Cetveli',
+    'Fiyat Farkı Hesabı (4734 m. 8)',
+    'Yasal Kesintiler & Stopaj Cetveli',
+    'Dizi Pusulası & Onay Heyeti',
+    'Ödeme Emri Belgesi (ÖEB) Entegrasyonu'
+  ],
+  releaseChannel: 'rc',
+  minEcosystemVersion: '1.0.0',
+  author: 'ilyasbozdemir.dev',
+  websiteUrl: 'https://hakedis.org',
+  repositoryUrl: 'https://github.com/ilyasbozdemir/workdesk-360',
+  sizeEstimatedMb: 85
+}
+
 export const DEFAULT_ECOSYSTEM_MANIFESTS: AppManifest[] = [
   TEMIN_360_MANIFEST,
   IHALE_360_MANIFEST,
+  HAKEDIS_360_MANIFEST,
   WORKSPACE_360_MANIFEST,
   DOSYA_360_MANIFEST,
   DISK_ANALIZ_360_MANIFEST,

@@ -16,6 +16,9 @@ const DashboardScreen = lazyRoute(() =>
 const HarcamaMerkeziScreen = lazyRoute(() =>
   import("./screens/dashboard/HarcamaMerkeziScreen")
 );
+const HakedisScreen = lazyRoute(() =>
+  import("./screens/hakedis/HakedisScreen")
+);
 const PiyasaFiyatArastirmasiScreen = lazyRoute(() =>
   import("./screens/dashboard/PiyasaFiyatArastirmasiScreen")
 );
@@ -563,7 +566,7 @@ const imzaliBelgelerRoute = createRoute({
 const hakedisRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.HAKEDIS,
-  component: HarcamaMerkeziScreen,
+  component: HakedisScreen,
 });
 
 const notlarRoute = createRoute({

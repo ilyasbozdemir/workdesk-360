@@ -60,7 +60,12 @@ export const KAMU_360_MODULES: Record<KamuModuleKey, KamuModuleDefinition> = {
     textColor: 'text-blue-500',
     tagline: '4734 KİK Gider & 2886 DİK Gelir',
     description: '22/d Doğrudan Temin Masası, piyasa tutanakları, teklif matrisi ve kamu gelir ihaleleri.',
-    matchingAppIds: ['dev.ilyasbozdemir.temin360', 'dev.ilyasbozdemir.ihale360', 'dev.ilyasbozdemir.flowdesk360']
+    matchingAppIds: [
+      'dev.ilyasbozdemir.temin360',
+      'dev.ilyasbozdemir.ihale360',
+      'dev.ilyasbozdemir.hakedis360',
+      'dev.ilyasbozdemir.flowdesk360'
+    ]
   },
   cbs_arazi_su: {
     key: 'cbs_arazi_su',
@@ -105,7 +110,12 @@ export const KAMU_360_MODULES: Record<KamuModuleKey, KamuModuleDefinition> = {
     textColor: 'text-amber-500',
     tagline: '5018 Sayılı Kanun & Ödenek Planlaması',
     description: 'Bütçe tertipleri, analitik bütçe kodları, harcama kalemleri ve mali analizler.',
-    matchingAppIds: ['dev.ilyasbozdemir.arsiv360', 'dev.ilyasbozdemir.evraktron', 'dev.ilyasbozdemir.belge360']
+    matchingAppIds: [
+      'dev.ilyasbozdemir.hakedis360',
+      'dev.ilyasbozdemir.arsiv360',
+      'dev.ilyasbozdemir.evraktron',
+      'dev.ilyasbozdemir.belge360'
+    ]
   }
 }
 

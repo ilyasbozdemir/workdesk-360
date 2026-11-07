@@ -5,7 +5,8 @@ import {
   FolderInput,
   CheckCircle2,
   FileSpreadsheet,
-  AlertTriangle
+  AlertTriangle,
+  Hammer
 } from 'lucide-react'
 import { FinancialServicesPermission } from '../modules/financial-services/permissions'
 
@@ -60,6 +61,15 @@ export const FINANCE_SERVICES_NAVIGATION: FinanceNavItem[] = [
     badgeVariant: 'purple',
     permission: 'finance:tax_calc',
     description: 'Damga vergisi, karar pulu ve KDV tevkifat oranları hesaplama aracı'
+  },
+  {
+    id: 'hakedis-masasi',
+    label: 'Hakediş & Yeşil Defter Masası',
+    shortLabel: 'Hakediş Masası',
+    icon: Hammer,
+    badge: 'Hakediş',
+    badgeVariant: 'emerald',
+    description: 'Hakediş.org standardında yeşil defter, metraj ve tahakkuk icmali'
   }
 ]
 

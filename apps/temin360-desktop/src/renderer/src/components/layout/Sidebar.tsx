@@ -197,6 +197,7 @@ export function Sidebar(): React.JSX.Element {
                       {item.path ? (
                         <Link
                           to={item.path}
+                          title={isCollapsed ? `${item.name}${item.badge ? ` (${item.badge})` : ''}` : undefined}
                           onClick={() => {
                             if (item.onClick) {
                               item.onClick()
@@ -239,6 +240,7 @@ export function Sidebar(): React.JSX.Element {
                         </Link>
                       ) : (
                         <div
+                          title={isCollapsed ? item.name : undefined}
                           onClick={() => {
                             if (hasChildren) toggleExpanded(itemKey)
                           }}

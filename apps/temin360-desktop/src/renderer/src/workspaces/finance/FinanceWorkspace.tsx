@@ -9,6 +9,7 @@ import { MifDraftsPage } from './modules/accounting/pages/MifDraftsPage'
 import { OebDraftsPage } from './modules/accounting/pages/OebDraftsPage'
 import { GuaranteesEscrowPage } from './modules/accounting/pages/GuaranteesEscrowPage'
 import { AccountingRecordsPage } from './modules/accounting/pages/AccountingRecordsPage'
+import HakedisScreen from '@renderer/screens/hakedis/HakedisScreen'
 import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
 
 export const FinanceWorkspace: React.FC = () => {
@@ -35,6 +36,8 @@ export const FinanceWorkspace: React.FC = () => {
         return <GuaranteesEscrowPage />
       case 'accounting-records':
         return <AccountingRecordsPage />
+      case 'hakedis-masasi':
+        return <HakedisScreen />
       default:
         return <FinanceDashboard onNavigateTab={setActiveFinanceTab} />
     }
@@ -75,6 +78,8 @@ export const FinanceWorkspace: React.FC = () => {
                 ? 'Ödeme Emri Belgeleri (ÖEB)'
                 : activeFinanceTab === 'guarantees-escrow'
                 ? 'Teminat & Emanetler'
+                : activeFinanceTab === 'hakedis-masasi'
+                ? 'Hakediş & Yeşil Defter Masası'
                 : 'Yevmiye Kayıtları'}
             </span>
           </div>
