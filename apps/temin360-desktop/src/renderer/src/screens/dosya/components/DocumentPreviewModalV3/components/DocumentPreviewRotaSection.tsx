@@ -142,25 +142,80 @@ export function DocumentPreviewRotaSection({
     [templateId]
   )
 
-  const activeBirimList = React.useMemo(() => {
-    if (birimListesi && birimListesi.length > 0) return birimListesi
-    if (Array.isArray(formData?.birimListesi) && formData.birimListesi.length > 0) {
-      return formData.birimListesi
-    }
-    if (typeof window !== 'undefined' && Array.isArray((window as any).__activeBirimListesi)) {
-      return (window as any).__activeBirimListesi
-    }
-    return []
-  }, [birimListesi, formData?.birimListesi])
-
   const currentBirimId = formData?.birimId ?? formData?.birim_id ?? null
   const currentBirimAdi =
+    formData?.ihalesiYapilacakBirim ||
     formData?.birimAdi ||
     formData?.birim_adi ||
     formData?.birim ||
     formData?.mudurluk ||
     formData?.harcamaBirimi ||
+    formData?.harcama_birimi ||
     ''
+
+  const activeBirimList = React.useMemo(() => {
+    let baseList: any[] = []
+    if (birimListesi && birimListesi.length > 0) {
+      baseList = [...birimListesi]
+    } else if (Array.isArray(formData?.birimListesi) && formData.birimListesi.length > 0) {
+      baseList = [...formData.birimListesi]
+    } else if (
+      typeof window !== 'undefined' &&
+      Array.isArray((window as any).__activeBirimListesi)
+    ) {
+      baseList = [...(window as any).__activeBirimListesi]
+    }
+
+    // Dosyanın kendi "İhalesi Yapılacak Birim / Müdürlük" alanı TANIM_Birim listesinde yoksa havuza ekle
+    const trimmedDosyaBirim = String(currentBirimAdi || '').trim()
+    if (trimmedDosyaBirim) {
+      const lowerTarget = trimmedDosyaBirim.toLocaleLowerCase('tr-TR')
+      const exists = baseList.some((b: any) => {
+        if (
+          currentBirimId !== null &&
+          currentBirimId !== undefined &&
+          String(b?.id) === String(currentBirimId)
+        ) {
+          return true
+        }
+        const name = String(b?.birim_adi || b?.ad || b?.kisa_ad || '')
+          .trim()
+          .toLocaleLowerCase('tr-TR')
+        return name === lowerTarget
+      })
+      if (!exists) {
+        const syntheticId =
+          currentBirimId !== null &&
+          currentBirimId !== undefined &&
+          String(currentBirimId).trim() !== ''
+            ? currentBirimId
+            : `dosya_birim_${trimmedDosyaBirim}`
+        baseList.unshift({
+          id: syntheticId,
+          birim_adi: trimmedDosyaBirim,
+          ad: trimmedDosyaBirim,
+          antet_ek_satir:
+            formData?.antetEkSatir || formData?.antet_ek_satir || trimmedDosyaBirim,
+          sunum_makami:
+            formData?.sunulacakMakamAdi || formData?.sunulacakMakam || undefined,
+          ihtiyac_yeri_eki: formData?.ihtiyacYeri || undefined,
+          aktif_mi: 1
+        })
+      }
+    }
+
+    return baseList
+  }, [
+    birimListesi,
+    formData?.birimListesi,
+    currentBirimId,
+    currentBirimAdi,
+    formData?.antetEkSatir,
+    formData?.antet_ek_satir,
+    formData?.sunulacakMakamAdi,
+    formData?.sunulacakMakam,
+    formData?.ihtiyacYeri
+  ])
 
   const currentAntetLines: string[] = React.useMemo(() => {
     if (Array.isArray(formData?.antetSatirlari) && formData.antetSatirlari.length > 0) {
@@ -541,6 +596,12 @@ export function DocumentPreviewRotaSection({
         slots: slotsToSave,
         birimId: currentBirimResolution.birimId ?? currentBirimId ?? undefined,
         birimAdi: currentBirimResolution.birimAdi || currentBirimAdi || undefined,
+        antetEkSatir:
+          currentBirimResolution.antetEkSatir ||
+          formData?.antetEkSatir ||
+          formData?.antet_ek_satir ||
+          undefined,
+        kurumAdi: formData?.kurumAdi || undefined,
         antetSatirlari: currentAntetLines.length > 0 ? currentAntetLines : undefined,
         hazirlayanPersonelAdi: hazirlayanVal?.name || formData?.hazirlayanPersonelAdi,
         hazirlayanPersonelUnvan: hazirlayanVal?.title || formData?.hazirlayanPersonelUnvan,

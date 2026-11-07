@@ -62,10 +62,19 @@ export function BelgeAyarlariPaneli({
     setRotaFormData({
       belgeModu: saved?.belgeModu || 'standart',
       rota: saved?.rota ? saved.rota.map((s) => ({ ...s })) : [],
+      birimId: saved?.birimId ?? null,
+      birim_id: saved?.birimId ?? null,
+      birimAdi: saved?.birimAdi || '',
+      birim: saved?.birimAdi || '',
+      antetEkSatir: saved?.antetEkSatir || '',
+      antetSatirlari: Array.isArray(saved?.antetSatirlari) ? [...saved.antetSatirlari] : undefined,
       hazirlayanPersonelAdi: saved?.hazirlayanPersonelAdi || '',
       hazirlayanPersonelUnvan: saved?.hazirlayanPersonelUnvan || '',
+      gerceklestirmeGorevlisiAdi: saved?.gerceklestirmeGorevlisiAdi || '',
+      gerceklestirmeGorevlisiUnvani: saved?.gerceklestirmeGorevlisiUnvani || '',
       onaylayanPersonelAdi: saved?.onaylayanPersonelAdi || '',
-      onaylayanPersonelUnvan: saved?.onaylayanPersonelUnvan || ''
+      onaylayanPersonelUnvan: saved?.onaylayanPersonelUnvan || '',
+      sunulacakMakamAdi: saved?.sunulacakMakamAdi || ''
     })
   }, [selectedBelgeId, activeDosyaId])
 
@@ -78,10 +87,20 @@ export function BelgeAyarlariPaneli({
           {
             belgeModu: next.belgeModu || 'standart',
             rota: Array.isArray(next.rota) ? next.rota : [],
+            birimId: next.birimId ?? next.birim_id ?? undefined,
+            birimAdi: next.birimAdi || next.birim || undefined,
+            antetEkSatir: next.antetEkSatir || next.antet_ek_satir || undefined,
+            antetSatirlari:
+              Array.isArray(next.antetSatirlari) && next.antetSatirlari.length > 0
+                ? next.antetSatirlari
+                : undefined,
             hazirlayanPersonelAdi: next.hazirlayanPersonelAdi,
             hazirlayanPersonelUnvan: next.hazirlayanPersonelUnvan,
+            gerceklestirmeGorevlisiAdi: next.gerceklestirmeGorevlisiAdi,
+            gerceklestirmeGorevlisiUnvani: next.gerceklestirmeGorevlisiUnvani,
             onaylayanPersonelAdi: next.onaylayanPersonelAdi,
-            onaylayanPersonelUnvan: next.onaylayanPersonelUnvan
+            onaylayanPersonelUnvan: next.onaylayanPersonelUnvan,
+            sunulacakMakamAdi: next.sunulacakMakamAdi || next.sunulacakMakam
           },
           activeDosyaId
         )

@@ -78,6 +78,8 @@ export async function resolveSnapshotOverlay(
 
   // DB Snapshot Data merged with Smart Refresh Policy (preserve + source + manual)
   if (snapshotData && typeof snapshotData === 'object') {
+    finalData._hasSavedSnapshot = true
+    finalData._isBaseDefaultAntet = false
     try {
       const mergedByPolicy = applyRefreshPolicy(finalData, snapshotData)
       for (const [key, val] of Object.entries(mergedByPolicy)) {
@@ -101,6 +103,8 @@ export async function resolveSnapshotOverlay(
     } catch (e) {
       console.error('Failed to merge saved snapshot with refresh policy', e)
     }
+  } else {
+    finalData._isBaseDefaultAntet = true
   }
 
   // Ensure sunulacakMakamAdi and sunulacakMakam are in sync

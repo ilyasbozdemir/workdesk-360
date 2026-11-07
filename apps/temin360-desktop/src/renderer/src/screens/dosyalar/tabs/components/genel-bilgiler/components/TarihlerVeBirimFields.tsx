@@ -33,8 +33,24 @@ export const TarihlerVeBirimFields: React.FC<YeniDosyaTabProps> = (props) => {
     birimSearchQuery,
     setBirimSearchQuery,
     filteredBirimler,
-    handleSelectBirim
+    handleSelectBirim,
+    handleCreateAndSelectBirim
   } = props
+
+  const selectedBirimLabel =
+    (formData.birim_id
+      ? birimler.find((b) => Number(b.id) === Number(formData.birim_id))?.birim_adi
+      : null) ||
+    (formData as any).birim ||
+    formData.harcama_birimi ||
+    ''
+
+  const trimmedQuery = (birimSearchQuery || '').trim()
+  const hasExactBirimMatch = trimmedQuery
+    ? birimler.some(
+        (b) => (b.birim_adi || '').trim().toLocaleLowerCase('tr-TR') === trimmedQuery.toLocaleLowerCase('tr-TR')
+      )
+    : true
 
   return (
     <>
@@ -120,9 +136,7 @@ export const TarihlerVeBirimFields: React.FC<YeniDosyaTabProps> = (props) => {
             className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:outline-none text-slate-800 dark:text-slate-200 hover:bg-slate-100/50 text-left cursor-pointer"
           >
             <span>
-              {formData.birim_id
-                ? birimler.find((b) => b.id === formData.birim_id)?.birim_adi
-                : 'Birim Seçiniz...'}
+              {selectedBirimLabel || 'Birim Seçiniz...'}
             </span>
             <Search size={14} className="text-slate-400" />
           </button>
@@ -131,15 +145,28 @@ export const TarihlerVeBirimFields: React.FC<YeniDosyaTabProps> = (props) => {
             <div className="absolute left-0 mt-1.5 w-full bg-white dark:bg-slate-955 border border-slate-250 dark:border-slate-800 rounded-2xl shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
               <input
                 type="text"
-                placeholder="Birim ara..."
+                placeholder="Birim ara veya yeni birim adı yazın..."
                 value={birimSearchQuery}
                 onChange={(e) => setBirimSearchQuery?.(e.target.value)}
                 className="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 mb-2"
                 autoFocus
               />
               <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-0.5">
+                {trimmedQuery && !hasExactBirimMatch && (
+                  <button
+                    type="button"
+                    onClick={() => handleCreateAndSelectBirim?.(trimmedQuery)}
+                    className="w-full text-left p-2 text-xs rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors cursor-pointer mb-1 border border-blue-200 dark:border-blue-800"
+                  >
+                    + &ldquo;{trimmedQuery}&rdquo; Birimini Birimlere Ekle ve Seç
+                  </button>
+                )}
                 {(filteredBirimler ?? []).length === 0 ? (
-                  <div className="p-3 text-center text-xs text-slate-450">Birim bulunamadı.</div>
+                  <div className="p-3 text-center text-xs text-slate-450">
+                    {trimmedQuery
+                      ? 'Kayıtlı birim bulunamadı. Yukarıdaki butonla birimlere ekleyebilirsiniz.'
+                      : 'Birim bulunamadı.'}
+                  </div>
                 ) : (
                   (filteredBirimler ?? []).map((b) => (
                     <button
@@ -148,7 +175,7 @@ export const TarihlerVeBirimFields: React.FC<YeniDosyaTabProps> = (props) => {
                       onClick={() => handleSelectBirim?.(b)}
                       className={cn(
                         'w-full text-left p-2 text-xs rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900/80 transition-colors cursor-pointer',
-                        formData.birim_id === b.id &&
+                        Number(formData.birim_id) === Number(b.id) &&
                           'bg-blue-50/50 dark:bg-blue-900/10 text-blue-600 font-bold'
                       )}
                     >

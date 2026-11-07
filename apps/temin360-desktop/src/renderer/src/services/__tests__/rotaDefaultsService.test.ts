@@ -170,6 +170,25 @@ describe('rotaDefaultsService — Merkezi Belge Rota ve Onay Akışı Varsayıla
     )
     expect(manualDocRes.enrichedData.birimId).toBe(99)
     expect(manualDocRes.enrichedData.antetSatirlari).toEqual(['T.C.', 'MANUEL ANTET SATIRI'])
+
+    // 5. Belge ilk açılışta (snapshot yokken, _isBaseDefaultAntet: true) şablona/dosyaya özel antet ve birim ayarını uygular
+    const freshPreviewRes = resolveTemplateRouteForDocument(
+      'ihtiyac-listesi',
+      {
+        _isBaseDefaultAntet: true,
+        birimId: 10,
+        birimAdi: 'Varsayılan Dosya Birimi',
+        antetSatirlari: ['T.C.', 'KURUM', 'Varsayılan Dosya Birimi']
+      },
+      77
+    )
+    expect(freshPreviewRes.enrichedData.birimId).toBe(30)
+    expect((freshPreviewRes.enrichedData as any).birimAdi).toBe('Bilgi İşlem Müdürlüğü')
+    expect(freshPreviewRes.enrichedData.antetSatirlari).toEqual([
+      'T.C.',
+      'KURUM',
+      'Bilgi İşlem Müdürlüğü'
+    ])
   })
 })
 

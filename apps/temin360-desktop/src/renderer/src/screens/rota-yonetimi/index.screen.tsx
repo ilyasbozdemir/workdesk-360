@@ -19,11 +19,13 @@ import {
   getTemplateRouteDefinition
 } from '@temin360/document-templates'
 import {
+  InstitutionalHeaderProvider,
   resolveRoute,
   extractDocumentRouteValues,
   applyResolvedRouteToDocumentData
 } from '@worksuite-360/document-engine'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+import { useSettingsStore } from '../../store/settingsStore'
 import { TEMPLATE_OPTIONS } from '../dosya/components/DocumentPreviewModalV3/templateResolver'
 import {
   DOCUMENT_STAGES,
@@ -43,6 +45,7 @@ import {
 
 export default function RotaYonetimiScreen(): React.JSX.Element {
   const { activeDosyaId } = useWorkspaceStore()
+  const { institutionName } = useSettingsStore()
   const [scopeMode, setScopeMode] = useState<'global' | 'dosya'>(() =>
     activeDosyaId ? 'dosya' : 'global'
   )
@@ -52,6 +55,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
   const [selectedStageId, setSelectedStageId] = useState<number | 'all'>('all')
   const [personelListesi, setPersonelListesi] = useState<any[]>([])
   const [birimListesi, setBirimListesi] = useState<any[]>([])
+  const [kurumInfo, setKurumInfo] = useState<any>(null)
   const [dosyaInfo, setDosyaInfo] = useState<any>(null)
   const [savedConfigs, setSavedConfigs] = useState<Record<string, any>>(() =>
     getAllSavedRotaConfigs()
@@ -63,7 +67,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     setTimeout(() => setToastMsg(null), 3000)
   }
 
-  // Veritabanından personel, birim ve aktif dosya bilgilerini yükle
+  // Veritabanından kurum, personel, birim ve aktif dosya bilgilerini yükle
   useEffect(() => {
     let mounted = true
     const loadDbData = async () => {
@@ -71,17 +75,23 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
         const ipc = (window as any)?.electron?.ipcRenderer
         if (!ipc) return
 
-        const [pRes, bRes] = await Promise.all([
+        const [pRes, bRes, kRes] = await Promise.all([
           ipc.invoke('db:query', 'SELECT * FROM TANIM_Personel WHERE aktif_mi = 1 ORDER BY ad_soyad ASC'),
-          ipc.invoke('db:query', 'SELECT * FROM TANIM_Birim WHERE aktif_mi = 1 ORDER BY birim_adi ASC')
+          ipc.invoke('db:query', 'SELECT * FROM TANIM_Birim WHERE aktif_mi = 1 ORDER BY birim_adi ASC'),
+          ipc.invoke('db:query', 'SELECT * FROM TANIM_Kurum LIMIT 1')
         ])
 
         if (!mounted) return
         if (pRes?.success && Array.isArray(pRes.data)) {
           setPersonelListesi(pRes.data)
         }
+        let loadedBirimler: any[] = []
         if (bRes?.success && Array.isArray(bRes.data)) {
-          setBirimListesi(bRes.data)
+          loadedBirimler = [...bRes.data]
+          setBirimListesi(loadedBirimler)
+        }
+        if (kRes?.success && Array.isArray(kRes.data) && kRes.data[0]) {
+          setKurumInfo(kRes.data[0])
         }
 
         if (activeDosyaId) {
@@ -91,7 +101,69 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
             [activeDosyaId]
           )
           if (mounted && dRes?.success && dRes.data?.[0]) {
-            setDosyaInfo(dRes.data[0])
+            const dRow = dRes.data[0]
+            setDosyaInfo(dRow)
+
+            // Dosyanın "İhalesi Yapılacak Birim / Müdürlük" alanı TANIM_Birim'de yoksa otomatik ekle ve bağla
+            const rawDosyaBirim = String(
+              dRow.birim || dRow.harcama_birimi || dRow.antet_ek_satir || ''
+            ).trim()
+            if (rawDosyaBirim) {
+              const lowerTarget = rawDosyaBirim.toLocaleLowerCase('tr-TR')
+              const existingBirim = loadedBirimler.find(
+                (b) =>
+                  (dRow.birim_id && Number(b.id) === Number(dRow.birim_id)) ||
+                  String(b.birim_adi || b.ad || '')
+                    .trim()
+                    .toLocaleLowerCase('tr-TR') === lowerTarget
+              )
+              if (!existingBirim) {
+                try {
+                  const upperTitle = rawDosyaBirim.toLocaleUpperCase('tr-TR')
+                  const defaultMakam =
+                    dRow.sunulacak_makam ||
+                    (upperTitle.endsWith('MÜDÜRLÜĞÜ')
+                      ? `${upperTitle}NE`
+                      : upperTitle.endsWith('BAŞKANLIĞI')
+                      ? `${upperTitle}NA`
+                      : `${upperTitle} MAKAMINA`)
+                  const insRes = await ipc.invoke(
+                    'db:run',
+                    `INSERT INTO TANIM_Birim (ad, birim_adi, antet_ek_satir, sunum_makami, ihtiyac_yeri_eki, aktif_mi)
+                     VALUES (?, ?, ?, ?, ?, 1)`,
+                    [
+                      rawDosyaBirim,
+                      rawDosyaBirim,
+                      dRow.antet_ek_satir || rawDosyaBirim,
+                      defaultMakam,
+                      dRow.ihtiyac_yeri || `${rawDosyaBirim} Hizmet Binası`
+                    ]
+                  )
+                  if (insRes?.success && insRes.lastInsertRowid) {
+                    const newBirimId = Number(insRes.lastInsertRowid)
+                    await ipc.invoke(
+                      'db:run',
+                      'UPDATE DATA_TeminDosyasi SET birim_id = ? WHERE id = ? AND (birim_id IS NULL OR birim_id = 0)',
+                      [newBirimId, activeDosyaId]
+                    )
+                    const createdBirim = {
+                      id: newBirimId,
+                      birim_adi: rawDosyaBirim,
+                      antet_ek_satir: dRow.antet_ek_satir || rawDosyaBirim,
+                      sunum_makami: defaultMakam,
+                      ihtiyac_yeri_eki: dRow.ihtiyac_yeri || `${rawDosyaBirim} Hizmet Binası`,
+                      aktif_mi: 1
+                    }
+                    if (mounted) {
+                      setBirimListesi((prev) => [...prev, createdBirim])
+                      setDosyaInfo((prev: any) =>
+                        prev ? { ...prev, birim_id: prev.birim_id || newBirimId } : prev
+                      )
+                    }
+                  }
+                } catch {}
+              }
+            }
           }
         }
       } catch (err) {
@@ -121,21 +193,92 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
   useEffect(() => {
     const conf = getRotaConfigForTemplate(selectedTemplateId, effectiveDosyaId)
     const settingsValues = buildSettingsRouteValues(selectedTemplateId, effectiveDosyaId)
+
+    const fallbackKurumAdi =
+      conf?.kurumAdi || kurumInfo?.kurum_adi || institutionName || 'KAMU KURUMU'
+    const baseKurumAntet = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
+      kurumInfo,
+      fallbackKurumAdi
+    )
+
+    const initialBirimId =
+      conf?.birimId ?? (effectiveDosyaId ? dosyaInfo?.birim_id : null) ?? null
+    const initialBirimAdi =
+      conf?.birimAdi ||
+      (effectiveDosyaId
+        ? dosyaInfo?.birim || dosyaInfo?.harcama_birimi || dosyaInfo?.antet_ek_satir || ''
+        : '') ||
+      ''
+    const initialAntetEkSatir =
+      conf?.antetEkSatir || (effectiveDosyaId ? dosyaInfo?.antet_ek_satir || '' : '') || ''
+
+    const birimRes = InstitutionalHeaderProvider.resolveBirimSelection({
+      birimId: initialBirimId,
+      birimAdi: initialBirimAdi,
+      birimList: birimListesi,
+      personelList: personelListesi,
+      kurumRow: kurumInfo,
+      baseAntetLines: baseKurumAntet,
+      dosyaAntetEkSatir: initialAntetEkSatir,
+      fallbackInstitutionName: fallbackKurumAdi
+    })
+
+    const resolvedAntetLines =
+      Array.isArray(conf?.antetSatirlari) && conf.antetSatirlari.length > 0
+        ? [...conf.antetSatirlari]
+        : birimRes.antetSatirlari
+
+    const resolvedBirimName = birimRes.birimAdi || initialBirimAdi
+
     const baseDocData: Record<string, any> = {
+      kurumAdi: fallbackKurumAdi,
+      birimId: birimRes.birimId ?? initialBirimId,
+      birim_id: birimRes.birimId ?? initialBirimId,
+      birimAdi: resolvedBirimName,
+      birim_adi: resolvedBirimName,
+      birim: resolvedBirimName,
+      mudurluk: resolvedBirimName,
+      harcamaBirimi: resolvedBirimName,
+      harcama_birimi: resolvedBirimName,
+      ihalesiYapilacakBirim: resolvedBirimName,
+      antetEkSatir: birimRes.antetEkSatir || initialAntetEkSatir,
+      antet_ek_satir: birimRes.antetEkSatir || initialAntetEkSatir,
+      antetSatirlari: resolvedAntetLines,
       hazirlayanPersonelAdi:
-        conf?.hazirlayanPersonelAdi || dosyaInfo?.hazirlayan_ad_soyad || '',
+        conf?.hazirlayanPersonelAdi ||
+        dosyaInfo?.hazirlayan_ad_soyad ||
+        birimRes.gerceklestirmeGorevlisiAdi ||
+        '',
       hazirlayanPersonelUnvan:
-        conf?.hazirlayanPersonelUnvan || dosyaInfo?.hazirlayan_unvan || '',
+        conf?.hazirlayanPersonelUnvan ||
+        dosyaInfo?.hazirlayan_unvan ||
+        birimRes.gerceklestirmeGorevlisiUnvan ||
+        '',
       gerceklestirmeGorevlisiAdi:
-        conf?.gerceklestirmeGorevlisiAdi || dosyaInfo?.gerceklestirme_gorevlisi_ad_soyad || '',
+        conf?.gerceklestirmeGorevlisiAdi ||
+        dosyaInfo?.gerceklestirme_gorevlisi_ad_soyad ||
+        birimRes.gerceklestirmeGorevlisiAdi ||
+        '',
       gerceklestirmeGorevlisiUnvani:
-        conf?.gerceklestirmeGorevlisiUnvani || dosyaInfo?.gerceklestirme_gorevlisi_unvan || '',
+        conf?.gerceklestirmeGorevlisiUnvani ||
+        dosyaInfo?.gerceklestirme_gorevlisi_unvan ||
+        birimRes.gerceklestirmeGorevlisiUnvan ||
+        '',
       onaylayanPersonelAdi:
-        conf?.onaylayanPersonelAdi || dosyaInfo?.harcama_yetkilisi_ad_soyad || '',
+        conf?.onaylayanPersonelAdi ||
+        dosyaInfo?.harcama_yetkilisi_ad_soyad ||
+        birimRes.harcamaYetkilisiAdi ||
+        '',
       onaylayanPersonelUnvan:
-        conf?.onaylayanPersonelUnvan || dosyaInfo?.harcama_yetkilisi_unvan || '',
+        conf?.onaylayanPersonelUnvan ||
+        dosyaInfo?.harcama_yetkilisi_unvan ||
+        birimRes.harcamaYetkilisiUnvan ||
+        '',
       sunulacakMakamAdi:
-        conf?.sunulacakMakamAdi || dosyaInfo?.sunulacak_makam || '',
+        conf?.sunulacakMakamAdi ||
+        dosyaInfo?.sunulacak_makam ||
+        birimRes.sunulacakMakamAdi ||
+        '',
       komisyonUyeleri: conf?.komisyonUyeleri || [],
       olurYazisi: conf?.olurYazisi ?? true,
       routeOverrides: []
@@ -151,7 +294,17 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     })
 
     setFormData(applyResolvedRouteToDocumentData(baseDocData, resolved))
-  }, [selectedTemplateId, effectiveDosyaId, savedConfigs, dosyaInfo, activeDefinition])
+  }, [
+    selectedTemplateId,
+    effectiveDosyaId,
+    savedConfigs,
+    dosyaInfo,
+    kurumInfo,
+    birimListesi,
+    personelListesi,
+    institutionName,
+    activeDefinition
+  ])
 
   const mergedPersonel = useMemo(
     () =>
@@ -213,9 +366,22 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
       slots.muayeneKomisyonu) as RouteAssignee[] | undefined
 
     return {
-      belgeModu: 'standart' as const,
-      rota: [],
+      belgeModu: (formData.belgeModu || 'standart') as any,
+      rota: Array.isArray(formData.rota) ? formData.rota : [],
       slots,
+      birimId: formData.birimId ?? formData.birim_id ?? undefined,
+      birimAdi:
+        formData.birimAdi ||
+        formData.birim_adi ||
+        formData.birim ||
+        formData.mudurluk ||
+        undefined,
+      antetEkSatir: formData.antetEkSatir || formData.antet_ek_satir || undefined,
+      kurumAdi: formData.kurumAdi || undefined,
+      antetSatirlari:
+        Array.isArray(formData.antetSatirlari) && formData.antetSatirlari.length > 0
+          ? formData.antetSatirlari
+          : undefined,
       hazirlayanPersonelAdi: hazirlayanVal?.name || formData.hazirlayanPersonelAdi,
       hazirlayanPersonelUnvan: hazirlayanVal?.title || formData.hazirlayanPersonelUnvan,
       gerceklestirmeGorevlisiAdi:
@@ -230,7 +396,11 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
             id: m.id,
             adSoyad: m.name,
             unvan: m.title,
-            gorevi: m.role
+            gorevi: m.role,
+            imzaTuru: m.imzaTuru || 'İmza',
+            asilMi: m.asilMi ?? 1,
+            birimId: m.unitId,
+            birim: m.unitName
           }))
         : undefined,
       olurYazisi: formData.olurYazisi ?? true
@@ -276,8 +446,9 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
               </span>
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Her belgenin kendi şablonundaki Hazırlayan, Onaylayan, Komisyon / Araştırma Görevlileri
-              (`person-list`) ve Sunulacak Makam (`unit`) alanlarını merkezi olarak yapılandırın.
+              Her belgenin kendi şablonundaki Kurumsal Antet, İlgili Birim / Müdürlük, Hazırlayan,
+              Onaylayan, Komisyon / Araştırma Görevlileri (`person-list`) ve Sunulacak Makam (`unit`)
+              alanlarını Belge Önizleme ile birebir aynı yapıda merkezi olarak yapılandırın.
             </p>
           </div>
         </div>

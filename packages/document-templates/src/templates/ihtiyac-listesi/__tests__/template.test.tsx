@@ -12,6 +12,7 @@ import {
 import { IhtiyacListesiRenderer } from "../../../engine/renderers/IhtiyacListesiRenderer";
 import {
   createSyntheticDocumentData,
+  extractRenderedPages,
   SYNTHETIC_PERSONEL_LIST,
 } from "../../__tests__/fixtures";
 
@@ -82,10 +83,30 @@ describe("İhtiyaç Listesi — Render, Schema ve PDF Uyumluluk Testleri", () =>
       />,
     );
 
-    expect(html).toContain("Test Kalemi 1");
-    expect(html).toContain("Test Kalemi 18");
-    expect(html).toContain("Deniz KAYA");
-    expect(html).toContain("Selin YILMAZ");
+    const pages = extractRenderedPages(html);
+    expect(pages).toHaveLength(3);
+    expect(pages.map((p) => p.pageNumber)).toEqual([1, 2, 3]);
+    expect(pages.every((p) => p.totalPages === 3)).toBe(true);
+
+    // 1. Sayfa: Üst antet, Hazırlayan (Deniz KAYA) ve ilk 8 kalem burada; OLUR imzası (Selin YILMAZ) 1. sayfada OLMAMALI
+    expect(pages[0].html).toContain("ÖRNEK VALİLİĞİ");
+    expect(pages[0].html).toContain("Deniz KAYA");
+    expect(pages[0].html).toContain("Test Kalemi 1");
+    expect(pages[0].html).toContain("Test Kalemi 8");
+    expect(pages[0].html).not.toContain("Test Kalemi 9");
+    expect(pages[0].html).not.toContain("Selin YILMAZ");
+
+    // 2. Sayfa: Ara sayfa kalemleri (9..16); antet ve OLUR imzası 2. sayfada OLMAMALI
+    expect(pages[1].html).toContain("Test Kalemi 9");
+    expect(pages[1].html).toContain("Test Kalemi 16");
+    expect(pages[1].html).not.toContain("ÖRNEK VALİLİĞİ");
+    expect(pages[1].html).not.toContain("Selin YILMAZ");
+
+    // 3. Sayfa (Son Sayfa): Kalan kalemler (17..18) ve OLUR imza bloğu (Selin YILMAZ) yalnızca son sayfada korunmalı
+    expect(pages[2].html).toContain("Test Kalemi 17");
+    expect(pages[2].html).toContain("Test Kalemi 18");
+    expect(pages[2].html).toContain("Selin YILMAZ");
+    expect(pages[2].html).toContain("Destek Hizmetleri Müdürü");
   });
 
   it("boş, null ve undefined alanlarla çökmeksizin güvenli biçimde render edilir", () => {

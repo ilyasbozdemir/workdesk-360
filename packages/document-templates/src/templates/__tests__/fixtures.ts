@@ -374,3 +374,59 @@ export function createInMemoryStorageAdapter() {
   return adapter;
 }
 
+export interface RenderedPageSlice {
+  pageNumber: number | null;
+  totalPages: number | null;
+  orientation: string | null;
+  html: string;
+}
+
+/**
+ * DocumentLayout tarafından oluşturulan her bir sayfa kapsayıcısını
+ * (`data-document-page="true"`) ayrı ayrı ayrıştırır.
+ * Çok sayfalı şablonlarda hangi kalemin ve imza bloğunun hangi sayfada
+ * yer aldığını bağımsız olarak doğrulamak için kullanılır.
+ */
+export function extractRenderedPages(fullHtml: string): RenderedPageSlice[] {
+  const marker = '<div data-document-page="true"';
+  const indices: number[] = [];
+  let pos = 0;
+
+  while (true) {
+    const found = fullHtml.indexOf(marker, pos);
+    if (found === -1) break;
+    const openTagEnd = fullHtml.indexOf(">", found);
+    const openTag =
+      openTagEnd !== -1 ? fullHtml.slice(found, openTagEnd + 1) : "";
+    // Dış sarmalayıcı (örn. data-template-key) yerine yalnızca gerçek DocumentLayout sayfa kapsayıcılarını seç
+    if (
+      openTag.includes('class="document-container"') ||
+      openTag.includes("data-page-number=")
+    ) {
+      indices.push(found);
+    }
+    pos = found + marker.length;
+  }
+
+  if (indices.length === 0) return [];
+
+  return indices.map((startIdx, idx) => {
+    const endIdx = idx + 1 < indices.length ? indices[idx + 1] : fullHtml.length;
+    const pageHtml = fullHtml.slice(startIdx, endIdx);
+    const openTagEnd = pageHtml.indexOf(">");
+    const openTag = openTagEnd !== -1 ? pageHtml.slice(0, openTagEnd + 1) : pageHtml;
+
+    const pageNumMatch = openTag.match(/data-page-number="(\d+)"/);
+    const totalPagesMatch = openTag.match(/data-total-pages="(\d+)"/);
+    const orientMatch = openTag.match(/data-orientation="([^"]+)"/);
+
+    return {
+      pageNumber: pageNumMatch ? Number(pageNumMatch[1]) : null,
+      totalPages: totalPagesMatch ? Number(totalPagesMatch[1]) : null,
+      orientation: orientMatch ? orientMatch[1] : null,
+      html: pageHtml,
+    };
+  });
+}
+
+

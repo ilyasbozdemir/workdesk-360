@@ -39,8 +39,6 @@ export function IhtiyacListesi(props: IhtiyacListesiProps) {
     getStartIndex,
   } = useIhtiyacListesi(props);
 
-  console.log("data", data);
-
   return (
     <>
       {pages.map((pageItems, pageIdx) => {

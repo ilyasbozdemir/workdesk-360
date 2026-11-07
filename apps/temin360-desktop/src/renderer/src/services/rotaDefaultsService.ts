@@ -26,6 +26,8 @@ export interface TemplateRotaConfig {
   /** Seçili harcama/işlem birimi (TANIM_Birim.id) */
   birimId?: number | string | null
   birimAdi?: string
+  antetEkSatir?: string
+  kurumAdi?: string
   /** Kurum + Birim resmi antet satırları */
   antetSatirlari?: string[]
   hazirlayanPersonelAdi?: string
@@ -40,6 +42,10 @@ export interface TemplateRotaConfig {
     adSoyad: string
     unvan?: string
     gorevi?: string
+    imzaTuru?: 'Paraf' | 'Koordinasyon' | 'İmza' | string
+    asilMi?: number | boolean
+    birimId?: number | string | null
+    birim?: string
   }>
   olurYazisi?: boolean
   updatedAt?: string
@@ -282,28 +288,77 @@ export function resolveTemplateRouteForDocument<T extends Record<string, any>>(
 
   const enrichedData = applyResolvedRouteToDocumentData(documentData, resolvedRoute)
   const effectiveConf = getRotaConfigForTemplate(templateId, dosyaId)
+  const directScopedConf =
+    (dosyaId !== undefined && dosyaId !== null && String(dosyaId).trim() !== ''
+      ? getDirectRotaConfig(templateId, dosyaId) || getDirectRotaConfig(GLOBAL_ROTA_KEY, dosyaId)
+      : null) || getDirectRotaConfig(templateId, null)
+
+  const isBaseDefaultAntet = Boolean((documentData as any)?._isBaseDefaultAntet)
+
   if (effectiveConf) {
+    const shouldOverrideBirimFromConfig =
+      isBaseDefaultAntet &&
+      directScopedConf &&
+      ((directScopedConf.birimId !== undefined &&
+        directScopedConf.birimId !== null &&
+        String(directScopedConf.birimId).trim() !== '') ||
+        Boolean(directScopedConf.birimAdi?.trim()))
+
     if (
-      (enrichedData.birimId === undefined || enrichedData.birimId === null || enrichedData.birimId === '') &&
-      (enrichedData.birim_id === undefined || enrichedData.birim_id === null || enrichedData.birim_id === '') &&
-      effectiveConf.birimId !== undefined &&
-      effectiveConf.birimId !== null &&
-      String(effectiveConf.birimId).trim() !== ''
+      shouldOverrideBirimFromConfig ||
+      ((enrichedData.birimId === undefined ||
+        enrichedData.birimId === null ||
+        enrichedData.birimId === '') &&
+        (enrichedData.birim_id === undefined ||
+          enrichedData.birim_id === null ||
+          enrichedData.birim_id === ''))
     ) {
-      ;(enrichedData as any).birimId = effectiveConf.birimId
-      ;(enrichedData as any).birim_id = effectiveConf.birimId
-    }
-    if (!enrichedData.birimAdi && effectiveConf.birimAdi) {
+      if (
+        effectiveConf.birimId !== undefined &&
+        effectiveConf.birimId !== null &&
+        String(effectiveConf.birimId).trim() !== ''
+      ) {
+        ;(enrichedData as any).birimId = effectiveConf.birimId
+        ;(enrichedData as any).birim_id = effectiveConf.birimId
+      }
+      if (effectiveConf.birimAdi?.trim()) {
+        const bAdi = effectiveConf.birimAdi.trim()
+        ;(enrichedData as any).birimAdi = bAdi
+        ;(enrichedData as any).birim_adi = bAdi
+        ;(enrichedData as any).birim = bAdi
+        ;(enrichedData as any).harcamaBirimi = bAdi
+        ;(enrichedData as any).harcama_birimi = bAdi
+        ;(enrichedData as any).ihalesiYapilacakBirim = bAdi
+        ;(enrichedData as any).mudurluk = bAdi
+      }
+    } else if (!enrichedData.birimAdi && effectiveConf.birimAdi) {
       ;(enrichedData as any).birimAdi = effectiveConf.birimAdi
       ;(enrichedData as any).birim = enrichedData.birim || effectiveConf.birimAdi
       ;(enrichedData as any).mudurluk = enrichedData.mudurluk || effectiveConf.birimAdi
     }
+
+    if (effectiveConf.antetEkSatir && (isBaseDefaultAntet || !enrichedData.antetEkSatir)) {
+      ;(enrichedData as any).antetEkSatir = effectiveConf.antetEkSatir
+      ;(enrichedData as any).antet_ek_satir = effectiveConf.antetEkSatir
+    }
+
+    const shouldOverrideAntetFromConfig =
+      isBaseDefaultAntet &&
+      directScopedConf &&
+      Array.isArray(directScopedConf.antetSatirlari) &&
+      directScopedConf.antetSatirlari.length > 0
+
     if (
-      (!Array.isArray(enrichedData.antetSatirlari) || enrichedData.antetSatirlari.length === 0) &&
-      Array.isArray(effectiveConf.antetSatirlari) &&
-      effectiveConf.antetSatirlari.length > 0
+      shouldOverrideAntetFromConfig ||
+      !Array.isArray(enrichedData.antetSatirlari) ||
+      enrichedData.antetSatirlari.length === 0
     ) {
-      ;(enrichedData as any).antetSatirlari = [...effectiveConf.antetSatirlari]
+      if (
+        Array.isArray(effectiveConf.antetSatirlari) &&
+        effectiveConf.antetSatirlari.length > 0
+      ) {
+        ;(enrichedData as any).antetSatirlari = [...effectiveConf.antetSatirlari]
+      }
     }
   }
   return { resolvedRoute, enrichedData }

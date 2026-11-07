@@ -31,7 +31,12 @@ export function buildComparableSnapshot(
   showRight: boolean,
   orient: 'portrait' | 'landscape'
 ): string {
-  const { resolvedRoute: _ignoreResolvedRoute, ...rest } = data || {}
+  const {
+    resolvedRoute: _ignoreResolvedRoute,
+    _hasSavedSnapshot: _ignoreHasSavedSnapshot,
+    _isBaseDefaultAntet: _ignoreIsBaseDefaultAntet,
+    ...rest
+  } = data || {}
   return JSON.stringify({
     ...rest,
     showLogoLeft: Boolean(showLeft),
@@ -318,36 +323,76 @@ export function useDocumentPreviewData({
     loadInitialData()
   }, [isOpen, sourceDependencyKey, selectedDocId, resolvedId, propInvitedFirms])
 
-  // Rota varsayılanları değiştiğinde açık olan belgenin rotasını senkronize et
+  // Rota varsayılanları değiştiğinde açık olan belgenin rotasını ve antetini senkronize et
   useEffect(() => {
     const handleRotaDefaultsUpdated = () => {
-      const conf = getRotaConfigForTemplate(resolvedId || selectedDocId, activeDosyaId)
+      const targetTpl = resolvedId || selectedDocId
+      const conf = getRotaConfigForTemplate(targetTpl, activeDosyaId)
       if (!conf) return
-      setFormData((prev: any) => ({
-        ...prev,
-        belgeModu: conf.belgeModu,
-        rota: conf.rota,
-        koordinasyon: (conf.rota || []).map((r) => ({
-          adSoyad: r.a,
-          unvan: r.u,
-          tarih: r.tarih,
-          rol: r.t
-        })),
-        ...(conf.hazirlayanPersonelAdi
-          ? {
-              hazirlayanPersonelAdi: conf.hazirlayanPersonelAdi,
-              hazirlayanPersonelUnvan:
-                conf.hazirlayanPersonelUnvan || prev.hazirlayanPersonelUnvan
-            }
-          : {}),
-        ...(conf.onaylayanPersonelAdi
-          ? {
-              onaylayanPersonelAdi: conf.onaylayanPersonelAdi,
-              onaylayanPersonelUnvan:
-                conf.onaylayanPersonelUnvan || prev.onaylayanPersonelUnvan
-            }
-          : {})
-      }))
+      setFormData((prev: any) => {
+        const nextBase: Record<string, any> = {
+          ...prev,
+          belgeModu: conf.belgeModu || prev.belgeModu,
+          rota: conf.rota || prev.rota,
+          koordinasyon:
+            Array.isArray(conf.rota) && conf.rota.length > 0
+              ? conf.rota.map((r) => ({
+                  adSoyad: r.a,
+                  unvan: r.u,
+                  tarih: r.tarih,
+                  rol: r.t
+                }))
+              : prev.koordinasyon,
+          ...(conf.birimId !== undefined && conf.birimId !== null
+            ? { birimId: conf.birimId, birim_id: conf.birimId }
+            : {}),
+          ...(conf.birimAdi
+            ? {
+                birimAdi: conf.birimAdi,
+                birim_adi: conf.birimAdi,
+                birim: conf.birimAdi,
+                mudurluk: conf.birimAdi,
+                harcamaBirimi: conf.birimAdi,
+                harcama_birimi: conf.birimAdi,
+                ihalesiYapilacakBirim: conf.birimAdi
+              }
+            : {}),
+          ...(conf.antetEkSatir
+            ? { antetEkSatir: conf.antetEkSatir, antet_ek_satir: conf.antetEkSatir }
+            : {}),
+          ...(Array.isArray(conf.antetSatirlari) && conf.antetSatirlari.length > 0
+            ? { antetSatirlari: [...conf.antetSatirlari] }
+            : {}),
+          ...(conf.hazirlayanPersonelAdi
+            ? {
+                hazirlayanPersonelAdi: conf.hazirlayanPersonelAdi,
+                hazirlayanPersonelUnvan:
+                  conf.hazirlayanPersonelUnvan || prev.hazirlayanPersonelUnvan
+              }
+            : {}),
+          ...(conf.gerceklestirmeGorevlisiAdi
+            ? {
+                gerceklestirmeGorevlisiAdi: conf.gerceklestirmeGorevlisiAdi,
+                gerceklestirmeGorevlisiUnvani:
+                  conf.gerceklestirmeGorevlisiUnvani || prev.gerceklestirmeGorevlisiUnvani
+              }
+            : {}),
+          ...(conf.onaylayanPersonelAdi
+            ? {
+                onaylayanPersonelAdi: conf.onaylayanPersonelAdi,
+                onaylayanPersonelUnvan:
+                  conf.onaylayanPersonelUnvan || prev.onaylayanPersonelUnvan
+              }
+            : {}),
+          ...(conf.sunulacakMakamAdi
+            ? {
+                sunulacakMakamAdi: conf.sunulacakMakamAdi,
+                sunulacakMakam: conf.sunulacakMakamAdi
+              }
+            : {})
+        }
+        return applyDefaultRotaToFormData(nextBase, targetTpl, activeDosyaId)
+      })
     }
     window.addEventListener('temin360:rota-defaults-updated', handleRotaDefaultsUpdated)
     return () => {
