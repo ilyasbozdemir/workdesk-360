@@ -95,8 +95,7 @@ function ShortcutLink({
   const { tip, handlers } = useRailTooltip()
 
   const commonClass = cn(
-    // Kısa ekranlarda (<= 1080px yükseklik) ve çok kısa ekranlarda (<= 600px) düğmeler küçülür
-    'w-10 h-10 short:w-8 short:h-8 xshort:w-7 xshort:h-7 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border cursor-pointer relative',
+    'w-8 h-8 2xl:w-9 2xl:h-9 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border cursor-pointer relative',
     isActive
       ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
       : 'bg-transparent border-transparent text-slate-500 hover:scale-105',
@@ -105,7 +104,7 @@ function ShortcutLink({
 
   const content = (
     <>
-      <Icon className="w-5 h-5 short:w-4 short:h-4 xshort:w-3.5 xshort:h-3.5" />
+      <Icon className="w-4 h-4 2xl:w-4.5 2xl:h-4.5" />
       {item.badge && (
         <span
           className={cn(
@@ -305,13 +304,13 @@ export function ActiveFileShortcuts(): React.JSX.Element {
     <nav
       aria-label="Hızlı erişim"
       data-testid="active-file-rail"
-      className="h-full min-h-0 w-16 bg-white dark:bg-slate-900 border-r border-slate-250 dark:border-slate-800/80 flex flex-col py-4 short:py-2 xshort:py-1 shrink-0 z-30 select-none overflow-hidden"
+      className="h-full min-h-0 w-14 2xl:w-16 bg-white dark:bg-slate-900 border-r border-slate-250 dark:border-slate-800/80 flex flex-col py-2 shrink-0 z-30 select-none overflow-hidden"
     >
-      {/* Üst: Ana gezinme — sığmazsa yalnızca bu bölüm kayar (kesintisiz doğal momentum kaydırma) */}
+      {/* Üst: Ana gezinme — sığmazsa yalnızca bu bölüm kayar */}
       <div
         ref={scrollRef}
         data-testid="rail-scroll"
-        className="flex-1 min-h-0 w-full flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 py-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
+        className="flex-1 min-h-0 w-full flex flex-col items-center gap-1.5 2xl:gap-2 px-1.5 py-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
       >
         {primaryItems.map(renderLink)}
       </div>
@@ -320,9 +319,9 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       <div
         data-testid="rail-footer"
         onWheel={handleFooterWheel}
-        className="w-full shrink-0 flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 pt-2 short:pt-1 xshort:pt-0.5 pb-1 short:pb-0.5"
+        className="w-full shrink-0 flex flex-col items-center gap-1.5 2xl:gap-2 px-1.5 pt-1.5 pb-1"
       >
-        <div className="w-8 h-px bg-slate-200 dark:bg-slate-800 my-1 short:my-0.5 xshort:my-0" />
+        <div className="w-6 h-px bg-slate-200 dark:bg-slate-800 my-0.5" />
         {secondaryItems.map(renderLink)}
 
         {/* Kullanıcı Profili (PP) */}
@@ -333,7 +332,7 @@ export function ActiveFileShortcuts(): React.JSX.Element {
           data-testid="rail-profile"
           {...profileHandlers}
           className={cn(
-            'w-10 h-10 short:w-8 short:h-8 xshort:w-7 xshort:h-7 shrink-0 rounded-full flex items-center justify-center font-extrabold text-[11px] xshort:text-[10px] transition-all duration-200 border cursor-pointer relative mt-1.5 short:mt-0 overflow-hidden bg-white dark:bg-slate-900',
+            'w-8 h-8 2xl:w-9 2xl:h-9 shrink-0 rounded-full flex items-center justify-center font-extrabold text-[10px] 2xl:text-[11px] transition-all duration-200 border cursor-pointer relative overflow-hidden bg-white dark:bg-slate-900 mt-0.5',
             currentPath === '/profil'
               ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
               : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:scale-105'
