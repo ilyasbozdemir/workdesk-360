@@ -401,6 +401,7 @@ export function DocumentPreviewRotaSection({
       const hasOverrideFor = (slotId: string) =>
         existingOverrides.some((o) => o && o.slotId === slotId && o.value !== null)
 
+      const showBirim = prev?.antetBirimGosterilsin !== false
       const nextData: Record<string, any> = {
         ...prev,
         birimId: res.birimId ?? rawBirimId,
@@ -412,7 +413,9 @@ export function DocumentPreviewRotaSection({
         harcamaBirimi: res.harcamaBirimi || prev?.harcamaBirimi,
         harcama_birimi: res.harcamaBirimi || prev?.harcama_birimi,
         antetEkSatir: res.antetEkSatir || prev?.antetEkSatir,
-        antetSatirlari: res.antetSatirlari
+        antetSatirlari: showBirim
+          ? res.antetSatirlari
+          : InstitutionalHeaderProvider.parseKurumBaseAntetLines(null, prev?.kurumAdi || 'KAMU KURUMU')
       }
 
       if (res.ihtiyacYeri && !hasOverrideFor('ihtiyacYeri')) {
@@ -468,10 +471,33 @@ export function DocumentPreviewRotaSection({
         baseAntetLines: baseOnly,
         fallbackInstitutionName: prev?.kurumAdi
       })
+      const showBirim = prev?.antetBirimGosterilsin !== false
       return {
         ...prev,
-        antetSatirlari: res.antetSatirlari,
+        antetSatirlari: showBirim ? res.antetSatirlari : baseOnly,
         antetEkSatir: res.antetEkSatir || prev?.antetEkSatir
+      }
+    })
+  }
+
+  const handleToggleAntetBirim = (checked: boolean) => {
+    setFormData((prev: any) => {
+      const baseOnly = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
+        null,
+        prev?.kurumAdi || 'KAMU KURUMU'
+      )
+      const res = InstitutionalHeaderProvider.resolveBirimSelection({
+        birimId: prev?.birimId ?? prev?.birim_id,
+        birimAdi: prev?.birimAdi || prev?.birim || prev?.mudurluk,
+        birimList: activeBirimList,
+        personelList: personelListesi,
+        baseAntetLines: baseOnly,
+        fallbackInstitutionName: prev?.kurumAdi
+      })
+      return {
+        ...prev,
+        antetBirimGosterilsin: checked,
+        antetSatirlari: checked ? res.antetSatirlari : baseOnly
       }
     })
   }
@@ -624,6 +650,7 @@ export function DocumentPreviewRotaSection({
               birim: m.unitName
             }))
           : undefined,
+        antetBirimGosterilsin: formData?.antetBirimGosterilsin !== false,
         olurYazisi: formData?.olurYazisi
       },
       dosyaId
@@ -697,6 +724,23 @@ export function DocumentPreviewRotaSection({
               )
             })}
           </select>
+
+          {/* Birim Antette Gösterilsin mi? Şablona Özel Ayar */}
+          <div className="flex items-center justify-between px-0.5 pt-1">
+            <label className="text-[11px] font-medium text-slate-600 dark:text-slate-350 flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                data-testid="rota-antet-birim-toggle"
+                checked={formData?.antetBirimGosterilsin !== false}
+                onChange={(e) => handleToggleAntetBirim(e.target.checked)}
+                className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer border-slate-300 dark:border-slate-700"
+              />
+              <span>Birim antette gösterilsin</span>
+            </label>
+            <span className="text-[10px] text-slate-400">
+              {formData?.antetBirimGosterilsin !== false ? 'Kurum + Birim' : 'Yalnızca Üst Kurum'}
+            </span>
+          </div>
         </div>
 
         {/* Antet Önizleme Kutusu */}

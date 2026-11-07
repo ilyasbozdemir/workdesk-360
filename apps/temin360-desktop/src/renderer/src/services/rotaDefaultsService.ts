@@ -48,6 +48,8 @@ export interface TemplateRotaConfig {
     birim?: string
   }>
   olurYazisi?: boolean
+  /** Şablon antetinde birim satırının gösterilip gösterilmeyeceği (false ise sadece kurum üst anteti gösterilir) */
+  antetBirimGosterilsin?: boolean
   updatedAt?: string
 }
 
@@ -335,6 +337,10 @@ export function resolveTemplateRouteForDocument<T extends Record<string, any>>(
       ;(enrichedData as any).birimAdi = effectiveConf.birimAdi
       ;(enrichedData as any).birim = enrichedData.birim || effectiveConf.birimAdi
       ;(enrichedData as any).mudurluk = enrichedData.mudurluk || effectiveConf.birimAdi
+    }
+
+    if (effectiveConf.antetBirimGosterilsin !== undefined) {
+      ;(enrichedData as any).antetBirimGosterilsin = effectiveConf.antetBirimGosterilsin
     }
 
     if (effectiveConf.antetEkSatir && (isBaseDefaultAntet || !enrichedData.antetEkSatir)) {

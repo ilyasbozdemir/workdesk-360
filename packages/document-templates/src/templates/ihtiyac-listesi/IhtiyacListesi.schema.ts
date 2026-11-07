@@ -20,6 +20,8 @@ export const IhtiyacKalemiSchema = z
 export const IhtiyacListesiSchema = z
   .object({
     antetSatirlari: z.array(z.string()).optional(),
+    antetBirimGosterilsin: z.boolean().optional(),
+    birimAntetteGosterilsin: z.boolean().optional(),
     // KİK & Standart Form Bilgileri
     kikKodu: z.string().optional(),
     kikAdi: z.string().optional(),

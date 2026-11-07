@@ -341,6 +341,31 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
       const matches = html.match(/Destek Hizmetleri Müdürlüğü/g);
       expect(matches).toHaveLength(1);
     });
+
+    it("antetBirimGosterilsin: false olduğunda birim satırını gizler ve sadece üst kurum antetini gösterir", async () => {
+      const { DocumentHeader } = await import("../document/DocumentHeader");
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      const React = await import("react");
+
+      const html = renderToStaticMarkup(
+        React.createElement(DocumentHeader, {
+          data: {
+            antetSatirlari: [
+              "T.C.",
+              "ÇANKAYA BELEDİYE BAŞKANLIĞI",
+              "Destek Hizmetleri Müdürlüğü",
+            ],
+            mudurluk: "Destek Hizmetleri Müdürlüğü",
+            birim: "Destek Hizmetleri Müdürlüğü",
+            antetBirimGosterilsin: false,
+          },
+        })
+      );
+
+      expect(html).toContain("T.C.");
+      expect(html).toContain("ÇANKAYA BELEDİYE BAŞKANLIĞI");
+      expect(html).not.toContain("Destek Hizmetleri Müdürlüğü");
+    });
   });
 });
 

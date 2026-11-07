@@ -37,7 +37,13 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       ""
     ).trim();
 
+    const showBirim =
+      data?.antetBirimGosterilsin !== false &&
+      (data as any)?.birimAntetteGosterilsin !== false &&
+      (data as any)?.antetteBirimGoster !== false;
+
     if (
+      showBirim &&
       birimLine &&
       !lines.some(
         (l) =>
@@ -46,6 +52,12 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       )
     ) {
       lines.push(birimLine);
+    } else if (!showBirim && birimLine) {
+      lines = lines.filter(
+        (l) =>
+          l.trim().toLocaleUpperCase("tr-TR") !==
+            birimLine.toLocaleUpperCase("tr-TR"),
+      );
     }
 
     return lines.length > 0 ? lines : ["T.C."];
