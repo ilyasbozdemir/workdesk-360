@@ -5,6 +5,7 @@ import { HeaderActions } from './header/HeaderActions'
 import { HeaderBottomRow } from './header/HeaderBottomRow'
 import { useHeader } from './header/useHeader'
 import { getHeaderMenus } from './header/headerNavigation'
+import { useWorkspaceContextStore } from '../../store/workspaceContextStore'
 
 const UpdateModal = lazy(() =>
   import('../ui/UpdateModal').then((m) => ({ default: m.UpdateModal }))
@@ -12,6 +13,7 @@ const UpdateModal = lazy(() =>
 const AboutModal = lazy(() => import('../ui/AboutModal').then((m) => ({ default: m.AboutModal })))
 
 export function Header(): React.JSX.Element {
+  const { activeWorkspace } = useWorkspaceContextStore()
   const {
     navigate,
     theme,
@@ -65,8 +67,10 @@ export function Header(): React.JSX.Element {
     >
       {/* Üst Vurgu Çizgisi */}
       <div
-        className={`h-0.5 w-full bg-linear-to-r ${
-          isDt
+        className={`h-0.5 w-full bg-linear-to-r transition-all duration-300 ${
+          activeWorkspace === 'finance'
+            ? 'from-emerald-500 via-teal-400 to-cyan-500'
+            : isDt
             ? 'from-blue-500 via-sky-400 to-indigo-500'
             : 'from-indigo-600 via-purple-500 to-pink-500'
         }`}

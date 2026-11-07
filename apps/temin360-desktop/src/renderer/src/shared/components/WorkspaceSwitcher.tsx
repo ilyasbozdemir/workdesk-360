@@ -31,8 +31,6 @@ export const WorkspaceSwitcher: React.FC = () => {
   const hasFinanceAccess = canAccessFinance()
 
   const handleSwitch = (target: 'procurement' | 'finance') => {
-    if (target === 'procurement' && !hasProcurementAccess) return
-    if (target === 'finance' && !hasFinanceAccess) return
     setActiveWorkspace(target)
   }
 
@@ -48,46 +46,30 @@ export const WorkspaceSwitcher: React.FC = () => {
         <button
           type="button"
           onClick={() => handleSwitch('procurement')}
-          disabled={!hasProcurementAccess}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
             activeWorkspace === 'procurement'
-              ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/25 scale-[1.02]'
-              : hasProcurementAccess
-              ? 'text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-black/5 dark:hover:bg-white/5'
-              : 'text-slate-400 opacity-50 cursor-not-allowed'
+              ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30 scale-[1.02]'
+              : 'text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-black/5 dark:hover:bg-white/5'
           }`}
-          title={
-            hasProcurementAccess
-              ? 'Satın Alma & Doğrudan Temin Çalışma Masası (4734 Sayılı Kanun)'
-              : 'Bu çalışma masasına erişim yetkiniz bulunmamaktadır'
-          }
+          title="Satın Alma & Doğrudan Temin Çalışma Masası (4734 Sayılı Kamu İhale Kanunu)"
         >
           <ShoppingCart size={13} className="shrink-0" />
           <span>Satın Alma (4734)</span>
-          {!hasProcurementAccess && <Lock size={10} className="text-slate-400 ml-0.5" />}
         </button>
 
         {/* Mali Hizmetler & Muhasebe Masası Butonu */}
         <button
           type="button"
           onClick={() => handleSwitch('finance')}
-          disabled={!hasFinanceAccess}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 ${
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer ${
             activeWorkspace === 'finance'
-              ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/25 scale-[1.02]'
-              : hasFinanceAccess
-              ? 'text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-black/5 dark:hover:bg-white/5'
-              : 'text-slate-400 opacity-50 cursor-not-allowed'
+              ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-500/30 scale-[1.02]'
+              : 'text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-black/5 dark:hover:bg-white/5'
           }`}
-          title={
-            hasFinanceAccess
-              ? 'Mali Hizmetler & Muhasebe Çalışma Masası (5018 Sayılı Kanun)'
-              : 'Bu çalışma masasına erişim yetkiniz bulunmamaktadır'
-          }
+          title="Mali Hizmetler & Muhasebe Çalışma Masası (5018 Sayılı Kamu Mali Yönetimi Kanunu)"
         >
           <Coins size={13} className="shrink-0" />
           <span>Mali Hizmetler (5018)</span>
-          {!hasFinanceAccess && <Lock size={10} className="text-slate-400 ml-0.5" />}
         </button>
       </div>
 
