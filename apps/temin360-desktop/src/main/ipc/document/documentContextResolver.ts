@@ -12,6 +12,9 @@ export function resolveDocumentPayload(
   payload: { dosyaId?: number; documentId?: string }
 ): { success: boolean; data?: any; error?: string } {
   try {
+    if (!db || typeof db.prepare !== 'function') {
+      return { success: false, error: 'Geçersiz veya kapalı veritabanı bağlantısı' }
+    }
     const dosyaId = Number(payload?.dosyaId || 0)
     const documentId = payload?.documentId || ''
 
@@ -712,6 +715,7 @@ export function resolveDocumentPayload(
       solLogo,
       sagLogo,
       dosyaNo: (dosya as any)?.temin_no || '',
+      teminNo: (dosya as any)?.temin_no || '',
       konu: (dosya as any)?.konu || '',
       isinAdi: (dosya as any)?.konu || '',
       isinTanimi: (dosya as any)?.isin_aciklamasi || (dosya as any)?.konu || '',

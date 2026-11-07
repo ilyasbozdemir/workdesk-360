@@ -321,4 +321,123 @@ describe('Split-Brain Resolver Equivalence Tests (Phase 1)', () => {
     expect(payloadRes.data.resolvedContext.muayeneKomisyonu[0].adSoyad).toBe('Ayşe DEMİR')
     expect(ciktiRes.data.dosyaContext.muayeneKomisyonu[0].adSoyad).toBe('Ayşe DEMİR')
   })
+
+  it('Regresyon 1: resolveDocumentPayload veritabanı hatası durumunda resolveAllCiktiData sessizce {} ile devam etmemeli, anlamlı hata döndürmelidir', () => {
+    const brokenDb = {
+      prepare: (sql: string) => {
+        if (sql.includes('DATA_TeminDosyasi')) {
+          throw new Error('SQLite disk I/O failure in payload resolver')
+        }
+        return {
+          all: () => [],
+          get: () => null,
+          run: () => {}
+        }
+      }
+    }
+    const ciktiRes = resolveAllCiktiData(brokenDb, { dosyaId: 1 })
+    expect(ciktiRes.success).toBe(false)
+    expect(ciktiRes.error).toContain('Belge çözümleme hatası')
+    expect(ciktiRes.error).toContain('SQLite disk I/O failure in payload resolver')
+  })
+
+  it('Regresyon 2: Bulunamayan hedef sablonId talep edildiğinde açıklayıcı hata dönmelidir', () => {
+    db.prepare(`INSERT INTO TANIM_Kurum (id, kurum_adi, is_active) VALUES (1, 'DEVLET HASTANESİ', 1);`).run()
+    const ciktiRes = resolveAllCiktiData(db, { dosyaId: 1, sablonId: 9999 })
+    expect(ciktiRes.success).toBe(false)
+    expect(ciktiRes.error).toContain('Hedef şablon veritabanında bulunamadı')
+    expect(ciktiRes.error).toContain('9999')
+  })
+
+  it('Regresyon 3: Şablon içeriği boş olduğunda render hatası dönmelidir', () => {
+    db.prepare(`INSERT INTO TANIM_Kurum (id, kurum_adi, is_active) VALUES (1, 'DEVLET HASTANESİ', 1);`).run()
+    db.prepare(`INSERT INTO TANIM_Sablon (id, kod, ad, html_icerik, aktif_mi) VALUES (50, 'bos_sablon', 'Boş Şablon', '', 1);`).run()
+
+    const ciktiRes = resolveAllCiktiData(db, { dosyaId: 1, sablonId: 50 })
+    expect(ciktiRes.success).toBe(false)
+    expect(ciktiRes.error).toContain('Şablon içeriği boş')
+  })
+
+  it('Regresyon 4: Mustache render sırasında sözdizimi / ayrıştırma hatası olduğunda hata sessizce yutulmamalıdır', () => {
+    db.prepare(`INSERT INTO TANIM_Kurum (id, kurum_adi, is_active) VALUES (1, 'DEVLET HASTANESİ', 1);`).run()
+    // Kapatılmamış Mustache bloğu: {{#kalemler}} (kapanış etiketi yok)
+    db.prepare(`
+      INSERT INTO TANIM_Sablon (id, kod, ad, html_icerik, aktif_mi) 
+      VALUES (60, 'hatali_sablon', 'Hatalı Şablon', '<div>{{#kalemler}}<span>{{kalem_adi}}</div>', 1);
+    `).run()
+
+    const ciktiRes = resolveAllCiktiData(db, { dosyaId: 1, sablonId: 60 })
+    expect(ciktiRes.success).toBe(false)
+    expect(ciktiRes.error).toContain('Mustache render hatası')
+  })
+
+  it('Regresyon 5: documentId veya templateId ile çağrıldığında doğru şablon çözümlenmeli ve render edilmelidir', () => {
+    db.prepare(`INSERT INTO TANIM_Kurum (id, kurum_adi, is_active) VALUES (1, 'DEVLET HASTANESİ', 1);`).run()
+    db.prepare(`INSERT INTO DATA_TeminDosyasi (id, temin_no, konu) VALUES (1, '2026/005', 'Laboratuvar Alımı');`).run()
+    db.prepare(`
+      INSERT INTO TANIM_Sablon (id, kod, ad, dosya_adi, route_path, html_icerik, aktif_mi) 
+      VALUES (70, 'ihtiyac-listesi', 'İhtiyaç Listesi', 'ihtiyac-listesi.html', '/dosya/ihtiyac-listesi', '<h1>İşin Tanımı: {{{isin_tanimi}}} - Dosya: {{{dosya_no}}}</h1>', 1);
+    `).run()
+
+    // 1) documentId ile çağırma
+    const resDoc = resolveAllCiktiData(db, { dosyaId: 1, documentId: 'ihtiyac-listesi' })
+    expect(resDoc.success).toBe(true)
+    expect(resDoc.data.sablons.length).toBe(1)
+    expect(resDoc.data.sablons[0].id).toBe(70)
+    expect(resDoc.data.renderedHtmlMap[70]).toContain('İşin Tanımı: Laboratuvar Alımı - Dosya: 2026/005')
+
+    // 2) templateId ile çağırma
+    const resTpl = resolveAllCiktiData(db, { dosyaId: 1, templateId: 'ihtiyac-listesi' })
+    expect(resTpl.success).toBe(true)
+    expect(resTpl.data.renderedHtmlMap[70]).toContain('İşin Tanımı: Laboratuvar Alımı - Dosya: 2026/005')
+  })
+
+  it('Regresyon 6: Geçersiz dosyaId (0 veya olmayan id) sorgulandığında güvenli varsayılanlar üretilmeli ve çökmemelidir', () => {
+    db.prepare(`INSERT INTO TANIM_Kurum (id, kurum_adi, is_active) VALUES (1, 'DEVLET HASTANESİ', 1);`).run()
+
+    const resZero = resolveAllCiktiData(db, { dosyaId: 0 })
+    expect(resZero.success).toBe(true)
+    expect(resZero.data.dosyaContext.dosya_no).toBe('')
+    expect(resZero.data.dosyaContext.id).toBe(0)
+    expect(resZero.data.dosyaContext.firmalar).toEqual([])
+    expect(resZero.data.dosyaContext.butce_yili).toBe(new Date().getFullYear().toString())
+
+    const resNonExistent = resolveAllCiktiData(db, { dosyaId: 999999 })
+    expect(resNonExistent.success).toBe(true)
+    expect(resNonExistent.data.dosyaContext.id).toBe(0)
+  })
+
+  it('Regresyon 7: Önizleme (resolvedContext) ve Çıktı Merkezi (dosyaContext) veri alanları birebir uyumludur', () => {
+    db.prepare(`INSERT INTO TANIM_Kurum (id, kurum_adi, is_active) VALUES (1, 'DEVLET HASTANESİ', 1);`).run()
+    db.prepare(`INSERT INTO TANIM_Personel (id, ad_soyad, unvan, aktif_mi) VALUES (10, 'Dr. Mehmet AK', 'Başhekim', 1);`).run()
+    db.prepare(`INSERT INTO TANIM_Personel (id, ad_soyad, unvan, aktif_mi) VALUES (11, 'Ali VELİ', 'Şef', 1);`).run()
+    db.prepare(`
+      INSERT INTO DATA_TeminDosyasi (id, temin_no, konu, butce_yili, onay_personel_id, hazirlayan_personel_id)
+      VALUES (1, '2026/007', 'Genel Hizmet Alımı', '2026', 10, 11);
+    `).run()
+
+    const payloadRes = resolveDocumentPayload(db, { dosyaId: 1 })
+    const ciktiRes = resolveAllCiktiData(db, { dosyaId: 1 })
+
+    const resolved = payloadRes.data.resolvedContext
+    const cikti = ciktiRes.data.dosyaContext
+
+    // Çekirdek alanların eşdeğerliği
+    expect(cikti.teminNo).toBe(resolved.teminNo)
+    expect(cikti.dosya_no).toBe(resolved.teminNo)
+    expect(cikti.isinTanimi).toBe(resolved.isinTanimi)
+    expect(cikti.isin_tanimi).toBe(resolved.isinTanimi)
+    expect(cikti.butceYili).toBe(resolved.butceYili)
+    expect(cikti.butce_yili).toBe(resolved.butceYili)
+
+    // Kurumsal antet ve kurum eşdeğerliği
+    expect(cikti.kurumAdi).toBe(resolved.kurumAdi)
+    expect(cikti.antet).toEqual(resolved.antet)
+
+    // Personel ve imza blokları eşdeğerliği
+    expect(cikti.harcamaYetkilisi.adSoyad).toBe(resolved.onaylayanPersonelAdi)
+    expect(cikti.harcamaYetkilisi.unvan).toBe(resolved.onaylayanPersonelUnvan)
+    expect(cikti.gerceklestirmeGorevlisi.adSoyad).toBe(resolved.hazirlayanPersonelAdi)
+    expect(cikti.gerceklestirmeGorevlisi.unvan).toBe(resolved.hazirlayanPersonelUnvan)
+  })
 })
