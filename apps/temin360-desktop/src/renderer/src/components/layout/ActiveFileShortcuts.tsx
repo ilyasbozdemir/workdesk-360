@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   Briefcase,
@@ -40,7 +41,7 @@ function useRailTooltip(): {
   const [tip, setTip] = useState<{ top: number; left: number } | null>(null)
   const show = (el: HTMLElement): void => {
     const r = el.getBoundingClientRect()
-    setTip({ top: r.top + r.height / 2, left: r.right + 12 })
+    setTip({ top: r.top + r.height / 2, left: r.right + 10 })
   }
   return {
     tip,
@@ -60,15 +61,17 @@ function RailTooltip({
   tip: { top: number; left: number } | null
   children: React.ReactNode
 }): React.JSX.Element | null {
-  if (!tip) return null
-  return (
+  if (!tip || typeof document === 'undefined') return null
+  return createPortal(
     <div
       role="tooltip"
       style={{ top: tip.top, left: tip.left, transform: 'translateY(-50%)' }}
-      className="fixed z-300 max-w-[min(20rem,calc(100vw-6rem))] flex items-center gap-1.5 bg-slate-900 text-white text-xs rounded-lg py-1.5 px-3 shadow-xl pointer-events-none wrap-break-word"
+      className="fixed z-[99999] max-w-[min(20rem,calc(100vw-6rem))] flex items-center gap-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg py-1.5 px-3 shadow-2xl border border-slate-700/60 pointer-events-none whitespace-nowrap animate-in fade-in-0 duration-150 select-none"
     >
-      {children}
-    </div>
+      <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 border-l border-b border-slate-700/60 rotate-45" />
+      <span className="relative z-10 flex items-center gap-1.5">{children}</span>
+    </div>,
+    document.body
   )
 }
 
@@ -137,6 +140,7 @@ function ShortcutLink({
           e.preventDefault()
           item.onClick?.()
         }}
+        title={item.name}
         aria-label={item.name}
         data-testid="rail-shortcut"
         {...handlers}
@@ -150,6 +154,7 @@ function ShortcutLink({
   return (
     <Link
       to={item.path as never}
+      title={item.name}
       aria-label={item.name}
       data-testid="rail-shortcut"
       {...handlers}
@@ -323,6 +328,7 @@ export function ActiveFileShortcuts(): React.JSX.Element {
         {/* Kullanıcı Profili (PP) */}
         <Link
           to="/profil"
+          title={profileLabel}
           aria-label={profileLabel}
           data-testid="rail-profile"
           {...profileHandlers}
