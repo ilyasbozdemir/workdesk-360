@@ -32,7 +32,8 @@ import {
   Sparkles,
   FileSpreadsheet,
   FileDown,
-  GitFork
+  GitFork,
+  FileCheck
 } from 'lucide-react'
 import { APP_ROUTES } from '../../constants/routeConstants'
 import { useModuleStore } from '../../store/moduleStore'
@@ -481,6 +482,51 @@ export function getSidebarMenuGroups(
                     path: APP_ROUTES.ROTA_YONETIMI,
                     icon: GitFork,
                     badge: 'ROTA'
+                  }
+                ]
+              },
+              {
+                name: 'BKMYBS & Mali Yönetim',
+                icon: Coins,
+                badge: '5018',
+                children: [
+                  {
+                    name: '💰 Mali Çalışma Masası',
+                    path: APP_ROUTES.BKMYBS_MALI_YONETIM,
+                    icon: Coins,
+                    badge: 'HUB'
+                  },
+                  {
+                    name: '1. Analitik Bütçe & Ödenek',
+                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=butce`,
+                    icon: Calculator
+                  },
+                  {
+                    name: '2. 22/d Limit & %10 Kotası',
+                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=limit`,
+                    icon: Scale,
+                    badge: 'KİK'
+                  },
+                  {
+                    name: '3. MİF & Ödeme Emri (ÖEB)',
+                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=mif`,
+                    icon: FileCheck,
+                    badge: 'ÖEB'
+                  },
+                  {
+                    name: '4. TKYS Taşınır & Zimmet',
+                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=tkys`,
+                    icon: Boxes
+                  },
+                  {
+                    name: '5. Emanetler & Teminatlar',
+                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=emanet`,
+                    icon: Key
+                  },
+                  {
+                    name: '6. Harcama Sözleşmeleri',
+                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=sozlesme`,
+                    icon: FileText
                   }
                 ]
               }

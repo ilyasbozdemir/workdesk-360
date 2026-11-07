@@ -113,6 +113,18 @@ export function getTabLabel(fullPath: string): string {
     if (doc) return `📄 ${decodeURIComponent(doc)}`
     return '📄 Belge Önizleme'
   }
+  if (path.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)) {
+    const query = fullPath.split('?')[1] || ''
+    const params = new URLSearchParams(query)
+    const tab = params.get('tab')
+    if (tab === 'butce') return 'BKMYBS — Analitik Bütçe & Ödenek'
+    if (tab === 'limit') return 'BKMYBS — 22/d Limit & %10 Kota'
+    if (tab === 'mif') return 'BKMYBS — MİF & Ödeme Emri (ÖEB)'
+    if (tab === 'tkys') return 'BKMYBS — TKYS Taşınır & Zimmet'
+    if (tab === 'emanet') return 'BKMYBS — Emanet & Teminatlar'
+    if (tab === 'sozlesme') return 'BKMYBS — Harcama Sözleşmeleri'
+    return 'BKMYBS & Mali Yönetim (5018)'
+  }
   if (path.startsWith(APP_ROUTES.DOSYA_DETAY)) return 'Dosya Detayları'
   if (path.startsWith(APP_ROUTES.TAKIP)) return 'Takip & Durum'
   if (path.startsWith(APP_ROUTES.RAPORLAR)) return 'Raporlar'

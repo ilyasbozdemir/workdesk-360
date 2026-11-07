@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   Briefcase,
@@ -124,6 +124,13 @@ export function ActiveFileShortcuts(): React.JSX.Element {
   const { adminUsername, adminName, institutionName, institutionLogo } = useSettingsStore()
   const { activeDosyaId } = useWorkspaceStore()
   const { tip: profileTip, handlers: profileHandlers } = useRailTooltip()
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const handleFooterWheel = (e: React.WheelEvent): void => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop += e.deltaY
+    }
+  }
 
   const primaryItems: ShortcutItem[] = [
     {
@@ -239,22 +246,22 @@ export function ActiveFileShortcuts(): React.JSX.Element {
     <nav
       aria-label="Hızlı erişim"
       data-testid="active-file-rail"
-      className="h-full min-h-0 w-16 bg-white dark:bg-slate-900 border-r border-slate-250 dark:border-slate-800/80 flex flex-col py-4 short:py-2 xshort:py-1 shrink-0 z-30 select-none"
+      className="h-full min-h-0 w-16 bg-white dark:bg-slate-900 border-r border-slate-250 dark:border-slate-800/80 flex flex-col py-4 short:py-2 xshort:py-1 shrink-0 z-30 select-none overflow-hidden"
     >
-      {/* Üst: Ana gezinme — sığmazsa yalnızca bu bölüm kayar */}
+      {/* Üst: Ana gezinme — sığmazsa yalnızca bu bölüm kayar (kesintisiz doğal momentum kaydırma) */}
       <div
+        ref={scrollRef}
         data-testid="rail-scroll"
-        tabIndex={-1}
-        className="flex-1 min-h-28 short:min-h-20 xshort:min-h-12 w-full flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 py-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar"
-        style={{ scrollbarWidth: 'thin' }}
+        className="flex-1 min-h-0 w-full flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 py-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
       >
         {primaryItems.map(renderLink)}
       </div>
 
-      {/* Alt: ikincil gezinme ve profil — her zaman görünür */}
+      {/* Alt: ikincil gezinme ve profil — her zaman görünür, fare tekerleğiyle de kaydırılabilir */}
       <div
         data-testid="rail-footer"
-        className="w-full shrink-0 flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 pt-2 xshort:pt-1"
+        onWheel={handleFooterWheel}
+        className="w-full shrink-0 flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 pt-2 xshort:pt-1 pb-1"
       >
         <div className="w-8 h-px bg-slate-200 dark:bg-slate-800 my-1 short:my-0.5 xshort:my-0" />
         {secondaryItems.map(renderLink)}

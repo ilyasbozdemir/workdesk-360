@@ -264,8 +264,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     frame: false,
-    titleBarStyle: 'hidden',
-    titleBarOverlay: false,
+    ...(process.platform === 'darwin' ? { titleBarStyle: 'hidden' as const } : {}),
     title: 'Workspace 360 — WorkSuite 360 Merkezi Çalışma Alanı',
     icon: getIconPath(),
     webPreferences: {

@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import {
   BookOpen,
+  Coins,
   Columns3,
   Edit,
   ExternalLink,
@@ -367,6 +368,21 @@ export function TakipScreen(): React.JSX.Element {
                   >
                     <FileText className="w-3.5 h-3.5 text-blue-500" />
                     Dosya Künyesi
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const targetId = activeDosyaId || activeDosya.id
+                      const route = `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=mif&dosyaId=${targetId}`
+                      addTab(route)
+                      navigate({ to: route })
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-600 dark:hover:text-white border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                    title="Dosya Verilerini 5018 BKMYBS Masasına Aktar & MİF / Ödeme Emri Üret"
+                  >
+                    <Coins size={13} />
+                    ⚡ Mali İşlemlere Aktar
                   </button>
 
                   <button

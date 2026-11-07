@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { useTabStore } from '../../store/tabStore'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { AlertCircle, ArrowLeft, FileText, Layers } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Coins, FileText, Layers } from 'lucide-react'
 import { ProcessStepper } from './components/ProcessStepper'
 import { APP_ROUTES } from '../../constants/routeConstants'
 
@@ -125,6 +125,19 @@ export function SubScreen({
             >
               <Layers className="w-3.5 h-3.5 text-indigo-500" />
               Süreç Takip
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const route = `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=mif&dosyaId=${activeDosyaId}`
+                addTab(route)
+                navigate({ to: route })
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all cursor-pointer shadow-xs"
+              title="5018 BKMYBS Mali Masasına ve Ödeme Emri Taslağına Aktar"
+            >
+              <Coins className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              Mali Masaya Aktar
             </button>
           </div>
         )}

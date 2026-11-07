@@ -28,6 +28,7 @@ export const APP_ROUTES = {
   RAPORLAR: '/raporlar',
   OKAS_KOD: '/okaskod',
   BUTCE_KOD: '/butcekod',
+  BKMYBS_MALI_YONETIM: '/bkmybs-mali-yonetim',
   MEVZUAT: '/mevzuat',
   CHANGELOG: '/changelog',
   YARDIM: '/yardim',

@@ -111,6 +111,19 @@ export function TakipActiveDosyaSummary({
           </button>
 
           <button
+            onClick={() => {
+              const route = `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=mif&dosyaId=${activeDosya.id}`;
+              addTab(route);
+              navigate({ to: route });
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all cursor-pointer shadow-xs"
+            title="5018 BKMYBS Mali Masasına Aktar & MİF / Ödeme Emri Üret"
+          >
+            <Coins className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            Mali Masaya Aktar
+          </button>
+
+          <button
             onClick={onEditClick}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white border border-blue-200 dark:border-blue-800/60 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
             title="Dosya Formunu Düzenle"
