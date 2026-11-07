@@ -3,9 +3,11 @@ import { join } from 'path'
 import fs from 'fs'
 
 export function readSystemTemplate(fileName: string): string | null {
-  const templatesDirDev = join(app.getAppPath(), 'resources', 'templates')
-  const templatesDirProd = join(process.resourcesPath, 'templates')
-  const targetDir = fs.existsSync(templatesDirProd) ? templatesDirProd : templatesDirDev
+  try {
+    const appPath = typeof app?.getAppPath === 'function' ? app.getAppPath() : process.cwd()
+    const templatesDirDev = join(appPath, 'resources', 'templates')
+    const templatesDirProd = join((process as any).resourcesPath || appPath, 'templates')
+    const targetDir = fs.existsSync(templatesDirProd) ? templatesDirProd : templatesDirDev
 
   const altName1 = fileName.endsWith('.html')
     ? fileName.replace(/\.html$/, '.mustache')
@@ -39,6 +41,9 @@ export function readSystemTemplate(fileName: string): string | null {
     } catch {}
   }
   return null
+  } catch {
+    return null
+  }
 }
 
 const ONES = ['', 'BİR', 'İKİ', 'ÜÇ', 'DÖRT', 'BEŞ', 'ALTI', 'YEDİ', 'SEKİZ', 'DOKUZ']

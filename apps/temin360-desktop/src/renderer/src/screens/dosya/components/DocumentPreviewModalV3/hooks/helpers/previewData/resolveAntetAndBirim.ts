@@ -12,14 +12,33 @@ export async function resolveAntetAndBirim(
 ): Promise<void> {
   let kurumRow: Record<string, any> | null = null
   if (
-    resolved.antetSatirlari &&
+    payloadData?.resolvedContext?.antetSatirlari &&
+    Array.isArray(payloadData.resolvedContext.antetSatirlari) &&
+    payloadData.resolvedContext.antetSatirlari.length > 0
+  ) {
+    baseData.antetSatirlari = payloadData.resolvedContext.antetSatirlari
+    if (payloadData.kurum) kurumRow = payloadData.kurum
+  } else if (
+    resolved?.antetSatirlari &&
     Array.isArray(resolved.antetSatirlari) &&
     resolved.antetSatirlari.length > 0
   ) {
     baseData.antetSatirlari = resolved.antetSatirlari
+    if (payloadData?.kurum) kurumRow = payloadData.kurum
+  } else if (payloadData?.kurum) {
+    const kData = payloadData.kurum
+    kurumRow = kData
+    baseData.antetSatirlari = InstitutionalHeaderProvider.parseKurumBaseAntetLines(kData)
+    if (!baseData.kurumAdi && kData.kurum_adi) baseData.kurumAdi = kData.kurum_adi
+    if (!baseData.mudurluk && (kData.harcama_birim_adi || kData.mudurluk)) {
+      baseData.mudurluk = kData.harcama_birim_adi || kData.mudurluk
+    }
   } else {
     try {
-      const kurumRows = await queryExecutor('SELECT * FROM TANIM_Kurum LIMIT 1', [])
+      const kurumRows = await queryExecutor(
+        'SELECT * FROM TANIM_Kurum WHERE is_active = 1 ORDER BY id ASC LIMIT 1',
+        []
+      )
       if (kurumRows && kurumRows[0]) {
         const kRow = kurumRows[0]
         kurumRow = kRow

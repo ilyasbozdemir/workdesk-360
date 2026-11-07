@@ -148,7 +148,7 @@ export const App: React.FC = () => {
         backgroundColor: 'var(--theme-bg-100)',
         color: 'var(--theme-text-100)'
       }}
-      className="min-h-screen flex flex-col font-sans transition-colors duration-200"
+      className="h-screen flex flex-col font-sans transition-colors duration-200 overflow-hidden"
     >
       {/* KAMU 360 & Workspace Ortak Navbar */}
       <Header
@@ -161,8 +161,8 @@ export const App: React.FC = () => {
         onSelectModule={setActiveModuleKey}
       />
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* KAMU 360 Modüler Sidebar */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* KAMU 360 Modüler Sidebar (Sayfa ile kaymayan sabit yan menü) */}
         <KamuSidebar
           activeModuleKey={activeModuleKey}
           onSelectModule={setActiveModuleKey}
@@ -177,8 +177,8 @@ export const App: React.FC = () => {
           onToggle={() => setIsSidebarOpen((prev) => !prev)}
         />
 
-        {/* Ana İçerik Alanı */}
-        <main className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+        {/* Ana İçerik Alanı (Bağımsız Kayan Alan) */}
+        <main className="flex-1 h-full overflow-y-auto px-5 py-6 space-y-6 custom-scrollbar min-h-0">
           {/* Bildirim / Toast */}
           {launchNotification && (
             <div

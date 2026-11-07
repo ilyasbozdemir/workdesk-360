@@ -62,11 +62,11 @@ export const KamuSidebar: React.FC<KamuSidebarProps> = ({
         backgroundColor: 'var(--theme-bg-200)',
         borderColor: 'var(--theme-border-100)'
       }}
-      className={`border-r shrink-0 transition-all duration-300 flex flex-col justify-between select-none ${
+      className={`h-full border-r shrink-0 transition-all duration-300 flex flex-col justify-between select-none overflow-hidden ${
         isOpen ? 'w-72' : 'w-16'
       }`}
     >
-      <div className="p-3 overflow-y-auto space-y-5">
+      <div className="flex-1 p-3 overflow-y-auto space-y-5 min-h-0">
         {/* KAMU 360 Portali Modül Seçimi */}
         <div>
           {isOpen && (
@@ -250,7 +250,7 @@ export const KamuSidebar: React.FC<KamuSidebarProps> = ({
       {isOpen && (
         <div
           style={{ borderColor: 'var(--theme-border-100)' }}
-          className="p-3 border-t text-[11px] space-y-1"
+          className="shrink-0 p-3 border-t text-[11px] space-y-1"
         >
           <div className="flex items-center gap-1.5 font-bold" style={{ color: 'var(--theme-text-100)' }}>
             <Building2 size={13} className="text-blue-500" />

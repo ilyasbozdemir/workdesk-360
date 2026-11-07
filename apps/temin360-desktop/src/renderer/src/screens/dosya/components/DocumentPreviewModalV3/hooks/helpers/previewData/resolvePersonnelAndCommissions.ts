@@ -16,7 +16,8 @@ export async function resolvePersonnelAndCommissions(
   activeDosyaId: number,
   resolvedId: string,
   selectedDocId: string,
-  queryExecutor: (sql: string, params: any[]) => Promise<any[]>
+  queryExecutor: (sql: string, params: any[]) => Promise<any[]>,
+  payloadData?: any
 ): Promise<void> {
   // Automatic personnel resolution from IDs
   if (
@@ -82,16 +83,22 @@ export async function resolvePersonnelAndCommissions(
 
   if (activeDosyaId) {
     try {
-      const dbKomisyonlar = await queryExecutor(
-        `SELECT tk.*, COALESCE(tk.ad_soyad, p.ad_soyad) as ad_soyad, COALESCE(tk.unvan, p.unvan) as unvan,
-                COALESCE(tk.birim, p.birim) as birim, COALESCE(tk.birim_id, p.birim_id) as birim_id,
-                tk.gorev, tk.rol, tk.komisyon_id
-         FROM DATA_TeminKomisyon tk 
-         LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id 
-         WHERE tk.temin_dosya_id = ? 
-         ORDER BY tk.id ASC`,
-        [activeDosyaId]
-      )
+      let dbKomisyonlar: any[] =
+        payloadData?.komisyonlar && Array.isArray(payloadData.komisyonlar) && payloadData.komisyonlar.length > 0
+          ? payloadData.komisyonlar
+          : []
+      if (dbKomisyonlar.length === 0) {
+        dbKomisyonlar = await queryExecutor(
+          `SELECT tk.*, COALESCE(tk.ad_soyad, p.ad_soyad) as ad_soyad, COALESCE(tk.unvan, p.unvan) as unvan,
+                  COALESCE(tk.birim, p.birim) as birim, COALESCE(tk.birim_id, p.birim_id) as birim_id,
+                  tk.gorev, tk.rol, tk.komisyon_id
+           FROM DATA_TeminKomisyon tk 
+           LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id 
+           WHERE tk.temin_dosya_id = ? 
+           ORDER BY tk.id ASC`,
+          [activeDosyaId]
+        )
+      }
       if (dbKomisyonlar && dbKomisyonlar.length > 0) {
         // 1. Muhasebe Yetkilisi / Mutemet tespiti
         const muhasebeRow = dbKomisyonlar.find((k: any) => {

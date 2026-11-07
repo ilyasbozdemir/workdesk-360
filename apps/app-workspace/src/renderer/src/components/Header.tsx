@@ -57,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
         backgroundColor: 'var(--theme-bg-200)',
         borderBottom: '1px solid var(--theme-border-100)'
       }}
-      className="sticky top-0 z-40 shadow-xs backdrop-blur-md select-none"
+      className="shrink-0 z-40 shadow-xs backdrop-blur-md select-none"
     >
       {/* Üst Vurgu Çizgisi - KAMU 360 & TEMİN 360 Kurumsal Renk Gradyanı */}
       <div className="h-0.5 w-full bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500" />

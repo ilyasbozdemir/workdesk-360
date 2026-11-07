@@ -24,9 +24,9 @@ export async function resolveSnapshotOverlay(
   const dosyaObj = payloadData.dosya || dosyaRecord || {}
   const activeTab = useGlobalDocumentPreviewStore.getState().getActiveTab()
 
-  // Fetch direct JSON Snapshot from DB if available
-  let snapshotData = payloadData.savedSnapshot
-  if (activeDosyaId) {
+  // Fetch direct JSON Snapshot from DB if available (prefer preloaded payloadData.savedSnapshot)
+  let snapshotData = payloadData?.savedSnapshot || null
+  if (!snapshotData && activeDosyaId && (!payloadData || Object.keys(payloadData).length === 0)) {
     try {
       const cleanDocId = String(resolvedId).replace(/\.html$/i, '').trim()
       const canonicalKey = resolveTemplateKey(cleanDocId) || cleanDocId

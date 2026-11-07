@@ -4,6 +4,7 @@ import {
   resolveTemplateKey,
   cleanPersonelName
 } from '@temin360/document-templates'
+import { InstitutionalHeaderProvider } from '@worksuite-360/document-engine'
 import { formatTurkishDate, getIpcKurumBizimText, getIpcKurumIhtiyacYeri } from './documentUtils'
 
 export function resolveDocumentPayload(
@@ -366,31 +367,10 @@ export function resolveDocumentPayload(
           })
         : '0,00'
 
-    let antetSatirlari: string[] = []
-    if ((kurum as any)?.kurum_anteti) {
-      try {
-        const parsed = JSON.parse((kurum as any).kurum_anteti)
-        if (Array.isArray(parsed)) {
-          antetSatirlari = parsed.filter((s: string) => s && s.trim() !== '')
-        }
-      } catch {
-        if (typeof (kurum as any).kurum_anteti === 'string' && (kurum as any).kurum_anteti.trim()) {
-          antetSatirlari = (kurum as any).kurum_anteti
-            .split('\n')
-            .map((s: string) => s.trim())
-            .filter(Boolean)
-        }
-      }
-    }
-    if (antetSatirlari.length === 0) {
-      const kurumAdiText =
-        (kurum as any)?.ust_kurum_adi ||
-        (kurum as any)?.kurum_adi ||
-        (kurum as any)?.ad ||
-        settingsMap.institutionName ||
-        'KAMU KURUMU'
-      antetSatirlari = ['T.C.', String(kurumAdiText).toUpperCase()]
-    }
+    const baseAntetLines = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
+      kurum,
+      settingsMap.institutionName || 'KAMU KURUMU'
+    )
 
     const effectiveBirim = (
       (dosya as any)?.birim ||
@@ -410,12 +390,11 @@ export function resolveDocumentPayload(
       ''
     ).trim()
 
-    if (
-      birimAntet &&
-      !antetSatirlari.some((s: string) => s.trim().toUpperCase() === birimAntet.toUpperCase())
-    ) {
-      antetSatirlari.push(birimAntet)
-    }
+    const antetSatirlari = InstitutionalHeaderProvider.composeBirimAntetLines(
+      baseAntetLines,
+      birimAntet,
+      (dosya as any)?.antet_ek_satir
+    )
 
     const kurumAdi =
       (kurum as any)?.kurum_adi ||
@@ -743,6 +722,10 @@ export function resolveDocumentPayload(
           })
         : formattedGrandTotal,
       genelToplam: formattedGrandTotal,
+      kazananFirma: winnerFirm,
+      enUygunFirma: winnerFirm,
+      kazananFirmaAdi: winnerFirm.unvan || '',
+      enUygunTeklifVerenFirma: winnerFirm.unvan || '',
       yukleniciFirma: winnerFirm.unvan || '',
       yukleniciYetkili: winnerFirm.yetkili_ad_soyad || '',
       yukleniciAdresi: winnerFirm.adres || '',
@@ -788,6 +771,8 @@ export function resolveDocumentPayload(
       sayisi: paddedSayi,
       dosyaSayisi: teminNoStr || paddedSayi,
       ihtiyacKalemleri,
+      kalemler: ihtiyacKalemleri,
+      items: ihtiyacKalemleri,
       firmaListesi: combinedFirms,
       firmalar: fileFirms,
       firmaToplamlari: firmaTotals,
