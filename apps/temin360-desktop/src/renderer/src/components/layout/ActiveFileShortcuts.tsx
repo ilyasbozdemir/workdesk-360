@@ -94,15 +94,15 @@ function ShortcutLink({
       data-testid="rail-shortcut"
       {...handlers}
       className={cn(
-        // Kısa ekranlarda (<= 720px yükseklik) düğmeler küçülür
-        'w-10 h-10 short:w-8 short:h-8 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border cursor-pointer relative',
+        // Kısa ekranlarda (<= 720px yükseklik) ve çok kısa ekranlarda (<= 540px) düğmeler küçülür
+        'w-10 h-10 short:w-8 short:h-8 xshort:w-7 xshort:h-7 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border cursor-pointer relative',
         isActive
           ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
           : 'bg-transparent border-transparent text-slate-500 hover:scale-105',
         !isActive && item.color
       )}
     >
-      <Icon className="w-5 h-5 short:w-4 short:h-4" />
+      <Icon className="w-5 h-5 short:w-4 short:h-4 xshort:w-3.5 xshort:h-3.5" />
       {item.badge && (
         <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-500 ring-2 ring-white dark:ring-slate-900" />
       )}
@@ -239,13 +239,13 @@ export function ActiveFileShortcuts(): React.JSX.Element {
     <nav
       aria-label="Hızlı erişim"
       data-testid="active-file-rail"
-      className="h-full min-h-0 w-16 bg-white dark:bg-slate-900 border-r border-slate-250 dark:border-slate-800/80 flex flex-col py-4 short:py-2 shrink-0 z-30 select-none"
+      className="h-full min-h-0 w-16 bg-white dark:bg-slate-900 border-r border-slate-250 dark:border-slate-800/80 flex flex-col py-4 short:py-2 xshort:py-1 shrink-0 z-30 select-none"
     >
       {/* Üst: Ana gezinme — sığmazsa yalnızca bu bölüm kayar */}
       <div
         data-testid="rail-scroll"
         tabIndex={-1}
-        className="flex-1 min-h-28 short:min-h-20 w-full flex flex-col items-center gap-2.5 short:gap-1.5 px-2 py-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar"
+        className="flex-1 min-h-28 short:min-h-20 xshort:min-h-12 w-full flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 py-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar"
         style={{ scrollbarWidth: 'thin' }}
       >
         {primaryItems.map(renderLink)}
@@ -254,9 +254,9 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       {/* Alt: ikincil gezinme ve profil — her zaman görünür */}
       <div
         data-testid="rail-footer"
-        className="w-full shrink-0 flex flex-col items-center gap-2.5 short:gap-1.5 px-2 pt-2"
+        className="w-full shrink-0 flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 pt-2 xshort:pt-1"
       >
-        <div className="w-8 h-px bg-slate-200 dark:bg-slate-800 my-1 short:my-0" />
+        <div className="w-8 h-px bg-slate-200 dark:bg-slate-800 my-1 short:my-0.5 xshort:my-0" />
         {secondaryItems.map(renderLink)}
 
         {/* Kullanıcı Profili (PP) */}
@@ -266,7 +266,7 @@ export function ActiveFileShortcuts(): React.JSX.Element {
           data-testid="rail-profile"
           {...profileHandlers}
           className={cn(
-            'w-10 h-10 short:w-8 short:h-8 shrink-0 rounded-full flex items-center justify-center font-extrabold text-[11px] transition-all duration-200 border cursor-pointer relative mt-1.5 short:mt-0 overflow-hidden bg-white dark:bg-slate-900',
+            'w-10 h-10 short:w-8 short:h-8 xshort:w-7 xshort:h-7 shrink-0 rounded-full flex items-center justify-center font-extrabold text-[11px] xshort:text-[10px] transition-all duration-200 border cursor-pointer relative mt-1.5 short:mt-0 overflow-hidden bg-white dark:bg-slate-900',
             currentPath === '/profil'
               ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
               : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:scale-105'
