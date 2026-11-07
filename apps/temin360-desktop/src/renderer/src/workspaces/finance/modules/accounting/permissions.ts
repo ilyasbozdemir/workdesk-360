@@ -61,3 +61,4 @@ export function checkAccountingPermission(
   if (userRoles.includes('mali_hizmetler') && permission === 'accounting:view') return true
   return false
 }
+

@@ -4,6 +4,7 @@ import {
   Briefcase,
   Building2,
   ClipboardList,
+  Coins,
   FileSpreadsheet,
   FolderKanban,
   GitFork,
@@ -20,6 +21,7 @@ import {
 import { cn } from '../../utils/cn'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+import { useWorkspaceContextStore } from '../../store/workspaceContextStore'
 import { getInitials } from '@renderer/utils/formatters'
 
 /**
@@ -72,7 +74,8 @@ function RailTooltip({
 
 interface ShortcutItem {
   name: string
-  path: string
+  path?: string
+  onClick?: () => void
   icon: React.ComponentType<{ className?: string }>
   color: string
   badge?: string
@@ -87,33 +90,72 @@ function ShortcutLink({
 }): React.JSX.Element {
   const Icon = item.icon
   const { tip, handlers } = useRailTooltip()
+
+  const commonClass = cn(
+    // Kısa ekranlarda (<= 1080px yükseklik) ve çok kısa ekranlarda (<= 600px) düğmeler küçülür
+    'w-10 h-10 short:w-8 short:h-8 xshort:w-7 xshort:h-7 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border cursor-pointer relative',
+    isActive
+      ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
+      : 'bg-transparent border-transparent text-slate-500 hover:scale-105',
+    !isActive && item.color
+  )
+
+  const content = (
+    <>
+      <Icon className="w-5 h-5 short:w-4 short:h-4 xshort:w-3.5 xshort:h-3.5" />
+      {item.badge && (
+        <span
+          className={cn(
+            'absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-white dark:ring-slate-900',
+            item.badge === '5018' ? 'bg-emerald-500' : 'bg-cyan-500'
+          )}
+        />
+      )}
+      <RailTooltip tip={tip}>
+        <span>{item.name}</span>
+        {item.badge && (
+          <span
+            className={cn(
+              'px-1.5 py-0.2 text-[9px] font-black uppercase rounded',
+              item.badge === '5018'
+                ? 'bg-emerald-500/30 text-emerald-300'
+                : 'bg-cyan-500/30 text-cyan-300'
+            )}
+          >
+            {item.badge}
+          </span>
+        )}
+      </RailTooltip>
+    </>
+  )
+
+  if (item.onClick) {
+    return (
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault()
+          item.onClick?.()
+        }}
+        aria-label={item.name}
+        data-testid="rail-shortcut"
+        {...handlers}
+        className={commonClass}
+      >
+        {content}
+      </a>
+    )
+  }
+
   return (
     <Link
       to={item.path as never}
       aria-label={item.name}
       data-testid="rail-shortcut"
       {...handlers}
-      className={cn(
-        // Kısa ekranlarda (<= 720px yükseklik) ve çok kısa ekranlarda (<= 540px) düğmeler küçülür
-        'w-10 h-10 short:w-8 short:h-8 xshort:w-7 xshort:h-7 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border cursor-pointer relative',
-        isActive
-          ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
-          : 'bg-transparent border-transparent text-slate-500 hover:scale-105',
-        !isActive && item.color
-      )}
+      className={commonClass}
     >
-      <Icon className="w-5 h-5 short:w-4 short:h-4 xshort:w-3.5 xshort:h-3.5" />
-      {item.badge && (
-        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-500 ring-2 ring-white dark:ring-slate-900" />
-      )}
-      <RailTooltip tip={tip}>
-        <span>{item.name}</span>
-        {item.badge && (
-          <span className="px-1.5 py-0.2 text-[9px] font-black uppercase rounded bg-cyan-500/30 text-cyan-300">
-            {item.badge}
-          </span>
-        )}
-      </RailTooltip>
+      {content}
     </Link>
   )
 }
@@ -123,6 +165,7 @@ export function ActiveFileShortcuts(): React.JSX.Element {
   const currentPath = router.location.pathname
   const { adminUsername, adminName, institutionName, institutionLogo } = useSettingsStore()
   const { activeDosyaId } = useWorkspaceStore()
+  const { setActiveWorkspace } = useWorkspaceContextStore()
   const { tip: profileTip, handlers: profileHandlers } = useRailTooltip()
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -138,6 +181,13 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       path: '/',
       icon: Home,
       color: 'hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20'
+    },
+    {
+      name: 'Mali Hizmetler & Muhasebe Masası (5018)',
+      onClick: () => setActiveWorkspace('finance'),
+      icon: Coins,
+      color: 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-600',
+      badge: '5018'
     },
     {
       name: 'Kurum Bilgileri',
@@ -235,7 +285,11 @@ export function ActiveFileShortcuts(): React.JSX.Element {
   ]
 
   const renderLink = (item: ShortcutItem): React.JSX.Element => (
-    <ShortcutLink key={item.path} item={item} isActive={currentPath === item.path.split('?')[0]} />
+    <ShortcutLink
+      key={item.path || item.name}
+      item={item}
+      isActive={item.path ? currentPath === item.path.split('?')[0] : false}
+    />
   )
 
   const userInitials = getInitials(adminName || adminUsername || 'SY')

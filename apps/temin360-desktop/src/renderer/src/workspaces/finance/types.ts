@@ -114,3 +114,4 @@ export interface AccountingRecordItem {
   aciklama: string
   durum: 'taslak' | 'kesinlesti'
 }
+

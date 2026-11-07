@@ -62,3 +62,4 @@ export const ACCOUNTING_NAVIGATION: AccountingNavItem[] = [
     description: 'Merkezi yönetim hesap planı (630, 103, 360, 361) taslak kayıtları'
   }
 ]
+

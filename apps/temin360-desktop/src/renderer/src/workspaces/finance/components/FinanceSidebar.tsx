@@ -9,7 +9,8 @@ import {
   Sparkles,
   ArrowRightLeft,
   ShieldCheck,
-  FileText
+  FileText,
+  ShoppingCart
 } from 'lucide-react'
 import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
 import { useSettingsStore } from '@renderer/store/settingsStore'
@@ -29,6 +30,7 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
   const {
     activeFinanceSection,
     setActiveFinanceSection,
+    setActiveWorkspace,
     canAccessFinancialServices,
     canAccessAccounting
   } = useWorkspaceContextStore()
@@ -76,6 +78,17 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
             </div>
           )}
         </div>
+
+        {/* Satın Alma Masasına (4734) Geçiş Butonu */}
+        <button
+          type="button"
+          onClick={() => setActiveWorkspace('procurement')}
+          className="w-full flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/25 text-xs font-bold transition-all hover:scale-[1.01] cursor-pointer"
+          title="Satın Alma & Doğrudan Temin Çalışma Masasına Geç (4734 Sayılı Kanun)"
+        >
+          <ShoppingCart size={15} className="shrink-0" />
+          {!isCollapsed && <span className="truncate">Satın Alma Masası (4734)</span>}
+        </button>
 
         {/* Modül / Bölüm Seçici (Mali Hizmetler vs Muhasebe) */}
         {!isCollapsed ? (
@@ -191,3 +204,4 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
     </aside>
   )
 }
+

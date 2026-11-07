@@ -218,3 +218,4 @@ export const AccountingRecordsPage: React.FC = () => {
     </div>
   )
 }
+

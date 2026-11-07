@@ -349,3 +349,4 @@ export const IncomingProcurementsPage: React.FC<{
     </div>
   )
 }
+

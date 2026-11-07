@@ -61,3 +61,4 @@ export function checkFinancialPermission(
   if (userRoles.includes('muhasebe') && permission === 'finance:view') return true
   return false
 }
+

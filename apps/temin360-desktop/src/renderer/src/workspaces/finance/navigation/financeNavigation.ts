@@ -62,3 +62,4 @@ export const FINANCE_SERVICES_NAVIGATION: FinanceNavItem[] = [
     description: 'Damga vergisi, karar pulu ve KDV tevkifat oranları hesaplama aracı'
   }
 ]
+

@@ -154,3 +154,4 @@ export const useWorkspaceContextStore = create<WorkspaceContextState>((set, get)
     return roles.includes('admin') || roles.includes('muhasebe') || roles.includes('harcama_yetkilisi')
   }
 }))
+
