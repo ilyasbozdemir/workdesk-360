@@ -1,38 +1,38 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
 import {
-  FileText,
-  Search,
-  Plus,
+  AlertCircle,
+  ArrowRight,
+  Building,
   CheckCircle2,
   Clock,
-  Printer,
   Eye,
-  Building,
-  ArrowRight,
+  FileText,
+  Plus,
+  Printer,
+  Search,
   ShieldCheck,
-  AlertCircle
-} from 'lucide-react'
-import { formatCurrency } from '@renderer/utils/formatters'
-import { INITIAL_MIF_LISTESI } from '@renderer/screens/bkmybs-mali-yonetim/bkmybsMockData'
-import { MifKayit } from '@renderer/screens/bkmybs-mali-yonetim/types'
+} from "lucide-react";
+import { formatCurrency } from "@renderer/utils/formatters";
+import { INITIAL_MIF_LISTESI } from "@renderer/screens/bkmybs-mali-yonetim/bkmybsMockData";
+import { MifKayit } from "@renderer/screens/bkmybs-mali-yonetim/types";
 
 export const MifDraftsPage: React.FC<{
-  onOpenMatbuMif?: (mif: MifKayit) => void
+  onOpenMatbuMif?: (mif: MifKayit) => void;
 }> = ({ onOpenMatbuMif }) => {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterDurum, setFilterDurum] = useState('all')
-  const [mifList, setMifList] = useState<MifKayit[]>(INITIAL_MIF_LISTESI)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDurum, setFilterDurum] = useState("all");
+  const [mifList, setMifList] = useState<MifKayit[]>(INITIAL_MIF_LISTESI);
 
   const filteredMif = mifList.filter((m) => {
     const matchesSearch =
       m.mifNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.aciklama.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.alacakliUnvan.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.alacakliVkn.includes(searchTerm)
+      m.alacakliVkn.includes(searchTerm);
 
-    if (filterDurum === 'all') return matchesSearch
-    return matchesSearch && m.durum === filterDurum
-  })
+    if (filterDurum === "all") return matchesSearch;
+    return matchesSearch && m.durum === filterDurum;
+  });
 
   return (
     <div className="space-y-6">
@@ -52,14 +52,18 @@ export const MifDraftsPage: React.FC<{
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Harcama birimlerinden aktarılan tahakkuk fişleri, borç/alacak hesap bağlamaları ve resmî MİF dökümleri.
+              Harcama birimlerinden aktarılan tahakkuk fişleri, borç/alacak
+              hesap bağlamaları ve resmî MİF dökümleri.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <div className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
-            Toplam MİF: <span className="font-bold text-blue-600 dark:text-blue-400">{mifList.length} Fiş</span>
+            Toplam MİF:{" "}
+            <span className="font-bold text-blue-600 dark:text-blue-400">
+              {mifList.length} Fiş
+            </span>
           </div>
         </div>
       </div>
@@ -79,19 +83,19 @@ export const MifDraftsPage: React.FC<{
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           {[
-            { id: 'all', label: 'Tümü' },
-            { id: 'taslak', label: 'Taslaklar' },
-            { id: 'odenege_baglandi', label: 'Ödeneğe Bağlanan' },
-            { id: 'onaylandi', label: 'Onaylandı' },
-            { id: 'odendi', label: 'Ödendi' }
+            { id: "all", label: "Tümü" },
+            { id: "taslak", label: "Taslaklar" },
+            { id: "odenege_baglandi", label: "Ödeneğe Bağlanan" },
+            { id: "onaylandi", label: "Onaylandı" },
+            { id: "odendi", label: "Ödendi" },
           ].map((f) => (
             <button
               key={f.id}
               onClick={() => setFilterDurum(f.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                 filterDurum === f.id
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
               }`}
             >
               {f.label}
@@ -118,24 +122,41 @@ export const MifDraftsPage: React.FC<{
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {filteredMif.map((mif) => (
-                <tr key={mif.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
+                <tr
+                  key={mif.id}
+                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+                >
                   <td className="py-3.5 px-4 whitespace-nowrap">
-                    <div className="font-bold text-blue-600 dark:text-blue-400">{mif.mifNo}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{mif.tarih}</div>
+                    <div className="font-bold text-blue-600 dark:text-blue-400">
+                      {mif.mifNo}
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      {mif.tarih}
+                    </div>
                   </td>
                   <td className="py-3.5 px-4 max-w-xs">
-                    <div className="font-medium text-slate-800 dark:text-slate-200 truncate" title={mif.aciklama}>
+                    <div
+                      className="font-medium text-slate-800 dark:text-slate-200 truncate"
+                      title={mif.aciklama}
+                    >
                       {mif.aciklama}
                     </div>
                     {mif.dosyaId && (
-                      <span className="text-[10px] text-blue-500 font-semibold">DT Dosya #{mif.dosyaId}</span>
+                      <span className="text-[10px] text-blue-500 font-semibold">
+                        DT Dosya #{mif.dosyaId}
+                      </span>
                     )}
                   </td>
                   <td className="py-3.5 px-4 max-w-[170px]">
-                    <div className="font-semibold text-slate-800 dark:text-slate-200 truncate" title={mif.alacakliUnvan}>
+                    <div
+                      className="font-semibold text-slate-800 dark:text-slate-200 truncate"
+                      title={mif.alacakliUnvan}
+                    >
                       {mif.alacakliUnvan}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">VKN: {mif.alacakliVkn}</div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      VKN: {mif.alacakliVkn}
+                    </div>
                   </td>
                   <td className="py-3.5 px-4 whitespace-nowrap font-mono text-[11px] text-slate-600 dark:text-slate-300">
                     {mif.butceTertibi}
@@ -149,14 +170,18 @@ export const MifDraftsPage: React.FC<{
                   <td className="py-3.5 px-4 text-center whitespace-nowrap">
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        mif.durum === 'onaylandi'
-                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                          : mif.durum === 'muhasebeye_sevk'
-                          ? 'bg-blue-500/10 text-blue-600 border-blue-500/20'
-                          : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                        mif.durum === "onaylandi"
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                          : mif.durum === "muhasebeye_sevk"
+                          ? "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                          : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                       }`}
                     >
-                      {mif.durum === 'onaylandi' ? 'Onaylandı' : mif.durum === 'muhasebeye_sevk' ? 'Muhasebeye Sevk' : 'Taslak'}
+                      {mif.durum === "onaylandi"
+                        ? "Onaylandı"
+                        : mif.durum === "muhasebeye_sevk"
+                        ? "Muhasebeye Sevk"
+                        : "Taslak"}
                     </span>
                   </td>
                   <td className="py-3.5 px-4 text-center whitespace-nowrap">
@@ -176,5 +201,5 @@ export const MifDraftsPage: React.FC<{
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
