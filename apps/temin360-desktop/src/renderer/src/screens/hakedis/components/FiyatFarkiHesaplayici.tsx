@@ -242,3 +242,4 @@ export const FiyatFarkiHesaplayici: React.FC<FiyatFarkiHesaplayiciProps> = ({
     </div>
   )
 }
+

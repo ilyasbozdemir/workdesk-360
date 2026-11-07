@@ -427,3 +427,4 @@ export default function HakedisScreen(): React.JSX.Element {
     </div>
   )
 }
+

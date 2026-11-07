@@ -171,3 +171,4 @@ export const DiziPusulasiVeImzalar: React.FC<DiziPusulasiVeImzalarProps> = ({
     </div>
   )
 }
+

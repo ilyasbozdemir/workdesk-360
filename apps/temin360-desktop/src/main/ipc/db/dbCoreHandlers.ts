@@ -68,6 +68,40 @@ export function registerDbCoreHandlers(): void {
   })
 
   /**
+   * SELECT Tek Satır Getirme İşleyicisi (`db:get`)
+   */
+  ipcMain.handle('db:get', async (_, sqlOrPayload: any, maybeParams: any[] = []) => {
+    const sql = typeof sqlOrPayload === 'string' ? sqlOrPayload : sqlOrPayload?.sql
+    const params = typeof sqlOrPayload === 'string' ? maybeParams : (sqlOrPayload?.params || maybeParams || [])
+    try {
+      validateSqlQuery(sql, params)
+      const db = workspaceManager.getDb()
+      const stmt = db.prepare(sql)
+      const row = stmt.reader ? stmt.get(...params) : null
+      return { success: true, data: row }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  /**
+   * SELECT Çoklu Satır Getirme İşleyicisi (`db:all`)
+   */
+  ipcMain.handle('db:all', async (_, sqlOrPayload: any, maybeParams: any[] = []) => {
+    const sql = typeof sqlOrPayload === 'string' ? sqlOrPayload : sqlOrPayload?.sql
+    const params = typeof sqlOrPayload === 'string' ? maybeParams : (sqlOrPayload?.params || maybeParams || [])
+    try {
+      validateSqlQuery(sql, params)
+      const db = workspaceManager.getDb()
+      const stmt = db.prepare(sql)
+      const rows = stmt.reader ? stmt.all(...params) : []
+      return { success: true, data: rows }
+    } catch (error: any) {
+      return { success: false, error: error.message }
+    }
+  })
+
+  /**
    * INSERT, UPDATE, DELETE İşlem Çalıştırma İşleyicisi (`db:run`)
    * @param sql Çalıştırılacak DML SQL ifadesi
    * @param params Sorgu parametreleri

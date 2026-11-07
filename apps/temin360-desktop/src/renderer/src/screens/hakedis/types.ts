@@ -46,3 +46,4 @@ export interface HakedisBilgileri {
   sozlesmeBedeli: number
   oncekiHakedislerToplami: number
 }
+

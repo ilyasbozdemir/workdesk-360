@@ -7,6 +7,8 @@ const allowedChannels = new Set([
   'db:query',
   'db:run',
   'db:execute',
+  'db:get',
+  'db:all',
   'db:transaction',
   'db:bulk-import',
   'db:get-settings',

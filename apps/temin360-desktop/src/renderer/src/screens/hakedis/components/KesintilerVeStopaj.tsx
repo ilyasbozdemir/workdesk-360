@@ -321,3 +321,4 @@ export const KesintilerVeStopaj: React.FC<KesintilerVeStopajProps> = ({
     </div>
   )
 }
+

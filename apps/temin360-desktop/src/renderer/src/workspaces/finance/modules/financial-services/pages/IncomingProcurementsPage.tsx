@@ -79,7 +79,7 @@ export const IncomingProcurementsPage: React.FC = () => {
           COALESCE(d.tur, 'mal') as aliciTur,
           COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as kazananFirma,
           COALESCE(f.vergi_no, '-') as kazananVergiNo,
-          COALESCE(f.iban, '-') as kazananIban,
+          COALESCE(f.hesap_no, '-') as kazananIban,
           COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
           COALESCE(d.kesinti_damga, 0) as damgaVergisi,
           COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,

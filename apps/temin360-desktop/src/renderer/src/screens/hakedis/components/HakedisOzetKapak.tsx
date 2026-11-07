@@ -337,3 +337,4 @@ export const HakedisOzetKapak: React.FC<HakedisOzetKapakProps> = ({
     </div>
   )
 }
+

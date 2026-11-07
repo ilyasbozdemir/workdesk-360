@@ -50,7 +50,7 @@ export const MifDraftsPage: React.FC = () => {
           COALESCE(d.konu, 'Doğrudan Temin Hak Sahibi Ödemesi') as konu,
           COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as alacakliUnvan,
           COALESCE(f.vergi_no, '-') as alacakliVkn,
-          COALESCE(f.iban, '-') as alacakliIban,
+          COALESCE(f.hesap_no, '-') as alacakliIban,
           COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
           COALESCE(d.kesinti_damga, 0) as damgaVergisi,
           COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,

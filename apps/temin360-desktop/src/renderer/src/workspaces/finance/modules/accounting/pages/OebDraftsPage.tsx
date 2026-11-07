@@ -54,7 +54,7 @@ export const OebDraftsPage: React.FC = () => {
           COALESCE(d.harcama_birimi, b.ad, 'Harcama Birimi') as harcamaBirimi,
           COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as hakSahibiAdi,
           COALESCE(f.vergi_no, '-') as hakSahibiVkn,
-          COALESCE(f.iban, '-') as hakSahibiIban,
+          COALESCE(f.hesap_no, '-') as hakSahibiIban,
           COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
           COALESCE(d.kesinti_damga, 0) as damgaVergisi,
           COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,
