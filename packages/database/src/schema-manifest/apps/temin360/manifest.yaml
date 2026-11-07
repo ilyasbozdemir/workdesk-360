@@ -9,7 +9,7 @@ release_date: "2026-11-07"
 changes:
   - schema: 46
     type: update
-    description: "DATA_TeminDosyasi tablosuna kilit/aktarım takip kolonları; TANIM_KomisyonUye ve DATA_TeminKomisyon tablolarına birim ve imza türü kolonları (imza_turu, birim_id, birim) eklendi."
+    description: "DATA_TeminDosyasi tablosuna kilit/aktarım takip ve antet birim görünürlük kolonları (antet_birim_gosterilsin); TANIM_KomisyonUye ve DATA_TeminKomisyon tablolarına birim ve imza türü kolonları (imza_turu, birim_id, birim) eklendi."
     columns_added:
       - table: DATA_TeminDosyasi
         column: is_locked
@@ -21,6 +21,8 @@ changes:
         column: aktarim_grubu_id
       - table: DATA_TeminDosyasi
         column: kaynak_kayit_id
+      - table: DATA_TeminDosyasi
+        column: antet_birim_gosterilsin
       - table: TANIM_KomisyonUye
         column: imza_turu
       - table: TANIM_KomisyonUye
@@ -39,6 +41,7 @@ changes:
       - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kayit_kaynagi TEXT DEFAULT 'yeni';"
       - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN aktarim_grubu_id TEXT DEFAULT NULL;"
       - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kaynak_kayit_id TEXT DEFAULT NULL;"
+      - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN antet_birim_gosterilsin INTEGER DEFAULT 1;"
       - "ALTER TABLE TANIM_KomisyonUye ADD COLUMN imza_turu TEXT DEFAULT 'İmza';"
       - "ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim_id INTEGER DEFAULT NULL;"
       - "ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim TEXT DEFAULT NULL;"

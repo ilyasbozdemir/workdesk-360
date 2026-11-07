@@ -303,6 +303,7 @@
       "aktarim_grubu_id",
       "alt_yuklenici_olacak_mi",
       "antet_ek_satir",
+      "antet_birim_gosterilsin",
       "avans_verilecek_mi",
       "birim",
       "birim_id",

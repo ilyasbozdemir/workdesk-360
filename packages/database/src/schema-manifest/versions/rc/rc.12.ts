@@ -25,13 +25,14 @@ export default {
     {
       schema: 46,
       type: "column_added",
-      description: "DATA_TeminDosyasi tablosuna kilit/aktarım takip kolonları; TANIM_KomisyonUye ve DATA_TeminKomisyon tablolarına birim ve imza türü kolonları (imza_turu, birim_id, birim) eklendi.",
+      description: "DATA_TeminDosyasi tablosuna kilit/aktarım takip ve antet birim görünürlük kolonları (antet_birim_gosterilsin); TANIM_KomisyonUye ve DATA_TeminKomisyon tablolarına birim ve imza türü kolonları (imza_turu, birim_id, birim) eklendi.",
       columns_added: [
         { table: "DATA_TeminDosyasi", column: "is_locked" },
         { table: "DATA_TeminDosyasi", column: "lock_reason" },
         { table: "DATA_TeminDosyasi", column: "kayit_kaynagi" },
         { table: "DATA_TeminDosyasi", column: "aktarim_grubu_id" },
         { table: "DATA_TeminDosyasi", column: "kaynak_kayit_id" },
+        { table: "DATA_TeminDosyasi", column: "antet_birim_gosterilsin" },
         { table: "TANIM_KomisyonUye", column: "imza_turu" },
         { table: "TANIM_KomisyonUye", column: "birim_id" },
         { table: "TANIM_KomisyonUye", column: "birim" },
