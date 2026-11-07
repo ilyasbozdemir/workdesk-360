@@ -298,5 +298,49 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
       expect(warnings[0].type).toBe("birim_not_found");
     });
   });
+
+  describe("4. DocumentHeader Antet Birim Bütünlüğü (Talep Eden / İşleten Birim)", () => {
+    it("antetSatirlari sadece kurum üst satırlarını içerdiğinde birim/müdürlük satırını antete ekler", async () => {
+      const { DocumentHeader } = await import("../document/DocumentHeader");
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      const React = await import("react");
+
+      const html = renderToStaticMarkup(
+        React.createElement(DocumentHeader, {
+          data: {
+            antetSatirlari: ["T.C.", "ÇANKAYA BELEDİYE BAŞKANLIĞI"],
+            birim: "Destek Hizmetleri Müdürlüğü",
+          },
+        })
+      );
+
+      expect(html).toContain("T.C.");
+      expect(html).toContain("ÇANKAYA BELEDİYE BAŞKANLIĞI");
+      expect(html).toContain("Destek Hizmetleri Müdürlüğü");
+    });
+
+    it("antetSatirlari zaten birim adını içeriyorsa mükerrer ekleme yapmaz", async () => {
+      const { DocumentHeader } = await import("../document/DocumentHeader");
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      const React = await import("react");
+
+      const html = renderToStaticMarkup(
+        React.createElement(DocumentHeader, {
+          data: {
+            antetSatirlari: [
+              "T.C.",
+              "ÇANKAYA BELEDİYE BAŞKANLIĞI",
+              "Destek Hizmetleri Müdürlüğü",
+            ],
+            mudurluk: "Destek Hizmetleri Müdürlüğü",
+          },
+        })
+      );
+
+      // Sadece 1 kez geçmeli
+      const matches = html.match(/Destek Hizmetleri Müdürlüğü/g);
+      expect(matches).toHaveLength(1);
+    });
+  });
 });
 
