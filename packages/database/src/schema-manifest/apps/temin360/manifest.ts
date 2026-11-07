@@ -1,6 +1,7 @@
 /* eslint-disable */
 /**
  * TEMİN 360 (Doğrudan Temin - 4734 KİK Md. 22) Şema Manifesti
+ * Bu dosya apps/temin360/manifest.yaml dosyasından otomatik derlenir.
  */
 export const temin360Manifest = {
   app: "temin360-desktop",
@@ -16,21 +17,71 @@ export const temin360Manifest = {
   changes: [
     {
       schema: 46,
-      type: "column_added",
+      type: "update",
       description: "DATA_TeminDosyasi tablosuna kilit/aktarım takip ve antet birim görünürlük kolonları (antet_birim_gosterilsin); TANIM_KomisyonUye ve DATA_TeminKomisyon tablolarına birim ve imza türü kolonları (imza_turu, birim_id, birim) eklendi.",
       columns_added: [
-        { table: "DATA_TeminDosyasi", column: "is_locked" },
-        { table: "DATA_TeminDosyasi", column: "lock_reason" },
-        { table: "DATA_TeminDosyasi", column: "kayit_kaynagi" },
-        { table: "DATA_TeminDosyasi", column: "aktarim_grubu_id" },
-        { table: "DATA_TeminDosyasi", column: "kaynak_kayit_id" },
-        { table: "DATA_TeminDosyasi", column: "antet_birim_gosterilsin" },
-        { table: "TANIM_KomisyonUye", column: "imza_turu" },
-        { table: "TANIM_KomisyonUye", column: "birim_id" },
-        { table: "TANIM_KomisyonUye", column: "birim" },
-        { table: "DATA_TeminKomisyon", column: "imza_turu" },
-        { table: "DATA_TeminKomisyon", column: "birim_id" },
-        { table: "DATA_TeminKomisyon", column: "birim" }
+        {
+          table: "DATA_TeminDosyasi",
+          column: "is_locked"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "lock_reason"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "kayit_kaynagi"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "aktarim_grubu_id"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "kaynak_kayit_id"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "antet_birim_gosterilsin"
+        },
+        {
+          table: "TANIM_KomisyonUye",
+          column: "imza_turu"
+        },
+        {
+          table: "TANIM_KomisyonUye",
+          column: "birim_id"
+        },
+        {
+          table: "TANIM_KomisyonUye",
+          column: "birim"
+        },
+        {
+          table: "DATA_TeminKomisyon",
+          column: "imza_turu"
+        },
+        {
+          table: "DATA_TeminKomisyon",
+          column: "birim_id"
+        },
+        {
+          table: "DATA_TeminKomisyon",
+          column: "birim"
+        }
+      ],
+      raw_sql: [
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN is_locked INTEGER DEFAULT 0;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN lock_reason TEXT DEFAULT NULL;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kayit_kaynagi TEXT DEFAULT 'yeni';",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN aktarim_grubu_id TEXT DEFAULT NULL;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kaynak_kayit_id TEXT DEFAULT NULL;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN antet_birim_gosterilsin INTEGER DEFAULT 1;",
+        "ALTER TABLE TANIM_KomisyonUye ADD COLUMN imza_turu TEXT DEFAULT 'İmza';",
+        "ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim_id INTEGER DEFAULT NULL;",
+        "ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim TEXT DEFAULT NULL;",
+        "ALTER TABLE DATA_TeminKomisyon ADD COLUMN imza_turu TEXT DEFAULT 'İmza';",
+        "ALTER TABLE DATA_TeminKomisyon ADD COLUMN birim_id INTEGER DEFAULT NULL;",
+        "ALTER TABLE DATA_TeminKomisyon ADD COLUMN birim TEXT DEFAULT NULL;"
       ]
     }
   ]

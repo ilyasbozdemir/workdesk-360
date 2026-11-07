@@ -1,4 +1,4 @@
-﻿# Veritabanı Şema Değişiklikleri, Aktif Geliştirme (beta.current) ve Release Kuralları
+# Veritabanı Şema Değişiklikleri, Aktif Geliştirme (beta.current) ve Release Kuralları
 
 Bu kural, TEMİN 360 projesinde veritabanı şemasında yapılan her değişiklik, eklenen/çıkarılan alan veya şablon tanımları, migration yönetimi ve sürüm yayınlama (release) süreçleri için **ZORUNLUDUR**.
 
@@ -10,12 +10,13 @@ Geliştirme sırasında veritabanında herhangi bir tabloya yeni sütun (`ALTER 
 
 ⚠️ **MANUEL OLARAK YENİ NUMARALI SÜRÜM DOSYASI (`beta.235.ts`, `1.0.0-beta.235.yaml` VB.) OLUŞTURULMAZ! TÜM EKLENEN VE ÇIKARILANLAR `current` DOSYALARINDA ANLIK TUTULUR!**
 
-1. **Aktif Geliştirme Manifestlerine (`current`) Yazma**:
-   - Eklenen, güncellenen veya çıkarılan tüm sütun, tablo, raw SQL göç adımları ve şablon listesi durumları **ANINDA VE UNUTULMADAN** aşağıdaki aktif `current` dosyalarına işlenir:
-     - [`packages/database/src/schema-manifest/versions/beta.current.ts`](file:///d:/Github/ilyas-bozdemir/workdesk-360/packages/database/src/schema-manifest/versions/beta.current.ts)
+1. **Aktif Geliştirme Manifestlerine (`current`) Yazma (YAML Tek Gerçeklik Kaynağı - SSOT)**:
+   - Veritabanı şema değişiklikleri için **ana kaynak YAML dosyasıdır**:
      - [`packages/database/src/schema-manifest/1.0.0-beta.current.yaml`](file:///d:/Github/ilyas-bozdemir/workdesk-360/packages/database/src/schema-manifest/1.0.0-beta.current.yaml)
-     - [`tum_belgeler_listesi.yaml`](file:///d:/Github/ilyas-bozdemir/workdesk-360/tum_belgeler_listesi.yaml) ve [`template-registry.ts`](file:///d:/Github/ilyas-bozdemir/workdesk-360/packages/document-templates/src/constants/template-registry.ts)
-   - `schema_max` değeri güncellenir; değişiklikler `columns_added`, `tables_added` veya `raw_sql` dizilerine kaydedilerek sonraki migration'lar için saklanır.
+   - Sütun, tablo, raw SQL göç adımları ve şablon listesi durumları bu YAML dosyasına işlenir.
+   - İlgili TypeScript dosyaları ([`beta.current.ts`](file:///d:/Github/ilyas-bozdemir/workdesk-360/packages/database/src/schema-manifest/versions/beta.current.ts), app manifestleri vb.) elle yazılmaz; `pnpm manifest:sync` veya `pnpm --filter @dt/database build` çalıştırıldığında YAML kaynağından **otomatik derlenir**.
+   - Belge şablon değişiklikleri varsa [`tum_belgeler_listesi.yaml`](file:///d:/Github/ilyas-bozdemir/workdesk-360/tum_belgeler_listesi.yaml) ve [`template-registry.ts`](file:///d:/Github/ilyas-bozdemir/workdesk-360/packages/document-templates/src/constants/template-registry.ts) güncellenir.
+   - `schema_max` değeri güncellenir; değişiklikler `columns_added`, `tables_added` veya `raw_sql` dizilerine kaydedilir.
 
 2. **Klasörleme Yapısı**:
    - Sürüm `.ts` dosyaları `packages/database/src/schema-manifest/versions/` altında (`alpha/`, `beta-001-100/`, `beta-101-200/`, `beta-201-300/` vb.) klasörlenmiştir.

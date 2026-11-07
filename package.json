@@ -44,6 +44,8 @@
     "build:website": "pnpm --filter app-landing build",
     "check:schema": "node scripts/check-schema.mjs",
     "fix:schema": "node scripts/check-schema.mjs --fix",
+    "manifest:sync": "node scripts/sync-manifests.mjs",
+    "manifest:check": "node scripts/sync-manifests.mjs --check",
     "pre-release": "node scripts/check-schema.mjs && pnpm --filter temin360-desktop typecheck:web",
     "typecheck:temin": "pnpm --filter temin360-desktop typecheck:node && pnpm --filter temin360-desktop typecheck:web",
     "typecheck:ihale": "pnpm --filter ihale360-desktop typecheck:node && pnpm --filter ihale360-desktop typecheck:web",

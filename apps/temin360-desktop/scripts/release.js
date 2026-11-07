@@ -380,6 +380,13 @@ function main() {
     }
   }
 
+  // 0.0 Ön Kontrol: Şema Manifest Senkronizasyonu (YAML -> TS)
+  const syncScript = path.join(GIT_ROOT, 'scripts/sync-manifests.mjs')
+  if (fs.existsSync(syncScript)) {
+    console.log(c.cyan('🔄 Şema manifestleri YAML kaynağından senkronize ediliyor...'))
+    exec(`node "${syncScript}"`, { silent: false })
+  }
+
   // 0.1 Ön Kontroller: Şema Doğrulama (Zorunlu Ön Koşul)
   const schemaScript = path.join(GIT_ROOT, 'scripts/check-schema.mjs')
   if (fs.existsSync(schemaScript)) {
