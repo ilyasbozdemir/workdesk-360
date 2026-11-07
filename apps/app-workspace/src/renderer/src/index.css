@@ -52,11 +52,19 @@
   }
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 body {
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   background-color: var(--theme-bg-100);
   color: var(--theme-text-100);
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -78,4 +86,19 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--theme-text-200);
+}
+
+/* Frameless Window Drag Region & Interactive Controls */
+.app-drag-region {
+  -webkit-app-region: drag;
+}
+
+.app-no-drag,
+input,
+textarea,
+select,
+button,
+a,
+[role='button'] {
+  -webkit-app-region: no-drag !important;
 }

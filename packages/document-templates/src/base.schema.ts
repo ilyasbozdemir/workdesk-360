@@ -21,6 +21,8 @@ export const BaseTemplateSchema = z.object({
   kurumEposta: z.string().email().optional(),
   kurumKep: z.string().optional(),
   antetSatirlari: z.array(z.string()).optional(),
+  antetBirimGosterilsin: z.boolean().optional(),
+  birimAntetteGosterilsin: z.boolean().optional(),
   solLogo: z.string().url().optional(),
   sagLogo: z.string().url().optional(),
   evrakSayisi: z.string().optional(),

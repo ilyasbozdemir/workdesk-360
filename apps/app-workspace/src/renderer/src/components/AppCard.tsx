@@ -15,7 +15,10 @@ import {
   Play,
   Clock,
   Info,
-  ExternalLink
+  ExternalLink,
+  Download,
+  CheckCircle2,
+  Cpu
 } from 'lucide-react'
 import { RealAppStatus, canLaunch } from '../detection.js'
 
@@ -54,13 +57,20 @@ export const AppCard: React.FC<AppCardProps> = ({ manifest, realStatus, onInspec
     ? !!realStatus.isDevSource || (!realStatus.installed && canLaunch(realStatus))
     : false
 
+  const handleDownloadInstall = () => {
+    if (manifest.websiteUrl || manifest.repositoryUrl) {
+      const url = manifest.websiteUrl || `${manifest.repositoryUrl}/releases`
+      window.open(url, '_blank')
+    }
+  }
+
   return (
     <div
       style={{
         backgroundColor: 'var(--theme-card-bg)',
         borderColor: 'var(--theme-card-border)'
       }}
-      className="p-5 rounded-2xl border transition-all duration-200 hover:shadow-lg flex flex-col justify-between backdrop-blur-md"
+      className="p-5 rounded-2xl border transition-all duration-200 hover:shadow-lg flex flex-col justify-between backdrop-blur-md relative overflow-hidden group"
     >
       <div>
         {/* Top Header: Icon + Name + Badges */}
@@ -109,7 +119,7 @@ export const AppCard: React.FC<AppCardProps> = ({ manifest, realStatus, onInspec
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               {isDevSource ? 'Geliştirici Modu (Dev)' : 'Yüklü / Hazır'}
             </span>
-          ) : (
+          ) : manifest.installState === 'planned' ? (
             <span
               style={{
                 backgroundColor: 'var(--theme-badge-planned-bg)',
@@ -120,6 +130,18 @@ export const AppCard: React.FC<AppCardProps> = ({ manifest, realStatus, onInspec
             >
               <Clock size={12} />
               Planlandı
+            </span>
+          ) : (
+            <span
+              style={{
+                backgroundColor: 'var(--theme-badge-planned-bg)',
+                color: 'var(--theme-badge-planned-text)',
+                borderColor: 'var(--theme-badge-planned-border)'
+              }}
+              className="text-xs font-semibold px-2.5 py-1 rounded-full border shrink-0 flex items-center gap-1.5"
+            >
+              <Download size={12} className="text-sky-500" />
+              İndirilebilir
             </span>
           )}
         </div>
@@ -187,7 +209,7 @@ export const AppCard: React.FC<AppCardProps> = ({ manifest, realStatus, onInspec
                 color: 'var(--theme-text-200)'
               }}
               className="p-1.5 rounded-lg border hover:text-sky-500 transition-colors"
-              title="Web Sitesi"
+              title="Resmi Web Sitesi / Rehber"
             >
               <ExternalLink size={14} />
             </a>
@@ -205,7 +227,7 @@ export const AppCard: React.FC<AppCardProps> = ({ manifest, realStatus, onInspec
               <Play size={14} fill="currentColor" />
               <span>Başlat</span>
             </button>
-          ) : (
+          ) : manifest.installState === 'planned' ? (
             <button
               disabled
               style={{
@@ -216,6 +238,20 @@ export const AppCard: React.FC<AppCardProps> = ({ manifest, realStatus, onInspec
               title="Bu uygulama henüz bağımsız kurulabilir durumda değildir."
             >
               Kuruluma Hazır Değil
+            </button>
+          ) : (
+            <button
+              onClick={handleDownloadInstall}
+              style={{
+                backgroundColor: 'var(--theme-bg-200)',
+                color: 'var(--theme-text-100)',
+                borderColor: 'var(--theme-border-100)'
+              }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1.5 hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all shadow-xs"
+              title="Uygulama indirme veya kurulum sayfasına git"
+            >
+              <Download size={13} />
+              <span>İndir &amp; Kur</span>
             </button>
           )}
         </div>

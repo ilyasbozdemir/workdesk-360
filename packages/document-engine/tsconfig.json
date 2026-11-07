@@ -9,7 +9,11 @@
     "strict": true,
     "skipLibCheck": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@temin360/contracts": ["../contracts/index.ts"]
+    }
   },
   "include": ["src/**/*"]
 }

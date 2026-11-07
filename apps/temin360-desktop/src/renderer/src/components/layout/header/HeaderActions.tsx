@@ -1,8 +1,10 @@
 import React from 'react'
-import { Calculator, CheckSquare, DownloadCloud, Moon, Store, Sun } from 'lucide-react'
+import { Calculator, CheckSquare, DownloadCloud, Moon, Settings, Store, Sun, User } from 'lucide-react'
 import { SyncPopover } from './SyncPopover'
 import { NotificationPopover } from './NotificationPopover'
 import { APP_ROUTES } from '../../../constants/routeConstants'
+import { useSettingsStore } from '../../../store/settingsStore'
+import { getInitials } from '@renderer/utils/formatters'
 
 interface HeaderActionsProps {
   theme: string
@@ -19,6 +21,8 @@ export const HeaderActions = React.memo(function HeaderActions({
   updateStatus,
   setShowUpdateModal
 }: HeaderActionsProps): React.JSX.Element {
+  const { adminName, adminUsername } = useSettingsStore()
+  const initials = getInitials(adminName || adminUsername || 'SY')
   return (
     <div
       className="flex items-center gap-1.5"
@@ -106,6 +110,27 @@ export const HeaderActions = React.memo(function HeaderActions({
 
         {/* Bildirim Popover */}
         <NotificationPopover />
+
+        {/* Sistem Ayarları Hızlı Erişim */}
+        <button
+          type="button"
+          onClick={(): void => navigate({ to: APP_ROUTES.AYARLAR })}
+          className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+          title="Sistem Ayarları"
+        >
+          <Settings className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Kullanıcı Profili Hızlı Erişim */}
+        <button
+          type="button"
+          onClick={(): void => navigate({ to: APP_ROUTES.PROFIL })}
+          className="h-7 px-2 flex items-center gap-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/70 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-[10px] font-bold transition-all cursor-pointer shadow-2xs"
+          title={`Kullanıcı Profili & Güvenlik (${adminName || adminUsername || 'Sistem Yöneticisi'})`}
+        >
+          <User className="w-3 h-3 text-blue-500 shrink-0" />
+          <span>{initials}</span>
+        </button>
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Archive, Clock, ShieldCheck, Laptop, User } from 'lucide-react'
+import { Archive, Clock, ShieldCheck, Laptop, User, PanelLeft } from 'lucide-react'
 
 interface GenelTabProps {
   disableDocumentGuidance: boolean
@@ -10,6 +10,8 @@ interface GenelTabProps {
   setTrashRetentionDays?: (val: number) => void
   useDesktopUserAsDefault?: boolean
   setUseDesktopUserAsDefault?: (val: boolean) => void
+  alwaysShowQuickMenu?: boolean
+  setAlwaysShowQuickMenu?: (val: boolean) => void
   pcInfo?: {
     hostname?: string
     osUsername?: string
@@ -29,6 +31,8 @@ export const GenelTab: React.FC<GenelTabProps> = ({
   setTrashRetentionDays,
   useDesktopUserAsDefault,
   setUseDesktopUserAsDefault,
+  alwaysShowQuickMenu = true,
+  setAlwaysShowQuickMenu,
   pcInfo
 }) => {
   return (
@@ -103,6 +107,43 @@ export const GenelTab: React.FC<GenelTabProps> = ({
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
                 Etkinleştirildiğinde, uygulama çalışma dosyası açılışında kullanıcı adı otomatik olarak bu bilgisayarın oturumuyla doldurulur.
+              </span>
+            </div>
+          </label>
+        </div>
+
+        {/* Sol Hızlı Erişim Menüsü & Kullanıcı Profili Görünürlüğü */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <label className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <PanelLeft className="w-4 h-4 text-purple-500" />
+                Sol Hızlı Erişim Menüsü &amp; Kullanıcı Profili Görünürlüğü
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl">
+                Kullanıcı Profili, Belge Rota Yönetimi, Kurum, Birim, Personel ve İhtiyaç Raporları
+                kısayollarının yer aldığı sol hızlı erişim çubuğunun aktif bir dosya seçili değilken de
+                her zaman görünür olup olmayacağını belirleyin.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 shrink-0">
+              {alwaysShowQuickMenu ? 'Her Zaman Görünür' : 'Sadece Aktif Dosyada'}
+            </div>
+          </div>
+
+          <label className="flex items-center gap-3 p-3.5 bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200/70 dark:border-slate-800/70 rounded-xl cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800/30 transition-all">
+            <input
+              type="checkbox"
+              checked={Boolean(alwaysShowQuickMenu)}
+              onChange={(e) => setAlwaysShowQuickMenu?.(e.target.checked)}
+              className="rounded border-slate-300 dark:border-slate-700 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+            />
+            <div>
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                Aktif Dosya Seçili Olmadan da Sol Hızlı Menüyü ve Kullanıcı Profilini Göster (Önerilen)
+              </span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                Açık olduğunda, herhangi bir doğrudan temin dosyası seçmeden de sol hızlı menüden Kullanıcı Profili, Belge Rota Yönetimi, Personel ve Birim ekranlarına doğrudan erişebilirsiniz.
               </span>
             </div>
           </label>

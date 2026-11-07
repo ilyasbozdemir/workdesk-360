@@ -57,6 +57,7 @@ export interface IhtiyacRaporu {
   tahmini_butce?: number
   notlar?: string | null
   evrak_sayisi?: string | null
+  belge_snapshot_json?: string | null
   created_at?: string
   updated_at?: string
   // İlişkili alanlar (Join)

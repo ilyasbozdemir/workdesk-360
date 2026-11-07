@@ -1,5 +1,5 @@
 import React from 'react'
-import { Check, FileText, History, RefreshCw, Save, Users } from 'lucide-react'
+import { Check, FileText, History, RefreshCw, Save, Users, Zap } from 'lucide-react'
 import type { KomisyonType } from './types'
 
 interface KomisyonAtamaFooterProps {
@@ -11,6 +11,7 @@ interface KomisyonAtamaFooterProps {
   onSyncFromKomisyonYonetimi: () => void
   onSeedDefaultCommissions: () => void
   onCopyFromLastDossier: () => void
+  onApplyToAllDossiers?: () => void
   onSave: () => void
 }
 
@@ -23,6 +24,7 @@ export const KomisyonAtamaFooter: React.FC<KomisyonAtamaFooterProps> = ({
   onSyncFromKomisyonYonetimi,
   onSeedDefaultCommissions,
   onCopyFromLastDossier,
+  onApplyToAllDossiers,
   onSave
 }) => {
   return (
@@ -87,7 +89,7 @@ export const KomisyonAtamaFooter: React.FC<KomisyonAtamaFooterProps> = ({
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <button
           type="button"
           onClick={onCopyFromLastDossier}
@@ -120,6 +122,19 @@ export const KomisyonAtamaFooter: React.FC<KomisyonAtamaFooterProps> = ({
           <RefreshCw className="w-3.5 h-3.5" />
           Komisyon Yönetiminden Yükle
         </button>
+
+        {onApplyToAllDossiers && (
+          <button
+            type="button"
+            onClick={onApplyToAllDossiers}
+            disabled={loading || saving}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            title="Bu ekrandaki komisyon üyelerini tek tıkla tüm aktif dosyalara uygula ve fiş oluştur"
+          >
+            <Zap className="w-3.5 h-3.5" />
+            Tüm Dosyalara Uygula
+          </button>
+        )}
 
         <button
           type="button"

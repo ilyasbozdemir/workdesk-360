@@ -7,6 +7,7 @@ export interface TemplateEditContextType {
   firmaListesi?: any[];
   birimListesi?: any[];
   firstPageLimit?: number | null;
+  data?: Record<string, any>;
 }
 
 export const TemplateEditContext = createContext<TemplateEditContextType>({
@@ -27,6 +28,7 @@ export function TemplateEditProvider({
   firmaListesi,
   birimListesi,
   firstPageLimit,
+  data,
 }: TemplateEditProviderProps) {
   return (
     <TemplateEditContext.Provider
@@ -37,6 +39,7 @@ export function TemplateEditProvider({
         firmaListesi,
         birimListesi,
         firstPageLimit,
+        data,
       }}
     >
       {children}

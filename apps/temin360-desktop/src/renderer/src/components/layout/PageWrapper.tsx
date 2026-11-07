@@ -8,6 +8,7 @@ import { Footer } from './Footer'
 import { TabsBar } from './TabsBar'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useWorkspaceContextStore } from '../../store/workspaceContextStore'
 import { normalizePath, useTabStore } from '../../store/tabStore'
 import LauncherScreen from '../../screens/launcher/index.screen'
 import LockScreen from './LockScreen'
@@ -17,6 +18,8 @@ import { APP_ROUTES } from '../../constants/routeConstants'
 import { WorkspaceCloseModal } from './WorkspaceCloseModal'
 import { ShutdownOverlay } from './ShutdownOverlay'
 import { GlobalDocumentPreviewHost } from './GlobalDocumentPreviewHost'
+import { ProcurementWorkspace } from '../../workspaces/procurement/ProcurementWorkspace'
+import { FinanceWorkspace } from '../../workspaces/finance/FinanceWorkspace'
 
 import { DisclaimerModal } from '../modals/DisclaimerModal'
 const GoogleDriveModal = React.lazy(() =>
@@ -63,7 +66,8 @@ export function PageWrapper(): React.ReactNode {
     closeWorkspace,
     fileName
   } = useWorkspaceStore()
-  const { unifiedStepperMode, loadSettings } = useSettingsStore()
+  const { unifiedStepperMode, alwaysShowQuickMenu, loadSettings } = useSettingsStore()
+  const { activeWorkspace } = useWorkspaceContextStore()
 
   const { tabs, activeTabPath, addTab, clearTabs, clearDosyaTabs } = useTabStore()
 
@@ -153,36 +157,12 @@ export function PageWrapper(): React.ReactNode {
       <div className="flex flex-col flex-1 min-w-0 min-h-0 h-full overflow-hidden">
         <Header />
         <TamperAlertBanner />
-        <TabsBar />
-        <div className="flex flex-1 min-h-0 overflow-hidden relative">
-          {activeDosyaId && <ActiveFileShortcuts />}
-          <main className="flex-1 min-h-0 relative overflow-hidden">
-            {tabs.map((tab) => {
-              const isActive = tab.path === activeTabPath
-              const isExpired = expiredPaths[tab.path]
-
-              if (isExpired) return null
-
-              const cleanPath = normalizePath(tab.path).split('?')[0]
-              const Component = routeComponents[cleanPath]
-              if (!Component) return null
-
-              return (
-                <div
-                  key={tab.path}
-                  style={{ display: isActive ? 'block' : 'none' }}
-                  className={
-                    cleanPath === APP_ROUTES.BELGE_ONIZLEME
-                      ? 'h-full w-full absolute inset-0 p-0 overflow-hidden'
-                      : 'h-full w-full absolute inset-0 p-6 overflow-auto'
-                  }
-                >
-                  <Component />
-                </div>
-              )
-            })}
-          </main>
-        </div>
+        {activeWorkspace === 'procurement' && <TabsBar />}
+        {activeWorkspace === 'finance' ? (
+          <FinanceWorkspace />
+        ) : (
+          <ProcurementWorkspace expiredPaths={expiredPaths} />
+        )}
         <Footer />
       </div>
 

@@ -40,7 +40,7 @@ export function useHizliKadro({
     queryFn: async () => {
       const res = await window.electron.ipcRenderer.invoke(
         'db:query',
-        'SELECT id, ad_soyad, unvan, birim FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY ad_soyad ASC'
+        'SELECT id, ad_soyad, unvan, birim, birim_id FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY ad_soyad ASC'
       )
       if (res && res.success && Array.isArray(res.data)) return res.data
       return []
@@ -72,6 +72,7 @@ export function useHizliKadro({
         const masterRes = await window.electron.ipcRenderer.invoke(
           'db:query',
           `SELECT u.id as db_id, u.komisyon_id, u.personel_id, u.gorev_id, u.asil_mi,
+                  COALESCE(u.imza_turu, 'İmza') as imza_turu,
                   COALESCE(u.belgede_goster, 1) as belgede_goster,
                   COALESCE(u.belge_kapsami, 'tumu') as belge_kapsami,
                   u.hedef_belgeler,
@@ -156,7 +157,9 @@ export function useHizliKadro({
               gorevId: null,
               gorevAd: m.gorev || 'Üye',
               personelId: m.personel_id || null,
-              asilMi: (m.rol || '').toLowerCase().includes('yedek') ? 0 : 1,
+              asilMi:
+                m.asli_yedek === 'Yedek' || (m.rol || '').toLowerCase().includes('yedek') ? 0 : 1,
+              imzaTuru: (m.imza_turu as any) || 'İmza',
               belgedeGoster: sablonIds === null || sablonIds.length > 0,
               belgeSablonIds: sablonIds
             }
@@ -183,6 +186,7 @@ export function useHizliKadro({
               gorevAd: m.gorev_adi || 'Üye',
               personelId: mPid,
               asilMi: m.asil_mi ?? 1,
+              imzaTuru: (m.imza_turu as any) || 'İmza',
               belgedeGoster: sablonIds === null || sablonIds.length > 0,
               belgeSablonIds: sablonIds
             })
@@ -198,6 +202,7 @@ export function useHizliKadro({
               gorevAd: m.gorev_adi || 'Üye',
               personelId: m.personel_id || null,
               asilMi: m.asil_mi ?? 1,
+              imzaTuru: (m.imza_turu as any) || 'İmza',
               belgedeGoster: sablonIds === null || sablonIds.length > 0,
               belgeSablonIds: sablonIds
             }
@@ -213,6 +218,7 @@ export function useHizliKadro({
             gorevAd: t.ad,
             personelId: null,
             asilMi: t.asil,
+            imzaTuru: 'İmza',
             belgedeGoster: t.belgedeGoster,
             belgeSablonIds: t.belgeSablonIds
           }))
@@ -244,6 +250,7 @@ export function useHizliKadro({
         gorevAd,
         personelId: null,
         asilMi: asil,
+        imzaTuru: 'İmza',
         belgedeGoster,
         belgeSablonIds
       }
@@ -281,6 +288,13 @@ export function useHizliKadro({
     setRows((prev) =>
       prev.map((r) => (r.id === rowId ? { ...r, asilMi: r.asilMi === 1 ? 0 : 1 } : r))
     )
+  }
+
+  const handleChangeImzaTuru = (
+    rowId: string | number,
+    imzaTuru: 'Paraf' | 'Koordinasyon' | 'İmza'
+  ) => {
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, imzaTuru } : r)))
   }
 
   const handleChangeBelgeSablonIds = (rowId: string | number, sablonIds: string[] | null) => {
@@ -365,12 +379,13 @@ export function useHizliKadro({
 
       for (let i = 0; i < rows.length; i++) {
         const r = rows[i]
+        const p = personeller.find((item) => item.id === r.personelId)
         const isShow = r.belgeSablonIds === null || r.belgeSablonIds.length > 0
         const scope =
           r.belgeSablonIds === null ? 'tumu' : r.belgeSablonIds.length === 0 ? 'gizli' : 'ozel'
         const hedefJson = JSON.stringify(r.belgeSablonIds === null ? ['*'] : r.belgeSablonIds)
         txStatements.push({
-          sql: 'INSERT INTO TANIM_KomisyonUye (komisyon_id, gorev_id, personel_id, asil_mi, sira, belgede_goster, belge_kapsami, hedef_belgeler) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          sql: 'INSERT INTO TANIM_KomisyonUye (komisyon_id, gorev_id, personel_id, asil_mi, sira, belgede_goster, belge_kapsami, hedef_belgeler, imza_turu, birim_id, birim) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           params: [
             komisyonId,
             r.gorevId || 1,
@@ -379,7 +394,10 @@ export function useHizliKadro({
             i + 1,
             isShow ? 1 : 0,
             scope,
-            hedefJson
+            hedefJson,
+            r.imzaTuru || 'İmza',
+            p?.birim_id || null,
+            p?.birim || null
           ]
         })
       }
@@ -418,8 +436,8 @@ export function useHizliKadro({
               const hedefJson = JSON.stringify(r.belgeSablonIds === null ? ['*'] : r.belgeSablonIds)
               txStatements.push({
                 sql: `INSERT INTO DATA_TeminKomisyon 
-                      (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, belge_kapsami, hedef_belgeler)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                      (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 params: [
                   activeDosyaId,
                   komisyonId,
@@ -431,7 +449,11 @@ export function useHizliKadro({
                   komisyonAdi,
                   isShow ? 1 : 0,
                   scope,
-                  hedefJson
+                  hedefJson,
+                  r.asilMi === 0 ? 'Yedek' : 'Asil',
+                  r.imzaTuru || 'İmza',
+                  p.birim_id || null,
+                  p.birim || null
                 ]
               })
             }
@@ -484,6 +506,7 @@ export function useHizliKadro({
     handleSelectPersonel,
     handleSelectGorev,
     handleToggleAsil,
+    handleChangeImzaTuru,
     handleChangeBelgeSablonIds,
     handleToggleBelgedeGoster,
     handleLoadStandardTemplate,

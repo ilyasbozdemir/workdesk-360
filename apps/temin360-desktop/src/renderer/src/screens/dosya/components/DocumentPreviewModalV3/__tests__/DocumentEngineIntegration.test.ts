@@ -81,26 +81,37 @@ describe('DocumentEngine - Dosya Bazlı Belge Yönetimi ve Şablon Sistemi', () 
     DocumentValidationService.clearRules()
   })
 
-  // Senaryo 1: Olmayan belge ilk açılışta oluşturulur
-  it('1. Olmayan belge ilk açılışta oluşturulur ve veritabanına kaydedilir', async () => {
+  // Senaryo 1: Olmayan belge ilk açılışta sadece çözümlenir, Kaydet denmeden veritabanında snapshot oluşturmaz
+  it('1. Olmayan belge ilk açılışta (persistIfMissing=false) veritabanına otomatik kaydedilmez; yalnızca Kaydet veya persistIfMissing=true ile kaydedilir', async () => {
     const dosyaId = 101
     const templateKey = 'luzum_muzekkeresi'
 
-    const doc = await DocumentEngine.loadOrCreateDocument({
+    // Varsayılan önizleme açılışı (persistIfMissing = false)
+    const previewDoc = await DocumentEngine.loadOrCreateDocument({
       dosyaId,
       templateKey
     })
 
-    expect(doc).toBeDefined()
-    expect(doc.dosyaId).toBe(dosyaId)
-    expect(doc.templateKey).toBe(templateKey)
-    expect(doc.data).toBeDefined()
-    expect(doc.id).toBeGreaterThan(0)
+    expect(previewDoc).toBeDefined()
+    expect(previewDoc.dosyaId).toBe(dosyaId)
+    expect(previewDoc.templateKey).toBe(templateKey)
+    expect(previewDoc.data).toBeDefined()
+    expect(previewDoc.isExisting).toBe(false)
 
-    // Veritabanında artık kayıt olmalı
+    // Yalnızca önizleme açıldığında veritabanında otomatik snapshot OLUŞMAMALIDIR
     const key = `${dosyaId}_${templateKey}`
+    expect(mockDbStore.has(key)).toBe(false)
+
+    // Kullanıcı açıkça Kaydet dediğinde veya persistIfMissing=true olduğunda kaydedilir
+    await DocumentEngine.saveDocument({
+      dosyaId,
+      templateKey,
+      data: previewDoc.data,
+      validateBeforeSave: false
+    })
+
     expect(mockDbStore.has(key)).toBe(true)
-    expect(mockDbStore.get(key).data).toEqual(doc.data)
+    expect(mockDbStore.get(key).data).toEqual(previewDoc.data)
   })
 
   // Senaryo 2: Mevcut belge tekrar açıldığında kayıtlı verisi yüklenir

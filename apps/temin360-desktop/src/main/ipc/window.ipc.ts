@@ -197,8 +197,7 @@ export function registerWindowIpcHandlers(options: WindowIpcOptions): void {
         show: false,
         autoHideMenuBar: true,
         frame: false,
-        titleBarStyle: 'hidden',
-        titleBarOverlay: false,
+        ...(process.platform === 'darwin' ? { titleBarStyle: 'hidden' as const } : {}),
         title: data.title || `Dosya #${data.dosyaId}`,
         icon: getAppIcon(),
         webPreferences: {
@@ -245,8 +244,7 @@ export function registerWindowIpcHandlers(options: WindowIpcOptions): void {
         show: false,
         autoHideMenuBar: true,
         frame: false,
-        titleBarStyle: 'hidden',
-        titleBarOverlay: false,
+        ...(process.platform === 'darwin' ? { titleBarStyle: 'hidden' as const } : {}),
         title: data.title || 'TEMİN 360',
         icon: getAppIcon(),
         webPreferences: {

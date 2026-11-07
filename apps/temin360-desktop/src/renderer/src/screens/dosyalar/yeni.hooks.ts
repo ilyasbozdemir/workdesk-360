@@ -90,6 +90,7 @@ export interface UseYeniDosyaScreenReturn {
   handleAiFormValidation: () => void
   handleAiFullFormGenerate: () => void
   handleSelectBirim: (b: DBBirim) => void
+  handleCreateAndSelectBirim: (birimAdi: string) => Promise<void>
   handleSave: (e: React.FormEvent) => Promise<void>
   getIhaleSekliExplanation: (sekil: string | null | undefined) => string
   matchedSuggestions: string[]
@@ -565,13 +566,71 @@ export function useYeniDosyaScreen(): UseYeniDosyaScreenReturn {
       birim_id: birim.id,
       birim: birim.birim_adi,
       harcama_birimi: prev.harcama_birimi || birim.birim_adi,
-      antet_ek_satir: birim.antet_ek_satir || '',
-      sunulacak_makam: birim.sunum_makami || '',
-      ihtiyac_yeri: birim.ihtiyac_yeri_eki || '',
-      e_butce: birim.e_butce || ''
+      antet_ek_satir: birim.antet_ek_satir || birim.birim_adi || '',
+      sunulacak_makam: birim.sunum_makami || prev.sunulacak_makam || '',
+      ihtiyac_yeri: birim.ihtiyac_yeri_eki || prev.ihtiyac_yeri || '',
+      e_butce: birim.e_butce || prev.e_butce || ''
     }))
     setShowBirimSearch(false)
     setBirimSearchQuery('')
+  }
+
+  const ensureBirimInDb = async (rawBirimName?: string | null): Promise<DBBirim | null> => {
+    const cleanName = String(rawBirimName || '').trim()
+    if (!cleanName) return null
+
+    const normalized = cleanName.toLocaleLowerCase('tr-TR')
+    const existing = birimler.find(
+      (b) => (b.birim_adi || '').trim().toLocaleLowerCase('tr-TR') === normalized
+    )
+    if (existing) return existing
+
+    try {
+      const upperTitle = cleanName.toLocaleUpperCase('tr-TR')
+      const defaultSunumMakami = upperTitle.endsWith('MÜDÜRLÜĞÜ')
+        ? `${upperTitle}NE`
+        : upperTitle.endsWith('BAŞKANLIĞI')
+        ? `${upperTitle}NA`
+        : `${upperTitle} MAKAMINA`
+
+      const insertRes = await window.electron?.ipcRenderer?.invoke(
+        'db:run',
+        `INSERT INTO TANIM_Birim (ad, birim_adi, antet_ek_satir, sunum_makami, ihtiyac_yeri_eki, aktif_mi)
+         VALUES (?, ?, ?, ?, ?, 1)`,
+        [cleanName, cleanName, cleanName, defaultSunumMakami, `${cleanName} Hizmet Binası`]
+      )
+      if (insertRes?.success && insertRes.lastInsertRowid) {
+        const newBirim: DBBirim = {
+          id: Number(insertRes.lastInsertRowid),
+          birim_adi: cleanName,
+          antet_ek_satir: cleanName,
+          sunum_makami: defaultSunumMakami,
+          ihtiyac_yeri_eki: `${cleanName} Hizmet Binası`
+        }
+        setBirimler((prev) => [...prev, newBirim])
+        return newBirim
+      }
+    } catch (err) {
+      console.warn('Birim otomatik eklenemedi:', err)
+    }
+    return null
+  }
+
+  const handleCreateAndSelectBirim = async (birimAdi: string) => {
+    const created = await ensureBirimInDb(birimAdi)
+    if (created) {
+      handleSelectBirim(created)
+    } else if (birimAdi.trim()) {
+      const clean = birimAdi.trim()
+      setFormData((prev) => ({
+        ...prev,
+        birim: clean,
+        harcama_birimi: prev.harcama_birimi || clean,
+        antet_ek_satir: prev.antet_ek_satir || clean
+      }))
+      setShowBirimSearch(false)
+      setBirimSearchQuery('')
+    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -682,8 +741,29 @@ export function useYeniDosyaScreen(): UseYeniDosyaScreenReturn {
       console.warn('Temin no doğrulama uyarısı:', err)
     }
 
+    let resolvedBirimId = formData.birim_id ?? null
+    const candidateBirimName =
+      (formData as any).birim ||
+      formData.harcama_birimi ||
+      formData.antet_ek_satir ||
+      ''
+    if (!resolvedBirimId && String(candidateBirimName).trim()) {
+      const ensured = await ensureBirimInDb(candidateBirimName)
+      if (ensured) {
+        resolvedBirimId = ensured.id
+      }
+    }
+    const matchedBirimObj = resolvedBirimId
+      ? birimler.find((b) => Number(b.id) === Number(resolvedBirimId))
+      : null
+    const resolvedBirimAdi =
+      matchedBirimObj?.birim_adi || String(candidateBirimName || '').trim() || null
+
     const payload = {
       ...formData,
+      birim_id: resolvedBirimId,
+      birim: resolvedBirimAdi || (formData as any).birim,
+      harcama_birimi: formData.harcama_birimi || resolvedBirimAdi || null,
       temin_no: finalTeminNo,
       konu: finalKonu,
       tekrar_no: nextTekrarNo,
@@ -832,6 +912,7 @@ export function useYeniDosyaScreen(): UseYeniDosyaScreenReturn {
     handleAiFormValidation,
     handleAiFullFormGenerate,
     handleSelectBirim,
+    handleCreateAndSelectBirim,
     handleSave,
     getIhaleSekliExplanation,
     matchedSuggestions,

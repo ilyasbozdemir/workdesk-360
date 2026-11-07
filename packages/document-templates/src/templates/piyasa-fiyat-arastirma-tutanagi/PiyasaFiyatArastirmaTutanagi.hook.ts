@@ -95,9 +95,13 @@ export function usePiyasaFiyatArastirmaTutanagi(
         : "Yapılan İş / Mal / Hizmetin Adı, Niteliği:";
 
     // Komisyon çözümleme
-    const displayKomisyon = (raw.komisyon &&
-      Array.isArray(raw.komisyon) &&
-      raw.komisyon.length > 0)
+    const displayKomisyon = (raw.fiyatArastirmaGorevlileri &&
+      Array.isArray(raw.fiyatArastirmaGorevlileri) &&
+      raw.fiyatArastirmaGorevlileri.length > 0)
+      ? raw.fiyatArastirmaGorevlileri
+      : (raw.komisyon &&
+          Array.isArray(raw.komisyon) &&
+          raw.komisyon.length > 0)
       ? raw.komisyon
       : (raw.fiyatKomisyonu &&
           Array.isArray(raw.fiyatKomisyonu) &&

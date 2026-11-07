@@ -1,32 +1,36 @@
-import React, { useState } from 'react'
-import { Eye, EyeOff, HelpCircle, Plus, Settings, Trash2 } from 'lucide-react'
-import { PersonelCombobox } from '../PersonelCombobox'
-import { KomisyonRowDetail } from './KomisyonRowDetail'
-import type { KomisyonRow, PersonelItem } from './types'
+import React, { useState } from "react";
+import { Eye, EyeOff, HelpCircle, Plus, Settings, Trash2 } from "lucide-react";
+import { PersonelCombobox } from "../PersonelCombobox";
+import { KomisyonRowDetail } from "./KomisyonRowDetail";
+import type { KomisyonRow, PersonelItem } from "./types";
 
 interface KomisyonAtamaTableProps {
-  rows: KomisyonRow[]
-  personeller: PersonelItem[]
-  gorevler?: string[]
-  onPersonelChange: (sira: number, personelId: number | null) => void
-  onGorevChange: (sira: number, newGorev: string) => void
-  onToggleBelgedeGoster: (sira: number) => void
-  onRowFieldChange?: (sira: number, field: keyof KomisyonRow, value: any) => void
-  onAddRow: () => void
-  onRemoveRow: (sira: number) => void
+  rows: KomisyonRow[];
+  personeller: PersonelItem[];
+  gorevler?: string[];
+  onPersonelChange: (sira: number, personelId: number | null) => void;
+  onGorevChange: (sira: number, newGorev: string) => void;
+  onToggleBelgedeGoster: (sira: number) => void;
+  onRowFieldChange?: (
+    sira: number,
+    field: keyof KomisyonRow,
+    value: any,
+  ) => void;
+  onAddRow: () => void;
+  onRemoveRow: (sira: number) => void;
 }
 
 const DEFAULT_SUGGESTED_ROLES = [
-  'Komisyon Başkanı',
-  'Üye',
-  'Fiyat Araştırma Görevlisi',
-  'Harcama Yetkilisi',
-  'Satın Alma Harcama Yetkilisi',
-  'Gerçekleştirme Görevlisi',
-  'Muhasebe Yetkilisi',
-  'Yedek Üye',
-  'Uzman Üye'
-]
+  "Komisyon Başkanı",
+  "Üye",
+  "Fiyat Araştırma Görevlisi",
+  "Harcama Yetkilisi",
+  "Satın Alma Harcama Yetkilisi",
+  "Gerçekleştirme Görevlisi",
+  "Muhasebe Yetkilisi",
+  "Yedek Üye",
+  "Uzman Üye",
+];
 
 export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
   rows,
@@ -37,15 +41,17 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
   onToggleBelgedeGoster,
   onRowFieldChange,
   onAddRow,
-  onRemoveRow
+  onRemoveRow,
 }) => {
-  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({})
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
 
   const toggleRowExpanded = (sira: number) => {
-    setExpandedRows((prev) => ({ ...prev, [sira]: !prev[sira] }))
-  }
+    setExpandedRows((prev) => ({ ...prev, [sira]: !prev[sira] }));
+  };
 
-  const allRoles = Array.from(new Set([...DEFAULT_SUGGESTED_ROLES, ...gorevler]))
+  const allRoles = Array.from(
+    new Set([...DEFAULT_SUGGESTED_ROLES, ...gorevler]),
+  );
 
   return (
     <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
@@ -56,14 +62,20 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
               <th className="py-2.5 px-3 font-bold text-slate-600 dark:text-slate-400 w-12 text-center border-r border-slate-200 dark:border-slate-800">
                 #
               </th>
-              <th className="py-2.5 px-3 font-bold text-slate-600 dark:text-slate-400 w-52 border-r border-slate-200 dark:border-slate-800">
+              <th className="py-2.5 px-3 font-bold text-slate-600 dark:text-slate-400 w-48 border-r border-slate-200 dark:border-slate-800">
                 Komisyondaki Görevi / Rolü
               </th>
               <th className="py-2.5 px-3 font-bold text-slate-600 dark:text-slate-400">
-                Atanan Personel (Ad Soyad / Unvan)
+                Atanan Personel (Birim / Ad Soyad / Unvan)
               </th>
               <th
-                className="py-2.5 px-3 font-bold text-slate-600 dark:text-slate-400 w-32 text-center border-l border-slate-200 dark:border-slate-800"
+                className="py-2.5 px-2.5 font-bold text-slate-600 dark:text-slate-400 w-36 text-center border-l border-slate-200 dark:border-slate-800"
+                title="Komisyon görevinden bağımsız olarak evrak üzerindeki imza yerleşim türünü (Paraf, Koordinasyon veya Islak İmza) belirler"
+              >
+                İmza Türü
+              </th>
+              <th
+                className="py-2.5 px-3 font-bold text-slate-600 dark:text-slate-400 w-28 text-center border-l border-slate-200 dark:border-slate-800"
                 title="Resmi belge tablosunda ve dağıtımında listelensin mi?"
               >
                 <div className="flex items-center justify-center gap-1">
@@ -78,19 +90,21 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {rows.map((row, idx) => {
-              const isExpanded = !!expandedRows[row.sira]
-              const hasCustomSettings =
-                !!row.vekaletUnvani ||
+              const isExpanded = !!expandedRows[row.sira];
+              const hasCustomSettings = !!row.vekaletUnvani ||
                 !!row.baslangicTarihi ||
-                (row.belgeKapsami && row.belgeKapsami !== 'tumu') ||
-                (Array.isArray(row.hedefBelgeler) && row.hedefBelgeler.length > 0)
+                (row.belgeKapsami && row.belgeKapsami !== "tumu") ||
+                (Array.isArray(row.hedefBelgeler) &&
+                  row.hedefBelgeler.length > 0);
 
               return (
                 <React.Fragment key={row.sira}>
                   <tr
                     style={{ zIndex: rows.length - idx }}
                     className={`relative hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${
-                      !row.belgedeGoster ? 'bg-slate-50/30 dark:bg-slate-900/30' : ''
+                      !row.belgedeGoster
+                        ? "bg-slate-50/30 dark:bg-slate-900/30"
+                        : ""
                     }`}
                   >
                     <td className="py-2 px-3 text-center text-slate-500 font-medium border-r border-slate-100 dark:border-slate-800">
@@ -101,7 +115,8 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
                         type="text"
                         list={`gorev-options-${row.sira}`}
                         value={row.gorev}
-                        onChange={(e) => onGorevChange(row.sira, e.target.value)}
+                        onChange={(e) =>
+                          onGorevChange(row.sira, e.target.value)}
                         placeholder="Görev seçin veya yazın..."
                         className="w-full bg-slate-50/70 dark:bg-slate-850 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 border border-slate-200/80 dark:border-slate-700 focus:border-blue-500 rounded-lg px-2.5 py-1 text-xs outline-none transition-all font-semibold"
                       />
@@ -117,7 +132,8 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
                           <PersonelCombobox
                             personeller={personeller}
                             selectedId={row.personelId}
-                            onChange={(personelId) => onPersonelChange(row.sira, personelId)}
+                            onChange={(personelId) =>
+                              onPersonelChange(row.sira, personelId)}
                           />
                         </div>
                         {row.vekaletUnvani && (
@@ -130,27 +146,47 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
                         )}
                       </div>
                     </td>
+                    <td className="py-1.5 px-2.5 text-center border-l border-slate-100 dark:border-slate-800">
+                      <select
+                        data-testid={`komisyon-row-imzaturu-${row.sira}`}
+                        value={row.imzaTuru || "İmza"}
+                        onChange={(e) =>
+                          onRowFieldChange?.(
+                            row.sira,
+                            "imzaTuru",
+                            e.target.value as any,
+                          )}
+                        title="Komisyon görevinden (Başkan/Üye) bağımsız olarak belge üzerindeki imza yerleşimini seçin"
+                        className="w-full px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 focus:border-blue-500 outline-none cursor-pointer"
+                      >
+                        <option value="İmza">✒️ Islak İmza</option>
+                        <option value="Paraf">✏️ Paraf</option>
+                        <option value="Koordinasyon">🔀 Koordinasyon</option>
+                      </select>
+                    </td>
                     <td className="py-1.5 px-3 text-center border-l border-slate-100 dark:border-slate-800">
                       <button
                         type="button"
                         onClick={() => onToggleBelgedeGoster(row.sira)}
                         className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer w-full select-none ${
                           row.belgedeGoster
-                            ? 'bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs'
-                            : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+                            ? "bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shadow-2xs"
+                            : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
                         }`}
                       >
-                        {row.belgedeGoster ? (
-                          <>
-                            <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span>Göster</span>
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span>Gizle</span>
-                          </>
-                        )}
+                        {row.belgedeGoster
+                          ? (
+                            <>
+                              <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                              <span>Göster</span>
+                            </>
+                          )
+                          : (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span>Gizle</span>
+                            </>
+                          )}
                       </button>
                     </td>
                     <td className="py-1.5 px-2 text-center border-l border-slate-100 dark:border-slate-800">
@@ -160,8 +196,8 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
                           onClick={() => toggleRowExpanded(row.sira)}
                           className={`p-1.5 rounded-lg transition-colors cursor-pointer relative ${
                             isExpanded || hasCustomSettings
-                              ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-bold'
-                              : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                              ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 font-bold"
+                              : "text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800"
                           }`}
                           title="Özelleştirilmiş Görev Unvanı, Süre ve Belge Görünürlük Ayarları"
                         >
@@ -191,7 +227,7 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
                     />
                   )}
                 </React.Fragment>
-              )
+              );
             })}
           </tbody>
         </table>
@@ -208,5 +244,5 @@ export const KomisyonAtamaTable: React.FC<KomisyonAtamaTableProps> = ({
         </button>
       </div>
     </div>
-  )
-}
+  );
+};

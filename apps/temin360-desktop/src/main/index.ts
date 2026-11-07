@@ -348,8 +348,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     frame: false,
-    titleBarStyle: 'hidden',
-    titleBarOverlay: false,
+    ...(process.platform === 'darwin' ? { titleBarStyle: 'hidden' as const } : {}),
     icon: winIcon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

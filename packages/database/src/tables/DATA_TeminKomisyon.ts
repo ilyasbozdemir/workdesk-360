@@ -34,6 +34,9 @@ export const DATA_TeminKomisyon = {
     { name: 'belge_kapsami', type: 'TEXT', default: "'tumu'", description: 'Belge Kapsamı' },
     { name: 'hedef_belgeler', type: 'TEXT', default: "'[\"*\"]'", description: 'Hedef Belgeler' },
     { name: 'asli_yedek', type: 'TEXT', default: "'Asil'", description: 'Asil / Yedek' },
+    { name: 'imza_turu', type: 'TEXT', default: "'İmza'", description: 'İmza Türü (Paraf, Koordinasyon, İmza)' },
+    { name: 'birim_id', type: 'INTEGER', description: 'Üyenin Birim ID' },
+    { name: 'birim', type: 'TEXT', description: 'Üyenin Birim Adı' },
     { name: 'kaynak', type: 'TEXT', default: "'kurumsal'", description: 'Atama kaynağı (kurumsal, manuel, senkronizasyon, klonlama)' },
     {
       name: 'created_at',

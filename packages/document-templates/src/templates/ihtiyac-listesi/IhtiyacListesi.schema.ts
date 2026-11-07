@@ -20,6 +20,8 @@ export const IhtiyacKalemiSchema = z
 export const IhtiyacListesiSchema = z
   .object({
     antetSatirlari: z.array(z.string()).optional(),
+    antetBirimGosterilsin: z.boolean().optional(),
+    birimAntetteGosterilsin: z.boolean().optional(),
     // KİK & Standart Form Bilgileri
     kikKodu: z.string().optional(),
     kikAdi: z.string().optional(),
@@ -27,6 +29,7 @@ export const IhtiyacListesiSchema = z
     standartFormAdi: z.string().optional(),
     evrakSayisi: z.string().optional(),
     konu: z.string().optional(),
+    dosyaKonusu: z.string().optional(),
     maddeNo: z.string().optional(),
     tarih: z.string().optional(),
     dosyaTarihi: z.string().optional(),

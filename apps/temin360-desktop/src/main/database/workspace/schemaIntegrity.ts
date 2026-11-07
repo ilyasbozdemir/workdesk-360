@@ -275,7 +275,13 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     { name: 'is_tanimi', def: 'TEXT' },
     { name: 'is_adi', def: 'TEXT' },
     { name: 'konu', def: 'TEXT' },
-    { name: 'komisyon_seed_edildi', def: 'INTEGER' }
+    { name: 'komisyon_seed_edildi', def: 'INTEGER' },
+    { name: 'antet_birim_gosterilsin', def: 'INTEGER DEFAULT 1' },
+    { name: 'is_locked', def: 'INTEGER DEFAULT 0' },
+    { name: 'lock_reason', def: 'TEXT' },
+    { name: 'kayit_kaynagi', def: "TEXT DEFAULT 'yeni'" },
+    { name: 'aktarim_grubu_id', def: 'TEXT' },
+    { name: 'kaynak_kayit_id', def: 'TEXT' }
   ]
   for (const c of teminDosyasiColumns) {
     safeAddColumn(db, 'DATA_TeminDosyasi', c.name, c.def)
@@ -284,6 +290,9 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   // 6. DATA_TeminKomisyon & TANIM_KomisyonUye Kolonları
   const komisyonExtendedColumns = [
     { name: 'asli_yedek', def: "TEXT DEFAULT 'Asil'" },
+    { name: 'imza_turu', def: "TEXT DEFAULT 'İmza'" },
+    { name: 'birim_id', def: 'INTEGER' },
+    { name: 'birim', def: 'TEXT' },
     { name: 'kaynak', def: "TEXT DEFAULT 'kurumsal'" },
     { name: 'rol', def: "TEXT DEFAULT 'Asil'" },
     { name: 'komisyon_turu', def: 'TEXT' },
@@ -333,6 +342,38 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     `,
       'DATA_TeminDosyasi Kolon Eşitleme'
     )
+
+    if (isPhysicalTable(db, 'TANIM_Birim')) {
+      safeExec(
+        db,
+        `
+        INSERT OR IGNORE INTO TANIM_Birim (ad, birim_adi, antet_ek_satir, sunum_makami, aktif_mi)
+        SELECT DISTINCT
+          TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), ''))) AS yeni_ad,
+          TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), ''))) AS yeni_birim_adi,
+          TRIM(COALESCE(NULLIF(TRIM(d.antet_ek_satir), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''))) AS yeni_antet,
+          TRIM(COALESCE(NULLIF(TRIM(d.sunulacak_makam), ''), TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''))) || ' MAKAMINA')) AS yeni_makam,
+          1
+        FROM DATA_TeminDosyasi d
+        WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
+          AND COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), '')) IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM TANIM_Birim b
+            WHERE LOWER(TRIM(b.birim_adi)) = LOWER(TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), ''))))
+          );
+
+        UPDATE DATA_TeminDosyasi
+        SET birim_id = (
+          SELECT b.id FROM TANIM_Birim b
+          WHERE LOWER(TRIM(b.birim_adi)) = LOWER(TRIM(COALESCE(NULLIF(TRIM(DATA_TeminDosyasi.birim), ''), NULLIF(TRIM(DATA_TeminDosyasi.harcama_birimi), ''), NULLIF(TRIM(DATA_TeminDosyasi.antet_ek_satir), ''))))
+          LIMIT 1
+        )
+        WHERE (birim_id IS NULL OR birim_id = 0)
+          AND COALESCE(NULLIF(TRIM(birim), ''), NULLIF(TRIM(harcama_birimi), ''), NULLIF(TRIM(antet_ek_satir), '')) IS NOT NULL;
+        `,
+        'DATA_TeminDosyasi Birim ve TANIM_Birim Otomatik Eşitleme'
+      )
+    }
   }
 
   if (isPhysicalTable(db, 'DATA_TeminKomisyon')) {

@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useClickOutside } from '../../hooks/useClickOutside'
-import { Search, ChevronDown, Check, X, UserPlus, User } from 'lucide-react'
+import { Search, ChevronDown, Check, X, UserPlus, User, Building2 } from 'lucide-react'
 
 export interface PersonelOption {
   id: number
   ad_soyad: string
   unvan?: string | null
   birim?: string | null
+  birim_id?: number | string | null
 }
 
 interface PersonelComboboxProps {
@@ -30,6 +31,7 @@ export function PersonelCombobox({
 }: PersonelComboboxProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedBirimFilter, setSelectedBirimFilter] = useState<string>('ALL')
   const containerRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -37,21 +39,36 @@ export function PersonelCombobox({
     return personeller.find((p) => p.id === selectedId) || null
   }, [personeller, selectedId])
 
+  const distinctUnits = useMemo(() => {
+    const unitSet = new Set<string>()
+    for (const p of personeller) {
+      const b = (p.birim || '').trim()
+      if (b) unitSet.add(b)
+    }
+    return Array.from(unitSet).sort((a, b) => a.localeCompare(b, 'tr-TR'))
+  }, [personeller])
+
   const cleanUnvan = (unvan?: string | null) => {
     if (!unvan) return ''
     return unvan.replace(/^\(+|\)+$/g, '').trim()
   }
 
   const filteredList = useMemo(() => {
-    if (!searchTerm.trim()) return personeller
+    let base = personeller
+    if (selectedBirimFilter !== 'ALL') {
+      base = base.filter(
+        (p) => (p.birim || '').trim().toLowerCase() === selectedBirimFilter.toLowerCase()
+      )
+    }
+    if (!searchTerm.trim()) return base
     const query = searchTerm.toLowerCase().trim()
-    return personeller.filter((p) => {
+    return base.filter((p) => {
       const name = (p.ad_soyad || '').toLowerCase()
       const title = (p.unvan || '').toLowerCase()
       const unit = (p.birim || '').toLowerCase()
       return name.includes(query) || title.includes(query) || unit.includes(query)
     })
-  }, [personeller, searchTerm])
+  }, [personeller, searchTerm, selectedBirimFilter])
 
   useClickOutside(
     containerRef,
@@ -158,14 +175,33 @@ export function PersonelCombobox({
 
       {/* Autocomplete Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 max-h-64 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-100">
-          {/* Arama Input */}
+        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5 max-h-72 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-100">
+          {/* Birim Filtresi ve Arama Input */}
+          {distinctUnits.length > 0 && (
+            <div className="flex items-center gap-1.5 mb-1.5 px-1">
+              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <select
+                data-testid="personel-combobox-birim-filter"
+                value={selectedBirimFilter}
+                onChange={(e) => setSelectedBirimFilter(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full px-2 py-1 text-[11px] font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:border-blue-500 text-slate-700 dark:text-slate-200 cursor-pointer"
+              >
+                <option value="ALL">Tüm Birimler ({personeller.length})</option>
+                {distinctUnits.map((unitName) => (
+                  <option key={unitName} value={unitName}>
+                    🏢 {unitName}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="relative mb-1.5">
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="İsim veya unvan ile ara..."
+              placeholder="İsim, unvan veya birim ile ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-8 pr-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
@@ -227,11 +263,10 @@ export function PersonelCombobox({
                         <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">
                           {p.ad_soyad}
                         </div>
-                        {p.unvan && (
-                          <div className="text-[10px] text-slate-400 truncate">
-                            {cleanUnvan(p.unvan)}
-                          </div>
-                        )}
+                        <div className="text-[10px] text-slate-400 truncate">
+                          {cleanUnvan(p.unvan)}
+                          {p.birim ? `${p.unvan ? ' • ' : ''}${p.birim}` : ''}
+                        </div>
                       </div>
                     </div>
                     {isSelected && (

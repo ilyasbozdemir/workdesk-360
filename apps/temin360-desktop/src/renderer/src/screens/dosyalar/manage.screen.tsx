@@ -63,6 +63,7 @@ export function DosyaManageScreen(): React.JSX.Element {
     handleAiFormValidation,
     handleAiFullFormGenerate,
     handleSelectBirim,
+    handleCreateAndSelectBirim,
     handleSave,
     handleCopyDosya,
     matchedSuggestions,
@@ -194,6 +195,7 @@ export function DosyaManageScreen(): React.JSX.Element {
                     setBirimSearchQuery={setBirimSearchQuery}
                     filteredBirimler={filteredBirimler}
                     handleSelectBirim={handleSelectBirim}
+                    handleCreateAndSelectBirim={handleCreateAndSelectBirim}
                     showPersonelSearch={showPersonelSearch}
                     setShowPersonelSearch={setShowPersonelSearch}
                     personelSearchQuery={personelSearchQuery}

@@ -21,6 +21,12 @@ import type {
 } from '../documentSettings.types'
 import { ekOner, ilgiOner, kapanisIbaresi } from '../documentSettingsUtils'
 import { TemplateRegistryService } from '@temin360/document-templates'
+import { DocumentPreviewRotaSection } from '../../../dosya/components/DocumentPreviewModalV3/components/DocumentPreviewRotaSection'
+import {
+  getRotaConfigForTemplate,
+  saveRotaConfigForTemplate
+} from '../../../../services/rotaDefaultsService'
+import { useWorkspaceStore } from '../../../../store/workspaceStore'
 
 interface BelgeAyarlariPaneliProps {
   selectedBelgeId?: string
@@ -44,6 +50,64 @@ export function BelgeAyarlariPaneli({
   const [activeTab, setActiveTab] = useState<'muhatap' | 'ilgi' | 'ek' | 'dagitim' | 'rota'>(
     'muhatap'
   )
+  const { activeDosyaId } = useWorkspaceStore()
+  const [rotaFormData, setRotaFormData] = useState<Record<string, any>>({
+    belgeModu: 'standart',
+    rota: []
+  })
+
+  useEffect(() => {
+    if (!selectedBelgeId) return
+    const saved = getRotaConfigForTemplate(selectedBelgeId, activeDosyaId)
+    setRotaFormData({
+      belgeModu: saved?.belgeModu || 'standart',
+      rota: saved?.rota ? saved.rota.map((s) => ({ ...s })) : [],
+      birimId: saved?.birimId ?? null,
+      birim_id: saved?.birimId ?? null,
+      birimAdi: saved?.birimAdi || '',
+      birim: saved?.birimAdi || '',
+      antetEkSatir: saved?.antetEkSatir || '',
+      antetSatirlari: Array.isArray(saved?.antetSatirlari) ? [...saved.antetSatirlari] : undefined,
+      hazirlayanPersonelAdi: saved?.hazirlayanPersonelAdi || '',
+      hazirlayanPersonelUnvan: saved?.hazirlayanPersonelUnvan || '',
+      gerceklestirmeGorevlisiAdi: saved?.gerceklestirmeGorevlisiAdi || '',
+      gerceklestirmeGorevlisiUnvani: saved?.gerceklestirmeGorevlisiUnvani || '',
+      onaylayanPersonelAdi: saved?.onaylayanPersonelAdi || '',
+      onaylayanPersonelUnvan: saved?.onaylayanPersonelUnvan || '',
+      sunulacakMakamAdi: saved?.sunulacakMakamAdi || ''
+    })
+  }, [selectedBelgeId, activeDosyaId])
+
+  const handleSetRotaFormData: React.Dispatch<React.SetStateAction<any>> = (updater) => {
+    setRotaFormData((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater
+      if (selectedBelgeId) {
+        saveRotaConfigForTemplate(
+          selectedBelgeId,
+          {
+            belgeModu: next.belgeModu || 'standart',
+            rota: Array.isArray(next.rota) ? next.rota : [],
+            birimId: next.birimId ?? next.birim_id ?? undefined,
+            birimAdi: next.birimAdi || next.birim || undefined,
+            antetEkSatir: next.antetEkSatir || next.antet_ek_satir || undefined,
+            antetSatirlari:
+              Array.isArray(next.antetSatirlari) && next.antetSatirlari.length > 0
+                ? next.antetSatirlari
+                : undefined,
+            hazirlayanPersonelAdi: next.hazirlayanPersonelAdi,
+            hazirlayanPersonelUnvan: next.hazirlayanPersonelUnvan,
+            gerceklestirmeGorevlisiAdi: next.gerceklestirmeGorevlisiAdi,
+            gerceklestirmeGorevlisiUnvani: next.gerceklestirmeGorevlisiUnvani,
+            onaylayanPersonelAdi: next.onaylayanPersonelAdi,
+            onaylayanPersonelUnvan: next.onaylayanPersonelUnvan,
+            sunulacakMakamAdi: next.sunulacakMakamAdi || next.sunulacakMakam
+          },
+          activeDosyaId
+        )
+      }
+      return next
+    })
+  }
 
   const template = selectedBelgeId
     ? TemplateRegistryService.getTemplateById(selectedBelgeId)
@@ -244,13 +308,23 @@ export function BelgeAyarlariPaneli({
 
         <button
           role="tab"
-          aria-selected={false}
-          disabled
-          className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-slate-600 cursor-not-allowed border-b-2 border-transparent"
-          title="İlk sürümde Rota sekmesi iskelet olarak hazırdır"
+          aria-selected={activeTab === 'rota'}
+          tabIndex={0}
+          onClick={() => setActiveTab('rota')}
+          className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+            activeTab === 'rota'
+              ? 'border-purple-500 text-purple-400 bg-slate-900'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+          title="Belge Rota ve Onay Akışı"
         >
-          <GitFork className="w-3.5 h-3.5 opacity-60" />
-          Rota (Yakında)
+          <GitFork className="w-3.5 h-3.5" />
+          Rota
+          {Array.isArray(rotaFormData.rota) && rotaFormData.rota.length > 0 && (
+            <span className="ml-1 text-[10px] bg-purple-900/60 text-purple-300 border border-purple-700/60 px-1.5 py-0.2 rounded-full">
+              {rotaFormData.rota.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -493,6 +567,19 @@ export function BelgeAyarlariPaneli({
                 })}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* SEKME 5: ROTA & ONAY AKIŞI */}
+        {activeTab === 'rota' && (
+          <div className="space-y-4 animate-in fade-in duration-200 bg-white dark:bg-slate-900 rounded-xl p-3 border border-slate-800">
+            <DocumentPreviewRotaSection
+              formData={rotaFormData}
+              setFormData={handleSetRotaFormData}
+              personelListesi={[]}
+              templateId={selectedBelgeId}
+              dosyaId={activeDosyaId}
+            />
           </div>
         )}
       </div>

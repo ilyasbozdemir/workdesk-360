@@ -1,16 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   Briefcase,
   Building2,
   ClipboardList,
+  Coins,
   FileSpreadsheet,
   FolderKanban,
+  GitFork,
   HelpCircle,
   Home,
   LayoutGrid,
   LayoutTemplate,
   PackageSearch,
+  Settings,
   UserCheck,
   Users,
   Warehouse
@@ -18,6 +22,7 @@ import {
 import { cn } from '../../utils/cn'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+import { useWorkspaceContextStore } from '../../store/workspaceContextStore'
 import { getInitials } from '@renderer/utils/formatters'
 
 /**
@@ -36,7 +41,7 @@ function useRailTooltip(): {
   const [tip, setTip] = useState<{ top: number; left: number } | null>(null)
   const show = (el: HTMLElement): void => {
     const r = el.getBoundingClientRect()
-    setTip({ top: r.top + r.height / 2, left: r.right + 12 })
+    setTip({ top: r.top + r.height / 2, left: r.right + 10 })
   }
   return {
     tip,
@@ -56,21 +61,24 @@ function RailTooltip({
   tip: { top: number; left: number } | null
   children: React.ReactNode
 }): React.JSX.Element | null {
-  if (!tip) return null
-  return (
+  if (!tip || typeof document === 'undefined') return null
+  return createPortal(
     <div
       role="tooltip"
       style={{ top: tip.top, left: tip.left, transform: 'translateY(-50%)' }}
-      className="fixed z-300 max-w-[min(20rem,calc(100vw-6rem))] flex items-center gap-1.5 bg-slate-900 text-white text-xs rounded-lg py-1.5 px-3 shadow-xl pointer-events-none wrap-break-word"
+      className="fixed z-[99999] max-w-[min(20rem,calc(100vw-6rem))] flex items-center gap-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg py-1.5 px-3 shadow-2xl border border-slate-700/60 pointer-events-none whitespace-nowrap animate-in fade-in-0 duration-150 select-none"
     >
-      {children}
-    </div>
+      <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-900 border-l border-b border-slate-700/60 rotate-45" />
+      <span className="relative z-10 flex items-center gap-1.5">{children}</span>
+    </div>,
+    document.body
   )
 }
 
 interface ShortcutItem {
   name: string
-  path: string
+  path?: string
+  onClick?: () => void
   icon: React.ComponentType<{ className?: string }>
   color: string
   badge?: string
@@ -85,33 +93,73 @@ function ShortcutLink({
 }): React.JSX.Element {
   const Icon = item.icon
   const { tip, handlers } = useRailTooltip()
-  return (
-    <Link
-      to={item.path as never}
-      aria-label={item.name}
-      data-testid="rail-shortcut"
-      {...handlers}
-      className={cn(
-        // Kısa ekranlarda (<= 720px yükseklik) düğmeler küçülür
-        'w-10 h-10 short:w-8 short:h-8 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border cursor-pointer relative',
-        isActive
-          ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
-          : 'bg-transparent border-transparent text-slate-500 hover:scale-105',
-        !isActive && item.color
-      )}
-    >
-      <Icon className="w-5 h-5 short:w-4 short:h-4" />
+
+  const commonClass = cn(
+    'w-8 h-8 2xl:w-9 2xl:h-9 shrink-0 rounded-xl flex items-center justify-center transition-all duration-200 border cursor-pointer relative',
+    isActive
+      ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
+      : 'bg-transparent border-transparent text-slate-500 hover:scale-105',
+    !isActive && item.color
+  )
+
+  const content = (
+    <>
+      <Icon className="w-4 h-4 2xl:w-4.5 2xl:h-4.5" />
       {item.badge && (
-        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-cyan-500 ring-2 ring-white dark:ring-slate-900" />
+        <span
+          className={cn(
+            'absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-white dark:ring-slate-900',
+            item.badge === '5018' ? 'bg-emerald-500' : 'bg-cyan-500'
+          )}
+        />
       )}
       <RailTooltip tip={tip}>
         <span>{item.name}</span>
         {item.badge && (
-          <span className="px-1.5 py-0.2 text-[9px] font-black uppercase rounded bg-cyan-500/30 text-cyan-300">
+          <span
+            className={cn(
+              'px-1.5 py-0.2 text-[9px] font-black uppercase rounded',
+              item.badge === '5018'
+                ? 'bg-emerald-500/30 text-emerald-300'
+                : 'bg-cyan-500/30 text-cyan-300'
+            )}
+          >
             {item.badge}
           </span>
         )}
       </RailTooltip>
+    </>
+  )
+
+  if (item.onClick) {
+    return (
+      <a
+        href="#"
+        onClick={(e) => {
+          e.preventDefault()
+          item.onClick?.()
+        }}
+        title={item.name}
+        aria-label={item.name}
+        data-testid="rail-shortcut"
+        {...handlers}
+        className={commonClass}
+      >
+        {content}
+      </a>
+    )
+  }
+
+  return (
+    <Link
+      to={item.path as never}
+      title={item.name}
+      aria-label={item.name}
+      data-testid="rail-shortcut"
+      {...handlers}
+      className={commonClass}
+    >
+      {content}
     </Link>
   )
 }
@@ -121,7 +169,15 @@ export function ActiveFileShortcuts(): React.JSX.Element {
   const currentPath = router.location.pathname
   const { adminUsername, adminName, institutionName, institutionLogo } = useSettingsStore()
   const { activeDosyaId } = useWorkspaceStore()
+  const { setActiveWorkspace } = useWorkspaceContextStore()
   const { tip: profileTip, handlers: profileHandlers } = useRailTooltip()
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const handleFooterWheel = (e: React.WheelEvent): void => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop += e.deltaY
+    }
+  }
 
   const primaryItems: ShortcutItem[] = [
     {
@@ -129,6 +185,13 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       path: '/',
       icon: Home,
       color: 'hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20'
+    },
+    {
+      name: 'Mali Hizmetler & Muhasebe Masası (5018)',
+      onClick: () => setActiveWorkspace('finance'),
+      icon: Coins,
+      color: 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-600',
+      badge: '5018'
     },
     {
       name: 'Kurum Bilgileri',
@@ -176,6 +239,15 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       color: 'hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20'
     },
     {
+      name: activeDosyaId
+        ? `Belge Rota & Onay Akışı (Dosya #${activeDosyaId})`
+        : 'Belge Rota & Onay Akışı (Varsayılan)',
+      path: '/rota-yonetimi',
+      icon: GitFork,
+      color: 'hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/20',
+      badge: 'ROTA'
+    },
+    {
       name: 'Ambar Yönetimi',
       path: '/ambar',
       icon: Warehouse,
@@ -207,65 +279,75 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       path: '/yardim',
       icon: HelpCircle,
       color: 'hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+    },
+    {
+      name: 'Sistem Ayarları',
+      path: '/ayarlar',
+      icon: Settings,
+      color: 'hover:text-slate-800 hover:bg-slate-100 dark:hover:text-slate-100 dark:hover:bg-slate-800'
     }
   ]
 
   const renderLink = (item: ShortcutItem): React.JSX.Element => (
-    <ShortcutLink key={item.path} item={item} isActive={currentPath === item.path.split('?')[0]} />
+    <ShortcutLink
+      key={item.path || item.name}
+      item={item}
+      isActive={item.path ? currentPath === item.path.split('?')[0] : false}
+    />
   )
 
-  const userInitials = getInitials(adminName || '')
-  const profileLabel = `Kullanıcı: ${adminUsername} (Profil)${institutionName ? ` — ${institutionName}` : ''}`
+  const userInitials = getInitials(adminName || adminUsername || 'SY')
+  const displayUsername = adminName || adminUsername || 'Sistem Yöneticisi'
+  const profileLabel = `Kullanıcı: ${displayUsername} (Profil)${institutionName ? ` — ${institutionName}` : ''}`
 
   return (
     <nav
       aria-label="Hızlı erişim"
       data-testid="active-file-rail"
-      className="h-full min-h-0 w-16 bg-white dark:bg-slate-900 border-r border-slate-250 dark:border-slate-800/80 flex flex-col py-4 short:py-2 shrink-0 z-30 select-none"
+      className="h-full min-h-0 w-14 2xl:w-16 bg-white dark:bg-slate-900 border-r border-slate-250 dark:border-slate-800/80 flex flex-col py-2 shrink-0 z-30 select-none overflow-hidden"
     >
       {/* Üst: Ana gezinme — sığmazsa yalnızca bu bölüm kayar */}
       <div
+        ref={scrollRef}
         data-testid="rail-scroll"
-        tabIndex={-1}
-        className="flex-1 min-h-28 short:min-h-20 w-full flex flex-col items-center gap-2.5 short:gap-1.5 px-2 py-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar"
-        style={{ scrollbarWidth: 'thin' }}
+        className="flex-1 min-h-0 w-full flex flex-col items-center gap-1.5 2xl:gap-2 px-1.5 py-1 overflow-y-auto overflow-x-hidden custom-scrollbar"
       >
         {primaryItems.map(renderLink)}
       </div>
 
-      {/* Alt: ikincil gezinme ve profil — her zaman görünür */}
+      {/* Alt: ikincil gezinme ve profil — her zaman görünür, fare tekerleğiyle de kaydırılabilir */}
       <div
         data-testid="rail-footer"
-        className="w-full shrink-0 flex flex-col items-center gap-2.5 short:gap-1.5 px-2 pt-2"
+        onWheel={handleFooterWheel}
+        className="w-full shrink-0 flex flex-col items-center gap-1.5 2xl:gap-2 px-1.5 pt-1.5 pb-1"
       >
-        <div className="w-8 h-px bg-slate-200 dark:bg-slate-800 my-1 short:my-0" />
+        <div className="w-6 h-px bg-slate-200 dark:bg-slate-800 my-0.5" />
         {secondaryItems.map(renderLink)}
 
         {/* Kullanıcı Profili (PP) */}
-        {adminUsername && (
-          <Link
-            to="/profil"
-            aria-label={profileLabel}
-            data-testid="rail-profile"
-            {...profileHandlers}
-            className={cn(
-              'w-10 h-10 short:w-8 short:h-8 shrink-0 rounded-full flex items-center justify-center font-extrabold text-[11px] transition-all duration-200 border cursor-pointer relative mt-1.5 short:mt-0 overflow-hidden bg-white dark:bg-slate-900',
-              currentPath === '/profil'
-                ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
-                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:scale-105'
-            )}
-          >
-            {institutionLogo ? (
-              <img
-                src={institutionLogo}
-                alt="Kurum logosu"
-                className="w-full h-full object-contain p-0.5"
-              />
-            ) : (
-              userInitials
-            )}
-          </Link>
-        )}
+        <Link
+          to="/profil"
+          title={profileLabel}
+          aria-label={profileLabel}
+          data-testid="rail-profile"
+          {...profileHandlers}
+          className={cn(
+            'w-8 h-8 2xl:w-9 2xl:h-9 shrink-0 rounded-full flex items-center justify-center font-extrabold text-[10px] 2xl:text-[11px] transition-all duration-200 border cursor-pointer relative overflow-hidden bg-white dark:bg-slate-900 mt-0.5',
+            currentPath === '/profil'
+              ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
+              : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:scale-105'
+          )}
+        >
+          {institutionLogo ? (
+            <img
+              src={institutionLogo}
+              alt="Kurum logosu"
+              className="w-full h-full object-contain p-0.5"
+            />
+          ) : (
+            userInitials
+          )}
+        </Link>
         <RailTooltip tip={profileTip}>{profileLabel}</RailTooltip>
       </div>
     </nav>

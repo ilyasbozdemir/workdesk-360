@@ -1,2 +1,3 @@
 export * from './IhtiyacListesi.schema';
-export * from "./IhtiyacListesi.template";
+export * from './IhtiyacListesi.hook';
+export * from './IhtiyacListesi.template';

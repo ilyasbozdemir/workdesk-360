@@ -88,6 +88,7 @@ export default function AyarlarScreen(): React.ReactNode {
   const [unifiedStepperMode, setUnifiedStepperMode] = useState(true)
   const [trashRetentionDays, setTrashRetentionDays] = useState(30)
   const [useDesktopUserAsDefault, setUseDesktopUserAsDefault] = useState(false)
+  const [alwaysShowQuickMenu, setAlwaysShowQuickMenu] = useState(true)
   const [pcInfo, setPcInfo] = useState<{
     hostname?: string
     osUsername?: string
@@ -160,6 +161,7 @@ export default function AyarlarScreen(): React.ReactNode {
         setUnifiedStepperMode(settings.unifiedStepperMode !== 'false')
         setTrashRetentionDays(parseInt(settings.trashRetentionDays || '30', 10) || 30)
         setUseDesktopUserAsDefault(settings.useDesktopUserAsDefault === 'true')
+        setAlwaysShowQuickMenu(settings.alwaysShowQuickMenu !== 'false')
       }, 0)
     }
   }, [settings])
@@ -254,8 +256,10 @@ export default function AyarlarScreen(): React.ReactNode {
         dataToSave.unifiedStepperMode = unifiedStepperMode ? 'true' : 'false'
         dataToSave.trashRetentionDays = String(trashRetentionDays)
         dataToSave.useDesktopUserAsDefault = useDesktopUserAsDefault ? 'true' : 'false'
+        dataToSave.alwaysShowQuickMenu = alwaysShowQuickMenu ? 'true' : 'false'
         useSettingsStore.getState().setTrashRetentionDays(trashRetentionDays)
         useSettingsStore.getState().setUseDesktopUserAsDefault(useDesktopUserAsDefault)
+        useSettingsStore.getState().setAlwaysShowQuickMenu(alwaysShowQuickMenu)
       } else if (tab === 'smtp') {
         dataToSave.smtp_host = smtpHost
         dataToSave.smtpHost = smtpHost
@@ -338,6 +342,8 @@ export default function AyarlarScreen(): React.ReactNode {
                     setTrashRetentionDays={setTrashRetentionDays}
                     useDesktopUserAsDefault={useDesktopUserAsDefault}
                     setUseDesktopUserAsDefault={setUseDesktopUserAsDefault}
+                    alwaysShowQuickMenu={alwaysShowQuickMenu}
+                    setAlwaysShowQuickMenu={setAlwaysShowQuickMenu}
                     pcInfo={pcInfo}
                   />
                 )}

@@ -7,30 +7,60 @@ interface KurumsalSablonTabProps {
   piyasaDefaults: DosyaKomisyonMember[]
   muayeneDefaults: DosyaKomisyonMember[]
   onEditKomisyon: (kom: { id: number; ad: string }) => void
+  onBulkApplyToAllDossiers?: () => void
+  isBulkApplying?: boolean
+  bulkFeedback?: string | null
 }
 
 export const KurumsalSablonTab: React.FC<KurumsalSablonTabProps> = ({
   piyasaDefaults,
   muayeneDefaults,
-  onEditKomisyon
+  onEditKomisyon,
+  onBulkApplyToAllDossiers,
+  isBulkApplying = false,
+  bulkFeedback = null
 }) => {
   return (
     <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
       {/* Kurumsal Şablon Açıklama Kutusu */}
-      <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-2 text-xs">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-          <h3 className="text-sm font-black text-amber-900 dark:text-amber-200">
-            Kurumsal Genel Komisyon Şablonları Havuzu
-          </h3>
+      <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 space-y-2.5 text-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <h3 className="text-sm font-black text-amber-900 dark:text-amber-200">
+              Kurumsal Genel Komisyon Şablonları Havuzu
+            </h3>
+          </div>
+
+          {onBulkApplyToAllDossiers && (
+            <button
+              type="button"
+              onClick={onBulkApplyToAllDossiers}
+              disabled={isBulkApplying}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-all cursor-pointer shadow-xs disabled:opacity-50 self-start sm:self-auto"
+              title="Bu şablon havuzundaki görevlileri tek tıkla tüm aktif dosyalara uygular ve fiş oluşturur"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>
+                {isBulkApplying
+                  ? 'Tüm Dosyalara Uygulanıyor...'
+                  : 'Bu Şablonu Tek Tıkla Tüm Dosyalara Uygula'}
+              </span>
+            </button>
+          )}
         </div>
         <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
           Bu bölümde tanımlanan personel kadroları, kurumunuzun doğrudan temin ve ihale süreçleri
-          için <strong>genel şablon havuzudur</strong>. Yeni bir temin dosyası açıldığında veya bir
-          dosyada <em>&quot;Kurumsal Şablonu Aktar&quot;</em> işlemi yapıldığında bu kadro
-          varsayılan olarak dosyaya kopyalanır. Bir dosyada yapılan özel değişiklikler buradaki
-          şablon kadrosunu asla bozmaz.
+          için <strong>genel şablon havuzudur</strong>. Yeni bir temin dosyası açıldığında veya{' '}
+          <em>&quot;Bu Şablonu Tek Tıkla Tüm Dosyalara Uygula&quot;</em> butonuna basıldığında bu
+          kadro dosyalara kopyalanır ve fiş geçmişine işlenir.
         </p>
+        {bulkFeedback && (
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 font-bold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{bulkFeedback}</span>
+          </div>
+        )}
       </div>
 
       {/* Şablon Kartları Izgarası */}

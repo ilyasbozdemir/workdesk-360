@@ -13,6 +13,38 @@ export type EvrakSayisiResolverFn = (
   queryExecutor: (sql: string, params: any[]) => Promise<any[]>
 ) => Promise<string>
 
+export interface BirimAntetResolutionInput {
+  birimId?: number | string | null
+  birimAdi?: string | null
+  birimList?: any[]
+  kurumRow?: Record<string, any> | null
+  personelList?: any[]
+  baseAntetLines?: string[]
+  dosyaAntetEkSatir?: string | null
+  fallbackInstitutionName?: string
+}
+
+export interface BirimAntetResolutionResult {
+  birimId?: number | string
+  birimAdi: string
+  antetEkSatir: string
+  antetSatirlari: string[]
+  mudurluk: string
+  harcamaBirimi: string
+  ihtiyacYeri: string
+  sunulacakMakamAdi: string
+  harcamaYetkilisiId?: number
+  harcamaYetkilisiAdi?: string
+  harcamaYetkilisiUnvan?: string
+  gerceklestirmeGorevlisiId?: number
+  gerceklestirmeGorevlisiAdi?: string
+  gerceklestirmeGorevlisiUnvan?: string
+  matchedBirim: Record<string, any> | null
+  birimFound: boolean
+  birimPassive: boolean
+  warning?: string
+}
+
 /**
  * Kurumsal ve Antet Bilgileri Sağlayıcısı (Institutional Header Provider)
  * - Belgeye özel alanlar, kalemler veya tekliflerle ilgilenmez.
@@ -30,6 +62,270 @@ export class InstitutionalHeaderProvider {
 
   static setEvrakSayisiResolver(resolver: EvrakSayisiResolverFn | null): void {
     this.evrakSayisiResolver = resolver
+  }
+
+  /**
+   * TANIM_Kurum satırından veya varsayılan kurum bilgisinden temel antet satırlarını üretir.
+   * Birim satırı eklenmeden önceki kurumsal üst başlığı (T.C., Üst Kurum, Kurum Adı) döndürür.
+   */
+  static parseKurumBaseAntetLines(
+    kurumRow?: Record<string, any> | null,
+    fallbackInstitutionName?: string
+  ): string[] {
+    let lines: string[] = []
+    if (kurumRow?.kurum_anteti) {
+      try {
+        const parsed =
+          typeof kurumRow.kurum_anteti === 'string'
+            ? JSON.parse(kurumRow.kurum_anteti)
+            : kurumRow.kurum_anteti
+        if (Array.isArray(parsed)) {
+          lines = parsed
+            .map((s: unknown) => String(s ?? '').trim())
+            .filter(Boolean)
+        }
+      } catch {
+        if (typeof kurumRow.kurum_anteti === 'string' && kurumRow.kurum_anteti.trim()) {
+          lines = kurumRow.kurum_anteti
+            .split('\n')
+            .map((s: string) => s.trim())
+            .filter(Boolean)
+        }
+      }
+    }
+
+    if (lines.length === 0) {
+      const built: string[] = ['T.C.']
+      if (kurumRow?.ust_kurum_adi && String(kurumRow.ust_kurum_adi).trim()) {
+        built.push(String(kurumRow.ust_kurum_adi).trim().toUpperCase())
+      }
+      const kurumAdiText =
+        kurumRow?.kurum_adi ||
+        kurumRow?.ad ||
+        fallbackInstitutionName ||
+        ''
+      if (kurumAdiText && String(kurumAdiText).trim()) {
+        const upperKurum = String(kurumAdiText).trim().toUpperCase()
+        if (!built.some((b) => b.toUpperCase() === upperKurum)) {
+          built.push(upperKurum)
+        }
+      }
+      if (built.length === 1 && fallbackInstitutionName) {
+        built.push(String(fallbackInstitutionName).trim().toUpperCase())
+      }
+      lines = built
+    }
+
+    return lines
+  }
+
+  /**
+   * Temel kurum antet satırları ile seçili birimin antet_ek_satir / birim_adi bilgisini
+   * mükerrer satır oluşturmadan birleştirir.
+   */
+  static composeBirimAntetLines(
+    baseLines: string[],
+    birimOrEkSatir?: Record<string, any> | string | null,
+    dosyaAntetEkSatir?: string | null,
+     knownBirimNames?: string[]
+  ): string[] {
+    const cleanBase = Array.isArray(baseLines)
+      ? baseLines.map((s) => String(s ?? '').trim()).filter(Boolean)
+      : []
+
+    // Eğer bilinen birim adları verildiyse ve temel antet dizisinin son satırı eski bir birime aitse onu çıkar
+    let result = [...cleanBase]
+    if (knownBirimNames && knownBirimNames.length > 0 && result.length > 2) {
+      const normalizedKnown = new Set(
+        knownBirimNames.map((n) => String(n ?? '').trim().toLocaleUpperCase('tr-TR')).filter(Boolean)
+      )
+      const lastLineUpper = result[result.length - 1].toLocaleUpperCase('tr-TR')
+      if (normalizedKnown.has(lastLineUpper)) {
+        result = result.slice(0, -1)
+      }
+    }
+
+    let ekSatir = ''
+    if (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) {
+      ekSatir = String(dosyaAntetEkSatir).trim()
+    } else if (typeof birimOrEkSatir === 'string') {
+      ekSatir = birimOrEkSatir.trim()
+    } else if (birimOrEkSatir && typeof birimOrEkSatir === 'object') {
+      ekSatir = String(
+        birimOrEkSatir.antet_ek_satir ||
+          birimOrEkSatir.birim_antet_ek_satir ||
+          birimOrEkSatir.birim_adi ||
+          birimOrEkSatir.birim_tablo_adi ||
+          birimOrEkSatir.ad ||
+          ''
+      ).trim()
+    }
+
+    if (
+      ekSatir &&
+      !result.some(
+        (s) => s.trim().toLocaleUpperCase('tr-TR') === ekSatir.toLocaleUpperCase('tr-TR')
+      )
+    ) {
+      result.push(ekSatir)
+    }
+
+    return result.length > 0 ? result : ['T.C.']
+  }
+
+  /**
+   * Seçili birimId veya birimAdi üzerinden TANIM_Birim + TANIM_Kurum + TANIM_Personel
+   * ilişkilerini tek merkezden çözümler. Birim bulunamadığında veya pasif olduğunda
+   * güvenli fallback ve uyarı (warning) döndürür.
+   */
+  static resolveBirimSelection(input: BirimAntetResolutionInput): BirimAntetResolutionResult {
+    const {
+      birimId,
+      birimAdi,
+      birimList = [],
+      kurumRow = null,
+      personelList = [],
+      baseAntetLines,
+      dosyaAntetEkSatir,
+      fallbackInstitutionName
+    } = input
+
+    const knownBirimNames: string[] = []
+    for (const b of birimList) {
+      if (!b) continue
+      if (b.birim_adi) knownBirimNames.push(String(b.birim_adi))
+      if (b.ad) knownBirimNames.push(String(b.ad))
+      if (b.antet_ek_satir) knownBirimNames.push(String(b.antet_ek_satir))
+    }
+
+    const effectiveBaseLines =
+      baseAntetLines && baseAntetLines.length > 0
+        ? baseAntetLines
+        : this.parseKurumBaseAntetLines(kurumRow, fallbackInstitutionName)
+
+    const hasExplicitId =
+      birimId !== undefined && birimId !== null && String(birimId).trim() !== '' && Number(birimId) !== 0
+    const cleanBirimAdi = typeof birimAdi === 'string' ? birimAdi.trim() : ''
+
+    let matchedBirim: Record<string, any> | null = null
+    if (hasExplicitId && Array.isArray(birimList)) {
+      matchedBirim =
+        birimList.find(
+          (b: any) => b && (Number(b.id) === Number(birimId) || String(b.id) === String(birimId).trim())
+        ) || null
+    }
+    if (!matchedBirim && cleanBirimAdi && Array.isArray(birimList)) {
+      const targetUpper = cleanBirimAdi.toLocaleUpperCase('tr-TR')
+      matchedBirim =
+        birimList.find((b: any) => {
+          if (!b) return false
+          return [b.birim_adi, b.ad, b.kisa_ad, b.antet_ek_satir]
+            .filter(Boolean)
+            .some((val) => String(val).trim().toLocaleUpperCase('tr-TR') === targetUpper)
+        }) || null
+    }
+
+    const birimFound = Boolean(matchedBirim)
+    const birimPassive = Boolean(
+      matchedBirim &&
+        (matchedBirim.aktif_mi === 0 ||
+          matchedBirim.aktif_mi === '0' ||
+          matchedBirim.aktif_mi === false ||
+          matchedBirim.is_active === 0 ||
+          matchedBirim.is_active === false)
+    )
+
+    let warning: string | undefined
+    if (hasExplicitId && !birimFound && birimList.length > 0) {
+      warning = `Seçili birim (ID: ${birimId}) birim tanımlarında bulunamadı. Varsayılan kurum anteti kullanılıyor.`
+    } else if (!hasExplicitId && cleanBirimAdi && !birimFound && birimList.length > 0) {
+      warning = `"${cleanBirimAdi}" birimi TANIM_Birim kayıtlarında bulunamadı.`
+    } else if (birimPassive && matchedBirim) {
+      const bName = matchedBirim.birim_adi || matchedBirim.ad || String(birimId)
+      warning = `"${bName}" birimi pasif durumdadır.`
+    }
+
+    const resolvedBirimAdi =
+      matchedBirim?.birim_adi ||
+      matchedBirim?.ad ||
+      cleanBirimAdi ||
+      ''
+    const resolvedAntetEkSatir =
+      (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) ||
+      matchedBirim?.antet_ek_satir ||
+      resolvedBirimAdi ||
+      ''
+
+    const antetSatirlari = this.composeBirimAntetLines(
+      effectiveBaseLines,
+      matchedBirim || resolvedAntetEkSatir,
+      dosyaAntetEkSatir,
+      knownBirimNames
+    )
+
+    const sunulacakMakamAdi = String(
+      matchedBirim?.sunum_makami ||
+        kurumRow?.makam_adi ||
+        ''
+    ).trim()
+
+    const ihtiyacYeri = String(
+      matchedBirim?.ihtiyac_yeri_eki ||
+        resolvedBirimAdi ||
+        ''
+    ).trim()
+
+    let harcamaYetkilisiAdi: string | undefined
+    let harcamaYetkilisiUnvan: string | undefined = matchedBirim?.harcama_yetkilisi_unvan || undefined
+    const harcamaYetkilisiId = matchedBirim?.harcama_yetkilisi_id
+      ? Number(matchedBirim.harcama_yetkilisi_id)
+      : undefined
+
+    if (harcamaYetkilisiId && Array.isArray(personelList) && personelList.length > 0) {
+      const hp = personelList.find((p: any) => p && Number(p.id) === harcamaYetkilisiId)
+      if (hp) {
+        harcamaYetkilisiAdi = hp.ad_soyad || hp.adSoyad || ''
+        harcamaYetkilisiUnvan = harcamaYetkilisiUnvan || hp.unvan || 'Harcama Yetkilisi'
+      }
+    }
+
+    let gerceklestirmeGorevlisiAdi: string | undefined
+    let gerceklestirmeGorevlisiUnvan: string | undefined =
+      matchedBirim?.gerceklestirme_gorevlisi_unvan || undefined
+    const gerceklestirmeGorevlisiId =
+      matchedBirim?.gerceklestirme_gorevlisi_id || matchedBirim?.ilgili_personel_id
+        ? Number(matchedBirim.gerceklestirme_gorevlisi_id || matchedBirim.ilgili_personel_id)
+        : undefined
+
+    if (gerceklestirmeGorevlisiId && Array.isArray(personelList) && personelList.length > 0) {
+      const gp = personelList.find((p: any) => p && Number(p.id) === gerceklestirmeGorevlisiId)
+      if (gp) {
+        gerceklestirmeGorevlisiAdi = gp.ad_soyad || gp.adSoyad || ''
+        gerceklestirmeGorevlisiUnvan =
+          gerceklestirmeGorevlisiUnvan || gp.unvan || 'Gerçekleştirme Görevlisi'
+      }
+    }
+
+    return {
+      birimId: matchedBirim?.id ?? (hasExplicitId ? Number(birimId) || birimId! : undefined),
+      birimAdi: resolvedBirimAdi,
+      antetEkSatir: resolvedAntetEkSatir,
+      antetSatirlari,
+      mudurluk: resolvedBirimAdi || resolvedAntetEkSatir,
+      harcamaBirimi: resolvedBirimAdi || resolvedAntetEkSatir,
+      ihtiyacYeri,
+      sunulacakMakamAdi,
+      harcamaYetkilisiId,
+      harcamaYetkilisiAdi,
+      harcamaYetkilisiUnvan,
+      gerceklestirmeGorevlisiId,
+      gerceklestirmeGorevlisiAdi,
+      gerceklestirmeGorevlisiUnvan,
+      matchedBirim,
+      birimFound,
+      birimPassive,
+      warning
+    }
   }
 
   /**
@@ -142,23 +438,6 @@ export class InstitutionalHeaderProvider {
       kurumRow = kurumRows[0]
     }
 
-    let antetSatirlari: string[] = []
-    if (kurumRow?.kurum_anteti) {
-      try {
-        const parsed = JSON.parse(kurumRow.kurum_anteti)
-        if (Array.isArray(parsed)) {
-          antetSatirlari = parsed.filter((s: string) => s && String(s).trim() !== '')
-        }
-      } catch {
-        if (typeof kurumRow.kurum_anteti === 'string' && kurumRow.kurum_anteti.trim()) {
-          antetSatirlari = kurumRow.kurum_anteti
-            .split('\n')
-            .map((s: string) => s.trim())
-            .filter(Boolean)
-        }
-      }
-    }
-
     const kurumAdiText =
       kurumRow?.ust_kurum_adi ||
       kurumRow?.kurum_adi ||
@@ -166,9 +445,12 @@ export class InstitutionalHeaderProvider {
       settings.institutionName ||
       'KAMU KURUMU'
 
-    if (antetSatirlari.length === 0) {
-      antetSatirlari = ['T.C.', String(kurumAdiText).toUpperCase()]
-    }
+    const baseLines = this.parseKurumBaseAntetLines(kurumRow, kurumAdiText)
+    const antetSatirlari = this.composeBirimAntetLines(
+      baseLines,
+      dosyaRow,
+      dosyaRow?.antet_ek_satir
+    )
 
     const effectiveMudurluk =
       dosyaRow?.birim_adi ||

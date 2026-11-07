@@ -1,6 +1,6 @@
 {
   "name": "@dt/database",
-  "version": "1.0.0-rc.11",
+  "version": "1.0.0-rc.13",
   "description": "Shared database models, schemas, and migrations for TEMİN 360 App",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +8,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && node -e \"const fs = require('fs'); const path = require('path'); function copyYaml(src, dist) { fs.mkdirSync(dist, { recursive: true }); fs.readdirSync(src, { withFileTypes: true }).forEach(entry => { const sPath = path.join(src, entry.name); const dPath = path.join(dist, entry.name); if (entry.isDirectory()) { copyYaml(sPath, dPath); } else if (entry.name.endsWith('.yaml')) { fs.copyFileSync(sPath, dPath); } }); } copyYaml('src/schema-manifest', 'dist/schema-manifest');\"",
+    "build": "node ../../scripts/sync-manifests.mjs && tsc && node -e \"const fs = require('fs'); const path = require('path'); function copyYaml(src, dist) { fs.mkdirSync(dist, { recursive: true }); fs.readdirSync(src, { withFileTypes: true }).forEach(entry => { const sPath = path.join(src, entry.name); const dPath = path.join(dist, entry.name); if (entry.isDirectory()) { copyYaml(sPath, dPath); } else if (entry.name.endsWith('.yaml')) { fs.copyFileSync(sPath, dPath); } }); } copyYaml('src/schema-manifest', 'dist/schema-manifest');\"",
+    "manifest:sync": "node ../../scripts/sync-manifests.mjs",
+    "manifest:check": "node ../../scripts/sync-manifests.mjs --check",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {

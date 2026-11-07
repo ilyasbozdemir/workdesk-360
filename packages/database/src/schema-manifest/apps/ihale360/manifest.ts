@@ -1,6 +1,7 @@
 /* eslint-disable */
 /**
  * İHALE 360 (4734 Sayılı Kamu İhale Kanunu Md. 19 / 21) Şema Manifesti
+ * Bu dosya apps/ihale360/manifest.yaml dosyasından otomatik derlenir.
  */
 export const ihale360Manifest = {
   app: "ihale360-desktop",
@@ -11,8 +12,6 @@ export const ihale360Manifest = {
   schema_min: 1,
   schema_max: 1,
   release_date: "2026-10-26",
-  inheritsHistoricalSuiteManifests: false,
-  shared_schema_scope: "ihale",
   changes: [
     {
       schema: 1,
@@ -23,4 +22,3 @@ export const ihale360Manifest = {
 };
 
 export default ihale360Manifest;
-
