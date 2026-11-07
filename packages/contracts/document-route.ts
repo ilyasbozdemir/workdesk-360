@@ -15,6 +15,12 @@
 export type RouteKind = "person" | "person-list" | "unit";
 export type RouteSource = "settings" | "document";
 
+/**
+ * Belge rotasındaki imza / işlem türü.
+ * Komisyon görevi (Başkan, Üye, Yedek Üye vb.) ile KARIŞTIRILMAMALIDIR; ayrı bir alandır.
+ */
+export type CommissionSignatureType = "Paraf" | "Koordinasyon" | "İmza";
+
 export interface RouteSlotDefinition {
   id: string;
   label: string;
@@ -38,9 +44,20 @@ export interface TemplateRouteDefinition {
 export interface RouteAssignee {
   id: string;
   name: string;
+  /** Personelin kadro / meslek unvanı (Örn: İnşaat Mühendisi, Şube Müdürü) */
   title?: string;
+  /** Bağlı olduğu birim ID */
   unitId?: string;
+  /** Bağlı olduğu birim adı */
+  unitName?: string;
+  /** Komisyondaki görevi / sıfatı (Örn: Komisyon Başkanı, Başkan, Üye, Yedek Üye) */
   role?: string;
+  /** Belge rotasındaki imza türü (Paraf | Koordinasyon | İmza) - komisyon görevinden ayrıdır */
+  imzaTuru?: CommissionSignatureType;
+  /** Asil (1 / true) veya Yedek (0 / false) üye durumu */
+  asilMi?: number | boolean;
+  /** Yedek üyenin bu belgede asil üye yerine aktif katılıp imzalayacağı durumu */
+  aktifKatilim?: boolean;
 }
 
 export type RouteValue = RouteAssignee | RouteAssignee[] | null;

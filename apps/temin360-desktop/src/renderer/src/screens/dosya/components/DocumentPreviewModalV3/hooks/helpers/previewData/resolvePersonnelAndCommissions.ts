@@ -1,4 +1,9 @@
-import { TemplateRegistryService, resolveCommissionCategory } from '@temin360/document-templates'
+import {
+  TemplateRegistryService,
+  resolveCommissionCategory,
+  distributeCommissionMembersBySignatureType,
+  isCommissionAppointmentDocument
+} from '@temin360/document-templates'
 import { dedupeMembers, cleanPersonelName } from './previewDataUtils'
 
 export async function resolvePersonnelAndCommissions(
@@ -78,7 +83,9 @@ export async function resolvePersonnelAndCommissions(
   if (activeDosyaId) {
     try {
       const dbKomisyonlar = await queryExecutor(
-        `SELECT tk.*, p.ad_soyad, p.unvan, tk.gorev, tk.rol, tk.komisyon_id 
+        `SELECT tk.*, COALESCE(tk.ad_soyad, p.ad_soyad) as ad_soyad, COALESCE(tk.unvan, p.unvan) as unvan,
+                COALESCE(tk.birim, p.birim) as birim, COALESCE(tk.birim_id, p.birim_id) as birim_id,
+                tk.gorev, tk.rol, tk.komisyon_id
          FROM DATA_TeminKomisyon tk 
          LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id 
          WHERE tk.temin_dosya_id = ? 
@@ -188,7 +195,11 @@ export async function resolvePersonnelAndCommissions(
           }
         }
 
-        // 4. Komisyon listeleri
+        // 4. Komisyon listeleri (Yedek üye kuralları ve İmza / Paraf / Koordinasyon ayrımı ile)
+        const currentDocId = String(resolvedId || selectedDocId || targetDocTemplateId || '').toLowerCase()
+        const isApptDoc = isCommissionAppointmentDocument(targetDocIds.length > 0 ? targetDocIds : currentDocId)
+        const isMuayeneDoc = currentDocId.includes('muayene') || currentDocId.includes('kabul')
+
         const maliyetMembers = dbKomisyonlar.filter((k: any) => {
           if (!TemplateRegistryService.isMemberVisibleInDocument(k, targetDocIds)) return false
           return resolveCommissionCategory(k) === 'maliyet'
@@ -201,17 +212,20 @@ export async function resolvePersonnelAndCommissions(
 
         if (maliyetMembers.length > 0) {
           const deduplicatedMaliyet = dedupeMembers(maliyetMembers)
-          const formattedMaliyet = deduplicatedMaliyet.map((m: any) => ({
-            adSoyad: cleanPersonelName(m.ad_soyad || m.adSoyad),
-            unvan: m.unvan || '',
-            gorev: m.gorev || 'Fiyat Araştırma Görevlisi',
-            gorevi: m.gorev || 'Fiyat Araştırma Görevlisi',
-            komisyonGorevi: m.gorev || 'Fiyat Araştırma Görevlisi',
-            rol: m.rol || 'Üye'
-          }))
+          const distMaliyet = distributeCommissionMembersBySignatureType(deduplicatedMaliyet, {
+            docId: targetDocIds.length > 0 ? targetDocIds : currentDocId,
+            defaultRole: 'Fiyat Araştırma Görevlisi',
+            existingRota: Array.isArray(baseData.rota) ? baseData.rota : []
+          })
+
+          // Görevlendirme oluru belgelerinde tüm uygun üyeler (İmza + Paraf + Koordinasyon) tabloda gösterilir;
+          // tutanak ve karar belgelerinde ıslak imza alanına yalnızca 'İmza' türündeki üyeler yerleşir.
+          const formattedMaliyet = isApptDoc
+            ? distMaliyet.allEligibleMembers
+            : distMaliyet.wetSignatureMembers
+
           baseData.fiyatKomisyonu = formattedMaliyet
-          const currentDocId = String(resolvedId || selectedDocId || '').toLowerCase()
-          if (!currentDocId.includes('muayene') && !currentDocId.includes('kabul')) {
+          if (!isMuayeneDoc) {
             const activeOfficers = formattedMaliyet.filter((m: any) => {
               const combined = `${m.adSoyad || ''} ${m.unvan || ''} ${m.gorev || ''}`.toLowerCase()
               return (
@@ -229,23 +243,40 @@ export async function resolvePersonnelAndCommissions(
               activeOfficers.length > 0 ? activeOfficers : formattedMaliyet
             baseData.gorevliler = baseData.gorevlendirilenler
             baseData.dagitimListesi = baseData.gorevlendirilenler
+
+            if (
+              !isApptDoc &&
+              (distMaliyet.parafMembers.length > 0 || distMaliyet.koordinasyonMembers.length > 0)
+            ) {
+              baseData.rota = distMaliyet.rotaSteps
+            }
           }
         }
 
         if (muayeneMembers.length > 0) {
           const deduplicatedMuayene = dedupeMembers(muayeneMembers)
-          const formattedMuayene = deduplicatedMuayene.map((m: any) => ({
-            adSoyad: m.ad_soyad || '',
-            unvan: m.unvan || '',
-            gorev: m.gorev || 'Üye',
-            rol: m.rol || 'Üye'
-          }))
+          const distMuayene = distributeCommissionMembersBySignatureType(deduplicatedMuayene, {
+            docId: targetDocIds.length > 0 ? targetDocIds : currentDocId,
+            defaultRole: 'Üye',
+            existingRota: Array.isArray(baseData.rota) ? baseData.rota : []
+          })
+
+          const formattedMuayene = isApptDoc
+            ? distMuayene.allEligibleMembers
+            : distMuayene.wetSignatureMembers
+
           baseData.muayeneKomisyonu = formattedMuayene
-          const currentDocId = String(resolvedId || selectedDocId || '').toLowerCase()
-          if (currentDocId.includes('muayene') || currentDocId.includes('kabul')) {
+          if (isMuayeneDoc) {
             baseData.gorevlendirilenler = formattedMuayene
             baseData.gorevliler = formattedMuayene
             baseData.dagitimListesi = formattedMuayene
+
+            if (
+              !isApptDoc &&
+              (distMuayene.parafMembers.length > 0 || distMuayene.koordinasyonMembers.length > 0)
+            ) {
+              baseData.rota = distMuayene.rotaSteps
+            }
           }
         }
       }
@@ -420,14 +451,22 @@ export async function resolvePersonnelAndCommissions(
         return resolveCommissionCategory(g) === 'maliyet'
       })
       if (gMaliyet.length > 0) {
-        const formatted = dedupeMembers(gMaliyet).map((m: any) => ({
-          adSoyad: m.ad_soyad || '',
-          unvan: m.unvan || '',
-          gorev: m.gorev || 'Fiyat Araştırma Görevlisi',
-          gorevi: m.gorev || 'Fiyat Araştırma Görevlisi',
-          komisyonGorevi: m.gorev || 'Fiyat Araştırma Görevlisi',
-          rol: m.rol || 'Üye'
-        }))
+        const currentDocId = String(resolvedId || selectedDocId || targetDocTemplateId || '').toLowerCase()
+        const isApptDoc = isCommissionAppointmentDocument(
+          targetDocIds.length > 0 ? targetDocIds : currentDocId
+        )
+        const distGlobalMaliyet = distributeCommissionMembersBySignatureType(
+          dedupeMembers(gMaliyet),
+          {
+            docId: targetDocIds.length > 0 ? targetDocIds : currentDocId,
+            defaultRole: 'Fiyat Araştırma Görevlisi',
+            existingRota: Array.isArray(baseData.rota) ? baseData.rota : []
+          }
+        )
+        const formatted = isApptDoc
+          ? distGlobalMaliyet.allEligibleMembers
+          : distGlobalMaliyet.wetSignatureMembers
+
         baseData.fiyatKomisyonu = formatted
         const activeOfficers = formatted.filter((m: any) => {
           const combined = `${m.adSoyad || ''} ${m.unvan || ''} ${m.gorev || ''}`.toLowerCase()

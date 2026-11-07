@@ -15,6 +15,7 @@ import {
   Users
 } from 'lucide-react'
 import type {
+  CommissionSignatureType,
   ResolvedRouteStep,
   RouteAssignee,
   RouteOverride,
@@ -26,7 +27,8 @@ import {
   buildMergedPersonelList,
   filterPersonelByBirim,
   validateBirimAndPersonelAssignments,
-  getTemplateRouteDefinition
+  getTemplateRouteDefinition,
+  isCommissionAppointmentDocument
 } from '@temin360/document-templates'
 import {
   InstitutionalHeaderProvider,
@@ -127,6 +129,7 @@ export function DocumentPreviewRotaSection({
     () => Boolean(formData?.allowCrossUnitPersonnel)
   )
   const [showAntetLinesEditor, setShowAntetLinesEditor] = React.useState<boolean>(false)
+  const [memberUnitFilters, setMemberUnitFilters] = React.useState<Record<string, string>>({})
 
   React.useEffect(() => {
     const onUpdated = () => setSettingsVersion((v) => v + 1)
@@ -553,7 +556,11 @@ export function DocumentPreviewRotaSection({
               id: m.id,
               adSoyad: m.name,
               unvan: m.title,
-              gorevi: m.role
+              gorevi: m.role,
+              imzaTuru: m.imzaTuru || 'İmza',
+              asilMi: m.asilMi ?? 1,
+              birimId: m.unitId,
+              birim: m.unitName
             }))
           : undefined,
         olurYazisi: formData?.olurYazisi
@@ -905,8 +912,9 @@ export function DocumentPreviewRotaSection({
 
           if (step.kind === 'person-list') {
             const currentList: RouteAssignee[] = Array.isArray(step.value) ? step.value : []
+            const isApptDoc = isCommissionAppointmentDocument(templateId || GLOBAL_ROTA_KEY)
 
-            const handleAddMember = () => {
+            const handleAddMember = (asReserve = false) => {
               const unusedPerson = mergedPersonelList.find(
                 (p) =>
                   !currentList.some(
@@ -915,18 +923,32 @@ export function DocumentPreviewRotaSection({
                       cleanPersonelName(p.ad_soyad).toLowerCase()
                   )
               )
+              const defaultRole = asReserve
+                ? 'Yedek Üye'
+                : currentList.length === 0
+                  ? 'Komisyon Başkanı'
+                  : 'Üye'
               const nextMember: RouteAssignee = unusedPerson
                 ? {
                     id: String(unusedPerson.id || unusedPerson.ad_soyad),
                     name: cleanPersonelName(unusedPerson.ad_soyad),
                     title: unusedPerson.unvan || '',
-                    role: currentList.length === 0 ? 'Başkan' : 'Üye'
+                    role: defaultRole,
+                    imzaTuru: 'İmza',
+                    asilMi: asReserve ? 0 : 1,
+                    unitId:
+                      unusedPerson.birim_id !== undefined && unusedPerson.birim_id !== null
+                        ? String(unusedPerson.birim_id)
+                        : undefined,
+                    unitName: unusedPerson.birim || undefined
                   }
                 : {
                     id: `member_${Date.now()}`,
                     name: '',
                     title: '',
-                    role: currentList.length === 0 ? 'Başkan' : 'Üye'
+                    role: defaultRole,
+                    imzaTuru: 'İmza',
+                    asilMi: asReserve ? 0 : 1
                   }
               updateSlotOverride(step.id, [...currentList, nextMember])
             }
@@ -951,6 +973,28 @@ export function DocumentPreviewRotaSection({
               next[target] = tmp
               updateSlotOverride(step.id, next)
             }
+
+            const wetSigCount = currentList.filter((m) => {
+              const isRes =
+                m.asilMi === 0 ||
+                m.asilMi === false ||
+                String(m.role || '')
+                  .toLowerCase()
+                  .includes('yedek')
+              if (isRes && !isApptDoc && !m.aktifKatilim) return false
+              return (m.imzaTuru || 'İmza') === 'İmza'
+            }).length
+
+            const routeFlowCount = currentList.filter((m) => {
+              const isRes =
+                m.asilMi === 0 ||
+                m.asilMi === false ||
+                String(m.role || '')
+                  .toLowerCase()
+                  .includes('yedek')
+              if (isRes && !isApptDoc && !m.aktifKatilim) return false
+              return m.imzaTuru === 'Paraf' || m.imzaTuru === 'Koordinasyon'
+            }).length
 
             return (
               <div
@@ -993,23 +1037,64 @@ export function DocumentPreviewRotaSection({
                   <p className="text-[10px] text-slate-400 leading-tight">{step.description}</p>
                 )}
 
+                {currentList.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 text-[10px] px-2 py-1 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200/70 dark:border-slate-800">
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                      ✒️ Islak İmza: {wetSigCount}
+                    </span>
+                    {routeFlowCount > 0 && (
+                      <span className="font-semibold text-indigo-700 dark:text-indigo-400">
+                        • 🔀 Paraf/Koordinasyon: {routeFlowCount}
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {currentList.length === 0 ? (
                   <div className="p-2.5 bg-slate-50 dark:bg-slate-900/60 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg text-center space-y-1.5">
                     <p className="text-[11px] text-slate-500">
                       Henüz bu liste için görevli/komisyon üyesi atanmadı.
                     </p>
-                    <button
-                      type="button"
-                      onClick={handleAddMember}
-                      className="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Görevli / Üye Ekle</span>
-                    </button>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleAddMember(false)}
+                        className="px-2.5 py-1 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 rounded-lg text-[11px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Asil Üye Ekle</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddMember(true)}
+                        className="px-2 py-1 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 rounded-lg text-[10px] font-bold inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Yedek Üye</span>
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
                     {currentList.map((member, idx) => {
+                      const rowFilterKey = `${step.id}_${idx}`
+                      const rowUnitOverride = memberUnitFilters[rowFilterKey] ?? ''
+                      const effectiveRowUnitId =
+                        rowUnitOverride === '__ALL__'
+                          ? null
+                          : rowUnitOverride !== ''
+                            ? rowUnitOverride
+                            : (currentBirimResolution.birimId ?? currentBirimId)
+                      const effectiveRowUnitAdi =
+                        rowUnitOverride === '__ALL__'
+                          ? null
+                          : rowUnitOverride !== ''
+                            ? activeBirimList.find((b: any) => String(b.id) === rowUnitOverride)
+                                ?.birim_adi || rowUnitOverride
+                            : currentBirimResolution.birimAdi || currentBirimAdi
+                      const includeOtherForMember =
+                        rowUnitOverride === '__ALL__' ? true : allowCrossUnitPersonnel
+
                       const baseMemberPool = buildMergedPersonelList(
                         personelListesi,
                         {
@@ -1024,10 +1109,10 @@ export function DocumentPreviewRotaSection({
                         member.title
                       )
                       const memberFilterRes = filterPersonelByBirim(baseMemberPool, {
-                        birimId: currentBirimResolution.birimId ?? currentBirimId,
-                        birimAdi: currentBirimResolution.birimAdi || currentBirimAdi,
+                        birimId: effectiveRowUnitId,
+                        birimAdi: effectiveRowUnitAdi,
                         birimList: activeBirimList,
-                        includeOtherUnits: allowCrossUnitPersonnel,
+                        includeOtherUnits: includeOtherForMember,
                         currentSelectedNames: member.name ? [member.name] : []
                       })
                       const memberPool = memberFilterRes.filteredList
@@ -1039,15 +1124,62 @@ export function DocumentPreviewRotaSection({
                       )
                       const selectedVal = matched ? String(matched.id || matched.ad_soyad) : ''
 
+                      const isReserve =
+                        member.asilMi === 0 ||
+                        member.asilMi === false ||
+                        String(member.role || '')
+                          .toLowerCase()
+                          .includes('yedek')
+                      const currentSigType: CommissionSignatureType =
+                        member.imzaTuru === 'Paraf' || member.imzaTuru === 'Koordinasyon'
+                          ? member.imzaTuru
+                          : 'İmza'
+                      const currentRole =
+                        member.role ||
+                        (isReserve
+                          ? 'Yedek Üye'
+                          : idx === 0 && currentList.length > 1
+                            ? 'Komisyon Başkanı'
+                            : 'Üye')
+
                       return (
                         <div
                           key={member.id || idx}
-                          className="p-2 bg-slate-50/80 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 rounded-lg space-y-1.5"
+                          className={`p-2 border rounded-lg space-y-1.5 ${
+                            isReserve
+                              ? 'bg-amber-50/40 dark:bg-amber-950/20 border-amber-200/80 dark:border-amber-800/60'
+                              : 'bg-slate-50/80 dark:bg-slate-900/70 border-slate-200/80 dark:border-slate-800'
+                          }`}
                         >
                           <div className="flex items-center justify-between gap-1">
-                            <span className="text-[10px] font-bold text-slate-500">
-                              #{idx + 1}. Görevli / Üye
-                            </span>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-[10px] font-bold text-slate-500">
+                                #{idx + 1}. Görevli
+                              </span>
+                              <button
+                                type="button"
+                                data-testid={`rota-member-asil-toggle-${step.id}-${idx}`}
+                                onClick={() => {
+                                  const nextReserve = !isReserve
+                                  handleUpdateMember(idx, {
+                                    asilMi: nextReserve ? 0 : 1,
+                                    role: nextReserve
+                                      ? 'Yedek Üye'
+                                      : currentRole === 'Yedek Üye'
+                                        ? 'Üye'
+                                        : currentRole
+                                  })
+                                }}
+                                className={`text-[9px] font-bold px-1.5 py-0.5 rounded border cursor-pointer ${
+                                  isReserve
+                                    ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
+                                    : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
+                                }`}
+                                title="Asil / Yedek Üye durumunu değiştir"
+                              >
+                                {isReserve ? '⟳ Yedek Üye' : '✓ Asil Üye'}
+                              </button>
+                            </div>
                             <div className="flex items-center gap-0.5">
                               <button
                                 type="button"
@@ -1075,64 +1207,107 @@ export function DocumentPreviewRotaSection({
                             </div>
                           </div>
 
-                          {memberPool.length > 0 && (
-                            <select
-                              value={selectedVal}
-                              onChange={(e) => {
-                                const val = e.target.value
-                                const p = memberPool.find(
-                                  (item) => String(item.id || item.ad_soyad) === val
-                                )
-                                if (p) {
-                                  handleUpdateMember(idx, {
-                                    id: String(p.id || p.ad_soyad),
-                                    name: cleanPersonelName(p.ad_soyad),
-                                    title: p.unvan || member.title || ''
-                                  })
+                          {/* Üye Bazlı Birim Filtresi + Personel Seçimi (Farklı birimlerden personel ekleme desteği) */}
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-1">
+                            {activeBirimList.length > 0 && (
+                              <select
+                                data-testid={`rota-member-unit-filter-${step.id}-${idx}`}
+                                value={rowUnitOverride}
+                                onChange={(e) =>
+                                  setMemberUnitFilters((prev) => ({
+                                    ...prev,
+                                    [rowFilterKey]: e.target.value
+                                  }))
                                 }
-                              }}
-                              className="w-full text-[11px] px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md cursor-pointer"
-                            >
-                              <option value="">👤 Personel Seç...</option>
-                              {allowCrossUnitPersonnel &&
-                              memberFilterRes.hasUnitDataInPool &&
-                              memberFilterRes.primaryUnitPersonel.length > 0 &&
-                              memberFilterRes.otherUnitPersonel.length > 0 ? (
-                                <>
-                                  <optgroup label="🏢 İlgili Birim Personeli">
-                                    {memberFilterRes.primaryUnitPersonel.map((p, pIdx) => (
-                                      <option
-                                        key={`pri_${p.id || pIdx}`}
-                                        value={String(p.id || p.ad_soyad)}
-                                      >
-                                        {p.label ||
-                                          `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                  <optgroup label="🌐 Diğer Birim Personelleri">
-                                    {memberFilterRes.otherUnitPersonel.map((p, pIdx) => (
-                                      <option
-                                        key={`oth_${p.id || pIdx}`}
-                                        value={String(p.id || p.ad_soyad)}
-                                      >
-                                        {p.label ||
-                                          `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
-                                        {p.birim ? ` — [${p.birim}]` : ''}
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                </>
-                              ) : (
-                                memberPool.map((p, pIdx) => (
-                                  <option key={p.id || pIdx} value={String(p.id || p.ad_soyad)}>
-                                    {p.label || `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
-                                  </option>
-                                ))
-                              )}
-                            </select>
-                          )}
+                                className="sm:col-span-5 text-[10px] px-1.5 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md cursor-pointer text-slate-600 dark:text-slate-300"
+                                title="Bu üye için personel listesini birime göre filtrele (Farklı birimlerden üye seçebilirsiniz)"
+                              >
+                                <option value="">🏢 Belge Birimi</option>
+                                <option value="__ALL__">🌐 Tüm Birimler</option>
+                                {activeBirimList.map((b: any, bIdx: number) => {
+                                  const bId =
+                                    b.id !== undefined && b.id !== null
+                                      ? String(b.id)
+                                      : `b_${bIdx}`
+                                  const bLabel = b.birim_adi || b.ad || b.kisa_ad || `Birim #${bId}`
+                                  return (
+                                    <option key={bId} value={bId}>
+                                      {bLabel}
+                                    </option>
+                                  )
+                                })}
+                              </select>
+                            )}
 
+                            {memberPool.length > 0 && (
+                              <select
+                                data-testid={`rota-member-person-select-${step.id}-${idx}`}
+                                value={selectedVal}
+                                onChange={(e) => {
+                                  const val = e.target.value
+                                  const p = memberPool.find(
+                                    (item) => String(item.id || item.ad_soyad) === val
+                                  )
+                                  if (p) {
+                                    handleUpdateMember(idx, {
+                                      id: String(p.id || p.ad_soyad),
+                                      name: cleanPersonelName(p.ad_soyad),
+                                      title: p.unvan || member.title || '',
+                                      unitId:
+                                        p.birim_id !== undefined && p.birim_id !== null
+                                          ? String(p.birim_id)
+                                          : member.unitId,
+                                      unitName: p.birim || member.unitName
+                                    })
+                                  }
+                                }}
+                                className={`${
+                                  activeBirimList.length > 0 ? 'sm:col-span-7' : 'sm:col-span-12'
+                                } w-full text-[11px] px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md cursor-pointer`}
+                              >
+                                <option value="">👤 Personel Seç...</option>
+                                {includeOtherForMember &&
+                                memberFilterRes.hasUnitDataInPool &&
+                                memberFilterRes.primaryUnitPersonel.length > 0 &&
+                                memberFilterRes.otherUnitPersonel.length > 0 ? (
+                                  <>
+                                    <optgroup label="🏢 Seçili Birim Personeli">
+                                      {memberFilterRes.primaryUnitPersonel.map((p, pIdx) => (
+                                        <option
+                                          key={`pri_${p.id || pIdx}`}
+                                          value={String(p.id || p.ad_soyad)}
+                                        >
+                                          {p.label ||
+                                            `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                    <optgroup label="🌐 Diğer Birim Personelleri">
+                                      {memberFilterRes.otherUnitPersonel.map((p, pIdx) => (
+                                        <option
+                                          key={`oth_${p.id || pIdx}`}
+                                          value={String(p.id || p.ad_soyad)}
+                                        >
+                                          {p.label ||
+                                            `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
+                                          {p.birim ? ` — [${p.birim}]` : ''}
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                  </>
+                                ) : (
+                                  memberPool.map((p, pIdx) => (
+                                    <option key={p.id || pIdx} value={String(p.id || p.ad_soyad)}>
+                                      {p.label || `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
+                                      {p.birim ? ` — [${p.birim}]` : ''}
+                                    </option>
+                                  ))
+                                )}
+                              </select>
+                            )}
+                          </div>
+
+                          {/* Adı Soyadı & Kadro Unvanı */}
                           <div className="grid grid-cols-2 gap-1">
                             <input
                               type="text"
@@ -1145,22 +1320,103 @@ export function DocumentPreviewRotaSection({
                               type="text"
                               value={member.title || ''}
                               onChange={(e) => handleUpdateMember(idx, { title: e.target.value })}
-                              placeholder="Unvanı"
+                              placeholder="Unvanı (Örn: Mühendis)"
                               className="px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[11px]"
                             />
                           </div>
+
+                          {/* Ayrı Alanlar: Komisyon Görevi (Başkan, Üye vb.) VE İmza Türü (İmza, Paraf, Koordinasyon) */}
+                          <div className="grid grid-cols-2 gap-1">
+                            <div>
+                              <label className="block text-[9px] font-semibold text-slate-400 mb-0.5">
+                                Komisyon Görevi
+                              </label>
+                              <input
+                                data-testid={`rota-member-role-${step.id}-${idx}`}
+                                type="text"
+                                list={`komisyon-gorev-list-${step.id}-${idx}`}
+                                value={currentRole}
+                                onChange={(e) => handleUpdateMember(idx, { role: e.target.value })}
+                                placeholder="Başkan / Üye"
+                                className="w-full px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[10px] font-semibold"
+                              />
+                              <datalist id={`komisyon-gorev-list-${step.id}-${idx}`}>
+                                <option value="Komisyon Başkanı" />
+                                <option value="Başkan" />
+                                <option value="Üye" />
+                                <option value="Fiyat Araştırma Görevlisi" />
+                                <option value="Uzman Üye" />
+                                <option value="Mali Üye" />
+                                <option value="Yedek Üye" />
+                              </datalist>
+                            </div>
+
+                            <div>
+                              <label className="block text-[9px] font-semibold text-slate-400 mb-0.5">
+                                İmza Türü (Rota)
+                              </label>
+                              <select
+                                data-testid={`rota-member-sigtype-${step.id}-${idx}`}
+                                value={currentSigType}
+                                onChange={(e) =>
+                                  handleUpdateMember(idx, {
+                                    imzaTuru: e.target.value as CommissionSignatureType
+                                  })
+                                }
+                                className="w-full px-1.5 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-[10px] font-bold text-indigo-700 dark:text-indigo-300 cursor-pointer"
+                                title="Belge üzerindeki imza/rota işlemi (Komisyon görevinden bağımsızdır)"
+                              >
+                                <option value="İmza">✒️ Islak İmza</option>
+                                <option value="Paraf">✏️ Paraf</option>
+                                <option value="Koordinasyon">🔀 Koordinasyon</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Yedek Üye İşleyiş Kuralı Kontrolü */}
+                          {isReserve && !isApptDoc && (
+                            <div className="flex items-center justify-between px-2 py-1 bg-amber-100/70 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 rounded text-[9.5px] text-amber-900 dark:text-amber-200">
+                              <span>
+                                {member.aktifKatilim
+                                  ? '✓ Asil üye yerine bu belgede imza alanı açık'
+                                  : 'ℹ️ Yedek üye (Otomatik imza alanına eklenmez)'}
+                              </span>
+                              <label className="inline-flex items-center gap-1 font-bold cursor-pointer shrink-0 ml-1">
+                                <input
+                                  data-testid={`rota-member-reserve-active-${step.id}-${idx}`}
+                                  type="checkbox"
+                                  checked={Boolean(member.aktifKatilim)}
+                                  onChange={(e) =>
+                                    handleUpdateMember(idx, { aktifKatilim: e.target.checked })
+                                  }
+                                  className="rounded border-amber-400 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                />
+                                <span>İmza Aç</span>
+                              </label>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
 
-                    <button
-                      type="button"
-                      onClick={handleAddMember}
-                      className="w-full py-1 border border-dashed border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>+ Görevli / Üye Ekle</span>
-                    </button>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleAddMember(false)}
+                        className="py-1 border border-dashed border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded-lg text-[10.5px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>+ Asil Üye Ekle</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddMember(true)}
+                        className="py-1 border border-dashed border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-lg text-[10.5px] font-bold flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>+ Yedek Üye Ekle</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

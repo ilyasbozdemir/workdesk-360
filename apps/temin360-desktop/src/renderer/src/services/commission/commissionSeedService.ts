@@ -101,6 +101,9 @@ export interface RawCommissionMember {
   hedef_belgeler?: string | null
   asli_yedek?: string | null
   asil_mi?: number
+  imza_turu?: string | null
+  birim_id?: number | null
+  birim?: string | null
   sira?: number
   kaynak?: string | null
 }
@@ -322,8 +325,8 @@ export async function seedDossierCommission(
 
         txStatements.push({
           sql: `INSERT INTO DATA_TeminKomisyon 
-                (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, kaynak)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'onceki_dosya')`,
+                (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim, kaynak)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'onceki_dosya')`,
           params: [
             dosyaId,
             m.komisyon_id || 1,
@@ -339,7 +342,10 @@ export async function seedDossierCommission(
             m.bitis_tarihi || null,
             m.belge_kapsami || 'tumu',
             m.hedef_belgeler || '["*"]',
-            m.asli_yedek || 'Asil'
+            m.asli_yedek || 'Asil',
+            m.imza_turu || 'İmza',
+            m.birim_id || null,
+            m.birim || null
           ]
         })
         insertCount++
@@ -366,8 +372,8 @@ export async function seedDossierCommission(
 
         txStatements.push({
           sql: `INSERT INTO DATA_TeminKomisyon 
-                (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, belge_kapsami, hedef_belgeler, asli_yedek, kaynak)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'kurumsal')`,
+                (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim, kaynak)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'kurumsal')`,
           params: [
             dosyaId,
             m.komisyon_id,
@@ -380,7 +386,10 @@ export async function seedDossierCommission(
             isShow,
             scope,
             hedefJson,
-            m.asil_mi === 1 ? 'Asil' : 'Yedek'
+            m.asil_mi === 1 ? 'Asil' : 'Yedek',
+            m.imza_turu || 'İmza',
+            m.birim_id || null,
+            m.birim || null
           ]
         })
         insertCount++
@@ -520,8 +529,8 @@ export async function copyCommissionBetweenDossiers(
 
       txStatements.push({
         sql: `INSERT INTO DATA_TeminKomisyon 
-              (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, kaynak)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim, kaynak)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         params: [
           targetDosyaId,
           m.komisyon_id || (komTuru.toLowerCase().includes('muayene') ? 2 : 1),
@@ -540,6 +549,9 @@ export async function copyCommissionBetweenDossiers(
             ? m.hedef_belgeler
             : JSON.stringify(m.hedef_belgeler || ['*']),
           asliYedek,
+          m.imza_turu || m.imzaTuru || 'İmza',
+          m.birim_id || null,
+          m.birim || null,
           `kopyalandi:${sourceDosyaId}`
         ]
       })
@@ -557,6 +569,10 @@ export async function copyCommissionBetweenDossiers(
         rol,
         asil_mi: asliYedek === 'Yedek' ? 0 : 1,
         asli_yedek: asliYedek,
+        imza_turu: m.imza_turu || m.imzaTuru || 'İmza',
+        imzaTuru: m.imza_turu || m.imzaTuru || 'İmza',
+        birim_id: m.birim_id || null,
+        birim: m.birim || null,
         komisyon_turu: komTuru
       })
     }
@@ -650,8 +666,8 @@ export async function applyInstitutionalTemplateToDossier(
 
       txStatements.push({
         sql: `INSERT INTO DATA_TeminKomisyon 
-              (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, belge_kapsami, hedef_belgeler, asli_yedek, kaynak)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'kurumsal')`,
+              (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim, kaynak)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'kurumsal')`,
         params: [
           targetDosyaId,
           m.komisyon_id,
@@ -664,7 +680,10 @@ export async function applyInstitutionalTemplateToDossier(
           isShow,
           scope,
           hedefJson,
-          m.asil_mi === 1 ? 'Asil' : 'Yedek'
+          m.asil_mi === 1 ? 'Asil' : 'Yedek',
+          m.imza_turu || 'İmza',
+          m.birim_id || null,
+          m.birim || null
         ]
       })
 
@@ -681,6 +700,10 @@ export async function applyInstitutionalTemplateToDossier(
         rol,
         asil_mi: m.asil_mi === 1 ? 1 : 0,
         asli_yedek: m.asil_mi === 1 ? 'Asil' : 'Yedek',
+        imza_turu: m.imza_turu || 'İmza',
+        imzaTuru: m.imza_turu || 'İmza',
+        birim_id: m.birim_id || null,
+        birim: m.birim || null,
         komisyon_turu: komAdi
       })
     }
@@ -878,7 +901,10 @@ export async function applyCommissionToAllDossiers(
           typeof m.hedef_belgeler === 'string'
             ? m.hedef_belgeler
             : JSON.stringify(m.hedef_belgeler || ['*']),
-        asli_yedek: asliYedek
+        asli_yedek: asliYedek,
+        imza_turu: m.imza_turu || m.imzaTuru || 'İmza',
+        birim_id: m.birim_id || null,
+        birim: m.birim || null
       }
     })
 
@@ -895,6 +921,10 @@ export async function applyCommissionToAllDossiers(
       rol: m.rol,
       asil_mi: m.asli_yedek === 'Yedek' ? 0 : 1,
       asli_yedek: m.asli_yedek,
+      imza_turu: m.imza_turu,
+      imzaTuru: m.imza_turu,
+      birim_id: m.birim_id,
+      birim: m.birim,
       komisyon_turu: m.komisyon_turu
     }))
 
@@ -909,8 +939,8 @@ export async function applyCommissionToAllDossiers(
       for (const m of normalizedMembers) {
         txStatements.push({
           sql: `INSERT INTO DATA_TeminKomisyon 
-                (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, kaynak)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim, kaynak)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           params: [
             d.id,
             m.komisyon_id,
@@ -927,6 +957,9 @@ export async function applyCommissionToAllDossiers(
             m.belge_kapsami,
             m.hedef_belgeler,
             m.asli_yedek,
+            m.imza_turu,
+            m.birim_id,
+            m.birim,
             `toplu_fis:${fisNo}`
           ]
         })
@@ -1079,8 +1112,8 @@ export async function restoreCommissionFromHistoryFis(
 
       txStatements.push({
         sql: `INSERT INTO DATA_TeminKomisyon 
-              (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, kaynak)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim, kaynak)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         params: [
           targetDosyaId,
           komId,
@@ -1099,6 +1132,9 @@ export async function restoreCommissionFromHistoryFis(
             ? m.hedef_belgeler
             : JSON.stringify(m.hedef_belgeler || ['*']),
           asliYedek,
+          m.imza_turu || m.imzaTuru || 'İmza',
+          m.birim_id || null,
+          m.birim || null,
           `fis_geri_yukleme:${historyId}`
         ]
       })
@@ -1116,6 +1152,10 @@ export async function restoreCommissionFromHistoryFis(
         rol,
         asil_mi: asliYedek === 'Yedek' ? 0 : 1,
         asli_yedek: asliYedek,
+        imza_turu: m.imza_turu || m.imzaTuru || 'İmza',
+        imzaTuru: m.imza_turu || m.imzaTuru || 'İmza',
+        birim_id: m.birim_id || null,
+        birim: m.birim || null,
         komisyon_turu: komTuru
       })
     }

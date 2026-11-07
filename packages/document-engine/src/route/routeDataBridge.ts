@@ -6,6 +6,7 @@
  * muayeneKomisyonu, sunulacakMakamAdi vb.) kullanmasını sağlar.
  */
 import type {
+  CommissionSignatureType,
   ResolvedDocumentRoute,
   RouteAssignee,
   RouteOverride,
@@ -15,11 +16,43 @@ import type {
   TemplateRouteDefinition,
 } from "@temin360/contracts";
 
+function normalizeSigType(raw: unknown): CommissionSignatureType {
+  if (typeof raw !== "string") return "İmza";
+  const clean = raw.trim().toLocaleLowerCase("tr-TR");
+  if (clean === "paraf") return "Paraf";
+  if (clean === "koordinasyon" || clean === "koordine") return "Koordinasyon";
+  return "İmza";
+}
+
+function isReserveAssignee(item: Record<string, any>): boolean {
+  if (item.asilMi === 0 || item.asilMi === false || item.asil_mi === 0 || item.asil_mi === false) {
+    return true;
+  }
+  const asliYedek = String(item.asliYedek ?? item.asli_yedek ?? "").trim().toLocaleLowerCase("tr-TR");
+  if (asliYedek === "yedek" || asliYedek.includes("yedek")) return true;
+  const roleStr = String(item.gorevi ?? item.gorev ?? item.rol ?? item.role ?? "")
+    .trim()
+    .toLocaleLowerCase("tr-TR");
+  if (roleStr.includes("yedek")) return true;
+  return false;
+}
+
+function isAppointmentTemplate(templateId?: string | null): boolean {
+  if (!templateId) return false;
+  const clean = String(templateId).trim().toLocaleLowerCase("tr-TR").replace(/_/g, "-");
+  return (
+    clean.includes("komisyon-gorevlendirme") ||
+    clean.includes("muayene-kabul-komisyonu") ||
+    clean.includes("fiyat-arastirma-gorevlendirmesi")
+  );
+}
+
 function toAssignee(
   name?: string | null,
   title?: string | null,
   id?: string | number | null,
   role?: string | null,
+  extra?: Partial<RouteAssignee>,
 ): RouteAssignee | null {
   const cleanName = typeof name === "string" ? name.trim() : "";
   if (!cleanName) return null;
@@ -28,6 +61,7 @@ function toAssignee(
     name: cleanName,
     title: typeof title === "string" ? title.trim() : undefined,
     role: typeof role === "string" ? role.trim() : undefined,
+    ...extra,
   };
 }
 
@@ -45,15 +79,53 @@ function toAssigneeList(rawList: unknown): RouteAssignee[] {
       obj.onaylayanPersonelAdi ||
       "";
     const title =
+      obj.vekalet_unvani ||
+      obj.vekaletUnvani ||
       obj.unvan ||
       obj.personel_unvan ||
       obj.title ||
       obj.u ||
       obj.onaylayanPersonelUnvan ||
       "";
-    const role = obj.gorevi || obj.gorev || obj.rol || obj.role || obj.t || "";
+    // Komisyon görevi (Başkan, Üye, Yedek Üye vb.) imza türünden (Paraf, Koordinasyon, İmza) ayrıdır
+    const rawRole = obj.gorevi || obj.gorev || obj.gorev_adi || obj.komisyonGorevi || obj.role || obj.rol || "";
+    const role =
+      rawRole && rawRole !== "Paraf" && rawRole !== "Koordinasyon" && rawRole !== "İmza"
+        ? String(rawRole).trim()
+        : "";
+    const rawSig = obj.imzaTuru ?? obj.imza_turu ?? obj.signatureType;
+    const imzaTuru = rawSig !== undefined && rawSig !== null ? normalizeSigType(rawSig) : undefined;
+    const isReserve = isReserveAssignee(obj);
+    const asilMi =
+      obj.asilMi !== undefined ||
+      obj.asil_mi !== undefined ||
+      obj.asliYedek !== undefined ||
+      obj.asli_yedek !== undefined ||
+      isReserve
+        ? isReserve
+          ? 0
+          : 1
+        : undefined;
+    const aktifKatilim =
+      obj.aktifKatilim !== undefined || obj.aktif_katilim !== undefined || obj.yedek_aktif !== undefined
+        ? Boolean(obj.aktifKatilim || obj.aktif_katilim || obj.yedek_aktif)
+        : undefined;
+    const unitId =
+      obj.birim_id !== undefined && obj.birim_id !== null
+        ? String(obj.birim_id)
+        : obj.birimId !== undefined && obj.birimId !== null
+        ? String(obj.birimId)
+        : obj.unitId;
+    const unitName = obj.birim || obj.birim_adi || obj.birimAdi || obj.unitName || undefined;
+
     const id = obj.id ?? obj.personel_id ?? `person_${String(name).trim()}`;
-    const assignee = toAssignee(name, title, id, role);
+    const assignee = toAssignee(name, title, id, role, {
+      ...(imzaTuru ? { imzaTuru } : {}),
+      ...(asilMi !== undefined ? { asilMi } : {}),
+      ...(aktifKatilim !== undefined ? { aktifKatilim } : {}),
+      ...(unitId ? { unitId } : {}),
+      ...(unitName ? { unitName } : {}),
+    });
     if (assignee) {
       result.push(assignee);
     }
@@ -179,17 +251,85 @@ export function applyResolvedRouteToDocumentData<T extends Record<string, any>>(
     if (step.value === null) continue;
 
     if (step.kind === "person-list" && Array.isArray(step.value)) {
-      const mappedMembers = step.value.map((person, idx) => ({
-        id: person.id,
-        adSoyad: person.name,
-        ad_soyad: person.name,
-        unvan: person.title || "",
-        gorevi:
-          person.role ||
-          (idx === 0 && step.value && (step.value as RouteAssignee[]).length > 1
-            ? "Başkan"
-            : "Üye"),
-      }));
+      const isApptDoc = isAppointmentTemplate(resolvedRoute.templateId);
+      const rawStepMembers = step.value as RouteAssignee[];
+
+      const allMappedMembers = rawStepMembers.map((person, idx) => {
+        const isRes = isReserveAssignee(person as any);
+        const defaultRole =
+          idx === 0 && rawStepMembers.length > 1 ? "Başkan" : isRes ? "Yedek Üye" : "Üye";
+        const cleanRole =
+          person.role &&
+          person.role !== "Paraf" &&
+          person.role !== "Koordinasyon" &&
+          person.role !== "İmza"
+            ? person.role
+            : defaultRole;
+        const sigType = normalizeSigType(person.imzaTuru);
+
+        return {
+          id: person.id,
+          adSoyad: person.name,
+          ad_soyad: person.name,
+          unvan: person.title || "",
+          gorevi: cleanRole,
+          gorev: cleanRole,
+          komisyonGorevi: cleanRole,
+          rol: isRes ? "Yedek Üye" : cleanRole.toLocaleLowerCase("tr-TR").includes("başkan") ? "Başkan" : "Üye",
+          asilMi: isRes ? 0 : 1,
+          asil_mi: isRes ? 0 : 1,
+          asliYedek: isRes ? "Yedek" : "Asil",
+          asli_yedek: isRes ? "Yedek" : "Asil",
+          imzaTuru: sigType,
+          imza_turu: sigType,
+          ...(person.unitId ? { birimId: person.unitId, birim_id: person.unitId } : {}),
+          ...(person.unitName ? { birim: person.unitName } : {}),
+          ...(person.aktifKatilim !== undefined ? { aktifKatilim: person.aktifKatilim } : {}),
+        };
+      });
+
+      // Yedek üye kuralı: Görevlendirme belgeleri dışındaki evraklarda yedek üyeler,
+      // yalnızca aktifKatilim === true ise imza alanına dahil edilir.
+      const eligibleForDocument = allMappedMembers.filter(
+        (m) => m.asilMi !== 0 || isApptDoc || Boolean(m.aktifKatilim),
+      );
+
+      // İmza türü 'Paraf' veya 'Koordinasyon' olan üyeleri rota akışına aktar;
+      // ıslak imza alanına ('İmza' türündeki üyeler) yalnızca ıslak imzacıları yerleştir
+      const wetSignatureMembers = isApptDoc
+        ? eligibleForDocument
+        : eligibleForDocument.filter((m) => m.imzaTuru === "İmza");
+
+      const routeFlowMembers = eligibleForDocument.filter(
+        (m) => m.imzaTuru === "Paraf" || m.imzaTuru === "Koordinasyon",
+      );
+
+      if (routeFlowMembers.length > 0) {
+        const currentRota: any[] = Array.isArray(next.rota) ? [...next.rota] : [];
+        for (const rm of routeFlowMembers) {
+          const exists = currentRota.some(
+            (r) =>
+              String(r?.a || "")
+                .trim()
+                .toLocaleLowerCase("tr-TR") === rm.adSoyad.toLocaleLowerCase("tr-TR") &&
+              String(r?.t || "")
+                .trim()
+                .toLocaleLowerCase("tr-TR") === rm.imzaTuru.toLocaleLowerCase("tr-TR"),
+          );
+          if (!exists) {
+            currentRota.push({
+              t: rm.imzaTuru,
+              a: rm.adSoyad,
+              u: rm.unvan,
+              gorevi: rm.gorevi,
+              sira: currentRota.length + 1,
+            });
+          }
+        }
+        next.rota = currentRota;
+      }
+
+      const mappedMembers = wetSignatureMembers;
 
       const targetKey = step.fieldKey || step.id;
       next[targetKey] = mappedMembers;

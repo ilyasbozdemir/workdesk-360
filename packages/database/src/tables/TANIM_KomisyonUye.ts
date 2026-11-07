@@ -11,6 +11,8 @@ export const TANIM_KomisyonUye = {
     { name: 'belgede_goster', type: 'INTEGER', default: 1, description: 'Belgede Gösterilsin mi (1: Evet, 0: Hayır)' },
     { name: 'belge_kapsami', type: 'TEXT', default: "'tumu'", description: 'Belge Kapsamı' },
     { name: 'hedef_belgeler', type: 'TEXT', default: "'[\"*\"]'", description: 'Hedef Belgeler' },
+    { name: 'imza_turu', type: 'TEXT', default: "'İmza'", description: 'İmza Türü (Paraf, Koordinasyon, İmza)' },
+    { name: 'birim_id', type: 'INTEGER', description: 'Üyenin Seçildiği Birim ID' },
     {
       name: 'created_at',
       type: 'DATETIME',

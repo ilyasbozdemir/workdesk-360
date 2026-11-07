@@ -1,10 +1,13 @@
 import { DOC_GROUPS } from '@temin360/document-templates'
 
+export type CommissionSignatureType = 'Paraf' | 'Koordinasyon' | 'İmza'
+
 export interface PersonelItem {
   id: number
   ad_soyad: string
   unvan: string | null
   birim?: string | null
+  birim_id?: number | null
 }
 
 export interface GorevItem {
@@ -20,6 +23,7 @@ export interface MemberRow {
   gorevAd: string
   personelId: number | null
   asilMi: number // 1: Asil, 0: Yedek
+  imzaTuru?: CommissionSignatureType // 'Paraf' | 'Koordinasyon' | 'İmza' (Komisyon görevinden ayrı alan)
   belgedeGoster: boolean // Resmi belgede gösterilsin mi?
   belgeSablonIds: string[] | null // null => Tüm belgeler (varsayılan), [] => Hiçbir belge (gizli), [...] => Belirtilen şablonlar
 }

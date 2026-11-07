@@ -37,7 +37,13 @@ export const PRESERVE_FIELDS = new Set([
   'fiyatArastirmaGorevlileri',
   'fiyatKomisyonu',
   'muayeneKomisyonu',
-  'komisyonUyeleri'
+  'komisyonUyeleri',
+  'komisyon',
+  'gorevliler',
+  'gorevlendirilenler',
+  'dagitimListesi',
+  'rota',
+  'routeOverrides'
 ])
 
 export const SOURCE_FIELDS = new Set([

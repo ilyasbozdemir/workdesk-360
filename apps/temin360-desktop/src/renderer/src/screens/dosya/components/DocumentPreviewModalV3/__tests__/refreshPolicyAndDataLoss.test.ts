@@ -535,4 +535,89 @@ describe('TEMİN 360 — Belge Veri Kaybı Düzeltme ve Regresyon Testleri', () 
     )
     expect(snapFieldChanged).not.toBe(snap1)
   })
+
+  it('Senaryo 9 (Komisyon İmza Türü & Snapshot İzolasyonu): Komisyon üyesinin imza türü değiştirildiğinde diğer belgelerdeki kayıtlı snapshot verileri otomatik değiştirilmez', () => {
+    // Kaynak komisyon verisinde (DATA_TeminKomisyon) bir üyenin imza türü Paraf veya Koordinasyon olarak değiştirildiğinde
+    const updatedSourceData = {
+      fiyatArastirmaGorevlileri: [
+        {
+          id: 1,
+          adSoyad: 'Ahmet Yılmaz',
+          unvan: 'Şube Müdürü',
+          gorevi: 'Komisyon Başkanı',
+          imzaTuru: 'Paraf'
+        }
+      ],
+      muayeneKomisyonu: [
+        {
+          id: 2,
+          adSoyad: 'Mehmet Demir',
+          unvan: 'Mühendis',
+          gorevi: 'Üye',
+          imzaTuru: 'Koordinasyon'
+        }
+      ],
+      rota: [
+        {
+          sira: 1,
+          islem: 'Paraf',
+          personel: 'Ahmet Yılmaz',
+          unvan: 'Şube Müdürü',
+          komisyonGorevi: 'Komisyon Başkanı'
+        }
+      ]
+    }
+
+    // Daha önce kaydedilmiş başka bir belgenin (veya mevcut belgenin) snapshot verisi
+    const savedSnapshotData = {
+      fiyatArastirmaGorevlileri: [
+        {
+          id: 1,
+          adSoyad: 'Ahmet Yılmaz',
+          unvan: 'Şube Müdürü',
+          gorevi: 'Komisyon Başkanı',
+          imzaTuru: 'İmza'
+        },
+        {
+          id: 3,
+          adSoyad: 'Zeynep Kaya',
+          unvan: 'Tekniker',
+          gorevi: 'Fiyat Araştırma Görevlisi',
+          imzaTuru: 'İmza'
+        }
+      ],
+      muayeneKomisyonu: [
+        {
+          id: 2,
+          adSoyad: 'Mehmet Demir',
+          unvan: 'Mühendis',
+          gorevi: 'Üye',
+          imzaTuru: 'İmza'
+        }
+      ],
+      rota: [
+        {
+          sira: 1,
+          islem: 'Hazırlayan',
+          personel: 'Ali Veli',
+          unvan: 'Memur'
+        }
+      ]
+    }
+
+    expect(getFieldRefreshPolicy('fiyatArastirmaGorevlileri')).toBe('preserve')
+    expect(getFieldRefreshPolicy('muayeneKomisyonu')).toBe('preserve')
+    expect(getFieldRefreshPolicy('komisyonUyeleri')).toBe('preserve')
+    expect(getFieldRefreshPolicy('komisyon')).toBe('preserve')
+    expect(getFieldRefreshPolicy('rota')).toBe('preserve')
+    expect(getFieldRefreshPolicy('routeOverrides')).toBe('preserve')
+
+    const merged = applyRefreshPolicy(updatedSourceData, savedSnapshotData)
+
+    // Kayıtlı snapshot verisindeki imza türü ve üyeler ezilmemeli, aynen korunmalı
+    expect(merged.fiyatArastirmaGorevlileri).toHaveLength(2)
+    expect((merged.fiyatArastirmaGorevlileri as any[])[0].imzaTuru).toBe('İmza')
+    expect((merged.muayeneKomisyonu as any[])[0].imzaTuru).toBe('İmza')
+    expect((merged.rota as any[])[0].personel).toBe('Ali Veli')
+  })
 })

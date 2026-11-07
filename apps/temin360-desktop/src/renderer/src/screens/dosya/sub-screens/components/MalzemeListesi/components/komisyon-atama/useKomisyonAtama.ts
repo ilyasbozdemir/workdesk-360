@@ -92,10 +92,10 @@ export function useKomisyonAtama({
           console.warn('Kurum bilgisi okunamadı:', e)
         }
 
-        // 2. Personel listesi
+        // 2. Personel listesi (Kurum -> Birim -> Personel)
         const pRes = await (window as any).electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT id, ad_soyad, unvan FROM TANIM_Personel WHERE aktif_mi = 1 ORDER BY ad_soyad ASC'
+          'SELECT id, ad_soyad, unvan, birim, birim_id FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY ad_soyad ASC'
         )
         const pList: PersonelItem[] = pRes.success && pRes.data ? pRes.data : []
         if (isMounted) setPersoneller(pList)
@@ -152,11 +152,19 @@ export function useKomisyonAtama({
                     }
                   }
 
+                  const asliYedek: 'Asil' | 'Yedek' =
+                    matched?.asli_yedek === 'Yedek' ||
+                    String(matched?.gorev || '').toLowerCase().includes('yedek')
+                      ? 'Yedek'
+                      : 'Asil'
+
                   return {
                     sira: idx + 1,
                     gorev: matched?.gorev || 'Fiyat Araştırma Görevlisi',
                     personelId: matched?.personel_id || null,
                     belgedeGoster: hasBelgedeGoster ? matched.belgede_goster === 1 : true,
+                    imzaTuru: (matched?.imza_turu as any) || 'İmza',
+                    asliYedek,
                     vekaletUnvani: matched?.vekalet_unvani || '',
                     baslangicTarihi: matched?.baslangic_tarihi || '',
                     bitisTarihi: matched?.bitis_tarihi || '',
@@ -184,11 +192,19 @@ export function useKomisyonAtama({
                     }
                   }
 
+                  const asliYedek: 'Asil' | 'Yedek' =
+                    matched?.asli_yedek === 'Yedek' ||
+                    String(matched?.gorev || '').toLowerCase().includes('yedek')
+                      ? 'Yedek'
+                      : 'Asil'
+
                   return {
                     sira: idx + 1,
                     gorev: matched?.gorev || (idx === 0 ? 'Komisyon Başkanı' : 'Üye'),
                     personelId: matched?.personel_id || null,
                     belgedeGoster: hasBelgedeGoster ? matched.belgede_goster === 1 : true,
+                    imzaTuru: (matched?.imza_turu as any) || 'İmza',
+                    asliYedek,
                     vekaletUnvani: matched?.vekalet_unvani || '',
                     baslangicTarihi: matched?.baslangic_tarihi || '',
                     bitisTarihi: matched?.bitis_tarihi || '',
@@ -225,11 +241,18 @@ export function useKomisyonAtama({
                       parsedHedefBelgeler = []
                     }
                   }
+                  const asliYedek: 'Asil' | 'Yedek' =
+                    matched?.asli_yedek === 'Yedek' ||
+                    String(matched?.gorev || '').toLowerCase().includes('yedek')
+                      ? 'Yedek'
+                      : 'Asil'
                   return {
                     sira: idx + 1,
                     gorev: matched?.gorev || 'Fiyat Araştırma Görevlisi',
                     personelId: matched?.personel_id || null,
                     belgedeGoster: matched?.belgede_goster !== 0,
+                    imzaTuru: (matched?.imza_turu as any) || 'İmza',
+                    asliYedek,
                     vekaletUnvani: matched?.vekalet_unvani || '',
                     baslangicTarihi: matched?.baslangic_tarihi || '',
                     bitisTarihi: matched?.bitis_tarihi || '',
@@ -253,11 +276,18 @@ export function useKomisyonAtama({
                       parsedHedefBelgeler = []
                     }
                   }
+                  const asliYedek: 'Asil' | 'Yedek' =
+                    matched?.asli_yedek === 'Yedek' ||
+                    String(matched?.gorev || '').toLowerCase().includes('yedek')
+                      ? 'Yedek'
+                      : 'Asil'
                   return {
                     sira: idx + 1,
                     gorev: matched?.gorev || (idx === 0 ? 'Komisyon Başkanı' : 'Üye'),
                     personelId: matched?.personel_id || null,
                     belgedeGoster: matched?.belgede_goster !== 0,
+                    imzaTuru: (matched?.imza_turu as any) || 'İmza',
+                    asliYedek,
                     vekaletUnvani: matched?.vekalet_unvani || '',
                     baslangicTarihi: matched?.baslangic_tarihi || '',
                     bitisTarihi: matched?.bitis_tarihi || '',
@@ -323,6 +353,8 @@ export function useKomisyonAtama({
             gorev: m.gorev_adi || 'Fiyat Araştırma Görevlisi',
             personelId: m.personel_id || null,
             belgedeGoster: m.belgede_goster !== 0,
+            imzaTuru: (m.imza_turu as any) || 'İmza',
+            asliYedek: m.asil_mi === 0 ? ('Yedek' as const) : ('Asil' as const),
             vekaletUnvani: '',
             baslangicTarihi: '',
             bitisTarihi: '',
@@ -335,6 +367,8 @@ export function useKomisyonAtama({
             gorev: m.gorev_adi || (idx === 0 ? 'Komisyon Başkanı' : 'Üye'),
             personelId: m.personel_id || null,
             belgedeGoster: m.belgede_goster !== 0,
+            imzaTuru: (m.imza_turu as any) || 'İmza',
+            asliYedek: m.asil_mi === 0 ? ('Yedek' as const) : ('Asil' as const),
             vekaletUnvani: '',
             baslangicTarihi: '',
             bitisTarihi: '',
@@ -395,19 +429,25 @@ export function useKomisyonAtama({
         const p = personeller.find((item) => item.id === row.personelId)
         if (!p) continue
 
-        const rol =
-          row.gorev.toLowerCase().includes('başkan') || row.gorev.toLowerCase().includes('yetkili')
+        const isYedekRow =
+          row.asliYedek === 'Yedek' || row.gorev.toLowerCase().includes('yedek')
+        const rol = isYedekRow
+          ? 'Yedek Üye'
+          : row.gorev.toLowerCase().includes('başkan') ||
+              row.gorev.toLowerCase().includes('yetkili')
             ? 'Başkan'
             : 'Üye'
 
         const finalUnvan = row.vekaletUnvani?.trim() || p.unvan || null
         const hedefBelgelerJson = JSON.stringify(row.hedefBelgeler || ['*'])
+        const imzaTuruVal = row.imzaTuru || 'İmza'
+        const asliYedekVal = isYedekRow ? 'Yedek' : 'Asil'
 
         await (window as any).electron.ipcRenderer.invoke(
           'db:run',
           `INSERT INTO DATA_TeminKomisyon 
-           (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             activeDosyaId,
             komId,
@@ -422,7 +462,11 @@ export function useKomisyonAtama({
             row.baslangicTarihi || null,
             row.bitisTarihi || null,
             row.belgeKapsami || 'tumu',
-            hedefBelgelerJson
+            hedefBelgelerJson,
+            asliYedekVal,
+            imzaTuruVal,
+            p.birim_id || null,
+            p.birim || null
           ]
         )
 
@@ -454,7 +498,8 @@ export function useKomisyonAtama({
           .filter((r) => r.personelId)
           .map((r) => {
             const p = personeller.find((item) => item.id === r.personelId)
-            const isYedek = r.gorev.toLowerCase().includes('yedek')
+            const isYedek =
+              r.asliYedek === 'Yedek' || r.gorev.toLowerCase().includes('yedek')
             return {
               fisNo,
               komisyon_id: komId,
@@ -471,6 +516,10 @@ export function useKomisyonAtama({
               gorev_adi: r.gorev,
               asil_mi: isYedek ? 0 : 1,
               asli_yedek: isYedek ? 'Yedek' : 'Asil',
+              imza_turu: r.imzaTuru || 'İmza',
+              imzaTuru: r.imzaTuru || 'İmza',
+              birim_id: p?.birim_id || null,
+              birim: p?.birim || null,
               komisyon_turu: komTitle,
               belgedeGoster: r.belgedeGoster,
               belgede_goster: r.belgedeGoster ? 1 : 0
@@ -539,13 +588,23 @@ export function useKomisyonAtama({
               }
             }
 
-            const isAsil = row.gorev.toLowerCase().includes('yedek') ? 0 : 1
+            const isAsil =
+              row.asliYedek === 'Yedek' || row.gorev.toLowerCase().includes('yedek') ? 0 : 1
+            const p = personeller.find((item) => item.id === row.personelId)
 
             if (gorevId) {
               await (window as any).electron.ipcRenderer.invoke(
                 'db:run',
-                'INSERT INTO TANIM_KomisyonUye (komisyon_id, personel_id, gorev_id, asil_mi) VALUES (?, ?, ?, ?)',
-                [targetKomId, row.personelId, gorevId, isAsil]
+                'INSERT INTO TANIM_KomisyonUye (komisyon_id, personel_id, gorev_id, asil_mi, imza_turu, birim_id, birim) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [
+                  targetKomId,
+                  row.personelId,
+                  gorevId,
+                  isAsil,
+                  row.imzaTuru || 'İmza',
+                  p?.birim_id || null,
+                  p?.birim || null
+                ]
               )
             }
           }
@@ -924,7 +983,11 @@ export function useKomisyonAtama({
           bitis_tarihi: r.bitisTarihi || null,
           belge_kapsami: r.belgeKapsami || 'tumu',
           hedef_belgeler: r.hedefBelgeler || ['*'],
-          asli_yedek: r.gorev.toLowerCase().includes('yedek') ? 'Yedek' : 'Asil'
+          asli_yedek:
+            r.asliYedek === 'Yedek' || r.gorev.toLowerCase().includes('yedek') ? 'Yedek' : 'Asil',
+          imza_turu: r.imzaTuru || 'İmza',
+          birim_id: p.birim_id || null,
+          birim: p.birim || null
         })
       }
 
@@ -945,7 +1008,11 @@ export function useKomisyonAtama({
           bitis_tarihi: r.bitisTarihi || null,
           belge_kapsami: r.belgeKapsami || 'tumu',
           hedef_belgeler: r.hedefBelgeler || ['*'],
-          asli_yedek: r.gorev.toLowerCase().includes('yedek') ? 'Yedek' : 'Asil'
+          asli_yedek:
+            r.asliYedek === 'Yedek' || r.gorev.toLowerCase().includes('yedek') ? 'Yedek' : 'Asil',
+          imza_turu: r.imzaTuru || 'İmza',
+          birim_id: p.birim_id || null,
+          birim: p.birim || null
         })
       }
 

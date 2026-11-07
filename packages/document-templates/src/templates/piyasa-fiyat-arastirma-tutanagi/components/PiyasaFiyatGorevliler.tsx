@@ -90,7 +90,8 @@ export const PiyasaFiyatGorevliler: React.FC<PiyasaFiyatGorevlilerProps> = ({
                 <div style={{ marginBottom: "3px" }}>
                   <select
                     value={selectedValue}
-                    onChange={(e) => handleSelectMember(idx, e.target.value)}
+                    onChange={(e) =>
+                      handleSelectMember(idx, e.target.value)}
                     style={{
                       fontSize: "7pt",
                       padding: "1px 4px",
@@ -132,6 +133,21 @@ export const PiyasaFiyatGorevliler: React.FC<PiyasaFiyatGorevlilerProps> = ({
                   placeholder="Unvanı"
                 />
               </span>
+              {(uye.gorevi || uye.gorev) && (
+                <div
+                  style={{
+                    fontSize: "8pt",
+                    color: "#475569",
+                    marginTop: "2px",
+                  }}
+                >
+                  <EditableField
+                    name={`komisyon.${idx}.gorevi`}
+                    value={uye.gorevi || uye.gorev || ""}
+                    placeholder="Görevi"
+                  />
+                </div>
+              )}
             </div>
           );
         })}

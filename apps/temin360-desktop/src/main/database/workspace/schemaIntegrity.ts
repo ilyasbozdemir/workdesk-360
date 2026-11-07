@@ -284,6 +284,9 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   // 6. DATA_TeminKomisyon & TANIM_KomisyonUye Kolonları
   const komisyonExtendedColumns = [
     { name: 'asli_yedek', def: "TEXT DEFAULT 'Asil'" },
+    { name: 'imza_turu', def: "TEXT DEFAULT 'İmza'" },
+    { name: 'birim_id', def: 'INTEGER' },
+    { name: 'birim', def: 'TEXT' },
     { name: 'kaynak', def: "TEXT DEFAULT 'kurumsal'" },
     { name: 'rol', def: "TEXT DEFAULT 'Asil'" },
     { name: 'komisyon_turu', def: 'TEXT' },
