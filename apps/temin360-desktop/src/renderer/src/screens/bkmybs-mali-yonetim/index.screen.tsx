@@ -22,10 +22,10 @@ import { MifOebTab } from './components/tabs/MifOebTab'
 import { TkysZimmetTab } from './components/tabs/TkysZimmetTab'
 import { EmanetTeminatTab } from './components/tabs/EmanetTeminatTab'
 import { SozlesmeTaahhutTab } from './components/tabs/SozlesmeTaahhutTab'
-import { OebMatbuModal } from './components/modals/OebMatbuModal'
 import { MaliIslemlereAktarModal } from './components/modals/MaliIslemlereAktarModal'
 import { useSettingsStore } from '@renderer/store/settingsStore'
 import { useTabStore } from '@renderer/store/tabStore'
+import { useGlobalDocumentPreviewStore } from '@renderer/store/globalDocumentPreviewStore'
 
 export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
   const router = useRouterState()
@@ -77,7 +77,6 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
   const [sozlesmeListesi] = useState(INITIAL_SOZLESME_LISTESI)
 
   // 4. MODALLAR STATE
-  const [selectedMifForOeb, setSelectedMifForOeb] = useState<MifKayit | null>(null)
   const [isAktarModalOpen, setIsAktarModalOpen] = useState(false)
 
   // İdare Türü Güncelleme (Büyükşehir vs Diğer)
@@ -160,7 +159,13 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
         {activeTab === 'mif' && (
           <MifOebTab
             mifListesi={mifListesi}
-            onOpenOebModal={(mif) => setSelectedMifForOeb(mif)}
+            onOpenOebModal={(mif) => {
+              useGlobalDocumentPreviewStore.getState().openDocument({
+                documentId: 'odeme-yazisi',
+                dosyaId: mif.dosyaId,
+                documentTitle: `Ödeme Emri Belgesi — ${mif.dosyaNo || '#' + mif.dosyaId}`
+              })
+            }}
             onMifDurumGuncelle={handleMifDurumGuncelle}
             activeRole={activeRole}
           />
@@ -178,13 +183,6 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
           <SozlesmeTaahhutTab sozlesmeListesi={sozlesmeListesi} activeRole={activeRole} />
         )}
       </div>
-
-      {/* 3. RESMÎ ÖEB MATBU A4 BELGE MODALI */}
-      <OebMatbuModal
-        mif={selectedMifForOeb}
-        onClose={() => setSelectedMifForOeb(null)}
-        institutionName={institutionName}
-      />
 
       {/* 4. MALİ İŞLEMLERE AKTAR & MİF ÜRET MODALI */}
       <MaliIslemlereAktarModal

@@ -1,7 +1,5 @@
-import React, { useState } from 'react'
-import {
-  FinanceSidebar
-} from './components/FinanceSidebar'
+import React from 'react'
+import { FinanceSidebar } from './components/FinanceSidebar'
 import { FinanceDashboard } from './dashboard/FinanceDashboard'
 import { IncomingProcurementsPage } from './modules/financial-services/pages/IncomingProcurementsPage'
 import { BudgetAppropriationPage } from './modules/financial-services/pages/BudgetAppropriationPage'
@@ -11,74 +9,18 @@ import { MifDraftsPage } from './modules/accounting/pages/MifDraftsPage'
 import { OebDraftsPage } from './modules/accounting/pages/OebDraftsPage'
 import { GuaranteesEscrowPage } from './modules/accounting/pages/GuaranteesEscrowPage'
 import { AccountingRecordsPage } from './modules/accounting/pages/AccountingRecordsPage'
-import { OebMatbuModal } from '@renderer/screens/bkmybs-mali-yonetim/components/modals/OebMatbuModal'
-import { MifKayit } from '@renderer/screens/bkmybs-mali-yonetim/types'
-import { OebRecordItem, IncomingProcurementItem } from './types'
 import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
 
 export const FinanceWorkspace: React.FC = () => {
-  const { activeFinanceTab, setActiveFinanceTab, activeFinanceSection, setActiveFinanceSection } =
+  const { activeFinanceTab, setActiveFinanceTab, activeFinanceSection } =
     useWorkspaceContextStore()
-
-  // Seçili belge için resmî matbu A4 çıktısı modalı
-  const [selectedMatbuMif, setSelectedMatbuMif] = useState<MifKayit | null>(null)
-
-  const handleSelectIncomingForOeb = (item: IncomingProcurementItem) => {
-    setActiveFinanceSection('accounting')
-    setActiveFinanceTab('oeb-drafts')
-  }
-
-  const handleSelectIncomingForMif = (item: IncomingProcurementItem) => {
-    setActiveFinanceSection('accounting')
-    setActiveFinanceTab('mif-drafts')
-  }
-
-  const handleOpenOebModal = (oeb: OebRecordItem) => {
-    // OebRecordItem -> MifKayit adaptörü
-    const adaptedMif: MifKayit = {
-      id: oeb.id,
-      mifNo: oeb.oebNo.replace('ÖEB', 'MİF'),
-      dosyaId: oeb.dosyaId,
-      dosyaNo: oeb.dosyaNo,
-      tarih: oeb.tarih,
-      aciklama: `${oeb.dosyaNo} Sayılı Doğrudan Temin Hak Sahibi Ödemesi`,
-      alacakliUnvan: oeb.hakSahibiAdi,
-      alacakliVkn: oeb.hakSahibiVkn,
-      alacakliIban: oeb.hakSahibiIban,
-      butceTertibi: oeb.butceTertibi,
-      brutTutar: oeb.brutTutar,
-      faturaNo: 'FAT-' + oeb.dosyaNo,
-      faturaTarihi: oeb.tarih,
-      kdvOrani: 20,
-      kdvTutari: 0,
-      damgaVergisiOrani: 0.00948,
-      damgaVergisiTutari: oeb.damgaVergisi,
-      kararPuluTutari: oeb.kararPulu,
-      kdvTevkifatTutari: oeb.kdvTevkifat,
-      digerKesintiler: 0,
-      netOdenecekTutar: oeb.netOdenecekTutar,
-      durum: 'onaylandi',
-      hazirlayan: 'Mali Hizmetler',
-      onaylayan: oeb.onaylayan || 'Harcama Yetkilisi'
-    }
-    setSelectedMatbuMif(adaptedMif)
-  }
-
-  const handleOpenMifModal = (mif: MifKayit) => {
-    setSelectedMatbuMif(mif)
-  }
 
   const renderActiveContent = () => {
     switch (activeFinanceTab) {
       case 'dashboard':
         return <FinanceDashboard onNavigateTab={setActiveFinanceTab} />
       case 'incoming-procurements':
-        return (
-          <IncomingProcurementsPage
-            onSelectForOeb={handleSelectIncomingForOeb}
-            onSelectForMif={handleSelectIncomingForMif}
-          />
-        )
+        return <IncomingProcurementsPage />
       case 'budget-tracking':
         return <BudgetAppropriationPage />
       case 'compliance-check':
@@ -86,9 +28,9 @@ export const FinanceWorkspace: React.FC = () => {
       case 'tax-deductions':
         return <TaxDeductionsPage />
       case 'mif-drafts':
-        return <MifDraftsPage onOpenMatbuMif={handleOpenMifModal} />
+        return <MifDraftsPage />
       case 'oeb-drafts':
-        return <OebDraftsPage onOpenMatbuOeb={handleOpenOebModal} />
+        return <OebDraftsPage />
       case 'guarantees-escrow':
         return <GuaranteesEscrowPage />
       case 'accounting-records':
@@ -111,7 +53,9 @@ export const FinanceWorkspace: React.FC = () => {
             <span className="font-bold text-slate-500">Mali Masası</span>
             <span className="text-slate-300 dark:text-slate-700">/</span>
             <span className="font-semibold text-emerald-600 dark:text-emerald-400 capitalize">
-              {activeFinanceSection === 'financial-services' ? 'Mali Hizmetler (5018)' : 'Muhasebe (BKMYBS)'}
+              {activeFinanceSection === 'financial-services'
+                ? 'Mali Hizmetler (5018)'
+                : 'Muhasebe (BKMYBS)'}
             </span>
             <span className="text-slate-300 dark:text-slate-700">/</span>
             <span className="font-bold text-slate-800 dark:text-slate-200">
@@ -147,14 +91,6 @@ export const FinanceWorkspace: React.FC = () => {
           {renderActiveContent()}
         </main>
       </div>
-
-      {/* Resmî A4 Matbu Belge Çıktı Modalı */}
-      {selectedMatbuMif && (
-        <OebMatbuModal
-          onClose={() => setSelectedMatbuMif(null)}
-          mif={selectedMatbuMif}
-        />
-      )}
     </div>
   )
 }

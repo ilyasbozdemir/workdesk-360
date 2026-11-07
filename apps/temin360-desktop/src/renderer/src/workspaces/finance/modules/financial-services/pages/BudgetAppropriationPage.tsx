@@ -1,26 +1,132 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Coins,
   Search,
   Filter,
   Plus,
   ArrowUpRight,
-  ArrowDownLeft,
   Lock,
-  Layers,
-  Sparkles,
   PieChart,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Layers,
+  BookOpen
 } from 'lucide-react'
 import { formatCurrency } from '@renderer/utils/formatters'
-import { INITIAL_BUTCE_TERTIPLERI } from '@renderer/screens/bkmybs-mali-yonetim/bkmybsMockData'
-import { ButceTertip } from '@renderer/screens/bkmybs-mali-yonetim/types'
+
+export interface RealTertipItem {
+  id: string | number
+  kurumsalKod: string
+  fonksiyonelKod: string
+  finansmanKod: string
+  ekonomikKod: string
+  aciklama: string
+  baslangicOdenegi: number
+  harcananTutar: number
+  blokeEdilenTutar: number
+  kullanilabilirOdenek: number
+  yil: number
+}
 
 export const BudgetAppropriationPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEko, setFilterEko] = useState('all')
-  const [tertipler, setTertipler] = useState<ButceTertip[]>(INITIAL_BUTCE_TERTIPLERI)
+  const [tertipler, setTertipler] = useState<RealTertipItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const loadBudgetData = async () => {
+    try {
+      setLoading(true)
+
+      // 1. Ödenek kayıtlarını çek
+      const odenekRows = await window.electron?.ipcRenderer?.invoke(
+        'db:query',
+        `SELECT 
+          o.id,
+          COALESCE(o.butce_kodu, k.kod, '03.2.1.01') as ekonomikKod,
+          COALESCE(o.kurumsal_kod, '46.06.01.05') as kurumsalKod,
+          COALESCE(o.butce_kalemi, k.aciklama, o.aciklama, 'Genel Bütçe Kalemi') as aciklama,
+          COALESCE(o.yillik_odenek, 0) as baslangicOdenegi,
+          COALESCE(o.butce_yili, 2026) as yil
+        FROM TANIM_ButceOdenek o
+        LEFT JOIN TANIM_ButceKod k ON o.butce_kodu = k.kod
+        ORDER BY o.id ASC`
+      )
+
+      // 2. Gerçek doğrudan temin harcamalarını çek
+      const spendingRows = await window.electron?.ipcRenderer?.invoke(
+        'db:query',
+        `SELECT 
+          COALESCE(butce_kodu, '03.2.1.01') as butce_kodu,
+          SUM(CASE WHEN status = 'tamamlandi' OR durum_asama_id = 4 THEN COALESCE(net_odenen, yaklasik_maliyet) ELSE 0 END) as harcanan,
+          SUM(CASE WHEN (status != 'tamamlandi' OR status IS NULL) AND (durum_asama_id < 4 OR durum_asama_id IS NULL) THEN COALESCE(yaklasik_maliyet, 0) ELSE 0 END) as bloke
+        FROM DATA_TeminDosyasi
+        WHERE is_deleted = 0
+        GROUP BY butce_kodu`
+      )
+
+      const spendingMap = new Map<string, { harcanan: number; bloke: number }>()
+      if (Array.isArray(spendingRows)) {
+        spendingRows.forEach((r: any) => {
+          spendingMap.set(r.butce_kodu, {
+            harcanan: Number(r.harcanan) || 0,
+            bloke: Number(r.bloke) || 0
+          })
+        })
+      }
+
+      if (Array.isArray(odenekRows) && odenekRows.length > 0) {
+        const mapped: RealTertipItem[] = odenekRows.map((r: any) => {
+          const s = spendingMap.get(r.ekonomikKod) || { harcanan: 0, bloke: 0 }
+          const baslangic = Number(r.baslangicOdenegi) || 0
+          const kullanilabilir = Math.max(0, baslangic - s.harcanan - s.bloke)
+
+          return {
+            id: r.id,
+            kurumsalKod: r.kurumsalKod || '46.06.01.05',
+            fonksiyonelKod: '01.3.1.00',
+            finansmanKod: '5',
+            ekonomikKod: r.ekonomikKod,
+            aciklama: r.aciklama,
+            baslangicOdenegi: baslangic,
+            harcananTutar: s.harcanan,
+            blokeEdilenTutar: s.bloke,
+            kullanilabilirOdenek: kullanilabilir,
+            yil: r.yil || 2026
+          }
+        })
+        setTertipler(mapped)
+      } else {
+        // Eğer TANIM_ButceOdenek boşsa, DATA_TeminDosyasi içindeki aktif bütçe kodlarına göre dinamik listele
+        const dynamicList: RealTertipItem[] = []
+        spendingMap.forEach((val, bCode) => {
+          dynamicList.push({
+            id: `dyn-${bCode}`,
+            kurumsalKod: '46.06.01.05',
+            fonksiyonelKod: '01.3.1.00',
+            finansmanKod: '5',
+            ekonomikKod: bCode,
+            aciklama: `${bCode} Harcama Tertibi`,
+            baslangicOdenegi: val.harcanan + val.bloke + 100000,
+            harcananTutar: val.harcanan,
+            blokeEdilenTutar: val.bloke,
+            kullanilabilirOdenek: 100000,
+            yil: 2026
+          })
+        })
+        setTertipler(dynamicList)
+      }
+    } catch (err) {
+      console.error('Bütçe verileri yüklenirken hata:', err)
+      setTertipler([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadBudgetData()
+  }, [])
 
   const filteredTertipler = tertipler.filter((t) => {
     const matchesSearch =
@@ -61,7 +167,9 @@ export const BudgetAppropriationPage: React.FC = () => {
             {formatCurrency(toplamHarcanan)}
           </div>
           <div className="text-[11px] text-emerald-600/80 font-medium mt-1">
-            %{((toplamHarcanan / toplamBaslangic) * 100).toFixed(1)} Nakit Çıkışı
+            {toplamBaslangic > 0
+              ? `%${((toplamHarcanan / toplamBaslangic) * 100).toFixed(1)} Nakit Çıkışı`
+              : 'Aktif harcama'}
           </div>
         </div>
 
@@ -87,7 +195,9 @@ export const BudgetAppropriationPage: React.FC = () => {
             {formatCurrency(toplamSerbest)}
           </div>
           <div className="text-[11px] text-purple-600/80 font-medium mt-1">
-            %{((toplamSerbest / toplamBaslangic) * 100).toFixed(1)} Kalan Harcanabilir Limit
+            {toplamBaslangic > 0
+              ? `%${((toplamSerbest / toplamBaslangic) * 100).toFixed(1)} Kalan Harcanabilir Limit`
+              : 'Serbest ödenek'}
           </div>
         </div>
       </div>
@@ -100,25 +210,25 @@ export const BudgetAppropriationPage: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Tertip kodu (03.2...), kurumsal kod veya harcama açıklaması ara..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+            placeholder="Tertip kodu (03.2.1.01) veya açıklama ara..."
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-800 dark:text-slate-200 placeholder-slate-400"
           />
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           {[
             { id: 'all', label: 'Tüm Kodlar' },
-            { id: '03.2', label: '03.2 Tüketime Yönelik' },
-            { id: '03.5', label: '03.5 Hizmet Alımları' },
-            { id: '03.7', label: '03.7 Menkul Mal Alımları' },
-            { id: '06.1', label: '06.1 Yatırım & Yapım' }
+            { id: '03.2', label: '03.2 Tüketim' },
+            { id: '03.5', label: '03.5 Hizmet' },
+            { id: '03.7', label: '03.7 Menkul Mal' },
+            { id: '03.8', label: '03.8 Gayrimenkul Bakım' }
           ].map((f) => (
             <button
               key={f.id}
               onClick={() => setFilterEko(f.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 filterEko === f.id
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800'
               }`}
             >
@@ -128,85 +238,90 @@ export const BudgetAppropriationPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Bütçe Tertipleri Tablosu */}
+      {/* Tertip Tablosu */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="py-3 px-4">Analitik Bütçe Tertibi</th>
-                <th className="py-3 px-4">Tertip Açıklaması</th>
-                <th className="py-3 px-4 text-right">Başlangıç Ödeneği</th>
-                <th className="py-3 px-4 text-right">Harcanan</th>
-                <th className="py-3 px-4 text-right">Bloke Edilen</th>
-                <th className="py-3 px-4 text-right">Kullanılabilir Serbest</th>
-                <th className="py-3 px-4 text-center">Ödenek Doluluk</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-              {filteredTertipler.map((tertip) => {
-                const dolulukOrani = (
-                  ((tertip.harcananTutar + tertip.blokeEdilenTutar) / tertip.baslangicOdenegi) *
-                  100
-                ).toFixed(1)
-                const dolulukNum = Number(dolulukOrani)
+        {loading ? (
+          <div className="p-12 text-center text-xs text-slate-400">Bütçe tertipleri yükleniyor...</div>
+        ) : filteredTertipler.length === 0 ? (
+          <div className="p-12 text-center space-y-2">
+            <Coins size={36} className="mx-auto text-slate-300 dark:text-slate-600" />
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">Henüz Bütçe Tertibi Bulunmuyor</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Satın alma dosyalarındaki bütçe kodları ve tanımlanan bütçe ödenekleri burada gerçek zamanlı izlenir.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">Ekonomik Kod</th>
+                  <th className="py-3 px-4">Bütçe Tertibi Açıklaması</th>
+                  <th className="py-3 px-4 text-right">Başlangıç Ödeneği</th>
+                  <th className="py-3 px-4 text-right">Harcanan</th>
+                  <th className="py-3 px-4 text-right">Bloke Edilen</th>
+                  <th className="py-3 px-4 text-right">Kullanılabilir Ödenek</th>
+                  <th className="py-3 px-4 text-center">Doluluk</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {filteredTertipler.map((t) => {
+                  const oran =
+                    t.baslangicOdenegi > 0
+                      ? Math.min(100, ((t.harcananTutar + t.blokeEdilenTutar) / t.baslangicOdenegi) * 100)
+                      : 0
 
-                return (
-                  <tr
-                    key={tertip.id}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                        {tertip.kurumsalKod} - {tertip.fonksiyonelKod} - {tertip.finansmanKod} -{' '}
-                        <span className="text-emerald-600 dark:text-emerald-400">{tertip.ekonomikKod}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">Mali Yıl: {tertip.yil}</div>
-                    </td>
-                    <td className="py-3 px-4 max-w-xs">
-                      <div className="font-medium text-slate-800 dark:text-slate-200 truncate" title={tertip.aciklama}>
-                        {tertip.aciklama}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
-                      {formatCurrency(tertip.baslangicOdenegi)}
-                    </td>
-                    <td className="py-3 px-4 text-right font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                      {formatCurrency(tertip.harcananTutar)}
-                    </td>
-                    <td className="py-3 px-4 text-right font-semibold text-amber-600 dark:text-amber-400 whitespace-nowrap">
-                      {formatCurrency(tertip.blokeEdilenTutar)}
-                    </td>
-                    <td className="py-3 px-4 text-right font-bold text-purple-600 dark:text-purple-400 whitespace-nowrap">
-                      {formatCurrency(tertip.kullanilabilirOdenek)}
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap min-w-[140px]">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              dolulukNum > 90
-                                ? 'bg-rose-500'
-                                : dolulukNum > 70
-                                ? 'bg-amber-500'
-                                : 'bg-emerald-500'
-                            }`}
-                            style={{ width: `${Math.min(100, dolulukNum)}%` }}
-                          />
+                  return (
+                    <tr
+                      key={t.id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="py-3.5 px-4 font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                        {t.ekonomikKod}
+                      </td>
+                      <td className="py-3.5 px-4 max-w-xs">
+                        <div className="font-semibold text-slate-800 dark:text-slate-200 truncate" title={t.aciklama}>
+                          {t.aciklama}
                         </div>
-                        <span className="font-bold text-[11px] text-slate-700 dark:text-slate-300 w-9 text-right">
-                          %{dolulukOrani}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          {t.kurumsalKod} - {t.fonksiyonelKod} - {t.finansmanKod}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                        {formatCurrency(t.baslangicOdenegi)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        {formatCurrency(t.harcananTutar)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-semibold text-amber-600 dark:text-amber-400 whitespace-nowrap">
+                        {formatCurrency(t.blokeEdilenTutar)}
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-black text-purple-600 dark:text-purple-400 whitespace-nowrap">
+                        {formatCurrency(t.kullanilabilirOdenek)}
+                      </td>
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-16 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                oran > 90 ? 'bg-rose-500' : oran > 70 ? 'bg-amber-500' : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${oran}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-500 w-8 text-right">
+                            %{oran.toFixed(0)}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )
 }
-

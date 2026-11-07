@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Coins,
   Scale,
@@ -25,6 +25,71 @@ export const FinanceDashboard: React.FC<{
 }> = ({ onNavigateTab }) => {
   const { canAccessFinancialServices, canAccessAccounting } = useWorkspaceContextStore()
 
+  const [metrics, setMetrics] = useState({
+    toplamOdenek: 0,
+    toplamHarcanan: 0,
+    toplamBloke: 0,
+    toplamSerbest: 0,
+    dosyaSayisi: 0,
+    odenenDosyaSayisi: 0,
+    bekleyenDosyaSayisi: 0,
+    kikHarcanan: 0
+  })
+  const [loading, setLoading] = useState(true)
+
+  const loadDashboardMetrics = async () => {
+    try {
+      setLoading(true)
+
+      // 1. DATA_TeminDosyasi toplamlarını çek
+      const fileMetrics = await window.electron?.ipcRenderer?.invoke(
+        'db:query',
+        `SELECT 
+          COUNT(*) as totalFiles,
+          SUM(CASE WHEN status = 'tamamlandi' OR durum_asama_id = 4 THEN 1 ELSE 0 END) as odenenCount,
+          SUM(CASE WHEN (status != 'tamamlandi' OR status IS NULL) AND (durum_asama_id < 4 OR durum_asama_id IS NULL) THEN 1 ELSE 0 END) as bekleyenCount,
+          COALESCE(SUM(CASE WHEN status = 'tamamlandi' OR durum_asama_id = 4 THEN COALESCE(net_odenen, yaklasik_maliyet) ELSE 0 END), 0) as harcananTutar,
+          COALESCE(SUM(CASE WHEN (status != 'tamamlandi' OR status IS NULL) AND (durum_asama_id < 4 OR durum_asama_id IS NULL) THEN COALESCE(yaklasik_maliyet, 0) ELSE 0 END), 0) as blokeTutar,
+          COALESCE(SUM(yaklasik_maliyet), 0) as toplamAlim
+        FROM DATA_TeminDosyasi
+        WHERE is_deleted = 0`
+      )
+
+      // 2. TANIM_ButceOdenek toplam başlangıç ödeneğini çek
+      const odenekMetrics = await window.electron?.ipcRenderer?.invoke(
+        'db:query',
+        `SELECT COALESCE(SUM(yillik_odenek), 0) as toplamBaslangic FROM TANIM_ButceOdenek`
+      )
+
+      const f = fileMetrics?.[0] || {}
+      const o = odenekMetrics?.[0] || {}
+
+      const baslangic = Number(o.toplamBaslangic) || 0
+      const harcanan = Number(f.harcananTutar) || 0
+      const bloke = Number(f.blokeTutar) || 0
+      const serbest = baslangic > 0 ? Math.max(0, baslangic - harcanan - bloke) : Math.max(0, 1000000 - harcanan - bloke)
+
+      setMetrics({
+        toplamOdenek: baslangic > 0 ? baslangic : harcanan + bloke + 1000000,
+        toplamHarcanan: harcanan,
+        toplamBloke: bloke,
+        toplamSerbest: serbest,
+        dosyaSayisi: Number(f.totalFiles) || 0,
+        odenenDosyaSayisi: Number(f.odenenCount) || 0,
+        bekleyenDosyaSayisi: Number(f.bekleyenCount) || 0,
+        kikHarcanan: harcanan + bloke
+      })
+    } catch (err) {
+      console.error('Mali göstergeler yüklenirken hata:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadDashboardMetrics()
+  }, [])
+
   return (
     <div className="space-y-6">
       {/* 4 Önemli Mali Metrik Kartı */}
@@ -39,15 +104,15 @@ export const FinanceDashboard: React.FC<{
               </div>
             </div>
             <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-2">
-              {formatCurrency(2250000)}
+              {formatCurrency(metrics.toplamSerbest)}
             </div>
             <div className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
-              <TrendingUp size={12} /> Toplam Ödeneğin %62,5&apos;i serbest
+              <TrendingUp size={12} /> Bütçe Harcanabilir Limit
             </div>
           </div>
           <button
             onClick={() => onNavigateTab('budget-tracking')}
-            className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+            className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 cursor-pointer"
           >
             <span>Bütçe Tertipleri Masası</span>
             <ArrowRight size={13} />
@@ -58,207 +123,166 @@ export const FinanceDashboard: React.FC<{
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-              <span>%10 KİK Tavan Kullanımı</span>
+              <span>22/d Harcama Toplamı</span>
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 <Scale size={16} />
               </div>
             </div>
             <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-2">
-              %42,8
+              {formatCurrency(metrics.kikHarcanan)}
             </div>
-            <div className="text-[11px] text-amber-600 font-medium mt-1 flex items-center gap-1">
-              <CheckCircle2 size={12} /> KİK İzin Limiti Güvenli Bölgede
+            <div className="text-[11px] text-slate-500 font-medium mt-1">
+              Gerçekleşen + Bloke Doğrudan Temin
             </div>
           </div>
           <button
             onClick={() => onNavigateTab('compliance-check')}
-            className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400"
+            className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 cursor-pointer"
           >
-            <span>Kota & Limit İncele</span>
+            <span>Limit &amp; Kota Kontrolü</span>
             <ArrowRight size={13} />
           </button>
         </div>
 
-        {/* Kart 3: Bekleyen Ödeme Emri Belgeleri */}
+        {/* Kart 3: 4734'ten Gelen Dosyalar */}
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-              <span>İmza Bekleyen ÖEB</span>
+              <span>Satın Alma Dosyaları</span>
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <FileText size={16} />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-2">
+              {metrics.dosyaSayisi} Dosya
+            </div>
+            <div className="text-[11px] text-blue-600 font-medium mt-1">
+              {metrics.bekleyenDosyaSayisi} Ödeme Bekleyen | {metrics.odenenDosyaSayisi} Ödenen
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigateTab('incoming-procurements')}
+            className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 cursor-pointer"
+          >
+            <span>Gelen Dosyaları İncele</span>
+            <ArrowRight size={13} />
+          </button>
+        </div>
+
+        {/* Kart 4: Onaylanan Ödemeler */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <span>Muhasebeleştirilen Tutar</span>
               <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                 <Receipt size={16} />
               </div>
             </div>
-            <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-2">
-              3 Belge
+            <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-2">
+              {formatCurrency(metrics.toplamHarcanan)}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">
-              Net Tutar: <strong className="text-slate-800 dark:text-slate-200">{formatCurrency(482881)}</strong>
+            <div className="text-[11px] text-purple-600 font-medium mt-1">
+              {metrics.odenenDosyaSayisi} Tamamlanan Dosya
             </div>
           </div>
           <button
             onClick={() => onNavigateTab('oeb-drafts')}
-            className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-purple-600 hover:text-purple-700 dark:text-purple-400"
+            className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 cursor-pointer"
           >
             <span>ÖEB Masasına Git</span>
             <ArrowRight size={13} />
           </button>
         </div>
-
-        {/* Kart 4: Teminat ve Emanetler */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-              <span>Aktif Teminatlar (Banka)</span>
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                <ShieldCheck size={16} />
-              </div>
-            </div>
-            <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-2">
-              {formatCurrency(190000)}
-            </div>
-            <div className="text-[11px] text-blue-600 font-medium mt-1">
-              3 Mektup Kasada Aktif
-            </div>
-          </div>
-          <button
-            onClick={() => onNavigateTab('guarantees-escrow')}
-            className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
-          >
-            <span>Emanet Masasını Aç</span>
-            <ArrowRight size={13} />
-          </button>
-        </div>
       </div>
 
-      {/* Orta Grid: İki Bölümlü Hızlı Kontrol Paneli */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Sol Kolon: Satın Alma'dan Gelen ve Mali İnceleme Bekleyen Dosyalar */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Clock size={16} className="text-blue-500" />
-                Mali İnceleme Bekleyen Satın Alma Dosyaları
+      {/* İki Çalışma Alanı Özeti: Mali Hizmetler & Muhasebe */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sol Kolon: Mali Hizmetler Birimi İşlemleri */}
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                5018
+              </div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Mali Hizmetler &amp; Bütçe Yönetimi
               </h3>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                4734 Doğrudan Temin sürecinden aktarılan ve bloke/tahakkuk bekleyen işler
-              </p>
             </div>
-            <button
-              onClick={() => onNavigateTab('incoming-procurements')}
-              className="text-xs font-semibold text-blue-600 hover:underline"
-            >
-              Tümünü Gör
-            </button>
+            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              Harcama Birimi Denetimi
+            </span>
           </div>
 
-          <div className="space-y-2.5">
-            {[
-              {
-                id: 1,
-                dosyaNo: '2026/DT-104',
-                konu: 'Hizmet Binası Güvenlik ve Ağ Donanımı Alımı',
-                firma: 'Mega Bilişim Ltd. Şti.',
-                tutar: 245000,
-                durum: 'ÖEB Hazırlanacak'
-              },
-              {
-                id: 2,
-                dosyaNo: '2026/DT-108',
-                konu: 'Kütüphane Süreli Yayın ve Kitap Alımı',
-                firma: 'Kültür Kitap Dağıtım A.Ş.',
-                tutar: 88500,
-                durum: 'Bloke Bekliyor'
-              },
-              {
-                id: 3,
-                dosyaNo: '2026/DT-112',
-                konu: 'Hizmet Araçları Periyodik Bakım Hizmeti',
-                firma: 'Öz Ulaşım Otomotiv Sanayi Ltd.',
-                tutar: 165000,
-                durum: 'Tevkifat Kontrolü'
-              }
-            ].map((dosya) => (
-              <div
-                key={dosya.id}
-                className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-150 dark:border-slate-800 flex items-center justify-between gap-3"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs text-blue-600 dark:text-blue-400">
-                      {dosya.dosyaNo}
-                    </span>
-                    <span className="text-[10px] px-2 py-0.2 rounded-full font-semibold bg-amber-500/10 text-amber-600">
-                      {dosya.durum}
-                    </span>
-                  </div>
-                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mt-0.5">
-                    {dosya.konu}
-                  </div>
-                  <div className="text-[10px] text-slate-400">{dosya.firma}</div>
-                </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Doğrudan temin dosyalarının ödenek blokajı, KİK %10 kotaları, tevkifat oranları ve Ödeme Emri Belgesi (ÖEB) hazırlıkları bu masada yönetilir.
+          </p>
 
-                <div className="text-right shrink-0">
-                  <div className="font-bold text-xs text-slate-900 dark:text-slate-100">
-                    {formatCurrency(dosya.tutar)}
-                  </div>
-                  <button
-                    onClick={() => onNavigateTab('incoming-procurements')}
-                    className="text-[10px] text-blue-600 font-semibold hover:underline mt-1 inline-flex items-center gap-0.5"
-                  >
-                    <span>İşleme Al</span>
-                    <ArrowRight size={10} />
-                  </button>
-                </div>
+          <div className="space-y-2 pt-1">
+            <button
+              onClick={() => onNavigateTab('incoming-procurements')}
+              className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <FileText size={15} className="text-blue-500" />
+                <span>Gelen Satın Alma Dosyalarını Tetkik Et</span>
               </div>
-            ))}
+              <ArrowRight size={14} className="text-slate-400" />
+            </button>
+
+            <button
+              onClick={() => onNavigateTab('budget-tracking')}
+              className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Coins size={15} className="text-emerald-500" />
+                <span>Analitik Bütçe Tertipleri ve Bloke Takibi</span>
+              </div>
+              <ArrowRight size={14} className="text-slate-400" />
+            </button>
           </div>
         </div>
 
-        {/* Sağ Kolon: Mali Uygunluk ve Bütçe Sağlık Durumu */}
-        <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs p-5 space-y-4 flex flex-col justify-between">
-          <div className="space-y-3">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <PieChart size={16} className="text-emerald-500" />
-              Mali Uygunluk & Denetim Durumu
-            </h3>
-
-            <div className="p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-500/20 text-xs space-y-1.5">
-              <div className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                <CheckCircle2 size={14} /> 5018 Harcama Kontrolü Aktif
+        {/* Sağ Kolon: Merkezi Yönetim Muhasebe İşlemleri */}
+        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-xs">
+                MİF
               </div>
-              <p className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80">
-                Tüm satın alma dosyaları bütçe tertibine bağlanmadan ve kanuni vergi kesintileri yapılmadan ödemeye sevk edilemez.
-              </p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Merkezi Yönetim Muhasebe &amp; Saymanlık
+              </h3>
             </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-slate-600 dark:text-slate-400">2026 Yılı 22/d Eşik Değeri (Büyükşehir):</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100">864.500 ₺</span>
-              </div>
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-slate-600 dark:text-slate-400">Sözleşme Damga Vergisi Oranı:</span>
-                <span className="font-bold text-purple-600 dark:text-purple-400">Binde 9,48</span>
-              </div>
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-slate-600 dark:text-slate-400">İhale Karar Pulu Oranı:</span>
-                <span className="font-bold text-blue-600 dark:text-blue-400">Binde 5,69</span>
-              </div>
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-slate-600 dark:text-slate-400">Kesin Teminat Mektubu Oranı:</span>
-                <span className="font-bold text-amber-600 dark:text-amber-400">%6</span>
-              </div>
-            </div>
+            <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">
+              BKMYBS Formatı
+            </span>
           </div>
 
-          <div className="pt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Muhasebe İşlem Fişleri (MİF), hak sahibi IBAN aktarımları, kesin/geçici teminat emanet hesapları ve Sayıştay uyumlu yevmiye defteri kayıtları.
+          </p>
+
+          <div className="space-y-2 pt-1">
             <button
-              onClick={() => onNavigateTab('tax-deductions')}
-              className="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors"
+              onClick={() => onNavigateTab('oeb-drafts')}
+              className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer"
             >
-              <span>Yasal Kesinti ve Vergi Hesaplayıcıyı Aç</span>
-              <ArrowRight size={13} />
+              <div className="flex items-center gap-2">
+                <Receipt size={15} className="text-purple-500" />
+                <span>Ödeme Emri Belgeleri (ÖEB) ve Resmî Çıktılar</span>
+              </div>
+              <ArrowRight size={14} className="text-slate-400" />
+            </button>
+
+            <button
+              onClick={() => onNavigateTab('mif-drafts')}
+              className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet size={15} className="text-blue-500" />
+                <span>Muhasebe İşlem Fişleri (MİF) Listesi</span>
+              </div>
+              <ArrowRight size={14} className="text-slate-400" />
             </button>
           </div>
         </div>
@@ -266,4 +290,3 @@ export const FinanceDashboard: React.FC<{
     </div>
   )
 }
-
