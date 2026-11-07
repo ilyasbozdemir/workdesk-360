@@ -1,32 +1,32 @@
 {
   "totalFiles": 1645,
-  "totalLines": 297841,
-  "codeLines": 277494,
-  "nonBlankLines": 277494,
-  "blankLines": 20347,
+  "totalLines": 297938,
+  "codeLines": 277586,
+  "nonBlankLines": 277586,
+  "blankLines": 20352,
   "testFiles": 84,
   "testLines": 18650,
   "testNonBlankLines": 16235,
   "prodFiles": 1561,
-  "prodLines": 279191,
-  "prodNonBlankLines": 261259,
-  "timestamp": "2026-11-07T07:05:04.683Z",
+  "prodLines": 279288,
+  "prodNonBlankLines": 261351,
+  "timestamp": "2026-11-07T07:15:03.451Z",
   "scope": "app+deps",
   "breakdown": [
     {
       "name": "temin360-desktop",
       "path": "apps/temin360-desktop",
       "files": 1287,
-      "totalLines": 259708,
-      "codeLines": 241681,
-      "nonBlankLines": 241681,
-      "blankLines": 18027,
+      "totalLines": 259803,
+      "codeLines": 241772,
+      "nonBlankLines": 241772,
+      "blankLines": 18031,
       "testFiles": 69,
       "testLines": 15893,
       "testNonBlankLines": 13838,
       "prodFiles": 1218,
-      "prodLines": 243815,
-      "prodNonBlankLines": 227843
+      "prodLines": 243910,
+      "prodNonBlankLines": 227934
     },
     {
       "name": "@temin360/contracts",
@@ -77,16 +77,16 @@
       "name": "@temin360/document-templates",
       "path": "packages/document-templates",
       "files": 163,
-      "totalLines": 28162,
-      "codeLines": 26447,
-      "nonBlankLines": 26447,
-      "blankLines": 1715,
+      "totalLines": 28164,
+      "codeLines": 26448,
+      "nonBlankLines": 26448,
+      "blankLines": 1716,
       "testFiles": 13,
       "testLines": 2303,
       "testNonBlankLines": 2001,
       "prodFiles": 150,
-      "prodLines": 25859,
-      "prodNonBlankLines": 24446
+      "prodLines": 25861,
+      "prodNonBlankLines": 24447
     }
   ]
 }
