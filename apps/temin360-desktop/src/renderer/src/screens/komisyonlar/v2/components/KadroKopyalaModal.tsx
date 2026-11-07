@@ -1,5 +1,5 @@
 import React from 'react'
-import { Copy } from 'lucide-react'
+import { Copy, Zap } from 'lucide-react'
 import { Button } from '../../../../components/ui/Button'
 import { Modal } from '../../../../components/ui/Modal'
 import type { DosyaKomisyonItem } from '../types'
@@ -13,6 +13,7 @@ interface KadroKopyalaModalProps {
   copyFeedback: string | null
   onSelectSourceId: (id: number | null) => void
   onExecuteCopy: () => void
+  onExecuteCopyToAllDossiers?: () => void
   onClose: () => void
 }
 
@@ -25,6 +26,7 @@ export const KadroKopyalaModal: React.FC<KadroKopyalaModalProps> = ({
   copyFeedback,
   onSelectSourceId,
   onExecuteCopy,
+  onExecuteCopyToAllDossiers,
   onClose
 }) => {
   if (!targetDosya) return null
@@ -115,10 +117,23 @@ export const KadroKopyalaModal: React.FC<KadroKopyalaModalProps> = ({
         )}
 
         {/* Butonlar */}
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex-wrap">
           <Button variant="outline" size="sm" onClick={onClose} className="text-xs rounded-xl">
             İptal
           </Button>
+
+          {onExecuteCopyToAllDossiers && (
+            <Button
+              size="sm"
+              disabled={!selectedSourceDosyaId || isCopying}
+              onClick={onExecuteCopyToAllDossiers}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer"
+              title="Seçili kaynak dosyanın komisyon kadrosunu tek tıkla sistemdeki tüm dosyalara uygula"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>{isCopying ? 'Uygulanıyor...' : 'Tüm Dosyalara Uygula'}</span>
+            </Button>
+          )}
 
           <Button
             size="sm"
@@ -127,7 +142,7 @@ export const KadroKopyalaModal: React.FC<KadroKopyalaModalProps> = ({
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer"
           >
             <Copy className="w-3.5 h-3.5" />
-            <span>{isCopying ? 'Kopyalanıyor...' : 'Kopyala ve Dosyaya Aktar'}</span>
+            <span>{isCopying ? 'Kopyalanıyor...' : 'Bu Dosyaya Aktar'}</span>
           </Button>
         </div>
       </div>

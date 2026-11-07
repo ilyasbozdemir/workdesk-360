@@ -1,5 +1,5 @@
 import React from 'react'
-import { History, Info, RefreshCw, Search } from 'lucide-react'
+import { CheckCircle2, History, Info, RefreshCw, Search, Zap } from 'lucide-react'
 import { Input } from '../../../../components/ui/Input'
 import { DosyaKomisyonCard } from './DosyaKomisyonCard'
 import type { DosyaFilterMode, DosyaKomisyonItem } from '../types'
@@ -20,6 +20,9 @@ interface DosyaKomisyonlariTabProps {
   onApplyTemplate: (dosyaId: number) => void
   onOpenCopyModal: (item: DosyaKomisyonItem) => void
   onOpenDetail: (item: DosyaKomisyonItem, tab: 'kadro' | 'revizyon') => void
+  onBulkApplyToAllDossiers?: (sourceDosyaId?: number | null) => void
+  isBulkApplying?: boolean
+  bulkFeedback?: string | null
 }
 
 export const DosyaKomisyonlariTab: React.FC<DosyaKomisyonlariTabProps> = ({
@@ -37,35 +40,65 @@ export const DosyaKomisyonlariTab: React.FC<DosyaKomisyonlariTabProps> = ({
   emptyFilesCount,
   onApplyTemplate,
   onOpenCopyModal,
-  onOpenDetail
+  onOpenDetail,
+  onBulkApplyToAllDossiers,
+  isBulkApplying = false,
+  bulkFeedback = null
 }) => {
   return (
     <div className="flex-1 flex flex-col space-y-3 min-h-0">
-      {/* Bilgilendirme ve Ayrım Barı */}
-      <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-gradient-to-r from-blue-50/80 via-slate-50 to-indigo-50/80 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/30 border border-blue-200/70 dark:border-slate-800 text-xs">
+      {/* Bilgilendirme ve Tek Tıkla Tümüne Uygula Barı */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-gradient-to-r from-blue-50/80 via-slate-50 to-indigo-50/80 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/30 border border-blue-200/70 dark:border-slate-800 text-xs">
         <div className="flex items-center gap-2">
           <Info className="w-4 h-4 text-blue-600 shrink-0" />
           <span className="text-slate-700 dark:text-slate-300">
             <strong>Dosya Bazlı Komisyon Mimarisi:</strong> Her dosyanın kadrosu bağımsızdır.{' '}
             <span className="text-emerald-700 dark:text-emerald-400 font-bold">Özel Kadrolu</span>{' '}
-            dosyalarda yapılan değişiklikler diğer dosyaları veya kurumsal şablonu etkilemez.{' '}
-            <span className="text-amber-700 dark:text-amber-400 font-bold">Kurumsal Şablonlu</span>{' '}
-            dosyalar ise tek tıkla dosyaya özel kadroya dönüştürülebilir.
+            dosyalarda yapılan değişiklikler diğer dosyaları etkilemez. İsterseniz kurumsal şablonu
+            veya herhangi bir dosyanın kadrosunu <strong>tek tıkla tüm dosyalara</strong>{' '}
+            uygulayabilirsiniz.
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onRefresh}
-          disabled={isDosyaRefetching}
-          className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-all cursor-pointer shadow-2xs shrink-0"
-          title="Listeyi Yenile"
-        >
-          <RefreshCw
-            className={`w-4 h-4 ${isDosyaRefetching ? 'animate-spin text-blue-600' : ''}`}
-          />
-        </button>
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          {onBulkApplyToAllDossiers && (
+            <button
+              type="button"
+              onClick={() => onBulkApplyToAllDossiers(null)}
+              disabled={isBulkApplying || isDosyaRefetching}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs transition-all cursor-pointer shadow-xs disabled:opacity-50"
+              title="Kurumsal şablonda tanımlı komisyon üyelerini tek tıkla tüm aktif dosyalara uygular ve fiş oluşturur"
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span>
+                {isBulkApplying
+                  ? 'Tüm Dosyalara Uygulanıyor...'
+                  : 'Şablonu Tek Tıkla Tümüne Uygula'}
+              </span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isDosyaRefetching}
+            className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-all cursor-pointer shadow-2xs shrink-0"
+            title="Listeyi Yenile"
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${isDosyaRefetching ? 'animate-spin text-blue-600' : ''}`}
+            />
+          </button>
+        </div>
       </div>
+
+      {/* Toplu İşlem Fiş Bildirimi */}
+      {bulkFeedback && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-bold animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{bulkFeedback}</span>
+        </div>
+      )}
 
       {/* Arama ve Filtreleme Araç Çubuğu */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs">
@@ -156,6 +189,7 @@ export const DosyaKomisyonlariTab: React.FC<DosyaKomisyonlariTabProps> = ({
               onApplyTemplate={onApplyTemplate}
               onOpenCopyModal={onOpenCopyModal}
               onOpenDetail={onOpenDetail}
+              onApplyToAllDossiers={onBulkApplyToAllDossiers}
             />
           ))
         )}

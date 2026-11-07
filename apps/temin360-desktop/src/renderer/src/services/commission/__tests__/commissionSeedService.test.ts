@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   seedDossierCommission,
   getDossierCommissionStatus,
-  markDossierAsDeliberatelyCleared
+  markDossierAsDeliberatelyCleared,
+  copyCommissionBetweenDossiers,
+  applyCommissionToAllDossiers,
+  restoreCommissionFromHistoryFis
 } from '../commissionSeedService'
 
 describe('Aşama 7.1.3.1 - Commission Seed Service Lifecycle Tests', () => {
@@ -10,6 +13,7 @@ describe('Aşama 7.1.3.1 - Commission Seed Service Lifecycle Tests', () => {
     dosyalar: any[]
     komisyonlar: any[]
     tanimUye: any[]
+    history: any[]
   }
   let transactionExecuted: any[] = []
   let transactionFailNext = false
@@ -76,7 +80,8 @@ describe('Aşama 7.1.3.1 - Commission Seed Service Lifecycle Tests', () => {
           asil_mi: 1,
           belgede_goster: 1
         }
-      ]
+      ],
+      history: []
     }
 
     // Window mock
@@ -92,6 +97,28 @@ describe('Aşama 7.1.3.1 - Commission Seed Service Lifecycle Tests', () => {
                 const dosyaId = params[0]
                 const d = mockDbData.dosyalar.find((x) => x.id === dosyaId)
                 return { success: true, data: d ? [d] : [] }
+              }
+
+              if (sql.includes('FROM DATA_TeminDosyasi d') && sql.includes('ORDER BY d.id DESC')) {
+                return {
+                  success: true,
+                  data: mockDbData.dosyalar.map((d) => ({
+                    id: d.id,
+                    dosya_no: `#${d.id}`
+                  }))
+                }
+              }
+
+              if (sql.includes('SELECT * FROM DATA_TeminKomisyon WHERE temin_dosya_id = ?')) {
+                const dosyaId = params[0]
+                const rows = mockDbData.komisyonlar.filter((x) => x.temin_dosya_id === dosyaId)
+                return { success: true, data: rows }
+              }
+
+              if (sql.includes('SELECT * FROM DATA_TeminKomisyonHistory WHERE id = ?')) {
+                const histId = params[0]
+                const row = mockDbData.history.find((h) => h.id === histId)
+                return { success: true, data: row ? [row] : [] }
               }
 
               if (sql.includes('SELECT COUNT(*) as cnt FROM DATA_TeminKomisyon')) {
@@ -152,13 +179,23 @@ describe('Aşama 7.1.3.1 - Commission Seed Service Lifecycle Tests', () => {
                   const d = mockDbData.dosyalar.find((x) => x.id === dosyaId)
                   if (d) d.komisyon_seed_edildi = 1
                 }
-                if (q.sql.includes('INSERT INTO DATA_TeminKomisyon')) {
+                if (q.sql.includes('INSERT INTO DATA_TeminKomisyon ')) {
                   mockDbData.komisyonlar.push({
                     id: mockDbData.komisyonlar.length + 1,
                     temin_dosya_id: q.params[0],
                     komisyon_id: q.params[1],
                     personel_id: q.params[2],
                     ad_soyad: q.params[3]
+                  })
+                }
+                if (q.sql.includes('INSERT INTO DATA_TeminKomisyonHistory')) {
+                  mockDbData.history.push({
+                    id: mockDbData.history.length + 1,
+                    temin_dosya_id: q.params[0],
+                    komisyon_turu: q.params[1],
+                    islem_turu: q.params[2],
+                    islem_yapan: q.params[3],
+                    snapshot_data: q.params[4]
                   })
                 }
                 if (q.sql.includes('DELETE FROM DATA_TeminKomisyon WHERE temin_dosya_id = ?')) {
@@ -318,5 +355,49 @@ describe('Aşama 7.1.3.1 - Commission Seed Service Lifecycle Tests', () => {
     // Dosyadaki üyeler değişmemeli
     const file101MembersAfter = mockDbData.komisyonlar.filter((x) => x.temin_dosya_id === 101)
     expect(file101MembersAfter.length).toBe(3)
+  })
+
+  it('10. Kaynak dosyada özel atama yoksa (Kurumsal Şablon mirası) kopyalama hata vermemeli ve şablonu aktarmalı', async () => {
+    // 102 numaralı dosyada DATA_TeminKomisyon kaydı yok (şablon mirası kullanıyor)
+    const res = await copyCommissionBetweenDossiers(101, 102)
+    expect(res.success).toBe(true)
+    expect(res.count).toBe(3)
+    expect(res.fisNo).toMatch(/^FIS-\d+$/)
+
+    const file101Members = mockDbData.komisyonlar.filter((x) => x.temin_dosya_id === 101)
+    expect(file101Members.length).toBe(3)
+    expect(mockDbData.history.length).toBe(1)
+    expect(mockDbData.history[0].islem_turu).toContain(res.fisNo!)
+  })
+
+  it('11. Tek tıkla tüm dosyalara uygulama (applyCommissionToAllDossiers) tüm aktif dosyaları güncellemeli ve fiş oluşturmalı', async () => {
+    const res = await applyCommissionToAllDossiers()
+    expect(res.success).toBe(true)
+    expect(res.affectedDossiersCount).toBe(4) // 101, 102, 103, 104
+    expect(res.memberCountPerDossier).toBe(3)
+    expect(res.fisNo).toMatch(/^FIS-\d+$/)
+
+    for (const d of [101, 102, 103, 104]) {
+      const members = mockDbData.komisyonlar.filter((x) => x.temin_dosya_id === d)
+      expect(members.length).toBe(3)
+    }
+    expect(mockDbData.history.length).toBe(4)
+  })
+
+  it('12. Fişten geri yükleme (restoreCommissionFromHistoryFis) hem tek dosyaya hem tüm dosyalara uygulanabilmeli', async () => {
+    // Önce bir fiş oluştur
+    await copyCommissionBetweenDossiers(101, 103) // 103'te 1 üye var
+    expect(mockDbData.history.length).toBe(1)
+    const fisId = mockDbData.history[0].id
+
+    // Bu fişi tüm dosyalara uygula
+    const bulkRes = await restoreCommissionFromHistoryFis(fisId, 'all')
+    expect(bulkRes.success).toBe(true)
+    expect(bulkRes.affectedDossiersCount).toBe(4)
+
+    for (const d of [101, 102, 103, 104]) {
+      const members = mockDbData.komisyonlar.filter((x) => x.temin_dosya_id === d)
+      expect(members.length).toBe(1)
+    }
   })
 })

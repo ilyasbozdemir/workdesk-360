@@ -17,13 +17,15 @@ interface DosyaKomisyonCardProps {
   onApplyTemplate: (dosyaId: number) => void
   onOpenCopyModal: (item: DosyaKomisyonItem) => void
   onOpenDetail: (item: DosyaKomisyonItem, tab: 'kadro' | 'revizyon') => void
+  onApplyToAllDossiers?: (sourceDosyaId: number) => void
 }
 
 export const DosyaKomisyonCard: React.FC<DosyaKomisyonCardProps> = ({
   item,
   onApplyTemplate,
   onOpenCopyModal,
-  onOpenDetail
+  onOpenDetail,
+  onApplyToAllDossiers
 }) => {
   return (
     <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700/60 shadow-xs hover:shadow-md transition-all duration-200">
@@ -163,6 +165,19 @@ export const DosyaKomisyonCard: React.FC<DosyaKomisyonCardProps> = ({
 
         {/* Sağ: Aksiyon Butonları */}
         <div className="flex items-center gap-2 shrink-0 self-end md:self-start pt-1 flex-wrap justify-end">
+          {/* Bu Dosyanın Kadrosunu Tüm Dosyalara Dağıt Butonu */}
+          {onApplyToAllDossiers && item.totalMembersCount > 0 && (
+            <button
+              type="button"
+              onClick={() => onApplyToAllDossiers(item.id)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 text-xs font-bold hover:bg-amber-100 dark:hover:bg-amber-900/60 border border-amber-200 dark:border-amber-800 transition-colors cursor-pointer shadow-2xs"
+              title="Bu dosyadaki komisyon üyelerini tek tıkla diğer tüm dosyalara uygula ve fiş oluştur"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-600" />
+              <span>Tümüne Uygula</span>
+            </button>
+          )}
+
           {/* Başka Dosyadan Kopyala Butonu */}
           <button
             type="button"
@@ -174,15 +189,15 @@ export const DosyaKomisyonCard: React.FC<DosyaKomisyonCardProps> = ({
             <span>Dosyadan Kopyala</span>
           </button>
 
-          {/* Revizyon Çizelgesi Butonu */}
+          {/* Fiş Geçmişi / Revizyon Çizelgesi Butonu */}
           <button
             type="button"
             onClick={() => onOpenDetail(item, 'revizyon')}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200/80 dark:border-indigo-800 transition-colors cursor-pointer shadow-2xs"
-            title="Bu dosyadaki komisyon üye değişiklikleri geçmişini aç"
+            title="Bu dosyadaki komisyon işlem fişlerini ve değişiklik geçmişini aç"
           >
             <History className="w-3.5 h-3.5" />
-            <span>Revizyon Çizelgesi ({item.history_count})</span>
+            <span>Fiş Geçmişi ({item.history_count})</span>
           </button>
 
           {/* Kadroyu Güncelle Butonu */}
