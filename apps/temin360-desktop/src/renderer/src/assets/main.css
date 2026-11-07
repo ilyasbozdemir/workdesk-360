@@ -1,8 +1,8 @@
 @import 'tailwindcss';
 
 @custom-variant dark (.dark &);
-/* Low-height screens (viewport height <= 960px) */
-@custom-variant short (@media (max-height: 960px));
+/* Low-height screens & standard 1080p desktop with taskbar (viewport height <= 1080px) */
+@custom-variant short (@media (max-height: 1080px));
 /* Ultra low-height screens (viewport height <= 600px) */
 @custom-variant xshort (@media (max-height: 600px));
 

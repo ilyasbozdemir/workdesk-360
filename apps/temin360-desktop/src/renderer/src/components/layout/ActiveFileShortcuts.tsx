@@ -261,7 +261,7 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       <div
         data-testid="rail-footer"
         onWheel={handleFooterWheel}
-        className="w-full shrink-0 flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 pt-2 xshort:pt-1 pb-1"
+        className="w-full shrink-0 flex flex-col items-center gap-2.5 short:gap-1.5 xshort:gap-1 px-2 pt-2 short:pt-1 xshort:pt-0.5 pb-1 short:pb-0.5"
       >
         <div className="w-8 h-px bg-slate-200 dark:bg-slate-800 my-1 short:my-0.5 xshort:my-0" />
         {secondaryItems.map(renderLink)}

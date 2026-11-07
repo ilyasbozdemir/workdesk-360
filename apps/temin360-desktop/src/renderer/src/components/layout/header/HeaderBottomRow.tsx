@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "@tanstack/react-router";
 import { ClipboardList, Layers, Printer } from "lucide-react";
 import { TeminSelector } from "../TeminSelector";
+import { WorkspaceSwitcher } from "@renderer/shared/components/WorkspaceSwitcher";
 import { APP_ROUTES } from "../../../constants/routeConstants";
 
 interface HeaderBottomRowProps {
@@ -21,15 +22,9 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
       className="min-h-9 py-1 flex items-center justify-between gap-1 sm:gap-2.5 bg-slate-100/50 dark:bg-slate-950/20 border-t border-slate-200/30 dark:border-slate-800/30 select-none px-2 sm:px-3 relative z-20 w-full"
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
     >
-      {/* Sol: KİK Md. 22 Kompakt Rozeti */}
-      <div className="shrink-0 flex items-center pl-1">
-        <div
-          title="Temin 360 - 4734 Sayılı Kamu İhale Kanunu Madde 22 Doğrudan Temin Masası"
-          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border select-none bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 shadow-2xs"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shrink-0" />
-          <span>KİK Md. 22</span>
-        </div>
+      {/* Sol: Çoklu Çalışma Masası Seçici (4734 Satın Alma vs 5018 Mali Hizmetler) */}
+      <div className="shrink-0 flex items-center pl-0.5">
+        <WorkspaceSwitcher />
       </div>
 
       {/* Orta: Temin Seçici */}
