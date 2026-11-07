@@ -7,7 +7,7 @@ export const temin360Manifest = {
   app: "temin360-desktop",
   target: "temin360-desktop",
   target_scope: "dogrudan-temin",
-  version: "1.0.0-rc.12",
+  version: "1.0.0-rc.13",
   suite: "workdesk-360",
   schema_min: 1,
   schema_max: 46,
