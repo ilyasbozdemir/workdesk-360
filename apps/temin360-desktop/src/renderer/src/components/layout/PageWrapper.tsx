@@ -63,7 +63,7 @@ export function PageWrapper(): React.ReactNode {
     closeWorkspace,
     fileName
   } = useWorkspaceStore()
-  const { unifiedStepperMode, loadSettings } = useSettingsStore()
+  const { unifiedStepperMode, alwaysShowQuickMenu, loadSettings } = useSettingsStore()
 
   const { tabs, activeTabPath, addTab, clearTabs, clearDosyaTabs } = useTabStore()
 
@@ -155,7 +155,7 @@ export function PageWrapper(): React.ReactNode {
         <TamperAlertBanner />
         <TabsBar />
         <div className="flex flex-1 min-h-0 overflow-hidden relative">
-          {activeDosyaId && <ActiveFileShortcuts />}
+          {(activeDosyaId || alwaysShowQuickMenu) && <ActiveFileShortcuts />}
           <main className="flex-1 min-h-0 relative overflow-hidden">
             {tabs.map((tab) => {
               const isActive = tab.path === activeTabPath

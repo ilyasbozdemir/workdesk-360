@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   LayoutTemplate,
   PackageSearch,
+  Settings,
   UserCheck,
   Users,
   Warehouse
@@ -217,6 +218,12 @@ export function ActiveFileShortcuts(): React.JSX.Element {
       path: '/yardim',
       icon: HelpCircle,
       color: 'hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+    },
+    {
+      name: 'Sistem Ayarları',
+      path: '/ayarlar',
+      icon: Settings,
+      color: 'hover:text-slate-800 hover:bg-slate-100 dark:hover:text-slate-100 dark:hover:bg-slate-800'
     }
   ]
 
@@ -224,8 +231,9 @@ export function ActiveFileShortcuts(): React.JSX.Element {
     <ShortcutLink key={item.path} item={item} isActive={currentPath === item.path.split('?')[0]} />
   )
 
-  const userInitials = getInitials(adminName || '')
-  const profileLabel = `Kullanıcı: ${adminUsername} (Profil)${institutionName ? ` — ${institutionName}` : ''}`
+  const userInitials = getInitials(adminName || adminUsername || 'SY')
+  const displayUsername = adminName || adminUsername || 'Sistem Yöneticisi'
+  const profileLabel = `Kullanıcı: ${displayUsername} (Profil)${institutionName ? ` — ${institutionName}` : ''}`
 
   return (
     <nav
@@ -252,30 +260,28 @@ export function ActiveFileShortcuts(): React.JSX.Element {
         {secondaryItems.map(renderLink)}
 
         {/* Kullanıcı Profili (PP) */}
-        {adminUsername && (
-          <Link
-            to="/profil"
-            aria-label={profileLabel}
-            data-testid="rail-profile"
-            {...profileHandlers}
-            className={cn(
-              'w-10 h-10 short:w-8 short:h-8 shrink-0 rounded-full flex items-center justify-center font-extrabold text-[11px] transition-all duration-200 border cursor-pointer relative mt-1.5 short:mt-0 overflow-hidden bg-white dark:bg-slate-900',
-              currentPath === '/profil'
-                ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
-                : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:scale-105'
-            )}
-          >
-            {institutionLogo ? (
-              <img
-                src={institutionLogo}
-                alt="Kurum logosu"
-                className="w-full h-full object-contain p-0.5"
-              />
-            ) : (
-              userInitials
-            )}
-          </Link>
-        )}
+        <Link
+          to="/profil"
+          aria-label={profileLabel}
+          data-testid="rail-profile"
+          {...profileHandlers}
+          className={cn(
+            'w-10 h-10 short:w-8 short:h-8 shrink-0 rounded-full flex items-center justify-center font-extrabold text-[11px] transition-all duration-200 border cursor-pointer relative mt-1.5 short:mt-0 overflow-hidden bg-white dark:bg-slate-900',
+            currentPath === '/profil'
+              ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25 scale-105'
+              : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 hover:scale-105'
+          )}
+        >
+          {institutionLogo ? (
+            <img
+              src={institutionLogo}
+              alt="Kurum logosu"
+              className="w-full h-full object-contain p-0.5"
+            />
+          ) : (
+            userInitials
+          )}
+        </Link>
         <RailTooltip tip={profileTip}>{profileLabel}</RailTooltip>
       </div>
     </nav>

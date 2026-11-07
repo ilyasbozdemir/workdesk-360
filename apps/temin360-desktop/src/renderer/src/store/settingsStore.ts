@@ -71,6 +71,8 @@ interface SettingsState {
   setDefaultKurumIci: (val: boolean) => Promise<void>
   useDesktopUserAsDefault: boolean
   setUseDesktopUserAsDefault: (val: boolean) => Promise<void>
+  alwaysShowQuickMenu: boolean
+  setAlwaysShowQuickMenu: (val: boolean) => Promise<void>
   loadSettings: () => Promise<void>
 }
 
@@ -107,6 +109,19 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       }
     } catch (e) {
       console.error('Failed to save useDesktopUserAsDefault setting:', e)
+    }
+  },
+  alwaysShowQuickMenu: true,
+  setAlwaysShowQuickMenu: async (val: boolean) => {
+    set({ alwaysShowQuickMenu: val })
+    try {
+      if (window.electron?.ipcRenderer) {
+        await window.electron.ipcRenderer.invoke('db:save-settings', {
+          alwaysShowQuickMenu: String(val)
+        })
+      }
+    } catch (e) {
+      console.error('Failed to save alwaysShowQuickMenu setting:', e)
     }
   },
   adminName: 'Sistem Yöneticisi',
@@ -239,7 +254,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
         aiProvider,
         defaultKurumIci:
           settings.defaultKurumIci !== undefined ? settings.defaultKurumIci !== 'false' : true,
-        useDesktopUserAsDefault: settings.useDesktopUserAsDefault === 'true'
+        useDesktopUserAsDefault: settings.useDesktopUserAsDefault === 'true',
+        alwaysShowQuickMenu:
+          settings.alwaysShowQuickMenu !== undefined ? settings.alwaysShowQuickMenu !== 'false' : true
         // isDisclaimerAccepted is intentionally not loaded from DB to show it on every app launch
       })
     } catch (error) {
