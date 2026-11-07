@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useTabStore } from "../../../../store/tabStore";
+import { APP_ROUTES } from "../../../../constants/routeConstants";
 import {
   BookOpen,
   Calculator,
@@ -41,6 +43,8 @@ export function TakipActiveDosyaSummary({
   onOpenNewWindowClick,
   onDeleteClick,
 }: TakipActiveDosyaSummaryProps): React.JSX.Element {
+  const navigate = useNavigate();
+  const { addTab } = useTabStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -94,6 +98,19 @@ export function TakipActiveDosyaSummary({
           </div>
 
           <button
+            onClick={() => {
+              const route = `${APP_ROUTES.DOSYA_KUNYE}?id=${activeDosya.id}`;
+              addTab(route);
+              navigate({ to: route });
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
+            title="Dosya Künyesini ve Tüm Verileri İncele"
+          >
+            <FileText className="w-3.5 h-3.5 text-blue-500" />
+            Dosya Künyesi
+          </button>
+
+          <button
             onClick={onEditClick}
             className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-600 dark:hover:text-white border border-blue-200 dark:border-blue-800/60 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
             title="Dosya Formunu Düzenle"
@@ -125,6 +142,19 @@ export function TakipActiveDosyaSummary({
 
             {isMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 py-2 flex flex-col text-xs font-semibold animate-in fade-in slide-in-from-top-2 duration-200">
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    const route = `${APP_ROUTES.DOSYA_KUNYE}?id=${activeDosya.id}`;
+                    addTab(route);
+                    navigate({ to: route });
+                  }}
+                  className="w-full text-left px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center gap-2 transition-colors cursor-pointer border-0 bg-transparent font-semibold"
+                >
+                  <FileText size={14} className="text-blue-500" />
+                  Dosya Künyesi (Sekmede Aç)
+                </button>
+
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
