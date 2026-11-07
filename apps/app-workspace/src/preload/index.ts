@@ -8,7 +8,15 @@ const api: WorkspaceAPI = {
   getSystemInfo: () => ipcRenderer.invoke('workspace:get-system-info'),
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
   maximizeWindow: () => ipcRenderer.send('window:maximize'),
-  closeWindow: () => ipcRenderer.send('window:close')
+  closeWindow: () => ipcRenderer.send('window:close'),
+  isMaximized: () => ipcRenderer.invoke('window:is-maximized'),
+  onMaximizeChange: (callback: (isMax: boolean) => void) => {
+    const handler = (_: unknown, val: boolean) => callback(val)
+    ipcRenderer.on('window:maximized-change', handler)
+    return () => {
+      ipcRenderer.removeListener('window:maximized-change', handler)
+    }
+  }
 }
 
 if (process.contextIsolated) {

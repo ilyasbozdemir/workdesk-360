@@ -23,6 +23,8 @@ export interface WorkspaceAPI {
   minimizeWindow: () => void
   maximizeWindow: () => void
   closeWindow: () => void
+  isMaximized?: () => Promise<boolean>
+  onMaximizeChange?: (callback: (isMax: boolean) => void) => () => void
 }
 
 declare global {

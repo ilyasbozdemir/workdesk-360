@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   LayoutGrid,
   Moon,
@@ -7,6 +7,7 @@ import {
   Sparkles,
   Minus,
   Square,
+  Copy,
   X,
   Menu,
   Building2,
@@ -37,7 +38,18 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const isElectron = typeof window !== 'undefined' && !!window.workspaceAPI
   const [showModuleMenu, setShowModuleMenu] = useState(false)
+  const [isMaximized, setIsMaximized] = useState(false)
   const currentModule = KAMU_360_MODULES[activeModuleKey]
+
+  useEffect(() => {
+    if (window.workspaceAPI?.isMaximized) {
+      window.workspaceAPI.isMaximized().then(setIsMaximized).catch(() => {})
+    }
+    if (window.workspaceAPI?.onMaximizeChange) {
+      return window.workspaceAPI.onMaximizeChange(setIsMaximized)
+    }
+    return undefined
+  }, [])
 
   const handleMinimize = () => {
     window.workspaceAPI?.minimizeWindow()
@@ -55,9 +67,10 @@ export const Header: React.FC<HeaderProps> = ({
     <header
       style={{
         backgroundColor: 'var(--theme-bg-200)',
-        borderBottom: '1px solid var(--theme-border-100)'
-      }}
-      className="shrink-0 z-40 shadow-xs backdrop-blur-md select-none"
+        borderBottom: '1px solid var(--theme-border-100)',
+        WebkitAppRegion: isElectron ? 'drag' : 'no-drag'
+      } as React.CSSProperties}
+      className="shrink-0 z-40 shadow-xs backdrop-blur-md select-none app-drag-region"
     >
       {/* Üst Vurgu Çizgisi - KAMU 360 & TEMİN 360 Kurumsal Renk Gradyanı */}
       <div className="h-0.5 w-full bg-gradient-to-r from-blue-600 via-sky-400 to-emerald-500" />
@@ -242,9 +255,9 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={handleMaximize}
                 style={{ color: 'var(--theme-text-200)' }}
                 className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                title="Ekranı Kapla"
+                title={isMaximized ? 'Aşağı Getir' : 'Ekranı Kapla'}
               >
-                <Square size={12} />
+                {isMaximized ? <Copy size={11} className="rotate-180" /> : <Square size={12} />}
               </button>
               <button
                 onClick={handleClose}

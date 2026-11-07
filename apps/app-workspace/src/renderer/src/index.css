@@ -87,3 +87,18 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--theme-text-200);
 }
+
+/* Frameless Window Drag Region & Interactive Controls */
+.app-drag-region {
+  -webkit-app-region: drag;
+}
+
+.app-no-drag,
+input,
+textarea,
+select,
+button,
+a,
+[role='button'] {
+  -webkit-app-region: no-drag !important;
+}
