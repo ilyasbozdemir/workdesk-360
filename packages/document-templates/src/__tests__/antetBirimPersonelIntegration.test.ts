@@ -434,5 +434,55 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
       expect(html).not.toContain("Örnek Belediye Başkanlığı &gt; Belediye Meclisi");
       expect(html).not.toContain("Örnek Belediye Başkanlığı > Belediye Meclisi");
     });
+
+    it("Birim antet_ek_satir alanında yalnızca kurum adı yazılmışsa veya kurum adı tekrarı varsa saf birim adını kullanır", async () => {
+      const res = InstitutionalHeaderProvider.resolveBirimSelection({
+        birimId: 15,
+        birimAdi: "Fen İşleri Müdürlüğü",
+        birimList: [
+          {
+            id: 15,
+            birim_adi: "Fen İşleri Müdürlüğü",
+            antet_ek_satir: "Örnek Belediye Başkanlığı", // Hatalı biçimde kurum adı girilmiş
+            aktif_mi: 1,
+          },
+        ],
+        personelList: [
+          {
+            id: 101,
+            ad_soyad: "Ahmet YILMAZ",
+            unvan: "Fen İşleri Müdürü",
+            birim_id: 15,
+            birim: "Fen İşleri Müdürlüğü",
+            aktif_mi: 1,
+          },
+          {
+            id: 102,
+            ad_soyad: "Mehmet KAYA",
+            unvan: "Mühendis",
+            birim_id: 15,
+            birim: "Fen İşleri Müdürlüğü",
+            aktif_mi: 1,
+          },
+        ],
+        baseAntetLines: ["T.C.", "ÖRNEK BELEDİYE BAŞKANLIĞI"],
+        fallbackInstitutionName: "Örnek Belediye Başkanlığı",
+      });
+
+      // 1. Antet satırlarında kurum adı mükerrer olmamalı, saf birim adı eklenmeli
+      expect(res.antetSatirlari).toEqual([
+        "T.C.",
+        "ÖRNEK BELEDİYE BAŞKANLIĞI",
+        "Fen İşleri Müdürlüğü",
+      ]);
+      expect(res.antetSatirlari.filter((s) => s.includes("ÖRNEK BELEDİYE")).length).toBe(1);
+
+      // 2. Birim-personel bağlantısı: Birim personellerinden müdür unvanlı olan Harcama Yetkilisi atanmalı
+      expect(res.harcamaYetkilisiAdi).toBe("Ahmet YILMAZ");
+      expect(res.harcamaYetkilisiUnvan).toBe("Fen İşleri Müdürü");
+
+      // 3. İlgili personel (Hazırlayan) birimin diğer personeline atanmalı
+      expect(res.ilgiliPersonelAdi).toBe("Mehmet KAYA");
+    });
   });
 });

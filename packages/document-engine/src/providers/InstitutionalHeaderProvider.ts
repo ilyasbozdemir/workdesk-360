@@ -49,6 +49,43 @@ export interface BirimAntetResolutionResult {
 }
 
 /**
+ * Birim ek satırında DETSİS veya eski içe aktarımdan kalma hiyerarşi ("Kurum Adı > Birim Adı")
+ * veya kurum ön eki varsa temizleyip saf birim adını döner.
+ * Kurum adıyla tamamen aynı bir metin girildiyse (birim yerine kurum adı tekrarlanmışsa)
+ * boş metin ('') dönerek asıl birim adının devreye girmesini sağlar.
+ */
+export function sanitizeBirimAntetSatiri(
+  text?: string | null,
+  kurumAdi?: string | null
+): string {
+  if (!text) return ''
+  let cleaned = String(text).trim()
+
+  // 1. Eğer metinde ">" hiyerarşi ayracı varsa sadece en son birim adını al
+  if (cleaned.includes('>')) {
+    const parts = cleaned.split('>').map((p) => p.trim()).filter(Boolean)
+    cleaned = parts[parts.length - 1] || cleaned
+  }
+
+  // 2. Eğer metin kurum adıyla başlıyorsa ve arkasından birim geliyorsa kurum adını temizle
+  if (kurumAdi && String(kurumAdi).trim()) {
+    const kUpper = String(kurumAdi).trim().toLocaleUpperCase('tr-TR')
+    const cUpper = cleaned.toLocaleUpperCase('tr-TR')
+    if (cUpper.startsWith(kUpper) && cUpper.length > kUpper.length) {
+      cleaned = cleaned.slice(String(kurumAdi).trim().length).replace(/^[>\s:/-]+/, '').trim()
+    }
+  }
+
+  // 3. Olası kalan ">" veya baştaki/sondaki gereksiz karakterleri temizle
+  if (cleaned.includes('>')) {
+    const parts = cleaned.split('>').map((p) => p.trim()).filter(Boolean)
+    cleaned = parts[parts.length - 1] || cleaned
+  }
+
+  return cleaned.trim()
+}
+
+/**
  * Kurumsal ve Antet Bilgileri Sağlayıcısı (Institutional Header Provider)
  * - Belgeye özel alanlar, kalemler veya tekliflerle ilgilenmez.
  * - Sadece kurum, birim ve dosya üst verilerini çözümler.
@@ -58,6 +95,8 @@ export class InstitutionalHeaderProvider {
   private static cache = new Map<number, InstitutionalHeaderData>()
   private static settingsGetter: (() => InstitutionalHeaderSettings) | null = null
   private static evrakSayisiResolver: EvrakSayisiResolverFn | null = null
+
+  static sanitizeBirimAntetSatiri = sanitizeBirimAntetSatiri
 
   static setSettingsGetter(getter: () => InstitutionalHeaderSettings): void {
     this.settingsGetter = getter
@@ -122,32 +161,6 @@ export class InstitutionalHeaderProvider {
     }
 
     return lines
-  }
-
-  /**
-   * Birim ek satırında DETSİS veya eski içe aktarımdan kalma hiyerarşi ("Kurum Adı > Birim Adı")
-   * veya kurum ön eki varsa temizleyip saf birim adını döner.
-   */
-  static sanitizeBirimAntetSatiri(text?: string | null, kurumAdi?: string | null): string {
-    if (!text) return ''
-    let cleaned = String(text).trim()
-
-    // 1. Eğer metinde ">" hiyerarşi ayracı varsa sadece en son birim adını al
-    if (cleaned.includes('>')) {
-      const parts = cleaned.split('>').map((p) => p.trim()).filter(Boolean)
-      cleaned = parts[parts.length - 1] || cleaned
-    }
-
-    // 2. Eğer metin kurum adıyla başlıyorsa ve arkasından birim geliyorsa temizle
-    if (kurumAdi && String(kurumAdi).trim()) {
-      const kUpper = String(kurumAdi).trim().toLocaleUpperCase('tr-TR')
-      const cUpper = cleaned.toLocaleUpperCase('tr-TR')
-      if (cUpper.startsWith(kUpper) && cUpper.length > kUpper.length) {
-        cleaned = cleaned.slice(String(kurumAdi).trim().length).replace(/^[>\s:/-]+/, '').trim()
-      }
-    }
-
-    return cleaned
   }
 
   /**
@@ -283,22 +296,44 @@ export class InstitutionalHeaderProvider {
       warning = `"${bName}" birimi pasif durumdadır.`
     }
 
-    const resolvedBirimAdi = this.sanitizeBirimAntetSatiri(
+    const resolvedBirimAdi = sanitizeBirimAntetSatiri(
       matchedBirim?.birim_adi ||
       matchedBirim?.ad ||
       cleanBirimAdi ||
-      ''
+      '',
+      fallbackInstitutionName || kurumRow?.kurum_adi
     )
-    const rawAntetEkSatir =
-      (matchedBirim?.antet_ek_satir && String(matchedBirim.antet_ek_satir).trim()) ||
-      resolvedBirimAdi ||
-      (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) ||
-      ''
 
-    const resolvedAntetEkSatir = this.sanitizeBirimAntetSatiri(
+    const institutionNameUpper = String(fallbackInstitutionName || kurumRow?.kurum_adi || '')
+      .trim()
+      .toLocaleUpperCase('tr-TR')
+
+    let rawAntetEkSatir =
+      (matchedBirim?.antet_ek_satir && String(matchedBirim.antet_ek_satir).trim()) || ''
+
+    // Eğer veritabanındaki antet_ek_satir yalnızca kurum adının aynısı ise, geçersiz say ve birim adını al
+    if (
+      !rawAntetEkSatir ||
+      (institutionNameUpper && rawAntetEkSatir.toLocaleUpperCase('tr-TR') === institutionNameUpper)
+    ) {
+      rawAntetEkSatir =
+        resolvedBirimAdi ||
+        (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) ||
+        ''
+    }
+
+    let resolvedAntetEkSatir = sanitizeBirimAntetSatiri(
       rawAntetEkSatir,
       fallbackInstitutionName || kurumRow?.kurum_adi
     )
+
+    // Temizleme sonrası metin boşsa veya kurum adına eşitse mutlaka saf birim adını kullan
+    if (
+      !resolvedAntetEkSatir ||
+      (institutionNameUpper && resolvedAntetEkSatir.toLocaleUpperCase('tr-TR') === institutionNameUpper)
+    ) {
+      resolvedAntetEkSatir = resolvedBirimAdi
+    }
 
     const antetSatirlari = resolvedAntetEkSatir
       ? this.composeBirimAntetLines(
@@ -321,6 +356,21 @@ export class InstitutionalHeaderProvider {
         ''
     ).trim()
 
+    // Birim & Müdürlük Yönetimi ve Personel Yönetimi bağlantısı:
+    // İlgili birime ait personelleri bul
+    const unitPersons = Array.isArray(personelList) && matchedBirim
+      ? personelList.filter((p: any) => {
+          if (!p) return false
+          const pBId = p.birim_id ?? p.birimId
+          if (pBId !== undefined && pBId !== null && matchedBirim.id !== undefined && matchedBirim.id !== null) {
+            if (Number(pBId) === Number(matchedBirim.id)) return true
+          }
+          const pBirim = String(p.birim || p.birim_adi || '').trim().toLocaleLowerCase('tr-TR')
+          const targetBName = String(matchedBirim.birim_adi || matchedBirim.ad || '').trim().toLocaleLowerCase('tr-TR')
+          return Boolean(pBirim && targetBName && pBirim === targetBName)
+        })
+      : []
+
     let harcamaYetkilisiAdi: string | undefined
     let harcamaYetkilisiUnvan: string | undefined = matchedBirim?.harcama_yetkilisi_unvan || undefined
     const harcamaYetkilisiId = matchedBirim?.harcama_yetkilisi_id
@@ -332,6 +382,25 @@ export class InstitutionalHeaderProvider {
       if (hp) {
         harcamaYetkilisiAdi = hp.ad_soyad || hp.adSoyad || ''
         harcamaYetkilisiUnvan = harcamaYetkilisiUnvan || hp.unvan || 'Harcama Yetkilisi'
+      }
+    }
+
+    // Birim üzerinde yetkili tanımlı değilse birimin amiri/müdürü konumundaki personeli otomatik bağla
+    if (!harcamaYetkilisiAdi && unitPersons.length > 0) {
+      const boss = unitPersons.find((p: any) => {
+        const u = String(p.unvan || '').toLocaleLowerCase('tr-TR')
+        return (
+          u.includes('müdür') ||
+          u.includes('mudur') ||
+          u.includes('başkan') ||
+          u.includes('yetkili') ||
+          u.includes('amir') ||
+          u.includes('şube müdürü')
+        )
+      }) || unitPersons[0]
+      if (boss) {
+        harcamaYetkilisiAdi = boss.ad_soyad || boss.adSoyad || ''
+        harcamaYetkilisiUnvan = harcamaYetkilisiUnvan || boss.unvan || 'Harcama Yetkilisi'
       }
     }
 
@@ -363,6 +432,15 @@ export class InstitutionalHeaderProvider {
       if (ip) {
         ilgiliPersonelAdi = ip.ad_soyad || ip.adSoyad || ''
         ilgiliPersonelUnvan = ip.unvan || ''
+      }
+    }
+
+    // Birim üzerinde ilgili personel atanmamışsa birimin ilk personeli (hazırlayan) olarak bağla
+    if (!ilgiliPersonelAdi && unitPersons.length > 0) {
+      const worker = unitPersons.find((p: any) => p.ad_soyad !== harcamaYetkilisiAdi) || unitPersons[0]
+      if (worker) {
+        ilgiliPersonelAdi = worker.ad_soyad || worker.adSoyad || ''
+        ilgiliPersonelUnvan = worker.unvan || ''
       }
     }
 

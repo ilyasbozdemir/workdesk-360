@@ -1,7 +1,47 @@
 import React, { useMemo } from "react";
 import { BaseTemplate } from "../base.schema";
 import { GLOBAL_THEME } from "../theme.config";
-import { InstitutionalHeaderProvider } from "@worksuite-360/document-engine";
+import {
+  InstitutionalHeaderProvider,
+  sanitizeBirimAntetSatiri,
+} from "@worksuite-360/document-engine";
+
+/**
+ * Antet ek satırını güvenli biçimde temizler. DETSİS veya eski aktarımlardan
+ * kalma "Kurum > Birim" hiyerarşisini ve kurum adını ayıklar.
+ */
+function safeSanitizeBirimSatiri(
+  text?: string | null,
+  kurumAdi?: string | null,
+): string {
+  if (typeof sanitizeBirimAntetSatiri === "function") {
+    return sanitizeBirimAntetSatiri(text, kurumAdi);
+  }
+  if (
+    typeof InstitutionalHeaderProvider !== "undefined" &&
+    typeof InstitutionalHeaderProvider?.sanitizeBirimAntetSatiri === "function"
+  ) {
+    return InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(text, kurumAdi);
+  }
+  if (!text) return "";
+  let cleaned = String(text).trim();
+  if (cleaned.includes(">")) {
+    const parts = cleaned.split(">").map((p) => p.trim()).filter(Boolean);
+    cleaned = parts[parts.length - 1] || cleaned;
+  }
+  if (kurumAdi && String(kurumAdi).trim()) {
+    const kUpper = String(kurumAdi).trim().toLocaleUpperCase("tr-TR");
+    const cUpper = cleaned.toLocaleUpperCase("tr-TR");
+    if (cUpper.startsWith(kUpper) && cUpper.length > kUpper.length) {
+      cleaned = cleaned.slice(String(kurumAdi).trim().length).replace(/^[>\s:/-]+/, "").trim();
+    }
+  }
+  if (cleaned.includes(">")) {
+    const parts = cleaned.split(">").map((p) => p.trim()).filter(Boolean);
+    cleaned = parts[parts.length - 1] || cleaned;
+  }
+  return cleaned.trim();
+}
 
 interface DocumentHeaderProps {
   data?: Partial<BaseTemplate> & Record<string, any>;
@@ -28,12 +68,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
     let lines: string[] = [];
     if (rawAntetList.length > 0) {
       lines = rawAntetList
-        .map((s) =>
-          InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
-            String(s ?? "").trim(),
-            data?.kurumAdi,
-          )
-        )
+        .map((s) => safeSanitizeBirimSatiri(String(s ?? "").trim(), data?.kurumAdi))
         .filter(Boolean);
     } else {
       lines = [
@@ -41,12 +76,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
         data?.kurumUst,
         data?.kurumAdi,
       ]
-        .map((s) =>
-          InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
-            String(s ?? "").trim(),
-            data?.kurumAdi,
-          )
-        )
+        .map((s) => safeSanitizeBirimSatiri(String(s ?? "").trim(), data?.kurumAdi))
         .filter(Boolean);
     }
 
@@ -63,7 +93,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       ""
     ).trim();
 
-    const birimLine = InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
+    const birimLine = safeSanitizeBirimSatiri(
       rawBirimLine,
       data?.kurumAdi,
     );
@@ -100,7 +130,16 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       }
     }
 
-    return lines.length > 0 ? lines : ["T.C."];
+    // Antet satırlarında olası ">" veya mükerrer kurum satırlarını son kontrol olarak temizle
+    const uniqueLines: string[] = [];
+    for (const l of lines) {
+      const cleanLine = safeSanitizeBirimSatiri(l, data?.kurumAdi);
+      if (cleanLine && !uniqueLines.some((u) => u.toLocaleUpperCase("tr-TR") === cleanLine.toLocaleUpperCase("tr-TR"))) {
+        uniqueLines.push(cleanLine);
+      }
+    }
+
+    return uniqueLines.length > 0 ? uniqueLines : ["T.C."];
   }, [data]);
 
   return (
