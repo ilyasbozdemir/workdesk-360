@@ -1,11 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { InstitutionalHeaderProvider } from "@worksuite-360/document-engine";
 import {
   buildMergedPersonelList,
-  filterPersonelByBirim,
-  validateBirimAndPersonelAssignments,
   doesPersonelBelongToBirim,
+  filterPersonelByBirim,
   isPersonelActive,
+  validateBirimAndPersonelAssignments,
 } from "../document/ApprovalSignature";
 import { resolveAntetSatirlari } from "../resolver/helpers/resolveAntetSatirlari";
 
@@ -103,7 +103,9 @@ const MOCK_PERSONELLER = [
 describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Testleri", () => {
   describe("1. Seçili birimId Üzerinden Resmi Antet Çözümlemesi", () => {
     it("seçili birimId ile kurum anteti + birim antet satırını ve birim yetkililerini çözer", () => {
-      const baseLines = InstitutionalHeaderProvider.parseKurumBaseAntetLines(MOCK_KURUM);
+      const baseLines = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
+        MOCK_KURUM,
+      );
       const res = InstitutionalHeaderProvider.resolveBirimSelection({
         birimId: 10,
         birimList: MOCK_BIRIMLER,
@@ -217,7 +219,8 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
         "Ahmet Yılmaz",
         "Zeynep Kaya",
       ]);
-      expect(res.filteredList.some((p) => p.ad_soyad === "Emekli Personel")).toBe(false);
+      expect(res.filteredList.some((p) => p.ad_soyad === "Emekli Personel"))
+        .toBe(false);
     });
 
     it("includeOtherUnits: true olduğunda diğer birimlerdeki yetkili personelleri de dahil eder", () => {
@@ -252,8 +255,10 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
     });
 
     it("doesPersonelBelongToBirim hem birim_id hem birim adı üzerinden eşleşme yapar", () => {
-      expect(doesPersonelBelongToBirim(MOCK_PERSONELLER[0], 10, MOCK_BIRIMLER)).toBe(true);
-      expect(doesPersonelBelongToBirim(MOCK_PERSONELLER[0], 20, MOCK_BIRIMLER)).toBe(false);
+      expect(doesPersonelBelongToBirim(MOCK_PERSONELLER[0], 10, MOCK_BIRIMLER))
+        .toBe(true);
+      expect(doesPersonelBelongToBirim(MOCK_PERSONELLER[0], 20, MOCK_BIRIMLER))
+        .toBe(false);
       expect(isPersonelActive(MOCK_PERSONELLER[0])).toBe(true);
       expect(isPersonelActive(MOCK_PERSONELLER[4])).toBe(false);
     });
@@ -282,8 +287,17 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
       });
 
       expect(warnings).toHaveLength(2);
-      expect(warnings.some((w) => w.type === "personel_different_birim" && w.personelName === "Ali Çelik")).toBe(true);
-      expect(warnings.some((w) => w.type === "personel_passive" && w.personelName === "Emekli Personel")).toBe(true);
+      expect(
+        warnings.some((w) =>
+          w.type === "personel_different_birim" &&
+          w.personelName === "Ali Çelik"
+        ),
+      ).toBe(true);
+      expect(
+        warnings.some((w) =>
+          w.type === "personel_passive" && w.personelName === "Emekli Personel"
+        ),
+      ).toBe(true);
     });
 
     it("bulunamayan birimId için birim_not_found uyarısı üretir", () => {
@@ -300,7 +314,7 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
   });
 
   describe("4. DocumentHeader Antet Birim Bütünlüğü (Talep Eden / İşleten Birim)", () => {
-    it("antetSatirlari sadece kurum üst satırlarını içerdiğinde birim/müdürlük satırını antete ekler", async () => {
+    it("antetBirimGosterilsin: true olduğunda birim/müdürlük satırını antete ekler", async () => {
       const { DocumentHeader } = await import("../document/DocumentHeader");
       const { renderToStaticMarkup } = await import("react-dom/server");
       const React = await import("react");
@@ -310,8 +324,9 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
           data: {
             antetSatirlari: ["T.C.", "ÇANKAYA BELEDİYE BAŞKANLIĞI"],
             birim: "Destek Hizmetleri Müdürlüğü",
+            antetBirimGosterilsin: true,
           },
-        })
+        }),
       );
 
       expect(html).toContain("T.C.");
@@ -334,7 +349,7 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
             ],
             mudurluk: "Destek Hizmetleri Müdürlüğü",
           },
-        })
+        }),
       );
 
       // Sadece 1 kez geçmeli
@@ -359,7 +374,7 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
             birim: "Destek Hizmetleri Müdürlüğü",
             antetBirimGosterilsin: false,
           },
-        })
+        }),
       );
 
       expect(html).toContain("T.C.");
@@ -368,4 +383,3 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
     });
   });
 });
-

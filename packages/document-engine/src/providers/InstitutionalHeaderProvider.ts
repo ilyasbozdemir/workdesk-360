@@ -154,9 +154,6 @@ export class InstitutionalHeaderProvider {
       ekSatir = String(
         birimOrEkSatir.antet_ek_satir ||
           birimOrEkSatir.birim_antet_ek_satir ||
-          birimOrEkSatir.birim_adi ||
-          birimOrEkSatir.birim_tablo_adi ||
-          birimOrEkSatir.ad ||
           ''
       ).trim()
     }
@@ -252,16 +249,17 @@ export class InstitutionalHeaderProvider {
       ''
     const resolvedAntetEkSatir =
       (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) ||
-      matchedBirim?.antet_ek_satir ||
-      resolvedBirimAdi ||
+      (matchedBirim?.antet_ek_satir && String(matchedBirim.antet_ek_satir).trim()) ||
       ''
 
-    const antetSatirlari = this.composeBirimAntetLines(
-      effectiveBaseLines,
-      matchedBirim || resolvedAntetEkSatir,
-      dosyaAntetEkSatir,
-      knownBirimNames
-    )
+    const antetSatirlari = resolvedAntetEkSatir
+      ? this.composeBirimAntetLines(
+          effectiveBaseLines,
+          resolvedAntetEkSatir,
+          dosyaAntetEkSatir,
+          knownBirimNames
+        )
+      : effectiveBaseLines
 
     const sunulacakMakamAdi = String(
       matchedBirim?.sunum_makami ||
@@ -438,25 +436,28 @@ export class InstitutionalHeaderProvider {
       kurumRow = kurumRows[0]
     }
 
+    // Kurum adı: Tanımlı kurum_adi / ad / settings.institutionName önceliklidir (asla üst kurum adı veya yapay fallback öne geçmez)
     const kurumAdiText =
-      kurumRow?.ust_kurum_adi ||
       kurumRow?.kurum_adi ||
       kurumRow?.ad ||
       settings.institutionName ||
-      'KAMU KURUMU'
+      kurumRow?.ust_kurum_adi ||
+      ''
 
     const baseLines = this.parseKurumBaseAntetLines(kurumRow, kurumAdiText)
-    const antetSatirlari = this.composeBirimAntetLines(
-      baseLines,
-      dosyaRow,
-      dosyaRow?.antet_ek_satir
-    )
+    const antetSatirlari = dosyaRow?.antet_ek_satir
+      ? this.composeBirimAntetLines(
+          baseLines,
+          dosyaRow.antet_ek_satir,
+          dosyaRow.antet_ek_satir
+        )
+      : baseLines
 
     const effectiveMudurluk =
       dosyaRow?.birim_adi ||
       (dosyaRow?.antet_ek_satir ? String(dosyaRow.antet_ek_satir).trim() : '') ||
       settings.departmentName ||
-      'Destek Hizmetleri Müdürlüğü'
+      ''
 
     const solLogo =
       kurumRow?.logo_sol ||
@@ -500,8 +501,8 @@ export class InstitutionalHeaderProvider {
 
     const result: InstitutionalHeaderData = {
       antetSatirlari,
-      kurumUst: kurumAdiText,
-      kurumAdi: kurumRow?.kurum_adi || kurumAdiText,
+      kurumUst: kurumRow?.ust_kurum_adi || '',
+      kurumAdi: kurumRow?.kurum_adi || kurumRow?.ad || settings.institutionName || '',
       mudurluk: effectiveMudurluk,
       solLogo,
       sagLogo,

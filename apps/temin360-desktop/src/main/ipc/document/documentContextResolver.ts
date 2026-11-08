@@ -377,7 +377,7 @@ export function resolveDocumentPayload(
 
     const baseAntetLines = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
       kurum,
-      settingsMap.institutionName || "KAMU KURUMU",
+      settingsMap.institutionName || "",
     );
 
     const effectiveBirim = (
@@ -397,21 +397,22 @@ export function resolveDocumentPayload(
     const birimAntet = (
       (dosya as any)?.antet_ek_satir ||
       (dosya as any)?.birim_antet_ek_satir ||
-      effectiveBirim ||
-      settingsMap.spendingUnit ||
+      (birimListesi as any[]).find((b: any) => b.id === (dosya as any)?.birim_id)?.antet_ek_satir ||
       ""
     ).trim();
 
-    const antetSatirlari = InstitutionalHeaderProvider.composeBirimAntetLines(
-      baseAntetLines,
-      birimAntet,
-      (dosya as any)?.antet_ek_satir,
-    );
+    const antetSatirlari = birimAntet
+      ? InstitutionalHeaderProvider.composeBirimAntetLines(
+          baseAntetLines,
+          birimAntet,
+          (dosya as any)?.antet_ek_satir,
+        )
+      : baseAntetLines;
 
     const kurumAdi = (kurum as any)?.kurum_adi ||
       (kurum as any)?.ad ||
       settingsMap.institutionName ||
-      "T.C. KAMU KURUMU";
+      "";
     const harcamaBirimi = (dosya as any)?.harcama_birimi ||
       effectiveBirim ||
       birimAntet ||
