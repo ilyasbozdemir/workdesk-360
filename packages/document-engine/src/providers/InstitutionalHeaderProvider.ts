@@ -39,6 +39,9 @@ export interface BirimAntetResolutionResult {
   gerceklestirmeGorevlisiId?: number
   gerceklestirmeGorevlisiAdi?: string
   gerceklestirmeGorevlisiUnvan?: string
+  ilgiliPersonelId?: number
+  ilgiliPersonelAdi?: string
+  ilgiliPersonelUnvan?: string
   matchedBirim: Record<string, any> | null
   birimFound: boolean
   birimPassive: boolean
@@ -344,6 +347,20 @@ export class InstitutionalHeaderProvider {
       }
     }
 
+    let ilgiliPersonelAdi: string | undefined
+    let ilgiliPersonelUnvan: string | undefined
+    const ilgiliPersonelId = matchedBirim?.ilgili_personel_id
+      ? Number(matchedBirim.ilgili_personel_id)
+      : undefined
+
+    if (ilgiliPersonelId && Array.isArray(personelList) && personelList.length > 0) {
+      const ip = personelList.find((p: any) => p && Number(p.id) === ilgiliPersonelId)
+      if (ip) {
+        ilgiliPersonelAdi = ip.ad_soyad || ip.adSoyad || ''
+        ilgiliPersonelUnvan = ip.unvan || ''
+      }
+    }
+
     return {
       birimId: matchedBirim?.id ?? (hasExplicitId ? Number(birimId) || birimId! : undefined),
       birimAdi: resolvedBirimAdi,
@@ -359,6 +376,9 @@ export class InstitutionalHeaderProvider {
       gerceklestirmeGorevlisiId,
       gerceklestirmeGorevlisiAdi,
       gerceklestirmeGorevlisiUnvan,
+      ilgiliPersonelId,
+      ilgiliPersonelAdi,
+      ilgiliPersonelUnvan,
       matchedBirim,
       birimFound,
       birimPassive,

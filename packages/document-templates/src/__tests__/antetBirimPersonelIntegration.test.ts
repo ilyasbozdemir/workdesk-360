@@ -384,8 +384,8 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
 
     it("DETSİS hiyerarşi oku (Kurum > Birim) içeren antet_ek_satir bilgisini saf birim adına temizler", async () => {
       const sanitized = InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
-        "Güneyyurt Belediye Başkanlığı > Belediye Meclisi",
-        "Güneyyurt Belediye Başkanlığı"
+        "Örnek Belediye Başkanlığı > Belediye Meclisi",
+        "Örnek Belediye Başkanlığı"
       );
       expect(sanitized).toBe("Belediye Meclisi");
 
@@ -396,17 +396,17 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
           {
             id: 9,
             birim_adi: "Belediye Meclisi",
-            antet_ek_satir: "Güneyyurt Belediye Başkanlığı > Belediye Meclisi",
+            antet_ek_satir: "Örnek Belediye Başkanlığı > Belediye Meclisi",
             aktif_mi: 1,
           },
         ],
-        baseAntetLines: ["T.C.", "GÜNEYYURT BELEDİYE BAŞKANLIĞI"],
-        fallbackInstitutionName: "Güneyyurt Belediye Başkanlığı",
+        baseAntetLines: ["T.C.", "ÖRNEK BELEDİYE BAŞKANLIĞI"],
+        fallbackInstitutionName: "Örnek Belediye Başkanlığı",
       });
 
       expect(res.antetSatirlari).toEqual([
         "T.C.",
-        "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
+        "ÖRNEK BELEDİYE BAŞKANLIĞI",
         "Belediye Meclisi",
       ]);
       expect(res.antetEkSatir).toBe("Belediye Meclisi");
@@ -421,18 +421,18 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
           data: {
             antetSatirlari: [
               "T.C.",
-              "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
-              "Güneyyurt Belediye Başkanlığı > Belediye Meclisi",
+              "ÖRNEK BELEDİYE BAŞKANLIĞI",
+              "Örnek Belediye Başkanlığı > Belediye Meclisi",
             ],
-            kurumAdi: "Güneyyurt Belediye Başkanlığı",
+            kurumAdi: "Örnek Belediye Başkanlığı",
           },
         }),
       );
 
       expect(html).toContain("Belediye Meclisi");
       expect(html).not.toContain("&gt;");
-      expect(html).not.toContain("Güneyyurt Belediye Başkanlığı &gt; Belediye Meclisi");
-      expect(html).not.toContain("Güneyyurt Belediye Başkanlığı > Belediye Meclisi");
+      expect(html).not.toContain("Örnek Belediye Başkanlığı &gt; Belediye Meclisi");
+      expect(html).not.toContain("Örnek Belediye Başkanlığı > Belediye Meclisi");
     });
   });
 });

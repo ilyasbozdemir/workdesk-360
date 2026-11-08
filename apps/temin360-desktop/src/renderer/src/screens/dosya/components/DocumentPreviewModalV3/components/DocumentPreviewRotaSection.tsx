@@ -272,6 +272,29 @@ export function DocumentPreviewRotaSection({
     ]
   )
 
+  const showBirimInAntet = formData?.antetBirimGosterilsin !== false
+  const effectiveAntetLines = React.useMemo(() => {
+    if (showBirimInAntet && currentBirimResolution.antetSatirlari?.length > 0) {
+      return currentBirimResolution.antetSatirlari
+    }
+    if (!showBirimInAntet && currentAntetLines.length > 2) {
+      return currentAntetLines.slice(0, 2)
+    }
+    return currentAntetLines
+  }, [showBirimInAntet, currentBirimResolution.antetSatirlari, currentAntetLines])
+
+  React.useEffect(() => {
+    if (
+      effectiveAntetLines.length > 0 &&
+      JSON.stringify(formData?.antetSatirlari) !== JSON.stringify(effectiveAntetLines)
+    ) {
+      setFormData((prev: any) => ({
+        ...prev,
+        antetSatirlari: effectiveAntetLines
+      }))
+    }
+  }, [effectiveAntetLines])
+
   const rawMergedPersonelList = React.useMemo(
     () =>
       buildMergedPersonelList(personelListesi, {
@@ -444,29 +467,31 @@ export function DocumentPreviewRotaSection({
         nextData.sunulacakMakam = res.sunulacakMakamAdi
       }
 
-      // Manuel görevli seçimi YOKSA ve alanda henüz görevli atanmamışsa birimin varsayılan yetkililerini doldur
-      if (
-        res.harcamaYetkilisiAdi &&
-        !hasOverrideFor('onaylayan') &&
-        !String(prev?.onaylayanPersonelAdi || '').trim()
-      ) {
+      // 1. Onaylayan / Harcama Yetkilisi: Birimin Harcama Yetkilisi tanımlıysa ata
+      if (res.harcamaYetkilisiAdi && !hasOverrideFor('onaylayan')) {
         nextData.onaylayanPersonelAdi = res.harcamaYetkilisiAdi
         nextData.onaylayanPersonelUnvan =
-          res.harcamaYetkilisiUnvan || prev?.onaylayanPersonelUnvan || 'Harcama Yetkilisi'
+          res.harcamaYetkilisiUnvan || 'Harcama Yetkilisi'
         nextData.harcamaYetkilisiAdi = res.harcamaYetkilisiAdi
         nextData.harcamaYetkilisiUnvan =
-          res.harcamaYetkilisiUnvan || prev?.harcamaYetkilisiUnvan || 'Harcama Yetkilisi'
+          res.harcamaYetkilisiUnvan || 'Harcama Yetkilisi'
       }
 
-      if (
-        res.gerceklestirmeGorevlisiAdi &&
-        !hasOverrideFor('hazirlayan') &&
-        !hasOverrideFor('gerceklestirmeGorevlisi') &&
-        !String(prev?.hazirlayanPersonelAdi || '').trim()
-      ) {
-        nextData.hazirlayanPersonelAdi = res.gerceklestirmeGorevlisiAdi
-        nextData.hazirlayanPersonelUnvan =
-          res.gerceklestirmeGorevlisiUnvan || prev?.hazirlayanPersonelUnvan || ''
+      // 2. Hazırlayan / İlgili Personel: Birimin ilgili personeli veya gerçekleştirme görevlisi tanımlıysa ata
+      const defaultHazirlayan = res.ilgiliPersonelAdi || res.gerceklestirmeGorevlisiAdi
+      const defaultHazirlayanUnvan = res.ilgiliPersonelUnvan || res.gerceklestirmeGorevlisiUnvan || ''
+      if (defaultHazirlayan && !hasOverrideFor('hazirlayan')) {
+        nextData.hazirlayanPersonelAdi = defaultHazirlayan
+        nextData.hazirlayanPersonelUnvan = defaultHazirlayanUnvan
+        nextData.talepEdenPersonelAdi = defaultHazirlayan
+        nextData.talepEdenPersonelUnvan = defaultHazirlayanUnvan
+      }
+
+      // 3. Gerçekleştirme Görevlisi: Birimin gerçekleştirme görevlisi tanımlıysa ata
+      if (res.gerceklestirmeGorevlisiAdi && !hasOverrideFor('gerceklestirmeGorevlisi')) {
+        nextData.gerceklestirmeGorevlisiAdi = res.gerceklestirmeGorevlisiAdi
+        nextData.gerceklestirmeGorevlisiUnvani =
+          res.gerceklestirmeGorevlisiUnvan || 'Gerçekleştirme Görevlisi'
       }
 
       return nextData
@@ -804,7 +829,7 @@ export function DocumentPreviewRotaSection({
           data-testid="rota-antet-preview"
           className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-lg text-center space-y-0.5"
         >
-          {currentAntetLines.map((line, idx) => (
+          {effectiveAntetLines.map((line, idx) => (
             <div
               key={idx}
               className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-tight truncate"
@@ -925,11 +950,16 @@ export function DocumentPreviewRotaSection({
               currentPerson?.name,
               currentPerson?.title
             )
+            const isApprovalStep =
+              step.id === 'onaylayan' ||
+              step.id === 'harcamaYetkilisi' ||
+              (step as any).role === 'harcama_yetkilisi'
+
             const stepFilterRes = filterPersonelByBirim(baseStepPool, {
               birimId: currentBirimResolution.birimId ?? currentBirimId,
               birimAdi: currentBirimResolution.birimAdi || currentBirimAdi,
               birimList: activeBirimList,
-              includeOtherUnits: allowCrossUnitPersonnel,
+              includeOtherUnits: allowCrossUnitPersonnel || isApprovalStep,
               currentSelectedNames: currentPerson?.name ? [currentPerson.name] : []
             })
             const stepPersonelList = stepFilterRes.filteredList
