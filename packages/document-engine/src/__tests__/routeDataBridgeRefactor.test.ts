@@ -212,3 +212,4 @@ describe("routeDataBridge Refactor — Şablondan Bağımsız Açık Sözleşme 
     expect(doc.fiyatArastirmaGorevlileri[0].adSoyad).toBe("Memur Can");
   });
 });
+
