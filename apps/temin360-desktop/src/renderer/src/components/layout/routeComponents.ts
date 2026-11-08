@@ -177,6 +177,15 @@ export const routeComponents: Record<string, () => React.ReactElement> = {
   "/rota-yonetimi": lazyRoute(() =>
     import("../../screens/rota-yonetimi/index.screen")
   ),
+  "/piyasa-fiyat-arastirmasi": lazyRoute(() =>
+    import("../../screens/dashboard/PiyasaFiyatArastirmasiScreen")
+  ),
+  "/surec-studyosu": lazyRoute(() =>
+    import("../../screens/modul-magazasi/SurecStudyosuScreen")
+  ),
+  "/islak-imza": lazyRoute(() =>
+    import("../../screens/islak-imza/islak-imzali-belge.screen")
+  ),
 };
 
 // Doğrudan Temin (4734 m.22) sürümünde kapsam dışı ekranlar (2886, EBYS) kayıt edilmez

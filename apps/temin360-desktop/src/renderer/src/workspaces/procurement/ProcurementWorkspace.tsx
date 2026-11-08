@@ -34,6 +34,9 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
 
     if (cleanPath === '/' || cleanPath === APP_ROUTES.DASHBOARD) return 'Gösterge Paneli'
     if (cleanPath === APP_ROUTES.DOSYALAR) return 'Doğrudan Temin Dosyaları'
+    if (cleanPath === APP_ROUTES.PIYASA_FIYAT_ARASTIRMALARI_MASASI) return 'Piyasa Fiyat Araştırmaları Masası'
+    if (cleanPath === APP_ROUTES.SUREC_STUDYOSU) return 'Süreç Stüdyosu'
+    if (cleanPath === APP_ROUTES.ISLAK_IMZA) return 'Islak İmzalı Belge Yönetimi'
     if (cleanPath === '/dosya' || cleanPath.startsWith('/dosya/')) {
       if (cleanPath === APP_ROUTES.BELGE_ONIZLEME) return 'A4 Belge Önizleme & Düzenleme'
       if (cleanPath === APP_ROUTES.HAZIRLIK_VE_IHTIYAC) return '1. İhtiyaç & Onay Aşaması'
