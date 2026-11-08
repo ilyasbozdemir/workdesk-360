@@ -164,3 +164,4 @@ Tüm testler ve tip denetimleri sıfır hata ile tamamlanmıştır:
 
 - **Çoklu Kurum ve Dış Entegrasyon:** İleride BKMYBS, MYS ve EKAP doğrudan entegrasyonu sağlandığında kural motoruna harici servis doğrulayıcıları eklenebilir.
 - **Genişletilebilir Süreçler:** `WorkflowDefinition` arayüzü sayesinde İhale (Açık/Belli İstekliler), Hakediş Kabul ve Doğrudan Temin 22/a, 22/b, 22/c akışları sadece yeni tanım dosyası yazılarak sisteme eklenebilir.
+

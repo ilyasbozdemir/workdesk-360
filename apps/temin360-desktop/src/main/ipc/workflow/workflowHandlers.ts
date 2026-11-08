@@ -109,3 +109,4 @@ export function registerWorkflowHandlers(): void {
     WorkflowService.markAllNotificationsRead()
   })
 }
+

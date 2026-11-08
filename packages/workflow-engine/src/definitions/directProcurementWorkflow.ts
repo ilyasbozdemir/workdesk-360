@@ -240,3 +240,4 @@ export const DIRECT_PROCUREMENT_WORKFLOW_DEFINITION: WorkflowDefinition = {
   transitions: DIRECT_PROCUREMENT_TRANSITIONS,
   rules: ALL_STANDARD_RULES
 }
+
