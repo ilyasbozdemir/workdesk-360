@@ -121,7 +121,9 @@ export default defineConfig(({ mode, command }) => {
       resolve: {
         alias: {
           '@renderer': resolve('src/renderer/src'),
-          '@workdesk-360/workflow-engine': resolve('../../packages/workflow-engine/src/index.ts')
+          '@workdesk-360/workflow-engine': resolve('../../packages/workflow-engine/src/index.ts'),
+          '@worksuite-360/document-engine': resolve('../../packages/document-engine/src/index.ts'),
+          '@temin360/document-templates': resolve('../../packages/document-templates/src/index.ts')
         }
       },
       build: {

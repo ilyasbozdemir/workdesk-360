@@ -32,6 +32,7 @@ import {
 } from '@temin360/document-templates'
 import {
   InstitutionalHeaderProvider,
+  sanitizeBirimAntetSatiri,
   resolveRoute,
   extractDocumentRouteValues,
   applyResolvedRouteToDocumentData
@@ -42,6 +43,41 @@ import {
   GLOBAL_ROTA_KEY
 } from '../../../../../services/rotaDefaultsService'
 import { kurumService } from '../../../../../services/kurumService'
+
+/**
+ * Antet ek satırını güvenli biçimde temizler. DETSİS veya eski aktarımlardan
+ * kalma "Kurum > Birim" hiyerarşisini ve kurum adını ayıklar.
+ */
+function cleanBirimAntet(text?: string | null, kurumAdi?: string | null): string {
+  if (typeof sanitizeBirimAntetSatiri === 'function') {
+    return sanitizeBirimAntetSatiri(text, kurumAdi)
+  }
+  if (
+    typeof InstitutionalHeaderProvider !== 'undefined' &&
+    typeof InstitutionalHeaderProvider?.sanitizeBirimAntetSatiri === 'function'
+  ) {
+    return InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(text, kurumAdi)
+  }
+  if (!text) return ''
+  let cleaned = String(text).trim()
+  if (cleaned.includes('>')) {
+    const parts = cleaned.split('>').map((p) => p.trim()).filter(Boolean)
+    cleaned = parts[parts.length - 1] || cleaned
+  }
+  if (kurumAdi && String(kurumAdi).trim()) {
+    const kUpper = String(kurumAdi).trim().toLocaleUpperCase('tr-TR')
+    const cUpper = cleaned.toLocaleUpperCase('tr-TR')
+    if (cUpper === kUpper) return ''
+    if (cUpper.startsWith(kUpper) && cUpper.length > kUpper.length) {
+      cleaned = cleaned.slice(String(kurumAdi).trim().length).replace(/^[>\s:/-]+/, '').trim()
+    }
+  }
+  if (cleaned.includes('>')) {
+    const parts = cleaned.split('>').map((p) => p.trim()).filter(Boolean)
+    cleaned = parts[parts.length - 1] || cleaned
+  }
+  return cleaned.trim()
+}
 
 export type BelgeModuType = 'standart' | 'koordinasyonlu' | 'hizli_onay'
 
@@ -221,9 +257,7 @@ export function DocumentPreviewRotaSection({
   const currentAntetLines: string[] = React.useMemo(() => {
     if (Array.isArray(formData?.antetSatirlari) && formData.antetSatirlari.length > 0) {
       return formData.antetSatirlari
-        .map((s: unknown) =>
-          InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(String(s ?? ''), formData?.kurumAdi)
-        )
+        .map((s: unknown) => cleanBirimAntet(String(s ?? ''), formData?.kurumAdi))
         .filter(Boolean)
     }
     if (typeof formData?.antetSatirlari === 'string' && formData.antetSatirlari.trim()) {
@@ -231,17 +265,13 @@ export function DocumentPreviewRotaSection({
         const parsed = JSON.parse(formData.antetSatirlari)
         if (Array.isArray(parsed)) {
           return parsed
-            .map((s: unknown) =>
-              InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(String(s ?? ''), formData?.kurumAdi)
-            )
+            .map((s: unknown) => cleanBirimAntet(String(s ?? ''), formData?.kurumAdi))
             .filter(Boolean)
         }
       } catch {
         return formData.antetSatirlari
           .split('\n')
-          .map((s: string) =>
-            InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(s.trim(), formData?.kurumAdi)
-          )
+          .map((s: string) => cleanBirimAntet(s.trim(), formData?.kurumAdi))
           .filter(Boolean)
       }
     }
@@ -249,7 +279,7 @@ export function DocumentPreviewRotaSection({
     return InstitutionalHeaderProvider.parseKurumBaseAntetLines(
       formData?.kurum || null,
       kName
-    )
+    ).map((s: string) => cleanBirimAntet(s, kName)).filter(Boolean)
   }, [formData?.antetSatirlari, formData?.kurumAdi, formData?.kurum_adi, formData?.kurum])
 
   const currentBirimResolution = React.useMemo(
@@ -276,12 +306,19 @@ export function DocumentPreviewRotaSection({
   const effectiveAntetLines = React.useMemo(() => {
     if (showBirimInAntet && currentBirimResolution.antetSatirlari?.length > 0) {
       return currentBirimResolution.antetSatirlari
+        .map((l) => cleanBirimAntet(l, formData?.kurumAdi))
+        .filter(Boolean)
     }
     if (!showBirimInAntet && currentAntetLines.length > 2) {
-      return currentAntetLines.slice(0, 2)
+      return currentAntetLines
+        .slice(0, 2)
+        .map((l) => cleanBirimAntet(l, formData?.kurumAdi))
+        .filter(Boolean)
     }
     return currentAntetLines
-  }, [showBirimInAntet, currentBirimResolution.antetSatirlari, currentAntetLines])
+      .map((l) => cleanBirimAntet(l, formData?.kurumAdi))
+      .filter(Boolean)
+  }, [showBirimInAntet, currentBirimResolution.antetSatirlari, currentAntetLines, formData?.kurumAdi])
 
   React.useEffect(() => {
     if (
@@ -429,7 +466,7 @@ export function DocumentPreviewRotaSection({
       if (baseOnly.length <= 1 && currentAntetLines.length > 1) {
         baseOnly = currentAntetLines
           .slice(0, 2)
-          .map((l) => InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(l, prev?.kurumAdi))
+          .map((l) => cleanBirimAntet(l, prev?.kurumAdi))
           .filter(Boolean)
       }
 
@@ -442,17 +479,11 @@ export function DocumentPreviewRotaSection({
         fallbackInstitutionName: prev?.kurumAdi || prev?.kurum_adi
       })
 
-      const existingOverrides: RouteOverride[] = Array.isArray(prev?.routeOverrides)
-        ? prev.routeOverrides
-        : []
-      const hasOverrideFor = (slotId: string) =>
-        existingOverrides.some((o) => o && o.slotId === slotId && o.value !== null)
-
       const showBirim = prev?.antetBirimGosterilsin !== false
       const nextAntetLines =
         showBirim && (selectedBirim || res.birimAdi)
-          ? res.antetSatirlari
-          : baseOnly
+          ? res.antetSatirlari.map((l) => cleanBirimAntet(l, prev?.kurumAdi)).filter(Boolean)
+          : baseOnly.map((l) => cleanBirimAntet(l, prev?.kurumAdi)).filter(Boolean)
 
       const nextData: Record<string, any> = {
         ...prev,
@@ -468,18 +499,18 @@ export function DocumentPreviewRotaSection({
         antetSatirlari: nextAntetLines
       }
 
-      if (res.ihtiyacYeri && !hasOverrideFor('ihtiyacYeri')) {
+      if (res.ihtiyacYeri) {
         nextData.ihtiyacYeri = res.ihtiyacYeri
         nextData.talepEdenBirim = res.birimAdi || res.ihtiyacYeri
       }
 
-      if (res.sunulacakMakamAdi && !hasOverrideFor('sunulacakMakam')) {
+      if (res.sunulacakMakamAdi) {
         nextData.sunulacakMakamAdi = res.sunulacakMakamAdi
         nextData.sunulacakMakam = res.sunulacakMakamAdi
       }
 
-      // 1. Onaylayan / Harcama Yetkilisi: Birimin Harcama Yetkilisi tanımlıysa ata
-      if (res.harcamaYetkilisiAdi && !hasOverrideFor('onaylayan')) {
+      // 1. Onaylayan / Harcama Yetkilisi: Birimin Harcama Yetkilisi veya birim personellerinden yetkili ata
+      if (res.harcamaYetkilisiAdi) {
         nextData.onaylayanPersonelAdi = res.harcamaYetkilisiAdi
         nextData.onaylayanPersonelUnvan =
           res.harcamaYetkilisiUnvan || 'Harcama Yetkilisi'
@@ -491,7 +522,7 @@ export function DocumentPreviewRotaSection({
       // 2. Hazırlayan / İlgili Personel: Birimin ilgili personeli veya gerçekleştirme görevlisi tanımlıysa ata
       const defaultHazirlayan = res.ilgiliPersonelAdi || res.gerceklestirmeGorevlisiAdi
       const defaultHazirlayanUnvan = res.ilgiliPersonelUnvan || res.gerceklestirmeGorevlisiUnvan || ''
-      if (defaultHazirlayan && !hasOverrideFor('hazirlayan')) {
+      if (defaultHazirlayan) {
         nextData.hazirlayanPersonelAdi = defaultHazirlayan
         nextData.hazirlayanPersonelUnvan = defaultHazirlayanUnvan
         nextData.talepEdenPersonelAdi = defaultHazirlayan
@@ -499,10 +530,21 @@ export function DocumentPreviewRotaSection({
       }
 
       // 3. Gerçekleştirme Görevlisi: Birimin gerçekleştirme görevlisi tanımlıysa ata
-      if (res.gerceklestirmeGorevlisiAdi && !hasOverrideFor('gerceklestirmeGorevlisi')) {
+      if (res.gerceklestirmeGorevlisiAdi) {
         nextData.gerceklestirmeGorevlisiAdi = res.gerceklestirmeGorevlisiAdi
         nextData.gerceklestirmeGorevlisiUnvani =
           res.gerceklestirmeGorevlisiUnvan || 'Gerçekleştirme Görevlisi'
+      }
+
+      // Yeni birim seçildiğinde, eski birimden kalmış manuel slot seçimlerini temizle
+      if (Array.isArray(prev?.routeOverrides)) {
+        nextData.routeOverrides = prev.routeOverrides.filter(
+          (o: RouteOverride) =>
+            o.slotId !== 'hazirlayan' &&
+            o.slotId !== 'onaylayan' &&
+            o.slotId !== 'harcamaYetkilisi' &&
+            o.slotId !== 'gerceklestirmeGorevlisi'
+        )
       }
 
       return nextData
@@ -820,7 +862,7 @@ export function DocumentPreviewRotaSection({
             {activeBirimList.map((b: any, bIdx: number) => {
               const bId = b.id !== undefined && b.id !== null ? String(b.id) : `birim_${bIdx}`
               const rawLabel = b.birim_adi || b.ad || b.kisa_ad || `Birim #${bId}`
-              const bLabel = InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(rawLabel, formData?.kurumAdi)
+              const bLabel = cleanBirimAntet(rawLabel, formData?.kurumAdi)
               const isPassive =
                 b.aktif_mi === 0 || b.aktif_mi === '0' || b.aktif_mi === false || b.is_active === 0
               return (
@@ -1062,7 +1104,7 @@ export function DocumentPreviewRotaSection({
                     className="w-full text-[11px] px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
                   >
                     <option value="">👤 Personel Havuzundan Seç...</option>
-                    {allowCrossUnitPersonnel &&
+                    {(allowCrossUnitPersonnel || isApprovalStep) &&
                     stepFilterRes.hasUnitDataInPool &&
                     stepFilterRes.primaryUnitPersonel.length > 0 &&
                     stepFilterRes.otherUnitPersonel.length > 0 ? (
@@ -1084,11 +1126,14 @@ export function DocumentPreviewRotaSection({
                         </optgroup>
                       </>
                     ) : (
-                      stepPersonelList.map((p, pIdx) => (
-                        <option key={p.id || pIdx} value={String(p.id || p.ad_soyad)}>
-                          {p.label || `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}
-                        </option>
-                      ))
+                      stepPersonelList.map((p, pIdx) => {
+                        const unitTag = p.birim ? ` — [${p.birim}]` : ''
+                        return (
+                          <option key={p.id || pIdx} value={String(p.id || p.ad_soyad)}>
+                            {p.label || `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ''}`}{unitTag}
+                          </option>
+                        )
+                      })
                     )}
                   </select>
                 )}
@@ -1447,7 +1492,7 @@ export function DocumentPreviewRotaSection({
                                       ? String(b.id)
                                       : `b_${bIdx}`
                                   const rawLabel = b.birim_adi || b.ad || b.kisa_ad || `Birim #${bId}`
-              const bLabel = InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(rawLabel, formData?.kurumAdi)
+                                  const bLabel = cleanBirimAntet(rawLabel, formData?.kurumAdi)
                                   return (
                                     <option key={bId} value={bId}>
                                       {bLabel}
