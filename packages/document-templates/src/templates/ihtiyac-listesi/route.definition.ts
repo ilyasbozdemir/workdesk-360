@@ -18,6 +18,8 @@ export const ihtiyacListesiRoute = {
       required: true,
       fieldKey: "hazirlayanPersonelAdi",
       titleFieldKey: "hazirlayanPersonelUnvan",
+      sourceFieldKeys: ["hazirlayanPersonelAdi", "talepEdenPersonelAdi"],
+      sourceTitleFieldKeys: ["hazirlayanPersonelUnvan", "talepEdenPersonelUnvan"],
       description: "İhtiyaç listesini düzenleyen / teklif eden görevli",
     },
     {
@@ -28,6 +30,8 @@ export const ihtiyacListesiRoute = {
       required: true,
       fieldKey: "onaylayanPersonelAdi",
       titleFieldKey: "onaylayanPersonelUnvan",
+      sourceFieldKeys: ["onaylayanPersonelAdi"],
+      sourceTitleFieldKeys: ["onaylayanPersonelUnvan"],
       description: "Belge altındaki OLUR bloğunu imzalayan harcama yetkilisi",
     },
     {
@@ -37,8 +41,9 @@ export const ihtiyacListesiRoute = {
       defaultSource: "document",
       required: false,
       fieldKey: "sunulacakMakamAdi",
+      targetFieldKeys: ["sunulacakMakam", "muhatapBirim"],
+      sourceFieldKeys: ["sunulacakMakamAdi", "sunulacakMakam", "muhatapBirim"],
       description: "Belgenin arz edildiği üst makam / müdürlük",
     },
   ],
 } satisfies TemplateRouteDefinition;
-

@@ -29,6 +29,8 @@ const yaklasikMaliyetRoute: TemplateRouteDefinition = {
       defaultSource: "document",
       required: true,
       fieldKey: "komisyonUyeleri",
+      targetFieldKeys: ["komisyon"],
+      sourceFieldKeys: ["komisyonUyeleri", "komisyon", "gorevlendirilenler"],
       description: "Yaklaşık maliyet hesap cetvelini imzalayan görevliler",
     },
     {
@@ -39,6 +41,10 @@ const yaklasikMaliyetRoute: TemplateRouteDefinition = {
       required: true,
       fieldKey: "onaylayanPersonelAdi",
       titleFieldKey: "onaylayanPersonelUnvan",
+      targetFieldKeys: ["baskanAdi"],
+      targetTitleFieldKeys: ["baskanUnvan"],
+      sourceFieldKeys: ["onaylayanPersonelAdi", "baskanAdi"],
+      sourceTitleFieldKeys: ["onaylayanPersonelUnvan", "baskanUnvan"],
       description: "Cetveli onaylayan harcama yetkilisi",
     },
   ],
@@ -56,6 +62,14 @@ const onayBelgesiRoute: TemplateRouteDefinition = {
       required: true,
       fieldKey: "hazirlayanPersonelAdi",
       titleFieldKey: "hazirlayanPersonelUnvan",
+      targetFieldKeys: ["gerceklestirmeGorevlisiAdi"],
+      targetTitleFieldKeys: ["gerceklestirmeGorevlisiUnvani", "gerceklestirmeGorevlisiUnvan"],
+      sourceFieldKeys: ["gerceklestirmeGorevlisiAdi", "hazirlayanPersonelAdi"],
+      sourceTitleFieldKeys: [
+        "gerceklestirmeGorevlisiUnvani",
+        "gerceklestirmeGorevlisiUnvan",
+        "hazirlayanPersonelUnvan",
+      ],
       description: "Onay belgesini hazırlayıp onaya arz eden gerçekleştirme görevlisi",
     },
     {
@@ -66,6 +80,10 @@ const onayBelgesiRoute: TemplateRouteDefinition = {
       required: true,
       fieldKey: "onaylayanPersonelAdi",
       titleFieldKey: "onaylayanPersonelUnvan",
+      targetFieldKeys: ["harcamaYetkilisiAdi"],
+      targetTitleFieldKeys: ["harcamaYetkilisiUnvan"],
+      sourceFieldKeys: ["onaylayanPersonelAdi", "harcamaYetkilisiAdi"],
+      sourceTitleFieldKeys: ["onaylayanPersonelUnvan", "harcamaYetkilisiUnvan"],
       description: "Onay belgesini UYGUNDUR diyerek onaylayan harcama yetkilisi",
     },
     {
@@ -75,6 +93,8 @@ const onayBelgesiRoute: TemplateRouteDefinition = {
       defaultSource: "document",
       required: false,
       fieldKey: "sunulacakMakamAdi",
+      targetFieldKeys: ["sunulacakMakam", "muhatapBirim"],
+      sourceFieldKeys: ["sunulacakMakamAdi", "sunulacakMakam", "muhatapBirim"],
       description: "Belgenin sunulduğu makam başlığı",
     },
   ],
@@ -83,6 +103,7 @@ const onayBelgesiRoute: TemplateRouteDefinition = {
 const komisyonGorevlendirmeRoute: TemplateRouteDefinition = {
   templateId: "komisyon-gorevlendirme-onayi",
   version: 1,
+  isAppointmentDocument: true,
   slots: [
     {
       id: "komisyon",
@@ -91,6 +112,13 @@ const komisyonGorevlendirmeRoute: TemplateRouteDefinition = {
       defaultSource: "document",
       required: true,
       fieldKey: "komisyonUyeleri",
+      targetFieldKeys: ["komisyon"],
+      sourceFieldKeys: [
+        "komisyonUyeleri",
+        "fiyatArastirmaGorevlileri",
+        "komisyon",
+        "gorevlendirilenler",
+      ],
       description: "Komisyonda görevlendirilen başkan ve üyeler",
     },
     {
@@ -101,6 +129,8 @@ const komisyonGorevlendirmeRoute: TemplateRouteDefinition = {
       required: false,
       fieldKey: "hazirlayanPersonelAdi",
       titleFieldKey: "hazirlayanPersonelUnvan",
+      sourceFieldKeys: ["hazirlayanPersonelAdi", "talepEdenPersonelAdi"],
+      sourceTitleFieldKeys: ["hazirlayanPersonelUnvan", "talepEdenPersonelUnvan"],
       description: "Görevlendirme yazısını hazırlayan personel",
     },
     {
@@ -111,6 +141,10 @@ const komisyonGorevlendirmeRoute: TemplateRouteDefinition = {
       required: true,
       fieldKey: "onaylayanPersonelAdi",
       titleFieldKey: "onaylayanPersonelUnvan",
+      targetFieldKeys: ["harcamaYetkilisiAdi"],
+      targetTitleFieldKeys: ["harcamaYetkilisiUnvan"],
+      sourceFieldKeys: ["onaylayanPersonelAdi", "harcamaYetkilisiAdi"],
+      sourceTitleFieldKeys: ["onaylayanPersonelUnvan", "harcamaYetkilisiUnvan"],
       description: "Görevlendirmeyi onaylayan harcama yetkilisi",
     },
     {
@@ -120,6 +154,8 @@ const komisyonGorevlendirmeRoute: TemplateRouteDefinition = {
       defaultSource: "document",
       required: false,
       fieldKey: "sunulacakMakamAdi",
+      targetFieldKeys: ["sunulacakMakam"],
+      sourceFieldKeys: ["sunulacakMakamAdi", "sunulacakMakam", "muhatapBirim"],
     },
   ],
 };
@@ -135,6 +171,8 @@ const muayeneKabulRoute: TemplateRouteDefinition = {
       defaultSource: "document",
       required: true,
       fieldKey: "muayeneKomisyonu",
+      targetFieldKeys: ["komisyon"],
+      sourceFieldKeys: ["muayeneKomisyonu", "komisyon", "komisyonUyeleri"],
       description: "Mal/hizmet muayene ve kabulünü yapan komisyon üyeleri",
     },
     {
@@ -145,6 +183,10 @@ const muayeneKabulRoute: TemplateRouteDefinition = {
       required: true,
       fieldKey: "onaylayanPersonelAdi",
       titleFieldKey: "onaylayanPersonelUnvan",
+      targetFieldKeys: ["baskanAdi"],
+      targetTitleFieldKeys: ["baskanUnvan"],
+      sourceFieldKeys: ["onaylayanPersonelAdi", "baskanAdi"],
+      sourceTitleFieldKeys: ["onaylayanPersonelUnvan", "baskanUnvan"],
       description: "Muayene ve kabul tutanağını onaylayan yetkili",
     },
   ],
@@ -162,6 +204,8 @@ const globalDefaultRoute: TemplateRouteDefinition = {
       required: true,
       fieldKey: "hazirlayanPersonelAdi",
       titleFieldKey: "hazirlayanPersonelUnvan",
+      sourceFieldKeys: ["hazirlayanPersonelAdi", "talepEdenPersonelAdi"],
+      sourceTitleFieldKeys: ["hazirlayanPersonelUnvan", "talepEdenPersonelUnvan"],
       description: "Belgeleri hazırlayan varsayılan görevli personel",
     },
     {
@@ -172,6 +216,9 @@ const globalDefaultRoute: TemplateRouteDefinition = {
       required: false,
       fieldKey: "gerceklestirmeGorevlisiAdi",
       titleFieldKey: "gerceklestirmeGorevlisiUnvani",
+      targetFieldKeys: ["gerceklestirmeGorevlisiUnvan"],
+      sourceFieldKeys: ["gerceklestirmeGorevlisiAdi"],
+      sourceTitleFieldKeys: ["gerceklestirmeGorevlisiUnvani", "gerceklestirmeGorevlisiUnvan"],
       description: "Onay ve harcama belgelerindeki gerçekleştirme görevlisi",
     },
     {
@@ -182,6 +229,8 @@ const globalDefaultRoute: TemplateRouteDefinition = {
       required: true,
       fieldKey: "onaylayanPersonelAdi",
       titleFieldKey: "onaylayanPersonelUnvan",
+      sourceFieldKeys: ["onaylayanPersonelAdi"],
+      sourceTitleFieldKeys: ["onaylayanPersonelUnvan"],
       description: "Belgeleri onaylayan varsayılan harcama yetkilisi",
     },
     {
@@ -191,6 +240,8 @@ const globalDefaultRoute: TemplateRouteDefinition = {
       defaultSource: "document",
       required: false,
       fieldKey: "komisyonUyeleri",
+      targetFieldKeys: ["komisyon"],
+      sourceFieldKeys: ["komisyonUyeleri", "komisyon", "gorevlendirilenler"],
       description: "Komisyon ve tutanak belgelerinde görev alacak varsayılan heyet",
     },
     {
@@ -200,6 +251,8 @@ const globalDefaultRoute: TemplateRouteDefinition = {
       defaultSource: "document",
       required: false,
       fieldKey: "sunulacakMakamAdi",
+      targetFieldKeys: ["sunulacakMakam"],
+      sourceFieldKeys: ["sunulacakMakamAdi", "sunulacakMakam", "muhatapBirim"],
       description: "Belgelerin arz edildiği varsayılan makam adı",
     },
   ],
@@ -233,6 +286,13 @@ const BASE_ROUTE_DEFINITIONS: ReadonlyArray<TemplateRouteDefinition> = [
         defaultSource: "document",
         required: true,
         fieldKey: "fiyatArastirmaGorevlileri",
+        targetFieldKeys: ["komisyon", "fiyatKomisyonu"],
+        sourceFieldKeys: [
+          "fiyatArastirmaGorevlileri",
+          "komisyon",
+          "fiyatKomisyonu",
+          "gorevliler",
+        ],
         description: "Piyasa fiyat araştırması için görevlendirilen personeller",
       },
       ...komisyonGorevlendirmeRoute.slots.slice(1),
@@ -240,7 +300,7 @@ const BASE_ROUTE_DEFINITIONS: ReadonlyArray<TemplateRouteDefinition> = [
   },
   muayeneKabulRoute,
   { ...muayeneKabulRoute, templateId: "muayene_kabul" },
-  { ...muayeneKabulRoute, templateId: "muayene-kabul-komisyonu" },
+  { ...muayeneKabulRoute, templateId: "muayene-kabul-komisyonu", isAppointmentDocument: true },
   { ...muayeneKabulRoute, templateId: "kik048-yapim-gecici-kabul-teklif" },
   { ...muayeneKabulRoute, templateId: "kik049-yapim-gecici-kabul-tutanagi" },
   { ...muayeneKabulRoute, templateId: "kik050-yapim-kesin-kabul-teklif" },
@@ -281,7 +341,11 @@ export function getTemplateRouteDefinition(
     return { ...yaklasikMaliyetRoute, templateId };
   }
   if (clean.includes("muayene") || clean.includes("kabul")) {
-    return { ...muayeneKabulRoute, templateId };
+    return {
+      ...muayeneKabulRoute,
+      templateId,
+      isAppointmentDocument: clean.includes("komisyon"),
+    };
   }
   if (clean.includes("komisyon")) {
     return { ...komisyonGorevlendirmeRoute, templateId };
@@ -295,4 +359,3 @@ export function getTemplateRouteDefinition(
     templateId,
   };
 }
-

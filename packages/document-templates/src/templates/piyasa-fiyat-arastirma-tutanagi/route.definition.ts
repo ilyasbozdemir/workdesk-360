@@ -16,6 +16,13 @@ export const piyasaFiyatRoute = {
       defaultSource: "document",
       required: true,
       fieldKey: "fiyatArastirmaGorevlileri",
+      targetFieldKeys: ["komisyon", "fiyatKomisyonu"],
+      sourceFieldKeys: [
+        "fiyatArastirmaGorevlileri",
+        "komisyon",
+        "fiyatKomisyonu",
+        "gorevliler",
+      ],
       description: "Piyasa fiyat araştırmasını yapan görevli/komisyon listesi",
     },
     {
@@ -26,8 +33,11 @@ export const piyasaFiyatRoute = {
       required: true,
       fieldKey: "onaylayanPersonelAdi",
       titleFieldKey: "onaylayanPersonelUnvan",
+      targetFieldKeys: ["baskanAdi"],
+      targetTitleFieldKeys: ["baskanUnvan"],
+      sourceFieldKeys: ["onaylayanPersonelAdi", "baskanAdi"],
+      sourceTitleFieldKeys: ["onaylayanPersonelUnvan", "baskanUnvan"],
       description: "Tutanağı onaylayan harcama yetkilisi",
     },
   ],
 } satisfies TemplateRouteDefinition;
-

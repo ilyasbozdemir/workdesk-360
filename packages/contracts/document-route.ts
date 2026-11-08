@@ -33,12 +33,22 @@ export interface RouteSlotDefinition {
   titleFieldKey?: string;
   /** Kullanıcıya gösterilecek kısa açıklama */
   description?: string;
+  /** Bu slot verisinin yazılacağı ek/eş anlamlı hedef alan anahtarları (Örn: ["komisyon", "fiyatKomisyonu"]) */
+  targetFieldKeys?: readonly string[];
+  /** Tekil person seçiminde unvan için ek/eş anlamlı hedef alan anahtarları (Örn: ["baskanUnvan", "harcamaYetkilisiUnvan"]) */
+  targetTitleFieldKeys?: readonly string[];
+  /** Veri çıkarılırken (extract) kontrol edilecek alternatif kaynak alan anahtarları */
+  sourceFieldKeys?: readonly string[];
+  /** Tekil person seçiminde unvan için alternatif kaynak alan anahtarları */
+  sourceTitleFieldKeys?: readonly string[];
 }
 
 export interface TemplateRouteDefinition {
   templateId: string;
   version: number;
   slots: readonly RouteSlotDefinition[];
+  /** Görevlendirme belgesi mi? (Yedek üyelerin ve tüm imza türlerinin dahil edildiği resmi görevlendirme yazıları) */
+  isAppointmentDocument?: boolean;
 }
 
 export interface RouteAssignee {
@@ -78,5 +88,7 @@ export interface ResolvedDocumentRoute {
   definitionVersion: number;
   steps: ResolvedRouteStep[];
   validationErrors?: string[];
+  /** Görevlendirme belgesi mi? (Yedek üyelerin ve tüm imza türlerinin dahil edildiği resmi görevlendirme yazıları) */
+  isAppointmentDocument?: boolean;
 }
 

@@ -4,6 +4,13 @@
  * çözülmüş rota değerlerini doğrudan kendi standart personel/birim alanlarında
  * (hazirlayanPersonelAdi, onaylayanPersonelAdi, komisyonUyeleri, fiyatArastirmaGorevlileri,
  * muayeneKomisyonu, sunulacakMakamAdi vb.) kullanmasını sağlar.
+ *
+ * MİMARİ İLKE:
+ * Bu köprü şablona özel hardcoded kontrol (templateId.includes, sabit slot ID dallanması,
+ * örtük alan kopyalaması veya antet mantığı) İÇERMEZ.
+ * Hangi slotun nereye yazılacağı ve nereden okunacağı yalnızca şablonun açık
+ * RouteSlotDefinition sözleşmesi (fieldKey, titleFieldKey, targetFieldKeys, sourceFieldKeys)
+ * üzerinden yönetilir.
  */
 import type {
   CommissionSignatureType,
@@ -35,16 +42,6 @@ function isReserveAssignee(item: Record<string, any>): boolean {
     .toLocaleLowerCase("tr-TR");
   if (roleStr.includes("yedek")) return true;
   return false;
-}
-
-function isAppointmentTemplate(templateId?: string | null): boolean {
-  if (!templateId) return false;
-  const clean = String(templateId).trim().toLocaleLowerCase("tr-TR").replace(/_/g, "-");
-  return (
-    clean.includes("komisyon-gorevlendirme") ||
-    clean.includes("muayene-kabul-komisyonu") ||
-    clean.includes("fiyat-arastirma-gorevlendirmesi")
-  );
 }
 
 function toAssignee(
@@ -155,88 +152,105 @@ export function extractSlotValueFromData(
   slot: RouteSlotDefinition,
 ): RouteValue {
   if (slot.kind === "person-list") {
-    const primaryKey = slot.fieldKey || slot.id;
-    const rawArr =
-      (Array.isArray(data[primaryKey]) && data[primaryKey].length > 0
-        ? data[primaryKey]
-        : null) ||
-      (slot.id === "fiyatArastirmaGorevlileri" || slot.fieldKey === "fiyatArastirmaGorevlileri"
-        ? data.fiyatArastirmaGorevlileri || data.komisyon || data.fiyatKomisyonu || data.gorevliler
-        : slot.id === "muayeneKomisyonu" || slot.fieldKey === "muayeneKomisyonu"
-        ? data.muayeneKomisyonu || data.komisyon
-        : data.komisyonUyeleri || data.komisyon || data.gorevlendirilenler);
+    const candidateKeys: string[] = [];
+    if (slot.fieldKey) candidateKeys.push(slot.fieldKey);
+    if (!candidateKeys.includes(slot.id)) candidateKeys.push(slot.id);
+    if (slot.sourceFieldKeys) {
+      for (const key of slot.sourceFieldKeys) {
+        if (!candidateKeys.includes(key)) candidateKeys.push(key);
+      }
+    }
+
+    let rawArr: unknown = null;
+    for (const key of candidateKeys) {
+      if (Array.isArray(data[key]) && data[key].length > 0) {
+        rawArr = data[key];
+        break;
+      }
+    }
 
     const list = toAssigneeList(rawArr);
     return list.length > 0 ? list : null;
   }
 
   if (slot.kind === "unit") {
-    const key = slot.fieldKey || (slot.id === "ihtiyacYeri" ? "ihtiyacYeri" : "sunulacakMakamAdi");
-    const rawUnit =
-      data[key] ||
-      (key === "sunulacakMakamAdi"
-        ? data.sunulacakMakam || data.muhatapBirim || data.vmakamina
-        : data.harcamaBirimi);
-    if (typeof rawUnit === "string" && rawUnit.trim() !== "") {
-      return {
-        id: `unit_${rawUnit.trim()}`,
-        name: rawUnit.trim(),
-      };
+    const candidateKeys: string[] = [];
+    if (slot.fieldKey) candidateKeys.push(slot.fieldKey);
+    if (!candidateKeys.includes(slot.id)) candidateKeys.push(slot.id);
+    if (slot.sourceFieldKeys) {
+      for (const key of slot.sourceFieldKeys) {
+        if (!candidateKeys.includes(key)) candidateKeys.push(key);
+      }
+    }
+
+    for (const key of candidateKeys) {
+      const val = data[key];
+      if (typeof val === "string" && val.trim() !== "") {
+        return {
+          id: `unit_${val.trim()}`,
+          name: val.trim(),
+        };
+      }
     }
     return null;
   }
 
-  // kind === "person"
-  if (slot.id === "hazirlayan" || slot.fieldKey === "hazirlayanPersonelAdi") {
-    return toAssignee(
-      data.hazirlayanPersonelAdi || data.talepEdenPersonelAdi,
-      data.hazirlayanPersonelUnvan || data.talepEdenPersonelUnvan,
-      data.hazirlayanPersonelId,
-      "Hazırlayan",
-    );
+  // slot.kind === "person"
+  const nameKeys: string[] = [];
+  if (slot.fieldKey) nameKeys.push(slot.fieldKey);
+  if (slot.sourceFieldKeys) {
+    for (const key of slot.sourceFieldKeys) {
+      if (!nameKeys.includes(key)) nameKeys.push(key);
+    }
+  }
+  const defaultNameKey = `${slot.id}PersonelAdi`;
+  if (!nameKeys.includes(defaultNameKey)) nameKeys.push(defaultNameKey);
+  if (!nameKeys.includes(slot.id)) nameKeys.push(slot.id);
+
+  let foundName: string | null = null;
+  for (const key of nameKeys) {
+    const val = data[key];
+    if (typeof val === "string" && val.trim() !== "") {
+      foundName = val.trim();
+      break;
+    }
   }
 
-  if (slot.id === "onaylayan" || slot.fieldKey === "onaylayanPersonelAdi") {
-    return toAssignee(
-      data.onaylayanPersonelAdi || data.baskanAdi || data.harcamaYetkilisiAdi,
-      data.onaylayanPersonelUnvan || data.baskanUnvan || data.harcamaYetkilisiUnvan,
-      data.onaylayanPersonelId,
-      "Onaylayan",
-    );
+  const titleKeys: string[] = [];
+  if (slot.titleFieldKey) titleKeys.push(slot.titleFieldKey);
+  if (slot.sourceTitleFieldKeys) {
+    for (const key of slot.sourceTitleFieldKeys) {
+      if (!titleKeys.includes(key)) titleKeys.push(key);
+    }
+  }
+  const defaultTitleKey = `${slot.id}PersonelUnvan`;
+  if (!titleKeys.includes(defaultTitleKey)) titleKeys.push(defaultTitleKey);
+
+  let foundTitle: string | undefined = undefined;
+  for (const key of titleKeys) {
+    const val = data[key];
+    if (typeof val === "string" && val.trim() !== "") {
+      foundTitle = val.trim();
+      break;
+    }
   }
 
-  if (
-    slot.id === "gerceklestirmeGorevlisi" ||
-    slot.fieldKey === "gerceklestirmeGorevlisiAdi"
-  ) {
-    return toAssignee(
-      data.gerceklestirmeGorevlisiAdi || data.hazirlayanPersonelAdi,
-      data.gerceklestirmeGorevlisiUnvani ||
-        data.gerceklestirmeGorevlisiUnvan ||
-        data.hazirlayanPersonelUnvan,
-      data.gerceklestirmeGorevlisiId,
-      "Gerçekleştirme Görevlisi",
-    );
-  }
+  const idVal =
+    data[`${slot.id}PersonelId`] ??
+    (slot.fieldKey ? data[slot.fieldKey.replace(/Adi$/, "Id")] : undefined);
 
-  if (slot.id === "kontrolGorevlisi" || slot.fieldKey === "kontrolPersonelAdi") {
-    return toAssignee(
-      data.kontrolPersonelAdi,
-      data.kontrolPersonelUnvan,
-      data.kontrolPersonelId,
-      "Kontrol Görevlisi",
-    );
-  }
-
-  const nameKey = slot.fieldKey || `${slot.id}PersonelAdi`;
-  const titleKey = slot.titleFieldKey || `${slot.id}PersonelUnvan`;
-  return toAssignee(data[nameKey], data[titleKey], undefined, slot.label);
+  return toAssignee(foundName, foundTitle, idVal, slot.label);
 }
 
 /**
  * Çözülmüş belge rotasının (ResolvedDocumentRoute) adımlarını belge verisine (formData)
- * standart alan isimleriyle yazar. Böylece .template.tsx şablonları hiçbir değişiklik
- * gerektirmeden kendi PersonelCard / ApprovalSignature / komisyon alanlarında sonucu gösterir.
+ * standart alan isimleriyle yazar.
+ *
+ * MİMARİ İLKE:
+ * Onaylayan, komisyon başkanı ve harcama yetkilisi gibi farklı kamu rolleri
+ * kesinlikle otomatik olarak birbirine kopyalanmaz / eşitlenmez.
+ * Yalnızca şablonun açık sözleşmesinde (fieldKey, titleFieldKey, targetFieldKeys, targetTitleFieldKeys)
+ * tanımlı olan alanlar doldurulur.
  */
 export function applyResolvedRouteToDocumentData<T extends Record<string, any>>(
   data: T,
@@ -247,11 +261,12 @@ export function applyResolvedRouteToDocumentData<T extends Record<string, any>>(
     resolvedRoute,
   };
 
+  const isApptDoc = Boolean(resolvedRoute.isAppointmentDocument);
+
   for (const step of resolvedRoute.steps) {
     if (step.value === null) continue;
 
     if (step.kind === "person-list" && Array.isArray(step.value)) {
-      const isApptDoc = isAppointmentTemplate(resolvedRoute.templateId);
       const rawStepMembers = step.value as RouteAssignee[];
 
       const allMappedMembers = rawStepMembers.map((person, idx) => {
@@ -329,89 +344,56 @@ export function applyResolvedRouteToDocumentData<T extends Record<string, any>>(
         next.rota = currentRota;
       }
 
-      const mappedMembers = wetSignatureMembers;
+      // Birincil hedef alanına yaz
+      const primaryTargetKey = step.fieldKey || step.id;
+      next[primaryTargetKey] = wetSignatureMembers;
 
-      const targetKey = step.fieldKey || step.id;
-      next[targetKey] = mappedMembers;
-
-      if (
-        targetKey === "fiyatArastirmaGorevlileri" ||
-        step.id === "fiyatArastirmaGorevlileri" ||
-        resolvedRoute.templateId.includes("piyasa-fiyat") ||
-        resolvedRoute.templateId === "teklif_cetveli"
-      ) {
-        next.fiyatArastirmaGorevlileri = mappedMembers;
-        next.komisyon = mappedMembers;
-        next.fiyatKomisyonu = mappedMembers;
-      } else if (
-        targetKey === "muayeneKomisyonu" ||
-        step.id === "muayeneKomisyonu"
-      ) {
-        next.muayeneKomisyonu = mappedMembers;
-        next.komisyon = mappedMembers;
-      } else {
-        next.komisyonUyeleri = mappedMembers;
-        next.komisyon = mappedMembers;
+      // Şablon sözleşmesinde açıkça belirtilmiş ek hedef alanlara yaz
+      if (Array.isArray(step.targetFieldKeys)) {
+        for (const targetKey of step.targetFieldKeys) {
+          next[targetKey] = wetSignatureMembers;
+        }
       }
       continue;
     }
 
     if (step.kind === "unit" && !Array.isArray(step.value)) {
       const unitName = step.value.name;
-      const targetKey =
-        step.fieldKey ||
-        (step.id === "ihtiyacYeri" ? "ihtiyacYeri" : "sunulacakMakamAdi");
-      next[targetKey] = unitName;
-      if (targetKey === "sunulacakMakamAdi") {
-        next.sunulacakMakam = unitName;
-        next.muhatapBirim = unitName;
+      const primaryTargetKey = step.fieldKey || step.id;
+      next[primaryTargetKey] = unitName;
+
+      // Şablon sözleşmesinde açıkça belirtilmiş ek hedef alanlara yaz
+      if (Array.isArray(step.targetFieldKeys)) {
+        for (const targetKey of step.targetFieldKeys) {
+          next[targetKey] = unitName;
+        }
       }
       continue;
     }
 
     if (step.kind === "person" && !Array.isArray(step.value)) {
       const person = step.value;
-      if (step.id === "hazirlayan" || step.fieldKey === "hazirlayanPersonelAdi") {
-        next.hazirlayanPersonelAdi = person.name;
-        if (person.title !== undefined) {
-          next.hazirlayanPersonelUnvan = person.title;
+      const primaryNameKey = step.fieldKey || `${step.id}PersonelAdi`;
+      next[primaryNameKey] = person.name;
+
+      const primaryTitleKey = step.titleFieldKey || `${step.id}PersonelUnvan`;
+      if (person.title !== undefined) {
+        next[primaryTitleKey] = person.title;
+      }
+
+      // Şablon sözleşmesinde açıkça belirtilmiş ek hedef isim alanlarına yaz
+      if (Array.isArray(step.targetFieldKeys)) {
+        for (const targetKey of step.targetFieldKeys) {
+          next[targetKey] = person.name;
         }
-      } else if (
-        step.id === "onaylayan" ||
-        step.fieldKey === "onaylayanPersonelAdi"
-      ) {
-        next.onaylayanPersonelAdi = person.name;
-        next.baskanAdi = person.name;
-        next.harcamaYetkilisiAdi = person.name;
-        if (person.title !== undefined) {
-          next.onaylayanPersonelUnvan = person.title;
-          next.baskanUnvan = person.title;
-          next.harcamaYetkilisiUnvan = person.title;
-        }
-      } else if (
-        step.id === "gerceklestirmeGorevlisi" ||
-        step.fieldKey === "gerceklestirmeGorevlisiAdi"
-      ) {
-        next.gerceklestirmeGorevlisiAdi = person.name;
-        next.hazirlayanPersonelAdi = next.hazirlayanPersonelAdi || person.name;
-        if (person.title !== undefined) {
-          next.gerceklestirmeGorevlisiUnvani = person.title;
-          next.gerceklestirmeGorevlisiUnvan = person.title;
-          next.hazirlayanPersonelUnvan =
-            next.hazirlayanPersonelUnvan || person.title;
-        }
-      } else if (
-        step.id === "kontrolGorevlisi" ||
-        step.fieldKey === "kontrolPersonelAdi"
-      ) {
-        next.kontrolPersonelAdi = person.name;
-        if (person.title !== undefined) {
-          next.kontrolPersonelUnvan = person.title;
-        }
-      } else if (step.fieldKey) {
-        next[step.fieldKey] = person.name;
-        if (step.titleFieldKey && person.title !== undefined) {
-          next[step.titleFieldKey] = person.title;
+      }
+
+      // Şablon sözleşmesinde açıkça belirtilmiş ek hedef unvan alanlarına yaz
+      if (Array.isArray(step.targetTitleFieldKeys)) {
+        for (const targetTitleKey of step.targetTitleFieldKeys) {
+          if (person.title !== undefined) {
+            next[targetTitleKey] = person.title;
+          }
         }
       }
     }
@@ -421,4 +403,3 @@ export function applyResolvedRouteToDocumentData<T extends Record<string, any>>(
 }
 
 export type { RouteOverride };
-
