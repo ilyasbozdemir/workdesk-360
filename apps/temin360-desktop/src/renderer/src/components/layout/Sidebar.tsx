@@ -11,7 +11,7 @@ import { useModuleStore } from '../../store/moduleStore'
 import { IS_DT_EDITION } from '../../../../shared/edition'
 import { NewFeatureBadge } from '../ui/NewFeatureBadge'
 import { useNewFeaturesStore } from '../../store/newFeaturesStore'
-import { RoleSimulatorPopover } from '@renderer/shared/components/RoleSimulatorPopover'
+import { UserProfilePopover } from '@renderer/shared/components/UserProfilePopover'
 
 export function Sidebar(): React.JSX.Element {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -364,13 +364,13 @@ export function Sidebar(): React.JSX.Element {
 
       <div className="p-3 short:p-2 border-t border-sidebar-border space-y-2 short:space-y-1.5 shrink-0">
         {/* Kullanıcı Profili & 5018 Kamu Rolü Menüsü (Kibar, Birleşik Profil Kartı) */}
-        <RoleSimulatorPopover placement="top" className="w-full">
+        <UserProfilePopover placement="top" className="w-full">
           <div
             className={cn(
               'flex items-center rounded-xl bg-sidebar-hover-bg/50 hover:bg-sidebar-hover-bg transition-all border border-transparent hover:border-sidebar-border cursor-pointer select-none group',
               isCollapsed ? 'justify-center p-2' : 'px-2.5 py-2 short:py-1'
             )}
-            title="Kullanıcı Menüsü: Profil ve Rol Simülatörü"
+            title="Kullanıcı Menüsü: Profil ve Görev Yönetimi"
           >
             <div className="w-8 h-8 short:w-7 short:h-7 flex items-center justify-center shrink-0">
               <div className="w-full h-full rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center border border-sidebar-border/30 shadow-xs">
@@ -397,12 +397,12 @@ export function Sidebar(): React.JSX.Element {
                   className="text-[10px] text-sidebar-text/75 truncate mt-0.5"
                   title={adminTitle || 'Kullanıcı Profili'}
                 >
-                  {adminTitle || 'Kullanıcı Profili & Roller'}
+                  {adminTitle || 'Kullanıcı Profili & Görevler'}
                 </p>
               </div>
             )}
           </div>
-        </RoleSimulatorPopover>
+        </UserProfilePopover>
 
         <button
           onClick={handleCloseWorkspace}

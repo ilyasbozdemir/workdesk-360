@@ -15,7 +15,7 @@ import { NotificationPopover } from './NotificationPopover'
 import { APP_ROUTES } from '../../../constants/routeConstants'
 import { useSettingsStore } from '../../../store/settingsStore'
 import { getInitials } from '@renderer/utils/formatters'
-import { RoleSimulatorPopover } from '@renderer/shared/components/RoleSimulatorPopover'
+import { UserProfilePopover } from '@renderer/shared/components/UserProfilePopover'
 
 interface HeaderActionsProps {
   theme: string
@@ -133,7 +133,7 @@ export const HeaderActions = React.memo(function HeaderActions({
         </button>
 
         {/* Birleşik Kullanıcı Profili & Kamu Rolü Menüsü */}
-        <RoleSimulatorPopover placement="bottom-right">
+        <UserProfilePopover placement="bottom-right">
           <button
             type="button"
             className="h-7 px-2.5 flex items-center gap-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/70 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-[11px] font-bold transition-all cursor-pointer shadow-2xs group"
@@ -146,7 +146,7 @@ export const HeaderActions = React.memo(function HeaderActions({
               className="opacity-60 group-hover:opacity-100 transition-opacity"
             />
           </button>
-        </RoleSimulatorPopover>
+        </UserProfilePopover>
       </div>
     </div>
   )

@@ -15,17 +15,17 @@ export const RoleSimulatorSection: React.FC = () => {
         <div>
           <h2 className="text-lg font-bold text-slate-850 dark:text-slate-100 flex items-center gap-2.5">
             <ShieldCheck className="w-5 h-5 text-indigo-500" />
-            5018 Kamu Rolü &amp; Görevler Ayrılığı (RBAC) Yetki Simülasyonu
+            Kamu Görevi &amp; Yetki Alanı Yönetimi
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            5018 Sayılı Kamu Mali Yönetimi ve Kontrol Kanunu gereğince çalışma masası yetkilerini,
-            onay adımlarını ve menü erişimlerini rol bazında test edin.
+            5018 Sayılı Kamu Mali Yönetimi ve Kontrol Kanunu gereğince çalışma masası işlem yetkileri,
+            onay adımları ve görev tanımı.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-            Rol Modeli: Canlı
+            Aktif Görev: Tanımlı
           </span>
         </div>
       </div>
