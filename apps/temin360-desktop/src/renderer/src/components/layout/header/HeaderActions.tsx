@@ -40,7 +40,7 @@ export const HeaderActions = React.memo(function HeaderActions({
       className="flex items-center gap-1.5"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
-      {/* Hızlı Servis & Araç Kümesi (Mağaza & Hesap) */}
+      {/* Hızlı Servis & Araç Kümesi (Mağaza & Hesaplama Araçları) */}
       <div className="flex items-center bg-slate-100/90 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-2xs">
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.MODUL_MAGAZASI })}
@@ -56,10 +56,10 @@ export const HeaderActions = React.memo(function HeaderActions({
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.HESAPLAMA_ARACLARI })}
           className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-650 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
-          title="Hesap & Yüzde Araçları Süiti (KDV, İndirim, Kâr Marjı, Tarih Farkı)"
+          title="Mali Hesaplama & Formül Araçları (KDV, Tevkifat, Damga, Fiyat Farkı)"
         >
           <Calculator className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-          <span className="hidden xl:inline">Hesap</span>
+          <span className="hidden xl:inline">Hesaplama</span>
         </button>
       </div>
 
