@@ -11,6 +11,8 @@ import {
 } from 'lucide-react'
 import { SyncPopover } from './SyncPopover'
 import { NotificationPopover } from './NotificationPopover'
+import { PrintHubPopover } from './PrintHubPopover'
+import { CalendarSchedulePopover } from './CalendarSchedulePopover'
 import { APP_ROUTES } from '../../../constants/routeConstants'
 import { useSettingsStore } from '../../../store/settingsStore'
 import { getInitials } from '@renderer/utils/formatters'
@@ -114,6 +116,16 @@ export const HeaderActions = React.memo(function HeaderActions({
               />
             </button>
           )}
+
+        {/* 🖨️ Yazdırma & Dışa Aktarma Merkezi */}
+        <div className="hidden sm:flex items-center">
+          <PrintHubPopover />
+        </div>
+
+        {/* 📅 İhale & Süreç Takvimi */}
+        <div className="hidden sm:flex items-center">
+          <CalendarSchedulePopover />
+        </div>
 
         {/* Senkronizasyon & Bulut Popover */}
         <SyncPopover />
