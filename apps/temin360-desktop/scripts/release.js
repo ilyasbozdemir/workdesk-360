@@ -330,10 +330,12 @@ const releaseTargets = [
   'apps/flowdesk-desktop/package.json',
   'packages/database/package.json',
   'packages/document-templates/package.json',
+  'packages/document-engine/package.json',
   'packages/database/schema-snapshot.json',
   'packages/database/src/schema-manifest',
   'packages/database/src/schema-snapshot',
-  'apps/temin360-desktop/src/renderer/src/generated-loc.json'
+  'apps/temin360-desktop/src/renderer/src/generated-loc.json',
+  'apps/temin360-desktop/scripts/release.js'
 ]
 
 function stageReleaseFiles() {
@@ -353,7 +355,7 @@ function main() {
     const dirtyFiles = initialStatus
       .split('\n')
       .filter(Boolean)
-      .map((line) => line.substring(3).trim())
+      .map((line) => line.replace(/^[?\sMADRCU!]{1,3}\s+/, '').trim())
       .filter(
         (file) =>
           !releaseTargets.some(
@@ -464,7 +466,8 @@ function main() {
       const monorepoPkgs = [
         path.join(GIT_ROOT, 'package.json'),
         path.join(GIT_ROOT, 'packages/database/package.json'),
-        path.join(GIT_ROOT, 'packages/document-templates/package.json')
+        path.join(GIT_ROOT, 'packages/document-templates/package.json'),
+        path.join(GIT_ROOT, 'packages/document-engine/package.json')
       ]
       for (const pPath of monorepoPkgs) {
         if (fs.existsSync(pPath)) {
