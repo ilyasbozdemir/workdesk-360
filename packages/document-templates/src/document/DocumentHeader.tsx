@@ -45,29 +45,21 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       (data as any)?.birimAntetteGosterilsin === false ||
       (data as any)?.antetteBirimGoster === false;
 
-    // Sadece kullanıcı açıkça antetBirimGosterilsin: true derse veya açık antet_ek_satir varsa antete ekler
-    const appendBirim =
-      Boolean(data?.antetEkSatir || (data as any)?.antet_ek_satir) ||
-      data?.antetBirimGosterilsin === true ||
-      (data as any)?.birimAntetteGosterilsin === true ||
-      (data as any)?.antetteBirimGoster === true;
-
-    if (
-      appendBirim &&
-      birimLine &&
-      !lines.some(
-        (l) =>
-          l.trim().toLocaleUpperCase("tr-TR") ===
-            birimLine.toLocaleUpperCase("tr-TR"),
-      )
-    ) {
-      lines.push(birimLine);
-    } else if (hideBirim && birimLine) {
+    if (hideBirim && birimLine) {
       lines = lines.filter(
         (l) =>
           l.trim().toLocaleUpperCase("tr-TR") !==
-            birimLine.toLocaleUpperCase("tr-TR"),
+          birimLine.toLocaleUpperCase("tr-TR"),
       );
+    } else if (!hideBirim && birimLine) {
+      const alreadyHas = lines.some(
+        (l) =>
+          l.trim().toLocaleUpperCase("tr-TR") ===
+          birimLine.toLocaleUpperCase("tr-TR"),
+      );
+      if (!alreadyHas) {
+        lines.push(birimLine);
+      }
     }
 
     return lines.length > 0 ? lines : ["T.C."];

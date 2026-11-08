@@ -398,6 +398,9 @@ export function resolveDocumentPayload(
       (dosya as any)?.antet_ek_satir ||
       (dosya as any)?.birim_antet_ek_satir ||
       (birimListesi as any[]).find((b: any) => b.id === (dosya as any)?.birim_id)?.antet_ek_satir ||
+      (birimListesi as any[]).find((b: any) => b.id === (dosya as any)?.birim_id)?.birim_adi ||
+      effectiveBirim ||
+      settingsMap.spendingUnit ||
       ""
     ).trim();
 

@@ -154,6 +154,9 @@ export class InstitutionalHeaderProvider {
       ekSatir = String(
         birimOrEkSatir.antet_ek_satir ||
           birimOrEkSatir.birim_antet_ek_satir ||
+          birimOrEkSatir.birim_adi ||
+          birimOrEkSatir.birim_tablo_adi ||
+          birimOrEkSatir.ad ||
           ''
       ).trim()
     }
@@ -250,7 +253,7 @@ export class InstitutionalHeaderProvider {
     const resolvedAntetEkSatir =
       (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) ||
       (matchedBirim?.antet_ek_satir && String(matchedBirim.antet_ek_satir).trim()) ||
-      ''
+      resolvedBirimAdi
 
     const antetSatirlari = resolvedAntetEkSatir
       ? this.composeBirimAntetLines(
@@ -445,11 +448,15 @@ export class InstitutionalHeaderProvider {
       ''
 
     const baseLines = this.parseKurumBaseAntetLines(kurumRow, kurumAdiText)
-    const antetSatirlari = dosyaRow?.antet_ek_satir
+    const effectiveBirimSatir =
+      dosyaRow?.antet_ek_satir ||
+      dosyaRow?.birim_adi ||
+      ''
+    const antetSatirlari = effectiveBirimSatir
       ? this.composeBirimAntetLines(
           baseLines,
-          dosyaRow.antet_ek_satir,
-          dosyaRow.antet_ek_satir
+          effectiveBirimSatir,
+          dosyaRow?.antet_ek_satir
         )
       : baseLines
 

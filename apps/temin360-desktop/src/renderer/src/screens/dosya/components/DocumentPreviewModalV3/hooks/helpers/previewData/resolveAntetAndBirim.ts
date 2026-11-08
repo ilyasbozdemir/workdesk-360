@@ -204,7 +204,7 @@ export async function resolveAntetAndBirim(
     baseData.harcamaBirimi = baseData.harcamaBirimi || matchedBirimName
     baseData.harcama_birimi = baseData.harcama_birimi || matchedBirimName
     baseData.mudurluk = baseData.mudurluk || matchedBirimName
-    if (birimResolution.antetEkSatir) {
+    if (baseData.antetBirimGosterilsin !== false && birimResolution.antetSatirlari?.length) {
       baseData.antetSatirlari = birimResolution.antetSatirlari
     }
   }

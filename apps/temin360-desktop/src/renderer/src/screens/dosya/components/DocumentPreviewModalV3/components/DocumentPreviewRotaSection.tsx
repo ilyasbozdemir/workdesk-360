@@ -377,24 +377,23 @@ export function DocumentPreviewRotaSection({
   // Birim değiştiğinde resmi antet ve birim alanlarını çöz; mevcut manuel görevli seçimlerini SİLME!
   const handleSelectBirim = (rawBirimId: string) => {
     setFormData((prev: any) => {
-      if (!rawBirimId) {
-        return {
-          ...prev,
-          birimId: null,
-          birim_id: null
-        }
-      }
+      const selectedBirim = activeBirimList.find(
+        (b: any) => String(b.id) === String(rawBirimId)
+      )
 
-      const prevLines = Array.isArray(prev?.antetSatirlari)
-        ? prev.antetSatirlari
-        : currentAntetLines
+      // Temel kurum antetini al (birim satırı olmadan temiz kurum anteti)
+      const baseOnly = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
+        prev?.kurum || null,
+        prev?.kurumAdi || prev?.kurum_adi || ''
+      )
 
       const res = InstitutionalHeaderProvider.resolveBirimSelection({
-        birimId: rawBirimId,
+        birimId: rawBirimId ? rawBirimId : undefined,
+        birimAdi: selectedBirim?.birim_adi || selectedBirim?.ad,
         birimList: activeBirimList,
         personelList: personelListesi,
-        baseAntetLines: prevLines,
-        fallbackInstitutionName: prev?.kurumAdi
+        baseAntetLines: baseOnly,
+        fallbackInstitutionName: prev?.kurumAdi || prev?.kurum_adi
       })
 
       const existingOverrides: RouteOverride[] = Array.isArray(prev?.routeOverrides)
@@ -404,20 +403,23 @@ export function DocumentPreviewRotaSection({
         existingOverrides.some((o) => o && o.slotId === slotId && o.value !== null)
 
       const showBirim = prev?.antetBirimGosterilsin !== false
+      const nextAntetLines =
+        showBirim && selectedBirim
+          ? res.antetSatirlari
+          : baseOnly
+
       const nextData: Record<string, any> = {
         ...prev,
-        birimId: res.birimId ?? rawBirimId,
-        birim_id: res.birimId ?? rawBirimId,
-        birimAdi: res.birimAdi || prev?.birimAdi,
-        birim_adi: res.birimAdi || prev?.birim_adi,
-        birim: res.birimAdi || prev?.birim,
-        mudurluk: res.mudurluk || prev?.mudurluk,
-        harcamaBirimi: res.harcamaBirimi || prev?.harcamaBirimi,
-        harcama_birimi: res.harcamaBirimi || prev?.harcama_birimi,
-        antetEkSatir: res.antetEkSatir || prev?.antetEkSatir,
-        antetSatirlari: showBirim && res.antetEkSatir
-          ? res.antetSatirlari
-          : prev?.antetSatirlari || currentAntetLines
+        birimId: res.birimId ?? (rawBirimId ? rawBirimId : undefined),
+        birim_id: res.birimId ?? (rawBirimId ? rawBirimId : undefined),
+        birimAdi: res.birimAdi || selectedBirim?.birim_adi || '',
+        birim_adi: res.birimAdi || selectedBirim?.birim_adi || '',
+        birim: res.birimAdi || selectedBirim?.birim_adi || '',
+        mudurluk: res.mudurluk || res.birimAdi || '',
+        harcamaBirimi: res.harcamaBirimi || res.birimAdi || '',
+        harcama_birimi: res.harcamaBirimi || res.birimAdi || '',
+        antetEkSatir: res.antetEkSatir,
+        antetSatirlari: nextAntetLines
       }
 
       if (res.ihtiyacYeri && !hasOverrideFor('ihtiyacYeri')) {
@@ -470,12 +472,31 @@ export function DocumentPreviewRotaSection({
           baseLines = ['T.C.', String(kInfo.kurum_adi).trim().toUpperCase()]
         }
         if (baseLines.length > 0) {
-          setFormData((prev: any) => ({
-            ...prev,
-            antetSatirlari: baseLines,
-            kurumAdi: kInfo.kurum_adi || prev?.kurumAdi,
-            kurum_adi: kInfo.kurum_adi || prev?.kurum_adi
-          }))
+          setFormData((prev: any) => {
+            const showBirim = prev?.antetBirimGosterilsin !== false
+            const currentBId = prev?.birimId ?? prev?.birim_id
+            const currentBName = prev?.birimAdi || prev?.birim || prev?.mudurluk
+
+            let finalLines = baseLines
+            if (showBirim && (currentBId || currentBName)) {
+              const res = InstitutionalHeaderProvider.resolveBirimSelection({
+                birimId: currentBId,
+                birimAdi: currentBName,
+                birimList: activeBirimList,
+                personelList: personelListesi,
+                baseAntetLines: baseLines,
+                fallbackInstitutionName: kInfo.kurum_adi
+              })
+              finalLines = res.antetSatirlari
+            }
+
+            return {
+              ...prev,
+              antetSatirlari: finalLines,
+              kurumAdi: kInfo.kurum_adi || prev?.kurumAdi,
+              kurum_adi: kInfo.kurum_adi || prev?.kurum_adi
+            }
+          })
           return
         }
       }
@@ -497,24 +518,29 @@ export function DocumentPreviewRotaSection({
 
   const handleToggleAntetBirim = (checked: boolean) => {
     setFormData((prev: any) => {
-      const prevLines: string[] =
-        Array.isArray(prev?.antetSatirlari) && prev.antetSatirlari.length > 0
-          ? prev.antetSatirlari
-          : currentAntetLines
+      const baseOnly = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
+        prev?.kurum || null,
+        prev?.kurumAdi || prev?.kurum_adi || ''
+      )
+
+      const currentBId = prev?.birimId ?? prev?.birim_id
+      const currentBName = prev?.birimAdi || prev?.birim || prev?.mudurluk
 
       const res = InstitutionalHeaderProvider.resolveBirimSelection({
-        birimId: prev?.birimId ?? prev?.birim_id,
-        birimAdi: prev?.birimAdi || prev?.birim || prev?.mudurluk,
+        birimId: currentBId,
+        birimAdi: currentBName,
         birimList: activeBirimList,
         personelList: personelListesi,
-        baseAntetLines: prevLines,
-        fallbackInstitutionName: prev?.kurumAdi
+        baseAntetLines: baseOnly,
+        fallbackInstitutionName: prev?.kurumAdi || prev?.kurum_adi
       })
+
+      const hasBirim = Boolean(currentBId || currentBName)
 
       return {
         ...prev,
         antetBirimGosterilsin: checked,
-        antetSatirlari: checked && res.antetEkSatir ? res.antetSatirlari : prevLines
+        antetSatirlari: checked && hasBirim ? res.antetSatirlari : baseOnly
       }
     })
   }
