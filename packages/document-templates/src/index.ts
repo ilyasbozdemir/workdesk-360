@@ -87,7 +87,7 @@ export * from "./resolver/TemplateResolver";
 export * from "./constants/template-registry";
 export * from "./constants/workflowProfiles";
 export * from "./constants/template-constants";
-export * from "./constants/ancillary-mappings";
+export * from "./constants/all-templates.mapping";
 export * from "./constants/visibility.config";
 export * from "./constants/editable-fields";
 export * from "./constants/roles";
