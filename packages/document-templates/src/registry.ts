@@ -1,3 +1,7 @@
+import type { ProcessMapping } from './resolver/types';
+import type { TemplateRouteDefinition } from '@temin360/contracts';
+import { ANCILLARY_MAPPINGS } from './constants/ancillary-mappings';
+import { toCanonicalDocId } from './constants/template-constants';
 import type React from 'react';
 
 // Template component imports
@@ -34,6 +38,39 @@ import { Kik051YapimKesinKabulTutanagi } from './templates/kik051-yapim-kesin-ka
 
 import type { TemplateCapabilities } from './types';
 
+// Mapping imports from template packages
+import { dataMapping as ihtiyacListesiMapping } from './templates/ihtiyac-listesi/data.mapping';
+import { dataMapping as ihtiyacTalepFormuMapping } from './templates/ihtiyac-talep-formu/data.mapping';
+import { dataMapping as tasinirKayitYetkilisiGorusuMapping } from './templates/tasinir-kayit-yetkilisi-gorusu/data.mapping';
+import { dataMapping as teknikSartnameMapping } from './templates/teknik-sartname/data.mapping';
+import { dataMapping as luzumMuzekkeresiMapping } from './templates/luzum-muzekkeresi/data.mapping';
+import { dataMapping as luzumOnayEkiMapping } from './templates/luzum-muzekkeresi-onay-eki/data.mapping';
+import { dataMapping as luzumTeslimTesellumMapping } from './templates/luzum-muzekkeresi-teslim-tesellum/data.mapping';
+import { dataMapping as harcamaTalimatiMapping } from './templates/harcama-talimati/data.mapping';
+import { dataMapping as komisyonGorevlendirmeOnayiMapping } from './templates/komisyon-gorevlendirme-onayi/data.mapping';
+import { dataMapping as komisyonGorevlendirmeOnayiEkiMapping } from './templates/komisyon-gorevlendirme-onayi-eki/data.mapping';
+import { dataMapping as piyasaFiyatArastirmaGorevlendirmesiMapping } from './templates/piyasa-fiyat-arastirma-gorevlendirmesi/data.mapping';
+import { dataMapping as sonAlimFiyatCetveliMapping } from './templates/son-alim-fiyat-cetveli/data.mapping';
+import { dataMapping as fiyatArastirmaMektubuMapping } from './templates/fiyat-arastirma-mektubu/data.mapping';
+import { dataMapping as birimFiyatTeklifMektubuMapping } from './templates/birim-fiyat-teklif-mektubu/data.mapping';
+import { dataMapping as arastirmaMektubuMapping } from './templates/arastirma-mektubu/data.mapping';
+import { dataMapping as yaklasikMaliyetCetveliMapping } from './templates/yaklasik-maliyet-cetveli/data.mapping';
+import { dataMapping as piyasaFiyatArastirmaTutanagiMapping } from './templates/piyasa-fiyat-arastirma-tutanagi/data.mapping';
+import { dataMapping as kabulEdilenTeklifMapping } from './templates/kabul-edilen-teklif/data.mapping';
+import { dataMapping as dogrudanTeminOnayBelgesiMapping } from './templates/dogrudan-temin-onay-belgesi/data.mapping';
+import { dataMapping as butceSorgusuMapping } from './templates/butce-sorgusu/data.mapping';
+import { dataMapping as dogrudanTeminSozlesmesiMapping } from './templates/dogrudan-temin-sozlesmesi/data.mapping';
+import { dataMapping as sozlesmeyeDavetMapping } from './templates/sozlesmeye-davet/data.mapping';
+import { dataMapping as muayeneKabulKomisyonuMapping } from './templates/muayene-kabul-komisyonu/data.mapping';
+import { dataMapping as muayeneKabulTutanagiMapping } from './templates/muayene-kabul-tutanagi/data.mapping';
+import { dataMapping as harcamaPusulasiMapping } from './templates/harcama-pusulasi/data.mapping';
+import { dataMapping as odemeYazisiMapping } from './templates/odeme-yazisi/data.mapping';
+import { dataMapping as kik048Mapping } from './templates/kik048-yapim-gecici-kabul-teklif/data.mapping';
+import { dataMapping as kik049Mapping } from './templates/kik049-yapim-gecici-kabul-tutanagi/data.mapping';
+import { dataMapping as kik050Mapping } from './templates/kik050-yapim-kesin-kabul-teklif/data.mapping';
+import { dataMapping as kik051Mapping } from './templates/kik051-yapim-kesin-kabul-tutanagi/data.mapping';
+
+
 export interface TemplateDefinition<TComponent extends React.ComponentType<any> = React.ComponentType<any>> {
   id: string;
   name: string;
@@ -48,6 +85,10 @@ export interface TemplateDefinition<TComponent extends React.ComponentType<any> 
   kikAdi?: string;
   standartFormKodu?: string;
   standartFormAdi?: string;
+  dataMapping?: ProcessMapping;
+  mapping?: ProcessMapping;
+  routeDefinition?: TemplateRouteDefinition;
+  version?: number;
 }
 
 const DEFAULT_CAPS: TemplateCapabilities = {
@@ -76,6 +117,9 @@ export const templateRegistry = {
     description: 'Alımı yapılacak mal/hizmet kalemlerinin detaylı ihtiyaç tablosu',
     component: IhtiyacListesi,
     orientation: 'portrait',
+    dataMapping: ihtiyacListesiMapping,
+    mapping: ihtiyacListesiMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: false, supportsLogos: true },
     standartFormKodu: '',
     standartFormAdi: 'İhtiyaç Listesi Cetveli',
@@ -89,6 +133,9 @@ export const templateRegistry = {
     description: 'Birimlerin mal/hizmet taleplerini yetkili makama ilettiği resmi form',
     component: IhtiyacTalepFormu,
     orientation: 'portrait',
+    dataMapping: ihtiyacTalepFormuMapping,
+    mapping: ihtiyacTalepFormuMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: false, supportsLogos: true },
     standartFormKodu: ' - 4734 KİK m.22',
     standartFormAdi: 'İhtiyaç Belgesi ve Harcama Talep Müzekkeresi',
@@ -102,6 +149,9 @@ export const templateRegistry = {
     description: 'Stokta malzeme bulunup bulunmadığına ilişkin ambar yetkilisi görüşü',
     component: TasinirKayitYetkilisiGorusu,
     orientation: 'portrait',
+    dataMapping: tasinirKayitYetkilisiGorusuMapping,
+    mapping: tasinirKayitYetkilisiGorusuMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: false, supportsLogos: true },
     standartFormAdi: 'Taşınır Kayıt ve Kontrol Yetkilisi Görüş Belgesi',
   },
@@ -114,6 +164,9 @@ export const templateRegistry = {
     description: 'İşin ve malzemelerin teknik kriterlerini belirleyen doküman',
     component: TeknikSartname,
     orientation: 'portrait',
+    dataMapping: teknikSartnameMapping,
+    mapping: teknikSartnameMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: false, supportsLogos: true },
     standartFormAdi: 'Teknik Şartname Belgesi',
   },
@@ -126,6 +179,9 @@ export const templateRegistry = {
     description: 'Harcama biriminin alım gerekliliğini onaylatan başlangıç müzekkeresi',
     component: LuzumMuzekkeresi,
     orientation: 'portrait',
+    dataMapping: luzumMuzekkeresiMapping,
+    mapping: luzumMuzekkeresiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -146,6 +202,9 @@ export const templateRegistry = {
     description: 'Lüzum müzekkeresine eklenen kalem ve açıklama listesi',
     component: LuzumMuzekkeresiOnayEki,
     orientation: 'portrait',
+    dataMapping: luzumOnayEkiMapping,
+    mapping: luzumOnayEkiMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: true, supportsLogos: true },
     standartFormAdi: 'Lüzum Müzekkeresi Onay Eki',
   },
@@ -158,6 +217,9 @@ export const templateRegistry = {
     description: 'Lüzum müzekkeresi teslim alma ve evrak devir tutanağı',
     component: LuzumMuzekkeresiTeslimTesellum,
     orientation: 'portrait',
+    dataMapping: luzumTeslimTesellumMapping,
+    mapping: luzumTeslimTesellumMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: false, supportsLogos: true },
     standartFormAdi: 'Lüzum Müzekkeresi Teslim Tesellüm Tutanağı',
   },
@@ -170,6 +232,9 @@ export const templateRegistry = {
     description: 'Harcama Yetkilisi tarafından imzalanan alım ve ihale başlatma oluru',
     component: HarcamaTalimati,
     orientation: 'portrait',
+    dataMapping: harcamaTalimatiMapping,
+    mapping: harcamaTalimatiMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: true, supportsLogos: true },
     kikKodu: 'KİK024.0/M',
     kikAdi: 'Doğrudan Temin Onay Belgesi (Harcama Talimatı)',
@@ -183,6 +248,9 @@ export const templateRegistry = {
     description: 'Piyasa Araştırma veya Muayene Kabul Komisyon üyelerinin görevlendirme oluru',
     component: KomisyonGorevlendirmeOnayi,
     orientation: 'portrait',
+    dataMapping: komisyonGorevlendirmeOnayiMapping,
+    mapping: komisyonGorevlendirmeOnayiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -207,6 +275,9 @@ export const templateRegistry = {
     description: 'Görevlendirilen komisyon üyelerinin detaylı görev dağılım listesi',
     component: KomisyonGorevlendirmeOnayiEki,
     orientation: 'portrait',
+    dataMapping: komisyonGorevlendirmeOnayiEkiMapping,
+    mapping: komisyonGorevlendirmeOnayiEkiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsCommission: true,
@@ -229,6 +300,9 @@ export const templateRegistry = {
     description: 'Piyasa fiyat araştırmasını yapmak üzere görevlendirilen personelin olur belgesi',
     component: PiyasaFiyatArastirmaGorevlendirmesi,
     orientation: 'portrait',
+    dataMapping: piyasaFiyatArastirmaGorevlendirmesiMapping,
+    mapping: piyasaFiyatArastirmaGorevlendirmesiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -253,6 +327,9 @@ export const templateRegistry = {
     description: 'Geçmiş alımlara ait birim fiyat ve fatura karşılaştırma cetveli',
     component: SonAlimFiyatCetveli,
     orientation: 'portrait',
+    dataMapping: sonAlimFiyatCetveliMapping,
+    mapping: sonAlimFiyatCetveliMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: true, supportsLogos: true },
     standartFormAdi: 'Son Alım Fiyat Araştırma ve Mukayese Cetveli',
   },
@@ -267,6 +344,9 @@ export const templateRegistry = {
     description: 'Firmalara teklif sunmaları için gönderilen resmi davet yazısı',
     component: FiyatArastirmaMektubu,
     orientation: 'portrait',
+    dataMapping: fiyatArastirmaMektubuMapping,
+    mapping: fiyatArastirmaMektubuMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsFirmaListesi: true, supportsLogos: true },
     kikKodu: 'KİK027.0/M',
     kikAdi: 'Birim Fiyat Teklif Mektubu ve Fiyat İsteme Formu',
@@ -280,6 +360,9 @@ export const templateRegistry = {
     description: 'Firmaların birim fiyatlarını doldurarak imzaladığı teklif mektubu',
     component: BirimFiyatTeklifMektubu,
     orientation: 'portrait',
+    dataMapping: birimFiyatTeklifMektubuMapping,
+    mapping: birimFiyatTeklifMektubuMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsPersonnelList: false,
@@ -303,6 +386,9 @@ export const templateRegistry = {
     description: 'Piyasa araştırması kapsamında gönderilen bilgi ve teklif toplama yazısı',
     component: ArastirmaMektubu,
     orientation: 'portrait',
+    dataMapping: arastirmaMektubuMapping,
+    mapping: arastirmaMektubuMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsFirmaListesi: true, supportsLogos: true },
     kikKodu: 'KİK027.0/M',
     kikAdi: 'Piyasa Fiyat Araştırma ve Teklif İsteme Mektubu',
@@ -316,6 +402,9 @@ export const templateRegistry = {
     description: 'Toplanan tekliflerden alımın yaklaşık maliyetinin hesaplandığı cetvel',
     component: YaklasikMaliyetCetveli,
     orientation: 'portrait',
+    dataMapping: yaklasikMaliyetCetveliMapping,
+    mapping: yaklasikMaliyetCetveliMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsCommission: true,
@@ -335,6 +424,9 @@ export const templateRegistry = {
     description: 'Piyasa fiyat araştırması görevlilerinin teklifleri değerlendirdiği ana tutanak',
     component: PiyasaFiyatArastirmaTutanagi,
     orientation: 'portrait',
+    dataMapping: piyasaFiyatArastirmaTutanagiMapping,
+    mapping: piyasaFiyatArastirmaTutanagiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -357,6 +449,9 @@ export const templateRegistry = {
     description: 'En avantajlı teklifi veren firmaya yapılan alım kabul bildirimi',
     component: KabulEdilenTeklif,
     orientation: 'portrait',
+    dataMapping: kabulEdilenTeklifMapping,
+    mapping: kabulEdilenTeklifMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsFirmaListesi: true, supportsLogos: true },
     standartFormKodu: 'KİK Tebliği m.22',
     standartFormAdi: 'Sipariş Mektubu ve Tebliğ-Tebellüğ Belgesi',
@@ -370,6 +465,9 @@ export const templateRegistry = {
     description: 'Karara bağlanan alımın yetkili makam onay belgesi',
     component: DogrudanTeminOnayBelgesi,
     orientation: 'portrait',
+    dataMapping: dogrudanTeminOnayBelgesiMapping,
+    mapping: dogrudanTeminOnayBelgesiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -388,6 +486,9 @@ export const templateRegistry = {
     description: 'Alım sonucunun yetkili makam onay belgesi',
     component: DogrudanTeminOnayBelgesi,
     orientation: 'portrait',
+    dataMapping: dogrudanTeminOnayBelgesiMapping,
+    mapping: dogrudanTeminOnayBelgesiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -406,6 +507,9 @@ export const templateRegistry = {
     description: 'Alım tutarının ilgili bütçe tertibinden karşılanabilirliğini gösteren form',
     component: ButceSorgusu,
     orientation: 'portrait',
+    dataMapping: butceSorgusuMapping,
+    mapping: butceSorgusuMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: false, supportsLogos: true },
     standartFormAdi: 'Bütçe Ödenek Kontrol ve Bloke Belgesi',
   },
@@ -418,6 +522,9 @@ export const templateRegistry = {
     description: 'Yüklenici firma ile İdare arasında imzalanan matbu alım sözleşmesi',
     component: DogrudanTeminSozlesmesi,
     orientation: 'portrait',
+    dataMapping: dogrudanTeminSozlesmesiMapping,
+    mapping: dogrudanTeminSozlesmesiMapping,
+    version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsFirmaListesi: true, supportsLogos: true },
     kikKodu: 'KİK',
     kikAdi: 'Doğrudan Temin Mal / Hizmet Alımı Tip Sözleşmesi',
@@ -431,6 +538,9 @@ export const templateRegistry = {
     description: 'Kazanan yükleniciye sözleşme imzalaması için iletilen davet yazısı',
     component: SozlesmeyeDavet,
     orientation: 'portrait',
+    dataMapping: sozlesmeyeDavetMapping,
+    mapping: sozlesmeyeDavetMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsKalemListesi: false,
@@ -451,6 +561,9 @@ export const templateRegistry = {
     description: 'Teslim alınan mal veya hizmetin muayene ve kabul tutanağı cetveli',
     component: MuayeneKabulTutanagi,
     orientation: 'portrait',
+    dataMapping: muayeneKabulTutanagiMapping,
+    mapping: muayeneKabulTutanagiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -471,6 +584,9 @@ export const templateRegistry = {
     description: 'Teslim alınan mal veya hizmetin muayene kabul komisyonunca onaylanma kararı',
     component: MuayeneKabulKomisyonu,
     orientation: 'portrait',
+    dataMapping: muayeneKabulKomisyonuMapping,
+    mapping: muayeneKabulKomisyonuMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -490,6 +606,9 @@ export const templateRegistry = {
     description: 'Yapım işleri yüklenici iş bitirme dilekçesi sonrası ön inceleme ve geçici kabul teklif belgesi',
     component: Kik048YapimGeciciKabulTeklif,
     orientation: 'portrait',
+    dataMapping: kik048Mapping,
+    mapping: kik048Mapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: false,
@@ -510,6 +629,9 @@ export const templateRegistry = {
     description: 'Yapım işleri geçici kabul komisyonu heyeti ve yüklenici inceleme tutanağı',
     component: Kik049YapimGeciciKabulTutanagi,
     orientation: 'portrait',
+    dataMapping: kik049Mapping,
+    mapping: kik049Mapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -530,6 +652,9 @@ export const templateRegistry = {
     description: 'Yapım işleri teminat süresi sonu kesin kabul heyeti teşkili teklif belgesi',
     component: Kik050YapimKesinKabulTeklif,
     orientation: 'portrait',
+    dataMapping: kik050Mapping,
+    mapping: kik050Mapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: false,
@@ -550,6 +675,9 @@ export const templateRegistry = {
     description: 'Yapım işleri kesin kabul komisyonu heyeti ve yüklenici kesin kabul onay tutanağı',
     component: Kik051YapimKesinKabulTutanagi,
     orientation: 'portrait',
+    dataMapping: kik051Mapping,
+    mapping: kik051Mapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -570,6 +698,9 @@ export const templateRegistry = {
     description: 'Fatura kesme yükümlülüğü olmayan gerçek kişilerden yapılan alımların tutanağı',
     component: HarcamaPusulasi,
     orientation: 'portrait',
+    dataMapping: harcamaPusulasiMapping,
+    mapping: harcamaPusulasiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: false,
@@ -591,6 +722,9 @@ export const templateRegistry = {
     description: 'Mali hizmetler / muhasebe müdürlüğüne yazılan ödeme üst yazısı',
     component: OdemeYazisi,
     orientation: 'portrait',
+    dataMapping: odemeYazisiMapping,
+    mapping: odemeYazisiMapping,
+    version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: true,
@@ -730,4 +864,30 @@ export function getTemplateDefinition(key: string | null | undefined): TemplateD
  */
 export function getAllTemplateDefinitions(): TemplateDefinition<any>[] {
   return Object.values(templateRegistry);
+}
+
+/**
+ * Şablon anahtarına veya süreç yoluna göre veri eşleme (ProcessMapping) tanımını döner.
+ */
+export function getTemplateMapping(key: string | null | undefined): ProcessMapping {
+  if (!key) return {};
+  if (ANCILLARY_MAPPINGS[key]) return ANCILLARY_MAPPINGS[key];
+  const canonical = toCanonicalDocId(key);
+  if (ANCILLARY_MAPPINGS[canonical]) return ANCILLARY_MAPPINGS[canonical];
+
+  const resolvedKey = resolveTemplateKey(key);
+  if (resolvedKey && (templateRegistry as any)[resolvedKey]) {
+    const def = (templateRegistry as any)[resolvedKey];
+    if (def.dataMapping) return def.dataMapping;
+    if (def.mapping) return def.mapping;
+  }
+
+  const canonicalKey = resolveTemplateKey(canonical);
+  if (canonicalKey && (templateRegistry as any)[canonicalKey]) {
+    const def = (templateRegistry as any)[canonicalKey];
+    if (def.dataMapping) return def.dataMapping;
+    if (def.mapping) return def.mapping;
+  }
+
+  return {};
 }

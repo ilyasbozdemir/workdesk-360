@@ -1,5 +1,6 @@
 import { DocumentDataResolver, DocumentResolutionContext } from '@worksuite-360/document-engine'
 import { TemplateResolver } from '../../resolver/TemplateResolver'
+import { getTemplateMapping } from '../../registry'
 
 export type ProcessMappingProvider = (processPath: string) => any
 
@@ -20,7 +21,7 @@ export class DefaultDocumentResolver implements DocumentDataResolver<Record<stri
 
     const mapping = DefaultDocumentResolver.mappingProvider
       ? DefaultDocumentResolver.mappingProvider(templateKey)
-      : { mappings: [] }
+      : getTemplateMapping(templateKey)
 
     const resolver = new TemplateResolver(queryExecutor)
     let baseData: Record<string, unknown> = {}
