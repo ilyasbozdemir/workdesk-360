@@ -153,7 +153,10 @@ export function useKurumHooks() {
           'web_sitesi',
           'kurum_baskani',
           'baskan_unvani',
-          'harcama_yetkilisi'
+          'harcama_yetkilisi',
+          'sunulacak_makam_secimi',
+          'sunulacak_kurum_adi',
+          'makam_adi_custom'
         ])
 
         const keys = Object.keys(data).filter((k) => k !== 'id' && validColumns.has(k))
@@ -261,6 +264,9 @@ export function useKurumHooks() {
         const payload: KurumVerisi = {
           kurum_adi: data.kurum_adi || 'Yeni Kurum Profili',
           makam_adi: data.makam_adi || '',
+          sunulacak_makam_secimi: data.sunulacak_makam_secimi || 'makam',
+          sunulacak_kurum_adi: data.sunulacak_kurum_adi || '',
+          makam_adi_custom: data.makam_adi_custom || '',
           ust_kurum_adi: data.ust_kurum_adi || '',
           kurum_anteti: data.kurum_anteti || '[""]',
           limit_tipi: data.limit_tipi || 'diger',
