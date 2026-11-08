@@ -460,8 +460,24 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
         `
         UPDATE TANIM_Birim SET antet_ek_satir = birim_adi WHERE antet_ek_satir LIKE '%>%';
         UPDATE DATA_TeminDosyasi SET antet_ek_satir = harcama_birimi WHERE antet_ek_satir LIKE '%>%';
+
+        UPDATE TANIM_Personel
+        SET birim = (
+          SELECT b.birim_adi FROM TANIM_Birim b
+          WHERE b.harcama_yetkilisi_id = TANIM_Personel.id
+             OR b.gerceklestirme_gorevlisi_id = TANIM_Personel.id
+             OR b.ilgili_personel_id = TANIM_Personel.id
+          LIMIT 1
+        )
+        WHERE (birim IS NULL OR trim(birim) = '')
+          AND EXISTS (
+            SELECT 1 FROM TANIM_Birim b
+            WHERE b.harcama_yetkilisi_id = TANIM_Personel.id
+               OR b.gerceklestirme_gorevlisi_id = TANIM_Personel.id
+               OR b.ilgili_personel_id = TANIM_Personel.id
+          );
         `,
-        'TANIM_Birim ve DATA_TeminDosyasi antet hiyerarsi oku temizligi'
+        'TANIM_Birim ve DATA_TeminDosyasi antet hiyerarsi oku temizligi ve birim-personel baglama'
       )
 
       safeExec(
