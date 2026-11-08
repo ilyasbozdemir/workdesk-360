@@ -64,6 +64,7 @@ describe('Split-Brain Resolver Equivalence Tests (Phase 1)', () => {
         telefon TEXT,
         eposta TEXT,
         birim TEXT,
+        birim_id INTEGER,
         sicil_no TEXT,
         aktif_mi INTEGER DEFAULT 1
       );

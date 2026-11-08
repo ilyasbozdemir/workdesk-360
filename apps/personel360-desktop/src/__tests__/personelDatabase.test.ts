@@ -223,7 +223,7 @@ describe('Personel 360 — SQLite Database & Business Rules', () => {
       gorevlendirilenBirimAdi: 'Saha Koordinasyon',
       gorevTanimi: 'Bölge incelemesi ve raporlama',
       baslangicTarihi: '2026-10-01',
-      bitisTarihi: '2026-10-30',
+      bitisTarihi: '2026-12-31',
       olurNo: '2026/145',
       durum: 'aktif'
     }, 'Makam Oluru')
