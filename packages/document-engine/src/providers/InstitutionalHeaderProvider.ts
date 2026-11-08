@@ -1,4 +1,20 @@
 import { InstitutionalHeaderData } from '../types/contracts'
+import {
+  HeaderDefinition,
+  HeaderLineDefinition,
+  getHeaderLines,
+  validateHeaderDefinition
+} from '@temin360/contracts'
+
+export interface HeaderResolutionContext {
+  settings?: Record<string, any>
+  document?: Record<string, any>
+  manual?: Record<string, any>
+  kurumRow?: Record<string, any> | null
+  dosyaRow?: Record<string, any> | null
+  matchedBirim?: Record<string, any> | null
+  fallbackInstitutionName?: string
+}
 
 export interface InstitutionalHeaderSettings {
   institutionName?: string
@@ -164,6 +180,167 @@ export class InstitutionalHeaderProvider {
   }
 
   /**
+   * Key tabanlı, dinamik kaynak eşlemeli antet çözümleyicisi (Codex Görevi).
+   * Şablonun HeaderDefinition tanımındaki satırları (fields/lines), sıralamayı ve
+   * veri kaynaklarını ("settings" | "document" | "manual") sırasıyla çözümler.
+   */
+  static resolveDynamicHeader(
+    definition: HeaderDefinition,
+    context: HeaderResolutionContext = {}
+  ): string[] {
+    validateHeaderDefinition(definition)
+    const linesDef = getHeaderLines(definition)
+
+    const institutionName =
+      context.fallbackInstitutionName ||
+      context.kurumRow?.kurum_adi ||
+      context.kurumRow?.ad ||
+      context.settings?.institutionName ||
+      ''
+
+    const resolvedLines: string[] = []
+    const seenTextUpper = new Set<string>()
+
+    const getDeep = (obj: any, path: string): any => {
+      if (!obj || !path) return undefined
+      if (obj[path] !== undefined) return obj[path]
+      const parts = path.split('.')
+      let curr = obj
+      for (const p of parts) {
+        if (curr === null || curr === undefined) return undefined
+        curr = curr[p]
+      }
+      return curr
+    }
+
+    for (const lineDef of linesDef) {
+      if (lineDef.visible === false) {
+        continue
+      }
+
+      let rawVal: any = undefined
+
+      switch (lineDef.source) {
+        case 'settings': {
+          rawVal = getDeep(context.settings, lineDef.path)
+          if (rawVal === undefined || rawVal === null || String(rawVal).trim() === '') {
+            if (lineDef.key === 'countryPrefix' || lineDef.path === 'countryPrefix') {
+              rawVal = 'T.C.'
+            } else if (
+              lineDef.key === 'institutionName' ||
+              lineDef.path === 'institutionName' ||
+              lineDef.path === 'kurum_adi'
+            ) {
+              rawVal =
+                context.kurumRow?.kurum_adi ||
+                context.kurumRow?.ad ||
+                context.settings?.institutionName ||
+                institutionName
+            } else if (
+              lineDef.key === 'parentInstitution' ||
+              lineDef.path === 'parentInstitution' ||
+              lineDef.path === 'ust_kurum_adi'
+            ) {
+              rawVal =
+                context.kurumRow?.ust_kurum_adi ||
+                context.settings?.parentInstitution
+            }
+          }
+          break
+        }
+
+        case 'document': {
+          rawVal = getDeep(context.document, lineDef.path)
+          if (rawVal === undefined || rawVal === null || String(rawVal).trim() === '') {
+            if (
+              lineDef.key === 'tenderUnit' ||
+              lineDef.path.includes('resolvedTenderUnit') ||
+              lineDef.path === 'birimAdi' ||
+              lineDef.path === 'birim_adi'
+            ) {
+              rawVal =
+                context.matchedBirim?.birim_adi ||
+                context.matchedBirim?.ad ||
+                context.dosyaRow?.birim_adi ||
+                context.document?.birimAdi ||
+                context.document?.birim_adi ||
+                context.document?.birim ||
+                context.document?.mudurluk
+            } else if (
+              lineDef.key === 'antetEkSatir' ||
+              lineDef.path.includes('antetEkSatir')
+            ) {
+              rawVal =
+                context.matchedBirim?.antet_ek_satir ||
+                context.dosyaRow?.antet_ek_satir ||
+                context.document?.antetEkSatir
+            } else if (
+              lineDef.key === 'sunulacakMakam' ||
+              lineDef.path.includes('sunulacakMakam')
+            ) {
+              rawVal =
+                context.document?.sunulacakMakamAdi ||
+                context.document?.sunulacakMakam ||
+                context.dosyaRow?.sunulacak_makam ||
+                context.kurumRow?.makam_adi
+            }
+          }
+          break
+        }
+
+        case 'manual': {
+          rawVal = getDeep(context.manual, lineDef.path)
+          if (rawVal === undefined && context.document?.antetSatirlari) {
+            rawVal = getDeep(context.document.antetSatirlari, lineDef.path)
+          }
+          break
+        }
+      }
+
+      if (rawVal === undefined || rawVal === null || String(rawVal).trim() === '') {
+        if (lineDef.fallback && String(lineDef.fallback).trim() !== '') {
+          rawVal = lineDef.fallback
+        }
+      }
+
+      if (rawVal === undefined || rawVal === null || String(rawVal).trim() === '') {
+        continue
+      }
+
+      let text = String(rawVal).trim()
+      text = this.sanitizeBirimAntetSatiri(text, institutionName)
+
+      if (!text) {
+        continue
+      }
+
+      // Resmî Yönetmelik biçimlendirmesi:
+      // T.C. satırı aynen korunur
+      // Kurum / Üst Kurum satırları BÜYÜK HARFLE yazılır
+      // Birim satırları Baş Harfleri Büyük olarak korunur
+      const upperKey = lineDef.key.toLowerCase()
+      if (upperKey === 'countryprefix' || text.toUpperCase() === 'T.C.') {
+        text = 'T.C.'
+      } else if (
+        upperKey === 'parentinstitution' ||
+        upperKey === 'institutionname' ||
+        upperKey.includes('kurum')
+      ) {
+        text = text.toLocaleUpperCase('tr-TR')
+      }
+
+      const norm = text.toLocaleUpperCase('tr-TR')
+      if (seenTextUpper.has(norm)) {
+        continue
+      }
+      seenTextUpper.add(norm)
+      resolvedLines.push(text)
+    }
+
+    return resolvedLines.length > 0 ? resolvedLines : ['T.C.']
+  }
+
+  /**
    * Temel kurum antet satırları ile seçili birimin antet_ek_satir / birim_adi bilgisini
    * mükerrer satır oluşturmadan birleştirir.
    */
@@ -171,14 +348,26 @@ export class InstitutionalHeaderProvider {
     baseLines: string[],
     birimOrEkSatir?: Record<string, any> | string | null,
     dosyaAntetEkSatir?: string | null,
-     knownBirimNames?: string[]
+    knownBirimNames?: string[],
+    fallbackInstitutionName?: string
   ): string[] {
-    const cleanBase = Array.isArray(baseLines)
-      ? baseLines
-          .map((s) => String(s ?? '').trim())
-          .filter(Boolean)
-          .filter((line) => !line.includes('>'))
-      : []
+    const cleanBase: string[] = []
+    let extractedBirimFromBase = ''
+
+    if (Array.isArray(baseLines)) {
+      for (const line of baseLines) {
+        const str = String(line ?? '').trim()
+        if (!str) continue
+        if (str.includes('>')) {
+          const cleanB = this.sanitizeBirimAntetSatiri(str, fallbackInstitutionName)
+          if (cleanB && !extractedBirimFromBase) {
+            extractedBirimFromBase = cleanB
+          }
+        } else {
+          cleanBase.push(str)
+        }
+      }
+    }
 
     // Eğer bilinen birim adları verildiyse ve temel antet dizisinin son satırı eski bir birime aitse onu çıkar
     let result = [...cleanBase]
@@ -210,7 +399,11 @@ export class InstitutionalHeaderProvider {
       ekSatir = String(dosyaAntetEkSatir).trim()
     }
 
-    ekSatir = this.sanitizeBirimAntetSatiri(ekSatir)
+    if (!ekSatir && extractedBirimFromBase) {
+      ekSatir = extractedBirimFromBase
+    }
+
+    ekSatir = this.sanitizeBirimAntetSatiri(ekSatir, fallbackInstitutionName)
 
     if (
       ekSatir &&
@@ -340,7 +533,8 @@ export class InstitutionalHeaderProvider {
           effectiveBaseLines,
           resolvedAntetEkSatir,
           dosyaAntetEkSatir,
-          knownBirimNames
+          knownBirimNames,
+          fallbackInstitutionName || kurumRow?.kurum_adi
         )
       : effectiveBaseLines
 
@@ -596,7 +790,9 @@ export class InstitutionalHeaderProvider {
       ? this.composeBirimAntetLines(
           baseLines,
           effectiveBirimSatir,
-          dosyaRow?.antet_ek_satir
+          dosyaRow?.antet_ek_satir,
+          undefined,
+          kurumAdiText
         )
       : baseLines
 

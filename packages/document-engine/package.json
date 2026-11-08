@@ -8,6 +8,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@temin360/contracts": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

@@ -52,6 +52,36 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
   { data, hideLogos = false },
 ) => {
   const effectiveAntetLines = useMemo(() => {
+    // 1. Dinamik Key Tabanlı HeaderDefinition Tanımı Varsa Çözümle
+    if ((data as any)?.headerDefinition) {
+      try {
+        const dynLines = InstitutionalHeaderProvider.resolveDynamicHeader(
+          (data as any).headerDefinition,
+          {
+            settings: {
+              institutionName: data?.kurumAdi,
+              parentInstitution: data?.kurumUst,
+              spendingUnit: data?.harcamaBirimi,
+            },
+            document: data,
+            manual: data,
+            fallbackInstitutionName: data?.kurumAdi,
+          }
+        );
+        if (dynLines && dynLines.length > 0) {
+          const hideBirim = data?.antetBirimGosterilsin === false ||
+            (data as any)?.birimAntetteGosterilsin === false ||
+            (data as any)?.antetteBirimGoster === false;
+          if (hideBirim && dynLines.length > 2) {
+            return dynLines.slice(0, 2);
+          }
+          return dynLines;
+        }
+      } catch (err) {
+        console.warn("[DocumentHeader] resolveDynamicHeader fallback:", err);
+      }
+    }
+
     const rawVal = (data as any)?.antetSatirlari;
     let rawAntetList: string[] = [];
     if (Array.isArray(rawVal)) {

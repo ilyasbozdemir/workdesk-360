@@ -67,7 +67,6 @@ function cleanBirimAntet(text?: string | null, kurumAdi?: string | null): string
   if (kurumAdi && String(kurumAdi).trim()) {
     const kUpper = String(kurumAdi).trim().toLocaleUpperCase('tr-TR')
     const cUpper = cleaned.toLocaleUpperCase('tr-TR')
-    if (cUpper === kUpper) return ''
     if (cUpper.startsWith(kUpper) && cUpper.length > kUpper.length) {
       cleaned = cleaned.slice(String(kurumAdi).trim().length).replace(/^[>\s:/-]+/, '').trim()
     }
@@ -304,21 +303,69 @@ export function DocumentPreviewRotaSection({
 
   const showBirimInAntet = formData?.antetBirimGosterilsin !== false
   const effectiveAntetLines = React.useMemo(() => {
-    if (showBirimInAntet && currentBirimResolution.antetSatirlari?.length > 0) {
-      return currentBirimResolution.antetSatirlari
-        .map((l) => cleanBirimAntet(l, formData?.kurumAdi))
-        .filter(Boolean)
-    }
-    if (!showBirimInAntet && currentAntetLines.length > 2) {
-      return currentAntetLines
-        .slice(0, 2)
-        .map((l) => cleanBirimAntet(l, formData?.kurumAdi))
-        .filter(Boolean)
-    }
-    return currentAntetLines
+    const rawTargetBirim =
+      currentBirimResolution.birimAdi ||
+      currentBirimAdi ||
+      formData?.ihalesiYapilacakBirim ||
+      formData?.birimAdi ||
+      formData?.birim_adi ||
+      formData?.birim ||
+      formData?.mudurluk ||
+      ''
+    const cleanBirim = cleanBirimAntet(rawTargetBirim, formData?.kurumAdi)
+
+    let baseLines = currentAntetLines
       .map((l) => cleanBirimAntet(l, formData?.kurumAdi))
       .filter(Boolean)
-  }, [showBirimInAntet, currentBirimResolution.antetSatirlari, currentAntetLines, formData?.kurumAdi])
+
+    if (currentBirimResolution.antetSatirlari?.length > 0) {
+      baseLines = currentBirimResolution.antetSatirlari
+        .map((l) => cleanBirimAntet(l, formData?.kurumAdi))
+        .filter(Boolean)
+    }
+
+    if (!showBirimInAntet) {
+      // Birim antette gösterilmesin denmişse, birim satırını çıkar
+      if (cleanBirim) {
+        baseLines = baseLines.filter(
+          (l) => l.trim().toLocaleUpperCase('tr-TR') !== cleanBirim.toLocaleUpperCase('tr-TR')
+        )
+      }
+      if (baseLines.length > 2) {
+        baseLines = baseLines.slice(0, 2)
+      }
+      return baseLines
+    }
+
+    // Birim gösterilsin isteniyorsa ve seçili/atanmış birim varsa:
+    if (cleanBirim) {
+      const alreadyHas = baseLines.some(
+        (l) => l.trim().toLocaleUpperCase('tr-TR') === cleanBirim.toLocaleUpperCase('tr-TR')
+      )
+      if (!alreadyHas) {
+        if (baseLines.length > 2) {
+          // 3. satır eski bir birimse yenisiyle değiştir
+          baseLines[baseLines.length - 1] = cleanBirim
+        } else {
+          baseLines.push(cleanBirim)
+        }
+      }
+    }
+
+    return baseLines.length > 0 ? baseLines : ['T.C.']
+  }, [
+    showBirimInAntet,
+    currentBirimResolution.antetSatirlari,
+    currentBirimResolution.birimAdi,
+    currentAntetLines,
+    currentBirimAdi,
+    formData?.kurumAdi,
+    formData?.ihalesiYapilacakBirim,
+    formData?.birimAdi,
+    formData?.birim_adi,
+    formData?.birim,
+    formData?.mudurluk
+  ])
 
   React.useEffect(() => {
     if (
