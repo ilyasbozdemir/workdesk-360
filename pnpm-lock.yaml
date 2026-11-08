@@ -952,6 +952,9 @@ importers:
 
   packages/document-engine:
     dependencies:
+      '@temin360/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       react:
         specifier: ^19.0.0
         version: 19.2.4

@@ -11,6 +11,7 @@ export async function resolveAntetSatirlari(
 ): Promise<string[]> {
   try {
     let result: string[] = [];
+    let kurumAdiText = '';
 
     // 1. Fetch kurum_anteti or individual institution columns from TANIM_Kurum
     const kurumRes = await queryExecutor(
@@ -20,6 +21,7 @@ export async function resolveAntetSatirlari(
 
     if (kurumRes && kurumRes.length > 0) {
       const row = kurumRes[0];
+      kurumAdiText = row.kurum_adi || '';
       result = InstitutionalHeaderProvider.parseKurumBaseAntetLines(row);
     }
 
@@ -72,7 +74,13 @@ export async function resolveAntetSatirlari(
           [overrideBirimId]
         );
         if (birimRes && birimRes.length > 0) {
-          return InstitutionalHeaderProvider.composeBirimAntetLines(result, birimRes[0]);
+          return InstitutionalHeaderProvider.composeBirimAntetLines(
+            result,
+            birimRes[0],
+            undefined,
+            undefined,
+            kurumAdiText
+          );
         }
       } catch (e) {
         console.error('Seçili birimId için antet satırı çözümlenirken hata:', e);
@@ -102,7 +110,13 @@ export async function resolveAntetSatirlari(
             ''
           ).trim();
           if (ekSatir) {
-            result = InstitutionalHeaderProvider.composeBirimAntetLines(result, ekSatir, row.dosya_antet);
+            result = InstitutionalHeaderProvider.composeBirimAntetLines(
+              result,
+              ekSatir,
+              row.dosya_antet,
+              undefined,
+              kurumAdiText
+            );
           }
         }
       } catch (e) {

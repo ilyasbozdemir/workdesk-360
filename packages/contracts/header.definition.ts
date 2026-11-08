@@ -1,15 +1,15 @@
 /**
  * RESMÎ ANTET VE LOGO YERLEŞİM SÖZLEŞMESİ (HEADER DEFINITION)
  * 
- * Bu sözleşme; Resmî Yazışmalarda Uygulanacak Usul ve Esaslar Hakkında Yönetmelik
- * ve kurum hiyerarşisi (Üst Kurum, Bağlı İdare, Bağımsız Kurum vb.) doğrultusunda
- * belge şablonlarının antet ve logo yerleşimini tip-güvenli (discriminated union)
- * olarak tanımlar.
+ * Bu sözleşme; Resmî Yazışmalarda Uygulanacak Usul ve Esaslar Hakkında Yönetmelik,
+ * TBB Resmî Yazışma Kılavuzu ve kurum hiyerarşisi (Üst Kurum, Bağlı İdare, Bağımsız Kurum vb.)
+ * doğrultusunda belge şablonlarının antet ve logo yerleşimini tip-güvenli (discriminated union)
+ * ve key tabanlı dinamik veri kaynağı eşlemesiyle (HeaderLineDefinition) tanımlar.
  * 
  * Desteklenen Yerleşimler:
  * - "none": Logosu olmayan kurumlar veya sade yazışmalar
  * - "single": Sol, Orta veya Sağ konumlu tekil logo (Örn: T.C. Valilik veya Belediye Başkanlığı)
- * - "dual": Çift logo (Sol ve Sağ); örneğin solda bakanlık/valilik, sağda bağlı genel müdürlük/belediye
+ * - "dual": Çift logo (Sol ve Sağ); örneğin solda bakanlık/valilik, sağda bağlı idare/belediye
  *           veya her iki tarafta aynı kurum logosu.
  */
 
@@ -38,26 +38,79 @@ export type HeaderLogoMode =
 export type SingleLogoPosition = "left" | "center" | "right";
 
 /**
- * Tip güvenli ayrık birlik (Discriminated Union) antet sözleşmesi.
+ * Antet metin hizalama yönü
+ */
+export type HeaderAlignment = "left" | "center" | "right";
+
+/**
+ * Antet profil tipi:
+ * - "official": Resmî Yazışma Yönetmeliği hiyerarşisine (T.C. -> Üst Kurum -> Kurum -> Birim) sıkı bağlı
+ * - "custom": Esnek veya özel kurum formatı
+ */
+export type HeaderProfile = "official" | "custom";
+
+/**
+ * Antet satırının veri kaynağı:
+ * - "settings": Kurum genel ayarlarından (TANIM_Kurum, settings tablosu)
+ * - "document": Aktif temin dosyasından ve birim ilişkilerinden (DATA_TeminDosyasi, TANIM_Birim)
+ * - "manual": Şablon veya kullanıcı tarafından doğrudan girilen manuel override
+ */
+export type HeaderLineSource = "settings" | "document" | "manual";
+
+/**
+ * Key tabanlı dinamik antet satır tanımı.
+ * Her satır bağımsız bir key taşır, sıralanabilir ve mevcut mapping sistemi üzerinden beslenebilir.
+ */
+export interface HeaderLineDefinition {
+  /** Satırın sabit, benzersiz kimliği (Örn: 'countryPrefix', 'institutionName', 'tenderUnit') */
+  key: string;
+  /** Verinin çözümleneceği kaynak havuzu */
+  source: HeaderLineSource;
+  /** Kaynak havuzu içerisindeki veri yolu (Örn: 'resolvedTenderUnit.name', 'settings.institutionName') */
+  path: string;
+  /** Satırın görünürlük durumu (varsayılan: true) */
+  visible?: boolean;
+  /** Satırın zorunlu olup olmadığı (varsayılan: false) */
+  required?: boolean;
+  /** Kaynaktan değer çözülemezse kullanılacak varsayılan metin */
+  fallback?: string;
+}
+
+/**
+ * Temel antet meta ve satır sözleşmesi
+ */
+export interface BaseHeaderDefinition {
+  /** Profil türü: Resmî yazışma ("official") veya esnek ("custom") */
+  profile?: HeaderProfile;
+  /** Antet metin hizalaması (varsayılan: "center") */
+  alignment?: HeaderAlignment;
+  /** Sıralı antet satır tanımları */
+  lines?: HeaderLineDefinition[];
+  /** Alias: lines ile eşdeğerdir */
+  fields?: HeaderLineDefinition[];
+}
+
+/**
+ * Tip güvenli ayrık birlik (Discriminated Union) antet ve logo sözleşmesi.
  * logoMode ile logo alanlarının çelişmesi TypeScript derleyicisi seviyesinde önlenir.
  */
 export type HeaderDefinition =
-  | {
+  | (BaseHeaderDefinition & {
       logoMode: "none";
       leftLogo?: never;
       centerLogo?: never;
       rightLogo?: never;
-    }
-  | {
+    })
+  | (BaseHeaderDefinition & {
       logoMode: "single";
       position: SingleLogoPosition;
       logo: HeaderLogoSource;
-    }
-  | {
+    })
+  | (BaseHeaderDefinition & {
       logoMode: "dual";
       leftLogo: HeaderLogoSource;
       rightLogo: HeaderLogoSource;
-    };
+    });
 
 /**
  * Resmî Yazışma Yönetmeliği ve Antet Yerleşim Standartları
@@ -76,12 +129,48 @@ export const OFFICIAL_HEADER_LAYOUT = {
 export type OfficialHeaderLayout = typeof OFFICIAL_HEADER_LAYOUT;
 
 /**
- * Varsayılan standart resmi kurum antet yerleşimi (Tekil sol logo)
+ * Standart Resmî Yazışma Antet Satırları (Hiyerarşi: T.C. -> Üst Kurum -> İdare/Kurum -> İhaleyi Yapan Birim)
+ */
+export const DEFAULT_OFFICIAL_HEADER_LINES: HeaderLineDefinition[] = [
+  {
+    key: "countryPrefix",
+    source: "settings",
+    path: "countryPrefix",
+    fallback: "T.C.",
+    required: true,
+    visible: true,
+  },
+  {
+    key: "parentInstitution",
+    source: "settings",
+    path: "parentInstitution",
+    visible: true,
+  },
+  {
+    key: "institutionName",
+    source: "settings",
+    path: "institutionName",
+    required: true,
+    visible: true,
+  },
+  {
+    key: "tenderUnit",
+    source: "document",
+    path: "resolvedTenderUnit.name",
+    visible: true,
+  },
+];
+
+/**
+ * Varsayılan standart resmi kurum antet yerleşimi (Tekil sol logo + Resmi Satırlar)
  */
 export const DEFAULT_OFFICIAL_HEADER: HeaderDefinition = {
   logoMode: "single",
   position: "left",
   logo: "institution",
+  profile: "official",
+  alignment: "center",
+  lines: DEFAULT_OFFICIAL_HEADER_LINES,
 };
 
 /**
@@ -92,6 +181,9 @@ export const DUAL_INSTITUTION_HEADER: HeaderDefinition = {
   logoMode: "dual",
   leftLogo: "parentInstitution",
   rightLogo: "institution",
+  profile: "official",
+  alignment: "center",
+  lines: DEFAULT_OFFICIAL_HEADER_LINES,
 };
 
 /**
@@ -101,6 +193,9 @@ export const DUAL_SYMMETRIC_HEADER: HeaderDefinition = {
   logoMode: "dual",
   leftLogo: "institution",
   rightLogo: "institution",
+  profile: "official",
+  alignment: "center",
+  lines: DEFAULT_OFFICIAL_HEADER_LINES,
 };
 
 /**
@@ -110,6 +205,19 @@ export const CENTER_LOGO_HEADER: HeaderDefinition = {
   logoMode: "single",
   position: "center",
   logo: "institution",
+  profile: "official",
+  alignment: "center",
+  lines: DEFAULT_OFFICIAL_HEADER_LINES,
+};
+
+/**
+ * Logosuz sade antet yerleşimi
+ */
+export const NO_LOGO_HEADER: HeaderDefinition = {
+  logoMode: "none",
+  profile: "official",
+  alignment: "center",
+  lines: DEFAULT_OFFICIAL_HEADER_LINES,
 };
 
 /**
@@ -137,6 +245,67 @@ export function isNoLogoHeader(
   def: HeaderDefinition
 ): def is Extract<HeaderDefinition, { logoMode: "none" }> {
   return def.logoMode === "none";
+}
+
+/**
+ * HeaderDefinition için satır listesini (lines veya fields alias) döndürür
+ */
+export function getHeaderLines(def: HeaderDefinition): HeaderLineDefinition[] {
+  if (Array.isArray(def.lines) && def.lines.length > 0) {
+    return def.lines;
+  }
+  if (Array.isArray(def.fields) && def.fields.length > 0) {
+    return def.fields;
+  }
+  return DEFAULT_OFFICIAL_HEADER_LINES;
+}
+
+/**
+ * HeaderDefinition tanımını doğrular:
+ * - Aynı tanım içinde yinelenen (duplicate) key'ler bulunamaz.
+ * - Satırlarda key, source ve path zorunludur.
+ * - "official" profilinde T.C. en üstte olmalıdır (eğer tanımlıysa).
+ */
+export function validateHeaderDefinition(def: HeaderDefinition): void {
+  const lines = getHeaderLines(def);
+  const seenKeys = new Set<string>();
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) continue;
+
+    if (!line.key || typeof line.key !== "string" || !line.key.trim()) {
+      throw new Error(`Antet satırı [${i}] için geçerli bir 'key' zorunludur.`);
+    }
+
+    const trimmedKey = line.key.trim();
+    if (seenKeys.has(trimmedKey)) {
+      throw new Error(`Yinelenen antet satır key'i: "${trimmedKey}" (İndeks: ${i})`);
+    }
+    seenKeys.add(trimmedKey);
+
+    if (!line.source || !["settings", "document", "manual"].includes(line.source)) {
+      throw new Error(
+        `Antet satırı "${trimmedKey}" için geçerli bir source ("settings" | "document" | "manual") zorunludur.`
+      );
+    }
+
+    if (!line.path || typeof line.path !== "string" || !line.path.trim()) {
+      throw new Error(`Antet satırı "${trimmedKey}" için geçerli bir 'path' zorunludur.`);
+    }
+  }
+
+  // Resmî profil doğrulaması: T.C. ülke öneki varsa en üstte yer almalıdır
+  if (def.profile === "official" || !def.profile) {
+    const countryIndex = lines.findIndex(
+      (l) => l.key === "countryPrefix" || l.fallback === "T.C."
+    );
+    if (countryIndex > 0) {
+      throw new Error(
+        `Resmî antet profilinde "countryPrefix" (T.C.) en üstte (ilk satır) yer almalıdır.`
+      );
+    }
+  }
 }
 
 /**
@@ -194,4 +363,3 @@ export function resolveHeaderLogos(
     sagLogo: getLogoFromSource(def.rightLogo),
   };
 }
-
