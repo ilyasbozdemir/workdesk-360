@@ -97,6 +97,8 @@ export async function resolveAntetSatirlari(
           const ekSatir = (
             row.dosya_antet ||
             row.birim_antet ||
+            row.birim_adi ||
+            row.harcama_birimi ||
             ''
           ).trim();
           if (ekSatir) {

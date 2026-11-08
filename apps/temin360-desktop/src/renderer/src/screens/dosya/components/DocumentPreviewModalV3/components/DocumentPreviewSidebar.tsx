@@ -760,7 +760,9 @@ export function DocumentPreviewSidebar({
           {/* ========================================================= */}
          <div id="sidebar-ayarlar-rota">
   {/* DEBUG - işin bitince sil */}
-  {process.env.NODE_ENV !== "production" && (
+  
+  {/*
+    {process.env.NODE_ENV !== "production" && (
     <details open style={{ marginBottom: 8, fontSize: 11 }}>
       <summary style={{ cursor: "pointer", fontWeight: 600 }}>
         🐞 Rota Debug
@@ -794,6 +796,8 @@ export function DocumentPreviewSidebar({
       </pre>
     </details>
   )}
+  */}
+
 
   <DocumentPreviewRotaSection
     formData={formData}
