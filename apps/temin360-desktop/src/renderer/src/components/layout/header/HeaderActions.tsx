@@ -1,5 +1,15 @@
 import React from 'react'
-import { Calculator, CheckSquare, DownloadCloud, Moon, Settings, Store, Sun, User } from 'lucide-react'
+import {
+  Calculator,
+  CheckSquare,
+  ChevronDown,
+  DownloadCloud,
+  Moon,
+  Settings,
+  Store,
+  Sun,
+  User
+} from 'lucide-react'
 import { SyncPopover } from './SyncPopover'
 import { NotificationPopover } from './NotificationPopover'
 import { APP_ROUTES } from '../../../constants/routeConstants'
@@ -122,19 +132,21 @@ export const HeaderActions = React.memo(function HeaderActions({
           <Settings className="w-3.5 h-3.5" />
         </button>
 
-        {/* Kullanıcı Profili Hızlı Erişim & Rol Simülatörü */}
-        <div className="flex items-center gap-1">
-          <RoleSimulatorPopover placement="bottom-right" />
+        {/* Birleşik Kullanıcı Profili & Kamu Rolü Menüsü */}
+        <RoleSimulatorPopover placement="bottom-right">
           <button
             type="button"
-            onClick={(): void => navigate({ to: APP_ROUTES.PROFIL })}
-            className="h-7 px-2 flex items-center gap-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/70 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-[10px] font-bold transition-all cursor-pointer shadow-2xs"
-            title={`Kullanıcı Profili & Güvenlik (${adminName || adminUsername || 'Sistem Yöneticisi'})`}
+            className="h-7 px-2.5 flex items-center gap-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/70 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-[11px] font-bold transition-all cursor-pointer shadow-2xs group"
+            title={`Kullanıcı Menüsü: ${adminName || adminUsername || 'Sistem Yöneticisi'}`}
           >
-            <User className="w-3 h-3 text-blue-500 shrink-0" />
+            <User className="w-3.5 h-3.5 text-blue-500 shrink-0" />
             <span>{initials}</span>
+            <ChevronDown
+              size={11}
+              className="opacity-60 group-hover:opacity-100 transition-opacity"
+            />
           </button>
-        </div>
+        </RoleSimulatorPopover>
       </div>
     </div>
   )

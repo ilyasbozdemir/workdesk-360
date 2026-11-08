@@ -29,3 +29,4 @@ export function validateIpcSender(event: IpcMainInvokeEvent, channelName: string
     }
   }
 }
+

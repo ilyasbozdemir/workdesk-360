@@ -363,48 +363,46 @@ export function Sidebar(): React.JSX.Element {
       </div>
 
       <div className="p-3 short:p-2 border-t border-sidebar-border space-y-2 short:space-y-1.5 shrink-0">
-        <Link
-          to="/profil"
-          className={cn(
-            'flex items-center rounded-xl bg-sidebar-hover-bg/50 hover:bg-sidebar-hover-bg transition-all border border-transparent hover:border-sidebar-border cursor-pointer',
-            isCollapsed ? 'justify-center p-2' : 'px-2.5 py-2 short:py-1'
-          )}
-          title="Kullanıcı Profili ve Güvenlik Ayarlarına Git"
-        >
-          <div className="w-8 h-8 short:w-7 short:h-7 flex items-center justify-center shrink-0">
-            <div className="w-full h-full rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center border border-sidebar-border/30 shadow-xs">
-              <span className="text-xs font-bold">
-                {getInitials(adminName || adminUsername || 'SY')}
-              </span>
+        {/* Kullanıcı Profili & 5018 Kamu Rolü Menüsü (Kibar, Birleşik Profil Kartı) */}
+        <RoleSimulatorPopover placement="top" className="w-full">
+          <div
+            className={cn(
+              'flex items-center rounded-xl bg-sidebar-hover-bg/50 hover:bg-sidebar-hover-bg transition-all border border-transparent hover:border-sidebar-border cursor-pointer select-none group',
+              isCollapsed ? 'justify-center p-2' : 'px-2.5 py-2 short:py-1'
+            )}
+            title="Kullanıcı Menüsü: Profil ve Rol Simülatörü"
+          >
+            <div className="w-8 h-8 short:w-7 short:h-7 flex items-center justify-center shrink-0">
+              <div className="w-full h-full rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center border border-sidebar-border/30 shadow-xs">
+                <span className="text-xs font-bold">
+                  {getInitials(adminName || adminUsername || 'SY')}
+                </span>
+              </div>
             </div>
+            {!isCollapsed && (
+              <div className="ml-2.5 overflow-hidden flex-1 text-left">
+                <div className="flex items-center justify-between">
+                  <p
+                    className="text-sm font-bold text-sidebar-hover-text truncate leading-tight"
+                    title={adminName || adminUsername}
+                  >
+                    {adminName || adminUsername || 'Sistem Yöneticisi'}
+                  </p>
+                  <ChevronDown
+                    size={12}
+                    className="text-sidebar-text/40 group-hover:text-sidebar-text transition-transform duration-200"
+                  />
+                </div>
+                <p
+                  className="text-[10px] text-sidebar-text/75 truncate mt-0.5"
+                  title={adminTitle || 'Kullanıcı Profili'}
+                >
+                  {adminTitle || 'Kullanıcı Profili & Roller'}
+                </p>
+              </div>
+            )}
           </div>
-          {!isCollapsed && (
-            <div className="ml-2.5 overflow-hidden flex-1 text-left">
-              <p
-                className="text-sm font-bold text-sidebar-hover-text truncate leading-tight"
-                title={adminName || adminUsername}
-              >
-                {adminName || adminUsername || 'Sistem Yöneticisi'}
-              </p>
-              <p
-                className="text-[10px] text-sidebar-text/75 truncate mt-0.5"
-                title={adminTitle || 'Kullanıcı Profili'}
-              >
-                {adminTitle || 'Kullanıcı Profili'}
-              </p>
-            </div>
-          )}
-        </Link>
-
-        {/* 5018 Kamu Rolü & Yetki Simülatörü */}
-        <div className="flex items-center justify-center">
-          <RoleSimulatorPopover
-            placement="top"
-            showLabel={!isCollapsed}
-            compact={isCollapsed}
-            className="w-full"
-          />
-        </div>
+        </RoleSimulatorPopover>
 
         <button
           onClick={handleCloseWorkspace}
