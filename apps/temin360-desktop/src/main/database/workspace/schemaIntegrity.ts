@@ -454,6 +454,29 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
       'DATA_TeminDosyasi Kolon Eşitleme'
     )
 
+    safeAddColumn(db, 'TANIM_Personel', 'birim_id', 'INTEGER DEFAULT NULL')
+
+    if (isPhysicalTable(db, 'TANIM_Kurum')) {
+      try {
+        const kRows = db.prepare("SELECT id, kurum_anteti FROM TANIM_Kurum WHERE kurum_anteti LIKE '%>%'").all() as any[]
+        for (const row of kRows) {
+          if (!row.kurum_anteti) continue
+          try {
+            const parsed = JSON.parse(row.kurum_anteti)
+            if (Array.isArray(parsed)) {
+              const cleaned = parsed.filter((l: string) => l && !String(l).includes('>'))
+              db.prepare('UPDATE TANIM_Kurum SET kurum_anteti = ? WHERE id = ?').run(JSON.stringify(cleaned), row.id)
+            }
+          } catch {
+            const lines = String(row.kurum_anteti)
+              .split('\n')
+              .filter((l: string) => !l.includes('>'))
+            db.prepare('UPDATE TANIM_Kurum SET kurum_anteti = ? WHERE id = ?').run(lines.join('\n'), row.id)
+          }
+        }
+      } catch {}
+    }
+
     if (isPhysicalTable(db, 'TANIM_Birim')) {
       safeExec(
         db,
@@ -462,20 +485,33 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
         UPDATE DATA_TeminDosyasi SET antet_ek_satir = harcama_birimi WHERE antet_ek_satir LIKE '%>%';
 
         UPDATE TANIM_Personel
-        SET birim = (
-          SELECT b.birim_adi FROM TANIM_Birim b
-          WHERE b.harcama_yetkilisi_id = TANIM_Personel.id
+        SET birim_id = (
+          SELECT b.id FROM TANIM_Birim b
+          WHERE LOWER(TRIM(b.birim_adi)) = LOWER(TRIM(TANIM_Personel.birim))
+             OR LOWER(TRIM(b.ad)) = LOWER(TRIM(TANIM_Personel.birim))
+             OR b.harcama_yetkilisi_id = TANIM_Personel.id
              OR b.gerceklestirme_gorevlisi_id = TANIM_Personel.id
              OR b.ilgili_personel_id = TANIM_Personel.id
           LIMIT 1
         )
-        WHERE (birim IS NULL OR trim(birim) = '')
+        WHERE (birim_id IS NULL OR birim_id = 0)
           AND EXISTS (
             SELECT 1 FROM TANIM_Birim b
-            WHERE b.harcama_yetkilisi_id = TANIM_Personel.id
+            WHERE LOWER(TRIM(b.birim_adi)) = LOWER(TRIM(TANIM_Personel.birim))
+               OR LOWER(TRIM(b.ad)) = LOWER(TRIM(TANIM_Personel.birim))
+               OR b.harcama_yetkilisi_id = TANIM_Personel.id
                OR b.gerceklestirme_gorevlisi_id = TANIM_Personel.id
                OR b.ilgili_personel_id = TANIM_Personel.id
           );
+
+        UPDATE TANIM_Personel
+        SET birim = (
+          SELECT b.birim_adi FROM TANIM_Birim b
+          WHERE b.id = TANIM_Personel.birim_id
+          LIMIT 1
+        )
+        WHERE (birim IS NULL OR trim(birim) = '')
+          AND birim_id IS NOT NULL AND birim_id > 0;
         `,
         'TANIM_Birim ve DATA_TeminDosyasi antet hiyerarsi oku temizligi ve birim-personel baglama'
       )
@@ -883,6 +919,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     { name: 'gorev', def: 'TEXT' },
     { name: 'unvan', def: 'TEXT' },
     { name: 'birim', def: 'TEXT' },
+    { name: 'birim_id', def: 'INTEGER DEFAULT NULL' },
     { name: 'avatar', def: 'TEXT' }
   ]
   for (const c of personelCols) {

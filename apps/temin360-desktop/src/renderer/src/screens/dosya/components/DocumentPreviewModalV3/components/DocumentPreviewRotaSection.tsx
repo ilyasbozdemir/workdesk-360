@@ -412,19 +412,30 @@ export function DocumentPreviewRotaSection({
   // Birim değiştiğinde resmi antet ve birim alanlarını çöz; mevcut manuel görevli seçimlerini SİLME!
   const handleSelectBirim = (rawBirimId: string) => {
     setFormData((prev: any) => {
-      const selectedBirim = activeBirimList.find(
-        (b: any) => String(b.id) === String(rawBirimId)
-      )
+      const selectedBirim = activeBirimList.find((b: any, bIdx: number) => {
+        const optionId = b.id !== undefined && b.id !== null ? String(b.id) : `birim_${bIdx}`
+        return (
+          optionId === String(rawBirimId) ||
+          String(b.id) === String(rawBirimId) ||
+          String(b.birim_adi || b.ad || '') === String(rawBirimId)
+        )
+      })
 
       // Temel kurum antetini al (birim satırı olmadan temiz kurum anteti)
-      const baseOnly = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
+      let baseOnly = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
         prev?.kurum || null,
         prev?.kurumAdi || prev?.kurum_adi || ''
       )
+      if (baseOnly.length <= 1 && currentAntetLines.length > 1) {
+        baseOnly = currentAntetLines
+          .slice(0, 2)
+          .map((l) => InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(l, prev?.kurumAdi))
+          .filter(Boolean)
+      }
 
       const res = InstitutionalHeaderProvider.resolveBirimSelection({
-        birimId: rawBirimId ? rawBirimId : undefined,
-        birimAdi: selectedBirim?.birim_adi || selectedBirim?.ad,
+        birimId: selectedBirim?.id ?? (rawBirimId ? rawBirimId : undefined),
+        birimAdi: selectedBirim?.birim_adi || selectedBirim?.ad || rawBirimId,
         birimList: activeBirimList,
         personelList: personelListesi,
         baseAntetLines: baseOnly,
@@ -439,7 +450,7 @@ export function DocumentPreviewRotaSection({
 
       const showBirim = prev?.antetBirimGosterilsin !== false
       const nextAntetLines =
-        showBirim && selectedBirim
+        showBirim && (selectedBirim || res.birimAdi)
           ? res.antetSatirlari
           : baseOnly
 
@@ -739,12 +750,27 @@ export function DocumentPreviewRotaSection({
     setTimeout(() => setSavedFeedback(null), 2500)
   }
 
-  const selectedBirimOptionValue =
-    currentBirimResolution.matchedBirim?.id !== undefined
-      ? String(currentBirimResolution.matchedBirim.id)
-      : currentBirimId !== null && currentBirimId !== undefined
-      ? String(currentBirimId)
-      : ''
+  const selectedBirimOptionValue = React.useMemo(() => {
+    if (currentBirimResolution.matchedBirim?.id !== undefined) {
+      return String(currentBirimResolution.matchedBirim.id)
+    }
+    if (currentBirimId !== null && currentBirimId !== undefined && String(currentBirimId).trim() !== '') {
+      return String(currentBirimId)
+    }
+    if (currentBirimAdi) {
+      const lower = String(currentBirimAdi).trim().toLocaleLowerCase('tr-TR')
+      const found = activeBirimList.find((b: any) => {
+        const name = String(b.birim_adi || b.ad || '').trim().toLocaleLowerCase('tr-TR')
+        return name === lower
+      })
+      if (found) {
+        return found.id !== undefined && found.id !== null
+          ? String(found.id)
+          : `birim_${activeBirimList.indexOf(found)}`
+      }
+    }
+    return ''
+  }, [currentBirimResolution.matchedBirim, currentBirimId, currentBirimAdi, activeBirimList])
 
   return (
     <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-slate-800">

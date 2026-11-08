@@ -67,7 +67,7 @@ export async function loadDocumentPreviewData({
   if ((!personelList || personelList.length === 0) && !hasPayload) {
     try {
       personelList = await queryExecutor(
-        "SELECT id, ad_soyad, unvan, telefon, eposta, birim, sicil_no, aktif_mi FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' OR aktif_mi IS NULL ORDER BY ad_soyad ASC",
+        "SELECT id, ad_soyad, unvan, telefon, eposta, birim, birim_id, sicil_no, aktif_mi FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' OR aktif_mi IS NULL ORDER BY ad_soyad ASC",
         []
       )
     } catch (e) {
