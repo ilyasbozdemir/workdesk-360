@@ -36,6 +36,7 @@ jobs:
         run: pnpm install --frozen-lockfile
         env:
           npm_config_msvs_version: "2022"
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
 
       - name: Typecheck Disk Analiz 360
         run: |

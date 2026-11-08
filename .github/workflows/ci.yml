@@ -51,6 +51,7 @@ jobs:
           }
         env:
           npm_config_msvs_version: "2022"
+          ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
 
       - name: Build Database Package
         run: pnpm --filter @dt/database build
