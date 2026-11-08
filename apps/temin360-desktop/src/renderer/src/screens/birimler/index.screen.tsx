@@ -116,7 +116,7 @@ export default function BirimlerScreen({
             birim_adi: u.birimAdi,
             detsis_kodu: u.detsisNo,
             dtvt_kodu: u.detsisNo,
-            antet_ek_satir: u.kurumHiyerarsisi || ''
+            antet_ek_satir: u.birimAdi || ''
           })
           addedCount++
         } catch (e) {
@@ -129,7 +129,7 @@ export default function BirimlerScreen({
             data: {
               detsis_kodu: u.detsisNo,
               dtvt_kodu: u.detsisNo,
-              antet_ek_satir: u.kurumHiyerarsisi || existing.antet_ek_satir || ''
+              antet_ek_satir: u.birimAdi || existing.antet_ek_satir || ''
             }
           })
           updatedCount++

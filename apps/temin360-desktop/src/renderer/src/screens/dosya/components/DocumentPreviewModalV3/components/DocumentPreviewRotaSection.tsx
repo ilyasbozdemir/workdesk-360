@@ -220,16 +220,28 @@ export function DocumentPreviewRotaSection({
 
   const currentAntetLines: string[] = React.useMemo(() => {
     if (Array.isArray(formData?.antetSatirlari) && formData.antetSatirlari.length > 0) {
-      return formData.antetSatirlari.map((s: unknown) => String(s ?? ''))
+      return formData.antetSatirlari
+        .map((s: unknown) =>
+          InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(String(s ?? ''), formData?.kurumAdi)
+        )
+        .filter(Boolean)
     }
     if (typeof formData?.antetSatirlari === 'string' && formData.antetSatirlari.trim()) {
       try {
         const parsed = JSON.parse(formData.antetSatirlari)
-        if (Array.isArray(parsed)) return parsed.map((s: unknown) => String(s ?? ''))
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map((s: unknown) =>
+              InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(String(s ?? ''), formData?.kurumAdi)
+            )
+            .filter(Boolean)
+        }
       } catch {
         return formData.antetSatirlari
           .split('\n')
-          .map((s: string) => s.trim())
+          .map((s: string) =>
+            InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(s.trim(), formData?.kurumAdi)
+          )
           .filter(Boolean)
       }
     }
@@ -756,7 +768,8 @@ export function DocumentPreviewRotaSection({
             <option value="">🏢 Birim Seçiniz (Kurum Varsayılanı)...</option>
             {activeBirimList.map((b: any, bIdx: number) => {
               const bId = b.id !== undefined && b.id !== null ? String(b.id) : `birim_${bIdx}`
-              const bLabel = b.birim_adi || b.ad || b.kisa_ad || `Birim #${bId}`
+              const rawLabel = b.birim_adi || b.ad || b.kisa_ad || `Birim #${bId}`
+              const bLabel = InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(rawLabel, formData?.kurumAdi)
               const isPassive =
                 b.aktif_mi === 0 || b.aktif_mi === '0' || b.aktif_mi === false || b.is_active === 0
               return (
@@ -1377,7 +1390,8 @@ export function DocumentPreviewRotaSection({
                                     b.id !== undefined && b.id !== null
                                       ? String(b.id)
                                       : `b_${bIdx}`
-                                  const bLabel = b.birim_adi || b.ad || b.kisa_ad || `Birim #${bId}`
+                                  const rawLabel = b.birim_adi || b.ad || b.kisa_ad || `Birim #${bId}`
+              const bLabel = InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(rawLabel, formData?.kurumAdi)
                                   return (
                                     <option key={bId} value={bId}>
                                       {bLabel}

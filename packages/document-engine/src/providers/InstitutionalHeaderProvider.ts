@@ -120,6 +120,32 @@ export class InstitutionalHeaderProvider {
   }
 
   /**
+   * Birim ek satırında DETSİS veya eski içe aktarımdan kalma hiyerarşi ("Kurum Adı > Birim Adı")
+   * veya kurum ön eki varsa temizleyip saf birim adını döner.
+   */
+  static sanitizeBirimAntetSatiri(text?: string | null, kurumAdi?: string | null): string {
+    if (!text) return ''
+    let cleaned = String(text).trim()
+
+    // 1. Eğer metinde ">" hiyerarşi ayracı varsa sadece en son birim adını al
+    if (cleaned.includes('>')) {
+      const parts = cleaned.split('>').map((p) => p.trim()).filter(Boolean)
+      cleaned = parts[parts.length - 1] || cleaned
+    }
+
+    // 2. Eğer metin kurum adıyla başlıyorsa ve arkasından birim geliyorsa temizle
+    if (kurumAdi && String(kurumAdi).trim()) {
+      const kUpper = String(kurumAdi).trim().toLocaleUpperCase('tr-TR')
+      const cUpper = cleaned.toLocaleUpperCase('tr-TR')
+      if (cUpper.startsWith(kUpper) && cUpper.length > kUpper.length) {
+        cleaned = cleaned.slice(String(kurumAdi).trim().length).replace(/^[>\s:/-]+/, '').trim()
+      }
+    }
+
+    return cleaned
+  }
+
+  /**
    * Temel kurum antet satırları ile seçili birimin antet_ek_satir / birim_adi bilgisini
    * mükerrer satır oluşturmadan birleştirir.
    */
@@ -130,7 +156,10 @@ export class InstitutionalHeaderProvider {
      knownBirimNames?: string[]
   ): string[] {
     const cleanBase = Array.isArray(baseLines)
-      ? baseLines.map((s) => String(s ?? '').trim()).filter(Boolean)
+      ? baseLines
+          .map((s) => String(s ?? '').trim())
+          .filter(Boolean)
+          .filter((line) => !line.includes('>'))
       : []
 
     // Eğer bilinen birim adları verildiyse ve temel antet dizisinin son satırı eski bir birime aitse onu çıkar
@@ -160,6 +189,8 @@ export class InstitutionalHeaderProvider {
           ''
       ).trim()
     }
+
+    ekSatir = this.sanitizeBirimAntetSatiri(ekSatir)
 
     if (
       ekSatir &&
@@ -245,15 +276,21 @@ export class InstitutionalHeaderProvider {
       warning = `"${bName}" birimi pasif durumdadır.`
     }
 
-    const resolvedBirimAdi =
+    const resolvedBirimAdi = this.sanitizeBirimAntetSatiri(
       matchedBirim?.birim_adi ||
       matchedBirim?.ad ||
       cleanBirimAdi ||
       ''
-    const resolvedAntetEkSatir =
+    )
+    const rawAntetEkSatir =
       (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) ||
       (matchedBirim?.antet_ek_satir && String(matchedBirim.antet_ek_satir).trim()) ||
       resolvedBirimAdi
+
+    const resolvedAntetEkSatir = this.sanitizeBirimAntetSatiri(
+      rawAntetEkSatir,
+      fallbackInstitutionName || kurumRow?.kurum_adi
+    )
 
     const antetSatirlari = resolvedAntetEkSatir
       ? this.composeBirimAntetLines(
