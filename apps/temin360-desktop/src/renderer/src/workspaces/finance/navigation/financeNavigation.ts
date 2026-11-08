@@ -6,7 +6,8 @@ import {
   CheckCircle2,
   FileSpreadsheet,
   AlertTriangle,
-  Hammer
+  Hammer,
+  BookOpen
 } from 'lucide-react'
 import { FinancialServicesPermission } from '../modules/financial-services/permissions'
 
@@ -41,6 +42,16 @@ export const FINANCE_SERVICES_NAVIGATION: FinanceNavItem[] = [
     badgeVariant: 'emerald',
     permission: 'finance:budget_view',
     description: 'Kurumsal, fonksiyonel ve ekonomik kodlar, ödenek bloke takibi'
+  },
+  {
+    id: 'budget-codes',
+    label: '4 Düzey Analitik Bütçe Kodları',
+    shortLabel: 'Bütçe Kodları',
+    icon: BookOpen,
+    badge: '4 Düzey',
+    badgeVariant: 'emerald',
+    permission: 'finance:budget_view',
+    description: 'Kurumsal, fonksiyonel, finansman ve ekonomik 4 düzey analitik bütçe kodları rehberi'
   },
   {
     id: 'compliance-check',

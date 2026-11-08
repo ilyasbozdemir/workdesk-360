@@ -22,6 +22,7 @@ import { OebDraftsPage } from '../modules/accounting/pages/OebDraftsPage'
 import { GuaranteesEscrowPage } from '../modules/accounting/pages/GuaranteesEscrowPage'
 import { AccountingRecordsPage } from '../modules/accounting/pages/AccountingRecordsPage'
 import HakedisScreen from '@renderer/screens/hakedis/HakedisScreen'
+import ButceKodScreen from '@renderer/screens/butcekod/index.screen'
 
 export type FinanceSectionScope = 'financial-services' | 'accounting' | 'all'
 
@@ -73,6 +74,18 @@ export const FINANCE_PAGE_DEFINITIONS: FinancePageDefinition[] = [
     badgeVariant: 'emerald',
     description: 'Kurumsal, fonksiyonel ve ekonomik kodlar, ödenek bloke takibi',
     component: BudgetAppropriationPage
+  },
+  {
+    id: 'budget-codes',
+    section: 'financial-services',
+    title: '4 Düzey Analitik Bütçe Kodları',
+    shortLabel: 'Bütçe Kodları',
+    breadcrumbLabel: 'Bütçe Kodları Rehberi',
+    icon: Coins,
+    badge: '4 DÜZEY',
+    badgeVariant: 'emerald',
+    description: 'Kurumsal, fonksiyonel, finansman ve ekonomik 4 düzey analitik bütçe kodları sözlüğü',
+    component: ButceKodScreen
   },
   {
     id: 'compliance-check',

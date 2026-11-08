@@ -5,7 +5,8 @@ import {
   BookMarked,
   ShieldCheck,
   Receipt,
-  FileCheck
+  FileCheck,
+  Hammer
 } from 'lucide-react'
 import { AccountingPermission } from '../modules/accounting/permissions'
 
@@ -60,6 +61,16 @@ export const ACCOUNTING_NAVIGATION: AccountingNavItem[] = [
     badgeVariant: 'purple',
     permission: 'accounting:journal_entry',
     description: 'Merkezi yönetim hesap planı (630, 103, 360, 361) taslak kayıtları'
+  },
+  {
+    id: 'hakedis-masasi',
+    label: 'Hakediş & Yeşil Defter Masası',
+    shortLabel: 'Hakediş Masası',
+    icon: Hammer,
+    badge: 'Hakediş',
+    badgeVariant: 'emerald',
+    permission: 'accounting:oeb_payment',
+    description: 'Hakediş tahakkuk müzekkeresi, kesintiler ve yeşil defter icmali'
   }
 ]
 

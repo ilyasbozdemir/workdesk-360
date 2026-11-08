@@ -349,7 +349,6 @@ export function getSidebarMenuGroups(
             children: [
               { name: 'ÇŞB Birim Fiyat Pozları', path: APP_ROUTES.POZLAR, icon: BookOpen },
               { name: 'OKAS Kodları', path: APP_ROUTES.OKAS_KOD, icon: Tag },
-              { name: 'Bütçe Kodları (4 Düzey)', path: APP_ROUTES.BUTCE_KOD, icon: Coins },
               {
                 name: 'Mal, Hizmet & Yapım Kataloğu',
                 path: APP_ROUTES.MALZEMELER,
@@ -484,51 +483,6 @@ export function getSidebarMenuGroups(
                     badge: 'ROTA'
                   }
                 ]
-              },
-              {
-                name: 'BKMYBS & Mali Yönetim',
-                icon: Coins,
-                badge: '5018',
-                children: [
-                  {
-                    name: '💰 Mali Çalışma Masası',
-                    path: APP_ROUTES.BKMYBS_MALI_YONETIM,
-                    icon: Coins,
-                    badge: 'HUB'
-                  },
-                  {
-                    name: '1. Analitik Bütçe & Ödenek',
-                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=butce`,
-                    icon: Calculator
-                  },
-                  {
-                    name: '2. 22/d Limit & %10 Kotası',
-                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=limit`,
-                    icon: Scale,
-                    badge: 'KİK'
-                  },
-                  {
-                    name: '3. MİF & Ödeme Emri (ÖEB)',
-                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=mif`,
-                    icon: FileCheck,
-                    badge: 'ÖEB'
-                  },
-                  {
-                    name: '4. TKYS Taşınır & Zimmet',
-                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=tkys`,
-                    icon: Boxes
-                  },
-                  {
-                    name: '5. Emanetler & Teminatlar',
-                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=emanet`,
-                    icon: Key
-                  },
-                  {
-                    name: '6. Harcama Sözleşmeleri',
-                    path: `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=sozlesme`,
-                    icon: FileText
-                  }
-                ]
               }
             ]
           : []),
@@ -649,11 +603,6 @@ export function getSidebarMenuGroups(
                 badge: activeDosyaId ? 'HAVUZ' : 'YENİ'
               },
               {
-                name: 'Hakediş & Harcama İşlemleri',
-                path: APP_ROUTES.HAKEDIS,
-                icon: Hammer
-              },
-              {
                 name: 'İhale & Hesaplama Araçları',
                 path: APP_ROUTES.HESAPLAMA_ARACLARI,
                 icon: Calculator,
@@ -710,7 +659,6 @@ export function getSidebarMenuGroups(
                   },
                   { name: 'Taşınır Kodları', path: APP_ROUTES.TASINIR_KOD, icon: FolderTree },
                   { name: 'OKAS Kodları', path: APP_ROUTES.OKAS_KOD, icon: Tag },
-                  { name: 'Bütçe Kodları (4 Düzey)', path: APP_ROUTES.BUTCE_KOD, icon: Coins },
                   { name: 'Birim Fiyat Pozları', path: APP_ROUTES.POZLAR, icon: BookOpen },
                   { name: 'Ölçü Birimleri', path: APP_ROUTES.OLCU_BIRIMLERI, icon: Ruler }
                 ]

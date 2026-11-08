@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Building2, ChevronDown, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
+import { Building2, ChevronDown, ChevronLeft, ChevronRight, LogOut, Coins } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
 import { useShallow } from 'zustand/react/shallow'
 import { getInitials } from '@renderer/utils/formatters'
 import { MenuGroup, getSidebarMenuGroups } from './sidebar.constants'
@@ -44,6 +45,7 @@ export function Sidebar(): React.JSX.Element {
       activeDosyaId: s.activeDosyaId
     }))
   )
+  const { setActiveWorkspace } = useWorkspaceContextStore()
 
   // Mod Seçici Durumu
   const [procurementMode, setProcurementMode] = useState<
@@ -167,6 +169,22 @@ export function Sidebar(): React.JSX.Element {
             </span>
           </div>
         )}
+      </div>
+
+      {/* Mali Hizmetler Masasına (5018) Hızlı Geçiş Butonu */}
+      <div className={cn('px-3 pt-3 shrink-0', isCollapsed && 'px-2')}>
+        <button
+          type="button"
+          onClick={() => setActiveWorkspace('finance')}
+          className={cn(
+            'w-full flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-xs font-bold transition-all hover:scale-[1.01] cursor-pointer shadow-2xs',
+            isCollapsed && 'px-0'
+          )}
+          title="Mali Hizmetler & Muhasebe Çalışma Masasına Geç (5018 Sayılı Kanun)"
+        >
+          <Coins size={15} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+          {!isCollapsed && <span className="truncate">Mali Hizmetler (5018)</span>}
+        </button>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto py-4 px-3 short:py-2 short:px-2 space-y-6 short:space-y-3 custom-scrollbar">
