@@ -381,5 +381,58 @@ describe("Kurum - Birim - Personel İlişkisi: Antet ve Personel Filtreleme Test
       expect(html).toContain("ÇANKAYA BELEDİYE BAŞKANLIĞI");
       expect(html).not.toContain("Destek Hizmetleri Müdürlüğü");
     });
+
+    it("DETSİS hiyerarşi oku (Kurum > Birim) içeren antet_ek_satir bilgisini saf birim adına temizler", async () => {
+      const sanitized = InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
+        "Güneyyurt Belediye Başkanlığı > Belediye Meclisi",
+        "Güneyyurt Belediye Başkanlığı"
+      );
+      expect(sanitized).toBe("Belediye Meclisi");
+
+      const res = InstitutionalHeaderProvider.resolveBirimSelection({
+        birimId: 9,
+        birimAdi: "Belediye Meclisi",
+        birimList: [
+          {
+            id: 9,
+            birim_adi: "Belediye Meclisi",
+            antet_ek_satir: "Güneyyurt Belediye Başkanlığı > Belediye Meclisi",
+            aktif_mi: 1,
+          },
+        ],
+        baseAntetLines: ["T.C.", "GÜNEYYURT BELEDİYE BAŞKANLIĞI"],
+        fallbackInstitutionName: "Güneyyurt Belediye Başkanlığı",
+      });
+
+      expect(res.antetSatirlari).toEqual([
+        "T.C.",
+        "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
+        "Belediye Meclisi",
+      ]);
+      expect(res.antetEkSatir).toBe("Belediye Meclisi");
+      expect(res.antetSatirlari.join(" ")).not.toContain(">");
+
+      const { DocumentHeader } = await import("../document/DocumentHeader");
+      const { renderToStaticMarkup } = await import("react-dom/server");
+      const React = await import("react");
+
+      const html = renderToStaticMarkup(
+        React.createElement(DocumentHeader, {
+          data: {
+            antetSatirlari: [
+              "T.C.",
+              "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
+              "Güneyyurt Belediye Başkanlığı > Belediye Meclisi",
+            ],
+            kurumAdi: "Güneyyurt Belediye Başkanlığı",
+          },
+        }),
+      );
+
+      expect(html).toContain("Belediye Meclisi");
+      expect(html).not.toContain("&gt;");
+      expect(html).not.toContain("Güneyyurt Belediye Başkanlığı &gt; Belediye Meclisi");
+      expect(html).not.toContain("Güneyyurt Belediye Başkanlığı > Belediye Meclisi");
+    });
   });
 });

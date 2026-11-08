@@ -458,6 +458,15 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
       safeExec(
         db,
         `
+        UPDATE TANIM_Birim SET antet_ek_satir = birim_adi WHERE antet_ek_satir LIKE '%>%';
+        UPDATE DATA_TeminDosyasi SET antet_ek_satir = harcama_birimi WHERE antet_ek_satir LIKE '%>%';
+        `,
+        'TANIM_Birim ve DATA_TeminDosyasi antet hiyerarsi oku temizligi'
+      )
+
+      safeExec(
+        db,
+        `
         INSERT OR IGNORE INTO TANIM_Birim (ad, birim_adi, antet_ek_satir, sunum_makami, aktif_mi)
         SELECT DISTINCT
           TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), ''))) AS yeni_ad,

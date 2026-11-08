@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { BaseTemplate } from "../base.schema";
 import { GLOBAL_THEME } from "../theme.config";
+import { InstitutionalHeaderProvider } from "@worksuite-360/document-engine";
 
 interface DocumentHeaderProps {
   data?: Partial<BaseTemplate> & Record<string, any>;
@@ -14,7 +15,12 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
     let lines: string[] = [];
     if (Array.isArray(data?.antetSatirlari) && data.antetSatirlari.length > 0) {
       lines = data.antetSatirlari
-        .map((s) => String(s ?? "").trim())
+        .map((s) =>
+          InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
+            String(s ?? "").trim(),
+            data?.kurumAdi,
+          )
+        )
         .filter(Boolean);
     } else {
       lines = [
@@ -22,11 +28,16 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
         data?.kurumUst,
         data?.kurumAdi,
       ]
-        .map((s) => String(s ?? "").trim())
+        .map((s) =>
+          InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
+            String(s ?? "").trim(),
+            data?.kurumAdi,
+          )
+        )
         .filter(Boolean);
     }
 
-    const birimLine = (
+    const rawBirimLine = (
       data?.antetEkSatir ||
       (data as any)?.antet_ek_satir ||
       data?.mudurluk ||
@@ -39,9 +50,13 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       ""
     ).trim();
 
+    const birimLine = InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
+      rawBirimLine,
+      data?.kurumAdi,
+    );
+
     // Sadece kullanıcı açıkça antetBirimGosterilsin: false derse antetten çıkarır
-    const hideBirim =
-      data?.antetBirimGosterilsin === false ||
+    const hideBirim = data?.antetBirimGosterilsin === false ||
       (data as any)?.birimAntetteGosterilsin === false ||
       (data as any)?.antetteBirimGoster === false;
 
@@ -49,13 +64,13 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       lines = lines.filter(
         (l) =>
           l.trim().toLocaleUpperCase("tr-TR") !==
-          birimLine.toLocaleUpperCase("tr-TR"),
+            birimLine.toLocaleUpperCase("tr-TR"),
       );
     } else if (!hideBirim && birimLine) {
       const alreadyHas = lines.some(
         (l) =>
           l.trim().toLocaleUpperCase("tr-TR") ===
-          birimLine.toLocaleUpperCase("tr-TR"),
+            birimLine.toLocaleUpperCase("tr-TR"),
       );
       if (!alreadyHas) {
         lines.push(birimLine);
@@ -115,9 +130,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
             style={{
               fontWeight: "bold",
               fontSize: "12pt",
-              marginBottom: idx < effectiveAntetLines.length - 1
-                ? "4px"
-                : "0",
+              marginBottom: idx < effectiveAntetLines.length - 1 ? "4px" : "0",
             }}
           >
             {satir}
