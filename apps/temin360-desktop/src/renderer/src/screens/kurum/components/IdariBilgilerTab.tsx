@@ -235,8 +235,7 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             {/* Sunulacak Kurum Adı (Muhatap) */}
             <div
               className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                data.sunulacak_makam_secimi === "kurum" ||
-                  (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
+                data.sunulacak_makam_secimi === "kurum"
                   ? "border-blue-500/80 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/40"
                   : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
               }`}
@@ -261,19 +260,14 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                     }
                   }}
                   className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
-                    data.sunulacak_makam_secimi === "kurum" ||
-                      (!data.sunulacak_makam_secimi && data.sunulacak_kurum_adi)
+                    data.sunulacak_makam_secimi === "kurum"
                       ? "bg-blue-600 text-white shadow-sm"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
                   <Check className="w-3 h-3" />
                   <span>
-                    {data.sunulacak_makam_secimi === "kurum" ||
-                        (!data.sunulacak_makam_secimi &&
-                          data.sunulacak_kurum_adi)
-                      ? "Aktif"
-                      : "Seç"}
+                    {data.sunulacak_makam_secimi === "kurum" ? "Aktif" : "Seç"}
                   </span>
                 </button>
               </div>
@@ -282,10 +276,7 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 onChange={(e) => {
                   const val = e.target.value;
                   onChange("sunulacak_kurum_adi", val);
-                  if (
-                    data.sunulacak_makam_secimi === "kurum" ||
-                    (!data.sunulacak_makam_secimi && val)
-                  ) {
+                  if (data.sunulacak_makam_secimi === "kurum") {
                     onChange("makam_adi", val);
                   }
                 }}
@@ -298,15 +289,15 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
             {/* Sunulacak Makam Adı (Muhatap) */}
             <div
               className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                data.sunulacak_makam_secimi === "makam" ||
-                  !data.sunulacak_makam_secimi
+                data.sunulacak_makam_secimi === "makam" || !data.sunulacak_makam_secimi
                   ? "border-blue-500/80 bg-blue-50/40 dark:bg-blue-950/20 ring-1 ring-blue-500/40"
                   : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
               }`}
               onClick={() => {
                 onChange("sunulacak_makam_secimi", "makam");
-                if (data.makam_adi_custom) {
-                  onChange("makam_adi", data.makam_adi_custom);
+                const targetMakam = data.makam_adi_custom || data.makam_adi || "";
+                if (targetMakam) {
+                  onChange("makam_adi", targetMakam);
                 }
               }}
             >
@@ -319,37 +310,35 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     onChange("sunulacak_makam_secimi", "makam");
-                    if (data.makam_adi_custom) {
-                      onChange("makam_adi", data.makam_adi_custom);
+                    const targetMakam = data.makam_adi_custom || data.makam_adi || "";
+                    if (targetMakam) {
+                      onChange("makam_adi", targetMakam);
                     }
                   }}
                   className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
-                    data.sunulacak_makam_secimi === "makam" ||
-                      !data.sunulacak_makam_secimi
+                    data.sunulacak_makam_secimi === "makam" || !data.sunulacak_makam_secimi
                       ? "bg-blue-600 text-white shadow-sm"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
                   <Check className="w-3 h-3" />
                   <span>
-                    {data.sunulacak_makam_secimi === "makam" ||
-                        !data.sunulacak_makam_secimi
+                    {data.sunulacak_makam_secimi === "makam" || !data.sunulacak_makam_secimi
                       ? "Aktif"
                       : "Seç"}
                   </span>
                 </button>
               </div>
               <Input
-                value={data.makam_adi_custom !== undefined
-                  ? data.makam_adi_custom
-                  : data.makam_adi || ""}
+                value={
+                  data.makam_adi_custom !== undefined && data.makam_adi_custom !== null
+                    ? data.makam_adi_custom
+                    : (data.sunulacak_makam_secimi === "kurum" ? "" : (data.makam_adi || ""))
+                }
                 onChange={(e) => {
                   const val = e.target.value;
                   onChange("makam_adi_custom", val);
-                  if (
-                    data.sunulacak_makam_secimi === "makam" ||
-                    !data.sunulacak_makam_secimi
-                  ) {
+                  if (data.sunulacak_makam_secimi === "makam" || !data.sunulacak_makam_secimi) {
                     onChange("makam_adi", val);
                   }
                 }}
