@@ -23,8 +23,9 @@ export const BaseTemplateSchema = z.object({
   antetSatirlari: z.array(z.string()).optional(),
   antetBirimGosterilsin: z.boolean().optional(),
   birimAntetteGosterilsin: z.boolean().optional(),
-  solLogo: z.string().url().optional(),
-  sagLogo: z.string().url().optional(),
+  solLogo: z.string().optional(),
+  ortaLogo: z.string().optional(),
+  sagLogo: z.string().optional(),
   evrakSayisi: z.string().optional(),
   // KİK & Standart Form Destek Alanları (İsteğe Bağlı)
   kikKodu: z.string().optional(),

@@ -147,6 +147,21 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
           lineHeight: 1.3,
         }}
       >
+        {!hideLogos && (data?.ortaLogo || (data as any)?.ortaLogo) && (
+          <div style={{ marginBottom: "6px" }}>
+            <img
+              src={data?.ortaLogo || (data as any)?.ortaLogo}
+              alt="Orta Logo"
+              referrerPolicy="no-referrer"
+              style={{
+                maxWidth: "80px",
+                maxHeight: "80px",
+                objectFit: "contain",
+                display: "inline-block",
+              }}
+            />
+          </div>
+        )}
         {effectiveAntetLines.map((satir, idx) => (
           <div
             key={idx}
