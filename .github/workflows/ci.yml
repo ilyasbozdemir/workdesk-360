@@ -29,7 +29,26 @@ jobs:
           run_install: false
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          $maxAttempts = 3
+          $attempt = 0
+          $success = $false
+          while (-not $success -and $attempt -lt $maxAttempts) {
+            $attempt++
+            Write-Host "==> pnpm install attempt $attempt of $maxAttempts..."
+            pnpm install --frozen-lockfile
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+            } else {
+              if ($attempt -lt $maxAttempts) {
+                Write-Host "pnpm install failed (network / timeout). Retrying in 15s..."
+                Start-Sleep -Seconds 15
+              } else {
+                Write-Error "pnpm install failed after $maxAttempts attempts."
+                exit 1
+              }
+            }
+          }
         env:
           npm_config_msvs_version: "2022"
 
