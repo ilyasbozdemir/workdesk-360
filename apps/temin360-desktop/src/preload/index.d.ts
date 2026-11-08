@@ -45,6 +45,24 @@ declare global {
         getMifDrafts: () => Promise<any[]>
         getOebDrafts: () => Promise<any[]>
       }
+      workflow?: {
+        getInstance: (dosyaId: number) => Promise<any>
+        getAvailableActions: (payload: { dosyaId: number; actorRole?: string; actorId?: string }) => Promise<any[]>
+        executeTransition: (payload: {
+          dosyaId: number
+          transitionId: string
+          actorRole: string
+          actorId?: string
+          reason?: string
+          faturaNo?: string
+          faturaTarihi?: string
+        }) => Promise<{ success: boolean; instance?: any; transition?: any; error?: string }>
+        getHistory: (dosyaId: number) => Promise<any[]>
+        getTasks: (filter?: { dosyaId?: number; role?: string; status?: string }) => Promise<any[]>
+        getNotifications: (unreadOnly?: boolean) => Promise<any[]>
+        markNotificationRead: (id: string) => Promise<void>
+        markAllNotificationsRead: () => Promise<void>
+      }
     }
   }
 }

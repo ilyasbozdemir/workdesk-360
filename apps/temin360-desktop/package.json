@@ -62,6 +62,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@temin360/contracts": "workspace:*",
     "@temin360/document-templates": "workspace:*",
+    "@workdesk-360/workflow-engine": "workspace:*",
     "@tiptap/extension-table": "^3.26.0",
     "@tiptap/extension-table-cell": "^3.26.0",
     "@tiptap/extension-table-header": "^3.26.0",

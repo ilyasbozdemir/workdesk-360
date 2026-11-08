@@ -197,6 +197,114 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'evrak_sayisi', 'TEXT')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'belge_snapshot_json', 'TEXT')
 
+  // 2.1 Workflow, Görev ve Bildirim Motoru Tabloları
+  safeExec(
+    db,
+    `
+      CREATE TABLE IF NOT EXISTS WORKFLOW_Instance (
+        id TEXT PRIMARY KEY,
+        dosya_id INTEGER NOT NULL,
+        definition_id TEXT NOT NULL,
+        definition_version INTEGER DEFAULT 1,
+        current_state TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'IN_PROGRESS',
+        assigned_user_id TEXT,
+        assigned_unit_id TEXT,
+        assigned_role TEXT,
+        last_actor_id TEXT,
+        return_reason TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_instance_dosya ON WORKFLOW_Instance(dosya_id);
+      CREATE INDEX IF NOT EXISTS idx_wf_instance_state ON WORKFLOW_Instance(current_state);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_TransitionHistory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        instance_id TEXT NOT NULL,
+        dosya_id INTEGER NOT NULL,
+        from_state TEXT NOT NULL,
+        to_state TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        actor_id TEXT,
+        actor_role TEXT,
+        reason TEXT,
+        metadata_json TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_hist_dosya ON WORKFLOW_TransitionHistory(dosya_id);
+      CREATE INDEX IF NOT EXISTS idx_wf_hist_inst ON WORKFLOW_TransitionHistory(instance_id);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_Task (
+        id TEXT PRIMARY KEY,
+        instance_id TEXT NOT NULL,
+        dosya_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'OPEN',
+        assigned_user_id TEXT,
+        assigned_unit_id TEXT,
+        required_role TEXT,
+        due_at DATETIME,
+        completed_at DATETIME,
+        completed_by TEXT,
+        return_reason TEXT,
+        idempotency_key TEXT UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_task_dosya ON WORKFLOW_Task(dosya_id);
+      CREATE INDEX IF NOT EXISTS idx_wf_task_role ON WORKFLOW_Task(required_role, status);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_Notification (
+        id TEXT PRIMARY KEY,
+        task_id TEXT,
+        dosya_id INTEGER NOT NULL,
+        user_id TEXT,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        type TEXT NOT NULL,
+        channel TEXT DEFAULT 'IN_APP',
+        read_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_notif_dosya ON WORKFLOW_Notification(dosya_id);
+      CREATE INDEX IF NOT EXISTS idx_wf_notif_read ON WORKFLOW_Notification(read_at);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_NotificationOutbox (
+        id TEXT PRIMARY KEY,
+        channel TEXT NOT NULL,
+        recipient TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        attempts INTEGER DEFAULT 0,
+        last_attempt DATETIME,
+        error_message TEXT,
+        idempotency_key TEXT UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_outbox_status ON WORKFLOW_NotificationOutbox(status);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_RuleEvaluation (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        instance_id TEXT NOT NULL,
+        rule_id TEXT NOT NULL,
+        category TEXT NOT NULL,
+        passed INTEGER NOT NULL,
+        severity TEXT NOT NULL,
+        message TEXT NOT NULL,
+        details_json TEXT,
+        evaluated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_rule_inst ON WORKFLOW_RuleEvaluation(instance_id);
+    `,
+    'Workflow, Görev ve Bildirim Motoru Tabloları'
+  )
+
   // 3. Şema Sürümü ve Migrasyon Kontrolü
   try {
     const row = db.prepare("SELECT value FROM settings WHERE key = 'dbSchemaVersion'").get() as

@@ -5,6 +5,7 @@ import { UpdaterWidget } from './components/UpdaterWidget'
 import { ChangelogWidget } from './components/ChangelogWidget'
 import { DosyaOzetPaneli } from './components/DosyaOzetPaneli'
 import { DosyaSecilmediHero } from './components/DosyaSecilmediHero'
+import { DosyaSurecAsistani } from './components/DosyaSurecAsistani'
 import { TeknikDetaylarSection } from './components/TeknikDetaylarSection'
 import { useDosyaScreenData } from './hooks/useDosyaScreenData'
 
@@ -111,6 +112,17 @@ export default function DosyaScreen(): React.JSX.Element {
             <DosyaSecilmediHero />
           )}
         </div>
+
+        {/* UÇTAN UCA DOSYA SÜREÇ ASİSTANI (WORKFLOW & RULE ENGINE) */}
+        {dosyaData && activeDosyaId && (
+          <div className="lg:col-span-12">
+            <DosyaSurecAsistani
+              dosyaId={activeDosyaId}
+              dosyaNo={dosyaData.temin_no}
+              konu={dosyaData.konu}
+            />
+          </div>
+        )}
 
         {/* AYIRICI VE TEKNİK DETAYLAR */}
         <TeknikDetaylarSection

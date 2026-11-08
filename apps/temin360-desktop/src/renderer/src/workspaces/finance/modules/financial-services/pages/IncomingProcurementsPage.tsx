@@ -17,7 +17,8 @@ import {
   ShieldCheck,
   X,
   CreditCard,
-  MessageSquare
+  MessageSquare,
+  RotateCcw
 } from 'lucide-react'
 import { formatCurrency } from '@renderer/utils/formatters'
 import { useWorkspaceStore } from '@renderer/store/workspaceStore'
@@ -186,6 +187,35 @@ export const IncomingProcurementsPage: React.FC = () => {
     } catch (err) {
       console.error('Ödeme işlemi kaydedilirken hata:', err)
       alert('Ödeme kaydedilirken bir hata meydana geldi: ' + ((err as any)?.message || String(err)))
+    } finally {
+      setIsSubmitting(false)
+      setTimeout(() => setSuccessToast(null), 6000)
+    }
+  }
+
+  // Eksik Evrak / Düzeltme Nedeniyle İade Etme (Workflow Engine)
+  const handleReturnFile = async () => {
+    if (!selectedItem) return
+    if (!maliYorum.trim()) {
+      alert('Lütfen satın alma birimine iletilecek iade / eksiklik gerekçesini yazınız.')
+      return
+    }
+    setIsSubmitting(true)
+    try {
+      if (window.api?.workflow) {
+        await window.api.workflow.executeTransition({
+          dosyaId: selectedItem.id,
+          transitionId: 'T_RETURN_FROM_FINANCE',
+          actorRole: 'mali_hizmetler',
+          actorId: 'MALİ_MUTEMET',
+          reason: maliYorum
+        })
+      }
+      setSuccessToast(`Dosya ${selectedItem.dosyaNo} gerekçesiyle birlikte Satın Alma masasına iade edildi.`)
+      setSelectedItem(null)
+      await loadProcurements()
+    } catch (err: any) {
+      alert('İade işlemi sırasında hata: ' + (err?.message || err))
     } finally {
       setIsSubmitting(false)
       setTimeout(() => setSuccessToast(null), 6000)
@@ -593,6 +623,18 @@ export const IncomingProcurementsPage: React.FC = () => {
                   className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                 >
                   Vazgeç
+                </button>
+
+                {/* Eksik Evrak / İade Butonu (Workflow) */}
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={handleReturnFile}
+                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Satın alma birimine eksiklik gerekçesiyle iade et"
+                >
+                  <RotateCcw size={14} />
+                  <span>Eksiklikle İade Et</span>
                 </button>
 
                 {/* Re'sen Ödeme Onay Butonu */}
