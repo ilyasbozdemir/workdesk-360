@@ -5,8 +5,6 @@ import {
   getDefaultMappingForProcess,
   processMappingRegistry
 } from '../index'
-import { IhtiyacListesiMapping } from '../ihtiyac-listesi.mapping'
-import { PiyasaFiyatArastirmaTutanagiMapping } from '../all-templates.mapping'
 
 describe('Desktop Screen & Mapping Bridge Testleri', () => {
   it('screenTemplateMap Electron ekran rotalarını doğru şablon kimliklerine eşler', () => {
@@ -47,9 +45,11 @@ describe('Desktop Screen & Mapping Bridge Testleri', () => {
     expect('/dosya/hazirlik-ve-ihtiyac' in processMappingRegistry).toBe(true)
   })
 
-  it('Geriye dönük uyumluluk re-export dosyaları eksiksiz değer sağlar', () => {
-    expect(IhtiyacListesiMapping.dosyaKonusu?.deger).toBe('İhtiyaç Listesi')
-    expect(PiyasaFiyatArastirmaTutanagiMapping.toplamBedel?.tablo).toBe('DATA_TeminDosyasi')
+  it('Merkezi şablon paketinden şablon kimliği ile doğrudan mapping çekilebilir', () => {
+    const ihtiyacMapping = getDefaultMappingForProcess('ihtiyac-listesi')
+    expect(ihtiyacMapping.dosyaKonusu?.deger).toBe('İhtiyaç Listesi')
+
+    const tutanakMapping = getDefaultMappingForProcess('piyasa-fiyat-arastirma-tutanagi')
+    expect(tutanakMapping.toplamBedel?.tablo).toBe('DATA_TeminDosyasi')
   })
 })
-

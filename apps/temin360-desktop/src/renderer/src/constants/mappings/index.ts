@@ -7,7 +7,6 @@ import {
 } from '@temin360/document-templates'
 
 export type { ProcessMapping, TableColumnMapping }
-export * from './types'
 
 /**
  * Electron ekran rotası ile belge şablon kimliği arasındaki eşleme tablosu.
