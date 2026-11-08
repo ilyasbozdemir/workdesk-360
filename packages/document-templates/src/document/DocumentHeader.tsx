@@ -12,9 +12,22 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
   { data, hideLogos = false },
 ) => {
   const effectiveAntetLines = useMemo(() => {
+    const rawVal = (data as any)?.antetSatirlari;
+    let rawAntetList: string[] = [];
+    if (Array.isArray(rawVal)) {
+      rawAntetList = rawVal;
+    } else if (typeof rawVal === "string" && rawVal.trim()) {
+      try {
+        const parsed = JSON.parse(rawVal);
+        if (Array.isArray(parsed)) rawAntetList = parsed;
+      } catch {
+        rawAntetList = rawVal.split("\n");
+      }
+    }
+
     let lines: string[] = [];
-    if (Array.isArray(data?.antetSatirlari) && data.antetSatirlari.length > 0) {
-      lines = data.antetSatirlari
+    if (rawAntetList.length > 0) {
+      lines = rawAntetList
         .map((s) =>
           InstitutionalHeaderProvider.sanitizeBirimAntetSatiri(
             String(s ?? "").trim(),
@@ -60,20 +73,30 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       (data as any)?.birimAntetteGosterilsin === false ||
       (data as any)?.antetteBirimGoster === false;
 
-    if (hideBirim && birimLine) {
-      lines = lines.filter(
-        (l) =>
-          l.trim().toLocaleUpperCase("tr-TR") !==
-            birimLine.toLocaleUpperCase("tr-TR"),
-      );
-    } else if (!hideBirim && birimLine) {
+    if (hideBirim) {
+      if (birimLine) {
+        lines = lines.filter(
+          (l) =>
+            l.trim().toLocaleUpperCase("tr-TR") !==
+              birimLine.toLocaleUpperCase("tr-TR"),
+        );
+      }
+      if (lines.length > 2) {
+        lines = lines.slice(0, 2);
+      }
+    } else if (birimLine) {
       const alreadyHas = lines.some(
         (l) =>
           l.trim().toLocaleUpperCase("tr-TR") ===
             birimLine.toLocaleUpperCase("tr-TR"),
       );
       if (!alreadyHas) {
-        lines.push(birimLine);
+        if (lines.length > 2) {
+          // Eski birim satırının yerine yenisini koy
+          lines[lines.length - 1] = birimLine;
+        } else {
+          lines.push(birimLine);
+        }
       }
     }
 

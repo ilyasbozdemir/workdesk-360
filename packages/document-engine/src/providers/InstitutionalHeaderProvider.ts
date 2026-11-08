@@ -86,6 +86,7 @@ export class InstitutionalHeaderProvider {
           lines = parsed
             .map((s: unknown) => String(s ?? '').trim())
             .filter(Boolean)
+            .filter((line: string) => !line.includes('>'))
         }
       } catch {
         if (typeof kurumRow.kurum_anteti === 'string' && kurumRow.kurum_anteti.trim()) {
@@ -93,6 +94,7 @@ export class InstitutionalHeaderProvider {
             .split('\n')
             .map((s: string) => s.trim())
             .filter(Boolean)
+            .filter((line: string) => !line.includes('>'))
         }
       }
     }
@@ -178,9 +180,7 @@ export class InstitutionalHeaderProvider {
     }
 
     let ekSatir = ''
-    if (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) {
-      ekSatir = String(dosyaAntetEkSatir).trim()
-    } else if (typeof birimOrEkSatir === 'string') {
+    if (typeof birimOrEkSatir === 'string' && birimOrEkSatir.trim()) {
       ekSatir = birimOrEkSatir.trim()
     } else if (birimOrEkSatir && typeof birimOrEkSatir === 'object') {
       ekSatir = String(
@@ -191,6 +191,10 @@ export class InstitutionalHeaderProvider {
           birimOrEkSatir.ad ||
           ''
       ).trim()
+    }
+
+    if (!ekSatir && dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) {
+      ekSatir = String(dosyaAntetEkSatir).trim()
     }
 
     ekSatir = this.sanitizeBirimAntetSatiri(ekSatir)
@@ -286,9 +290,10 @@ export class InstitutionalHeaderProvider {
       ''
     )
     const rawAntetEkSatir =
-      (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) ||
       (matchedBirim?.antet_ek_satir && String(matchedBirim.antet_ek_satir).trim()) ||
-      resolvedBirimAdi
+      resolvedBirimAdi ||
+      (dosyaAntetEkSatir && String(dosyaAntetEkSatir).trim()) ||
+      ''
 
     const resolvedAntetEkSatir = this.sanitizeBirimAntetSatiri(
       rawAntetEkSatir,

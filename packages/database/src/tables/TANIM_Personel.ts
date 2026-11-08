@@ -14,6 +14,7 @@ export const TANIM_Personel = {
     { name: 'unvan', type: 'TEXT', description: 'Personelin Kadro Unvanı' },
     { name: 'gorev', type: 'TEXT', description: 'Personelin Kurum/İhale Görevi' },
     { name: 'birim', type: 'TEXT', description: 'Birim' },
+    { name: 'birim_id', type: 'INTEGER', description: 'Bağlı Olduğu Birim ID (TANIM_Birim.id)' },
     { name: 'sicil_no', type: 'TEXT', description: 'Kurum Sicil Numarası' },
     { name: 'telefon', type: 'TEXT', description: 'Telefon Numarası' },
     { name: 'eposta', type: 'TEXT', description: 'E-Posta Adresi' },

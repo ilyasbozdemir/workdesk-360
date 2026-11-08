@@ -302,8 +302,8 @@
     "DATA_TeminDosyasi": [
       "aktarim_grubu_id",
       "alt_yuklenici_olacak_mi",
-      "antet_ek_satir",
       "antet_birim_gosterilsin",
+      "antet_ek_satir",
       "avans_verilecek_mi",
       "birim",
       "birim_id",
@@ -852,6 +852,7 @@
       "aktif_mi",
       "avatar",
       "birim",
+      "birim_id",
       "created_at",
       "eposta",
       "eski_id",

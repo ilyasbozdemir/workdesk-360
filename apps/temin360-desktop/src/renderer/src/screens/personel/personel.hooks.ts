@@ -6,6 +6,7 @@ export interface Personel {
   unvan: string | null
   gorev?: string | null
   birim: string | null
+  birim_id?: number | null
   sicil_no: string | null
   telefon: string | null
   eposta: string | null
@@ -170,12 +171,13 @@ export function usePersonelHooks(): UsePersonelHooksReturn {
 
   const addPersonelMutation = useMutation({
     mutationFn: async (personel: PersonelWithRoles) => {
-      const sql = `INSERT INTO TANIM_Personel (ad_soyad, unvan, gorev, birim, sicil_no, telefon, eposta, aktif_mi, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      const sql = `INSERT INTO TANIM_Personel (ad_soyad, unvan, gorev, birim, birim_id, sicil_no, telefon, eposta, aktif_mi, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       const params = [
         personel.ad_soyad,
         personel.unvan || null,
         personel.gorev || null,
         personel.birim || null,
+        personel.birim_id ?? null,
         personel.sicil_no || null,
         personel.telefon || null,
         personel.eposta || null,
@@ -238,12 +240,13 @@ export function usePersonelHooks(): UsePersonelHooksReturn {
       const oldUnvan = oldRes.data?.[0]?.unvan || ''
       const oldGorev = oldRes.data?.[0]?.gorev || ''
 
-      const sql = `UPDATE TANIM_Personel SET ad_soyad = ?, unvan = ?, gorev = ?, birim = ?, sicil_no = ?, telefon = ?, eposta = ?, aktif_mi = ?, avatar = ? WHERE id = ?`
+      const sql = `UPDATE TANIM_Personel SET ad_soyad = ?, unvan = ?, gorev = ?, birim = ?, birim_id = ?, sicil_no = ?, telefon = ?, eposta = ?, aktif_mi = ?, avatar = ? WHERE id = ?`
       const params = [
         personel.ad_soyad,
         personel.unvan || null,
         personel.gorev || null,
         personel.birim || null,
+        personel.birim_id ?? null,
         personel.sicil_no || null,
         personel.telefon || null,
         personel.eposta || null,
