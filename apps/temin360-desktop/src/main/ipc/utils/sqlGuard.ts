@@ -553,3 +553,62 @@ export function extractTableAndAction(sql: string): {
 
   return { tableName, action }
 }
+
+/**
+ * Salt-okunur SQL Sorgusu Doğrulayıcısı
+ * `db:query`, `db:get`, `db:all` gibi kanallardan yalnızca okuma sorgularının
+ * (SELECT, EXPLAIN vb.) geçmesini garanti eder.
+ * Veri veya şema değiştiren (INSERT, UPDATE, DELETE, DROP, CREATE vb.) ifadeleri reddeder.
+ */
+export function assertReadOnlyQuery(sql: string): void {
+  if (!sql || typeof sql !== 'string') {
+    throw new Error('[sqlGuard] Geçersiz SQL sorgu metni.')
+  }
+  const tokens = tokenizeSql(sql)
+  if (tokens.length === 0) {
+    throw new Error('[sqlGuard] Boş SQL sorgusu çalıştırılamaz.')
+  }
+
+  // 1. Sorgu içinde herhangi bir mutasyon anahtar kelimesi var mı denetle
+  const MUTATING_KEYWORDS = new Set([
+    'INSERT',
+    'UPDATE',
+    'DELETE',
+    'DROP',
+    'ALTER',
+    'CREATE',
+    'REPLACE',
+    'TRUNCATE'
+  ])
+
+  for (let idx = 0; idx < tokens.length; idx++) {
+    const t = tokens[idx]
+    if (t.type === 'KEYWORD') {
+      const upper = t.value.toUpperCase()
+      // FK referential action (ON DELETE / ON UPDATE) hariç
+      if (
+        (upper === 'DELETE' || upper === 'UPDATE') &&
+        tokens[idx - 1]?.type === 'KEYWORD' &&
+        tokens[idx - 1].value.toUpperCase() === 'ON'
+      ) {
+        continue
+      }
+
+      if (MUTATING_KEYWORDS.has(upper)) {
+        throw new Error(
+          `[sqlGuard] Salt-okunur kanalda (db:query / db:get / db:all) veri veya şema değiştiren "${upper}" işlemi çalıştırılamaz. ` +
+            'Lütfen db:run veya db:transaction kanalını kullanın.'
+        )
+      }
+    }
+  }
+
+  // 2. İlk anahtar kelimenin geçerli bir okuma komutu olduğunu doğrula
+  const firstKeyword = tokens.find((t) => t.type === 'KEYWORD')?.value.toUpperCase()
+  if (!firstKeyword || !['SELECT', 'EXPLAIN', 'PRAGMA', 'WITH'].includes(firstKeyword)) {
+    throw new Error(
+      `[sqlGuard] Salt-okunur kanalda yalnızca SELECT, EXPLAIN veya PRAGMA sorguları çalıştırılabilir (Gelen: ${firstKeyword || 'BELİRSİZ'}).`
+    )
+  }
+}
+

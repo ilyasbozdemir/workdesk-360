@@ -213,7 +213,13 @@ const allowedChannels = new Set([
   'clipboard:writeText',
   // Audit Trail & Inspection
   'audit:get-history',
-  'audit:verify-chain'
+  'audit:verify-chain',
+  // Finance & Accounting Service Channels
+  'finance:get-incoming-procurements',
+  'finance:get-budget-summary',
+  'finance:execute-direct-payment',
+  'accounting:get-mif-drafts',
+  'accounting:get-oeb-drafts'
 ])
 
 // Secure gated wrapper exposing only authorized channels to renderer
@@ -252,7 +258,17 @@ const api = {
   getAuditHistory: (filter?: { recordId?: number; tableName?: string; limit?: number }) =>
     ipcRenderer.invoke('audit:get-history', filter),
   verifyAuditChain: () => ipcRenderer.invoke('audit:verify-chain'),
-  getActiveSessionStatus: () => ipcRenderer.invoke('get-active-session-status')
+  getActiveSessionStatus: () => ipcRenderer.invoke('get-active-session-status'),
+  finance: {
+    getIncomingProcurements: () => ipcRenderer.invoke('finance:get-incoming-procurements'),
+    getBudgetSummary: () => ipcRenderer.invoke('finance:get-budget-summary'),
+    executeDirectPayment: (payload: any) =>
+      ipcRenderer.invoke('finance:execute-direct-payment', payload)
+  },
+  accounting: {
+    getMifDrafts: () => ipcRenderer.invoke('accounting:get-mif-drafts'),
+    getOebDrafts: () => ipcRenderer.invoke('accounting:get-oeb-drafts')
+  }
 }
 
 if (process.contextIsolated) {

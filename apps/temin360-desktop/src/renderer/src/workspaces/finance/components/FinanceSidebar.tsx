@@ -16,6 +16,7 @@ import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
 import { useSettingsStore } from '@renderer/store/settingsStore'
 import { FINANCE_SERVICES_NAVIGATION } from '../navigation/financeNavigation'
 import { ACCOUNTING_NAVIGATION } from '../navigation/accountingNavigation'
+import { isValidTabForSection } from '../navigation/financeRegistry'
 
 interface FinanceSidebarProps {
   activeTab: string
@@ -34,6 +35,13 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
     canAccessFinancialServices,
     canAccessAccounting
   } = useWorkspaceContextStore()
+
+  const handleSectionSwitch = (sec: 'financial-services' | 'accounting') => {
+    setActiveFinanceSection(sec)
+    if (!isValidTabForSection(activeTab, sec)) {
+      onSelectTab('dashboard')
+    }
+  }
 
   const { institutionName, institutionLogo } = useSettingsStore()
 
@@ -94,7 +102,7 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
         {!isCollapsed ? (
           <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex items-center gap-1">
             <button
-              onClick={() => setActiveFinanceSection('financial-services')}
+              onClick={() => handleSectionSwitch('financial-services')}
               className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all text-center ${
                 activeFinanceSection === 'financial-services'
                   ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs'
@@ -104,7 +112,7 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
               Mali Hizmetler
             </button>
             <button
-              onClick={() => setActiveFinanceSection('accounting')}
+              onClick={() => handleSectionSwitch('accounting')}
               className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all text-center ${
                 activeFinanceSection === 'accounting'
                   ? 'bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-300 shadow-xs'
@@ -118,7 +126,7 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
           <div className="flex justify-center">
             <button
               onClick={() =>
-                setActiveFinanceSection(
+                handleSectionSwitch(
                   activeFinanceSection === 'financial-services' ? 'accounting' : 'financial-services'
                 )
               }

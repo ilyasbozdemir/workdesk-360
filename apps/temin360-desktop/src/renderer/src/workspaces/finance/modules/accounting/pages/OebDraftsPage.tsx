@@ -46,29 +46,9 @@ export const OebDraftsPage: React.FC = () => {
   const loadOebs = async () => {
     try {
       setLoading(true)
-      const res = await window.electron?.ipcRenderer?.invoke(
-        'db:query',
-        `SELECT 
-          d.id as dosyaId,
-          COALESCE(d.temin_no, '#' || d.id) as dosyaNo,
-          COALESCE(d.harcama_birimi, b.ad, 'Harcama Birimi') as harcamaBirimi,
-          COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as hakSahibiAdi,
-          COALESCE(f.vergi_no, '-') as hakSahibiVkn,
-          COALESCE(f.hesap_no, '-') as hakSahibiIban,
-          COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
-          COALESCE(d.kesinti_damga, 0) as damgaVergisi,
-          COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,
-          COALESCE(d.kesinti_kdv_tevkifat, 0) as kdvTevkifat,
-          COALESCE(d.net_odenen, 0) as netOdenecekTutar,
-          COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,
-          d.status,
-          COALESCE(d.temin_tarihi, SUBSTR(d.created_at, 1, 10), DATE('now')) as tarih
-        FROM DATA_TeminDosyasi d
-        LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
-        LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-        WHERE d.is_deleted = 0
-        ORDER BY d.id DESC`
-      )
+      const res = window.api?.accounting?.getOebDrafts
+        ? await window.api.accounting.getOebDrafts()
+        : await window.electron?.ipcRenderer?.invoke('accounting:get-oeb-drafts')
 
       if (res && Array.isArray(res)) {
         const mapped: RealOebItem[] = res.map((r: any) => {

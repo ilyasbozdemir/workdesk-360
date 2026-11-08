@@ -68,9 +68,16 @@ export const KAMU_USER_ROLES: Record<KamuUserRole, UserRoleDefinition> = {
   }
 }
 
+/**
+ * NOT: Bu store içerisindeki `userRoles`, 5018 sayılı kanun görevler ayrılığı ilkesi
+ * çerçevesinde arayüz menü ve görünüm testi için tasarlanmış bir CLIENT-SIDE UI SİMÜLASYONUDUR.
+ * Güvenlik ve veri mutasyonu yetkilendirmesi Main Process IPC katmanında (senderGuard,
+ * sqlGuard, authCrypto) bağımsız ve güvenli olarak yürütülür.
+ */
 interface WorkspaceContextState {
   activeWorkspace: ActiveWorkspace
   activeFinanceSection: FinanceSection
+  /** Simüle edilen kullanıcı rolleri (Yalnızca UI görünürlüğü içindir) */
   userRoles: KamuUserRole[]
   activeFinanceTab: string
 

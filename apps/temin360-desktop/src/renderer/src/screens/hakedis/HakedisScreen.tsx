@@ -27,6 +27,11 @@ import {
   KesintiParametreleri,
   HakedisBilgileri
 } from './types'
+import {
+  calculateMetrajTotals,
+  calculateFiyatFarki,
+  calculateKesintilerVeNet
+} from './utils/hakedisCalculators'
 
 export default function HakedisScreen(): React.JSX.Element {
   const { activeDosyaId } = useWorkspaceStore()
@@ -114,11 +119,12 @@ export default function HakedisScreen(): React.JSX.Element {
 
   // Gerçek SQLite Dosyasından Bilgileri Çek
   useEffect(() => {
-    if (!activeDosyaId || typeof window === 'undefined' || !(window as any).electronAPI) return
+    if (!activeDosyaId || typeof window === 'undefined' || !window.electron?.ipcRenderer) return
 
     const loadRealDosyaData = async () => {
       try {
-        const result = await (window as any).electronAPI.executeRawQuery(
+        const res = await window.electron.ipcRenderer.invoke(
+          'db:query',
           `SELECT d.*, f.unvan as yuklenici_adi 
            FROM DATA_TeminDosyasi d 
            LEFT JOIN TANIM_Firma f ON d.kazanan_firma_id = f.id 
@@ -126,8 +132,9 @@ export default function HakedisScreen(): React.JSX.Element {
           [activeDosyaId]
         )
 
-        if (result && result.length > 0) {
-          const row = result[0]
+        const rows = res?.success ? res.data : []
+        if (rows && rows.length > 0) {
+          const row = rows[0]
           setBilgiler((prev) => ({
             ...prev,
             dosyaId: row.id,
@@ -147,9 +154,10 @@ export default function HakedisScreen(): React.JSX.Element {
 
   // Aktif Dosya Kalemlerini SQLite'dan Çek
   const handleLoadFromActiveDosya = async () => {
-    if (!activeDosyaId || typeof window === 'undefined' || !(window as any).electronAPI) return
+    if (!activeDosyaId || typeof window === 'undefined' || !window.electron?.ipcRenderer) return
     try {
-      const items = await (window as any).electronAPI.executeRawQuery(
+      const res = await window.electron.ipcRenderer.invoke(
+        'db:query',
         `SELECT id, sira_no, aciklama, birim, miktar, birim_fiyat 
          FROM DATA_TeminKalem 
          WHERE dosya_id = ? 
@@ -157,6 +165,7 @@ export default function HakedisScreen(): React.JSX.Element {
         [activeDosyaId]
       )
 
+      const items = res?.success ? res.data : []
       if (items && items.length > 0) {
         const mappedKalemler: HakedisKalem[] = items.map((it: any, idx: number) => ({
           id: 'kalem-' + it.id,
@@ -175,45 +184,31 @@ export default function HakedisScreen(): React.JSX.Element {
     }
   }
 
-  // Hesaplamalar
-  const buHakedisImalatTutari = useMemo(() => {
-    return kalemler.reduce((acc, k) => acc + k.buHakedisMetraj * k.birimFiyat, 0)
-  }, [kalemler])
+  // Saf Domain Hesaplayıcıları (hakedisCalculators)
+  const metrajResult = useMemo(() => calculateMetrajTotals(kalemler), [kalemler])
+  const buHakedisImalatTutari = metrajResult.buHakedisImalatTutari
 
-  const hesaplananFiyatFarki = useMemo(() => {
-    if (!fiyatFarki.aktifMi || fiyatFarki.temelEndeksI0 <= 0) return 0
-    const endeksKatsayisi = fiyatFarki.guncelEndeksIn / fiyatFarki.temelEndeksI0 - 1
-    const agirlikliOran =
-      fiyatFarki.iscilikKatsayisiA1 +
-      fiyatFarki.malzemeKatsayisiA2 +
-      fiyatFarki.akaryakitKatsayisiB1 +
-      fiyatFarki.makineKatsayisiB2
-    return Math.max(0, buHakedisImalatTutari * endeksKatsayisi * agirlikliOran)
-  }, [buHakedisImalatTutari, fiyatFarki])
-
+  const fiyatFarkiResult = useMemo(
+    () => calculateFiyatFarki(buHakedisImalatTutari, fiyatFarki),
+    [buHakedisImalatTutari, fiyatFarki]
+  )
+  const hesaplananFiyatFarki = fiyatFarkiResult.fiyatFarkiTutari
   const brutHakedisTutari = buHakedisImalatTutari + hesaplananFiyatFarki
 
-  const hesaplananStopaj = brutHakedisTutari * kesintiler.stopajOrani
-  const hesaplananDamga = brutHakedisTutari * kesintiler.damgaVergisiOrani
-  const hesaplananKararPulu = brutHakedisTutari * kesintiler.kararPuluOrani
-  const hesaplananKdv = brutHakedisTutari * kesintiler.kdvOrani
+  const kesintiResult = useMemo(
+    () => calculateKesintilerVeNet(brutHakedisTutari, kesintiler),
+    [brutHakedisTutari, kesintiler]
+  )
 
-  const hesaplananKdvTevkifat = useMemo(() => {
-    if (kesintiler.kdvTevkifatOraniPayda <= 0) return 0
-    return (
-      (hesaplananKdv * kesintiler.kdvTevkifatOraniPay) / kesintiler.kdvTevkifatOraniPayda
-    )
-  }, [hesaplananKdv, kesintiler.kdvTevkifatOraniPay, kesintiler.kdvTevkifatOraniPayda])
-
-  const toplamKesintiler =
-    hesaplananStopaj +
-    hesaplananDamga +
-    hesaplananKararPulu +
-    hesaplananKdvTevkifat +
-    kesintiler.avansMahsubu +
-    kesintiler.cezaVeDigerKesintiler
-
-  const netOdenecekTutar = Math.max(0, brutHakedisTutari + hesaplananKdv - toplamKesintiler)
+  const {
+    hesaplananStopaj,
+    hesaplananDamga,
+    hesaplananKararPulu,
+    hesaplananKdv,
+    hesaplananKdvTevkifat,
+    toplamKesintiler,
+    netOdenecekTutar
+  } = kesintiResult
 
   const formatCurrency = (val: number): string => {
     return new Intl.NumberFormat('tr-TR', {

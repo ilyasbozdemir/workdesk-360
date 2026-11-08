@@ -36,6 +36,15 @@ declare global {
         isTampered: boolean
         tamperReason?: string
       }>
+      finance?: {
+        getIncomingProcurements: () => Promise<any[]>
+        getBudgetSummary: () => Promise<any[]>
+        executeDirectPayment: (payload: any) => Promise<{ success: boolean; message?: string; error?: string }>
+      }
+      accounting?: {
+        getMifDrafts: () => Promise<any[]>
+        getOebDrafts: () => Promise<any[]>
+      }
     }
   }
 }

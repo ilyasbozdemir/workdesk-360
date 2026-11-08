@@ -103,3 +103,4 @@ export const RoleSimulatorSection: React.FC = () => {
     </div>
   )
 }
+

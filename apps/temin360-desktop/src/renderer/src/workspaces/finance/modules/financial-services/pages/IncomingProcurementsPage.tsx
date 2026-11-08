@@ -69,33 +69,9 @@ export const IncomingProcurementsPage: React.FC = () => {
   const loadProcurements = async () => {
     try {
       setLoading(true)
-      const res = await window.electron?.ipcRenderer?.invoke(
-        'db:query',
-        `SELECT 
-          d.id,
-          COALESCE(d.temin_no, '#' || d.id) as dosyaNo,
-          COALESCE(d.konu, 'Doğrudan Temin Dosyası') as konu,
-          COALESCE(d.harcama_birimi, b.ad, 'Harcama Birimi') as harcamaBirimi,
-          COALESCE(d.tur, 'mal') as aliciTur,
-          COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as kazananFirma,
-          COALESCE(f.vergi_no, '-') as kazananVergiNo,
-          COALESCE(f.hesap_no, '-') as kazananIban,
-          COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
-          COALESCE(d.kesinti_damga, 0) as damgaVergisi,
-          COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,
-          COALESCE(d.kesinti_kdv_tevkifat, 0) as kdvTevkifati,
-          COALESCE(d.net_odenen, 0) as netOdenecek,
-          COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,
-          d.durum_asama_id as durumAsamaId,
-          d.status,
-          COALESCE(d.temin_tarihi, SUBSTR(d.created_at, 1, 10), DATE('now')) as tarih,
-          COALESCE(d.notlar, '') as notlar
-        FROM DATA_TeminDosyasi d
-        LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
-        LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-        WHERE d.is_deleted = 0
-        ORDER BY d.id DESC`
-      )
+      const res = window.api?.finance?.getIncomingProcurements
+        ? await window.api.finance.getIncomingProcurements()
+        : await window.electron?.ipcRenderer?.invoke('finance:get-incoming-procurements')
 
       if (res && Array.isArray(res)) {
         const mapped: RealProcurementItem[] = res.map((r: any) => {
@@ -177,27 +153,30 @@ export const IncomingProcurementsPage: React.FC = () => {
     setActiveWorkspace('procurement')
   }
 
-  // Re'sen Ödeme Onayı ve 4734'e Yansıtma
+  // Re'sen Ödeme Onayı ve 4734'e Yansıtma (Güvenli Tipli Servis API)
   const handleConfirmPayment = async () => {
     if (!selectedItem) return
     setIsSubmitting(true)
     try {
-      const auditNote = `[MALİ HİZMETLER & MUHASEBE VİZESİ]: Fatura No: ${faturaNo || '-'}, Tarih: ${faturaTarihi}, Brüt: ${formatCurrency(faturaTutar)}, Net Ödenen: ${formatCurrency(calculatedNet)} TL. İnceleme Görüşü: ${maliYorum}`
-      const newNotlar = selectedItem.notlar ? `${selectedItem.notlar}\n\n${auditNote}` : auditNote
+      const payload = {
+        dosyaId: selectedItem.id,
+        faturaNo,
+        faturaTarihi,
+        brutTutar: faturaTutar,
+        damgaVergisi,
+        kararPulu,
+        kdvTevkifat,
+        netTutar: calculatedNet,
+        maliNot: maliYorum
+      }
 
-      await window.electron?.ipcRenderer?.invoke(
-        'db:query',
-        `UPDATE DATA_TeminDosyasi 
-         SET status = 'tamamlandi',
-             durum_asama_id = 4,
-             net_odenen = ?,
-             kesinti_damga = ?,
-             kesinti_karar_pulu = ?,
-             kesinti_kdv_tevkifat = ?,
-             notlar = ?
-         WHERE id = ?`,
-        [calculatedNet, damgaVergisi, kararPulu, kdvTevkifat, newNotlar, selectedItem.id]
-      )
+      const res = window.api?.finance?.executeDirectPayment
+        ? await window.api.finance.executeDirectPayment(payload)
+        : await window.electron?.ipcRenderer?.invoke('finance:execute-direct-payment', payload)
+
+      if (res && res.success === false) {
+        throw new Error(res.error || 'Ödeme kaydı işlenirken hata oluştu')
+      }
 
       setSuccessToast(
         `Dosya ${selectedItem.dosyaNo} için fatura ve ödeme işlemi onaylandı! Satın Alma Masasındaki (4734) süreç re'sen tamamlandı olarak güncellendi.`
@@ -206,7 +185,7 @@ export const IncomingProcurementsPage: React.FC = () => {
       await loadProcurements()
     } catch (err) {
       console.error('Ödeme işlemi kaydedilirken hata:', err)
-      alert('Ödeme kaydedilirken bir hata meydana geldi.')
+      alert('Ödeme kaydedilirken bir hata meydana geldi: ' + ((err as any)?.message || String(err)))
     } finally {
       setIsSubmitting(false)
       setTimeout(() => setSuccessToast(null), 6000)

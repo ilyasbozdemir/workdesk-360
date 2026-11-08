@@ -4,7 +4,8 @@ import {
   ensureSchemaIntegrity,
   extractTableAndAction
 } from '../../database/workspace'
-import { validateSqlQuery } from '../utils/sqlGuard'
+import { validateSqlQuery, assertReadOnlyQuery } from '../utils/sqlGuard'
+import { validateIpcSender } from '../utils/senderGuard'
 import { withSchemaRetry } from '../utils/schemaRetry'
 
 import { handleDbTransaction, executeDbTransaction } from './dbTransaction'
@@ -23,32 +24,21 @@ export function registerDbCoreHandlers(): void {
    * @param params Sorgu parametreleri
    * @returns İşlem sonucu ve veri satırları listesi
    */
-  ipcMain.handle('db:query', async (_, sqlOrPayload: any, maybeParams: any[] = []) => {
+  ipcMain.handle('db:query', async (event, sqlOrPayload: any, maybeParams: any[] = []) => {
+    validateIpcSender(event, 'db:query')
     const sql = typeof sqlOrPayload === 'string' ? sqlOrPayload : sqlOrPayload?.sql
     const params = typeof sqlOrPayload === 'string' ? maybeParams : (sqlOrPayload?.params || maybeParams || [])
     try {
       validateSqlQuery(sql, params)
+      assertReadOnlyQuery(sql)
+
       const executeQuery = async () => {
         const db = workspaceManager.getDb()
         const stmt = db.prepare(sql)
-        // Defansif kontrol: Eğer çağrılan ifade veri döndürmeyen bir sorgu ise (UPDATE, INSERT, DELETE vb.)
-        // better-sqlite3 "This statement does not return data. Use run() instead" hatası fırlatır.
         if (!stmt.reader) {
-          const info = stmt.run(...params)
-          const changes = Number(info.changes ?? 0)
-          if (changes > 0) {
-            const { tableName, action } = extractTableAndAction(sql)
-            workspaceManager.recordMutation(tableName, action, changes)
-            if (workspaceManager.isDirty()) {
-              workspaceManager.saveDebounced(1000)
-            }
-          }
-          return {
-            success: true,
-            data: [],
-            lastInsertRowid: info.lastInsertRowid,
-            changes: info.changes
-          }
+          throw new Error(
+            '[sqlGuard] db:query yalnızca veri okuma sorguları (SELECT) için kullanılabilir. Veri değiştirme işlemleri için db:run veya db:transaction kullanın.'
+          )
         }
         const rows = stmt.all(...params)
         return { success: true, data: rows }
@@ -70,14 +60,19 @@ export function registerDbCoreHandlers(): void {
   /**
    * SELECT Tek Satır Getirme İşleyicisi (`db:get`)
    */
-  ipcMain.handle('db:get', async (_, sqlOrPayload: any, maybeParams: any[] = []) => {
+  ipcMain.handle('db:get', async (event, sqlOrPayload: any, maybeParams: any[] = []) => {
+    validateIpcSender(event, 'db:get')
     const sql = typeof sqlOrPayload === 'string' ? sqlOrPayload : sqlOrPayload?.sql
     const params = typeof sqlOrPayload === 'string' ? maybeParams : (sqlOrPayload?.params || maybeParams || [])
     try {
       validateSqlQuery(sql, params)
+      assertReadOnlyQuery(sql)
       const db = workspaceManager.getDb()
       const stmt = db.prepare(sql)
-      const row = stmt.reader ? stmt.get(...params) : null
+      if (!stmt.reader) {
+        throw new Error('[sqlGuard] db:get yalnızca veri okuma sorguları (SELECT) için kullanılabilir.')
+      }
+      const row = stmt.get(...params) || null
       return { success: true, data: row }
     } catch (error: any) {
       return { success: false, error: error.message }
@@ -87,14 +82,19 @@ export function registerDbCoreHandlers(): void {
   /**
    * SELECT Çoklu Satır Getirme İşleyicisi (`db:all`)
    */
-  ipcMain.handle('db:all', async (_, sqlOrPayload: any, maybeParams: any[] = []) => {
+  ipcMain.handle('db:all', async (event, sqlOrPayload: any, maybeParams: any[] = []) => {
+    validateIpcSender(event, 'db:all')
     const sql = typeof sqlOrPayload === 'string' ? sqlOrPayload : sqlOrPayload?.sql
     const params = typeof sqlOrPayload === 'string' ? maybeParams : (sqlOrPayload?.params || maybeParams || [])
     try {
       validateSqlQuery(sql, params)
+      assertReadOnlyQuery(sql)
       const db = workspaceManager.getDb()
       const stmt = db.prepare(sql)
-      const rows = stmt.reader ? stmt.all(...params) : []
+      if (!stmt.reader) {
+        throw new Error('[sqlGuard] db:all yalnızca veri okuma sorguları (SELECT) için kullanılabilir.')
+      }
+      const rows = stmt.all(...params)
       return { success: true, data: rows }
     } catch (error: any) {
       return { success: false, error: error.message }
@@ -107,7 +107,8 @@ export function registerDbCoreHandlers(): void {
    * @param params Sorgu parametreleri
    * @returns Son eklenen satır ID'si ve etkilenen satır sayısı
    */
-  ipcMain.handle('db:run', async (_, sql: string, params: any[] = []) => {
+  ipcMain.handle('db:run', async (event, sql: string, params: any[] = []) => {
+    validateIpcSender(event, 'db:run')
     try {
       validateSqlQuery(sql, params)
       const executeRun = async () => {
@@ -143,7 +144,8 @@ export function registerDbCoreHandlers(): void {
    * @param sql Çalıştırılacak SQL ifadesi
    * @param params Parametreler dizisi veya değişken argümanlar
    */
-  ipcMain.handle('db:execute', async (_, sql: string, ...params: any[]) => {
+  ipcMain.handle('db:execute', async (event, sql: string, ...params: any[]) => {
+    validateIpcSender(event, 'db:execute')
     try {
       const actualParams = params.length === 1 && Array.isArray(params[0]) ? params[0] : params
       validateSqlQuery(sql, actualParams)
@@ -180,7 +182,8 @@ export function registerDbCoreHandlers(): void {
    * @param queries Çalıştırılacak SQL ve parametre nesneleri dizisi
    * @returns Tranzaksiyon sonucu ve toplam değişen satır sayısı
    */
-  ipcMain.handle('db:transaction', async (_, queries: { sql: string; params?: any[] }[]) => {
+  ipcMain.handle('db:transaction', async (event, queries: { sql: string; params?: any[] }[]) => {
+    validateIpcSender(event, 'db:transaction')
     return handleDbTransaction(workspaceManager.getDb(), queries, {
       validateSql: true,
       onMutation: (tableName, action, count) => {

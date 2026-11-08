@@ -42,28 +42,9 @@ export const MifDraftsPage: React.FC = () => {
   const loadMifs = async () => {
     try {
       setLoading(true)
-      const res = await window.electron?.ipcRenderer?.invoke(
-        'db:query',
-        `SELECT 
-          d.id as dosyaId,
-          COALESCE(d.temin_no, '#' || d.id) as dosyaNo,
-          COALESCE(d.konu, 'Doğrudan Temin Hak Sahibi Ödemesi') as konu,
-          COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as alacakliUnvan,
-          COALESCE(f.vergi_no, '-') as alacakliVkn,
-          COALESCE(f.hesap_no, '-') as alacakliIban,
-          COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
-          COALESCE(d.kesinti_damga, 0) as damgaVergisi,
-          COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,
-          COALESCE(d.kesinti_kdv_tevkifat, 0) as kdvTevkifat,
-          COALESCE(d.net_odenen, 0) as netOdenecekTutar,
-          COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,
-          d.status,
-          COALESCE(d.temin_tarihi, SUBSTR(d.created_at, 1, 10), DATE('now')) as tarih
-        FROM DATA_TeminDosyasi d
-        LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
-        WHERE d.is_deleted = 0
-        ORDER BY d.id DESC`
-      )
+      const res = window.api?.accounting?.getMifDrafts
+        ? await window.api.accounting.getMifDrafts()
+        : await window.electron?.ipcRenderer?.invoke('accounting:get-mif-drafts')
 
       if (res && Array.isArray(res)) {
         const mapped: RealMifItem[] = res.map((r: any) => {
