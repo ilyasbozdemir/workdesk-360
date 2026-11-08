@@ -11,6 +11,7 @@ import { useModuleStore } from '../../store/moduleStore'
 import { IS_DT_EDITION } from '../../../../shared/edition'
 import { NewFeatureBadge } from '../ui/NewFeatureBadge'
 import { useNewFeaturesStore } from '../../store/newFeaturesStore'
+import { RoleSimulatorPopover } from '@renderer/shared/components/RoleSimulatorPopover'
 
 export function Sidebar(): React.JSX.Element {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -361,12 +362,12 @@ export function Sidebar(): React.JSX.Element {
         ))}
       </div>
 
-      <div className="p-4 short:p-2 border-t border-sidebar-border space-y-3 short:space-y-1.5 shrink-0">
+      <div className="p-3 short:p-2 border-t border-sidebar-border space-y-2 short:space-y-1.5 shrink-0">
         <Link
           to="/profil"
           className={cn(
-            'flex items-center rounded-md bg-sidebar-hover-bg/50 hover:bg-sidebar-hover-bg transition-all border border-transparent hover:border-sidebar-border cursor-pointer',
-            isCollapsed ? 'justify-center p-2' : 'px-2 py-2 short:py-1'
+            'flex items-center rounded-xl bg-sidebar-hover-bg/50 hover:bg-sidebar-hover-bg transition-all border border-transparent hover:border-sidebar-border cursor-pointer',
+            isCollapsed ? 'justify-center p-2' : 'px-2.5 py-2 short:py-1'
           )}
           title="Kullanıcı Profili ve Güvenlik Ayarlarına Git"
         >
@@ -378,7 +379,7 @@ export function Sidebar(): React.JSX.Element {
             </div>
           </div>
           {!isCollapsed && (
-            <div className="ml-3 overflow-hidden flex-1 text-left">
+            <div className="ml-2.5 overflow-hidden flex-1 text-left">
               <p
                 className="text-sm font-bold text-sidebar-hover-text truncate leading-tight"
                 title={adminName || adminUsername}
@@ -394,6 +395,16 @@ export function Sidebar(): React.JSX.Element {
             </div>
           )}
         </Link>
+
+        {/* 5018 Kamu Rolü & Yetki Simülatörü */}
+        <div className="flex items-center justify-center">
+          <RoleSimulatorPopover
+            placement="top"
+            showLabel={!isCollapsed}
+            compact={isCollapsed}
+            className="w-full"
+          />
+        </div>
 
         <button
           onClick={handleCloseWorkspace}

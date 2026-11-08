@@ -1,47 +1,17 @@
-import React, { useState } from "react";
-import {
-  ArrowRightLeft,
-  ChevronDown,
-  Coins,
-  Lock,
-  ShieldCheck,
-  ShoppingCart,
-  Sparkles,
-  UserCheck,
-} from "lucide-react";
-import {
-  KAMU_USER_ROLES,
-  KamuUserRole,
-  useWorkspaceContextStore,
-} from "@renderer/store/workspaceContextStore";
+import React from "react";
+import { Coins, ShoppingCart } from "lucide-react";
+import { useWorkspaceContextStore } from "@renderer/store/workspaceContextStore";
 
 export const WorkspaceSwitcher: React.FC = () => {
-  const {
-    activeWorkspace,
-    setActiveWorkspace,
-    userRoles,
-    setUserRoles,
-    canAccessProcurement,
-    canAccessFinance,
-  } = useWorkspaceContextStore();
-
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
-
-  const hasProcurementAccess = canAccessProcurement();
-  const hasFinanceAccess = canAccessFinance();
+  const { activeWorkspace, setActiveWorkspace } = useWorkspaceContextStore();
 
   const handleSwitch = (target: "procurement" | "finance") => {
     setActiveWorkspace(target);
   };
 
-  // Aktif rollerin birincil başlığı
-  const currentRoleKey = userRoles[0] || "admin";
-  const currentRoleDef = KAMU_USER_ROLES[currentRoleKey] ||
-    KAMU_USER_ROLES.admin;
-
   return (
     <div
-      className="flex items-center gap-2 select-none"
+      className="flex items-center select-none"
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
     >
       {/* 2'li Çalışma Masası Toggle Düğmesi */}
@@ -75,84 +45,6 @@ export const WorkspaceSwitcher: React.FC = () => {
           <Coins size={13} className="shrink-0" />
           <span>Mali Hizmetler (5018)</span>
         </button>
-      </div>
-
-      {/* Rol Simülatörü ve Yetki Göstergesi Dropdown */}
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setShowRoleMenu((prev) => !prev)}
-          className={`px-2 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-colors ${currentRoleDef.badgeBg}`}
-          title="Kullanıcı Rolü ve Yetki Grubu"
-        >
-          <UserCheck size={12} />
-          <span className="hidden xl:inline max-w-[120px] truncate">
-            {currentRoleDef.name}
-          </span>
-          <span className="xl:hidden">{currentRoleDef.code}</span>
-          <ChevronDown size={11} className="opacity-70" />
-        </button>
-
-        {showRoleMenu && (
-          <div className="absolute right-0 mt-1.5 w-72 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-2 z-60 backdrop-blur-md">
-            <div className="px-2 py-1.5 border-b border-slate-100 dark:border-slate-800 mb-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                Kamu Rolü &amp; Yetki Simülasyonu
-              </span>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                5018 Görevler Ayrılığı ilkesine göre çalışma masası yetkilerini
-                test edin:
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              {Object.values(KAMU_USER_ROLES).map((role) => {
-                const isSelected = userRoles.includes(role.key);
-                return (
-                  <button
-                    key={role.key}
-                    type="button"
-                    onClick={() => {
-                      if (role.key === "admin") {
-                        setUserRoles([
-                          "admin",
-                          "satin_alma",
-                          "mali_hizmetler",
-                          "muhasebe",
-                          "harcama_yetkilisi",
-                        ]);
-                      } else {
-                        setUserRoles([role.key]);
-                      }
-                      setShowRoleMenu(false);
-                    }}
-                    className={`w-full text-left p-2 rounded-lg text-xs transition-colors flex items-start gap-2 ${
-                      isSelected
-                        ? "bg-slate-100 dark:bg-slate-800 font-semibold text-slate-900 dark:text-slate-100"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                    }`}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full mt-1 shrink-0"
-                      style={{ backgroundColor: role.color }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="truncate font-bold">{role.name}</span>
-                        <span className="text-[9px] font-mono opacity-60 shrink-0">
-                          {role.code}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 leading-tight mt-0.5 truncate">
-                        {role.description}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
