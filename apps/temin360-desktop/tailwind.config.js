@@ -5,8 +5,8 @@ module.exports = {
   theme: {
     extend: {
       screens: {
-        short: { raw: '(max-height: 720px)' },
-        xshort: { raw: '(max-height: 540px)' }
+        short: { raw: '(max-height: 1080px)' },
+        xshort: { raw: '(max-height: 600px)' }
       },
       colors: {
         'primary-100': 'var(--primary-100)',

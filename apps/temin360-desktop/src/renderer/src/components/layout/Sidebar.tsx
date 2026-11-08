@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Building2, ChevronDown, ChevronLeft, ChevronRight, LogOut } from 'lucide-react'
+import { Building2, ChevronDown, ChevronLeft, ChevronRight, LogOut, Coins } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
 import { useShallow } from 'zustand/react/shallow'
 import { getInitials } from '@renderer/utils/formatters'
 import { MenuGroup, getSidebarMenuGroups } from './sidebar.constants'
@@ -11,6 +12,7 @@ import { useModuleStore } from '../../store/moduleStore'
 import { IS_DT_EDITION } from '../../../../shared/edition'
 import { NewFeatureBadge } from '../ui/NewFeatureBadge'
 import { useNewFeaturesStore } from '../../store/newFeaturesStore'
+import { UserProfilePopover } from '@renderer/shared/components/UserProfilePopover'
 
 export function Sidebar(): React.JSX.Element {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -43,6 +45,7 @@ export function Sidebar(): React.JSX.Element {
       activeDosyaId: s.activeDosyaId
     }))
   )
+  const { setActiveWorkspace } = useWorkspaceContextStore()
 
   // Mod Seçici Durumu
   const [procurementMode, setProcurementMode] = useState<
@@ -168,6 +171,22 @@ export function Sidebar(): React.JSX.Element {
         )}
       </div>
 
+      {/* Mali Hizmetler Masasına (5018) Hızlı Geçiş Butonu */}
+      <div className={cn('px-3 pt-3 shrink-0', isCollapsed && 'px-2')}>
+        <button
+          type="button"
+          onClick={() => setActiveWorkspace('finance')}
+          className={cn(
+            'w-full flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-xs font-bold transition-all hover:scale-[1.01] cursor-pointer shadow-2xs',
+            isCollapsed && 'px-0'
+          )}
+          title="Mali Hizmetler & Muhasebe Çalışma Masasına Geç (5018 Sayılı Kanun)"
+        >
+          <Coins size={15} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+          {!isCollapsed && <span className="truncate">Mali Hizmetler (5018)</span>}
+        </button>
+      </div>
+
       <div className="flex-1 min-h-0 overflow-y-auto py-4 px-3 short:py-2 short:px-2 space-y-6 short:space-y-3 custom-scrollbar">
         {finalMenuGroups.map((group, idx) => (
           <div key={idx} className="space-y-1.5">
@@ -197,6 +216,7 @@ export function Sidebar(): React.JSX.Element {
                       {item.path ? (
                         <Link
                           to={item.path}
+                          title={isCollapsed ? `${item.name}${item.badge ? ` (${item.badge})` : ''}` : undefined}
                           onClick={() => {
                             if (item.onClick) {
                               item.onClick()
@@ -239,6 +259,7 @@ export function Sidebar(): React.JSX.Element {
                         </Link>
                       ) : (
                         <div
+                          title={isCollapsed ? item.name : undefined}
                           onClick={() => {
                             if (hasChildren) toggleExpanded(itemKey)
                           }}
@@ -359,39 +380,47 @@ export function Sidebar(): React.JSX.Element {
         ))}
       </div>
 
-      <div className="p-4 short:p-2 border-t border-sidebar-border space-y-3 short:space-y-1.5 shrink-0">
-        <Link
-          to="/profil"
-          className={cn(
-            'flex items-center rounded-md bg-sidebar-hover-bg/50 hover:bg-sidebar-hover-bg transition-all border border-transparent hover:border-sidebar-border cursor-pointer',
-            isCollapsed ? 'justify-center p-2' : 'px-2 py-2 short:py-1'
-          )}
-          title="Kullanıcı Profili ve Güvenlik Ayarlarına Git"
-        >
-          <div className="w-8 h-8 short:w-7 short:h-7 flex items-center justify-center shrink-0">
-            <div className="w-full h-full rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center border border-sidebar-border/30 shadow-xs">
-              <span className="text-xs font-bold">
-                {getInitials(adminName || adminUsername || 'SY')}
-              </span>
+      <div className="p-3 short:p-2 border-t border-sidebar-border space-y-2 short:space-y-1.5 shrink-0">
+        {/* Kullanıcı Profili & 5018 Kamu Rolü Menüsü (Kibar, Birleşik Profil Kartı) */}
+        <UserProfilePopover placement="top" className="w-full">
+          <div
+            className={cn(
+              'flex items-center rounded-xl bg-sidebar-hover-bg/50 hover:bg-sidebar-hover-bg transition-all border border-transparent hover:border-sidebar-border cursor-pointer select-none group',
+              isCollapsed ? 'justify-center p-2' : 'px-2.5 py-2 short:py-1'
+            )}
+            title="Kullanıcı Menüsü: Profil ve Görev Yönetimi"
+          >
+            <div className="w-8 h-8 short:w-7 short:h-7 flex items-center justify-center shrink-0">
+              <div className="w-full h-full rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center border border-sidebar-border/30 shadow-xs">
+                <span className="text-xs font-bold">
+                  {getInitials(adminName || adminUsername || 'SY')}
+                </span>
+              </div>
             </div>
+            {!isCollapsed && (
+              <div className="ml-2.5 overflow-hidden flex-1 text-left">
+                <div className="flex items-center justify-between">
+                  <p
+                    className="text-sm font-bold text-sidebar-hover-text truncate leading-tight"
+                    title={adminName || adminUsername}
+                  >
+                    {adminName || adminUsername || 'Sistem Yöneticisi'}
+                  </p>
+                  <ChevronDown
+                    size={12}
+                    className="text-sidebar-text/40 group-hover:text-sidebar-text transition-transform duration-200"
+                  />
+                </div>
+                <p
+                  className="text-[10px] text-sidebar-text/75 truncate mt-0.5"
+                  title={adminTitle || 'Kullanıcı Profili'}
+                >
+                  {adminTitle || 'Kullanıcı Profili & Görevler'}
+                </p>
+              </div>
+            )}
           </div>
-          {!isCollapsed && (
-            <div className="ml-3 overflow-hidden flex-1 text-left">
-              <p
-                className="text-sm font-bold text-sidebar-hover-text truncate leading-tight"
-                title={adminName || adminUsername}
-              >
-                {adminName || adminUsername || 'Sistem Yöneticisi'}
-              </p>
-              <p
-                className="text-[10px] text-sidebar-text/75 truncate mt-0.5"
-                title={adminTitle || 'Kullanıcı Profili'}
-              >
-                {adminTitle || 'Kullanıcı Profili'}
-              </p>
-            </div>
-          )}
-        </Link>
+        </UserProfilePopover>
 
         <button
           onClick={handleCloseWorkspace}

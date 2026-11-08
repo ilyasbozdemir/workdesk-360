@@ -57,6 +57,7 @@ export function DefaultDocumentRenderer(props: DefaultDocumentRendererProps): Re
       firmaListesi={resolvedFirmaListesi}
       birimListesi={resolvedBirimListesi}
       firstPageLimit={resolvedFirstPageLimit}
+      data={data as any}
     >
       <DocumentPage
         templateKey={templateKey as TemplateKey}

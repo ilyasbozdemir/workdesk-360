@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { useTabStore } from '../../store/tabStore'
-import { Link } from '@tanstack/react-router'
-import { AlertCircle, ArrowLeft } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { AlertCircle, ArrowLeft, Coins, FileText, Layers } from 'lucide-react'
 import { ProcessStepper } from './components/ProcessStepper'
+import { APP_ROUTES } from '../../constants/routeConstants'
 
 const STEPPER_ROUTES = [
   'hazirlik-ve-ihtiyac',
@@ -33,6 +34,8 @@ export function SubScreen({
   hideStepper = false,
   requireActiveDosya = true
 }: SubScreenProps): React.JSX.Element {
+  const navigate = useNavigate()
+  const addTab = useTabStore((s) => s.addTab)
   const activeTabPath = useTabStore((s) => s.activeTabPath)
   const canGoBack = useTabStore((s) => {
     const currentTab = s.tabs.find((t) => t.path === s.activeTabPath)
@@ -95,6 +98,49 @@ export function SubScreen({
             <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs">{description}</p>
           </div>
         </div>
+
+        {activeDosyaId && (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const route = `${APP_ROUTES.DOSYA_KUNYE}?id=${activeDosyaId}`
+                addTab(route)
+                navigate({ to: route })
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
+              title="Dosya Künyesini ve Tüm Verileri İncele"
+            >
+              <FileText className="w-3.5 h-3.5 text-blue-500" />
+              Dosya Künyesi
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                addTab(APP_ROUTES.DOSYA_DETAY)
+                navigate({ to: APP_ROUTES.DOSYA_DETAY })
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
+              title="Süreç Takip Paneline Git"
+            >
+              <Layers className="w-3.5 h-3.5 text-indigo-500" />
+              Süreç Takip
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const route = `${APP_ROUTES.BKMYBS_MALI_YONETIM}?tab=mif&dosyaId=${activeDosyaId}`
+                addTab(route)
+                navigate({ to: route })
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/40 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all cursor-pointer shadow-xs"
+              title="5018 BKMYBS Mali Masasına ve Ödeme Emri Taslağına Aktar"
+            >
+              <Coins className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              Mali Masaya Aktar
+            </button>
+          </div>
+        )}
       </div>
 
       {/* PROCESS STEPPER */}

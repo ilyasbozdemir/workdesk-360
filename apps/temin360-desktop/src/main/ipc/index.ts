@@ -11,6 +11,8 @@ import { registerTestIpcHandlers } from './test.ipc'
 import { registerLoggerIpcHandlers } from '../logger'
 import { registerArchiveHandlers } from '../archive'
 import { registerKutuphaneIpc } from './kutuphane.ipc'
+import { registerFinanceServiceHandlers } from './finance/financeServiceHandlers'
+import { registerWorkflowHandlers } from './workflow/workflowHandlers'
 
 export interface IpcRegistrationOptions {
   closeAllSecondaryWindows: () => void
@@ -43,4 +45,6 @@ export function registerAllIpcHandlers(options: IpcRegistrationOptions): void {
   safeRegister('Logger', () => registerLoggerIpcHandlers())
   safeRegister('Archive', () => registerArchiveHandlers())
   safeRegister('Kutuphane', () => registerKutuphaneIpc())
+  safeRegister('Finance', () => registerFinanceServiceHandlers())
+  safeRegister('Workflow', () => registerWorkflowHandlers())
 }

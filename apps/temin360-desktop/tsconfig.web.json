@@ -14,7 +14,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@renderer/*": ["src/renderer/src/*"]
+      "@renderer/*": ["src/renderer/src/*"],
+      "@temin360/contracts": ["../../packages/contracts/index.ts"],
+      "@workdesk-360/workflow-engine": ["../../packages/workflow-engine/src/index.ts"]
     }
   }
 }

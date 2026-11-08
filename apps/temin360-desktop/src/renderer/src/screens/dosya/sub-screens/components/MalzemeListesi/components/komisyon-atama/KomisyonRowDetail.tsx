@@ -20,7 +20,7 @@ export const KomisyonRowDetail: React.FC<KomisyonRowDetailProps> = ({
 
   return (
     <tr className="bg-blue-50/40 dark:bg-blue-950/20 border-b border-blue-100 dark:border-blue-900/40 animate-in fade-in duration-150">
-      <td colSpan={5} className="p-3.5 pl-12">
+      <td colSpan={6} className="p-3.5 pl-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-blue-200/80 dark:border-blue-800/80 shadow-2xs">
           {/* Vekalet / Özel Görev Unvanı */}
           <div>

@@ -97,9 +97,20 @@ export const dosyaResolver: DocumentResolver = {
       birimListesi: pick(docRecord.birimListesi, lists.birim),
       firmaListesi: pick(docRecord.firmaListesi, lists.firma),
       dosyaRecord: docRecord.dosyaRecord,
-      activeLogoLeft: docRecord.headerData?.solLogo ? true : false,
-      activeLogoRight: docRecord.headerData?.sagLogo ? true : false,
-      activeOrientation: 'portrait',
+      activeLogoLeft:
+        dataObj.showLogoLeft !== undefined
+          ? Boolean(dataObj.showLogoLeft)
+          : docRecord.headerData?.solLogo
+            ? true
+            : false,
+      activeLogoRight:
+        dataObj.showLogoRight !== undefined
+          ? Boolean(dataObj.showLogoRight)
+          : docRecord.headerData?.sagLogo
+            ? true
+            : false,
+      activeOrientation:
+        dataObj.orientation === 'landscape' ? 'landscape' : 'portrait',
       initialSnapshotJson: JSON.stringify(dataObj)
     }
   }
@@ -111,25 +122,30 @@ export const ihtiyacRaporuResolver: DocumentResolver = {
     return IHTIYAC_RAPORU_TEMPLATES
   },
 
-  async resolve(source: DocumentSource, _templateId: string) {
-    void _templateId
+  async resolve(source: DocumentSource, templateId: string, context?: DocumentResolveContext) {
     if (source.kind !== 'ihtiyacRaporu') {
       throw new Error(
         `ihtiyacRaporuResolver yalnızca "ihtiyacRaporu" kaynaklarını destekler. Alınan: ${source.kind}`
       )
     }
 
-    const [rapor, kalemler, kurumInfo] = await Promise.all([
+    const [rapor, kalemler, kurumInfo, personelRows, birimRows] = await Promise.all([
       ihtiyacRaporuService.getRaporById(source.raporId),
       ihtiyacRaporuService.getRaporKalemleri(source.raporId),
-      kurumService.getKurumInfo()
+      kurumService.getKurumInfo(),
+      queryRows(
+        "SELECT id, ad_soyad, unvan, telefon, eposta, birim, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' ORDER BY ad_soyad ASC"
+      ),
+      queryRows(
+        'SELECT id, ad, birim_adi, kisa_ad, sunum_makami, antet_ek_satir, harcama_yetkilisi_id, harcama_yetkilisi_unvan FROM TANIM_Birim WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY birim_adi ASC'
+      )
     ])
 
     if (!rapor) {
       throw new Error(`İhtiyaç raporu bulunamadı (ID: ${source.raporId})`)
     }
 
-    const docData = mapRaporToLuzumMuzekkeresiData(
+    const baseDocData = mapRaporToLuzumMuzekkeresiData(
       rapor,
       kalemler || [],
       kurumInfo
@@ -140,7 +156,46 @@ export const ihtiyacRaporuResolver: DocumentResolver = {
         : undefined
     )
 
-    const personelListesi = rapor.talep_eden_personel
+    let savedSnapshotOverlay: Record<string, any> | null = null
+    if (!context?.forceDefault) {
+      if (rapor.belge_snapshot_json) {
+        try {
+          const parsed = JSON.parse(rapor.belge_snapshot_json)
+          if (parsed && typeof parsed === 'object') {
+            savedSnapshotOverlay =
+              parsed[templateId] ||
+              parsed.luzum_muzekkeresi ||
+              parsed.ihtiyac_listesi ||
+              null
+          }
+        } catch {
+          savedSnapshotOverlay = null
+        }
+      }
+
+      if (!savedSnapshotOverlay && rapor.temin_dosya_id && Number(rapor.temin_dosya_id) > 0) {
+        try {
+          const adapter = DocumentEngine.getStorageAdapter()
+          if (adapter) {
+            const snap = await adapter.getDocument({
+              dosyaId: Number(rapor.temin_dosya_id),
+              templateKey: templateId
+            })
+            if (snap?.record?.data && typeof snap.record.data === 'object') {
+              savedSnapshotOverlay = snap.record.data as Record<string, any>
+            }
+          }
+        } catch {
+          // ignore adapter error
+        }
+      }
+    }
+
+    const docData: Record<string, any> = savedSnapshotOverlay
+      ? { ...baseDocData, ...savedSnapshotOverlay }
+      : { ...baseDocData }
+
+    const fallbackPersonel = rapor.talep_eden_personel
       ? [
           {
             id: rapor.talep_eden_personel_id || 1,
@@ -150,7 +205,7 @@ export const ihtiyacRaporuResolver: DocumentResolver = {
         ]
       : []
 
-    const birimListesi = rapor.birim_adi
+    const fallbackBirim = rapor.birim_adi
       ? [
           {
             id: rapor.birim_id || 1,
@@ -159,6 +214,9 @@ export const ihtiyacRaporuResolver: DocumentResolver = {
         ]
       : []
 
+    const personelListesi = personelRows.length > 0 ? personelRows : fallbackPersonel
+    const birimListesi = birimRows.length > 0 ? birimRows : fallbackBirim
+
     return {
       resolvedData: docData,
       formData: docData,
@@ -166,9 +224,12 @@ export const ihtiyacRaporuResolver: DocumentResolver = {
       birimListesi,
       firmaListesi: [],
       raporRecord: rapor,
-      activeLogoLeft: true,
-      activeLogoRight: false,
-      activeOrientation: 'portrait',
+      activeLogoLeft:
+        docData.showLogoLeft !== undefined ? Boolean(docData.showLogoLeft) : true,
+      activeLogoRight:
+        docData.showLogoRight !== undefined ? Boolean(docData.showLogoRight) : false,
+      activeOrientation:
+        docData.orientation === 'landscape' ? 'landscape' : 'portrait',
       initialSnapshotJson: JSON.stringify(docData)
     }
   }

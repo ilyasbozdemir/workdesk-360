@@ -150,6 +150,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       InstitutionalHeaderProvider.clearCache(id)
 
       const queryExecutor = async (sql: string, params: any[] = []): Promise<any[]> => {
+        const trimmed = sql.trim().toUpperCase()
+        if (trimmed.startsWith('INSERT') || trimmed.startsWith('UPDATE') || trimmed.startsWith('DELETE')) {
+          const res = await window.electron.ipcRenderer.invoke('db:run', sql, params)
+          return res?.data || []
+        }
         const res = await window.electron.ipcRenderer.invoke('db:query', sql, params)
         return res?.data || []
       }

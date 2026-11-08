@@ -8,6 +8,7 @@ import { KurumProfileModal } from './components/KurumProfileModal'
 import { AdminCredentialsCard } from './components/AdminCredentialsCard'
 import { AuditTrailInfoCard } from './components/AuditTrailInfoCard'
 import { PasswordHistoryCard, PasswordHistoryItem } from './components/PasswordHistoryCard'
+import { RoleSimulatorSection } from './components/RoleSimulatorSection'
 
 export default function ProfilScreen(): React.JSX.Element {
   const { loadSettings: reloadSettingsStore, activeKurumId } = useSettingsStore()
@@ -229,7 +230,10 @@ export default function ProfilScreen(): React.JSX.Element {
         onSwitchKurum={handleSwitchKurum}
       />
 
-      {/* 2. BÖLÜM: YÖNETİCİ & GÜVENLİK BİLGİLERİ */}
+      {/* 2. BÖLÜM: 5018 KAMU ROLÜ & YETKİ SİMÜLASYONU */}
+      <RoleSimulatorSection />
+
+      {/* 3. BÖLÜM: YÖNETİCİ & GÜVENLİK BİLGİLERİ */}
       <AdminCredentialsCard
         adminName={adminName}
         setAdminName={setAdminName}

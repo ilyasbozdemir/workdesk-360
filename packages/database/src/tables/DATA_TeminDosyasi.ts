@@ -33,6 +33,12 @@ export const DATA_TeminDosyasi = {
 
     // Antet / İdari Alanlar
     { name: "antet_ek_satir", type: "TEXT", description: "Antet Ek Satir" },
+    {
+      name: "antet_birim_gosterilsin",
+      type: "INTEGER",
+      default: 1,
+      description: "Antette Birim Satırı Gösterilsin mi (1: Evet, 0: Hayır - Sadece Üst Kurum)",
+    },
     { name: "sunulacak_makam", type: "TEXT", description: "Sunulacak Makam" },
     { name: "ihtiyac_yeri", type: "TEXT", description: "Ihtiyac Yeri" },
 

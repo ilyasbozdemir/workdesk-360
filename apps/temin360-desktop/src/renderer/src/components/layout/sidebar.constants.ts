@@ -31,7 +31,9 @@ import {
   Store,
   Sparkles,
   FileSpreadsheet,
-  FileDown
+  FileDown,
+  GitFork,
+  FileCheck
 } from 'lucide-react'
 import { APP_ROUTES } from '../../constants/routeConstants'
 import { useModuleStore } from '../../store/moduleStore'
@@ -347,7 +349,6 @@ export function getSidebarMenuGroups(
             children: [
               { name: 'ÇŞB Birim Fiyat Pozları', path: APP_ROUTES.POZLAR, icon: BookOpen },
               { name: 'OKAS Kodları', path: APP_ROUTES.OKAS_KOD, icon: Tag },
-              { name: 'Bütçe Kodları (4 Düzey)', path: APP_ROUTES.BUTCE_KOD, icon: Coins },
               {
                 name: 'Mal, Hizmet & Yapım Kataloğu',
                 path: APP_ROUTES.MALZEMELER,
@@ -474,6 +475,12 @@ export function getSidebarMenuGroups(
                     name: 'Süreç Akış Haritası',
                     path: APP_ROUTES.SUREC_AKISI,
                     icon: Layers
+                  },
+                  {
+                    name: 'Belge Rota & Onay Akışı',
+                    path: APP_ROUTES.ROTA_YONETIMI,
+                    icon: GitFork,
+                    badge: 'ROTA'
                   }
                 ]
               }
@@ -596,11 +603,6 @@ export function getSidebarMenuGroups(
                 badge: activeDosyaId ? 'HAVUZ' : 'YENİ'
               },
               {
-                name: 'Hakediş & Harcama İşlemleri',
-                path: APP_ROUTES.HAKEDIS,
-                icon: Hammer
-              },
-              {
                 name: 'İhale & Hesaplama Araçları',
                 path: APP_ROUTES.HESAPLAMA_ARACLARI,
                 icon: Calculator,
@@ -657,7 +659,6 @@ export function getSidebarMenuGroups(
                   },
                   { name: 'Taşınır Kodları', path: APP_ROUTES.TASINIR_KOD, icon: FolderTree },
                   { name: 'OKAS Kodları', path: APP_ROUTES.OKAS_KOD, icon: Tag },
-                  { name: 'Bütçe Kodları (4 Düzey)', path: APP_ROUTES.BUTCE_KOD, icon: Coins },
                   { name: 'Birim Fiyat Pozları', path: APP_ROUTES.POZLAR, icon: BookOpen },
                   { name: 'Ölçü Birimleri', path: APP_ROUTES.OLCU_BIRIMLERI, icon: Ruler }
                 ]

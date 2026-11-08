@@ -263,6 +263,8 @@ function createWindow(): void {
     minHeight: 640,
     show: false,
     autoHideMenuBar: true,
+    frame: false,
+    ...(process.platform === 'darwin' ? { titleBarStyle: 'hidden' as const } : {}),
     title: 'Workspace 360 — WorkSuite 360 Merkezi Çalışma Alanı',
     icon: getIconPath(),
     webPreferences: {
@@ -275,6 +277,14 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
+  })
+
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('window:maximized-change', true)
+  })
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('window:maximized-change', false)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -305,6 +315,10 @@ function registerIpcHandlers(): void {
       nodeVersion: process.versions.node,
       electronVersion: process.versions.electron
     }
+  })
+
+  ipcMain.handle('window:is-maximized', () => {
+    return mainWindow?.isMaximized() ?? false
   })
 
   ipcMain.on('window:minimize', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { validateSqlQuery, extractTableAndAction } from '../sqlGuard'
+import { validateSqlQuery, extractTableAndAction, assertReadOnlyQuery } from '../sqlGuard'
 
 describe('SQL Guard Security Suite (sqlGuard.ts)', () => {
   describe('1. Multi-statement Injection Protection', () => {
@@ -455,6 +455,43 @@ describe('SQL Guard Security Suite (sqlGuard.ts)', () => {
       expect(() => {
         validateSqlQuery('WITH s AS (SELECT * FROM settings) SELECT * FROM s')
       }).toThrow(/Direct raw SQL query on settings\/TANIM_Ayar/)
+    })
+  })
+
+  describe('8. Read-Only Query Enforcement (assertReadOnlyQuery)', () => {
+    it('SELECT sorgularına izin verir', () => {
+      expect(() => {
+        assertReadOnlyQuery('SELECT id, konu FROM DATA_TeminDosyasi WHERE id = ?')
+      }).not.toThrow()
+    })
+
+    it('EXPLAIN ve PRAGMA okuma sorgularına izin verir', () => {
+      expect(() => {
+        assertReadOnlyQuery('EXPLAIN QUERY PLAN SELECT * FROM DATA_TeminDosyasi')
+      }).not.toThrow()
+      expect(() => {
+        assertReadOnlyQuery('PRAGMA table_info(DATA_TeminDosyasi)')
+      }).not.toThrow()
+    })
+
+    it('INSERT, UPDATE, DELETE gibi mutasyon sorgularını okuma kanalında engeller', () => {
+      expect(() => {
+        assertReadOnlyQuery('UPDATE DATA_TeminDosyasi SET status = "tamamlandi" WHERE id = 1')
+      }).toThrow(/Salt-okunur kanalda/)
+
+      expect(() => {
+        assertReadOnlyQuery('DELETE FROM DATA_TeminDosyasi WHERE id = 1')
+      }).toThrow(/Salt-okunur kanalda/)
+
+      expect(() => {
+        assertReadOnlyQuery('INSERT INTO DATA_TeminDosyasi (konu) VALUES ("Yeni")')
+      }).toThrow(/Salt-okunur kanalda/)
+    })
+
+    it('CTE içinde INSERT veya UPDATE barındıran sorguları engeller', () => {
+      expect(() => {
+        assertReadOnlyQuery('WITH t AS (UPDATE DATA_TeminDosyasi SET status = "ok") SELECT * FROM t')
+      }).toThrow(/Salt-okunur kanalda/)
     })
   })
 })

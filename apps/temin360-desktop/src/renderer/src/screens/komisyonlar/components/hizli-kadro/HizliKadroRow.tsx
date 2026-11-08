@@ -17,6 +17,7 @@ interface HizliKadroRowProps {
   onSelectGorev: (rowId: string | number, gorevAd: string, gorevId: number | null) => void
   onSelectPersonel: (rowId: string | number, pId: number | null) => void
   onToggleAsil: (rowId: string | number) => void
+  onChangeImzaTuru?: (rowId: string | number, imzaTuru: 'Paraf' | 'Koordinasyon' | 'İmza') => void
   onChangeBelgeSablonIds: (rowId: string | number, sablonIds: string[] | null) => void
   onRemoveRow: (rowId: string | number) => void
 }
@@ -33,6 +34,7 @@ export const HizliKadroRow: React.FC<HizliKadroRowProps> = ({
   onSelectGorev,
   onSelectPersonel,
   onToggleAsil,
+  onChangeImzaTuru,
   onChangeBelgeSablonIds,
   onRemoveRow
 }) => {
@@ -65,7 +67,7 @@ export const HizliKadroRow: React.FC<HizliKadroRowProps> = ({
       className={`grid gap-2 items-center px-3.5 py-2.5 hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors ${
         isHidden ? 'opacity-55' : ''
       } ${isDropdownOpen ? 'relative z-40' : 'relative z-0'}`}
-      style={{ gridTemplateColumns: '28px 180px 1fr 80px 200px 32px' }}
+      style={{ gridTemplateColumns: '28px 160px 1fr 72px 124px 180px 32px' }}
     >
       {/* # Sıra No */}
       <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-mono font-bold flex items-center justify-center">
@@ -128,6 +130,19 @@ export const HizliKadroRow: React.FC<HizliKadroRowProps> = ({
       >
         {row.asilMi === 1 ? '✓ Asil' : '⟳ Yedek'}
       </button>
+
+      {/* İmza Türü Seçimi (Komisyon görevinden ayrı alan) */}
+      <select
+        data-testid={`hizli-kadro-imzaturu-${index}`}
+        value={row.imzaTuru || 'İmza'}
+        onChange={(e) => onChangeImzaTuru?.(row.id, e.target.value as any)}
+        title="Evrak üzerindeki imza yerleşim türü (Islak İmza, Paraf, Koordinasyon)"
+        className="w-full px-2 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
+      >
+        <option value="İmza">✒️ Islak İmza</option>
+        <option value="Paraf">✏️ Paraf</option>
+        <option value="Koordinasyon">🔀 Koordinasyon</option>
+      </select>
 
       {/* Belge Kapsamı Seçimi & Granüler Şablon Butonu */}
       <div className="flex items-center gap-1.5 w-full">

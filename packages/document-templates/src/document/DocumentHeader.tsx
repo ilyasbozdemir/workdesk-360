@@ -1,15 +1,68 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { BaseTemplate } from "../base.schema";
 import { GLOBAL_THEME } from "../theme.config";
 
 interface DocumentHeaderProps {
-  data?: Partial<BaseTemplate>;
+  data?: Partial<BaseTemplate> & Record<string, any>;
   hideLogos?: boolean;
 }
 
 export const DocumentHeader: React.FC<DocumentHeaderProps> = (
   { data, hideLogos = false },
 ) => {
+  const effectiveAntetLines = useMemo(() => {
+    let lines: string[] = [];
+    if (Array.isArray(data?.antetSatirlari) && data.antetSatirlari.length > 0) {
+      lines = data.antetSatirlari
+        .map((s) => String(s ?? "").trim())
+        .filter(Boolean);
+    } else {
+      lines = [
+        "T.C.",
+        data?.kurumUst || "BELEDİYE BAŞKANLIĞI",
+        data?.kurumAdi || "",
+      ].filter(Boolean);
+    }
+
+    const birimLine = (
+      data?.antetEkSatir ||
+      (data as any)?.antet_ek_satir ||
+      data?.mudurluk ||
+      (data as any)?.birim ||
+      (data as any)?.birimAdi ||
+      (data as any)?.birim_adi ||
+      (data as any)?.harcamaBirimi ||
+      (data as any)?.harcama_birimi ||
+      (data as any)?.talepEdenBirim ||
+      ""
+    ).trim();
+
+    const showBirim =
+      data?.antetBirimGosterilsin !== false &&
+      (data as any)?.birimAntetteGosterilsin !== false &&
+      (data as any)?.antetteBirimGoster !== false;
+
+    if (
+      showBirim &&
+      birimLine &&
+      !lines.some(
+        (l) =>
+          l.trim().toLocaleUpperCase("tr-TR") ===
+            birimLine.toLocaleUpperCase("tr-TR"),
+      )
+    ) {
+      lines.push(birimLine);
+    } else if (!showBirim && birimLine) {
+      lines = lines.filter(
+        (l) =>
+          l.trim().toLocaleUpperCase("tr-TR") !==
+            birimLine.toLocaleUpperCase("tr-TR"),
+      );
+    }
+
+    return lines.length > 0 ? lines : ["T.C."];
+  }, [data]);
+
   return (
     <div
       style={{
@@ -54,39 +107,20 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
           lineHeight: 1.3,
         }}
       >
-        {data?.antetSatirlari && data.antetSatirlari.length > 0
-          ? (
-            data.antetSatirlari.map((satir, idx) => (
-              <div
-                key={idx}
-                style={{
-                  fontWeight: "bold",
-                  fontSize: "12pt",
-                  marginBottom: idx < data.antetSatirlari!.length - 1
-                    ? "4px"
-                    : "0",
-                }}
-              >
-                {satir}
-              </div>
-            ))
-          )
-          : (
-            <>
-              <div style={{ fontWeight: "bold", fontSize: "12pt" }}>T.C.</div>
-              <div style={{ fontWeight: "bold", fontSize: "12pt" }}>
-                {data?.kurumUst || "BELEDİYE BAŞKANLIĞI"}
-              </div>
-              {data?.kurumAdi && (
-                <div style={{ fontWeight: "bold", fontSize: "12pt" }}>
-                  {data.kurumAdi}
-                </div>
-              )}
-              <div style={{ fontWeight: "bold", fontSize: "12pt" }}>
-                {data?.mudurluk || "Destek Hizmetleri Müdürlüğü"}
-              </div>
-            </>
-          )}
+        {effectiveAntetLines.map((satir, idx) => (
+          <div
+            key={idx}
+            style={{
+              fontWeight: "bold",
+              fontSize: "12pt",
+              marginBottom: idx < effectiveAntetLines.length - 1
+                ? "4px"
+                : "0",
+            }}
+          >
+            {satir}
+          </div>
+        ))}
       </div>
 
       {/* SAĞ - LOGO */}

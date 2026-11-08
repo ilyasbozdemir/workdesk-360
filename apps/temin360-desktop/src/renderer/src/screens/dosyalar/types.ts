@@ -72,6 +72,7 @@ export interface YeniDosyaTabProps {
   setBirimSearchQuery?: React.Dispatch<React.SetStateAction<string>>
   filteredBirimler?: DBBirim[]
   handleSelectBirim?: (birim: DBBirim) => void
+  handleCreateAndSelectBirim?: (birimAdi: string) => Promise<void> | void
 
   showPersonelSearch?: 'irtibat' | 'hazirlayan' | 'onay' | 'talep_eden' | 'sunan' | null
   setShowPersonelSearch?: React.Dispatch<

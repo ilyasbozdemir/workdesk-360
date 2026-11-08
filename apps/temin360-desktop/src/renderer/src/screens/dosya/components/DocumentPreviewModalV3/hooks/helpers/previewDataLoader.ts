@@ -51,22 +51,23 @@ export async function loadDocumentPreviewData({
   }
 
   // Sadece merkezi backend yanıt vermediyse renderer tarafındaki resolver'ı çalıştır
-  if (!payloadData || Object.keys(payloadData).length === 0) {
+  const hasPayload = Boolean(payloadData && Object.keys(payloadData).length > 0)
+  if (!hasPayload) {
     const mapping = getDefaultMappingForProcess(resolvedId)
     const resolver = new TemplateResolver(queryExecutor)
     resolved = await resolver.resolve(mapping, activeDosyaId || 0, resolvedId)
   }
   let dosyaRecord = payloadData.dosya || null
-  if (!dosyaRecord && activeDosyaId) {
+  if (!dosyaRecord && activeDosyaId && !hasPayload) {
     const res = await queryExecutor('SELECT * FROM DATA_TeminDosyasi WHERE id = ?', [activeDosyaId])
     if (res && res[0]) dosyaRecord = res[0]
   }
 
   let personelList = payloadData.personelListesi || []
-  if (!personelList || personelList.length === 0) {
+  if ((!personelList || personelList.length === 0) && !hasPayload) {
     try {
       personelList = await queryExecutor(
-        "SELECT id, ad_soyad, unvan, telefon, eposta, birim, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' OR aktif_mi IS NULL ORDER BY ad_soyad ASC",
+        "SELECT id, ad_soyad, unvan, telefon, eposta, birim, sicil_no, aktif_mi FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' OR aktif_mi IS NULL ORDER BY ad_soyad ASC",
         []
       )
     } catch (e) {
@@ -75,10 +76,10 @@ export async function loadDocumentPreviewData({
   }
 
   let birimList = payloadData.birimListesi || []
-  if (!birimList || birimList.length === 0) {
+  if ((!birimList || birimList.length === 0) && !hasPayload) {
     try {
       birimList = await queryExecutor(
-        'SELECT id, ad, birim_adi, kisa_ad, sunum_makami, antet_ek_satir, harcama_yetkilisi_id, harcama_yetkilisi_unvan FROM TANIM_Birim WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY birim_adi ASC',
+        'SELECT id, ad, birim_adi, kisa_ad, sunum_makami, antet_ek_satir, ihtiyac_yeri_eki, harcama_yetkilisi_id, harcama_yetkilisi_unvan, gerceklestirme_gorevlisi_id, gerceklestirme_gorevlisi_unvan, ilgili_personel_id, aktif_mi FROM TANIM_Birim WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY birim_adi ASC',
         []
       )
     } catch (e) {
@@ -91,7 +92,7 @@ export async function loadDocumentPreviewData({
   let items = payloadData.items || []
   let bids = payloadData.bids || []
 
-  if (activeDosyaId) {
+  if (activeDosyaId && !hasPayload) {
     if (!fileFirms || fileFirms.length === 0) {
       try {
         const dbFirms = await queryExecutor(
@@ -154,7 +155,7 @@ export async function loadDocumentPreviewData({
     fileFirms = propInvitedFirms
   }
 
-  if (!combinedFirms || combinedFirms.length === 0) {
+  if ((!combinedFirms || combinedFirms.length === 0) && !hasPayload) {
     try {
       combinedFirms = await queryExecutor(
         `SELECT id, unvan, vergi_no, adres, telefon, email FROM TANIM_Firma ORDER BY unvan ASC LIMIT 100`,
@@ -214,7 +215,8 @@ export async function loadDocumentPreviewData({
     activeDosyaId,
     resolvedId,
     selectedDocId,
-    queryExecutor
+    queryExecutor,
+    payloadData
   )
 
   // 4. Resolve Firms and Items

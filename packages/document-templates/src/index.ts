@@ -64,6 +64,7 @@ export * from "./services/commissionResolver";
 export * from "./services/documentValidationService";
 export * from "./types";
 export * from "./registry";
+export * from "./route-registry";
 export * from "./DocumentPage";
 
 // Document Engine Bridge & IoC Registration

@@ -1,6 +1,7 @@
 /* eslint-disable */
 /**
  * RC SÜRÜM ŞEMA MANİFESTİ (1.0.0-rc.6)
+ * Bu dosya yaml/rc/1.0.0-rc.6.yaml dosyasından otomatik derlenir.
  */
 export default {
   app: "1.0.0-rc.6",

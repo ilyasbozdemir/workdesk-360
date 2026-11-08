@@ -154,6 +154,8 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
         talep_eden_personel_id INTEGER,
         talep_eden_personel TEXT,
         talep_eden_unvan TEXT,
+        evrak_sayisi TEXT,
+        belge_snapshot_json TEXT,
         durum TEXT DEFAULT 'taslak',
         temin_dosya_id INTEGER,
         tarih DATE DEFAULT CURRENT_DATE,
@@ -193,6 +195,115 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
 
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'talep_eden_unvan', 'TEXT')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'evrak_sayisi', 'TEXT')
+  safeAddColumn(db, 'DATA_IhtiyacRaporu', 'belge_snapshot_json', 'TEXT')
+
+  // 2.1 Workflow, Görev ve Bildirim Motoru Tabloları
+  safeExec(
+    db,
+    `
+      CREATE TABLE IF NOT EXISTS WORKFLOW_Instance (
+        id TEXT PRIMARY KEY,
+        dosya_id INTEGER NOT NULL,
+        definition_id TEXT NOT NULL,
+        definition_version INTEGER DEFAULT 1,
+        current_state TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'IN_PROGRESS',
+        assigned_user_id TEXT,
+        assigned_unit_id TEXT,
+        assigned_role TEXT,
+        last_actor_id TEXT,
+        return_reason TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_instance_dosya ON WORKFLOW_Instance(dosya_id);
+      CREATE INDEX IF NOT EXISTS idx_wf_instance_state ON WORKFLOW_Instance(current_state);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_TransitionHistory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        instance_id TEXT NOT NULL,
+        dosya_id INTEGER NOT NULL,
+        from_state TEXT NOT NULL,
+        to_state TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        actor_id TEXT,
+        actor_role TEXT,
+        reason TEXT,
+        metadata_json TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_hist_dosya ON WORKFLOW_TransitionHistory(dosya_id);
+      CREATE INDEX IF NOT EXISTS idx_wf_hist_inst ON WORKFLOW_TransitionHistory(instance_id);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_Task (
+        id TEXT PRIMARY KEY,
+        instance_id TEXT NOT NULL,
+        dosya_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'OPEN',
+        assigned_user_id TEXT,
+        assigned_unit_id TEXT,
+        required_role TEXT,
+        due_at DATETIME,
+        completed_at DATETIME,
+        completed_by TEXT,
+        return_reason TEXT,
+        idempotency_key TEXT UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_task_dosya ON WORKFLOW_Task(dosya_id);
+      CREATE INDEX IF NOT EXISTS idx_wf_task_role ON WORKFLOW_Task(required_role, status);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_Notification (
+        id TEXT PRIMARY KEY,
+        task_id TEXT,
+        dosya_id INTEGER NOT NULL,
+        user_id TEXT,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        type TEXT NOT NULL,
+        channel TEXT DEFAULT 'IN_APP',
+        read_at DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_notif_dosya ON WORKFLOW_Notification(dosya_id);
+      CREATE INDEX IF NOT EXISTS idx_wf_notif_read ON WORKFLOW_Notification(read_at);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_NotificationOutbox (
+        id TEXT PRIMARY KEY,
+        channel TEXT NOT NULL,
+        recipient TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        attempts INTEGER DEFAULT 0,
+        last_attempt DATETIME,
+        error_message TEXT,
+        idempotency_key TEXT UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_outbox_status ON WORKFLOW_NotificationOutbox(status);
+
+      CREATE TABLE IF NOT EXISTS WORKFLOW_RuleEvaluation (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        instance_id TEXT NOT NULL,
+        rule_id TEXT NOT NULL,
+        category TEXT NOT NULL,
+        passed INTEGER NOT NULL,
+        severity TEXT NOT NULL,
+        message TEXT NOT NULL,
+        details_json TEXT,
+        evaluated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_wf_rule_inst ON WORKFLOW_RuleEvaluation(instance_id);
+    `,
+    'Workflow, Görev ve Bildirim Motoru Tabloları'
+  )
 
   // 3. Şema Sürümü ve Migrasyon Kontrolü
   try {
@@ -275,7 +386,13 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     { name: 'is_tanimi', def: 'TEXT' },
     { name: 'is_adi', def: 'TEXT' },
     { name: 'konu', def: 'TEXT' },
-    { name: 'komisyon_seed_edildi', def: 'INTEGER' }
+    { name: 'komisyon_seed_edildi', def: 'INTEGER' },
+    { name: 'antet_birim_gosterilsin', def: 'INTEGER DEFAULT 1' },
+    { name: 'is_locked', def: 'INTEGER DEFAULT 0' },
+    { name: 'lock_reason', def: 'TEXT' },
+    { name: 'kayit_kaynagi', def: "TEXT DEFAULT 'yeni'" },
+    { name: 'aktarim_grubu_id', def: 'TEXT' },
+    { name: 'kaynak_kayit_id', def: 'TEXT' }
   ]
   for (const c of teminDosyasiColumns) {
     safeAddColumn(db, 'DATA_TeminDosyasi', c.name, c.def)
@@ -284,6 +401,9 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
   // 6. DATA_TeminKomisyon & TANIM_KomisyonUye Kolonları
   const komisyonExtendedColumns = [
     { name: 'asli_yedek', def: "TEXT DEFAULT 'Asil'" },
+    { name: 'imza_turu', def: "TEXT DEFAULT 'İmza'" },
+    { name: 'birim_id', def: 'INTEGER' },
+    { name: 'birim', def: 'TEXT' },
     { name: 'kaynak', def: "TEXT DEFAULT 'kurumsal'" },
     { name: 'rol', def: "TEXT DEFAULT 'Asil'" },
     { name: 'komisyon_turu', def: 'TEXT' },
@@ -333,6 +453,38 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     `,
       'DATA_TeminDosyasi Kolon Eşitleme'
     )
+
+    if (isPhysicalTable(db, 'TANIM_Birim')) {
+      safeExec(
+        db,
+        `
+        INSERT OR IGNORE INTO TANIM_Birim (ad, birim_adi, antet_ek_satir, sunum_makami, aktif_mi)
+        SELECT DISTINCT
+          TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), ''))) AS yeni_ad,
+          TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), ''))) AS yeni_birim_adi,
+          TRIM(COALESCE(NULLIF(TRIM(d.antet_ek_satir), ''), NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''))) AS yeni_antet,
+          TRIM(COALESCE(NULLIF(TRIM(d.sunulacak_makam), ''), TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''))) || ' MAKAMINA')) AS yeni_makam,
+          1
+        FROM DATA_TeminDosyasi d
+        WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
+          AND COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), '')) IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM TANIM_Birim b
+            WHERE LOWER(TRIM(b.birim_adi)) = LOWER(TRIM(COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), NULLIF(TRIM(d.antet_ek_satir), ''))))
+          );
+
+        UPDATE DATA_TeminDosyasi
+        SET birim_id = (
+          SELECT b.id FROM TANIM_Birim b
+          WHERE LOWER(TRIM(b.birim_adi)) = LOWER(TRIM(COALESCE(NULLIF(TRIM(DATA_TeminDosyasi.birim), ''), NULLIF(TRIM(DATA_TeminDosyasi.harcama_birimi), ''), NULLIF(TRIM(DATA_TeminDosyasi.antet_ek_satir), ''))))
+          LIMIT 1
+        )
+        WHERE (birim_id IS NULL OR birim_id = 0)
+          AND COALESCE(NULLIF(TRIM(birim), ''), NULLIF(TRIM(harcama_birimi), ''), NULLIF(TRIM(antet_ek_satir), '')) IS NOT NULL;
+        `,
+        'DATA_TeminDosyasi Birim ve TANIM_Birim Otomatik Eşitleme'
+      )
+    }
   }
 
   if (isPhysicalTable(db, 'DATA_TeminKomisyon')) {
@@ -714,7 +866,8 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
 
   const ihtiyacCols = [
     { name: 'talep_eden_unvan', def: 'TEXT' },
-    { name: 'evrak_sayisi', def: 'TEXT' }
+    { name: 'evrak_sayisi', def: 'TEXT' },
+    { name: 'belge_snapshot_json', def: 'TEXT' }
   ]
   for (const c of ihtiyacCols) {
     safeAddColumn(db, 'DATA_IhtiyacRaporu', c.name, c.def)

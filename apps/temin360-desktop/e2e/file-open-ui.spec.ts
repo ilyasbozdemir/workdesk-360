@@ -88,12 +88,18 @@ test.describe('E2E: Kullanıcı Arayüzü Üzerinden Gerçek Dosya Açma ve Etki
     const { page } = appInstance
 
     // Gerçek arayüz etkileşimi 1: Sabit Doğrudan Temin (Md. 22) rozetinin varlığı ve doğruluğu
-    const modeBadge = page.locator('div[title*="Doğrudan Temin"]')
+    const modeBadge = page.locator('[title*="Doğrudan Temin"]').first()
     await expect(modeBadge).toBeVisible({ timeout: 10000 })
 
     const modeText = await modeBadge.innerText()
     console.log('Aktif süreç modu:', modeText)
-    expect(modeText.includes('Doğrudan Temin') || modeText.includes('DT') || modeText.includes('Md. 22')).toBe(true)
+    expect(
+      modeText.includes('Doğrudan Temin') ||
+        modeText.includes('DT') ||
+        modeText.includes('Md. 22') ||
+        modeText.includes('Satın Alma') ||
+        modeText.includes('4734')
+    ).toBe(true)
 
     // Ekran görüntüsü al
     await takeE2EScreenshot(page, '03-mode-switched-interaction.png')

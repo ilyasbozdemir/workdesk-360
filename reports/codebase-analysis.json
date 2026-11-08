@@ -1,0 +1,3161 @@
+{
+  "metadata": {
+    "generatedAt": "2026-11-07T13:18:05.765Z",
+    "monorepoVersion": "1.0.0-rc.12",
+    "analyzerVersion": "2.0.0-architectural-ast",
+    "totalFilesScanned": 1760,
+    "totalLinesOfCode": 336026,
+    "findingsCount": {
+      "total": 223,
+      "p0": 71,
+      "p1": 45,
+      "p2": 107
+    }
+  },
+  "packageGraph": {
+    "@temin360/contracts": [],
+    "@worksuite-360/contracts": [],
+    "@dt/database": [],
+    "@worksuite-360/document-engine": [
+      "@temin360/contracts"
+    ],
+    "@temin360/document-templates": [
+      "@worksuite-360/document-engine",
+      "@temin360/contracts"
+    ],
+    "@temin360/domain": [],
+    "@temin360/pdf-generator": []
+  },
+  "templateStats": [
+    {
+      "id": "arastirma-mektubu",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "birim-fiyat-teklif-mektubu",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "butce-sorgusu",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "dogrudan-temin-onay-belgesi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "dogrudan-temin-sozlesmesi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "fiyat-arastirma-mektubu",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "harcama-pusulasi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "harcama-talimati",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "ihtiyac-listesi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": true,
+      "hasHook": true,
+      "hasTests": true
+    },
+    {
+      "id": "ihtiyac-talep-formu",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "kabul-edilen-teklif",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "kik048-yapim-gecici-kabul-teklif",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "kik049-yapim-gecici-kabul-tutanagi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "kik050-yapim-kesin-kabul-teklif",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "kik051-yapim-kesin-kabul-tutanagi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "komisyon-gorevlendirme-onayi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "komisyon-gorevlendirme-onayi-eki",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "luzum-muzekkeresi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "luzum-muzekkeresi-onay-eki",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "luzum-muzekkeresi-teslim-tesellum",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "muayene-kabul-komisyonu",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "muayene-kabul-tutanagi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "odeme-yazisi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "piyasa-fiyat-arastirma-gorevlendirmesi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "piyasa-fiyat-arastirma-tutanagi",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": true,
+      "hasHook": true,
+      "hasTests": true
+    },
+    {
+      "id": "son-alim-fiyat-cetveli",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "sozlesmeye-davet",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "tasinir-kayit-yetkilisi-gorusu",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "teknik-sartname",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": false,
+      "hasTests": false
+    },
+    {
+      "id": "yaklasik-maliyet-cetveli",
+      "hasIndex": true,
+      "hasSchema": true,
+      "hasTemplate": true,
+      "hasRouteDef": false,
+      "hasHook": true,
+      "hasTests": true
+    }
+  ],
+  "godComponentStats": [
+    {
+      "file": "apps/disk-analiz-360-desktop/src/renderer/src/App.tsx",
+      "lines": 2395,
+      "stateCount": 33,
+      "effectCount": 4,
+      "totalHooks": 43,
+      "importCount": 8,
+      "directIpcCallCount": 0,
+      "godScore": 1599
+    },
+    {
+      "file": "apps/disk-analiz-360-desktop/src/renderer/src/components/SmartArchiveWorkspaceView.tsx",
+      "lines": 2006,
+      "stateCount": 29,
+      "effectCount": 4,
+      "totalHooks": 39,
+      "importCount": 4,
+      "directIpcCallCount": 0,
+      "godScore": 1375
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/components/IhtiyacRaporuEditorView.tsx",
+      "lines": 1281,
+      "stateCount": 25,
+      "effectCount": 5,
+      "totalHooks": 34,
+      "importCount": 7,
+      "directIpcCallCount": 0,
+      "godScore": 1046
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ayarlar/index.screen.tsx",
+      "lines": 432,
+      "stateCount": 26,
+      "effectCount": 4,
+      "totalHooks": 39,
+      "importCount": 17,
+      "directIpcCallCount": 10,
+      "godScore": 987
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/firmalar/components/FirmaEslestirmeModal.tsx",
+      "lines": 1195,
+      "stateCount": 16,
+      "effectCount": 2,
+      "totalHooks": 24,
+      "importCount": 9,
+      "directIpcCallCount": 8,
+      "godScore": 981
+    },
+    {
+      "file": "apps/flowdesk-desktop/src/renderer/src/App.tsx",
+      "lines": 1491,
+      "stateCount": 19,
+      "effectCount": 2,
+      "totalHooks": 24,
+      "importCount": 2,
+      "directIpcCallCount": 0,
+      "godScore": 950
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/harici-aktarim/HariciDosyaAktarScreen.tsx",
+      "lines": 1504,
+      "stateCount": 13,
+      "effectCount": 1,
+      "totalHooks": 21,
+      "importCount": 11,
+      "directIpcCallCount": 3,
+      "godScore": 929
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/komisyonlar/useKomisyonlarScreenLogic.tsx",
+      "lines": 473,
+      "stateCount": 14,
+      "effectCount": 2,
+      "totalHooks": 22,
+      "importCount": 6,
+      "directIpcCallCount": 18,
+      "godScore": 881
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/components/DocumentPreviewRotaSection.tsx",
+      "lines": 1607,
+      "stateCount": 5,
+      "effectCount": 1,
+      "totalHooks": 14,
+      "importCount": 6,
+      "directIpcCallCount": 0,
+      "godScore": 795
+    },
+    {
+      "file": "apps/personel360-desktop/src/renderer/src/App.tsx",
+      "lines": 953,
+      "stateCount": 14,
+      "effectCount": 1,
+      "totalHooks": 15,
+      "importCount": 3,
+      "directIpcCallCount": 8,
+      "godScore": 782
+    },
+    {
+      "file": "apps/disk-analiz-360-desktop/src/renderer/src/components/SmartArchiveExplorerView.tsx",
+      "lines": 1065,
+      "stateCount": 16,
+      "effectCount": 2,
+      "totalHooks": 21,
+      "importCount": 5,
+      "directIpcCallCount": 0,
+      "godScore": 741
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/IhtiyacRaporlariScreen.tsx",
+      "lines": 653,
+      "stateCount": 14,
+      "effectCount": 4,
+      "totalHooks": 29,
+      "importCount": 11,
+      "directIpcCallCount": 0,
+      "godScore": 698
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/sablonlar/components/SablonEditor.tsx",
+      "lines": 519,
+      "stateCount": 11,
+      "effectCount": 2,
+      "totalHooks": 16,
+      "importCount": 13,
+      "directIpcCallCount": 11,
+      "godScore": 694
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/komisyonlar/components/PersonelGorevDagilimiTab.tsx",
+      "lines": 1165,
+      "stateCount": 12,
+      "effectCount": 0,
+      "totalHooks": 16,
+      "importCount": 5,
+      "directIpcCallCount": 0,
+      "godScore": 686
+    },
+    {
+      "file": "apps/temin360-desktop/src/renderer/src/screens/belgelerim/components/BelgeEditorModal.tsx",
+      "lines": 585,
+      "stateCount": 20,
+      "effectCount": 3,
+      "totalHooks": 23,
+      "importCount": 7,
+      "directIpcCallCount": 0,
+      "godScore": 623
+    }
+  ],
+  "findings": [
+    {
+      "id": "DEP-TMPL-DB-1",
+      "priority": "P0",
+      "file": "packages/document-templates/src/__tests__/workflowProfiles.test.ts:L10",
+      "evidence": "document-templates directly imports database module: '../../../database/src/tables/TANIM_Roller'",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "@dt/database"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonlar doğrudan veritabanı kütüphanesine bağlanmamalı; veri sağlayıcı (DataProvider) veya Resolver kontratları üzerinden veri almalıdır.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "SEC-PRELOAD-PARTIAL-GATEKEEPER-TEMIN",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/preload/index.ts:L223",
+      "evidence": "secureElectronAPI overrides 'invoke' with allowedChannels, but inherits unfiltered 'send' and 'on' from ...electronAPI.ipcRenderer",
+      "affectedModules": [
+        "temin360-desktop/preload"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "'send' ve 'on' metotları da allowedChannels kontrolünden geçirilmeli veya renderer tarafına yalnızca invoke protokolü açılmalıdır.",
+      "requiredRegressionTests": "apps/temin360-desktop/src/preload/__tests__/preloadSecurity.test.ts"
+    },
+    {
+      "id": "SEC-PRELOAD-RAW-EXPOSURE-FLOWDESK-DESKTOP",
+      "priority": "P0",
+      "file": "apps/flowdesk-desktop/src/preload/index.ts:L36",
+      "evidence": "contextBridge.exposeInMainWorld('electron', electronAPI) exposes unrestricted ipcRenderer methods (send, on, invoke) to the renderer process.",
+      "affectedModules": [
+        "flowdesk-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Doğrudan ham electronAPI maruziyeti kaldırılmalı; izin verilen IPC kanalları (allowlist) üzerinden filtrelenmiş bir proxy veya yalnızca spesifik API metotları sunulmalıdır.",
+      "requiredRegressionTests": "pnpm --filter flowdesk-desktop test"
+    },
+    {
+      "id": "SEC-PRELOAD-RAW-EXPOSURE-PERSONEL360-DESKTOP",
+      "priority": "P0",
+      "file": "apps/personel360-desktop/src/preload/index.ts:L30",
+      "evidence": "contextBridge.exposeInMainWorld('electron', electronAPI) exposes unrestricted ipcRenderer methods (send, on, invoke) to the renderer process.",
+      "affectedModules": [
+        "personel360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Doğrudan ham electronAPI maruziyeti kaldırılmalı; izin verilen IPC kanalları (allowlist) üzerinden filtrelenmiş bir proxy veya yalnızca spesifik API metotları sunulmalıdır.",
+      "requiredRegressionTests": "pnpm --filter personel360-desktop test"
+    },
+    {
+      "id": "SEC-PRELOAD-RAW-EXPOSURE-DISK-ANALIZ-360-DESKTOP",
+      "priority": "P0",
+      "file": "apps/disk-analiz-360-desktop/src/preload/index.ts:L107",
+      "evidence": "contextBridge.exposeInMainWorld('electron', electronAPI) exposes unrestricted ipcRenderer methods (send, on, invoke) to the renderer process.",
+      "affectedModules": [
+        "disk-analiz-360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Doğrudan ham electronAPI maruziyeti kaldırılmalı; izin verilen IPC kanalları (allowlist) üzerinden filtrelenmiş bir proxy veya yalnızca spesifik API metotları sunulmalıdır.",
+      "requiredRegressionTests": "pnpm --filter disk-analiz-360-desktop test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-5",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/archive.ts:L228",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`DELETE FROM DATA_TeminDosyasi WHERE id IN (${inClause})`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-6",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/database/workspace/schemaIntegrity.ts:L88",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`PRAGMA table_info(${table.name})`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-7",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/database/workspace/schemaIntegrity.ts:L769",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`PRAGMA table_info(${table.name})`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-8",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/database/workspace/__tests__/realWorkspaceMigrationFlow.test.ts:L74",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`PRAGMA table_info(${table})`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-9",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/db/tableExcelHandlers.ts:L13",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`SELECT * FROM ${tableName}`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-10",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/db/tableExcelHandlers.ts:L43",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`PRAGMA table_info(${tableName})`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-11",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/db/tableExcelHandlers.ts:L54",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`SELECT * FROM ${tableName} LIMIT 1`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-12",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/db/tableExcelHandlers.ts:L139",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`PRAGMA table_info(${tableName})`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-13",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/db/tableExcelHandlers.ts:L499",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`UPDATE ${tableName} SET ${setClause} WHERE \"${pkCol}\" = ?`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-14",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/db/tableExcelHandlers.ts:L509",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(\n                  `INSERT INTO ${tableName} (${insertCols.map((c) =>...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-15",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/document.ipc.ts:L337",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(\r\n              `DELETE FROM DATA_TeminBelgeSnapshot \r\n              ...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-16",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/document.ipc.ts:L433",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(\r\n            `DELETE FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ?...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-17",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/main/ipc/kutuphane.ipc.ts:L264",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`UPDATE DATA_KutuphaneBelge SET ${updates.join(', ')} WHERE id = ?`)...",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "SEC-SQLI-INTERPOLATION-18",
+      "priority": "P0",
+      "file": "apps/disk-analiz-360-desktop/src/main/modules/storage.ts:L1004",
+      "evidence": "Raw template string interpolation inside db.prepare(): db.prepare(`\n      SELECT id, fullPath, parentPath, name, extension, sizeBytes, ...",
+      "affectedModules": [
+        "disk-analiz-360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "SQL sorgularına değişkenler şablon dizgisi (${...}) ile eklenmemeli; parametrik (?) sorgular ve better-sqlite3 prepare().run(...params) kullanılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-ARASTIRMA_MEKTUBU",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/arastirma-mektubu",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'arastirma-mektubu/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/arastirma-mektubu/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-ARASTIRMA_MEKTUBU",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/arastirma-mektubu",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-BIRIM_FIYAT_TEKLIF_MEKTUBU",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/birim-fiyat-teklif-mektubu",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'birim-fiyat-teklif-mektubu/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/birim-fiyat-teklif-mektubu/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-BIRIM_FIYAT_TEKLIF_MEKTUBU",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/birim-fiyat-teklif-mektubu",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-BUTCE_SORGUSU",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/butce-sorgusu",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'butce-sorgusu/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/butce-sorgusu/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-BUTCE_SORGUSU",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/butce-sorgusu",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-DOGRUDAN_TEMIN_ONAY_BELGESI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/dogrudan-temin-onay-belgesi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'dogrudan-temin-onay-belgesi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/dogrudan-temin-onay-belgesi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-DOGRUDAN_TEMIN_ONAY_BELGESI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/dogrudan-temin-onay-belgesi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-DOGRUDAN_TEMIN_SOZLESMESI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/dogrudan-temin-sozlesmesi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'dogrudan-temin-sozlesmesi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/dogrudan-temin-sozlesmesi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-DOGRUDAN_TEMIN_SOZLESMESI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/dogrudan-temin-sozlesmesi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-FIYAT_ARASTIRMA_MEKTUBU",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/fiyat-arastirma-mektubu",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'fiyat-arastirma-mektubu/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/fiyat-arastirma-mektubu/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-FIYAT_ARASTIRMA_MEKTUBU",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/fiyat-arastirma-mektubu",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-HARCAMA_PUSULASI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/harcama-pusulasi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'harcama-pusulasi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/harcama-pusulasi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-HARCAMA_PUSULASI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/harcama-pusulasi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-HARCAMA_TALIMATI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/harcama-talimati",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'harcama-talimati/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/harcama-talimati/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-HARCAMA_TALIMATI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/harcama-talimati",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-IHTIYAC_TALEP_FORMU",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/ihtiyac-talep-formu",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'ihtiyac-talep-formu/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/ihtiyac-talep-formu/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-IHTIYAC_TALEP_FORMU",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/ihtiyac-talep-formu",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-KABUL_EDILEN_TEKLIF",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/kabul-edilen-teklif",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'kabul-edilen-teklif/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/kabul-edilen-teklif/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-KABUL_EDILEN_TEKLIF",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/kabul-edilen-teklif",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-KIK048_YAPIM_GECICI_KABUL_TEKLIF",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/kik048-yapim-gecici-kabul-teklif",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'kik048-yapim-gecici-kabul-teklif/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/kik048-yapim-gecici-kabul-teklif/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-KIK048_YAPIM_GECICI_KABUL_TEKLIF",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/kik048-yapim-gecici-kabul-teklif",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-KIK049_YAPIM_GECICI_KABUL_TUTANAGI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/kik049-yapim-gecici-kabul-tutanagi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'kik049-yapim-gecici-kabul-tutanagi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/kik049-yapim-gecici-kabul-tutanagi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-KIK049_YAPIM_GECICI_KABUL_TUTANAGI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/kik049-yapim-gecici-kabul-tutanagi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-KIK050_YAPIM_KESIN_KABUL_TEKLIF",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/kik050-yapim-kesin-kabul-teklif",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'kik050-yapim-kesin-kabul-teklif/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/kik050-yapim-kesin-kabul-teklif/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-KIK050_YAPIM_KESIN_KABUL_TEKLIF",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/kik050-yapim-kesin-kabul-teklif",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-KIK051_YAPIM_KESIN_KABUL_TUTANAGI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/kik051-yapim-kesin-kabul-tutanagi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'kik051-yapim-kesin-kabul-tutanagi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/kik051-yapim-kesin-kabul-tutanagi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-KIK051_YAPIM_KESIN_KABUL_TUTANAGI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/kik051-yapim-kesin-kabul-tutanagi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-KOMISYON_GOREVLENDIRME_ONAYI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/komisyon-gorevlendirme-onayi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'komisyon-gorevlendirme-onayi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/komisyon-gorevlendirme-onayi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-KOMISYON_GOREVLENDIRME_ONAYI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/komisyon-gorevlendirme-onayi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-KOMISYON_GOREVLENDIRME_ONAYI_EKI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/komisyon-gorevlendirme-onayi-eki",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'komisyon-gorevlendirme-onayi-eki/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/komisyon-gorevlendirme-onayi-eki/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-KOMISYON_GOREVLENDIRME_ONAYI_EKI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/komisyon-gorevlendirme-onayi-eki",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-LUZUM_MUZEKKERESI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/luzum-muzekkeresi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'luzum-muzekkeresi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/luzum-muzekkeresi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-LUZUM_MUZEKKERESI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/luzum-muzekkeresi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-LUZUM_MUZEKKERESI_ONAY_EKI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/luzum-muzekkeresi-onay-eki",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'luzum-muzekkeresi-onay-eki/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/luzum-muzekkeresi-onay-eki/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-LUZUM_MUZEKKERESI_ONAY_EKI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/luzum-muzekkeresi-onay-eki",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-LUZUM_MUZEKKERESI_TESLIM_TESELLUM",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/luzum-muzekkeresi-teslim-tesellum",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'luzum-muzekkeresi-teslim-tesellum/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/luzum-muzekkeresi-teslim-tesellum/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-LUZUM_MUZEKKERESI_TESLIM_TESELLUM",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/luzum-muzekkeresi-teslim-tesellum",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-MUAYENE_KABUL_KOMISYONU",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/muayene-kabul-komisyonu",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'muayene-kabul-komisyonu/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/muayene-kabul-komisyonu/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-MUAYENE_KABUL_KOMISYONU",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/muayene-kabul-komisyonu",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-MUAYENE_KABUL_TUTANAGI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/muayene-kabul-tutanagi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'muayene-kabul-tutanagi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/muayene-kabul-tutanagi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-MUAYENE_KABUL_TUTANAGI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/muayene-kabul-tutanagi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-ODEME_YAZISI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/odeme-yazisi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'odeme-yazisi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/odeme-yazisi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-ODEME_YAZISI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/odeme-yazisi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-PIYASA_FIYAT_ARASTIRMA_GOREVLENDIRMESI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/piyasa-fiyat-arastirma-gorevlendirmesi",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'piyasa-fiyat-arastirma-gorevlendirmesi/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/piyasa-fiyat-arastirma-gorevlendirmesi/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-PIYASA_FIYAT_ARASTIRMA_GOREVLENDIRMESI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/piyasa-fiyat-arastirma-gorevlendirmesi",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-SON_ALIM_FIYAT_CETVELI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/son-alim-fiyat-cetveli",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'son-alim-fiyat-cetveli/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/son-alim-fiyat-cetveli/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-SON_ALIM_FIYAT_CETVELI",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/son-alim-fiyat-cetveli",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-SOZLESMEYE_DAVET",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/sozlesmeye-davet",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'sozlesmeye-davet/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/sozlesmeye-davet/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-SOZLESMEYE_DAVET",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/sozlesmeye-davet",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-TASINIR_KAYIT_YETKILISI_GORUSU",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/tasinir-kayit-yetkilisi-gorusu",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'tasinir-kayit-yetkilisi-gorusu/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/tasinir-kayit-yetkilisi-gorusu/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-TASINIR_KAYIT_YETKILISI_GORUSU",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/tasinir-kayit-yetkilisi-gorusu",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-TEKNIK_SARTNAME",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/teknik-sartname",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'teknik-sartname/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/teknik-sartname/__tests__/route.test.ts"
+    },
+    {
+      "id": "TMPL-NO-TESTS-TEKNIK_SARTNAME",
+      "priority": "P1",
+      "file": "packages/document-templates/src/templates/teknik-sartname",
+      "evidence": "Template has no co-located __tests__ directory or test files (*.test.tsx).",
+      "affectedModules": [
+        "@temin360/document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablon için __tests__/template.test.tsx, mapping.test.ts ve route.test.ts testleri eklenmelidir.",
+      "requiredRegressionTests": "pnpm --filter @temin360/document-templates test"
+    },
+    {
+      "id": "TMPL-NO-ROUTE-DEF-YAKLASIK_MALIYET_CETVELI",
+      "priority": "P2",
+      "file": "packages/document-templates/src/templates/yaklasik-maliyet-cetveli",
+      "evidence": "Template does not have a co-located 'route.definition.ts'. Relies on centralized fallback routing.",
+      "affectedModules": [
+        "@temin360/document-templates",
+        "route-registry"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Şablonun paraf, koordinasyon ve imza rota kuralları 'yaklasik-maliyet-cetveli/route.definition.ts' dosyasına taşınmalı ve RouteRegistry'e kaydedilmelidir.",
+      "requiredRegressionTests": "packages/document-templates/src/templates/yaklasik-maliyet-cetveli/__tests__/route.test.ts"
+    },
+    {
+      "id": "GOD-COMPONENT-INSPECTIONTIMELINE",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/components/audit/InspectionTimeline.tsx:L1",
+      "evidence": "God Component Score: 584 (Satır: 632, State: 7, Effect: 1, Toplam Hook: 11, Import: 3, Doğrudan IPC: 9)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-A4EDITOR",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/components/editor/A4Editor.tsx:L1",
+      "evidence": "God Component Score: 451 (Satır: 590, State: 9, Effect: 1, Toplam Hook: 13, Import: 10, Doğrudan IPC: 1)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-HESAPCETVELIGRID",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/components/editor/HesapCetveliGrid.tsx:L1",
+      "evidence": "God Component Score: 316 (Satır: 568, State: 5, Effect: 0, Toplam Hook: 7, Import: 2, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-WORKSPACECLOSEMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/components/layout/WorkspaceCloseModal.tsx:L1",
+      "evidence": "God Component Score: 519 (Satır: 603, State: 7, Effect: 1, Toplam Hook: 8, Import: 4, Doğrudan IPC: 7)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-SAYIYIYAZIYACEVIRMODAL",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/components/modals/SayiyiYaziyaCevirModal.tsx:L1",
+      "evidence": "God Component Score: 321 (Satır: 514, State: 7, Effect: 0, Toplam Hook: 7, Import: 5, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-AITEXTGENERATORMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/components/ui/AITextGeneratorModal.tsx:L1",
+      "evidence": "God Component Score: 355 (Satır: 562, State: 5, Effect: 1, Toplam Hook: 6, Import: 5, Doğrudan IPC: 1)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-TIFOLUSTURMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/components/ui/TifOlusturModal.tsx:L1",
+      "evidence": "God Component Score: 527 (Satır: 524, State: 14, Effect: 1, Toplam Hook: 16, Import: 6, Doğrudan IPC: 3)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-ROUTES",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/routes.tsx:L1",
+      "evidence": "God Component Score: 285 (Satır: 692, State: 0, Effect: 0, Toplam Hook: 0, Import: 4, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DOCUMENTTHEMESECTIONS",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ayarlar/components/document-theme/DocumentThemeSections.tsx:L1",
+      "evidence": "God Component Score: 242 (Satır: 586, State: 0, Effect: 0, Toplam Hook: 0, Import: 4, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-BELGELERIMSCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/belgelerim/BelgelerimScreen.tsx:L1",
+      "evidence": "God Component Score: 619 (Satır: 818, State: 17, Effect: 1, Toplam Hook: 18, Import: 6, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-BELGEEDITORMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/belgelerim/components/BelgeEditorModal.tsx:L1",
+      "evidence": "God Component Score: 623 (Satır: 585, State: 20, Effect: 3, Toplam Hook: 23, Import: 7, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DASHBOARDHEROV3",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dashboard/components/DashboardHeroV3.tsx:L1",
+      "evidence": "God Component Score: 259 (Satır: 561, State: 1, Effect: 0, Toplam Hook: 2, Import: 5, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-KIKLIMITVEBIRIMANALIZSECTION",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dashboard/components/KikLimitVeBirimAnalizSection.tsx:L1",
+      "evidence": "God Component Score: 307 (Satır: 679, State: 1, Effect: 0, Toplam Hook: 2, Import: 5, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-PILLARSPIYASAFIYATTABLE",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dashboard/components/PillarsPiyasaFiyatTable.tsx:L1",
+      "evidence": "God Component Score: 474 (Satır: 631, State: 4, Effect: 1, Toplam Hook: 13, Import: 6, Doğrudan IPC: 3)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-PIYASAFIYATARASTIRMASIMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dashboard/components/PiyasaFiyatArastirmasiModal.tsx:L1",
+      "evidence": "God Component Score: 519 (Satır: 707, State: 6, Effect: 1, Toplam Hook: 13, Import: 8, Doğrudan IPC: 3)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-PROCUREMENTMETHODSSUMMARY",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dashboard/components/ProcurementMethodsSummary.tsx:L1",
+      "evidence": "God Component Score: 356 (Satır: 761, State: 2, Effect: 0, Toplam Hook: 3, Import: 6, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-PIYASAFIYATARASTIRMASISCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dashboard/PiyasaFiyatArastirmasiScreen.tsx:L1",
+      "evidence": "God Component Score: 581 (Satır: 807, State: 6, Effect: 1, Toplam Hook: 15, Import: 9, Doğrudan IPC: 3)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DOCUMENTPREVIEWHEADER",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/components/DocumentPreviewHeader.tsx:L1",
+      "evidence": "God Component Score: 254 (Satır: 564, State: 0, Effect: 0, Toplam Hook: 2, Import: 4, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DOCUMENTPREVIEWROTASECTION",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/components/DocumentPreviewRotaSection.tsx:L1",
+      "evidence": "God Component Score: 795 (Satır: 1607, State: 5, Effect: 1, Toplam Hook: 14, Import: 6, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DOCUMENTPREVIEWSIDEBAR",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/components/DocumentPreviewSidebar.tsx:L1",
+      "evidence": "God Component Score: 507 (Satır: 1039, State: 3, Effect: 0, Toplam Hook: 7, Import: 8, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-IHTIYACRAPORUBAGLAMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/components/MalzemeListesi/components/IhtiyacRaporuBaglaModal.tsx:L1",
+      "evidence": "God Component Score: 583 (Satır: 753, State: 14, Effect: 2, Toplam Hook: 18, Import: 6, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DATATABLETAB",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/database-browser/DataTableTab.tsx:L1",
+      "evidence": "God Component Score: 524 (Satır: 914, State: 4, Effect: 3, Toplam Hook: 11, Import: 4, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-BELGELISTESI",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/DosyaAsamalari/components/BelgeListesi.tsx:L1",
+      "evidence": "God Component Score: 250 (Satır: 610, State: 0, Effect: 0, Toplam Hook: 0, Import: 3, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-FIRMALARATEKLIFMEKTUBUMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/DosyaAsamalari/components/FirmalaraTeklifMektubuModal.tsx:L1",
+      "evidence": "God Component Score: 571 (Satır: 705, State: 6, Effect: 1, Toplam Hook: 10, Import: 7, Doğrudan IPC: 7)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-KABULFATURAHAKEDISCARD",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/DosyaAsamalari/components/KabulVeOdeme/KabulFaturaHakedisCard.tsx:L1",
+      "evidence": "God Component Score: 428 (Satır: 509, State: 7, Effect: 3, Toplam Hook: 16, Import: 7, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-KABULTUTANAKMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/DosyaAsamalari/components/KabulVeOdeme/KabulTutanakModal.tsx:L1",
+      "evidence": "God Component Score: 450 (Satır: 539, State: 13, Effect: 1, Toplam Hook: 14, Import: 7, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-BUTCEVEODENEKCARD",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/DosyaAsamalari/components/SiparisVeSozlesme/ButceVeOdenekCard.tsx:L1",
+      "evidence": "God Component Score: 483 (Satır: 543, State: 9, Effect: 1, Toplam Hook: 10, Import: 3, Doğrudan IPC: 5)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-FATURAVEIRSALIYE",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/FaturaVeIrsaliye.tsx:L1",
+      "evidence": "God Component Score: 292 (Satır: 528, State: 5, Effect: 0, Toplam Hook: 5, Import: 3, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-IMZALIBELGELER",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/sub-screens/ImzaliBelgeler.tsx:L1",
+      "evidence": "God Component Score: 427 (Satır: 518, State: 5, Effect: 1, Toplam Hook: 7, Import: 5, Doğrudan IPC: 5)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DOSYAHIZLIICERIKPOPOVER",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosyalar/components/DosyaHizliIcerikPopover.tsx:L1",
+      "evidence": "God Component Score: 446 (Satır: 574, State: 2, Effect: 0, Toplam Hook: 7, Import: 8, Doğrudan IPC: 6)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-ESKIDOSYAKOPYALAMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosyalar/components/EskiDosyaKopyalaModal.tsx:L1",
+      "evidence": "God Component Score: 362 (Satır: 551, State: 7, Effect: 1, Toplam Hook: 8, Import: 6, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-IHALEVETEKLIFFINANSALSECTION",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosyalar/tabs/components/genel-bilgiler/IhaleVeTeklifFinansalSection.tsx:L1",
+      "evidence": "God Component Score: 370 (Satır: 635, State: 1, Effect: 1, Toplam Hook: 6, Import: 8, Doğrudan IPC: 1)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-IHTIYACLISTESITAB",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosyalar/tabs/IhtiyacListesiTab.tsx:L1",
+      "evidence": "God Component Score: 409 (Satır: 685, State: 2, Effect: 1, Toplam Hook: 7, Import: 10, Doğrudan IPC: 1)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-USTYAZIFORMPANEL",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ebys/components/resmi-ust-yazi/UstYaziFormPanel.tsx:L1",
+      "evidence": "God Component Score: 264 (Satır: 646, State: 0, Effect: 0, Toplam Hook: 0, Import: 3, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-FIRMADETAIL",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/firmalar/components/FirmaDetail.tsx:L1",
+      "evidence": "God Component Score: 274 (Satır: 518, State: 3, Effect: 0, Toplam Hook: 4, Import: 6, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-FIRMAESLESTIRMEMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/firmalar/components/FirmaEslestirmeModal.tsx:L1",
+      "evidence": "God Component Score: 981 (Satır: 1195, State: 16, Effect: 2, Toplam Hook: 24, Import: 9, Doğrudan IPC: 8)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-FIRMAGECMISTEMINLER",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/firmalar/components/FirmaGecmisTeminler.tsx:L1",
+      "evidence": "God Component Score: 384 (Satır: 528, State: 6, Effect: 1, Toplam Hook: 9, Import: 4, Doğrudan IPC: 2)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-INDEX_SCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/firmalar/index.screen.tsx:L1",
+      "evidence": "God Component Score: 492 (Satır: 511, State: 9, Effect: 1, Toplam Hook: 12, Import: 14, Doğrudan IPC: 4)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-IHTIYACRAPORUEDITORVIEW",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/components/IhtiyacRaporuEditorView.tsx:L1",
+      "evidence": "God Component Score: 1046 (Satır: 1281, State: 25, Effect: 5, Toplam Hook: 34, Import: 7, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-IHTIYACRAPORULIST",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/components/IhtiyacRaporuList.tsx:L1",
+      "evidence": "God Component Score: 262 (Satır: 570, State: 0, Effect: 0, Toplam Hook: 2, Import: 7, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-YIUFEFIYATGUNCELLEMEMODAL",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/components/YiUfeFiyatGuncellemeModal.tsx:L1",
+      "evidence": "God Component Score: 444 (Satır: 568, State: 9, Effect: 1, Toplam Hook: 19, Import: 6, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-IHTIYACRAPORLARISCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/IhtiyacRaporlariScreen.tsx:L1",
+      "evidence": "God Component Score: 698 (Satır: 653, State: 14, Effect: 4, Toplam Hook: 29, Import: 11, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-PERSONELGOREVDAGILIMITAB",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/komisyonlar/components/PersonelGorevDagilimiTab.tsx:L1",
+      "evidence": "God Component Score: 686 (Satır: 1165, State: 12, Effect: 0, Toplam Hook: 16, Import: 5, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DETAY_SCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/komisyonlar/detay.screen.tsx:L1",
+      "evidence": "God Component Score: 532 (Satır: 538, State: 7, Effect: 0, Toplam Hook: 11, Import: 6, Doğrudan IPC: 8)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-IDARIBILGILERTAB",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/kurum/components/IdariBilgilerTab.tsx:L1",
+      "evidence": "God Component Score: 306 (Satır: 658, State: 1, Effect: 0, Toplam Hook: 2, Import: 9, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-MODULDETAILVIEW",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/modul-magazasi/components/ModulDetailView.tsx:L1",
+      "evidence": "God Component Score: 389 (Satır: 723, State: 4, Effect: 0, Toplam Hook: 6, Import: 10, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-PERSONELIZINMERKEZIVIEW",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/personel/components/PersonelIzinMerkeziView.tsx:L1",
+      "evidence": "God Component Score: 516 (Satır: 758, State: 11, Effect: 0, Toplam Hook: 17, Import: 4, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DETAY_SCREEN",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/pozlar/detay.screen.tsx:L1",
+      "evidence": "God Component Score: 272 (Satır: 519, State: 0, Effect: 0, Toplam Hook: 7, Import: 7, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-INDEX_SCREEN",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/pozlar/index.screen.tsx:L1",
+      "evidence": "God Component Score: 313 (Satır: 503, State: 4, Effect: 0, Toplam Hook: 8, Import: 11, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-PROJEDETAILMODAL",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/projeler/components/ProjeDetailModal.tsx:L1",
+      "evidence": "God Component Score: 221 (Satır: 512, State: 0, Effect: 0, Toplam Hook: 0, Import: 8, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-DOSYAMUHTEVIYATVIEW",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/raporlar/components/DosyaMuhteviyatView.tsx:L1",
+      "evidence": "God Component Score: 394 (Satır: 586, State: 4, Effect: 1, Toplam Hook: 6, Import: 5, Doğrudan IPC: 3)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-OLAYORGUSUTIMELINEVIEW",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/raporlar/components/OlayOrgusuTimelineView.tsx:L1",
+      "evidence": "God Component Score: 369 (Satır: 627, State: 4, Effect: 1, Toplam Hook: 6, Import: 4, Doğrudan IPC: 1)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-INDEX_SCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/rota-yonetimi/index.screen.tsx:L1",
+      "evidence": "God Component Score: 560 (Satır: 682, State: 10, Effect: 3, Toplam Hook: 19, Import: 11, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-FORMBUILDERV2PLAYGROUND",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/sablonlar/components/FormBuilderV2Playground.tsx:L1",
+      "evidence": "God Component Score: 552 (Satır: 506, State: 22, Effect: 0, Toplam Hook: 23, Import: 5, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-SABLONEDITOR",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/sablonlar/components/SablonEditor.tsx:L1",
+      "evidence": "God Component Score: 694 (Satır: 519, State: 11, Effect: 2, Toplam Hook: 16, Import: 13, Doğrudan IPC: 11)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-HARICIDOSYAAKTARSCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/harici-aktarim/HariciDosyaAktarScreen.tsx:L1",
+      "evidence": "God Component Score: 929 (Satır: 1504, State: 13, Effect: 1, Toplam Hook: 21, Import: 11, Doğrudan IPC: 3)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-FIYATFARKITAB",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/mevzuat/tabs/FiyatFarkiTab.tsx:L1",
+      "evidence": "God Component Score: 459 (Satır: 622, State: 11, Effect: 1, Toplam Hook: 13, Import: 5, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-BELGEAYARLARIPANELI",
+      "priority": "P1",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/surec-akisi/components/BelgeAyarlariPaneli.tsx:L1",
+      "evidence": "God Component Score: 342 (Satır: 589, State: 2, Effect: 2, Toplam Hook: 5, Import: 8, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-YENINESILBELGESTUDYOSUTAB",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/surec-akisi/components/YeniNesilBelgeStudyosuTab.tsx:L1",
+      "evidence": "God Component Score: 505 (Satır: 682, State: 8, Effect: 2, Toplam Hook: 19, Import: 11, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-TAKIPDOSYADETAYDIALOG",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/takip/components/TakipDosyaDetayDialog.tsx:L1",
+      "evidence": "God Component Score: 355 (Satır: 534, State: 4, Effect: 1, Toplam Hook: 5, Import: 8, Doğrudan IPC: 2)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-TAKIPGENELMETRIKVIEW",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/takip/components/TakipGenelMetrikView.tsx:L1",
+      "evidence": "God Component Score: 431 (Satır: 782, State: 4, Effect: 0, Toplam Hook: 14, Import: 4, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-TAKIPKANBANBOARD",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/takip/components/TakipKanbanBoard.tsx:L1",
+      "evidence": "God Component Score: 409 (Satır: 532, State: 9, Effect: 0, Toplam Hook: 13, Import: 8, Doğrudan IPC: 1)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-TAKIP_SCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/takip/takip.screen.tsx:L1",
+      "evidence": "God Component Score: 449 (Satır: 587, State: 7, Effect: 1, Toplam Hook: 13, Import: 22, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-TASLAK_YONETICISI_SCREEN",
+      "priority": "P0",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/system/taslak-yoneticisi/taslak-yoneticisi.screen.tsx:L1",
+      "evidence": "God Component Score: 588 (Satır: 586, State: 10, Effect: 2, Toplam Hook: 19, Import: 12, Doğrudan IPC: 4)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter temin360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-APP",
+      "priority": "P0",
+      "file": "apps/flowdesk-desktop/src/renderer/src/App.tsx:L1",
+      "evidence": "God Component Score: 950 (Satır: 1491, State: 19, Effect: 2, Toplam Hook: 24, Import: 2, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "flowdesk-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter flowdesk-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-APP",
+      "priority": "P0",
+      "file": "apps/personel360-desktop/src/renderer/src/App.tsx:L1",
+      "evidence": "God Component Score: 782 (Satır: 953, State: 14, Effect: 1, Toplam Hook: 15, Import: 3, Doğrudan IPC: 8)",
+      "affectedModules": [
+        "personel360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter personel360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-APP",
+      "priority": "P0",
+      "file": "apps/disk-analiz-360-desktop/src/renderer/src/App.tsx:L1",
+      "evidence": "God Component Score: 1599 (Satır: 2395, State: 33, Effect: 4, Toplam Hook: 43, Import: 8, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "disk-analiz-360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter disk-analiz-360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-PYTHONREPORTSANDCLEANERVIEW",
+      "priority": "P0",
+      "file": "apps/disk-analiz-360-desktop/src/renderer/src/components/PythonReportsAndCleanerView.tsx:L1",
+      "evidence": "God Component Score: 466 (Satır: 727, State: 9, Effect: 1, Toplam Hook: 11, Import: 5, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "disk-analiz-360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter disk-analiz-360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-SMARTARCHIVEEXPLORERVIEW",
+      "priority": "P0",
+      "file": "apps/disk-analiz-360-desktop/src/renderer/src/components/SmartArchiveExplorerView.tsx:L1",
+      "evidence": "God Component Score: 741 (Satır: 1065, State: 16, Effect: 2, Toplam Hook: 21, Import: 5, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "disk-analiz-360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter disk-analiz-360-desktop test"
+    },
+    {
+      "id": "GOD-COMPONENT-SMARTARCHIVEWORKSPACEVIEW",
+      "priority": "P0",
+      "file": "apps/disk-analiz-360-desktop/src/renderer/src/components/SmartArchiveWorkspaceView.tsx:L1",
+      "evidence": "God Component Score: 1375 (Satır: 2006, State: 29, Effect: 4, Toplam Hook: 39, Import: 4, Doğrudan IPC: 0)",
+      "affectedModules": [
+        "disk-analiz-360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Bileşen mimari sorumluluklarına göre parçalanmalı: 1) Veri getirme ve IPC mantığı özel bir Custom Hook'a taşınmalı, 2) Alt paneller bağımsız saf sunum bileşenlerine (Presenter Components) ayrılmalıdır.",
+      "requiredRegressionTests": "pnpm --filter disk-analiz-360-desktop test"
+    },
+    {
+      "id": "DUP-STRUCTURAL-CLONE-1",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/main/ipc/document/documentUtils.ts:L53",
+      "evidence": "Identical AST structure (9 statements) duplicated across 2 files: apps/temin360-desktop/src/main/ipc/document/documentUtils.ts:53 (convertNumberGroup) <=> packages/document-templates/src/document/sayiyiYaziyaCevir.ts:16 (convertGroup)",
+      "affectedModules": [
+        "temin360-desktop",
+        "document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Yapısal olarak birebir aynı olan bu mantık ortak bir yardımcı fonksiyona (utility/helper) veya paylaşılan bir pakete çıkartılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DUP-STRUCTURAL-CLONE-2",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosyalar/tabs/components/genel-bilgiler/components/TarihlerVeBirimFields.tsx:L6",
+      "evidence": "Identical AST structure (8 statements) duplicated across 2 files: apps/temin360-desktop/src/renderer/src/screens/dosyalar/tabs/components/genel-bilgiler/components/TarihlerVeBirimFields.tsx:6 (formatDateTimeLocal) <=> apps/temin360-desktop/src/renderer/src/screens/dosyalar/tabs/components/genel-bilgiler/SorumlularVeSurecTarihleriSection.tsx:7 (formatDateTimeLocal)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Yapısal olarak birebir aynı olan bu mantık ortak bir yardımcı fonksiyona (utility/helper) veya paylaşılan bir pakete çıkartılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DUP-STRUCTURAL-CLONE-3",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/tabs/LuzumMuzekkeresiTab.tsx:L17",
+      "evidence": "Identical AST structure (10 statements) duplicated across 2 files: apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/tabs/LuzumMuzekkeresiTab.tsx:17 (LuzumMuzekkeresiTab) <=> apps/temin360-desktop/src/renderer/src/screens/ihtiyac-raporlari/tabs/LuzumOnayEkiTab.tsx:17 (LuzumOnayEkiTab)",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Yapısal olarak birebir aynı olan bu mantık ortak bir yardımcı fonksiyona (utility/helper) veya paylaşılan bir pakete çıkartılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DUP-STRUCTURAL-CLONE-4",
+      "priority": "P2",
+      "file": "packages/document-templates/src/engine/renderers/IhtiyacListesiRenderer.tsx:L9",
+      "evidence": "Identical AST structure (9 statements) duplicated across 2 files: packages/document-templates/src/engine/renderers/IhtiyacListesiRenderer.tsx:9 (IhtiyacListesiRenderer) <=> packages/document-templates/src/engine/renderers/LuzumMuzekkeresiRenderer.tsx:9 (LuzumMuzekkeresiRenderer)",
+      "affectedModules": [
+        "document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Yapısal olarak birebir aynı olan bu mantık ortak bir yardımcı fonksiyona (utility/helper) veya paylaşılan bir pakete çıkartılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-TOKENIZESQL",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/main/ipc/utils/sqlGuard.ts:L84",
+      "evidence": "Exported function 'tokenizeSql' in 'apps/temin360-desktop/src/main/ipc/utils/sqlGuard.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-PRESERVE_FIELDS",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewData/refreshPolicy.ts:L9",
+      "evidence": "Exported const 'PRESERVE_FIELDS' in 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewData/refreshPolicy.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-SOURCE_FIELDS",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewData/refreshPolicy.ts:L49",
+      "evidence": "Exported const 'SOURCE_FIELDS' in 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewData/refreshPolicy.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-LOADDOCUMENTPREVIEWDATA",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewDataLoader.ts:L15",
+      "evidence": "Exported function 'loadDocumentPreviewData' in 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewDataLoader.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-IHTIYAC_RAPORU_TEMPLATES",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/sourceResolvers.ts:L13",
+      "evidence": "Exported const 'IHTIYAC_RAPORU_TEMPLATES' in 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/sourceResolvers.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DOSYARESOLVER",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/sourceResolvers.ts:L66",
+      "evidence": "Exported const 'dosyaResolver' in 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/sourceResolvers.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DIFFNEWTEMPLATEFROMBUFFER",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/services/ekapTemplateService.ts:L373",
+      "evidence": "Exported function 'diffNewTemplateFromBuffer' in 'apps/temin360-desktop/src/renderer/src/services/ekapTemplateService.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-GETGLOBALQUERYCLIENT",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/appEvents.ts:L50",
+      "evidence": "Exported function 'getGlobalQueryClient' in 'apps/temin360-desktop/src/renderer/src/utils/appEvents.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-TOKENIZEFORMULA",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/engine/formulaParser.ts:L79",
+      "evidence": "Exported function 'tokenizeFormula' in 'apps/temin360-desktop/src/renderer/src/utils/engine/formulaParser.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-EVALUATEAST",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/engine/formulaParser.ts:L328",
+      "evidence": "Exported function 'evaluateAST' in 'apps/temin360-desktop/src/renderer/src/utils/engine/formulaParser.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-CALISTIRKURALLAR",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/engine/ruleEngine.ts:L68",
+      "evidence": "Exported function 'calistirKurallar' in 'apps/temin360-desktop/src/renderer/src/utils/engine/ruleEngine.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-STANDART_KURAL_KATALOGU",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/engine/standardFormulas.ts:L103",
+      "evidence": "Exported const 'STANDART_KURAL_KATALOGU' in 'apps/temin360-desktop/src/renderer/src/utils/engine/standardFormulas.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-FORMATPARA",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/formatters.ts:L63",
+      "evidence": "Exported const 'formatPara' in 'apps/temin360-desktop/src/renderer/src/utils/formatters.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLATEVKIFAT",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/hesaplamalar.ts:L34",
+      "evidence": "Exported const 'hesaplaTevkifat' in 'apps/temin360-desktop/src/renderer/src/utils/hesaplamalar.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-KAYDETAKILLIVARSAYILANLAR",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/akilliVarsayilanlarUtils.ts:L21",
+      "evidence": "Exported function 'kaydetAkilliVarsayilanlar' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/akilliVarsayilanlarUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-OKUAKILLIVARSAYILANLAR",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/akilliVarsayilanlarUtils.ts:L31",
+      "evidence": "Exported function 'okuAkilliVarsayilanlar' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/akilliVarsayilanlarUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-VALIDATETCKIMLIKNO",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts:L15",
+      "evidence": "Exported function 'validateTCKimlikNo' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-VALIDATEVERGIKIMLIKNO",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts:L58",
+      "evidence": "Exported function 'validateVergiKimlikNo' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-VALIDATETR_IBAN",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts:L90",
+      "evidence": "Exported function 'validateTR_IBAN' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-FORMATTURKISHPHONE",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts:L136",
+      "evidence": "Exported function 'formatTurkishPhone' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-FORMATPLAKA",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts:L157",
+      "evidence": "Exported function 'formatPlaka' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DENETLETARIHSIRALAMASI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts:L185",
+      "evidence": "Exported function 'denetleTarihSiralamasi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/dogrulamaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DENETLEBELGEGECERLILIGI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/firmaVeFiyatKatalogUtils.ts:L68",
+      "evidence": "Exported function 'denetleBelgeGecerliligi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/firmaVeFiyatKatalogUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-OZETLEFIRMABELGEDURUMU",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/firmaVeFiyatKatalogUtils.ts:L112",
+      "evidence": "Exported function 'ozetleFirmaBelgeDurumu' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/firmaVeFiyatKatalogUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-ANALIZETFIYATGECMISI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/firmaVeFiyatKatalogUtils.ts:L179",
+      "evidence": "Exported function 'analizEtFiyatGecmisi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/firmaVeFiyatKatalogUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-URETKARSILASTIRMAMATRISI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/firmaVeFiyatKatalogUtils.ts:L246",
+      "evidence": "Exported function 'uretKarsilastirmaMatrisi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/firmaVeFiyatKatalogUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-GETFOTOGRAFTURUETIKETI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/fotografVeEkUtils.ts:L38",
+      "evidence": "Exported function 'getFotografTuruEtiketi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/fotografVeEkUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-FORMATFOTOMETADATAOZETI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/fotografVeEkUtils.ts:L60",
+      "evidence": "Exported function 'formatFotoMetadataOzeti' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/fotografVeEkUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLACOKGENALANI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts:L22",
+      "evidence": "Exported function 'hesaplaCokgenAlani' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DONUSTURALAN",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts:L42",
+      "evidence": "Exported function 'donusturAlan' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DONUSTURHACIM",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts:L84",
+      "evidence": "Exported function 'donusturHacim' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DONUSTURAGIRLIK",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts:L94",
+      "evidence": "Exported function 'donusturAgirlik' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLAIMARGOSTERGELERI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts:L117",
+      "evidence": "Exported function 'hesaplaImarGostergeleri' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLAARSAPAYI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts:L137",
+      "evidence": "Exported function 'hesaplaArsaPayi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/geometriVeAlanUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-OLUSTURDENETIMKAYDI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L44",
+      "evidence": "Exported function 'olusturDenetimKaydi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLASHA256",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L69",
+      "evidence": "Exported function 'hesaplaSha256' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-MUHURLEDOSYAVERISI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L81",
+      "evidence": "Exported function 'muhurleDosyaVerisi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DOGRULAMUHURBUTUNLUGU",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L99",
+      "evidence": "Exported function 'dogrulaMuhurButunlugu' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-MASKTCKN",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L127",
+      "evidence": "Exported function 'maskTCKN' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-MASKIBAN",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L134",
+      "evidence": "Exported function 'maskIBAN' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-MASKTELEFON",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L141",
+      "evidence": "Exported function 'maskTelefon' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-MASKADSOYAD",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L148",
+      "evidence": "Exported function 'maskAdSoyad' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-SIFRELEHASSASMETIN",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L161",
+      "evidence": "Exported function 'sifreleHassasMetin' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-COZHASSASMETIN",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L200",
+      "evidence": "Exported function 'cozHassasMetin' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-URETYEDEKDOSYAADI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts:L243",
+      "evidence": "Exported function 'uretYedekDosyaAdi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/guvenlikVeDenetimUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-URETOPENSTREETMAPURL",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/haritaVeKonumUtils.ts:L29",
+      "evidence": "Exported function 'uretOpenStreetMapUrl' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/haritaVeKonumUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-URETGOOGLEMAPSURL",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/haritaVeKonumUtils.ts:L36",
+      "evidence": "Exported function 'uretGoogleMapsUrl' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/haritaVeKonumUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-URETTKGMPARSELSORGUURL",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/haritaVeKonumUtils.ts:L43",
+      "evidence": "Exported function 'uretTkgmParselSorguUrl' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/haritaVeKonumUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLAGPSMESAFEMETRE",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/haritaVeKonumUtils.ts:L60",
+      "evidence": "Exported function 'hesaplaGpsMesafeMetre' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/haritaVeKonumUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLATEMINATLAR",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:L201",
+      "evidence": "Exported function 'hesaplaTeminatlar' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLAAVANSMAHSUBU",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts:L235",
+      "evidence": "Exported function 'hesaplaAvansMahsubu' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/maliHesaplamalarUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-MEVZUAT_PARAMETRELERI_TABLOSU",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/parametreDeposu.ts:L145",
+      "evidence": "Exported const 'MEVZUAT_PARAMETRELERI_TABLOSU' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/parametreDeposu.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-GETMEVZUATPARAMETRELERI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/parametreDeposu.ts:L248",
+      "evidence": "Exported function 'getMevzuatParametreleri' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/parametreDeposu.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-TURKIYE_RESMI_TATILLER",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/sureHesaplayici.ts:L17",
+      "evidence": "Exported const 'TURKIYE_RESMI_TATILLER' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/sureHesaplayici.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-ISRESMITATILVEYAHAFTASONU",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/sureHesaplayici.ts:L96",
+      "evidence": "Exported function 'isResmiTatilVeyaHaftasonu' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/sureHesaplayici.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-EKLETAKVIMGUNUMEVZUATUYARLAMALI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/sureHesaplayici.ts:L133",
+      "evidence": "Exported function 'ekleTakvimGunuMevzuatUyarlamali' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/sureHesaplayici.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLAGUNFARKI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/sureHesaplayici.ts:L151",
+      "evidence": "Exported function 'hesaplaGunFarki' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/sureHesaplayici.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-URETICALENDARDOSYASI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/takvimVeEpostaUtils.ts:L23",
+      "evidence": "Exported function 'uretICalendarDosyasi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/takvimVeEpostaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-INDIRICALENDARDOSYASI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/takvimVeEpostaUtils.ts:L70",
+      "evidence": "Exported function 'indirICalendarDosyasi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/takvimVeEpostaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-URETGOOGLECALENDARURL",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/takvimVeEpostaUtils.ts:L87",
+      "evidence": "Exported function 'uretGoogleCalendarUrl' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/takvimVeEpostaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-URETFIYATTEKLIFEPOSTASI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/takvimVeEpostaUtils.ts:L121",
+      "evidence": "Exported function 'uretFiyatTeklifEpostasi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/takvimVeEpostaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-KAYDETFORMTASLAGI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/taslakKurtarmaUtils.ts:L20",
+      "evidence": "Exported function 'kaydetFormTaslagi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/taslakKurtarmaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-OKUFORMTASLAGI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/taslakKurtarmaUtils.ts:L37",
+      "evidence": "Exported function 'okuFormTaslagi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/taslakKurtarmaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-TEMIZLEFORMTASLAGI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/taslakKurtarmaUtils.ts:L50",
+      "evidence": "Exported function 'temizleFormTaslagi' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/taslakKurtarmaUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLAMEDYAN",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/yaklasikMaliyetVeFiyatUtils.ts:L36",
+      "evidence": "Exported function 'hesaplaMedyan' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/yaklasikMaliyetVeFiyatUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-DENETLEISARTISEKSILIS",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/yapimVePersonelUtils.ts:L32",
+      "evidence": "Exported function 'denetleIsArtisEksilis' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/yapimVePersonelUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-HESAPLAISCILIKYAKLASIKMALIYETI",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/ihale/yapimVePersonelUtils.ts:L103",
+      "evidence": "Exported function 'hesaplaIscilikYaklasikMaliyeti' in 'apps/temin360-desktop/src/renderer/src/utils/ihale/yapimVePersonelUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-KURUMKODUALGILA",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/kurum-kodu.ts:L10",
+      "evidence": "Exported function 'kurumKoduAlgila' in 'apps/temin360-desktop/src/renderer/src/utils/kurum-kodu.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-ESKIDENYENIYE",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/kurum-kodu.ts:L47",
+      "evidence": "Exported function 'eskidenYeniye' in 'apps/temin360-desktop/src/renderer/src/utils/kurum-kodu.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-YENIDENTESKIYE",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/kurum-kodu.ts:L51",
+      "evidence": "Exported function 'yenidentEskiye' in 'apps/temin360-desktop/src/renderer/src/utils/kurum-kodu.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-GETKURUMUMUZTEXT",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/kurumHelper.ts:L152",
+      "evidence": "Exported function 'getKurumumuzText' in 'apps/temin360-desktop/src/renderer/src/utils/kurumHelper.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-GETKURUMIHTIYACYERIDEFAULT",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/kurumHelper.ts:L173",
+      "evidence": "Exported function 'getKurumIhtiyacYeriDefault' in 'apps/temin360-desktop/src/renderer/src/utils/kurumHelper.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-TURKISH_STOPWORDS",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/tagUtils.ts:L1",
+      "evidence": "Exported const 'TURKISH_STOPWORDS' in 'apps/temin360-desktop/src/renderer/src/utils/tagUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-NORMALIZETRCHARS",
+      "priority": "P2",
+      "file": "apps/temin360-desktop/src/renderer/src/utils/tagUtils.ts:L39",
+      "evidence": "Exported function 'normalizeTrChars' in 'apps/temin360-desktop/src/renderer/src/utils/tagUtils.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "temin360-desktop"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    },
+    {
+      "id": "DEAD-UNUSED-EXPORT-INCOMPATIBLE_MUAYENE_TASKS",
+      "priority": "P2",
+      "file": "packages/document-templates/src/services/commissionResolver.ts:L426",
+      "evidence": "Exported const 'INCOMPATIBLE_MUAYENE_TASKS' in 'packages/document-templates/src/services/commissionResolver.ts' is never imported or referenced in any package or application.",
+      "affectedModules": [
+        "document-templates"
+      ],
+      "confidence": "YÜKSEK",
+      "recommendedSolution": "Kullanılmayan bu sembol silinmeli veya yalnızca dosya içi ihtiyaç varsa 'export' belirteci kaldırılarak yerel (private) yapılmalıdır.",
+      "requiredRegressionTests": "pnpm test"
+    }
+  ]
+}

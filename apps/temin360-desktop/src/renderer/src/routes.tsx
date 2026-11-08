@@ -16,6 +16,9 @@ const DashboardScreen = lazyRoute(() =>
 const HarcamaMerkeziScreen = lazyRoute(() =>
   import("./screens/dashboard/HarcamaMerkeziScreen")
 );
+const HakedisScreen = lazyRoute(() =>
+  import("./screens/hakedis/HakedisScreen")
+);
 const PiyasaFiyatArastirmasiScreen = lazyRoute(() =>
   import("./screens/dashboard/PiyasaFiyatArastirmasiScreen")
 );
@@ -81,6 +84,9 @@ const RaporlarScreen = lazyRoute(() =>
 const OkasKodScreen = lazyRoute(() => import("./screens/okaskod/index.screen"));
 const ButceKodScreen = lazyRoute(() =>
   import("./screens/butcekod/index.screen")
+);
+const BkmybsMaliYonetimScreen = lazyRoute(() =>
+  import("./screens/bkmybs-mali-yonetim/index.screen")
 );
 const PozlarScreen = lazyRoute(() => import("./screens/pozlar/index.screen"));
 const YeniPozScreen = lazyRoute(() => import("./screens/pozlar/yeni.screen"));
@@ -351,6 +357,12 @@ const butceKodRoute = createRoute({
   component: ButceKodScreen,
 });
 
+const bkmybsMaliYonetimRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: APP_ROUTES.BKMYBS_MALI_YONETIM,
+  component: BkmybsMaliYonetimScreen,
+});
+
 const pozlarRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.POZLAR,
@@ -554,7 +566,7 @@ const imzaliBelgelerRoute = createRoute({
 const hakedisRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.HAKEDIS,
-  component: HarcamaMerkeziScreen,
+  component: HakedisScreen,
 });
 
 const notlarRoute = createRoute({
@@ -632,6 +644,7 @@ const routeTree = rootRoute.addChildren([
   raporlarRoute,
   okasKodRoute,
   butceKodRoute,
+  bkmybsMaliYonetimRoute,
   pozlarRoute,
   yeniPozRoute,
   pozDetayRoute,

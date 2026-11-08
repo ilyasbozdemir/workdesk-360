@@ -40,8 +40,8 @@ describe('Workspace 360 - Uygulama Kataloğu ve Başlatıcı', () => {
   it('kategori filtrelemesi yapıldığında yalnızca ilgili uygulamalar listelenmelidir', () => {
     render(<App />)
     // Kamu Alımları & İhale butonuna bas
-    const catBtn = screen.getByRole('button', { name: 'Kamu Alımları & İhale' })
-    fireEvent.click(catBtn)
+    const catBtns = screen.getAllByRole('button', { name: /Kamu Alımları & İhale/i })
+    fireEvent.click(catBtns[0])
 
     expect(screen.getByText('TEMİN 360')).toBeDefined()
     expect(screen.queryByText('Harita 360')).toBeNull()
@@ -49,8 +49,8 @@ describe('Workspace 360 - Uygulama Kataloğu ve Başlatıcı', () => {
 
   it('durum filtresi (Yüklü / Hazır) seçildiğinde planlanan uygulamalar gizlenmelidir', () => {
     render(<App />)
-    const installedFilter = screen.getByRole('button', { name: /Yüklü \/ Hazır/i })
-    fireEvent.click(installedFilter)
+    const installedFilters = screen.getAllByRole('button', { name: /Yüklü \/ Hazır/i })
+    fireEvent.click(installedFilters[0])
 
     expect(screen.getByText('TEMİN 360')).toBeDefined()
     expect(screen.queryByText('Dosya 360')).toBeNull()
@@ -104,6 +104,56 @@ describe('Workspace 360 - Uygulama Kataloğu ve Başlatıcı', () => {
 
     const successToast = await screen.findByText(/TEMİN 360 başarıyla başlatıldı/i)
     expect(successToast).toBeDefined()
+
+    // Temizle
+    delete window.workspaceAPI
+  })
+
+  it('KAMU 360 portal modül seçicisi üzerinden filtreleme yapabilmelidir', () => {
+    render(<App />)
+
+    // Sidebar'daki veya Header'daki İhale & Satın Alma modülüne tıkla
+    const moduleButtons = screen.getAllByRole('button', { name: /İhale & Satın Alma/i })
+    fireEvent.click(moduleButtons[0])
+
+    // İhale ve Temin listelenmeli
+    expect(screen.getByText('TEMİN 360')).toBeDefined()
+    // CBS / Harita uygulaması listede olmamalı
+    expect(screen.queryByText('Harita 360')).toBeNull()
+
+    // Tekrar Tüm Modüller seçildiğinde geri gelmeli
+    const allModuleBtns = screen.getAllByRole('button', { name: /Tüm Modüller/i })
+    fireEvent.click(allModuleBtns[0])
+    expect(screen.getByText('Harita 360')).toBeDefined()
+  })
+
+  it('kurulu olmayan veya indirme paketi sunan uygulamalar için İndir & Kur butonu sunulmalıdır', async () => {
+    // window.workspaceAPI mock
+    window.workspaceAPI = {
+      isElectron: true,
+      launchApp: async () => ({ success: true, message: 'OK' }),
+      checkAppInstalled: async (appId: string) => {
+        // Disk Analiz 360 kurulu değil gibi simüle et
+        if (appId === 'dev.ilyasbozdemir.diskanaliz360') {
+          return { installed: false }
+        }
+        return { installed: true }
+      },
+      getSystemInfo: async () => ({
+        platform: 'win32',
+        arch: 'x64',
+        nodeVersion: '22.0.0',
+        electronVersion: '39.0.0'
+      }),
+      minimizeWindow: () => {},
+      maximizeWindow: () => {},
+      closeWindow: () => {}
+    }
+
+    render(<App />)
+
+    const downloadButtons = await screen.findAllByRole('button', { name: /İndir & Kur/i })
+    expect(downloadButtons.length).toBeGreaterThan(0)
 
     // Temizle
     delete window.workspaceAPI

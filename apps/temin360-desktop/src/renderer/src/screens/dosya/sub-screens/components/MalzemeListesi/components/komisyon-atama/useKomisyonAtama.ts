@@ -7,7 +7,8 @@ import { resolveCommissionCategory, isTaskEligibleForMuayene } from '@temin360/d
 import {
   seedDossierCommission,
   markDossierAsDeliberatelyCleared,
-  getLastDossierCommissions
+  getLastDossierCommissions,
+  applyCommissionToAllDossiers
 } from '@renderer/services/commission/commissionSeedService'
 
 interface UseKomisyonAtamaParams {
@@ -91,10 +92,10 @@ export function useKomisyonAtama({
           console.warn('Kurum bilgisi okunamadı:', e)
         }
 
-        // 2. Personel listesi
+        // 2. Personel listesi (Kurum -> Birim -> Personel)
         const pRes = await (window as any).electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT id, ad_soyad, unvan FROM TANIM_Personel WHERE aktif_mi = 1 ORDER BY ad_soyad ASC'
+          'SELECT id, ad_soyad, unvan, birim, birim_id FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY ad_soyad ASC'
         )
         const pList: PersonelItem[] = pRes.success && pRes.data ? pRes.data : []
         if (isMounted) setPersoneller(pList)
@@ -151,11 +152,19 @@ export function useKomisyonAtama({
                     }
                   }
 
+                  const asliYedek: 'Asil' | 'Yedek' =
+                    matched?.asli_yedek === 'Yedek' ||
+                    String(matched?.gorev || '').toLowerCase().includes('yedek')
+                      ? 'Yedek'
+                      : 'Asil'
+
                   return {
                     sira: idx + 1,
                     gorev: matched?.gorev || 'Fiyat Araştırma Görevlisi',
                     personelId: matched?.personel_id || null,
                     belgedeGoster: hasBelgedeGoster ? matched.belgede_goster === 1 : true,
+                    imzaTuru: (matched?.imza_turu as any) || 'İmza',
+                    asliYedek,
                     vekaletUnvani: matched?.vekalet_unvani || '',
                     baslangicTarihi: matched?.baslangic_tarihi || '',
                     bitisTarihi: matched?.bitis_tarihi || '',
@@ -183,11 +192,19 @@ export function useKomisyonAtama({
                     }
                   }
 
+                  const asliYedek: 'Asil' | 'Yedek' =
+                    matched?.asli_yedek === 'Yedek' ||
+                    String(matched?.gorev || '').toLowerCase().includes('yedek')
+                      ? 'Yedek'
+                      : 'Asil'
+
                   return {
                     sira: idx + 1,
                     gorev: matched?.gorev || (idx === 0 ? 'Komisyon Başkanı' : 'Üye'),
                     personelId: matched?.personel_id || null,
                     belgedeGoster: hasBelgedeGoster ? matched.belgede_goster === 1 : true,
+                    imzaTuru: (matched?.imza_turu as any) || 'İmza',
+                    asliYedek,
                     vekaletUnvani: matched?.vekalet_unvani || '',
                     baslangicTarihi: matched?.baslangic_tarihi || '',
                     bitisTarihi: matched?.bitis_tarihi || '',
@@ -224,11 +241,18 @@ export function useKomisyonAtama({
                       parsedHedefBelgeler = []
                     }
                   }
+                  const asliYedek: 'Asil' | 'Yedek' =
+                    matched?.asli_yedek === 'Yedek' ||
+                    String(matched?.gorev || '').toLowerCase().includes('yedek')
+                      ? 'Yedek'
+                      : 'Asil'
                   return {
                     sira: idx + 1,
                     gorev: matched?.gorev || 'Fiyat Araştırma Görevlisi',
                     personelId: matched?.personel_id || null,
                     belgedeGoster: matched?.belgede_goster !== 0,
+                    imzaTuru: (matched?.imza_turu as any) || 'İmza',
+                    asliYedek,
                     vekaletUnvani: matched?.vekalet_unvani || '',
                     baslangicTarihi: matched?.baslangic_tarihi || '',
                     bitisTarihi: matched?.bitis_tarihi || '',
@@ -252,11 +276,18 @@ export function useKomisyonAtama({
                       parsedHedefBelgeler = []
                     }
                   }
+                  const asliYedek: 'Asil' | 'Yedek' =
+                    matched?.asli_yedek === 'Yedek' ||
+                    String(matched?.gorev || '').toLowerCase().includes('yedek')
+                      ? 'Yedek'
+                      : 'Asil'
                   return {
                     sira: idx + 1,
                     gorev: matched?.gorev || (idx === 0 ? 'Komisyon Başkanı' : 'Üye'),
                     personelId: matched?.personel_id || null,
                     belgedeGoster: matched?.belgede_goster !== 0,
+                    imzaTuru: (matched?.imza_turu as any) || 'İmza',
+                    asliYedek,
                     vekaletUnvani: matched?.vekalet_unvani || '',
                     baslangicTarihi: matched?.baslangic_tarihi || '',
                     bitisTarihi: matched?.bitis_tarihi || '',
@@ -322,6 +353,8 @@ export function useKomisyonAtama({
             gorev: m.gorev_adi || 'Fiyat Araştırma Görevlisi',
             personelId: m.personel_id || null,
             belgedeGoster: m.belgede_goster !== 0,
+            imzaTuru: (m.imza_turu as any) || 'İmza',
+            asliYedek: m.asil_mi === 0 ? ('Yedek' as const) : ('Asil' as const),
             vekaletUnvani: '',
             baslangicTarihi: '',
             bitisTarihi: '',
@@ -334,6 +367,8 @@ export function useKomisyonAtama({
             gorev: m.gorev_adi || (idx === 0 ? 'Komisyon Başkanı' : 'Üye'),
             personelId: m.personel_id || null,
             belgedeGoster: m.belgede_goster !== 0,
+            imzaTuru: (m.imza_turu as any) || 'İmza',
+            asliYedek: m.asil_mi === 0 ? ('Yedek' as const) : ('Asil' as const),
             vekaletUnvani: '',
             baslangicTarihi: '',
             bitisTarihi: '',
@@ -394,19 +429,25 @@ export function useKomisyonAtama({
         const p = personeller.find((item) => item.id === row.personelId)
         if (!p) continue
 
-        const rol =
-          row.gorev.toLowerCase().includes('başkan') || row.gorev.toLowerCase().includes('yetkili')
+        const isYedekRow =
+          row.asliYedek === 'Yedek' || row.gorev.toLowerCase().includes('yedek')
+        const rol = isYedekRow
+          ? 'Yedek Üye'
+          : row.gorev.toLowerCase().includes('başkan') ||
+              row.gorev.toLowerCase().includes('yetkili')
             ? 'Başkan'
             : 'Üye'
 
         const finalUnvan = row.vekaletUnvani?.trim() || p.unvan || null
         const hedefBelgelerJson = JSON.stringify(row.hedefBelgeler || ['*'])
+        const imzaTuruVal = row.imzaTuru || 'İmza'
+        const asliYedekVal = isYedekRow ? 'Yedek' : 'Asil'
 
         await (window as any).electron.ipcRenderer.invoke(
           'db:run',
           `INSERT INTO DATA_TeminKomisyon 
-           (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (temin_dosya_id, komisyon_id, personel_id, ad_soyad, unvan, gorev, rol, komisyon_turu, belgede_goster, vekalet_unvani, baslangic_tarihi, bitis_tarihi, belge_kapsami, hedef_belgeler, asli_yedek, imza_turu, birim_id, birim)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             activeDosyaId,
             komId,
@@ -421,7 +462,11 @@ export function useKomisyonAtama({
             row.baslangicTarihi || null,
             row.bitisTarihi || null,
             row.belgeKapsami || 'tumu',
-            hedefBelgelerJson
+            hedefBelgelerJson,
+            asliYedekVal,
+            imzaTuruVal,
+            p.birim_id || null,
+            p.birim || null
           ]
         )
 
@@ -446,29 +491,50 @@ export function useKomisyonAtama({
         }
       }
 
-      // Audit / History Snapshot
+      // Audit / History Snapshot (Fiş Bazlı)
       try {
+        const fisNo = `FIS-${Date.now().toString().slice(-6)}`
         const snapshotMembers = rows
           .filter((r) => r.personelId)
           .map((r) => {
             const p = personeller.find((item) => item.id === r.personelId)
+            const isYedek =
+              r.asliYedek === 'Yedek' || r.gorev.toLowerCase().includes('yedek')
             return {
+              fisNo,
+              komisyon_id: komId,
               personelId: r.personelId,
+              personel_id: r.personelId,
               ad_soyad: p?.ad_soyad || '',
+              personel_ad_soyad: p?.ad_soyad || '',
               unvan: r.vekaletUnvani?.trim() || p?.unvan || '',
               vekalet_unvani: r.vekaletUnvani || '',
               baslangic_tarihi: r.baslangicTarihi || '',
               bitis_tarihi: r.bitisTarihi || '',
               belge_kapsami: r.belgeKapsami || 'tumu',
               gorev: r.gorev,
-              belgedeGoster: r.belgedeGoster
+              gorev_adi: r.gorev,
+              asil_mi: isYedek ? 0 : 1,
+              asli_yedek: isYedek ? 'Yedek' : 'Asil',
+              imza_turu: r.imzaTuru || 'İmza',
+              imzaTuru: r.imzaTuru || 'İmza',
+              birim_id: p?.birim_id || null,
+              birim: p?.birim || null,
+              komisyon_turu: komTitle,
+              belgedeGoster: r.belgedeGoster,
+              belgede_goster: r.belgedeGoster ? 1 : 0
             }
           })
 
         await (window as any).electron.ipcRenderer.invoke(
           'db:run',
           `INSERT INTO DATA_TeminKomisyonHistory (temin_dosya_id, komisyon_turu, islem_turu, snapshot_data) VALUES (?, ?, ?, ?)`,
-          [activeDosyaId, komTitle, 'Kadro Ataması / Güncelleme', JSON.stringify(snapshotMembers)]
+          [
+            activeDosyaId,
+            komTitle,
+            `[${fisNo}] Kadro Ataması / Güncelleme`,
+            JSON.stringify(snapshotMembers)
+          ]
         )
       } catch (histErr) {
         console.warn('DATA_TeminKomisyonHistory kaydedilirken hata:', histErr)
@@ -522,13 +588,23 @@ export function useKomisyonAtama({
               }
             }
 
-            const isAsil = row.gorev.toLowerCase().includes('yedek') ? 0 : 1
+            const isAsil =
+              row.asliYedek === 'Yedek' || row.gorev.toLowerCase().includes('yedek') ? 0 : 1
+            const p = personeller.find((item) => item.id === row.personelId)
 
             if (gorevId) {
               await (window as any).electron.ipcRenderer.invoke(
                 'db:run',
-                'INSERT INTO TANIM_KomisyonUye (komisyon_id, personel_id, gorev_id, asil_mi) VALUES (?, ?, ?, ?)',
-                [targetKomId, row.personelId, gorevId, isAsil]
+                'INSERT INTO TANIM_KomisyonUye (komisyon_id, personel_id, gorev_id, asil_mi, imza_turu, birim_id, birim) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [
+                  targetKomId,
+                  row.personelId,
+                  gorevId,
+                  isAsil,
+                  row.imzaTuru || 'İmza',
+                  p?.birim_id || null,
+                  p?.birim || null
+                ]
               )
             }
           }
@@ -884,6 +960,90 @@ export function useKomisyonAtama({
     }
   }
 
+  const handleApplyToAllDossiers = async () => {
+    try {
+      setSaving(true)
+      // Önce mevcut ekrandaki seçili üyeleri birleştir
+      const allCustomMembers: any[] = []
+
+      for (const r of maliyetRows) {
+        if (!r.personelId) continue
+        const p = personeller.find((item) => item.id === r.personelId)
+        if (!p) continue
+        allCustomMembers.push({
+          komisyon_id: 1,
+          personel_id: p.id,
+          ad_soyad: p.ad_soyad,
+          unvan: r.vekaletUnvani?.trim() || p.unvan || null,
+          gorev: r.gorev,
+          komisyon_turu: 'Yaklaşık Maliyet Tespit Komisyonu',
+          belgede_goster: r.belgedeGoster ? 1 : 0,
+          vekalet_unvani: r.vekaletUnvani?.trim() || null,
+          baslangic_tarihi: r.baslangicTarihi || null,
+          bitis_tarihi: r.bitisTarihi || null,
+          belge_kapsami: r.belgeKapsami || 'tumu',
+          hedef_belgeler: r.hedefBelgeler || ['*'],
+          asli_yedek:
+            r.asliYedek === 'Yedek' || r.gorev.toLowerCase().includes('yedek') ? 'Yedek' : 'Asil',
+          imza_turu: r.imzaTuru || 'İmza',
+          birim_id: p.birim_id || null,
+          birim: p.birim || null
+        })
+      }
+
+      for (const r of muayeneRows) {
+        if (!r.personelId) continue
+        const p = personeller.find((item) => item.id === r.personelId)
+        if (!p) continue
+        allCustomMembers.push({
+          komisyon_id: 2,
+          personel_id: p.id,
+          ad_soyad: p.ad_soyad,
+          unvan: r.vekaletUnvani?.trim() || p.unvan || null,
+          gorev: r.gorev,
+          komisyon_turu: 'Muayene Kabul ve Tespit Komisyonu',
+          belgede_goster: r.belgedeGoster ? 1 : 0,
+          vekalet_unvani: r.vekaletUnvani?.trim() || null,
+          baslangic_tarihi: r.baslangicTarihi || null,
+          bitis_tarihi: r.bitisTarihi || null,
+          belge_kapsami: r.belgeKapsami || 'tumu',
+          hedef_belgeler: r.hedefBelgeler || ['*'],
+          asli_yedek:
+            r.asliYedek === 'Yedek' || r.gorev.toLowerCase().includes('yedek') ? 'Yedek' : 'Asil',
+          imza_turu: r.imzaTuru || 'İmza',
+          birim_id: p.birim_id || null,
+          birim: p.birim || null
+        })
+      }
+
+      const res = await applyCommissionToAllDossiers({
+        sourceDosyaId: activeDosyaId || null,
+        customMembers: allCustomMembers.length > 0 ? allCustomMembers : undefined,
+        islemAciklama: 'Dosya Kadrosundan Tüm Dosyalara Toplu Aktarım'
+      })
+
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['temin_dosyalari'] })
+        queryClient.invalidateQueries({ queryKey: ['komisyonlar'] })
+        queryClient.invalidateQueries({ queryKey: ['komisyon_detay'] })
+        queryClient.invalidateQueries({ queryKey: ['komisyon-dosya-bazli-v2'] })
+        queryClient.invalidateQueries({ queryKey: ['komisyon-global-history-v2'] })
+        queryClient.invalidateQueries({ queryKey: ['dosya-komisyon-history'] })
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 2500)
+        alert(
+          `✅ [${res.fisNo}] Komisyon kadrosu (${res.memberCountPerDossier} görevli) toplam ${res.affectedDossiersCount} dosyaya tek tıkla uygulandı ve fiş geçmişine işlendi.`
+        )
+      } else {
+        alert('Hata: ' + (res.error || 'Toplu aktarım başarısız oldu'))
+      }
+    } catch (err: any) {
+      alert('Tüm dosyalara uygulama hatası: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return {
     activeTab,
     setActiveTab,
@@ -906,6 +1066,7 @@ export function useKomisyonAtama({
     handleRemoveRow,
     handleSyncFromKomisyonYonetimi,
     handleSeedDefaultCommissions,
+    handleApplyToAllDossiers,
     handleSave,
     handleOpenDoc
   }

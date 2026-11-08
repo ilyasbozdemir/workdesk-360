@@ -52,6 +52,7 @@ export function LuzumMuzekkeresiRenderer(
         firmaListesi={resolvedFirmaListesi}
         birimListesi={resolvedBirimListesi}
         firstPageLimit={resolvedFirstPageLimit}
+        data={data as any}
       >
         <LuzumMuzekkeresi
           data={data}

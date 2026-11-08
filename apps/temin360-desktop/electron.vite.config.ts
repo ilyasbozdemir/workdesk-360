@@ -97,7 +97,12 @@ export default defineConfig(({ mode, command }) => {
         bytecode: isBytecode,
         sourcemap: false,
         externalizeDeps: {
-          exclude: ['@temin360/document-templates', '@worksuite-360/document-engine']
+          exclude: [
+            '@temin360/document-templates',
+            '@worksuite-360/document-engine',
+            '@temin360/contracts',
+            '@workdesk-360/workflow-engine'
+          ]
         }
       }
     },
@@ -105,14 +110,18 @@ export default defineConfig(({ mode, command }) => {
       define,
       build: {
         bytecode: isBytecode,
-        sourcemap: false
+        sourcemap: false,
+        externalizeDeps: {
+          exclude: ['@temin360/contracts', '@workdesk-360/workflow-engine']
+        }
       }
     },
     renderer: {
       define,
       resolve: {
         alias: {
-          '@renderer': resolve('src/renderer/src')
+          '@renderer': resolve('src/renderer/src'),
+          '@workdesk-360/workflow-engine': resolve('../../packages/workflow-engine/src/index.ts')
         }
       },
       build: {

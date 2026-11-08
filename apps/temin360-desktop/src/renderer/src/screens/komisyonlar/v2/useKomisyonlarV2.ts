@@ -3,7 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { resolveCommissionCategory } from '@temin360/document-templates'
 import {
   copyCommissionBetweenDossiers,
-  applyInstitutionalTemplateToDossier
+  applyInstitutionalTemplateToDossier,
+  applyCommissionToAllDossiers,
+  restoreCommissionFromHistoryFis
 } from '../../../services/commission/commissionSeedService'
 import type {
   DosyaFilterMode,
@@ -35,6 +37,8 @@ export function useKomisyonlarV2() {
   const [selectedSourceDosyaId, setSelectedSourceDosyaId] = useState<number | null>(null)
   const [isCopying, setIsCopying] = useState(false)
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
+  const [isBulkApplying, setIsBulkApplying] = useState(false)
+  const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
 
   // Kurumsal Şablon Düzenleme Modalı State
   const [editingTemplateKomisyon, setEditingTemplateKomisyon] = useState<{
@@ -284,7 +288,9 @@ export function useKomisyonlarV2() {
     try {
       const res = await copyCommissionBetweenDossiers(copyTargetDosya.id, selectedSourceDosyaId)
       if (res.success) {
-        setCopyFeedback('Kadro başarıyla kopyalandı ve bu dosyaya özel olarak kaydedildi!')
+        setCopyFeedback(
+          `✅ [${res.fisNo || 'FİŞ'}] Kadro (${res.count || 0} üye) başarıyla kopyalandı ve bu dosyaya özel olarak kaydedildi!`
+        )
         queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
         queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
         setTimeout(() => {
@@ -292,6 +298,7 @@ export function useKomisyonlarV2() {
           setSelectedSourceDosyaId(null)
           setCopyFeedback(null)
           refetchDosyaList()
+          refetchGlobalHistory()
         }, 1200)
       } else {
         setCopyFeedback('Hata: ' + (res.error || 'Kopyalama başarısız oldu'))
@@ -300,6 +307,93 @@ export function useKomisyonlarV2() {
       setCopyFeedback('Hata: ' + err.message)
     } finally {
       setIsCopying(false)
+    }
+  }
+
+  // Seçili Kaynak Dosyanın Kadrosunu Tek Tıkla TÜM Dosyalara Kopyalama (Modal İçinden)
+  const handleExecuteCopyToAllDossiers = async (): Promise<void> => {
+    if (!selectedSourceDosyaId) return
+    setIsCopying(true)
+    setCopyFeedback(null)
+    try {
+      const res = await applyCommissionToAllDossiers({
+        sourceDosyaId: selectedSourceDosyaId
+      })
+      if (res.success) {
+        setCopyFeedback(
+          `✅ [${res.fisNo}] Seçili kadro (${res.memberCountPerDossier} üye) toplam ${res.affectedDossiersCount} dosyaya tek tıkla uygulandı!`
+        )
+        queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
+        queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
+        setTimeout(() => {
+          setCopyTargetDosya(null)
+          setSelectedSourceDosyaId(null)
+          setCopyFeedback(null)
+          refetchDosyaList()
+          refetchGlobalHistory()
+        }, 1400)
+      } else {
+        setCopyFeedback('Hata: ' + (res.error || 'Toplu kopyalama başarısız oldu'))
+      }
+    } catch (err: any) {
+      setCopyFeedback('Hata: ' + err.message)
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
+  // Tek Tıkla Kurumsal Şablonu veya Belirli Bir Dosyanın Kadrosunu TÜM Dosyalara Uygulama
+  const handleBulkApplyToAllDossiers = async (sourceDosyaId?: number | null): Promise<void> => {
+    setIsBulkApplying(true)
+    setBulkFeedback(null)
+    try {
+      const res = await applyCommissionToAllDossiers({
+        sourceDosyaId: sourceDosyaId || null
+      })
+      if (res.success) {
+        const msg = `✅ [${res.fisNo}] Komisyon kadrosu (${res.memberCountPerDossier} görevli) toplam ${res.affectedDossiersCount} dosyaya tek tıkla uygulandı ve fiş geçmişine kaydedildi.`
+        setBulkFeedback(msg)
+        queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
+        queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
+        refetchDosyaList()
+        refetchGlobalHistory()
+        setTimeout(() => setBulkFeedback(null), 5000)
+      } else {
+        alert('Hata: ' + (res.error || 'Toplu aktarım başarısız oldu'))
+      }
+    } catch (err: any) {
+      alert('Toplu aktarım hatası: ' + err.message)
+    } finally {
+      setIsBulkApplying(false)
+    }
+  }
+
+  // Geçmiş Fişten (History Snapshot) Kadroyu Tek Dosyaya veya Tüm Dosyalara Geri Yükleme
+  const handleRestoreFromHistoryFis = async (
+    historyId: number,
+    mode: 'single' | 'all' = 'single'
+  ): Promise<void> => {
+    setIsBulkApplying(true)
+    try {
+      const res = await restoreCommissionFromHistoryFis(historyId, mode)
+      if (res.success) {
+        const msg =
+          mode === 'all'
+            ? `✅ [${res.fisNo}] Fiş #${String(historyId).padStart(4, '0')} kadrosu toplam ${res.affectedDossiersCount} dosyaya tek tıkla uygulandı!`
+            : `✅ [${res.fisNo}] Fiş #${String(historyId).padStart(4, '0')} kadrosu (${res.count} görevli) ilgili dosyaya başarıyla geri yüklendi!`
+        setBulkFeedback(msg)
+        queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
+        queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
+        refetchDosyaList()
+        refetchGlobalHistory()
+        setTimeout(() => setBulkFeedback(null), 5000)
+      } else {
+        alert('Fiş geri yükleme hatası: ' + (res.error || 'İşlem başarısız oldu'))
+      }
+    } catch (err: any) {
+      alert('Fiş geri yükleme hatası: ' + err.message)
+    } finally {
+      setIsBulkApplying(false)
     }
   }
 
@@ -364,6 +458,9 @@ export function useKomisyonlarV2() {
     isCopying,
     copyFeedback,
     setCopyFeedback,
+    isBulkApplying,
+    bulkFeedback,
+    setBulkFeedback,
     editingTemplateKomisyon,
     setEditingTemplateKomisyon,
     templateData,
@@ -378,6 +475,9 @@ export function useKomisyonlarV2() {
     refetchGlobalHistory,
     handleApplyTemplate,
     handleExecuteCopy,
+    handleExecuteCopyToAllDossiers,
+    handleBulkApplyToAllDossiers,
+    handleRestoreFromHistoryFis,
     filteredDosyaList,
     filteredHistoryList,
     totalFiles,

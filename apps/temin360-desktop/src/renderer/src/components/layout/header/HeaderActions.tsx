@@ -1,8 +1,22 @@
 import React from 'react'
-import { Calculator, CheckSquare, DownloadCloud, Moon, Store, Sun } from 'lucide-react'
+import {
+  Calculator,
+  CheckSquare,
+  ChevronDown,
+  DownloadCloud,
+  Moon,
+  Store,
+  Sun,
+  User
+} from 'lucide-react'
 import { SyncPopover } from './SyncPopover'
 import { NotificationPopover } from './NotificationPopover'
+import { PrintHubPopover } from './PrintHubPopover'
+import { CalendarSchedulePopover } from './CalendarSchedulePopover'
 import { APP_ROUTES } from '../../../constants/routeConstants'
+import { useSettingsStore } from '../../../store/settingsStore'
+import { getInitials } from '@renderer/utils/formatters'
+import { UserProfilePopover } from '@renderer/shared/components/UserProfilePopover'
 
 interface HeaderActionsProps {
   theme: string
@@ -19,12 +33,14 @@ export const HeaderActions = React.memo(function HeaderActions({
   updateStatus,
   setShowUpdateModal
 }: HeaderActionsProps): React.JSX.Element {
+  const { adminName, adminUsername } = useSettingsStore()
+  const initials = getInitials(adminName || adminUsername || 'SY')
   return (
     <div
       className="flex items-center gap-1.5"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
-      {/* Hızlı Servis & Araç Kümesi (Mağaza & Hesap) */}
+      {/* Hızlı Servis & Araç Kümesi (Mağaza & Hesaplama Araçları) */}
       <div className="flex items-center bg-slate-100/90 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-2xs">
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.MODUL_MAGAZASI })}
@@ -40,10 +56,10 @@ export const HeaderActions = React.memo(function HeaderActions({
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.HESAPLAMA_ARACLARI })}
           className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-650 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
-          title="Hesap & Yüzde Araçları Süiti (KDV, İndirim, Kâr Marjı, Tarih Farkı)"
+          title="Mali Hesaplama & Formül Araçları (KDV, Tevkifat, Damga, Fiyat Farkı)"
         >
           <Calculator className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-          <span className="hidden xl:inline">Hesap</span>
+          <span className="hidden xl:inline">Hesaplayıcı</span>
         </button>
       </div>
 
@@ -101,11 +117,37 @@ export const HeaderActions = React.memo(function HeaderActions({
             </button>
           )}
 
+        {/* 🖨️ Yazdırma & Dışa Aktarma Merkezi */}
+        <div className="hidden sm:flex items-center">
+          <PrintHubPopover />
+        </div>
+
+        {/* 📅 İhale & Süreç Takvimi */}
+        <div className="hidden sm:flex items-center">
+          <CalendarSchedulePopover />
+        </div>
+
         {/* Senkronizasyon & Bulut Popover */}
         <SyncPopover />
 
         {/* Bildirim Popover */}
         <NotificationPopover />
+
+        {/* Birleşik Kullanıcı Profili & Kamu Rolü Menüsü */}
+        <UserProfilePopover placement="bottom-right">
+          <button
+            type="button"
+            className="h-7 px-2.5 flex items-center gap-1.5 rounded-lg border border-slate-200/80 dark:border-slate-700/70 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-[11px] font-bold transition-all cursor-pointer shadow-2xs group"
+            title={`Kullanıcı Menüsü: ${adminName || adminUsername || 'Sistem Yöneticisi'}`}
+          >
+            <User className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span>{initials}</span>
+            <ChevronDown
+              size={11}
+              className="opacity-60 group-hover:opacity-100 transition-opacity"
+            />
+          </button>
+        </UserProfilePopover>
       </div>
     </div>
   )

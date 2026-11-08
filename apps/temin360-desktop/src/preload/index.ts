@@ -7,6 +7,8 @@ const allowedChannels = new Set([
   'db:query',
   'db:run',
   'db:execute',
+  'db:get',
+  'db:all',
   'db:transaction',
   'db:bulk-import',
   'db:get-settings',
@@ -211,7 +213,22 @@ const allowedChannels = new Set([
   'clipboard:writeText',
   // Audit Trail & Inspection
   'audit:get-history',
-  'audit:verify-chain'
+  'audit:verify-chain',
+  // Finance & Accounting Service Channels
+  'finance:get-incoming-procurements',
+  'finance:get-budget-summary',
+  'finance:execute-direct-payment',
+  'accounting:get-mif-drafts',
+  'accounting:get-oeb-drafts',
+  // Workflow Engine, Tasks & Notifications
+  'workflow:get-instance',
+  'workflow:get-available-actions',
+  'workflow:execute-transition',
+  'workflow:get-history',
+  'workflow:get-tasks',
+  'workflow:get-notifications',
+  'workflow:mark-notification-read',
+  'workflow:mark-all-notifications-read'
 ])
 
 // Secure gated wrapper exposing only authorized channels to renderer
@@ -250,7 +267,40 @@ const api = {
   getAuditHistory: (filter?: { recordId?: number; tableName?: string; limit?: number }) =>
     ipcRenderer.invoke('audit:get-history', filter),
   verifyAuditChain: () => ipcRenderer.invoke('audit:verify-chain'),
-  getActiveSessionStatus: () => ipcRenderer.invoke('get-active-session-status')
+  getActiveSessionStatus: () => ipcRenderer.invoke('get-active-session-status'),
+  finance: {
+    getIncomingProcurements: () => ipcRenderer.invoke('finance:get-incoming-procurements'),
+    getBudgetSummary: () => ipcRenderer.invoke('finance:get-budget-summary'),
+    executeDirectPayment: (payload: any) =>
+      ipcRenderer.invoke('finance:execute-direct-payment', payload)
+  },
+  accounting: {
+    getMifDrafts: () => ipcRenderer.invoke('accounting:get-mif-drafts'),
+    getOebDrafts: () => ipcRenderer.invoke('accounting:get-oeb-drafts')
+  },
+  workflow: {
+    getInstance: (dosyaId: number) => ipcRenderer.invoke('workflow:get-instance', dosyaId),
+    getAvailableActions: (payload: { dosyaId: number; actorRole?: string; actorId?: string }) =>
+      ipcRenderer.invoke('workflow:get-available-actions', payload),
+    executeTransition: (payload: {
+      dosyaId: number
+      transitionId: string
+      actorRole: string
+      actorId?: string
+      reason?: string
+      faturaNo?: string
+      faturaTarihi?: string
+    }) => ipcRenderer.invoke('workflow:execute-transition', payload),
+    getHistory: (dosyaId: number) => ipcRenderer.invoke('workflow:get-history', dosyaId),
+    getTasks: (filter?: { dosyaId?: number; role?: string; status?: string }) =>
+      ipcRenderer.invoke('workflow:get-tasks', filter),
+    getNotifications: (unreadOnly?: boolean) =>
+      ipcRenderer.invoke('workflow:get-notifications', unreadOnly),
+    markNotificationRead: (id: string) =>
+      ipcRenderer.invoke('workflow:mark-notification-read', id),
+    markAllNotificationsRead: () =>
+      ipcRenderer.invoke('workflow:mark-all-notifications-read')
+  }
 }
 
 if (process.contextIsolated) {

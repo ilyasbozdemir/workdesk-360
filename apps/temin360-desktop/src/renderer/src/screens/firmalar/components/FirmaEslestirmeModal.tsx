@@ -560,7 +560,7 @@ export function FirmaEslestirmeModal({
 
     setActionInProgress(stubId)
     try {
-      const delRes = await window.electron.ipcRenderer.invoke('db:query', 'DELETE FROM TANIM_Firma WHERE id = ?', [stubId])
+      const delRes = await window.electron.ipcRenderer.invoke('db:run', 'DELETE FROM TANIM_Firma WHERE id = ?', [stubId])
       if (!delRes.success) throw new Error(delRes.error)
 
       setFeedback({ type: 'info', message: `"${stub.unvan}" kaydı sistemden silindi.` })

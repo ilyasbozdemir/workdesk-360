@@ -26,6 +26,7 @@ export async function ensureIhtiyacRaporuTables(): Promise<void> {
       tahmini_butce REAL DEFAULT 0,
       notlar TEXT,
       evrak_sayisi TEXT,
+      belge_snapshot_json TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(temin_dosya_id) REFERENCES DATA_TeminDosyasi(id) ON DELETE SET NULL,

@@ -31,6 +31,8 @@ export default function KomisyonlarV2Screen({
     isCopying,
     copyFeedback,
     setCopyFeedback,
+    isBulkApplying,
+    bulkFeedback,
     editingTemplateKomisyon,
     setEditingTemplateKomisyon,
     templateData,
@@ -42,6 +44,9 @@ export default function KomisyonlarV2Screen({
     refetchGlobalHistory,
     handleApplyTemplate,
     handleExecuteCopy,
+    handleExecuteCopyToAllDossiers,
+    handleBulkApplyToAllDossiers,
+    handleRestoreFromHistoryFis,
     filteredDosyaList,
     filteredHistoryList,
     totalFiles,
@@ -142,7 +147,7 @@ export default function KomisyonlarV2Screen({
             }`}
           >
             <History className="w-4 h-4 text-indigo-500" />
-            <span>🕒 Tüm Dosyaların Revizyon Çizelgesi</span>
+            <span>🧾 Komisyon İşlem Fişleri (Tarihçe)</span>
           </button>
         </div>
       </div>
@@ -166,6 +171,9 @@ export default function KomisyonlarV2Screen({
           templateFilesCount={templateFilesCount}
           emptyFilesCount={emptyFilesCount}
           onApplyTemplate={handleApplyTemplate}
+          onBulkApplyToAllDossiers={handleBulkApplyToAllDossiers}
+          isBulkApplying={isBulkApplying}
+          bulkFeedback={bulkFeedback}
           onOpenCopyModal={(item) => {
             setCopyTargetDosya(item)
             setSelectedSourceDosyaId(null)
@@ -188,16 +196,22 @@ export default function KomisyonlarV2Screen({
           piyasaDefaults={templateData.piyasaDefaults}
           muayeneDefaults={templateData.muayeneDefaults}
           onEditKomisyon={(kom) => setEditingTemplateKomisyon(kom)}
+          onBulkApplyToAllDossiers={() => handleBulkApplyToAllDossiers(null)}
+          isBulkApplying={isBulkApplying}
+          bulkFeedback={bulkFeedback}
         />
       )}
 
-      {/* SEKME 3: TÜM DOSYALARIN REVİZYON ÇİZELGESİ (GLOBAL AUDIT LOG) */}
+      {/* SEKME 3: TÜM DOSYALARIN REVİZYON ÇİZELGESİ (GLOBAL FİŞ HISTORY) */}
       {activeTab === 'tarihce' && (
         <GlobalRevizyonCizelgesiTab
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           isGlobalHistoryLoading={isGlobalHistoryLoading}
           filteredHistoryList={filteredHistoryList}
+          onRestoreFis={handleRestoreFromHistoryFis}
+          isBulkApplying={isBulkApplying}
+          bulkFeedback={bulkFeedback}
           onOpenDosyaDetail={(dosyaId, dosyaNo, isTanimi) =>
             setSelectedDosya({
               id: dosyaId,
@@ -219,6 +233,7 @@ export default function KomisyonlarV2Screen({
         copyFeedback={copyFeedback}
         onSelectSourceId={setSelectedSourceDosyaId}
         onExecuteCopy={handleExecuteCopy}
+        onExecuteCopyToAllDossiers={handleExecuteCopyToAllDossiers}
         onClose={() => {
           setCopyTargetDosya(null)
           setSelectedSourceDosyaId(null)

@@ -1,6 +1,7 @@
 /* eslint-disable */
 /**
  * DEVLET İHALE 2886 (2886 Sayılı Devlet İhale Kanunu) Şema Manifesti
+ * Bu dosya apps/devlet-ihale-2886/manifest.yaml dosyasından otomatik derlenir.
  */
 export const devletIhale2886Manifest = {
   app: "devlet-ihale-2886-desktop",
@@ -11,8 +12,6 @@ export const devletIhale2886Manifest = {
   schema_min: 1,
   schema_max: 1,
   release_date: "2026-10-26",
-  inheritsHistoricalSuiteManifests: false,
-  shared_schema_scope: "devlet_ihale_2886",
   changes: [
     {
       schema: 1,
@@ -23,4 +22,3 @@ export const devletIhale2886Manifest = {
 };
 
 export default devletIhale2886Manifest;
-

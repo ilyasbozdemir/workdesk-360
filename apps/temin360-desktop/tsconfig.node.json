@@ -5,6 +5,11 @@
     "composite": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "types": ["electron-vite/node"]
+    "types": ["electron-vite/node"],
+    "baseUrl": ".",
+    "paths": {
+      "@temin360/contracts": ["../../packages/contracts/index.ts"],
+      "@workdesk-360/workflow-engine": ["../../packages/workflow-engine/src/index.ts"]
+    }
   }
 }

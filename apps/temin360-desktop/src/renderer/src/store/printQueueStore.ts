@@ -55,6 +55,7 @@ export interface PrintQueueState {
   lockDocument: (dosyaId: number, docKey: string, version?: string) => void
   unlockDocument: (dosyaId: number, docKey: string) => void
   clearQueueForDosya: (dosyaId: number) => void
+  clearAllQueue: () => void
   getQueueForDosya: (dosyaId: number | null | undefined) => QueuedDocument[]
   getReadyCountForDosya: (dosyaId: number | null | undefined) => number
   getPrintedCountForDosya: (dosyaId: number | null | undefined) => number
@@ -248,6 +249,11 @@ export const usePrintQueueStore = create<PrintQueueState>()(
           items: state.items.filter((i) => i.dosyaId !== dosyaId)
         }))
         emitAppEvent('print_queue:updated', { dosyaId })
+      },
+
+      clearAllQueue: () => {
+        set({ items: [] })
+        emitAppEvent('print_queue:updated', { dosyaId: 0 })
       },
 
       getQueueForDosya: (dosyaId) => {

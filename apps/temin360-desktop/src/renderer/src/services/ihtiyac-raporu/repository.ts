@@ -233,6 +233,10 @@ export const ihtiyacRaporuRepository = {
       fields.push('evrak_sayisi = ?')
       values.push(rapor.evrak_sayisi)
     }
+    if (rapor.belge_snapshot_json !== undefined) {
+      fields.push('belge_snapshot_json = ?')
+      values.push(rapor.belge_snapshot_json)
+    }
 
     fields.push('updated_at = CURRENT_TIMESTAMP')
 
@@ -341,5 +345,115 @@ export const ihtiyacRaporuRepository = {
     }))
 
     return this.createRapor(newRapor, clonedKalemler)
+  },
+
+  /**
+   * İhtiyaç Raporu önizleme ekranında yapılan belge düzenlemelerini
+   * hem DATA_IhtiyacRaporu temel alanlarına hem de belge_snapshot_json içine kalıcı olarak yazar.
+   */
+  async saveBelgeSnapshot(
+    raporId: number,
+    templateId: string,
+    data: Record<string, any>
+  ): Promise<{ rapor: IhtiyacRaporu; linkedDosyaId: number | null }> {
+    await ensureIhtiyacRaporuTables()
+    const existing = await this.getRaporById(raporId)
+    if (!existing) {
+      throw new Error(`Kaydedilecek İhtiyaç Raporu bulunamadı (ID: ${raporId})`)
+    }
+
+    let snapshotMap: Record<string, any> = {}
+    if (existing.belge_snapshot_json) {
+      try {
+        const parsed = JSON.parse(existing.belge_snapshot_json)
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          snapshotMap = parsed
+        }
+      } catch {
+        snapshotMap = {}
+      }
+    }
+
+    snapshotMap[templateId] = data
+
+    const updatePayload: Partial<IhtiyacRaporu> = {
+      belge_snapshot_json: JSON.stringify(snapshotMap)
+    }
+
+    const updatedBaslik =
+      typeof data.dosyaKonusu === 'string' && data.dosyaKonusu.trim()
+        ? data.dosyaKonusu.trim()
+        : typeof data.isinAdi === 'string' && data.isinAdi.trim()
+          ? data.isinAdi.trim()
+          : undefined
+    if (updatedBaslik !== undefined) {
+      updatePayload.baslik = updatedBaslik
+    }
+
+    if (typeof data.gerekce === 'string') {
+      updatePayload.gerekce = data.gerekce
+    } else if (typeof data.isinAciklamasi === 'string') {
+      updatePayload.gerekce = data.isinAciklamasi
+    }
+
+    if (typeof data.ihtiyacYeri === 'string') {
+      updatePayload.birim_adi = data.ihtiyacYeri
+    }
+
+    const talepEdenAdi =
+      typeof data.talepEdenPersonelAdi === 'string' && data.talepEdenPersonelAdi.trim()
+        ? data.talepEdenPersonelAdi.trim()
+        : typeof data.hazirlayanPersonelAdi === 'string' && data.hazirlayanPersonelAdi.trim()
+          ? data.hazirlayanPersonelAdi.trim()
+          : undefined
+    if (talepEdenAdi !== undefined) {
+      updatePayload.talep_eden_personel = talepEdenAdi
+    }
+
+    const talepEdenUnvan =
+      typeof data.talepEdenPersonelUnvan === 'string' && data.talepEdenPersonelUnvan.trim()
+        ? data.talepEdenPersonelUnvan.trim()
+        : typeof data.hazirlayanPersonelUnvan === 'string' && data.hazirlayanPersonelUnvan.trim()
+          ? data.hazirlayanPersonelUnvan.trim()
+          : undefined
+    if (talepEdenUnvan !== undefined) {
+      updatePayload.talep_eden_unvan = talepEdenUnvan
+    }
+
+    if (typeof data.evrakSayisi === 'string') {
+      updatePayload.evrak_sayisi = data.evrakSayisi
+    }
+
+    if (typeof data.notlar === 'string') {
+      updatePayload.notlar = data.notlar
+    }
+
+    let mappedKalemler: IhtiyacRaporuKalem[] | undefined = undefined
+    if (Array.isArray(data.ihtiyacKalemleri) && data.ihtiyacKalemleri.length > 0) {
+      mappedKalemler = data.ihtiyacKalemleri.map((item: any, idx: number) => ({
+        sira_no: Number(item.siraNo ?? item.sira_no ?? idx + 1),
+        kalem_adi: String(item.malzemeAdi ?? item.kalem_adi ?? item.adi ?? '').trim() || `Kalem ${idx + 1}`,
+        tipi: (item.tipi as any) || 'Mal',
+        birim: String(item.birimi ?? item.birim ?? 'Adet'),
+        miktar: sanitizeMiktar(item.miktar, 1),
+        kdv_orani: sanitizeKdvOrani(item.kdvOrani ?? item.kdv_orani, 20),
+        tasinir_kodu: item.tasinirKodu ?? item.tasinir_kodu ?? item.kodu ?? null,
+        okas_kodu: item.okasKodu ?? item.okas_kodu ?? null,
+        poz_no: item.pozNo ?? item.poz_no ?? null,
+        aciklama: item.ozelligi ?? item.aciklama ?? null,
+        tahmini_birim_fiyat: sanitizeBirimFiyat(item.tahminiBirimFiyat ?? item.tahmini_birim_fiyat, 0)
+      }))
+      const totals = calculateTotals(mappedKalemler)
+      updatePayload.tahmini_butce = totals.genelToplam
+    }
+
+    await this.updateRapor(raporId, updatePayload, mappedKalemler)
+    const updatedRapor = (await this.getRaporById(raporId)) || existing
+    const linkedDosyaId =
+      updatedRapor.temin_dosya_id && Number(updatedRapor.temin_dosya_id) > 0
+        ? Number(updatedRapor.temin_dosya_id)
+        : null
+
+    return { rapor: updatedRapor, linkedDosyaId }
   }
 }
