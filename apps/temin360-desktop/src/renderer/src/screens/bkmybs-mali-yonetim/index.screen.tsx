@@ -15,6 +15,7 @@ import {
   INITIAL_EMANET_LISTESI,
   INITIAL_SOZLESME_LISTESI
 } from './bkmybsMockData'
+import { loadRealBkmybsData } from '@renderer/services/finance/bkmybsDataService'
 import { BkmybsHeader } from './components/BkmybsHeader'
 import { ButceOdenekTab } from './components/tabs/ButceOdenekTab'
 import { KikLimitTab } from './components/tabs/KikLimitTab'
@@ -68,13 +69,37 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
     navigate({ to: newPath })
   }
 
-  // 3. MALİ VERİ MODELLERİ
+  // 3. MALİ VERİ MODELLERİ (Veritabanından Re'sen Yüklenir)
   const [tertipler, setTertipler] = useState<ButceTertip[]>(INITIAL_BUTCE_TERTIPLERI)
   const [kikKota, setKikKota] = useState<KikKotaModel>(INITIAL_KIK_KOTA)
   const [mifListesi, setMifListesi] = useState<MifKayit[]>(INITIAL_MIF_LISTESI)
-  const [tkysListesi] = useState(INITIAL_TKYS_LISTESI)
-  const [emanetListesi] = useState(INITIAL_EMANET_LISTESI)
-  const [sozlesmeListesi] = useState(INITIAL_SOZLESME_LISTESI)
+  const [tkysListesi, setTkysListesi] = useState(INITIAL_TKYS_LISTESI)
+  const [emanetListesi, setEmanetListesi] = useState(INITIAL_EMANET_LISTESI)
+  const [sozlesmeListesi, setSozlesmeListesi] = useState(INITIAL_SOZLESME_LISTESI)
+
+  // Veritabanındaki gerçek dosyalardan yaklaşık maliyet, onay belgeleri ve hakedişleri re'sen çek
+  useEffect(() => {
+    let isMounted = true
+    const fetchData = async () => {
+      try {
+        const realData = await loadRealBkmybsData()
+        if (isMounted && realData && realData.hasRealData) {
+          if (realData.tertipler.length > 0) setTertipler(realData.tertipler)
+          setKikKota(realData.kikKota)
+          if (realData.mifListesi.length > 0) setMifListesi(realData.mifListesi)
+          if (realData.tkysListesi.length > 0) setTkysListesi(realData.tkysListesi)
+          if (realData.emanetListesi.length > 0) setEmanetListesi(realData.emanetListesi)
+          if (realData.sozlesmeListesi.length > 0) setSozlesmeListesi(realData.sozlesmeListesi)
+        }
+      } catch (err) {
+        console.error('Mali veriler yüklenirken hata oluştu:', err)
+      }
+    }
+    void fetchData()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // 4. MODALLAR STATE
   const [isAktarModalOpen, setIsAktarModalOpen] = useState(false)

@@ -59,14 +59,14 @@ export function registerFinanceServiceHandlers(): void {
           COALESCE(d.kesinti_kdv_tevkifat, 0) as kdvTevkifati,
           COALESCE(d.net_odenen, 0) as netOdenecek,
           COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,
-          d.durum_asama_id as durumAsamaId,
+          COALESCE(d.durum_asama_id, 1) as durumAsamaId,
           d.status,
-          COALESCE(d.temin_tarihi, SUBSTR(d.created_at, 1, 10), DATE('now')) as tarih,
+          COALESCE(d.temin_tarihi, d.tarih, d.dosya_acilis_tarihi, DATE('now')) as tarih,
           COALESCE(d.notlar, '') as notlar
         FROM DATA_TeminDosyasi d
         LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-        WHERE d.is_deleted = 0
+        WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
         ORDER BY d.id DESC
       `
       return db.prepare(sql).all() as IncomingProcurementItem[]
@@ -85,15 +85,24 @@ export function registerFinanceServiceHandlers(): void {
       const db = workspaceManager.getDb()
       const sql = `
         SELECT 
-          id,
-          COALESCE(butce_kodu, '03.2.1.01') as kod,
-          COALESCE(aciklama, 'Genel Bütçe Tertibi') as ad,
-          COALESCE(yillik_odenek, 0) as baslangicOdenegi,
-          COALESCE(harcanan_tutar, 0) as harcanan,
-          COALESCE(bloke_tutar, 0) as bloke
-        FROM TANIM_ButceOdenek
-        WHERE is_deleted = 0
-        ORDER BY butce_kodu ASC
+          o.id,
+          COALESCE(o.butce_kodu, '03.2.1.01') as kod,
+          COALESCE(o.butce_kalemi, o.aciklama, 'Genel Bütçe Tertibi') as ad,
+          COALESCE(o.yillik_odenek, 0) as baslangicOdenegi,
+          COALESCE((
+            SELECT SUM(CASE WHEN d.status = 'tamamlandi' OR d.durum_asama_id = 4 THEN COALESCE(d.net_odenen, d.yaklasik_maliyet) ELSE 0 END)
+            FROM DATA_TeminDosyasi d
+            WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
+              AND (d.odenek_kalemi LIKE '%' || o.butce_kodu || '%' OR d.odenek_tertibi LIKE '%' || o.butce_kodu || '%')
+          ), 0) as harcanan,
+          COALESCE((
+            SELECT SUM(CASE WHEN (d.status != 'tamamlandi' OR d.status IS NULL) AND (d.durum_asama_id < 4 OR d.durum_asama_id IS NULL) THEN COALESCE(d.yaklasik_maliyet, 0) ELSE 0 END)
+            FROM DATA_TeminDosyasi d
+            WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
+              AND (d.odenek_kalemi LIKE '%' || o.butce_kodu || '%' OR d.odenek_tertibi LIKE '%' || o.butce_kodu || '%')
+          ), 0) as bloke
+        FROM TANIM_ButceOdenek o
+        ORDER BY o.butce_kodu ASC
       `
       return db.prepare(sql).all()
     } catch (err: any) {
@@ -172,10 +181,10 @@ export function registerFinanceServiceHandlers(): void {
           COALESCE(d.net_odenen, 0) as netOdenecekTutar,
           COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,
           d.status,
-          COALESCE(d.temin_tarihi, SUBSTR(d.created_at, 1, 10), DATE('now')) as tarih
+          COALESCE(d.temin_tarihi, d.tarih, d.dosya_acilis_tarihi, DATE('now')) as tarih
         FROM DATA_TeminDosyasi d
         LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
-        WHERE d.is_deleted = 0
+        WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
         ORDER BY d.id DESC
       `
       return db.prepare(sql).all()
@@ -207,11 +216,11 @@ export function registerFinanceServiceHandlers(): void {
           COALESCE(d.net_odenen, 0) as netOdenecekTutar,
           COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,
           d.status,
-          COALESCE(d.temin_tarihi, SUBSTR(d.created_at, 1, 10), DATE('now')) as tarih
+          COALESCE(d.temin_tarihi, d.tarih, d.dosya_acilis_tarihi, DATE('now')) as tarih
         FROM DATA_TeminDosyasi d
         LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
-        WHERE d.is_deleted = 0
+        WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
         ORDER BY d.id DESC
       `
       return db.prepare(sql).all()

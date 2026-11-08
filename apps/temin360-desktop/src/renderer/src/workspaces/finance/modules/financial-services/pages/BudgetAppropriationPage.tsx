@@ -13,6 +13,7 @@ import {
   BookOpen
 } from 'lucide-react'
 import { formatCurrency } from '@renderer/utils/formatters'
+import { loadRealBkmybsData } from '@renderer/services/finance/bkmybsDataService'
 
 export interface RealTertipItem {
   id: string | number
@@ -37,84 +38,11 @@ export const BudgetAppropriationPage: React.FC = () => {
   const loadBudgetData = async () => {
     try {
       setLoading(true)
-
-      // 1. Ödenek kayıtlarını çek
-      const odenekRows = await window.electron?.ipcRenderer?.invoke(
-        'db:query',
-        `SELECT 
-          o.id,
-          COALESCE(o.butce_kodu, k.kod, '03.2.1.01') as ekonomikKod,
-          COALESCE(o.kurumsal_kod, '46.06.01.05') as kurumsalKod,
-          COALESCE(o.butce_kalemi, k.aciklama, o.aciklama, 'Genel Bütçe Kalemi') as aciklama,
-          COALESCE(o.yillik_odenek, 0) as baslangicOdenegi,
-          COALESCE(o.butce_yili, 2026) as yil
-        FROM TANIM_ButceOdenek o
-        LEFT JOIN TANIM_ButceKod k ON o.butce_kodu = k.kod
-        ORDER BY o.id ASC`
-      )
-
-      // 2. Gerçek doğrudan temin harcamalarını çek
-      const spendingRows = await window.electron?.ipcRenderer?.invoke(
-        'db:query',
-        `SELECT 
-          COALESCE(butce_kodu, '03.2.1.01') as butce_kodu,
-          SUM(CASE WHEN status = 'tamamlandi' OR durum_asama_id = 4 THEN COALESCE(net_odenen, yaklasik_maliyet) ELSE 0 END) as harcanan,
-          SUM(CASE WHEN (status != 'tamamlandi' OR status IS NULL) AND (durum_asama_id < 4 OR durum_asama_id IS NULL) THEN COALESCE(yaklasik_maliyet, 0) ELSE 0 END) as bloke
-        FROM DATA_TeminDosyasi
-        WHERE is_deleted = 0
-        GROUP BY butce_kodu`
-      )
-
-      const spendingMap = new Map<string, { harcanan: number; bloke: number }>()
-      if (Array.isArray(spendingRows)) {
-        spendingRows.forEach((r: any) => {
-          spendingMap.set(r.butce_kodu, {
-            harcanan: Number(r.harcanan) || 0,
-            bloke: Number(r.bloke) || 0
-          })
-        })
-      }
-
-      if (Array.isArray(odenekRows) && odenekRows.length > 0) {
-        const mapped: RealTertipItem[] = odenekRows.map((r: any) => {
-          const s = spendingMap.get(r.ekonomikKod) || { harcanan: 0, bloke: 0 }
-          const baslangic = Number(r.baslangicOdenegi) || 0
-          const kullanilabilir = Math.max(0, baslangic - s.harcanan - s.bloke)
-
-          return {
-            id: r.id,
-            kurumsalKod: r.kurumsalKod || '46.06.01.05',
-            fonksiyonelKod: '01.3.1.00',
-            finansmanKod: '5',
-            ekonomikKod: r.ekonomikKod,
-            aciklama: r.aciklama,
-            baslangicOdenegi: baslangic,
-            harcananTutar: s.harcanan,
-            blokeEdilenTutar: s.bloke,
-            kullanilabilirOdenek: kullanilabilir,
-            yil: r.yil || 2026
-          }
-        })
-        setTertipler(mapped)
+      const realData = await loadRealBkmybsData()
+      if (realData && realData.tertipler.length > 0) {
+        setTertipler(realData.tertipler)
       } else {
-        // Eğer TANIM_ButceOdenek boşsa, DATA_TeminDosyasi içindeki aktif bütçe kodlarına göre dinamik listele
-        const dynamicList: RealTertipItem[] = []
-        spendingMap.forEach((val, bCode) => {
-          dynamicList.push({
-            id: `dyn-${bCode}`,
-            kurumsalKod: '46.06.01.05',
-            fonksiyonelKod: '01.3.1.00',
-            finansmanKod: '5',
-            ekonomikKod: bCode,
-            aciklama: `${bCode} Harcama Tertibi`,
-            baslangicOdenegi: val.harcanan + val.bloke + 100000,
-            harcananTutar: val.harcanan,
-            blokeEdilenTutar: val.bloke,
-            kullanilabilirOdenek: 100000,
-            yil: 2026
-          })
-        })
-        setTertipler(dynamicList)
+        setTertipler([])
       }
     } catch (err) {
       console.error('Bütçe verileri yüklenirken hata:', err)

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Scale,
   AlertTriangle,
@@ -13,10 +13,30 @@ import {
 import { formatCurrency } from '@renderer/utils/formatters'
 import { INITIAL_KIK_KOTA } from '@renderer/screens/bkmybs-mali-yonetim/bkmybsMockData'
 import { KikKotaModel } from '@renderer/screens/bkmybs-mali-yonetim/types'
+import { loadRealBkmybsData } from '@renderer/services/finance/bkmybsDataService'
 
 export const FinancialCompliancePage: React.FC = () => {
   const [idareTipi, setIdareTipi] = useState<'buyuksehir' | 'diger'>('buyuksehir')
   const [kotaData, setKotaData] = useState<KikKotaModel>(INITIAL_KIK_KOTA)
+
+  // Gerçek dosyalardan 22/d harcama ve kota verilerini re'sen çek
+  useEffect(() => {
+    let isMounted = true
+    const fetchRealKota = async () => {
+      try {
+        const realData = await loadRealBkmybsData()
+        if (isMounted && realData && realData.hasRealData) {
+          setKotaData(realData.kikKota)
+        }
+      } catch (err) {
+        console.error('KİK kota verileri yüklenirken hata oluştu:', err)
+      }
+    }
+    void fetchRealKota()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   // 2026 KİK Eşik Değerleri (Doğrudan Temin Md. 22/d Tek Seferlik Alım Parasal Limitleri)
   const esikDeger = idareTipi === 'buyuksehir' ? 864500 : 288100

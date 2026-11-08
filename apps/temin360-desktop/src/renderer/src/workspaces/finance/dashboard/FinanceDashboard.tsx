@@ -61,8 +61,10 @@ export const FinanceDashboard: React.FC<{
         `SELECT COALESCE(SUM(yillik_odenek), 0) as toplamBaslangic FROM TANIM_ButceOdenek`
       )
 
-      const f = fileMetrics?.[0] || {}
-      const o = odenekMetrics?.[0] || {}
+      const fRows = fileMetrics?.data || (Array.isArray(fileMetrics) ? fileMetrics : [])
+      const oRows = odenekMetrics?.data || (Array.isArray(odenekMetrics) ? odenekMetrics : [])
+      const f = fRows[0] || {}
+      const o = oRows[0] || {}
 
       const baslangic = Number(o.toplamBaslangic) || 0
       const harcanan = Number(f.harcananTutar) || 0
