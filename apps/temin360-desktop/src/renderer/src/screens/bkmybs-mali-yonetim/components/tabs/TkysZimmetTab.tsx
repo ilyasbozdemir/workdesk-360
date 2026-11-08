@@ -61,7 +61,22 @@ export const TkysZimmetTab: React.FC<TkysZimmetTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium text-slate-700 dark:text-slate-300">
-              {filtered.map((t) => (
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Boxes className="w-8 h-8 text-slate-300 dark:text-slate-600 stroke-[1.5]" />
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        Kayıtlı taşınır (TKYS / TİF) kaydı bulunmuyor.
+                      </p>
+                      <p className="text-[11px] text-slate-400 max-w-md">
+                        Muayene ve kabulü tamamlanan mal alımı dosyalarından otomatik Taşınır İşlem Fişi (TİF) ve ambar girişi oluşturulacaktır.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((t) => (
                 <tr
                   key={t.id}
                   className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
@@ -129,7 +144,7 @@ export const TkysZimmetTab: React.FC<TkysZimmetTabProps> = ({
                     </span>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

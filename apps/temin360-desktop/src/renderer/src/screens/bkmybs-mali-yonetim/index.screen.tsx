@@ -83,21 +83,39 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
     const fetchData = async () => {
       try {
         const realData = await loadRealBkmybsData()
-        if (isMounted && realData && realData.hasRealData) {
-          if (realData.tertipler.length > 0) setTertipler(realData.tertipler)
-          setKikKota(realData.kikKota)
-          if (realData.mifListesi.length > 0) setMifListesi(realData.mifListesi)
-          if (realData.tkysListesi.length > 0) setTkysListesi(realData.tkysListesi)
-          if (realData.emanetListesi.length > 0) setEmanetListesi(realData.emanetListesi)
-          if (realData.sozlesmeListesi.length > 0) setSozlesmeListesi(realData.sozlesmeListesi)
+        if (isMounted) {
+          if (realData) {
+            setTertipler(realData.tertipler || [])
+            setKikKota(realData.kikKota || INITIAL_KIK_KOTA)
+            setMifListesi(realData.mifListesi || [])
+            setTkysListesi(realData.tkysListesi || [])
+            setEmanetListesi(realData.emanetListesi || [])
+            setSozlesmeListesi(realData.sozlesmeListesi || [])
+          } else {
+            setTertipler([])
+            setKikKota(INITIAL_KIK_KOTA)
+            setMifListesi([])
+            setTkysListesi([])
+            setEmanetListesi([])
+            setSozlesmeListesi([])
+          }
         }
       } catch (err) {
         console.error('Mali veriler yüklenirken hata oluştu:', err)
       }
     }
     void fetchData()
+
+    const handleRefresh = () => {
+      void fetchData()
+    }
+    window.addEventListener('app:db-changed', handleRefresh)
+    window.addEventListener('focus', handleRefresh)
+
     return () => {
       isMounted = false
+      window.removeEventListener('app:db-changed', handleRefresh)
+      window.removeEventListener('focus', handleRefresh)
     }
   }, [])
 

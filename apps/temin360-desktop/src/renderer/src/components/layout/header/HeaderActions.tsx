@@ -59,7 +59,7 @@ export const HeaderActions = React.memo(function HeaderActions({
           title="Mali Hesaplama & Formül Araçları (KDV, Tevkifat, Damga, Fiyat Farkı)"
         >
           <Calculator className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-          <span className="hidden xl:inline">Hesaplama</span>
+          <span className="hidden xl:inline">Hesaplayıcı</span>
         </button>
       </div>
 

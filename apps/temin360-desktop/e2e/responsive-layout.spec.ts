@@ -60,6 +60,11 @@ interface LayoutReport {
 }
 
 async function collectLayoutReport(page: Page): Promise<LayoutReport> {
+  const acceptBtn = page.locator('button:has-text("Anladım, Kabul Ediyorum")')
+  if (await acceptBtn.isVisible({ timeout: 400 }).catch(() => false)) {
+    await acceptBtn.click()
+    await page.waitForTimeout(200)
+  }
   return page.evaluate(() => {
     const violations: string[] = []
     const vw = window.innerWidth
@@ -131,7 +136,13 @@ async function collectLayoutReport(page: Page): Promise<LayoutReport> {
         el.scrollIntoView({ behavior: 'instant', block: 'nearest' } as ScrollIntoViewOptions)
         const r = el.getBoundingClientRect()
         const sr = scrollArea.getBoundingClientRect()
-        if (r.top < sr.top - TOL || r.bottom > sr.bottom + TOL || !inViewport(r)) {
+        const itemHeight = r.bottom - r.top
+        const canFitEntirely = sr.height >= itemHeight - TOL
+        const isAccessible = canFitEntirely
+          ? r.top >= sr.top - TOL && r.bottom <= sr.bottom + TOL
+          : r.top >= sr.top - TOL && r.top < sr.bottom
+
+        if (!isAccessible || !inViewport(r)) {
           violations.push(`ana menü öğesine erişilemiyor: ${label(el)}`)
         }
       })

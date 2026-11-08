@@ -59,7 +59,22 @@ export const SozlesmeTaahhutTab: React.FC<SozlesmeTaahhutTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium text-slate-700 dark:text-slate-300">
-              {filtered.map((s) => {
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <FileText className="w-8 h-8 text-slate-300 dark:text-slate-600 stroke-[1.5]" />
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        Kayıtlı sözleşme veya harcama taahhüdü bulunmuyor.
+                      </p>
+                      <p className="text-[11px] text-slate-400 max-w-md">
+                        Sözleşmeye bağlanan doğrudan temin ve ihale dosyaları sonuçlandığında taahhüt ve hakediş takibi burada re'sen listelenir.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((s) => {
                 const progress = Math.min(100, (s.hakedisToplami / s.sozlesmeBedeli) * 100)
 
                 return (
@@ -113,7 +128,7 @@ export const SozlesmeTaahhutTab: React.FC<SozlesmeTaahhutTabProps> = ({
                     </td>
                   </tr>
                 )
-              })}
+              }))}
             </tbody>
           </table>
         </div>

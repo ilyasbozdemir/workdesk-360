@@ -25,7 +25,7 @@ export interface RealMaliDataset {
 export function extractEkonomikKod(raw: string | null | undefined, alimTuru?: string): string {
   if (!raw || typeof raw !== 'string' || !raw.trim()) {
     if (alimTuru === 'hizmet') return '03.5.2.02'
-    if (alimTuru === 'yapim') return '03.8.1.01'
+    if (alimTuru === 'yapim' || alimTuru === 'yapim_isi') return '03.8.1.01'
     if (alimTuru === 'danismanlik') return '03.5.1.01'
     return '03.2.1.01'
   }
@@ -44,7 +44,7 @@ export function extractEkonomikKod(raw: string | null | undefined, alimTuru?: st
 
   // 3. Fallback alım türü
   if (alimTuru === 'hizmet') return '03.5.2.02'
-  if (alimTuru === 'yapim') return '03.8.1.01'
+  if (alimTuru === 'yapim' || alimTuru === 'yapim_isi') return '03.8.1.01'
   return '03.2.1.01'
 }
 
@@ -75,8 +75,8 @@ export function getStandardEkonomikAciklama(kod: string, fallbackSubject?: strin
 }
 
 /**
- * Gerçek SQLite veritabanındaki DATA_TeminDosyasi, TANIM_ButceOdenek ve ilişkili tablolardan
- * 5018 & BKMYBS mali yönetim verilerini RE'SEN çeker ve hesaplar.
+ * Gerçek SQLite veritabanındaki DATA_TeminDosyasi, DATA_TeminBelgeSnapshot, TANIM_ButceOdenek
+ * ve ilişkili tablolardan 5018 & BKMYBS mali yönetim verilerini RE'SEN çeker ve hesaplar.
  */
 export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
   if (typeof window === 'undefined' || !window.electron?.ipcRenderer) {
@@ -84,29 +84,68 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
   }
 
   try {
-    // 1. Gerçek Doğrudan Temin ve İhale Dosyalarını Çek
+    // 1. Gerçek Doğrudan Temin Dosyalarını Çek (Tablodaki geçerli sütunlar)
     const dosyaQuery = `
       SELECT 
         d.id,
-        COALESCE(NULLIF(TRIM(d.temin_no), ''), NULLIF(TRIM(d.dosya_no), ''), 'DT-' || d.id) as temin_no,
-        COALESCE(NULLIF(TRIM(d.konu), ''), NULLIF(TRIM(d.is_tanimi), ''), NULLIF(TRIM(d.is_adi), ''), 'Doğrudan Temin Dosyası') as konu,
+        COALESCE(NULLIF(TRIM(d.temin_no), ''), 'DT-' || d.id) as temin_no,
+        COALESCE(NULLIF(TRIM(d.konu), ''), NULLIF(TRIM(d.isin_aciklamasi), ''), 'Doğrudan Temin Dosyası') as konu,
         COALESCE(d.yaklasik_maliyet, 0) as yaklasik_maliyet,
         COALESCE(d.net_odenen, 0) as net_odenen,
-        COALESCE(NULLIF(TRIM(d.odenek_kalemi), ''), NULLIF(TRIM(d.odenek_tertibi), ''), NULLIF(TRIM(d.butce_kodu), ''), '') as odenek_kalemi,
-        COALESCE(NULLIF(TRIM(d.kurumsal_kod), ''), '46.06.01.05') as kurumsal_kod,
+        COALESCE(NULLIF(TRIM(d.butce_kodu), ''), NULLIF(TRIM(d.ekonomik_kod), ''), '') as odenek_kalemi,
+        '46.06.01.05' as kurumsal_kod,
+        COALESCE(NULLIF(TRIM(d.fonksiyonel_kod), ''), '01.3.1.00') as fonksiyonel_kod,
+        COALESCE(NULLIF(TRIM(d.finansman_kodu), ''), '5') as finansman_kodu,
         COALESCE(NULLIF(TRIM(d.birim), ''), NULLIF(TRIM(d.harcama_birimi), ''), 'Destek Hizmetleri') as birim,
-        d.status,
-        d.durum,
-        d.durum_asama_id,
+        COALESCE(d.status, 'taslak') as status,
+        COALESCE(d.durum_asama_id, 1) as durum_asama_id,
         COALESCE(d.sozlesme_yapilacak_mi, 0) as sozlesme_yapilacak_mi,
-        COALESCE(d.tur, d.alim_turu, 'mal') as tur,
-        d.tarih
+        COALESCE(d.tur, 'mal') as tur,
+        COALESCE(d.temin_tarihi, d.dosya_acilis_tarihi, date('now')) as tarih
       FROM DATA_TeminDosyasi d
       WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
       ORDER BY d.id DESC
     `
     const dosyaRes = await window.electron.ipcRenderer.invoke('db:query', dosyaQuery)
     const dosyalar: any[] = dosyaRes?.success && Array.isArray(dosyaRes.data) ? dosyaRes.data : []
+
+    // 1.1 Belge Snapshot'larını Çek (Yaklaşık Maliyet Cetveli veya Onay Belgesi var mı?)
+    const snapshotsByDosya = new Map<number, { hasOnay: boolean; hasYm: boolean; snapshotYm: number }>()
+    try {
+      const snapRes = await window.electron.ipcRenderer.invoke(
+        'db:query',
+        `SELECT dosya_id, sablon_kodu, veri_json FROM DATA_TeminBelgeSnapshot WHERE (is_deleted = 0 OR is_deleted IS NULL)`
+      )
+      if (snapRes?.success && Array.isArray(snapRes.data)) {
+        for (const row of snapRes.data) {
+          const dId = Number(row.dosya_id)
+          if (!dId) continue
+          const current = snapshotsByDosya.get(dId) || { hasOnay: false, hasYm: false, snapshotYm: 0 }
+          const sKod = String(row.sablon_kodu || '').toLowerCase()
+          if (sKod.includes('onay') || sKod.includes('olur')) current.hasOnay = true
+          if (sKod.includes('yaklasik') || sKod.includes('maliyet') || sKod.includes('piyasa')) current.hasYm = true
+
+          if (row.veri_json && current.snapshotYm === 0) {
+            try {
+              const parsed = JSON.parse(row.veri_json)
+              const cost = Number(
+                parsed.toplamYaklasikMaliyet ||
+                  parsed.yaklasikMaliyet ||
+                  parsed.toplam_bedel ||
+                  parsed.toplamBedel ||
+                  0
+              )
+              if (cost > 0) current.snapshotYm = cost
+            } catch {
+              // ignore parse errors
+            }
+          }
+          snapshotsByDosya.set(dId, current)
+        }
+      }
+    } catch (e) {
+      console.warn('[loadRealBkmybsData] Snapshot verileri okunamadı:', e)
+    }
 
     // 2. Tanımlı Bütçe Ödeneklerini Çek
     const odenekQuery = `
@@ -147,7 +186,6 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
       }
     })
 
-    // Dosyalar veya Bütçe tanımları varsa gerçek veri var demektir
     const hasRealData = dosyalar.length > 0 || tanimOdenekler.length > 0
 
     // ── A) TERTİPLER & BLOKE/HARCAMA RE'SEN HESAPLAMA ──
@@ -175,7 +213,8 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
     // 2. Her dosyayı analiz et: Onay belgesi & yaklaşık maliyet -> Bloke; Tamamlanan -> Harcama
     dosyalar.forEach((d) => {
       const eko = extractEkonomikKod(d.odenek_kalemi, d.tur)
-      const ym = Number(d.yaklasik_maliyet) || 0
+      const snap = snapshotsByDosya.get(Number(d.id))
+      let ym = Number(d.yaklasik_maliyet) || (snap?.snapshotYm || 0)
       const net = Number(d.net_odenen) || ym
 
       // Eğer tertip listede yoksa re'sen oluştur
@@ -183,11 +222,11 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
         tertipMap.set(eko, {
           id: `tert-dyn-${eko}`,
           kurumsalKod: d.kurumsal_kod || '46.06.01.05',
-          fonksiyonelKod: '01.3.1.00',
-          finansmanKod: '5',
+          fonksiyonelKod: d.fonksiyonel_kod || '01.3.1.00',
+          finansmanKod: d.finansman_kodu || '5',
           ekonomikKod: eko,
           aciklama: getStandardEkonomikAciklama(eko, d.konu),
-          baslangicOdenegi: 0, // Aşağıda toplanan tutara göre dinamik dengelenecek
+          baslangicOdenegi: 0,
           harcananTutar: 0,
           blokeEdilenTutar: 0,
           kullanilabilirOdenek: 0,
@@ -196,27 +235,25 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
       }
 
       const item = tertipMap.get(eko)!
-      const isCompleted =
-        d.status === 'tamamlandi' || d.durum === 'Tamamlandı' || Number(d.durum_asama_id) === 4
+      const isCompleted = d.status === 'tamamlandi' || Number(d.durum_asama_id) === 4
 
       if (isCompleted) {
         item.harcananTutar += net
-      } else if (ym > 0) {
-        // Yaklaşık Maliyet ve Onay Belgesi aşamasında re'sen bloke edilen taahhüt
+      } else if (ym > 0 || snap?.hasOnay || snap?.hasYm) {
+        // Yaklaşık Maliyet ve/veya Onay Belgesi aşamasında re'sen bloke edilen taahhüt
         item.blokeEdilenTutar += ym
       }
     })
 
-    // 3. Başlangıç ödeneği tanımlanmamış tertipler için gerçekçi ve güvenli başlangıç ödeneği belirle
+    // 3. Başlangıç ödeneği tanımlanmamış dinamik tertipler için başlangıç ödeneği dengele
     const tertipler: ButceTertip[] = Array.from(tertipMap.values()).map((t) => {
       const totalCommitted = t.harcananTutar + t.blokeEdilenTutar
       let baslangic = t.baslangicOdenegi
 
-      if (baslangic <= 0) {
-        // En az harcanan + bloke + makul serbest ödenek payı
-        baslangic = Math.max(150000, Math.ceil((totalCommitted * 1.4) / 50000) * 50000)
-      } else if (baslangic < totalCommitted) {
-        baslangic = Math.ceil((totalCommitted * 1.15) / 50000) * 50000
+      if (baslangic <= 0 && totalCommitted > 0) {
+        baslangic = Math.max(100000, Math.ceil((totalCommitted * 1.3) / 50000) * 50000)
+      } else if (baslangic > 0 && baslangic < totalCommitted) {
+        baslangic = Math.ceil((totalCommitted * 1.1) / 50000) * 50000
       }
 
       const kullanilabilir = Math.max(0, baslangic - t.harcananTutar - t.blokeEdilenTutar)
@@ -234,7 +271,8 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
     const birimTotals = new Map<string, number>()
 
     dosyalar.forEach((d) => {
-      const ym = Number(d.yaklasik_maliyet) || 0
+      const snap = snapshotsByDosya.get(Number(d.id))
+      const ym = Number(d.yaklasik_maliyet) || (snap?.snapshotYm || 0)
       const net = Number(d.net_odenen) || ym
       const tutar = d.status === 'tamamlandi' || Number(d.durum_asama_id) === 4 ? net : ym
       gerceklesen22dToplami += tutar
@@ -243,7 +281,7 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
       birimTotals.set(bAdi, (birimTotals.get(bAdi) || 0) + tutar)
     })
 
-    const toplamMalHizmetButcesi = tertipler.reduce((acc, t) => acc + t.baslangicOdenegi, 0) || 5000000
+    const toplamMalHizmetButcesi = tertipler.reduce((acc, t) => acc + t.baslangicOdenegi, 0)
     const yuzde10TavanTutari = Math.round(toplamMalHizmetButcesi * 0.1)
     const kalanKotaTutari = Math.max(0, yuzde10TavanTutari - gerceklesen22dToplami)
     const kullanimOrani = yuzde10TavanTutari > 0 ? (gerceklesen22dToplami / yuzde10TavanTutari) * 100 : 0
@@ -268,18 +306,21 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
       kalanKotaTutari,
       kullanimOrani: Number(kullanimOrani.toFixed(1)),
       kikIzinRiski: kullanimOrani > 80,
-      birimDagitimlari:
-        birimDagitimlari.length > 0
-          ? birimDagitimlari
-          : [{ birimAdi: 'Destek Hizmetleri', tahsisEdilen: yuzde10TavanTutari, harcanan: 0, oran: 0 }]
+      birimDagitimlari
     }
 
     // ── C) MİF & ÖEB KAYITLARI RE'SEN ÜRETİMİ ──
     const mifListesi: MifKayit[] = dosyalar
-      .filter((d) => (Number(d.yaklasik_maliyet) > 0 || Number(d.net_odenen) > 0))
+      .filter((d) => {
+        const snap = snapshotsByDosya.get(Number(d.id))
+        const ym = Number(d.yaklasik_maliyet) || (snap?.snapshotYm || 0)
+        return ym > 0 || Number(d.net_odenen) > 0 || snap?.hasOnay
+      })
       .slice(0, 15)
       .map((d, idx) => {
-        const brut = Number(d.net_odenen) || Number(d.yaklasik_maliyet) || 0
+        const snap = snapshotsByDosya.get(Number(d.id))
+        const ym = Number(d.yaklasik_maliyet) || (snap?.snapshotYm || 0)
+        const brut = Number(d.net_odenen) || ym || 0
         const kdv = brut * 0.2
         const damga = brut * 0.00948
         const karar = brut * 0.00569
@@ -319,7 +360,7 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
 
     // ── D) TKYS TAŞINIR KAYITLARI ──
     const tkysListesi: TkysZimmetKayit[] = dosyalar
-      .filter((d) => d.tur === 'mal')
+      .filter((d) => d.tur === 'mal' && (Number(d.yaklasik_maliyet) > 0 || Number(d.net_odenen) > 0))
       .slice(0, 10)
       .map((d, idx) => ({
         id: `tkys-${d.id || idx}`,
@@ -339,7 +380,11 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
 
     // ── E) SÖZLEŞMELER ──
     const sozlesmeListesi: SozlesmeTaahhutKayit[] = dosyalar
-      .filter((d) => d.sozlesme_yapilacak_mi === 1 || d.tur === 'yapim')
+      .filter(
+        (d) =>
+          (d.sozlesme_yapilacak_mi === 1 || d.tur === 'yapim' || d.tur === 'yapim_isi') &&
+          (Number(d.yaklasik_maliyet) > 0 || Number(d.net_odenen) > 0)
+      )
       .map((d, idx) => {
         const bedel = Number(d.net_odenen) || Number(d.yaklasik_maliyet) || 0
         const firma = firmaMap.get(d.id) || { unvan: `${d.konu} Yüklenicisi`, vergiNo: '1111111111' }
@@ -389,4 +434,3 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
     return null
   }
 }
-

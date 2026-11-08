@@ -75,7 +75,24 @@ export const ButceOdenekTab: React.FC<ButceOdenekTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium text-slate-700 dark:text-slate-300">
-              {filtered.map((t) => {
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Coins className="w-8 h-8 text-slate-300 dark:text-slate-600 stroke-[1.5]" />
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        {searchTerm || filterEkonomik !== 'all'
+                          ? 'Arama kriterlerine uygun bütçe tertibi bulunamadı.'
+                          : 'Kayıtlı bütçe tertibi veya bloke işlemi bulunmuyor.'}
+                      </p>
+                      <p className="text-[11px] text-slate-400 max-w-md">
+                        Satın alma masasında doğrudan temin dosyası açılıp yaklaşık maliyet veya onay belgesi hazırlandığında, tutarlar ilgili bütçe tertibine re'sen bloke / taahhüt olarak yansıyacaktır.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((t) => {
                 const totalUsed = t.harcananTutar + t.blokeEdilenTutar
                 const usedPercent = Math.min(100, (totalUsed / t.baslangicOdenegi) * 100)
                 const isCritical = usedPercent > 85
@@ -143,7 +160,7 @@ export const ButceOdenekTab: React.FC<ButceOdenekTabProps> = ({
                     </td>
                   </tr>
                 )
-              })}
+              }))}
             </tbody>
           </table>
         </div>

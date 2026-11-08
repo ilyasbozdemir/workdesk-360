@@ -12,10 +12,14 @@ export const WorkspaceSwitcher: React.FC = () => {
   return (
     <div
       className="flex items-center select-none"
+      title="Doğrudan Temin & Satın Alma Masası (4734 Sayılı KİK Md. 22)"
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
     >
       {/* 2'li Çalışma Masası Toggle Düğmesi */}
-      <div className="flex items-center p-0.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/90 border border-slate-300/60 dark:border-slate-700/60 shadow-inner">
+      <div
+        className="flex items-center p-0.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/90 border border-slate-300/60 dark:border-slate-700/60 shadow-inner"
+        title="Doğrudan Temin & Satın Alma Masası (4734 Sayılı KİK Md. 22)"
+      >
         {/* Satın Alma Masası Butonu */}
         <button
           type="button"
@@ -25,10 +29,10 @@ export const WorkspaceSwitcher: React.FC = () => {
               ? "bg-blue-600 text-white shadow-sm shadow-blue-500/30 scale-[1.02]"
               : "text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-black/5 dark:hover:bg-white/5"
           }`}
-          title="Satın Alma & Doğrudan Temin Çalışma Masası (4734 Sayılı Kamu İhale Kanunu)"
+          title="Doğrudan Temin & Satın Alma Masası (4734 Sayılı KİK Md. 22)"
         >
           <ShoppingCart size={13} className="shrink-0" />
-          <span>Satın Alma (4734)</span>
+          <span>Doğrudan Temin (4734)</span>
         </button>
 
         {/* Mali Hizmetler & Muhasebe Masası Butonu */}

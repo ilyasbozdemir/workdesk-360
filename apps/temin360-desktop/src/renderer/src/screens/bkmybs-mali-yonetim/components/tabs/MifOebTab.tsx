@@ -89,7 +89,22 @@ export const MifOebTab: React.FC<MifOebTabProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium text-slate-700 dark:text-slate-300">
-              {filtered.map((m) => {
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <FileCheck2 className="w-8 h-8 text-slate-300 dark:text-slate-600 stroke-[1.5]" />
+                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                        Kayıtlı MİF / Ödeme Emri Belgesi bulunmuyor.
+                      </p>
+                      <p className="text-[11px] text-slate-400 max-w-md">
+                        Yaklaşık maliyeti ve kazanan firması belirlenmiş doğrudan temin dosyalarından otomatik MİF ve ÖEB oluşturabilirsiniz.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((m) => {
                 const totalKesinti =
                   m.damgaVergisiTutari + m.kararPuluTutari + m.kdvTevkifatTutari + m.digerKesintiler
 
@@ -201,7 +216,7 @@ export const MifOebTab: React.FC<MifOebTabProps> = ({
                     </td>
                   </tr>
                 )
-              })}
+              }))}
             </tbody>
           </table>
         </div>
