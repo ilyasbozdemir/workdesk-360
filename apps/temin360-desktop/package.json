@@ -1,6 +1,6 @@
 {
   "name": "temin360-desktop",
-  "version": "1.0.0-rc.13",
+  "version": "1.0.0-rc.14",
   "engines": {
     "node": ">=22.5.0"
   },

@@ -77,6 +77,7 @@ export function resolveRoute(input: ResolveRouteInput): ResolvedDocumentRoute {
   const route: ResolvedDocumentRoute = {
     templateId: definition.templateId,
     definitionVersion: definition.version,
+    isAppointmentDocument: Boolean(definition.isAppointmentDocument),
     steps,
   };
   const errors = validateRoute(route);

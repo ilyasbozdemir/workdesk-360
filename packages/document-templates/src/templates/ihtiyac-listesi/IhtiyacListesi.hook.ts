@@ -190,7 +190,10 @@ export function useIhtiyacListesi(
 
     // Standart CommonDocumentFields kullanımı
     const tarih = data.dosyaTarihi || data.tarih || "";
-    const dosyaKonusu = data.dosyaKonusu || (data as any).konu || "İhtiyaç Listesi";
+
+    const dosyaKonusu =
+      data.dosyaKonusu || (data as any).konu || "İhtiyaç Listesi";
+
     const sunulacakMakam = data.sunulacakMakamAdi ||
       (data as any).sunulacakMakam || "";
     const onayTarihi = data.onayTarihi || data.dosyaTarihi || data.tarih || "";
