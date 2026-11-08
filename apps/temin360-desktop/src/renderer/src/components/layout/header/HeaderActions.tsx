@@ -5,7 +5,6 @@ import {
   ChevronDown,
   DownloadCloud,
   Moon,
-  Settings,
   Store,
   Sun,
   User
@@ -121,16 +120,6 @@ export const HeaderActions = React.memo(function HeaderActions({
 
         {/* Bildirim Popover */}
         <NotificationPopover />
-
-        {/* Sistem Ayarları Hızlı Erişim */}
-        <button
-          type="button"
-          onClick={(): void => navigate({ to: APP_ROUTES.AYARLAR })}
-          className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-          title="Sistem Ayarları"
-        >
-          <Settings className="w-3.5 h-3.5" />
-        </button>
 
         {/* Birleşik Kullanıcı Profili & Kamu Rolü Menüsü */}
         <UserProfilePopover placement="bottom-right">
