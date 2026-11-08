@@ -183,7 +183,7 @@ export async function resolveAntetAndBirim(
         ? baseData.antetSatirlari
         : undefined,
     dosyaAntetEkSatir: dosyaObj.antet_ek_satir,
-    fallbackInstitutionName: baseData.kurumAdi || 'BELEDİYE BAŞKANLIĞI'
+    fallbackInstitutionName: baseData.kurumAdi || ''
   })
 
   if (birimResolution.birimId !== undefined) {
@@ -204,7 +204,9 @@ export async function resolveAntetAndBirim(
     baseData.harcamaBirimi = baseData.harcamaBirimi || matchedBirimName
     baseData.harcama_birimi = baseData.harcama_birimi || matchedBirimName
     baseData.mudurluk = baseData.mudurluk || matchedBirimName
-    baseData.antetSatirlari = birimResolution.antetSatirlari
+    if (birimResolution.antetEkSatir) {
+      baseData.antetSatirlari = birimResolution.antetSatirlari
+    }
   }
 
   if (!baseData.sunulacakMakamAdi && birimResolution.sunulacakMakamAdi) {

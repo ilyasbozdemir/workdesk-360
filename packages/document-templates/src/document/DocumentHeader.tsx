@@ -19,9 +19,11 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
     } else {
       lines = [
         "T.C.",
-        data?.kurumUst || "BELEDİYE BAŞKANLIĞI",
-        data?.kurumAdi || "",
-      ].filter(Boolean);
+        data?.kurumUst,
+        data?.kurumAdi,
+      ]
+        .map((s) => String(s ?? "").trim())
+        .filter(Boolean);
     }
 
     const birimLine = (
@@ -37,13 +39,21 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       ""
     ).trim();
 
-    const showBirim =
-      data?.antetBirimGosterilsin !== false &&
-      (data as any)?.birimAntetteGosterilsin !== false &&
-      (data as any)?.antetteBirimGoster !== false;
+    // Sadece kullanıcı açıkça antetBirimGosterilsin: false derse antetten çıkarır
+    const hideBirim =
+      data?.antetBirimGosterilsin === false ||
+      (data as any)?.birimAntetteGosterilsin === false ||
+      (data as any)?.antetteBirimGoster === false;
+
+    // Sadece kullanıcı açıkça antetBirimGosterilsin: true derse veya açık antet_ek_satir varsa antete ekler
+    const appendBirim =
+      Boolean(data?.antetEkSatir || (data as any)?.antet_ek_satir) ||
+      data?.antetBirimGosterilsin === true ||
+      (data as any)?.birimAntetteGosterilsin === true ||
+      (data as any)?.antetteBirimGoster === true;
 
     if (
-      showBirim &&
+      appendBirim &&
       birimLine &&
       !lines.some(
         (l) =>
@@ -52,7 +62,7 @@ export const DocumentHeader: React.FC<DocumentHeaderProps> = (
       )
     ) {
       lines.push(birimLine);
-    } else if (!showBirim && birimLine) {
+    } else if (hideBirim && birimLine) {
       lines = lines.filter(
         (l) =>
           l.trim().toLocaleUpperCase("tr-TR") !==

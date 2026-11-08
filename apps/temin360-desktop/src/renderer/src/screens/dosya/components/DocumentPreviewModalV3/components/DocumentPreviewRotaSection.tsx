@@ -41,6 +41,7 @@ import {
   saveRotaConfigForTemplate,
   GLOBAL_ROTA_KEY
 } from '../../../../../services/rotaDefaultsService'
+import { kurumService } from '../../../../../services/kurumService'
 
 export type BelgeModuType = 'standart' | 'koordinasyonlu' | 'hizli_onay'
 
@@ -232,11 +233,12 @@ export function DocumentPreviewRotaSection({
           .filter(Boolean)
       }
     }
+    const kName = formData?.kurumAdi || formData?.kurum_adi || ''
     return InstitutionalHeaderProvider.parseKurumBaseAntetLines(
-      null,
-      formData?.kurumAdi || 'KAMU KURUMU'
+      formData?.kurum || null,
+      kName
     )
-  }, [formData?.antetSatirlari, formData?.kurumAdi])
+  }, [formData?.antetSatirlari, formData?.kurumAdi, formData?.kurum_adi, formData?.kurum])
 
   const currentBirimResolution = React.useMemo(
     () =>
@@ -413,9 +415,9 @@ export function DocumentPreviewRotaSection({
         harcamaBirimi: res.harcamaBirimi || prev?.harcamaBirimi,
         harcama_birimi: res.harcamaBirimi || prev?.harcama_birimi,
         antetEkSatir: res.antetEkSatir || prev?.antetEkSatir,
-        antetSatirlari: showBirim
+        antetSatirlari: showBirim && res.antetEkSatir
           ? res.antetSatirlari
-          : InstitutionalHeaderProvider.parseKurumBaseAntetLines(null, prev?.kurumAdi || 'KAMU KURUMU')
+          : prev?.antetSatirlari || currentAntetLines
       }
 
       if (res.ihtiyacYeri && !hasOverrideFor('ihtiyacYeri')) {
@@ -457,47 +459,62 @@ export function DocumentPreviewRotaSection({
     })
   }
 
-  const handleRefreshAntetFromBirim = () => {
+  const handleRefreshAntetFromBirim = async () => {
+    try {
+      const kInfo = await kurumService.getKurumInfo()
+      if (kInfo) {
+        let baseLines: string[] = []
+        if (Array.isArray(kInfo.kurum_anteti) && kInfo.kurum_anteti.length > 0) {
+          baseLines = kInfo.kurum_anteti
+        } else if (kInfo.kurum_adi) {
+          baseLines = ['T.C.', String(kInfo.kurum_adi).trim().toUpperCase()]
+        }
+        if (baseLines.length > 0) {
+          setFormData((prev: any) => ({
+            ...prev,
+            antetSatirlari: baseLines,
+            kurumAdi: kInfo.kurum_adi || prev?.kurumAdi,
+            kurum_adi: kInfo.kurum_adi || prev?.kurum_adi
+          }))
+          return
+        }
+      }
+    } catch (e) {
+      console.warn('Kurum anteti veritabanından çekilemedi:', e)
+    }
+
     setFormData((prev: any) => {
-      const baseOnly = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
-        null,
-        prev?.kurumAdi || 'KAMU KURUMU'
-      )
-      const res = InstitutionalHeaderProvider.resolveBirimSelection({
-        birimId: prev?.birimId ?? prev?.birim_id,
-        birimAdi: prev?.birimAdi || prev?.birim || prev?.mudurluk,
-        birimList: activeBirimList,
-        personelList: personelListesi,
-        baseAntetLines: baseOnly,
-        fallbackInstitutionName: prev?.kurumAdi
-      })
-      const showBirim = prev?.antetBirimGosterilsin !== false
+      const fallbackName = prev?.kurumAdi || prev?.kurum_adi || ''
+      const baseOnly = fallbackName
+        ? ['T.C.', String(fallbackName).trim().toUpperCase()]
+        : ['T.C.']
       return {
         ...prev,
-        antetSatirlari: showBirim ? res.antetSatirlari : baseOnly,
-        antetEkSatir: res.antetEkSatir || prev?.antetEkSatir
+        antetSatirlari: baseOnly
       }
     })
   }
 
   const handleToggleAntetBirim = (checked: boolean) => {
     setFormData((prev: any) => {
-      const baseOnly = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
-        null,
-        prev?.kurumAdi || 'KAMU KURUMU'
-      )
+      const prevLines: string[] =
+        Array.isArray(prev?.antetSatirlari) && prev.antetSatirlari.length > 0
+          ? prev.antetSatirlari
+          : currentAntetLines
+
       const res = InstitutionalHeaderProvider.resolveBirimSelection({
         birimId: prev?.birimId ?? prev?.birim_id,
         birimAdi: prev?.birimAdi || prev?.birim || prev?.mudurluk,
         birimList: activeBirimList,
         personelList: personelListesi,
-        baseAntetLines: baseOnly,
+        baseAntetLines: prevLines,
         fallbackInstitutionName: prev?.kurumAdi
       })
+
       return {
         ...prev,
         antetBirimGosterilsin: checked,
-        antetSatirlari: checked ? res.antetSatirlari : baseOnly
+        antetSatirlari: checked && res.antetEkSatir ? res.antetSatirlari : prevLines
       }
     })
   }
@@ -684,7 +701,7 @@ export function DocumentPreviewRotaSection({
               type="button"
               onClick={handleRefreshAntetFromBirim}
               className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-indigo-600 cursor-pointer"
-              title="Seçili birimin resmi antet satırlarını yeniden oluştur"
+              title="Kurumsal anteti veritabanından (TANIM_Kurum) yeniden yükle"
             >
               <RefreshCw className="w-3 h-3" />
             </button>
@@ -702,7 +719,7 @@ export function DocumentPreviewRotaSection({
         {/* İlgili Birim Seçimi */}
         <div className="space-y-1">
           <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">
-            Harcama / İşlem Birimi (Birim Seçimi Antet ve Personeli Bağlar)
+            Harcama / İşlem Birimi
           </label>
           <select
             data-testid="rota-birim-select"

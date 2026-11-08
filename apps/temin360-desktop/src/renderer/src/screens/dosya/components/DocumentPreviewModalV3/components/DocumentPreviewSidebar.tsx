@@ -622,59 +622,6 @@ export function DocumentPreviewSidebar({
               )
             })()}
 
-            {/* Newline / Boşluk Satırı Ekleme */}
-            <div className="p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-600 dark:text-slate-400 font-semibold">
-                  Ekstra Boşluk (Kaydırma):
-                </span>
-                <span className="text-slate-600 dark:text-slate-300 font-mono text-[11px] font-bold">
-                  {Math.round(((formData as any).ekstraBosluk || 0) / 24)} Satır
-                </span>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      ekstraBosluk: Math.max(0, (prev.ekstraBosluk || 0) - 24)
-                    }))
-                  }
-                  className="flex-1 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-md text-[11px] font-semibold cursor-pointer transition-colors"
-                >
-                  - Satır
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev: any) => ({
-                      ...prev,
-                      ekstraBosluk: (prev.ekstraBosluk || 0) + 24
-                    }))
-                  }
-                  className="flex-1 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 border border-blue-200/60 dark:border-blue-800/50 text-blue-700 dark:text-blue-300 rounded-md text-[11px] font-bold cursor-pointer transition-colors"
-                >
-                  + Satır
-                </button>
-                {((formData as any).ekstraBosluk || 0) > 0 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        ekstraBosluk: 0
-                      }))
-                    }
-                    className="py-1 px-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md text-[10px] font-bold cursor-pointer"
-                    title="Boşluğu Sıfırla"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-
             {/* OLUR Bloğu Toggle (Şablon registry tanımında veya veride supportsOlur varsa gösterilir) */}
             {(supportsOlur || typeof (formData as any).olurYazisi === 'boolean') && (
               <label className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl cursor-pointer hover:border-slate-300 transition-colors">
@@ -811,17 +758,53 @@ export function DocumentPreviewSidebar({
           {/* ========================================================= */}
           {/* BELGE ÇALIŞMA MODU & ROTA / PARAF / KOORDİNASYON AKIŞI */}
           {/* ========================================================= */}
-          <div id="sidebar-ayarlar-rota">
-            <DocumentPreviewRotaSection
-              formData={formData}
-              setFormData={setFormData}
-              personelListesi={personelListesi}
-              birimListesi={birimListesi}
-              supportsOlur={supportsOlur}
-              templateId={selectedDocId}
-              dosyaId={(formData as any)?.dosyaId}
-            />
-          </div>
+         <div id="sidebar-ayarlar-rota">
+  {/* DEBUG - işin bitince sil */}
+  {process.env.NODE_ENV !== "production" && (
+    <details open style={{ marginBottom: 8, fontSize: 11 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 600 }}>
+        🐞 Rota Debug
+      </summary>
+      <pre
+        style={{
+          maxHeight: 300,
+          overflow: "auto",
+          background: "#111",
+          color: "#0f0",
+          padding: 8,
+          borderRadius: 6,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
+        {JSON.stringify(
+          {
+            templateId: selectedDocId,
+            dosyaId: (formData as any)?.dosyaId,
+            supportsOlur,
+            personelCount: personelListesi?.length ?? null,
+            birimCount: birimListesi?.length ?? null,
+            personelIlk3: personelListesi?.slice?.(0, 3),
+            birimIlk3: birimListesi?.slice?.(0, 3),
+            formData,
+          },
+          (_key, value) => (value === undefined ? "__undefined__" : value),
+          2
+        )}
+      </pre>
+    </details>
+  )}
+
+  <DocumentPreviewRotaSection
+    formData={formData}
+    setFormData={setFormData}
+    personelListesi={personelListesi}
+    birimListesi={birimListesi}
+    supportsOlur={supportsOlur}
+    templateId={selectedDocId}
+    dosyaId={(formData as any)?.dosyaId}
+  />
+</div>
 
           {/* ========================================================= */}
           {/* BELGE EVRAK AYARLARI (Muhatap, İlgi, Ek, Dağıtım) */}

@@ -86,7 +86,11 @@ export const dosyaResolver: DocumentResolver = {
       context
     })
 
-    const dataObj = (docRecord.data || {}) as Record<string, unknown>
+    const headerObj = (docRecord.headerData || {}) as Record<string, unknown>
+    const dataObj = {
+      ...headerObj,
+      ...((docRecord.data || {}) as Record<string, unknown>)
+    }
     const lists = await loadDosyaLists(source.dosyaId)
     const pick = (a: unknown[] | undefined, b: unknown[]) => (a && a.length > 0 ? a : b)
 

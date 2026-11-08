@@ -97,11 +97,11 @@ export async function resolveAntetSatirlari(
           const ekSatir = (
             row.dosya_antet ||
             row.birim_antet ||
-            row.birim_adi ||
-            row.harcama_birimi ||
             ''
           ).trim();
-          result = InstitutionalHeaderProvider.composeBirimAntetLines(result, ekSatir, row.dosya_antet);
+          if (ekSatir) {
+            result = InstitutionalHeaderProvider.composeBirimAntetLines(result, ekSatir, row.dosya_antet);
+          }
         }
       } catch (e) {
         console.error('Birim antet ek satırı çözümlenirken hata:', e);
