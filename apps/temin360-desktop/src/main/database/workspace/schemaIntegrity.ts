@@ -154,6 +154,8 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
         talep_eden_personel_id INTEGER,
         talep_eden_personel TEXT,
         talep_eden_unvan TEXT,
+        evrak_sayisi TEXT,
+        belge_snapshot_json TEXT,
         durum TEXT DEFAULT 'taslak',
         temin_dosya_id INTEGER,
         tarih DATE DEFAULT CURRENT_DATE,
@@ -193,6 +195,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
 
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'talep_eden_unvan', 'TEXT')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'evrak_sayisi', 'TEXT')
+  safeAddColumn(db, 'DATA_IhtiyacRaporu', 'belge_snapshot_json', 'TEXT')
 
   // 3. Şema Sürümü ve Migrasyon Kontrolü
   try {
@@ -755,7 +758,8 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
 
   const ihtiyacCols = [
     { name: 'talep_eden_unvan', def: 'TEXT' },
-    { name: 'evrak_sayisi', def: 'TEXT' }
+    { name: 'evrak_sayisi', def: 'TEXT' },
+    { name: 'belge_snapshot_json', def: 'TEXT' }
   ]
   for (const c of ihtiyacCols) {
     safeAddColumn(db, 'DATA_IhtiyacRaporu', c.name, c.def)
