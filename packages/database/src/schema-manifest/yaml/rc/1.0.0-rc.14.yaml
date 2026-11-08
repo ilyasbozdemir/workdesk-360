@@ -1,16 +1,16 @@
 app: 1.0.0-rc.14
 suite: workdesk-360
 apps:
-  temin360-desktop: 1.0.0-rc.12
+  temin360-desktop: 1.0.0-rc.14
   ihale360-desktop: 1.0.0-beta.1
   devlet-ihale-2886-desktop: 1.0.0-beta.1
 schema_min: 1
-schema_max: 46
-release_date: "2026-11-07"
+schema_max: 47
+release_date: '2026-11-09'
 changes:
   - schema: 46
     type: update
-    description: "DATA_TeminDosyasi tablosuna kilit/aktarım takip ve antet birim görünürlük kolonları (antet_birim_gosterilsin); TANIM_KomisyonUye ve DATA_TeminKomisyon tablolarına birim ve imza türü kolonları (imza_turu, birim_id, birim) eklendi."
+    description: DATA_TeminDosyasi tablosuna kilit/aktarım takip ve antet birim görünürlük kolonları (antet_birim_gosterilsin); TANIM_KomisyonUye ve DATA_TeminKomisyon tablolarına birim ve imza türü kolonları (imza_turu, birim_id, birim) eklendi.
     columns_added:
       - table: DATA_TeminDosyasi
         column: is_locked
@@ -37,15 +37,29 @@ changes:
       - table: DATA_TeminKomisyon
         column: birim
     raw_sql:
-      - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN is_locked INTEGER DEFAULT 0;"
-      - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN lock_reason TEXT DEFAULT NULL;"
-      - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kayit_kaynagi TEXT DEFAULT 'yeni';"
-      - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN aktarim_grubu_id TEXT DEFAULT NULL;"
-      - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kaynak_kayit_id TEXT DEFAULT NULL;"
-      - "ALTER TABLE DATA_TeminDosyasi ADD COLUMN antet_birim_gosterilsin INTEGER DEFAULT 1;"
-      - "ALTER TABLE TANIM_KomisyonUye ADD COLUMN imza_turu TEXT DEFAULT 'İmza';"
-      - "ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim_id INTEGER DEFAULT NULL;"
-      - "ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim TEXT DEFAULT NULL;"
-      - "ALTER TABLE DATA_TeminKomisyon ADD COLUMN imza_turu TEXT DEFAULT 'İmza';"
-      - "ALTER TABLE DATA_TeminKomisyon ADD COLUMN birim_id INTEGER DEFAULT NULL;"
-      - "ALTER TABLE DATA_TeminKomisyon ADD COLUMN birim TEXT DEFAULT NULL;"
+      - ALTER TABLE DATA_TeminDosyasi ADD COLUMN is_locked INTEGER DEFAULT 0;
+      - ALTER TABLE DATA_TeminDosyasi ADD COLUMN lock_reason TEXT DEFAULT NULL;
+      - ALTER TABLE DATA_TeminDosyasi ADD COLUMN kayit_kaynagi TEXT DEFAULT 'yeni';
+      - ALTER TABLE DATA_TeminDosyasi ADD COLUMN aktarim_grubu_id TEXT DEFAULT NULL;
+      - ALTER TABLE DATA_TeminDosyasi ADD COLUMN kaynak_kayit_id TEXT DEFAULT NULL;
+      - ALTER TABLE DATA_TeminDosyasi ADD COLUMN antet_birim_gosterilsin INTEGER DEFAULT 1;
+      - ALTER TABLE TANIM_KomisyonUye ADD COLUMN imza_turu TEXT DEFAULT 'İmza';
+      - ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim_id INTEGER DEFAULT NULL;
+      - ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim TEXT DEFAULT NULL;
+      - ALTER TABLE DATA_TeminKomisyon ADD COLUMN imza_turu TEXT DEFAULT 'İmza';
+      - ALTER TABLE DATA_TeminKomisyon ADD COLUMN birim_id INTEGER DEFAULT NULL;
+      - ALTER TABLE DATA_TeminKomisyon ADD COLUMN birim TEXT DEFAULT NULL;
+  - schema: 47
+    type: update
+    description: TANIM_Kurum tablosuna resmî evraklarda muhatap seçimi ve hitap başlığı yönetimi için sunulacak_makam_secimi, sunulacak_kurum_adi ve makam_adi_custom kolonları eklendi.
+    columns_added:
+      - table: TANIM_Kurum
+        column: sunulacak_makam_secimi
+      - table: TANIM_Kurum
+        column: sunulacak_kurum_adi
+      - table: TANIM_Kurum
+        column: makam_adi_custom
+    raw_sql:
+      - ALTER TABLE TANIM_Kurum ADD COLUMN sunulacak_makam_secimi TEXT DEFAULT 'makam';
+      - ALTER TABLE TANIM_Kurum ADD COLUMN sunulacak_kurum_adi TEXT DEFAULT '';
+      - ALTER TABLE TANIM_Kurum ADD COLUMN makam_adi_custom TEXT DEFAULT '';

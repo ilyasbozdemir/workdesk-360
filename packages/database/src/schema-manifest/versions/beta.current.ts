@@ -7,13 +7,13 @@ export default {
   app: "1.0.0-beta.current",
   suite: "workdesk-360",
   apps: {
-    "temin360-desktop": "1.0.0-rc.12",
+    "temin360-desktop": "1.0.0-rc.14",
     "ihale360-desktop": "1.0.0-beta.1",
     "devlet-ihale-2886-desktop": "1.0.0-beta.1"
   },
   schema_min: 1,
-  schema_max: 46,
-  release_date: "2026-11-07",
+  schema_max: 47,
+  release_date: "2026-11-09",
   changes: [
     {
       schema: 46,
@@ -83,6 +83,26 @@ export default {
         "ALTER TABLE DATA_TeminKomisyon ADD COLUMN birim_id INTEGER DEFAULT NULL;",
         "ALTER TABLE DATA_TeminKomisyon ADD COLUMN birim TEXT DEFAULT NULL;"
       ]
+    },
+    {
+      schema: 47,
+      type: "update",
+      description: "TANIM_Kurum tablosuna resmî evraklarda muhatap seçimi ve hitap başlığı yönetimi için sunulacak_makam_secimi, sunulacak_kurum_adi ve makam_adi_custom kolonları eklendi.",
+      columns_added: [
+        {
+          table: "TANIM_Kurum",
+          column: "sunulacak_makam_secimi"
+        },
+        {
+          table: "TANIM_Kurum",
+          column: "sunulacak_kurum_adi"
+        },
+        {
+          table: "TANIM_Kurum",
+          column: "makam_adi_custom"
+        }
+      ],
+      raw_sql: ["ALTER TABLE TANIM_Kurum ADD COLUMN sunulacak_makam_secimi TEXT DEFAULT 'makam';", "ALTER TABLE TANIM_Kurum ADD COLUMN sunulacak_kurum_adi TEXT DEFAULT '';", "ALTER TABLE TANIM_Kurum ADD COLUMN makam_adi_custom TEXT DEFAULT '';"]
     }
   ]
 };
