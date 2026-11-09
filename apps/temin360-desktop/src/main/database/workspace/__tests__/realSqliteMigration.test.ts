@@ -50,7 +50,7 @@ describe("Gerçek RC.8 / v44 SQLite Veritabanı Migration ve Bütünlük Testler
   });
 
   it(
-    "2. Gerçek v44 SQLite dosyası v46 seviyesine yükseltilmeli, tüm kullanıcı verileri ve ilişkileri korunmalıdır",
+    "2. Gerçek v44 SQLite dosyası hedef seviyeye (v47) yükseltilmeli, tüm kullanıcı verileri ve ilişkileri korunmalıdır",
     () => {
       const tempDir = fs.mkdtempSync(
         path.join(os.tmpdir(), "temin-real-migration-test-"),
@@ -155,7 +155,7 @@ describe("Gerçek RC.8 / v44 SQLite Veritabanı Migration ve Bütünlük Testler
         const schemaVerRow = rawDbAfter.prepare(
           "SELECT value FROM settings WHERE key = 'dbSchemaVersion'",
         ).get() as { value: string };
-        expect(schemaVerRow.value).toBe("46");
+        expect(schemaVerRow.value).toBe("47");
 
         // v45 tabloları (DATA_KutuphaneGrup vb.) artık oluşmuş olmalı
         const tablesAfter = rawDbAfter.prepare(
@@ -189,6 +189,14 @@ describe("Gerçek RC.8 / v44 SQLite Veritabanı Migration ve Bütünlük Testler
         );
         expect(teminKomColsAfter.some((c) => c.name === "birim_id")).toBe(true);
         expect(teminKomColsAfter.some((c) => c.name === "birim")).toBe(true);
+
+        // v47 kolonları (TANIM_Kurum muhatap makam/kurum alanları) eklenmiş olmalı
+        const kurumColsAfter = rawDbAfter.prepare(
+          "PRAGMA table_info(TANIM_Kurum)",
+        ).all() as { name: string }[];
+        expect(kurumColsAfter.some((c) => c.name === "sunulacak_makam_secimi")).toBe(true);
+        expect(kurumColsAfter.some((c) => c.name === "sunulacak_kurum_adi")).toBe(true);
+        expect(kurumColsAfter.some((c) => c.name === "makam_adi_custom")).toBe(true);
 
         // Kullanıcının kayıtlı kurum ayarları EZİLMEMELİ
         const instRow = rawDbAfter.prepare(

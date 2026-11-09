@@ -217,7 +217,7 @@ describe('Temin 360 - Production Identity & Security Test Suite', () => {
         Buffer.from(
           JSON.stringify({
             dtal_version: '1.0',
-            schema_version: 46,
+            schema_version: CURRENT_SCHEMA_VERSION,
             institution: 'Kayseri Şehir Hastanesi',
             created_at: '2024-03-12'
             // project_id kasıtlı olarak yok
