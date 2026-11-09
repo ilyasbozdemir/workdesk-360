@@ -229,7 +229,8 @@ export async function loadDocumentPreviewData({
     propInvitedFirms,
     combinedFirms,
     items,
-    bids
+    bids,
+    targetDocTemplateId
   )
 
   // 5. Resolve Snapshot and final data assembly

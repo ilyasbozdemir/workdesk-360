@@ -2,6 +2,12 @@ import { useGlobalDocumentPreviewStore } from '../../../../../../../store/global
 import { parseNumericPrice } from './previewDataUtils'
 import { formatDateString } from '../../../../../contextBuilder/dateHelpers'
 
+/**
+ * Dosya firmalarını, kazanan firmayı ve şablon kalemlerini koordine eder.
+ * MİMARİ İLKE: Her şablon kendi liste ve veri yapısının sahibidir.
+ * Eğer şablonun kendi resolver'ı veya snapshot'ı kalemleri (ihtiyacKalemleri vb.) zaten üretmişse,
+ * bu fonksiyon şablonun kendi veri yapısını bozmaz ve ezmez.
+ */
 export function resolveFirmsAndItems(
   baseData: any,
   dosyaObj: any,
@@ -11,7 +17,8 @@ export function resolveFirmsAndItems(
   propInvitedFirms: any[] | undefined,
   combinedFirms: any[],
   items: any[],
-  bids: any[]
+  bids: any[],
+  targetDocTemplateId?: string
 ): void {
   const safeFileFirms = Array.isArray(fileFirms) ? fileFirms : []
   const safeCombinedFirms = Array.isArray(combinedFirms) ? combinedFirms : []
@@ -33,7 +40,7 @@ export function resolveFirmsAndItems(
   baseData.firmalar = activeFirms
   baseData.firmaListesi = safeCombinedFirms
 
-  // Kazanan firma tespiti
+  // 1. Kazanan firma tespiti
   const winnerFirmaId =
     payloadData?.dosya?.firma_id ||
     dosyaRecord?.firma_id ||
@@ -78,7 +85,7 @@ export function resolveFirmsAndItems(
     }
   }
 
-  // Seçilen veya hedeflenen istekli firma bilgileri (Mektup ve Teklif formları için)
+  // 2. Seçilen veya hedeflenen istekli firma bilgileri (Mektup ve Teklif formları için)
   const activeTab = useGlobalDocumentPreviewStore.getState().getActiveTab()
   const explicitFirm =
     (activeTab?.selectedFirma as any) ||
@@ -108,14 +115,21 @@ export function resolveFirmsAndItems(
     baseData.eposta = fEmail
   }
 
-  // Şablon tercihleri (Örn: Sonuç Onay Belgesi Ekler listesi)
-  if (dosyaObj.sablon_tercihleri) {
+  // 3. Şablon tercihleri (Sadece Sonuç Onay Belgesi için ve ekler henüz tanımlı değilse)
+  const cleanDocKey = String(targetDocTemplateId || '').replace(/_/g, '-').toLowerCase()
+  if (
+    dosyaObj.sablon_tercihleri &&
+    (cleanDocKey.includes('sonuc-onay') || !baseData.ekler || baseData.ekler.length === 0)
+  ) {
     try {
       const parsedTercihler =
         typeof dosyaObj.sablon_tercihleri === 'string'
           ? JSON.parse(dosyaObj.sablon_tercihleri)
           : dosyaObj.sablon_tercihleri
-      if (Array.isArray(parsedTercihler.sonucOnayEkler)) {
+      if (
+        Array.isArray(parsedTercihler.sonucOnayEkler) &&
+        (!baseData.ekler || baseData.ekler.length === 0)
+      ) {
         baseData.ekler = parsedTercihler.sonucOnayEkler
       }
     } catch {
@@ -123,7 +137,7 @@ export function resolveFirmsAndItems(
     }
   }
 
-  // Teslim süresi
+  // 4. Teslim süresi & sözleşme
   if (
     dosyaObj.teslim_gun !== undefined &&
     dosyaObj.teslim_gun !== null &&
@@ -169,229 +183,315 @@ export function resolveFirmsAndItems(
     baseData.teslimSuresi = '7'
   }
 
-  const baseKalemler =
-    baseData.ihtiyacKalemleri &&
-    Array.isArray(baseData.ihtiyacKalemleri) &&
-    baseData.ihtiyacKalemleri.length > 0
-      ? baseData.ihtiyacKalemleri
-      : items
+  // 5. Kalemler ve Teklifler:
+  // Her şablon kendi listesinin sorumlusudur.
+  // Eğer şablonun kendi resolver'ı (IhtiyacListesiResolver, IhtiyacTalepFormuResolver, vb.)
+  // veya üst verisi kalemleri önceden çözmüşse, o kalemlerin yapısı KORUNUR.
+  const hasExistingResolvedKalemler =
+    Array.isArray(baseData.ihtiyacKalemleri) && baseData.ihtiyacKalemleri.length > 0
 
-  if (baseKalemler && Array.isArray(baseKalemler)) {
+  const sourceKalemler = hasExistingResolvedKalemler
+    ? baseData.ihtiyacKalemleri
+    : Array.isArray(items) && items.length > 0
+      ? items
+      : []
+
+  if (sourceKalemler.length > 0) {
     let grandTotalNum = 0
 
-    baseData.ihtiyacKalemleri = baseKalemler.map((kalem: any, idx: number) => {
+    baseData.ihtiyacKalemleri = sourceKalemler.map((kalem: any, idx: number) => {
       const miktarNum = Number(kalem.miktar || 1)
       const kalemId = kalem.id || items[idx]?.id || idx + 1
       let minPrice = Infinity
       let bestFirmName = ''
       let winnerPrice = 0
 
-      const teklifler = activeFirms.map((firm: any, fIdx: number) => {
-        const firmId = firm.id ?? firm.temin_firma_id ?? firm.firma_id
-        const firmUnvan = (firm.unvan || firm.firma_adi || firm.firmaUnvan || '')
-          .trim()
-          .toLowerCase()
+      // Firma tekliflerini hesapla (varsa teklif matrisi oluştur)
+      const teklifler =
+        activeFirms.length > 0
+          ? activeFirms.map((firm: any, fIdx: number) => {
+              const firmId = firm.id ?? firm.temin_firma_id ?? firm.firma_id
+              const firmUnvan = (firm.unvan || firm.firma_adi || firm.firmaUnvan || '')
+                .trim()
+                .toLowerCase()
 
-        // 1. Match from bids list
-        const bid = bids.find(
-          (b: any) =>
-            (b.temin_kalem_id === kalemId ||
-              b.temin_kalem_id === kalem.siraNo ||
-              b.temin_kalem_id === idx + 1 ||
-              b.kalem_id === kalemId) &&
-            (b.temin_firma_id === firmId ||
-              b.temin_firma_id === firm.temin_firma_id ||
-              b.temin_firma_id === firm.id ||
-              b.firma_id === firm.firma_id ||
-              b.firma_id === firm.id)
-        )
+              // Teklif tablosundan eşleştir
+              const bid = bids.find(
+                (b: any) =>
+                  (b.temin_kalem_id === kalemId ||
+                    b.temin_kalem_id === kalem.siraNo ||
+                    b.temin_kalem_id === idx + 1 ||
+                    b.kalem_id === kalemId) &&
+                  (b.temin_firma_id === firmId ||
+                    b.temin_firma_id === firm.temin_firma_id ||
+                    b.temin_firma_id === firm.id ||
+                    b.firma_id === firm.firma_id ||
+                    b.firma_id === firm.id)
+              )
 
-        let priceVal: any = bid ? (bid.birim_fiyat ?? bid.fiyat ?? bid.birimFiyat) : undefined
+              let priceVal: any = bid ? (bid.birim_fiyat ?? bid.fiyat ?? bid.birimFiyat) : undefined
 
-        // 2. Check in kalem's existing teklifler/firmaTeklifleri if not found
-        if (priceVal === undefined || priceVal === null || priceVal === '' || priceVal === '-') {
-          const existingOffers =
-            kalem.firmaTeklifleriDetay || kalem.firmaTeklifleri || kalem.teklifler || []
-          if (Array.isArray(existingOffers) && existingOffers.length > 0) {
-            const foundOffer =
-              existingOffers.find((eo: any) => {
-                const eoId = eo.firmaId ?? eo.temin_firma_id ?? eo.firma_id ?? eo.id
-                if (firmId !== undefined && eoId !== undefined && String(firmId) === String(eoId))
-                  return true
-                const eoUnvan = (eo.firmaUnvan || eo.unvan || eo.firma_adi || '')
-                  .trim()
-                  .toLowerCase()
-                if (firmUnvan && eoUnvan && firmUnvan === eoUnvan) return true
-                return false
-              }) || existingOffers[fIdx]
+              if (
+                priceVal === undefined ||
+                priceVal === null ||
+                priceVal === '' ||
+                priceVal === '-'
+              ) {
+                const existingOffers =
+                  kalem.firmaTeklifleriDetay || kalem.firmaTeklifleri || kalem.teklifler || []
+                if (Array.isArray(existingOffers) && existingOffers.length > 0) {
+                  const foundOffer =
+                    existingOffers.find((eo: any) => {
+                      const eoId = eo.firmaId ?? eo.temin_firma_id ?? eo.firma_id ?? eo.id
+                      if (
+                        firmId !== undefined &&
+                        eoId !== undefined &&
+                        String(firmId) === String(eoId)
+                      )
+                        return true
+                      const eoUnvan = (eo.firmaUnvan || eo.unvan || eo.firma_adi || '')
+                        .trim()
+                        .toLowerCase()
+                      if (firmUnvan && eoUnvan && firmUnvan === eoUnvan) return true
+                      return false
+                    }) || existingOffers[fIdx]
 
-            if (foundOffer) {
-              priceVal = foundOffer.birimFiyat ?? foundOffer.fiyat ?? foundOffer.birim_fiyat
-            }
-          }
-        }
+                  if (foundOffer) {
+                    priceVal = foundOffer.birimFiyat ?? foundOffer.fiyat ?? foundOffer.birim_fiyat
+                  }
+                }
+              }
 
-        const priceNum = parseNumericPrice(priceVal)
+              const priceNum = parseNumericPrice(priceVal)
 
-        if (priceNum > 0 && priceNum < minPrice) {
-          minPrice = priceNum
-          bestFirmName = firm.unvan || firm.firma_adi || ''
-        }
+              if (priceNum > 0 && priceNum < minPrice) {
+                minPrice = priceNum
+                bestFirmName = firm.unvan || firm.firma_adi || ''
+              }
 
-        if (
-          winnerFirm &&
-          (firm.id === winnerFirm.id || firm.temin_firma_id === winnerFirm.temin_firma_id) &&
-          priceNum > 0
-        ) {
-          winnerPrice = priceNum
-        }
+              if (
+                winnerFirm &&
+                (firm.id === winnerFirm.id || firm.temin_firma_id === winnerFirm.temin_firma_id) &&
+                priceNum > 0
+              ) {
+                winnerPrice = priceNum
+              }
 
-        const formattedPrice =
-          priceNum > 0
-            ? priceNum.toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : '-'
+              const formattedPrice =
+                priceNum > 0
+                  ? priceNum.toLocaleString('tr-TR', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })
+                  : '-'
 
-        const itemTotalNum = priceNum * miktarNum
-        const formattedTutar =
-          itemTotalNum > 0
-            ? itemTotalNum.toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : '-'
+              const itemTotalNum = priceNum * miktarNum
+              const formattedTutar =
+                itemTotalNum > 0
+                  ? itemTotalNum.toLocaleString('tr-TR', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })
+                  : '-'
 
-        return {
-          firmaId: firm.id,
-          firmaUnvan: firm.unvan || firm.firma_adi || `Firma ${fIdx + 1}`,
-          birimFiyat: priceNum,
-          fiyat: formattedPrice,
-          tutar: formattedTutar
-        }
-      })
+              return {
+                firmaId: firm.id,
+                firmaUnvan: firm.unvan || firm.firma_adi || `Firma ${fIdx + 1}`,
+                birimFiyat: priceNum,
+                fiyat: formattedPrice,
+                tutar: formattedTutar
+              }
+            })
+          : kalem.firmaTeklifleri || []
 
       const effectivePrice = winnerPrice > 0 ? winnerPrice : minPrice !== Infinity ? minPrice : 0
       const itemCostNum = effectivePrice * miktarNum
       grandTotalNum += itemCostNum
 
+      // Şablonun kendi alanlarını (pozNo, imalatAdi, teknikTarifi vb.) koruyarak birleştir
+      const koduVal =
+        kalem.pozNo ||
+        kalem.kodu ||
+        kalem.tasinirKodu ||
+        kalem.tasinir_kodu ||
+        kalem.hizmetKodu ||
+        kalem.hizmet_kodu ||
+        items[idx]?.tasinir_kodu ||
+        items[idx]?.poz_no ||
+        items[idx]?.hizmet_kodu ||
+        '-'
+
+      const adiVal =
+        kalem.imalatAdi ||
+        kalem.hizmetAdi ||
+        kalem.danismanlikKonusu ||
+        kalem.malzemeAdi ||
+        kalem.kalemAdi ||
+        kalem.kalem_adi ||
+        items[idx]?.kalem_adi ||
+        ''
+
+      const ozellikVal =
+        kalem.teknikTarifi ||
+        kalem.kapsam ||
+        kalem.ozelligi ||
+        kalem.aciklama ||
+        items[idx]?.aciklama ||
+        items[idx]?.poz_tanimi ||
+        ''
+
+      const birimVal =
+        kalem.olcuBirimi ||
+        kalem.birimi ||
+        kalem.birim ||
+        items[idx]?.olcu_birimi ||
+        items[idx]?.birim ||
+        'Adet'
+
       return {
         ...kalem,
         id: kalemId,
-        siraNo: kalem.siraNo || idx + 1,
-        kodu: kalem.kodu || kalem.tasinir_kodu || items[idx]?.tasinir_kodu || '-',
-        malzemeAdi: kalem.malzemeAdi || kalem.kalem_adi || items[idx]?.kalem_adi || '',
-        ozelligi: kalem.ozelligi || kalem.aciklama || items[idx]?.aciklama || '',
-        birimi: kalem.birimi || kalem.birim || items[idx]?.birim || '',
+        siraNo: kalem.siraNo || kalem.sira_no || idx + 1,
+        kodu: koduVal,
+        tasinirKodu: kalem.tasinirKodu || (koduVal !== '-' ? koduVal : ''),
+        pozNo: kalem.pozNo || items[idx]?.poz_no || '',
+        hizmetKodu: kalem.hizmetKodu || items[idx]?.hizmet_kodu || '',
+        malzemeAdi: adiVal,
+        kalemAdi: adiVal,
+        imalatAdi: kalem.imalatAdi || adiVal,
+        hizmetAdi: kalem.hizmetAdi || adiVal,
+        danismanlikKonusu: kalem.danismanlikKonusu || adiVal,
+        ozelligi: ozellikVal,
+        teknikTarifi: kalem.teknikTarifi || ozellikVal,
+        aciklama: kalem.aciklama || ozellikVal,
+        birimi: birimVal,
+        birim: birimVal,
+        olcuBirimi: kalem.olcuBirimi || items[idx]?.olcu_birimi || birimVal,
         miktar: miktarNum,
-        enUygunFirmaAdi: bestFirmName,
+        kdvOrani:
+          kalem.kdvOrani !== undefined && kalem.kdvOrani !== null
+            ? String(kalem.kdvOrani).replace('%', '')
+            : items[idx]?.kdv_orani !== undefined && items[idx]?.kdv_orani !== null
+              ? String(items[idx].kdv_orani)
+              : '20',
+        enUygunFirmaAdi: kalem.enUygunFirmaAdi || bestFirmName,
         enDusukFiyat:
-          effectivePrice > 0
-            ? effectivePrice.toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : '-',
+          kalem.enDusukFiyat && kalem.enDusukFiyat !== '-'
+            ? kalem.enDusukFiyat
+            : effectivePrice > 0
+              ? effectivePrice.toLocaleString('tr-TR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })
+              : '-',
         toplamBedel:
-          itemCostNum > 0
-            ? itemCostNum.toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : '-',
+          kalem.toplamBedel && kalem.toplamBedel !== '-'
+            ? kalem.toplamBedel
+            : itemCostNum > 0
+              ? itemCostNum.toLocaleString('tr-TR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })
+              : '-',
         firmaTeklifleri: teklifler,
         firmaTeklifleriDetay: teklifler
       }
     })
 
-    // Build firm totals row
-    const firmTotals = activeFirms.map((firm: any) => {
-      let firmTotalNum = 0
-      baseData.ihtiyacKalemleri.forEach((kalem: any) => {
-        const miktarNum = Number(kalem.miktar || 0)
-        const tf = (kalem.firmaTeklifleriDetay || []).find(
-          (t: any) =>
-            (firm.id && t.firmaId === firm.id) || (firm.unvan && t.firmaUnvan === firm.unvan)
-        )
-        if (tf && tf.birimFiyat > 0) {
-          firmTotalNum += tf.birimFiyat * miktarNum
+    // Firma toplamları (varsa teklifler için)
+    if (activeFirms.length > 0) {
+      const firmTotals = activeFirms.map((firm: any) => {
+        let firmTotalNum = 0
+        baseData.ihtiyacKalemleri.forEach((kalem: any) => {
+          const miktarNum = Number(kalem.miktar || 0)
+          const tf = (kalem.firmaTeklifleriDetay || []).find(
+            (t: any) =>
+              (firm.id && t.firmaId === firm.id) || (firm.unvan && t.firmaUnvan === firm.unvan)
+          )
+          if (tf && tf.birimFiyat > 0) {
+            firmTotalNum += tf.birimFiyat * miktarNum
+          }
+        })
+
+        return {
+          firmaId: firm.id,
+          unvan: firm.unvan || firm.firma_adi || '',
+          toplam:
+            firmTotalNum > 0
+              ? firmTotalNum.toLocaleString('tr-TR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })
+              : '0,00'
         }
       })
 
-      return {
-        firmaId: firm.id,
-        unvan: firm.unvan || firm.firma_adi || '',
-        toplam:
-          firmTotalNum > 0
-            ? firmTotalNum.toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : '0,00'
+      baseData.firmaToplamlari = firmTotals
+      baseData.firmaToplamlariDetay = firmTotals
+    }
+
+    if (!baseData.genelToplam || baseData.genelToplam === '0,00' || baseData.genelToplam === '0') {
+      if (winnerFirm?.teklif_toplami && Number(winnerFirm.teklif_toplami) > 0) {
+        baseData.genelToplam = Number(winnerFirm.teklif_toplami).toLocaleString('tr-TR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })
+      } else if (grandTotalNum > 0) {
+        baseData.genelToplam = grandTotalNum.toLocaleString('tr-TR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })
       }
-    })
-
-    baseData.firmaToplamlari = firmTotals
-    baseData.firmaToplamlariDetay = firmTotals
-
-    if (winnerFirm?.teklif_toplami && Number(winnerFirm.teklif_toplami) > 0) {
-      baseData.genelToplam = Number(winnerFirm.teklif_toplami).toLocaleString('tr-TR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    } else if (grandTotalNum > 0) {
-      baseData.genelToplam = grandTotalNum.toLocaleString('tr-TR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
     }
   }
 
-  // Son alım fiyat cetveli kalemleri
-  if (
-    (!baseData.fiyatKalemleri || baseData.fiyatKalemleri.length === 0) &&
-    baseData.ihtiyacKalemleri &&
-    baseData.ihtiyacKalemleri.length > 0
-  ) {
-    baseData.fiyatKalemleri = baseData.ihtiyacKalemleri.map((k: any, idx: number) => {
-      const birimFiyatStr =
-        k.enDusukFiyat && k.enDusukFiyat !== '-'
-          ? k.enDusukFiyat
-          : k.birimFiyat
-            ? Number(k.birimFiyat).toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : '0,00'
-      const toplamTutarStr =
-        k.toplamBedel && k.toplamBedel !== '-'
-          ? k.toplamBedel
-          : k.toplamTutar
-            ? Number(k.toplamTutar).toLocaleString('tr-TR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })
-            : '0,00'
+  // 6. Son Alım Fiyat Cetveli özel listesi:
+  // Sadece ilgili şablon istendiğinde ve listede veri yoksa doldur
+  if (cleanDocKey.includes('son-alim') || cleanDocKey.includes('fiyat-cetveli')) {
+    if (
+      (!baseData.fiyatKalemleri || baseData.fiyatKalemleri.length === 0) &&
+      baseData.ihtiyacKalemleri &&
+      baseData.ihtiyacKalemleri.length > 0
+    ) {
+      baseData.fiyatKalemleri = baseData.ihtiyacKalemleri.map((k: any, idx: number) => {
+        const birimFiyatStr =
+          k.enDusukFiyat && k.enDusukFiyat !== '-'
+            ? k.enDusukFiyat
+            : k.birimFiyat
+              ? Number(k.birimFiyat).toLocaleString('tr-TR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })
+              : '0,00'
+        const toplamTutarStr =
+          k.toplamBedel && k.toplamBedel !== '-'
+            ? k.toplamBedel
+            : k.toplamTutar
+              ? Number(k.toplamTutar).toLocaleString('tr-TR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })
+              : '0,00'
 
-      return {
-        siraNo: k.siraNo || idx + 1,
-        malzemeKodu: k.kodu || k.malzemeKodu || k.tasinir_kodu || '-',
-        malzemeAdi: k.malzemeAdi || k.kalem_adi || '',
-        ozelligi: k.ozelligi || k.aciklama || '',
-        birimi: k.birimi || k.birim || '',
-        kdvOrani: k.kdvOrani ? String(k.kdvOrani).replace('%', '') : '20',
-        miktar: k.miktar || 1,
-        birimFiyat: birimFiyatStr,
-        toplamTutar: toplamTutarStr,
-        kazananFirma: k.kazananFirma || winnerFirm?.unvan || k.enUygunFirmaAdi || '-',
-        alimTarihi:
-          formatDateString(k.alimTarihi) ||
-          formatDateString(dosyaObj.sozlesme_tarihi) ||
-          formatDateString(dosyaObj.dosya_acilis_tarihi) ||
-          formatDateString(dosyaObj.tarih) ||
-          '-'
-      }
-    })
+        return {
+          siraNo: k.siraNo || idx + 1,
+          malzemeKodu: k.kodu || k.malzemeKodu || k.tasinir_kodu || '-',
+          malzemeAdi: k.malzemeAdi || k.kalem_adi || '',
+          ozelligi: k.ozelligi || k.aciklama || '',
+          birimi: k.birimi || k.birim || '',
+          kdvOrani: k.kdvOrani ? String(k.kdvOrani).replace('%', '') : '20',
+          miktar: k.miktar || 1,
+          birimFiyat: birimFiyatStr,
+          toplamTutar: toplamTutarStr,
+          kazananFirma: k.kazananFirma || winnerFirm?.unvan || k.enUygunFirmaAdi || '-',
+          alimTarihi:
+            formatDateString(k.alimTarihi) ||
+            formatDateString(dosyaObj.sozlesme_tarihi) ||
+            formatDateString(dosyaObj.dosya_acilis_tarihi) ||
+            formatDateString(dosyaObj.tarih) ||
+            '-'
+        }
+      })
+    }
   }
 }

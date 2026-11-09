@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { applyRolePolicy, dedupeMembers, parseNumericPrice, resolveFirmsAndItems, cleanPersonelName } from '../index'
+import {
+  applyRolePolicy,
+  dedupeMembers,
+  parseNumericPrice,
+  resolveFirmsAndItems,
+  cleanPersonelName,
+  applyRefreshPolicy,
+  getFieldRefreshPolicy
+} from '../index'
 
 describe('DocumentPreviewModalV3 - previewData modular helpers', () => {
   it('parseNumericPrice handles numbers, strings with commas and dots correctly', () => {
@@ -38,7 +46,7 @@ describe('DocumentPreviewModalV3 - previewData modular helpers', () => {
     expect(deduped[2].ad_soyad).toBe('Ayşe Kaya')
   })
 
-  it('resolveFirmsAndItems correctly computes line item prices and winner firm', () => {
+  it('resolveFirmsAndItems correctly computes line item prices and winner firm when items are provided', () => {
     const baseData: any = {}
     const dosyaObj: any = { teslim_gun: 15 }
     const dosyaRecord: any = null
@@ -74,6 +82,73 @@ describe('DocumentPreviewModalV3 - previewData modular helpers', () => {
     expect(baseData.ihtiyacKalemleri[0].enUygunFirmaAdi).toBe('A Firması')
     expect(baseData.ihtiyacKalemleri[0].toplamBedel).toBe('500,00')
     expect(baseData.genelToplam).toBe('500,00')
+  })
+
+  it('resolveFirmsAndItems preserves template resolved items (pozNo, imalatAdi) without foreign list pollution', () => {
+    const baseData: any = {
+      ihtiyacKalemleri: [
+        {
+          id: 101,
+          siraNo: 1,
+          pozNo: 'Y.15.001',
+          imalatAdi: 'Beton Dökülmesi',
+          teknikTarifi: 'C25/30 hazır beton',
+          olcuBirimi: 'm³',
+          miktar: 50
+        }
+      ]
+    }
+    const dosyaObj: any = { teslim_gun: 10 }
+
+    resolveFirmsAndItems(
+      baseData,
+      dosyaObj,
+      null,
+      {},
+      [],
+      undefined,
+      [],
+      [],
+      [],
+      'ihtiyac-listesi'
+    )
+
+    expect(baseData.ihtiyacKalemleri.length).toBe(1)
+    expect(baseData.ihtiyacKalemleri[0].pozNo).toBe('Y.15.001')
+    expect(baseData.ihtiyacKalemleri[0].imalatAdi).toBe('Beton Dökülmesi')
+    expect(baseData.ihtiyacKalemleri[0].teknikTarifi).toBe('C25/30 hazır beton')
+    expect(baseData.ihtiyacKalemleri[0].olcuBirimi).toBe('m³')
+    // Should NOT inject fiyatKalemleri for ihtiyac-listesi
+    expect(baseData.fiyatKalemleri).toBeUndefined()
+  })
+
+  it('applyRefreshPolicy preserves manual table edits from saved snapshot and respects preserve fields', () => {
+    const sourceData = {
+      evrakSayisi: '2026/001',
+      harcamaYetkilisiAdi: 'Ali Veli',
+      ihtiyacKalemleri: [
+        { siraNo: 1, malzemeAdi: 'Orijinal Kaynak Malzeme', miktar: 1 }
+      ]
+    }
+
+    const savedSnapshot = {
+      evrakSayisi: '2026/001-Revize',
+      ihtiyacKalemleri: [
+        { siraNo: 1, malzemeAdi: 'Kullanıcının Belgede Düzenlediği Özel Malzeme', miktar: 5 }
+      ],
+      ozelGerekce: 'Acil ihtiyaç nedeniyle'
+    }
+
+    const merged = applyRefreshPolicy(sourceData, savedSnapshot)
+
+    // Manual / Template table items are preserved from snapshot!
+    expect(merged.ihtiyacKalemleri[0].malzemeAdi).toBe('Kullanıcının Belgede Düzenlediği Özel Malzeme')
+    expect(merged.ihtiyacKalemleri[0].miktar).toBe(5)
+    expect(merged.ozelGerekce).toBe('Acil ihtiyaç nedeniyle')
+    // Preserve fields are preserved from snapshot when filled
+    expect(merged.evrakSayisi).toBe('2026/001-Revize')
+    // Source data not present in snapshot remains intact
+    expect(merged.harcamaYetkilisiAdi).toBe('Ali Veli')
   })
 
   it('applyRolePolicy can be invoked without error', () => {

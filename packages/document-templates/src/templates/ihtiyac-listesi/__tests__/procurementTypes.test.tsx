@@ -30,6 +30,7 @@ describe("İhtiyaç Listesi — Alım Türü Modüler Şablonları Testleri", ()
   it("1. MalAlimiIhtiyacListesi: Taşınır kodu ve Malzeme Adı kolonlarıyla mal metnini render eder", () => {
     const data = {
       ...baseData,
+      alimTuru: "mal",
       ihtiyacKalemleri: [
         {
           siraNo: 1,

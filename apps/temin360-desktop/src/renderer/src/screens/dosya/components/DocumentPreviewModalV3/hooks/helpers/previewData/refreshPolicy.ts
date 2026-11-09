@@ -1,9 +1,12 @@
 /**
  * Refresh Policy & Field Categorization for Document Preview
- * 
- * - PRESERVE: Dosyadan miras alınan kurumsal / dosya sabitleri (asla ezilmez, tek kaynaktan gelir)
- * - SOURCE: Operasyonel dinamik veriler (kalemler, teklifler, yaklaşık maliyet - kaynaktan güncellenir)
- * - MANUAL: Kullanıcının belge üzerinde elle yaptığı canlı düzenlemeler (snapshot'tan korunur)
+ *
+ * MİMARİ İLKE: Her şablon kendi liste ve veri yapısının sahibidir.
+ *
+ * - PRESERVE: Dosyadan miras alınan kurumsal / dosya sabitleri (snapshot'ta doluysa korunur)
+ * - SOURCE: Ham veritabanı önbellekleri (items, bids, rawFirms vb. - sadece kaynakta boşsa snapshot'a başvurur)
+ * - MANUAL: Şablon içeriği, tablo kalemleri (ihtiyacKalemleri, fiyatKalemleri vb.), metinler ve düzenlemeler
+ *           (Kullanıcının şablon üzerinde yaptığı tüm tablo ve alan düzenlemeleri snapshot'tan tam korunur).
  */
 
 export const PRESERVE_FIELDS = new Set([
@@ -47,24 +50,12 @@ export const PRESERVE_FIELDS = new Set([
 ])
 
 export const SOURCE_FIELDS = new Set([
-  'ihtiyacKalemleri',
-  'kalemler',
   'items',
-  'malzemeler',
-  'fiyatKalemleri',
-  'teklifler',
   'bids',
-  'firmaTeklifleri',
-  'firmaListesi',
-  'firmalar',
-  'invitedFirms',
   'fileFirms',
-  'kazananFirma',
-  'yaklasikMaliyet',
-  'toplamTutar',
-  'kdvTutari',
-  'genelToplam',
-  'grandTotal',
+  'invitedFirms',
+  'rawFirms',
+  'dbKalemler',
   'paraBirimi'
 ])
 
@@ -85,8 +76,8 @@ function isNonEmptyValue(value: unknown): boolean {
 
 /**
  * Akıllı Belge Birleştirici (Smart Merge with Refresh Policy)
- * 
- * @param sourceData DB ve kurumsal başlıktan taze çekilen dinamik veriler
+ *
+ * @param sourceData DB ve kurumsal başlıktan çekilen taze kaynak veriler
  * @param savedSnapshot Kullanıcının önceden kaydettiği veya canlı düzenlediği snapshot verileri
  * @returns Refresh Policy kurallarına göre harmanlanmış nihai veri
  */
@@ -106,19 +97,19 @@ export function applyRefreshPolicy(
 
     if (policy === 'preserve') {
       // PRESERVE: Kullanıcının belge üzerinde veya rotada yaptığı dolu düzenlemeler senkronizasyonda korunur.
-      // Snapshot'taki değer boş string ("") veya boş dizi ([]) ise kaynak verideki değer muhafaza edilir.
       if (isNonEmptyValue(val)) {
         merged[key] = val
       }
     } else if (policy === 'source') {
-      // SOURCE: Veritabanındaki güncel kalem/teklif/tutar verisi esastır.
-      // Yalnızca kaynak veride değer boşsa (ör. [], "", null, undefined) snapshot'taki dolu değer fallback olarak alınır.
+      // SOURCE: Ham veritabanı önbellekleri için kaynak veride değer boşsa snapshot'taki dolu değer fallback olarak alınır.
       if (!isNonEmptyValue(merged[key]) && isNonEmptyValue(val)) {
         merged[key] = val
       }
     } else {
-      // MANUAL: Kullanıcının özel girdiği metinler, gerekçeler, tarihler, şerhler ve görünüm ayarları KORUNUR.
-      // Ancak snapshot'ta boş string ("") veya boş dizi ([]) varken kaynakta dolu değer varsa kaynak ezilmez.
+      // MANUAL / ŞABLON İÇERİĞİ:
+      // Her şablon kendi verisinin ve listelerinin sahibidir.
+      // Kullanıcının şablon üzerinde yaptığı tablo düzenlemeleri (kalemler, fiyatlar, metinler vb.)
+      // snapshot'tan KORUNUR ve kaynak veriyi ezerek güncel tutar.
       if (
         (typeof val === 'string' && val.trim() === '' && isNonEmptyValue(merged[key])) ||
         (Array.isArray(val) && val.length === 0 && isNonEmptyValue(merged[key]))
@@ -131,4 +122,3 @@ export function applyRefreshPolicy(
 
   return merged
 }
-

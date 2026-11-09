@@ -23,11 +23,17 @@ export interface MalAlimiIhtiyacListesiProps {
 }
 
 export function MalAlimiIhtiyacListesi(props: MalAlimiIhtiyacListesiProps) {
+  const alimTuru = String(
+    props.data?.alimTuru || props.data?.alim_turu || props.data?.tur || "",
+  ).toLowerCase();
+
+  const isExplicitMal = alimTuru === "mal" || alimTuru === "mal alımı";
+
   return (
     <BaseIhtiyacListesi
       {...props}
       defaultColumns={props.columns || MAL_ALIMI_TABLE_COLUMNS}
-      itemDescriptionText="mal"
+      itemDescriptionText={isExplicitMal ? "mal" : "mal/hizmet"}
     />
   );
 }
