@@ -366,6 +366,34 @@ export async function resolvePersonnelAndCommissions(
       }
     }
 
+    // Kurum Seviyesi Antet veya Harcama Yetkilisi Fallback Çözümlemesi
+    const isKurumLevelAntet =
+      !baseData.antetSatirlari ||
+      baseData.antetSatirlari.length <= 2 ||
+      dosyaObj?.antet_birim_gosterilsin === 0 ||
+      dosyaObj?.antet_birim_gosterilsin === '0'
+
+    const fallbackHarcamaAdi = ctx?.harcamaYetkilisiAdi || ''
+    const fallbackHarcamaUnvan = ctx?.harcamaYetkilisiUnvan || 'Harcama Yetkilisi'
+
+    if (fallbackHarcamaAdi) {
+      if (isKurumLevelAntet && !dosyaObj.onay_personel_id && !hasHarcamaRowInFile) {
+        baseData.harcamaYetkilisiAdi = fallbackHarcamaAdi
+        baseData.harcamaYetkilisiUnvan = fallbackHarcamaUnvan
+        if (!baseData.onaylayanPersonelAdi) {
+          baseData.onaylayanPersonelAdi = fallbackHarcamaAdi
+          baseData.onaylayanPersonelUnvan = fallbackHarcamaUnvan
+        }
+      } else if (!baseData.harcamaYetkilisiAdi) {
+        baseData.harcamaYetkilisiAdi = fallbackHarcamaAdi
+        baseData.harcamaYetkilisiUnvan = baseData.harcamaYetkilisiUnvan || fallbackHarcamaUnvan
+        if (!baseData.onaylayanPersonelAdi) {
+          baseData.onaylayanPersonelAdi = fallbackHarcamaAdi
+          baseData.onaylayanPersonelUnvan = baseData.harcamaYetkilisiUnvan
+        }
+      }
+    }
+
     if (dosyaObj.hazirlayan_personel_id || dosyaObj.sunan_personel_id) {
       const targetHazId = dosyaObj.hazirlayan_personel_id || dosyaObj.sunan_personel_id
       const hp = (personelList || []).find((p: any) => p.id === targetHazId)
