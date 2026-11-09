@@ -1,10 +1,10 @@
 /* eslint-disable */
 /**
- * AKTİF GELİŞTİRME ŞEMA MANİFESTİ (Workdesk 360 Monorepo Suite)
- * Bu dosya 1.0.0-beta.current.yaml dosyasından otomatik derlenir.
+ * AKTİF GELİŞTİRME ŞEMA MANİFESTİ (Uyumluluk Dosyası)
+ * Bu dosya 1.0.0-current.yaml dosyasından otomatik derlenir.
  */
 export default {
-  app: "1.0.0-beta.current",
+  app: "1.0.0-current",
   suite: "workdesk-360",
   apps: {
     "temin360-desktop": "1.0.0-rc.15",

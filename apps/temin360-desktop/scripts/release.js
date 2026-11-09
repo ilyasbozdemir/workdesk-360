@@ -174,14 +174,21 @@ function getRangeFolder(num) {
 }
 
 function finalizeCurrentSchemaManifest(version, dryRun) {
-  const currentTsPath = path.join(
+  const currentTsCandidate = path.join(
     GIT_ROOT,
-    'packages/database/src/schema-manifest/versions/beta.current.ts'
+    'packages/database/src/schema-manifest/versions/current.version.ts'
   )
-  const currentYamlPath = path.join(
+  const currentTsPath = fs.existsSync(currentTsCandidate)
+    ? currentTsCandidate
+    : path.join(GIT_ROOT, 'packages/database/src/schema-manifest/versions/beta.current.ts')
+
+  const currentYamlCandidate = path.join(
     GIT_ROOT,
-    'packages/database/src/schema-manifest/1.0.0-beta.current.yaml'
+    'packages/database/src/schema-manifest/1.0.0-current.yaml'
   )
+  const currentYamlPath = fs.existsSync(currentYamlCandidate)
+    ? currentYamlCandidate
+    : path.join(GIT_ROOT, 'packages/database/src/schema-manifest/1.0.0-beta.current.yaml')
   const manifestsTsPath = path.join(GIT_ROOT, 'packages/database/src/schema-manifest/manifests.ts')
 
   if (!fs.existsSync(currentTsPath)) return
