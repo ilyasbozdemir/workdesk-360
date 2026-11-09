@@ -106,8 +106,10 @@ export * from "./DocumentPage";
 // Document Engine Bridge & IoC Registration
 export * from "./engine/resolvers/LuzumMuzekkeresiResolver";
 export * from "./engine/resolvers/IhtiyacListesiResolver";
+export * from "./engine/resolvers/IhtiyacTalepFormuResolver";
 export * from "./engine/resolvers/DefaultDocumentResolver";
 export * from "./engine/renderers/LuzumMuzekkeresiRenderer";
 export * from "./engine/renderers/IhtiyacListesiRenderer";
+export * from "./engine/renderers/IhtiyacTalepFormuRenderer";
 export * from "./engine/renderers/DefaultDocumentRenderer";
 export * from "./engine/registerTeminTemplates";

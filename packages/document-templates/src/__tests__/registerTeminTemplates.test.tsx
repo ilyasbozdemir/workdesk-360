@@ -6,6 +6,7 @@ import {
   registerTeminTemplates,
   LuzumMuzekkeresiResolver,
   IhtiyacListesiResolver,
+  IhtiyacTalepFormuResolver,
   DefaultDocumentResolver
 } from '../index'
 
@@ -25,7 +26,7 @@ describe('registerTeminTemplates — IoC Şablon Enjeksiyonu', () => {
     expect(all.length).toBeGreaterThan(10)
   })
 
-  it('2. Pilot şablonlar (luzum_muzekkeresi, ihtiyac_listesi) özel resolver ve renderer ile donatılmalıdır', () => {
+  it('2. Pilot şablonlar (luzum_muzekkeresi, ihtiyac_listesi, ihtiyac_talep_formu) özel resolver ve renderer ile donatılmalıdır', () => {
     const luzumDef = TemplateRegistry.get('luzum_muzekkeresi')
     expect(luzumDef.resolver).toBeInstanceOf(LuzumMuzekkeresiResolver)
     expect(luzumDef.renderer).toBeDefined()
@@ -33,6 +34,10 @@ describe('registerTeminTemplates — IoC Şablon Enjeksiyonu', () => {
     const ihtiyacDef = TemplateRegistry.get('ihtiyac_listesi')
     expect(ihtiyacDef.resolver).toBeInstanceOf(IhtiyacListesiResolver)
     expect(ihtiyacDef.renderer).toBeDefined()
+
+    const talepDef = TemplateRegistry.get('ihtiyac_talep_formu')
+    expect(talepDef.resolver).toBeInstanceOf(IhtiyacTalepFormuResolver)
+    expect(talepDef.renderer).toBeDefined()
 
     const digerDef = TemplateRegistry.get('harcama_talimati')
     expect(digerDef.resolver).toBeInstanceOf(DefaultDocumentResolver)

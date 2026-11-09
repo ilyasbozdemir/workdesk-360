@@ -18,7 +18,6 @@ export async function resolveTableArray(
           FROM DATA_TeminKalem tk
           LEFT JOIN TANIM_Kalem tanim ON (
             tk.kalem_adi = tanim.kalem_adi 
-            OR (tk.barkod_id IS NOT NULL AND tk.barkod_id != '' AND tk.barkod_id = tanim.barkod_id)
             OR (tk.tasinir_kodu IS NOT NULL AND tk.tasinir_kodu != '' AND tk.tasinir_kodu = tanim.tasinir_kodu)
           )
           WHERE tk.temin_dosya_id = ?
@@ -76,6 +75,18 @@ export async function resolveTableArray(
       if (!item.ozelligi || item.ozelligi === '') {
         item.ozelligi = row.aciklama || row.ozelligi || '';
       }
+      if (!item.malzemeAdi || item.malzemeAdi === '') {
+        item.malzemeAdi = row.kalem_adi || row.malzemeAdi || '';
+      }
+      if (!item.birimi || item.birimi === '') {
+        item.birimi = row.birim || row.birimi || 'Adet';
+      }
+      if (!item.kodu || item.kodu === '') {
+        item.kodu = row.tasinir_kodu || row.kodu || '-';
+      }
+      if (!item.miktar || item.miktar === '') {
+        item.miktar = row.miktar !== undefined && row.miktar !== null ? row.miktar : 1;
+      }
 
       if (rule.tablo === 'DATA_TeminKalem' && firms && firms.length > 0) {
         let minPrice = Infinity;
@@ -118,6 +129,11 @@ export async function resolveTableArray(
       resolvedPayload['firmaToplamlariDetay'] = firmTotals.map((tot: number) => ({
         toplam: tot > 0 ? formatTR(tot) : '-'
       }));
+    }
+
+    if (sablonDegiskeni === 'ihtiyacKalemleri') {
+      resolvedPayload['kalemler'] = resolvedPayload[sablonDegiskeni];
+      resolvedPayload['items'] = resolvedPayload[sablonDegiskeni];
     }
   } catch (err) {
     resolvedPayload[sablonDegiskeni] = [];

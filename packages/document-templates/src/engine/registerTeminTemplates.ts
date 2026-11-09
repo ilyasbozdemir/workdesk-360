@@ -11,6 +11,8 @@ import { LuzumMuzekkeresiResolver } from "./resolvers/LuzumMuzekkeresiResolver";
 import { LuzumMuzekkeresiRenderer } from "./renderers/LuzumMuzekkeresiRenderer";
 import { IhtiyacListesiResolver } from "./resolvers/IhtiyacListesiResolver";
 import { IhtiyacListesiRenderer } from "./renderers/IhtiyacListesiRenderer";
+import { IhtiyacTalepFormuResolver } from "./resolvers/IhtiyacTalepFormuResolver";
+import { IhtiyacTalepFormuRenderer } from "./renderers/IhtiyacTalepFormuRenderer";
 import { DefaultDocumentResolver } from "./resolvers/DefaultDocumentResolver";
 import { DefaultDocumentRenderer } from "./renderers/DefaultDocumentRenderer";
 
@@ -75,6 +77,24 @@ export function registerTeminTemplates(
       orientation: "portrait",
       resolver: new IhtiyacListesiResolver(),
       renderer: IhtiyacListesiRenderer,
+      requiredProviders: ["institutionalHeader", "items"],
+    },
+    { allowOverride: true },
+  );
+
+  // 4.1 İhtiyaç Talep Formu (Tam İzolasyonlu Resolver & Renderer)
+  registry.register(
+    {
+      templateKey: "ihtiyac_talep_formu",
+      name: "IhtiyacTalepFormu",
+      title: "Standart Form: İhtiyaç Belgesi ve Harcama Talep Müzekkeresi",
+      category: "1-ihtiyac-tespiti-ve-baslangic",
+      categoryLabel: "Hazırlık & İhtiyaç",
+      description:
+        "Birimlerin mal/hizmet taleplerini yetkili makama ilettiği resmi form",
+      orientation: "portrait",
+      resolver: new IhtiyacTalepFormuResolver(),
+      renderer: IhtiyacTalepFormuRenderer,
       requiredProviders: ["institutionalHeader", "items"],
     },
     { allowOverride: true },

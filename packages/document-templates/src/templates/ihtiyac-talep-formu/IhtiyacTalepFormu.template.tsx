@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { DocumentTable } from "../../document/DocumentTable";
 import {
@@ -15,6 +15,7 @@ import {
 } from "../../document/DynamicPaginatedTable";
 import { useTemplateEdit } from "../../document/TemplateEditContext";
 import { IhtiyacTalepFormuType } from "./IhtiyacTalepFormu.schema";
+import { normalizeIhtiyacKalemleri } from "../ihtiyac-listesi/IhtiyacListesi.hook";
 
 interface IhtiyacTalepFormuProps {
   data?: Partial<IhtiyacTalepFormuType>;
@@ -100,7 +101,15 @@ export function IhtiyacTalepFormu({
         ? LANDSCAPE_LIMITS.lastPage
         : DEFAULT_LIMITS.lastPage),
   };
-  const items = data.ihtiyacKalemleri || [];
+  const items = useMemo(() => {
+    return normalizeIhtiyacKalemleri(data as Record<string, any>);
+  }, [
+    (data as any)?.ihtiyacKalemleri,
+    (data as any)?.kalemler,
+    (data as any)?.malzemeler,
+    (data as any)?.items,
+    data,
+  ]);
   const pages = paginateData(items, limits);
 
   const defaultToday = toTrDate(new Date().toISOString().split("T")[0]);
