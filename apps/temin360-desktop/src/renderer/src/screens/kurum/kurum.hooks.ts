@@ -107,14 +107,33 @@ export function useKurumHooks() {
               if (!baseRow.makam_adi && settings.makamAdi) baseRow.makam_adi = settings.makamAdi
             }
           } catch {}
+
+          // Legacy data backward compatibility for muhatap fields
+          if (baseRow.makam_adi) {
+            if (baseRow.sunulacak_makam_secimi === 'kurum') {
+              if (!baseRow.sunulacak_kurum_adi) baseRow.sunulacak_kurum_adi = baseRow.makam_adi
+            } else {
+              if (!baseRow.makam_adi_custom) baseRow.makam_adi_custom = baseRow.makam_adi
+            }
+          }
+          if (!baseRow.sunulacak_makam_secimi) {
+            baseRow.sunulacak_makam_secimi = 'makam'
+          }
+
           setKurumData(baseRow)
         }
 
-        // Also fetch all kurumlar list
-        const listRes = await window.electron.ipcRenderer.invoke(
+        // Also fetch all kurumlar list with resilient fallback
+        let listRes = await window.electron.ipcRenderer.invoke(
           'db:query',
           'SELECT * FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC'
         )
+        if (!listRes.success) {
+          listRes = await window.electron.ipcRenderer.invoke(
+            'db:query',
+            'SELECT * FROM TANIM_Kurum ORDER BY id ASC'
+          )
+        }
         if (listRes.success && listRes.data) {
           setAllKurumlar(listRes.data)
         }
@@ -174,7 +193,10 @@ export function useKurumHooks() {
           'harcama_yetkilisi',
           'sunulacak_makam_secimi',
           'sunulacak_kurum_adi',
-          'makam_adi_custom'
+          'makam_adi_custom',
+          'is_deleted',
+          'created_at',
+          'updated_at'
         ])
 
         const keys = Object.keys(data).filter((k) => k !== 'id' && validColumns.has(k))
@@ -191,11 +213,26 @@ export function useKurumHooks() {
         let res: any
         if (rowExists) {
           const setClause = keys.map((k) => `${k} = ?`).join(', ')
-          res = await window.electron.ipcRenderer.invoke(
-            'db:run',
-            `UPDATE TANIM_Kurum SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-            [...values, idToUpdate]
-          )
+          try {
+            res = await window.electron.ipcRenderer.invoke(
+              'db:run',
+              `UPDATE TANIM_Kurum SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+              [...values, idToUpdate]
+            )
+            if (!res.success && res.error && res.error.includes('updated_at')) {
+              res = await window.electron.ipcRenderer.invoke(
+                'db:run',
+                `UPDATE TANIM_Kurum SET ${setClause} WHERE id = ?`,
+                [...values, idToUpdate]
+              )
+            }
+          } catch {
+            res = await window.electron.ipcRenderer.invoke(
+              'db:run',
+              `UPDATE TANIM_Kurum SET ${setClause} WHERE id = ?`,
+              [...values, idToUpdate]
+            )
+          }
         } else {
           const insertCols = ['id', ...keys]
           const placeholders = insertCols.map(() => '?').join(', ')
@@ -381,11 +418,27 @@ export function useKurumHooks() {
           throw new Error('Sistemde en az bir kurum profili kalmalıdır.')
         }
 
-        const res = await window.electron.ipcRenderer.invoke(
-          'db:run',
-          'UPDATE TANIM_Kurum SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-          [id]
-        )
+        let res: any
+        try {
+          res = await window.electron.ipcRenderer.invoke(
+            'db:run',
+            'UPDATE TANIM_Kurum SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [id]
+          )
+          if (!res.success && res.error && res.error.includes('updated_at')) {
+            res = await window.electron.ipcRenderer.invoke(
+              'db:run',
+              'UPDATE TANIM_Kurum SET is_deleted = 1 WHERE id = ?',
+              [id]
+            )
+          }
+        } catch {
+          res = await window.electron.ipcRenderer.invoke(
+            'db:run',
+            'DELETE FROM TANIM_Kurum WHERE id = ?',
+            [id]
+          )
+        }
 
         if (!res.success) {
           throw new Error(res.error || 'Profil silinemedi.')

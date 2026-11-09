@@ -773,6 +773,7 @@
       "alt_kurum_sizin",
       "alt_kurum_tipi",
       "baskan_unvani",
+      "created_at",
       "detsis_kodu",
       "dtvt_kodu",
       "ebutce_kodu",
@@ -786,6 +787,7 @@
       "id",
       "il",
       "ilce",
+      "is_deleted",
       "kep_adresi",
       "konu_ortalama_siniri",
       "kurum_adi",
@@ -805,6 +807,7 @@
       "sunulacak_kurum_adi",
       "sunulacak_makam_secimi",
       "telefon",
+      "updated_at",
       "ust_kurum_adi",
       "web_sitesi"
     ],

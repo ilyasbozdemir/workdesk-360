@@ -49,7 +49,10 @@ export const TANIM_Kurum = {
     { name: 'web_sitesi', type: 'TEXT', default: '""' },
     { name: 'kurum_baskani', type: 'TEXT', default: '""', description: 'Kurum / Belediye Başkanı / En Üst Yönetici' },
     { name: 'baskan_unvani', type: 'TEXT', default: '""', description: 'Başkan / Üst Yönetici Unvanı' },
-    { name: 'harcama_yetkilisi', type: 'TEXT', default: '""', description: 'Varsayılan Harcama Yetkilisi' }
+    { name: 'harcama_yetkilisi', type: 'TEXT', default: '""', description: 'Varsayılan Harcama Yetkilisi' },
+    { name: 'is_deleted', type: 'INTEGER', default: 0, description: 'Silindi mi?' },
+    { name: 'created_at', type: 'DATETIME', default: 'CURRENT_TIMESTAMP', description: 'Oluşturulma Tarihi' },
+    { name: 'updated_at', type: 'DATETIME', default: 'CURRENT_TIMESTAMP', description: 'Son Güncellenme Tarihi' }
   ],
   initialData: [
     {

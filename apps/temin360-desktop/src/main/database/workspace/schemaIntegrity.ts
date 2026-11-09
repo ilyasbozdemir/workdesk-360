@@ -461,6 +461,9 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     safeAddColumn(db, 'TANIM_Kurum', 'sunulacak_makam_secimi', "TEXT DEFAULT 'makam'")
     safeAddColumn(db, 'TANIM_Kurum', 'sunulacak_kurum_adi', "TEXT DEFAULT ''")
     safeAddColumn(db, 'TANIM_Kurum', 'makam_adi_custom', "TEXT DEFAULT ''")
+    safeAddColumn(db, 'TANIM_Kurum', 'is_deleted', 'INTEGER DEFAULT 0')
+    safeAddColumn(db, 'TANIM_Kurum', 'created_at', "DATETIME DEFAULT CURRENT_TIMESTAMP")
+    safeAddColumn(db, 'TANIM_Kurum', 'updated_at', "DATETIME DEFAULT CURRENT_TIMESTAMP")
 
     if (isPhysicalTable(db, 'TANIM_Kurum')) {
       try {
