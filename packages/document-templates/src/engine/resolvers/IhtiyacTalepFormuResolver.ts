@@ -169,3 +169,4 @@ export class IhtiyacTalepFormuResolver implements DocumentDataResolver<IhtiyacTa
     return result
   }
 }
+

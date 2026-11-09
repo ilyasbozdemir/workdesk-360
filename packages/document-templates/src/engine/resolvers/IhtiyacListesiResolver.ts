@@ -29,22 +29,28 @@ export class IhtiyacListesiResolver implements DocumentDataResolver<IhtiyacListe
     let kalemler: any[] = []
     if (dosyaId) {
       const kRows = await queryExecutor(
-        `SELECT id, sira_no, kalem_adi, aciklama, birim, miktar, tasinir_kodu, kdv_orani
-         FROM DATA_TeminKalem WHERE temin_dosya_id = ? ORDER BY id ASC`,
+        `SELECT * FROM DATA_TeminKalem WHERE temin_dosya_id = ? ORDER BY id ASC`,
         [dosyaId]
       )
       if (kRows && kRows.length > 0) {
         kalemler = kRows.map((k: any, idx: number) => ({
           id: k.id,
           siraNo: k.sira_no || idx + 1,
-          kodu: k.tasinir_kodu || '',
+          kodu: k.poz_no || k.tasinir_kodu || k.hizmet_kodu || '',
           tasinirKodu: k.tasinir_kodu || '',
+          pozNo: k.poz_no || '',
+          hizmetKodu: k.hizmet_kodu || '',
           malzemeAdi: k.kalem_adi || '',
           kalemAdi: k.kalem_adi || '',
-          ozelligi: k.aciklama || '',
+          imalatAdi: k.kalem_adi || '',
+          hizmetAdi: k.kalem_adi || '',
+          danismanlikKonusu: k.kalem_adi || '',
+          ozelligi: k.poz_tanimi || k.aciklama || '',
+          teknikTarifi: k.poz_tanimi || k.aciklama || '',
           aciklama: k.aciklama || '',
-          birimi: k.birim || 'Adet',
-          birim: k.birim || 'Adet',
+          birimi: k.olcu_birimi || k.birim || 'Adet',
+          birim: k.olcu_birimi || k.birim || 'Adet',
+          olcuBirimi: k.olcu_birimi || k.birim || 'Adet',
           kdvOrani: k.kdv_orani !== undefined && k.kdv_orani !== null ? Number(k.kdv_orani) : 20,
           miktar: Number(k.miktar || 1)
         }))
@@ -135,7 +141,15 @@ export class IhtiyacListesiResolver implements DocumentDataResolver<IhtiyacListe
         ? `${headerData.harcamaYetkilisiUnvan.toUpperCase()}`
         : 'HARCAMA YETKİLİSİ MAKAMINA')
 
+    const alimTuru =
+      dosyaRow?.alim_turu ||
+      dosyaRow?.tur ||
+      (headerData as any).alimTuru ||
+      (headerData as any).tur ||
+      'mal'
+
     const result: IhtiyacListesiType = {
+      alimTuru,
       antetSatirlari: headerData.antetSatirlari,
       solLogo: headerData.solLogo || undefined,
       sagLogo: headerData.sagLogo || undefined,

@@ -103,14 +103,54 @@ export function normalizeIhtiyacKalemleri(
       ? String(k.kdvOrani).replace("%", "")
       : "20";
 
+    const koduVal =
+      k.pozNo ||
+      k.kodu ||
+      k.tasinirKodu ||
+      k.tasinir_kodu ||
+      k.hizmetKodu ||
+      k.hizmet_kodu ||
+      k.kod ||
+      "-";
+    const adiVal =
+      k.imalatAdi ||
+      k.hizmetAdi ||
+      k.danismanlikKonusu ||
+      k.malzemeAdi ||
+      k.kalemAdi ||
+      k.kalem_adi ||
+      k.ad ||
+      "";
+    const ozellikVal =
+      k.teknikTarifi ||
+      k.kapsam ||
+      k.ozelligi ||
+      k.aciklama ||
+      k.tanim ||
+      "";
+    const birimVal = k.olcuBirimi || k.birimi || k.birim || "Adet";
+
     return {
       ...k,
       id: k.id ?? idx + 1,
       siraNo: k.siraNo ?? (idx + 1),
-      kodu: k.kodu || k.tasinirKodu || k.tasinir_kodu || k.kod || "-",
-      malzemeAdi: k.malzemeAdi || k.kalemAdi || k.kalem_adi || k.ad || "",
-      ozelligi: k.ozelligi || k.aciklama || k.tanim || "",
-      birimi: k.birimi || k.birim || k.olcuBirimi || "Adet",
+      pozNo: k.pozNo || (koduVal !== "-" ? koduVal : ""),
+      hizmetKodu: k.hizmetKodu || (koduVal !== "-" ? koduVal : ""),
+      kodu: koduVal,
+      tasinirKodu:
+        k.tasinirKodu || k.tasinir_kodu || (koduVal !== "-" ? koduVal : ""),
+      malzemeAdi: adiVal,
+      kalemAdi: adiVal,
+      imalatAdi: k.imalatAdi || adiVal,
+      hizmetAdi: k.hizmetAdi || adiVal,
+      danismanlikKonusu: k.danismanlikKonusu || adiVal,
+      ozelligi: ozellikVal,
+      teknikTarifi: k.teknikTarifi || ozellikVal,
+      aciklama: k.aciklama || ozellikVal,
+      kapsam: k.kapsam || ozellikVal,
+      birimi: birimVal,
+      birim: birimVal,
+      olcuBirimi: birimVal,
       kdvOrani: kdvRaw,
       miktar: miktarFormatted,
       miktarRaw,
