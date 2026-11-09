@@ -108,12 +108,22 @@ export function compileYamlToTs(yamlPath, options = {}) {
  * Manifest eşlemeleri listesi
  */
 function getManifestMappings() {
+  const currentYaml = fs.existsSync(path.join(schemaManifestDir, '1.0.0-current.yaml'))
+    ? path.join(schemaManifestDir, '1.0.0-current.yaml')
+    : path.join(schemaManifestDir, '1.0.0-beta.current.yaml')
+
   const mappings = [
-    // 1. beta.current
+    // 1. current.version (aktif şema manifesti)
     {
-      yamlPath: path.join(schemaManifestDir, '1.0.0-beta.current.yaml'),
+      yamlPath: currentYaml,
+      tsPath: path.join(schemaManifestDir, 'versions', 'current.version.ts'),
+      commentBanner: `/**\n * AKTİF GELİŞTİRME ŞEMA MANİFESTİ (Workdesk 360 Monorepo Suite)\n * Bu dosya ${path.basename(currentYaml)} dosyasından otomatik derlenir.\n */`
+    },
+    // Uyumluluk için beta.current.ts senkronize tutulur
+    {
+      yamlPath: currentYaml,
       tsPath: path.join(schemaManifestDir, 'versions', 'beta.current.ts'),
-      commentBanner: `/**\n * AKTİF GELİŞTİRME ŞEMA MANİFESTİ (Workdesk 360 Monorepo Suite)\n * Bu dosya 1.0.0-beta.current.yaml dosyasından otomatik derlenir.\n */`
+      commentBanner: `/**\n * AKTİF GELİŞTİRME ŞEMA MANİFESTİ (Uyumluluk Dosyası)\n * Bu dosya ${path.basename(currentYaml)} dosyasından otomatik derlenir.\n */`
     },
     // 2. Apps manifests
     {
@@ -162,16 +172,24 @@ function getManifestMappings() {
  * Aktif sürüm yayılımı (beta.current -> aktif rc ve app manifesti)
  */
 function propagateCurrentManifest() {
-  const currentYamlPath = path.join(schemaManifestDir, '1.0.0-beta.current.yaml')
+  const currentYamlPath = fs.existsSync(path.join(schemaManifestDir, '1.0.0-current.yaml'))
+    ? path.join(schemaManifestDir, '1.0.0-current.yaml')
+    : path.join(schemaManifestDir, '1.0.0-beta.current.yaml')
   if (!fs.existsSync(currentYamlPath)) return
 
   const currentData = yaml.load(fs.readFileSync(currentYamlPath, 'utf8'))
   if (!currentData || !currentData.apps) return
 
+  // 1.0.0-beta.current.yaml varsa eşitle
+  const betaCurrentYamlPath = path.join(schemaManifestDir, '1.0.0-beta.current.yaml')
+  if (fs.existsSync(betaCurrentYamlPath) && currentYamlPath !== betaCurrentYamlPath) {
+    fs.writeFileSync(betaCurrentYamlPath, fs.readFileSync(currentYamlPath, 'utf8'), 'utf8')
+  }
+
   const teminVersion = currentData.apps['temin360-desktop']
   if (!teminVersion) return
 
-  console.log(`\x1b[36m🔄 [sync-manifests] Aktif beta.current şeması (max: ${currentData.schema_max}) hedeflere aktarılıyor...\x1b[0m`)
+  console.log(`\x1b[36m🔄 [sync-manifests] Aktif current şeması (max: ${currentData.schema_max}) hedeflere aktarılıyor...\x1b[0m`)
 
   // 1. apps/temin360/manifest.yaml güncelle
   const teminYamlPath = path.join(schemaManifestDir, 'apps', 'temin360', 'manifest.yaml')

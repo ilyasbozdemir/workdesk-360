@@ -1,4 +1,4 @@
-app: 1.0.0-beta.current
+app: 1.0.0-current
 suite: workdesk-360
 apps:
   temin360-desktop: 1.0.0-rc.15
