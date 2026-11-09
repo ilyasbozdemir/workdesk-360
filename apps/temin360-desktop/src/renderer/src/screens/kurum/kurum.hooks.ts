@@ -70,8 +70,9 @@ export function useKurumHooks() {
           'SELECT * FROM TANIM_Kurum WHERE id = ?',
           [currentId]
         )
+        let baseRow: KurumVerisi | null = null
         if (res.success && res.data && res.data.length > 0) {
-          setKurumData(res.data[0])
+          baseRow = { ...res.data[0] }
         } else {
           // Fallback to first available or default
           const allRes = await window.electron.ipcRenderer.invoke(
@@ -79,17 +80,34 @@ export function useKurumHooks() {
             'SELECT * FROM TANIM_Kurum ORDER BY id ASC LIMIT 1'
           )
           if (allRes.success && allRes.data && allRes.data.length > 0) {
-            setKurumData(allRes.data[0])
+            baseRow = { ...allRes.data[0] }
           } else {
-            setKurumData({
+            baseRow = {
               id: 1,
               kurum_adi: '',
               kurum_anteti: '[""]',
               limit_tipi: 'diger',
               finansman_kodu: '5',
               alt_kurum_tipi: 'belediye'
-            })
+            }
           }
+        }
+
+        // Cross-fallback: if any critical administrative fields are blank in TANIM_Kurum, pull from settings
+        if (baseRow) {
+          try {
+            const settings = await window.electron.ipcRenderer.invoke('db:get-settings')
+            if (settings) {
+              if (!baseRow.kurum_baskani && settings.kurumBaskani) baseRow.kurum_baskani = settings.kurumBaskani
+              if (!baseRow.baskan_unvani && settings.baskanUnvani) baseRow.baskan_unvani = settings.baskanUnvani
+              if (!baseRow.harcama_yetkilisi && settings.harcamaYetkilisi) baseRow.harcama_yetkilisi = settings.harcamaYetkilisi
+              if (!baseRow.sunulacak_makam_secimi && settings.sunulacakMakamSecimi) baseRow.sunulacak_makam_secimi = settings.sunulacakMakamSecimi
+              if (!baseRow.sunulacak_kurum_adi && settings.sunulacakKurumAdi) baseRow.sunulacak_kurum_adi = settings.sunulacakKurumAdi
+              if (!baseRow.makam_adi_custom && settings.makamAdiCustom) baseRow.makam_adi_custom = settings.makamAdiCustom
+              if (!baseRow.makam_adi && settings.makamAdi) baseRow.makam_adi = settings.makamAdi
+            }
+          } catch {}
+          setKurumData(baseRow)
         }
 
         // Also fetch all kurumlar list
@@ -160,14 +178,33 @@ export function useKurumHooks() {
         ])
 
         const keys = Object.keys(data).filter((k) => k !== 'id' && validColumns.has(k))
-        const setClause = keys.map((k) => `${k} = ?`).join(', ')
-        const values = keys.map((k) => data[k as keyof KurumVerisi])
+        const values = keys.map((k) => data[k as keyof KurumVerisi] ?? '')
 
-        const res = await window.electron.ipcRenderer.invoke(
-          'db:run',
-          `UPDATE TANIM_Kurum SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-          [...values, idToUpdate]
+        // Check if record exists in TANIM_Kurum
+        const checkRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT id FROM TANIM_Kurum WHERE id = ?',
+          [idToUpdate]
         )
+        const rowExists = checkRes.success && Array.isArray(checkRes.data) && checkRes.data.length > 0
+
+        let res: any
+        if (rowExists) {
+          const setClause = keys.map((k) => `${k} = ?`).join(', ')
+          res = await window.electron.ipcRenderer.invoke(
+            'db:run',
+            `UPDATE TANIM_Kurum SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            [...values, idToUpdate]
+          )
+        } else {
+          const insertCols = ['id', ...keys]
+          const placeholders = insertCols.map(() => '?').join(', ')
+          res = await window.electron.ipcRenderer.invoke(
+            'db:run',
+            `INSERT INTO TANIM_Kurum (${insertCols.join(', ')}) VALUES (${placeholders})`,
+            [idToUpdate, ...values]
+          )
+        }
 
         if (!res.success) {
           throw new Error(res.error || 'Güncelleme hatası')
@@ -194,7 +231,14 @@ export function useKurumHooks() {
             harcamaBirimAdi: data.harcama_birim_adi || '',
             institutionLogo: data.logo_kurum || '',
             logoLeft: data.logo_sol || '',
-            logoRight: data.logo_sag || ''
+            logoRight: data.logo_sag || '',
+            kurumBaskani: data.kurum_baskani || '',
+            baskanUnvani: data.baskan_unvani || '',
+            harcamaYetkilisi: data.harcama_yetkilisi || '',
+            sunulacakMakamSecimi: data.sunulacak_makam_secimi || 'makam',
+            sunulacakKurumAdi: data.sunulacak_kurum_adi || '',
+            makamAdiCustom: data.makam_adi_custom || '',
+            makamAdi: data.makam_adi || ''
           })
           await loadSettings()
           emitAppEvent('settings:changed')
@@ -279,6 +323,9 @@ export function useKurumHooks() {
           telefon: data.telefon || '',
           eposta: data.eposta || '',
           adres: data.adres || '',
+          kurum_baskani: data.kurum_baskani || '',
+          baskan_unvani: data.baskan_unvani || '',
+          harcama_yetkilisi: data.harcama_yetkilisi || '',
           logo_kurum: data.logo_kurum || '',
           logo_sol: data.logo_sol || '',
           logo_sag: data.logo_sag || '',

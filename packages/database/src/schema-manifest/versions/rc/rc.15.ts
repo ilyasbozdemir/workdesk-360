@@ -1,13 +1,13 @@
 /* eslint-disable */
 /**
  * RC SÜRÜM ŞEMA MANİFESTİ (1.0.0-rc.15)
- * Bu dosya 1.0.0-beta.current.yaml dosyasından otomatik derlenir.
+ * Bu dosya yaml/rc/1.0.0-rc.15.yaml dosyasından otomatik derlenir.
  */
 export default {
   app: "1.0.0-rc.15",
   suite: "workdesk-360",
   apps: {
-    "temin360-desktop": "1.0.0-rc.14",
+    "temin360-desktop": "1.0.0-rc.15",
     "ihale360-desktop": "1.0.0-beta.1",
     "devlet-ihale-2886-desktop": "1.0.0-beta.1"
   },

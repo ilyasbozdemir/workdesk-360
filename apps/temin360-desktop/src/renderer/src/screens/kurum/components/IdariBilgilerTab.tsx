@@ -241,8 +241,12 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
               }`}
               onClick={() => {
                 onChange("sunulacak_makam_secimi", "kurum");
-                if (data.sunulacak_kurum_adi) {
-                  onChange("makam_adi", data.sunulacak_kurum_adi);
+                const targetKurum = data.sunulacak_kurum_adi || data.kurum_adi || "";
+                if (targetKurum) {
+                  onChange("makam_adi", targetKurum);
+                  if (!data.sunulacak_kurum_adi) {
+                    onChange("sunulacak_kurum_adi", targetKurum);
+                  }
                 }
               }}
             >
@@ -255,8 +259,12 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     onChange("sunulacak_makam_secimi", "kurum");
-                    if (data.sunulacak_kurum_adi) {
-                      onChange("makam_adi", data.sunulacak_kurum_adi);
+                    const targetKurum = data.sunulacak_kurum_adi || data.kurum_adi || "";
+                    if (targetKurum) {
+                      onChange("makam_adi", targetKurum);
+                      if (!data.sunulacak_kurum_adi) {
+                        onChange("sunulacak_kurum_adi", targetKurum);
+                      }
                     }
                   }}
                   className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
@@ -272,7 +280,10 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 </button>
               </div>
               <Input
-                value={data.sunulacak_kurum_adi || ""}
+                value={
+                  data.sunulacak_kurum_adi ||
+                  (data.sunulacak_makam_secimi === "kurum" ? (data.makam_adi || "") : "")
+                }
                 onChange={(e) => {
                   const val = e.target.value;
                   onChange("sunulacak_kurum_adi", val);
@@ -298,6 +309,9 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 const targetMakam = data.makam_adi_custom || data.makam_adi || "";
                 if (targetMakam) {
                   onChange("makam_adi", targetMakam);
+                  if (!data.makam_adi_custom) {
+                    onChange("makam_adi_custom", targetMakam);
+                  }
                 }
               }}
             >
@@ -313,6 +327,9 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                     const targetMakam = data.makam_adi_custom || data.makam_adi || "";
                     if (targetMakam) {
                       onChange("makam_adi", targetMakam);
+                      if (!data.makam_adi_custom) {
+                        onChange("makam_adi_custom", targetMakam);
+                      }
                     }
                   }}
                   className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md transition-colors ${
@@ -331,9 +348,8 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
               </div>
               <Input
                 value={
-                  data.makam_adi_custom !== undefined && data.makam_adi_custom !== null
-                    ? data.makam_adi_custom
-                    : (data.sunulacak_makam_secimi === "kurum" ? "" : (data.makam_adi || ""))
+                  data.makam_adi_custom ||
+                  (data.sunulacak_makam_secimi === "kurum" ? "" : (data.makam_adi || ""))
                 }
                 onChange={(e) => {
                   const val = e.target.value;

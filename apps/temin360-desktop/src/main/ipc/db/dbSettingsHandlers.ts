@@ -57,7 +57,7 @@ export function registerDbSettingsHandlers(): void {
       try {
         const kurumRow = db
           .prepare(
-            'SELECT kurum_adi, kurum_anteti, logo_kurum, logo_sol, logo_sag FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1'
+            'SELECT kurum_adi, kurum_anteti, logo_kurum, logo_sol, logo_sag, kurum_baskani, baskan_unvani, harcama_yetkilisi, sunulacak_makam_secimi, sunulacak_kurum_adi, makam_adi_custom, makam_adi FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1'
           )
           .get() as
           | {
@@ -66,6 +66,13 @@ export function registerDbSettingsHandlers(): void {
               logo_kurum?: string
               logo_sol?: string
               logo_sag?: string
+              kurum_baskani?: string
+              baskan_unvani?: string
+              harcama_yetkilisi?: string
+              sunulacak_makam_secimi?: string
+              sunulacak_kurum_adi?: string
+              makam_adi_custom?: string
+              makam_adi?: string
             }
           | undefined
 
@@ -82,6 +89,27 @@ export function registerDbSettingsHandlers(): void {
           }
           if (!settingsObj.logoRight && kurumRow.logo_sag) {
             settingsObj.logoRight = kurumRow.logo_sag
+          }
+          if (!settingsObj.kurumBaskani && kurumRow.kurum_baskani) {
+            settingsObj.kurumBaskani = kurumRow.kurum_baskani
+          }
+          if (!settingsObj.baskanUnvani && kurumRow.baskan_unvani) {
+            settingsObj.baskanUnvani = kurumRow.baskan_unvani
+          }
+          if (!settingsObj.harcamaYetkilisi && kurumRow.harcama_yetkilisi) {
+            settingsObj.harcamaYetkilisi = kurumRow.harcama_yetkilisi
+          }
+          if (!settingsObj.sunulacakMakamSecimi && kurumRow.sunulacak_makam_secimi) {
+            settingsObj.sunulacakMakamSecimi = kurumRow.sunulacak_makam_secimi
+          }
+          if (!settingsObj.sunulacakKurumAdi && kurumRow.sunulacak_kurum_adi) {
+            settingsObj.sunulacakKurumAdi = kurumRow.sunulacak_kurum_adi
+          }
+          if (!settingsObj.makamAdiCustom && kurumRow.makam_adi_custom) {
+            settingsObj.makamAdiCustom = kurumRow.makam_adi_custom
+          }
+          if (!settingsObj.makamAdi && kurumRow.makam_adi) {
+            settingsObj.makamAdi = kurumRow.makam_adi
           }
         }
       } catch {

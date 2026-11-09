@@ -16,8 +16,8 @@ describe("Uygulama Bazlı Şema Manifestleri (Multi-Desktop Architecture)", () =
     expect(manifest.app).toBe("temin360-desktop");
     expect(manifest.target_scope).toBe("dogrudan-temin");
     expect(manifest.version).toBe(pkg.version);
-    expect(manifest.schema_max).toBe(46);
-    expect(getAppSchemaMax("temin360-desktop")).toBe(46);
+    expect(manifest.schema_max).toBe(47);
+    expect(getAppSchemaMax("temin360-desktop")).toBe(47);
 
     const v46Change = manifest.changes.find((c) => c.schema === 46);
     expect(v46Change).toBeDefined();
@@ -29,6 +29,16 @@ describe("Uygulama Bazlı Şema Manifestleri (Multi-Desktop Architecture)", () =
         { table: "DATA_TeminKomisyon", column: "imza_turu" },
         { table: "DATA_TeminKomisyon", column: "birim_id" },
         { table: "DATA_TeminKomisyon", column: "birim" },
+      ]),
+    );
+
+    const v47Change = manifest.changes.find((c) => c.schema === 47);
+    expect(v47Change).toBeDefined();
+    expect(v47Change?.columns_added).toEqual(
+      expect.arrayContaining([
+        { table: "TANIM_Kurum", column: "sunulacak_makam_secimi" },
+        { table: "TANIM_Kurum", column: "sunulacak_kurum_adi" },
+        { table: "TANIM_Kurum", column: "makam_adi_custom" },
       ]),
     );
   });

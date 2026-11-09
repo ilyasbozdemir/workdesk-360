@@ -455,6 +455,9 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     )
 
     safeAddColumn(db, 'TANIM_Personel', 'birim_id', 'INTEGER DEFAULT NULL')
+    safeAddColumn(db, 'TANIM_Kurum', 'kurum_baskani', "TEXT DEFAULT ''")
+    safeAddColumn(db, 'TANIM_Kurum', 'baskan_unvani', "TEXT DEFAULT ''")
+    safeAddColumn(db, 'TANIM_Kurum', 'harcama_yetkilisi', "TEXT DEFAULT ''")
     safeAddColumn(db, 'TANIM_Kurum', 'sunulacak_makam_secimi', "TEXT DEFAULT 'makam'")
     safeAddColumn(db, 'TANIM_Kurum', 'sunulacak_kurum_adi', "TEXT DEFAULT ''")
     safeAddColumn(db, 'TANIM_Kurum', 'makam_adi_custom', "TEXT DEFAULT ''")
