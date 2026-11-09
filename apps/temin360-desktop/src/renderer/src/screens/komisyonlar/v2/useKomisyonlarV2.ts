@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { resolveCommissionCategory } from '@temin360/document-templates'
+import { useWorkspaceStore } from '../../../store/workspaceStore'
 import {
   copyCommissionBetweenDossiers,
   applyInstitutionalTemplateToDossier,
@@ -17,9 +18,19 @@ import type {
 
 export function useKomisyonlarV2() {
   const queryClient = useQueryClient()
+  const { activeDosyaId } = useWorkspaceStore()
 
   // Ana Sekme: 'dosyalar' | 'sablonlar' | 'tarihce'
   const [activeTab, setActiveTab] = useState<KomisyonV2MainTab>('dosyalar')
+
+  // Aktif Dosya Varsa Öncelikli Olarak Sadece Onu Göster
+  const [showOnlyActive, setShowOnlyActive] = useState<boolean>(() => Boolean(activeDosyaId))
+
+  useEffect(() => {
+    if (activeDosyaId) {
+      setShowOnlyActive(true)
+    }
+  }, [activeDosyaId])
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterMode, setFilterMode] = useState<DosyaFilterMode>('all')
@@ -397,9 +408,34 @@ export function useKomisyonlarV2() {
     }
   }
 
-  // Filtrelenmiş Dosya Listesi
+  // Aktif Dosya Bilgisi
+  const activeDosyaItem = useMemo(() => {
+    if (!activeDosyaId) return null
+    return dosyaKomisyonList.find((d) => Number(d.id) === Number(activeDosyaId)) || null
+  }, [dosyaKomisyonList, activeDosyaId])
+
+  // Aktif dosya varsa her zaman listenin en üstünde yer alsın
+  const sortedDosyaList = useMemo(() => {
+    if (!activeDosyaId) return dosyaKomisyonList
+    return [...dosyaKomisyonList].sort((a, b) => {
+      if (Number(a.id) === Number(activeDosyaId)) return -1
+      if (Number(b.id) === Number(activeDosyaId)) return 1
+      return 0
+    })
+  }, [dosyaKomisyonList, activeDosyaId])
+
+  // Filtrelenmiş Dosya Listesi (Aktif Dosya Modu ve Filtreler)
   const filteredDosyaList = useMemo(() => {
-    return dosyaKomisyonList.filter((item) => {
+    let list = sortedDosyaList
+
+    if (showOnlyActive && activeDosyaId) {
+      const activeOnly = list.filter((item) => Number(item.id) === Number(activeDosyaId))
+      if (activeOnly.length > 0) {
+        list = activeOnly
+      }
+    }
+
+    return list.filter((item) => {
       const term = searchTerm.toLowerCase().trim()
       const matchesSearch =
         !term ||
@@ -416,7 +452,7 @@ export function useKomisyonlarV2() {
 
       return true
     })
-  }, [dosyaKomisyonList, searchTerm, filterMode])
+  }, [sortedDosyaList, showOnlyActive, activeDosyaId, searchTerm, filterMode])
 
   // Filtrelenmiş Global Tarihçe Listesi
   const filteredHistoryList = useMemo(() => {
@@ -485,6 +521,10 @@ export function useKomisyonlarV2() {
     templateFilesCount,
     emptyFilesCount,
     availableSourceDosyalar,
-    selectedSourceItem
+    selectedSourceItem,
+    activeDosyaId,
+    activeDosyaItem,
+    showOnlyActive,
+    setShowOnlyActive
   }
 }

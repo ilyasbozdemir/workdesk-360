@@ -54,7 +54,11 @@ export default function KomisyonlarV2Screen({
     templateFilesCount,
     emptyFilesCount,
     availableSourceDosyalar,
-    selectedSourceItem
+    selectedSourceItem,
+    activeDosyaId,
+    activeDosyaItem,
+    showOnlyActive,
+    setShowOnlyActive
   } = useKomisyonlarV2()
 
   // Tam Ekran Dosya Komisyon Detayı Açık İse
@@ -99,6 +103,12 @@ export default function KomisyonlarV2Screen({
             <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
               Dosya Bazlı &amp; Kurumsal Şablon
             </span>
+            {activeDosyaId && activeDosyaItem && (
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Aktif Dosya: #{activeDosyaItem.dosya_no}
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Dosyalara özel atanan komisyon kadrolarını yönetin, kurumsal şablondan aktarın veya
@@ -120,7 +130,7 @@ export default function KomisyonlarV2Screen({
             <Layers className="w-4 h-4" />
             <span>📁 Dosya Komisyonları</span>
             <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 font-mono font-bold">
-              {totalFiles}
+              {showOnlyActive && activeDosyaId ? '1 Aktif' : totalFiles}
             </span>
           </button>
 
@@ -174,6 +184,10 @@ export default function KomisyonlarV2Screen({
           onBulkApplyToAllDossiers={handleBulkApplyToAllDossiers}
           isBulkApplying={isBulkApplying}
           bulkFeedback={bulkFeedback}
+          activeDosyaId={activeDosyaId}
+          activeDosyaItem={activeDosyaItem}
+          showOnlyActive={showOnlyActive}
+          onToggleShowOnlyActive={setShowOnlyActive}
           onOpenCopyModal={(item) => {
             setCopyTargetDosya(item)
             setSelectedSourceDosyaId(null)

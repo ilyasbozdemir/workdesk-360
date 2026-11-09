@@ -89,6 +89,7 @@ export function FindInPage(): React.JSX.Element | null {
 
     // Catch local keydown (Ctrl+F) as additional handler
     const handleKeyDown = (e: KeyboardEvent): void => {
+      if (!e.key) return
       const isF = e.key.toLowerCase() === 'f'
       const isCmdOrCtrl = e.ctrlKey || e.metaKey
       if (isCmdOrCtrl && isF) {

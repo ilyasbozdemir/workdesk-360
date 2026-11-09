@@ -34,6 +34,30 @@ export const RotaKoordinasyonBlock: React.FC<RotaKoordinasyonBlockProps> = ({
   const { isEditing, onFieldChange, personelListesi, data } = useTemplateEdit();
   const personelList = buildMergedPersonelList(personelListesi, data);
 
+  const defaultHarcamaAdi =
+    (data && data.harcamaYetkilisiAdi ? data.harcamaYetkilisiAdi : "") ||
+    (data && data.onaylayanPersonelAdi ? data.onaylayanPersonelAdi : "") ||
+    "";
+  const defaultHarcamaUnvan =
+    (data && data.harcamaYetkilisiUnvan ? data.harcamaYetkilisiUnvan : "") ||
+    "Harcama Yetkilisi";
+
+  const olurPool = (Array.isArray(personelListesi) ? personelListesi : []).filter((p: any) => {
+    const rawHarcama = cleanPersonelName(defaultHarcamaAdi);
+    const pName = cleanPersonelName(p.ad_soyad);
+    if (rawHarcama && pName.toLowerCase() === rawHarcama.toLowerCase()) return true;
+    const isExecutive = !p.birim_id && (!p.birim || String(p.birim).trim() === "");
+    if (isExecutive) return true;
+    const uStr = `${p.unvan || ""} ${p.gorev || ""}`.toLowerCase();
+    return (
+      uStr.includes("harcama yetkili") ||
+      uStr.includes("başkan") ||
+      uStr.includes("kaymakam") ||
+      uStr.includes("rektör") ||
+      uStr.includes("genel müdür")
+    );
+  });
+
   const effectiveMode = data?.belgeModu || belgeModu || "standart";
 
   // Birleştirilmiş rota / koordinasyon listesi
@@ -67,12 +91,20 @@ export const RotaKoordinasyonBlock: React.FC<RotaKoordinasyonBlockProps> = ({
     if (!onFieldChange) return;
     const updated = [...activeRota];
     updated[idx] = { ...updated[idx], [field]: val };
+    if (field === "t" && val === "Olur" && defaultHarcamaAdi && !updated[idx].a) {
+      updated[idx].a = cleanPersonelName(defaultHarcamaAdi);
+      if (defaultHarcamaUnvan) {
+        updated[idx].u = defaultHarcamaUnvan;
+      }
+    }
     onFieldChange("rota", updated);
   };
 
   const handleSelectRotaPersonel = (idx: number, personelId: string) => {
     if (!onFieldChange) return;
-    const p = personelList.find(
+    const isOlur = activeRota[idx]?.t === "Olur";
+    const pool = isOlur && olurPool.length > 0 ? olurPool : personelList;
+    const p = pool.find(
       (item: any) => String(item.id || item.ad_soyad) === personelId,
     );
     if (!p) return;
@@ -390,7 +422,10 @@ export const RotaKoordinasyonBlock: React.FC<RotaKoordinasyonBlockProps> = ({
                           }}
                         >
                           <option value="">👤 Personel Seç...</option>
-                          {personelList.map((p: any) => (
+                          {((r.t === "Olur" && olurPool.length > 0)
+                            ? olurPool
+                            : personelList
+                          ).map((p: any) => (
                             <option key={p.id} value={String(p.id)}>
                               {p.ad_soyad} {p.unvan ? `(${p.unvan})` : ""}
                             </option>
