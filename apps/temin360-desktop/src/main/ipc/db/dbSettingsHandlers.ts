@@ -55,11 +55,7 @@ export function registerDbSettingsHandlers(): void {
 
       // Fallback from TANIM_Kurum if not present in settings
       try {
-        const kurumRow = db
-          .prepare(
-            'SELECT kurum_adi, kurum_anteti, logo_kurum, logo_sol, logo_sag, kurum_baskani, baskan_unvani, harcama_yetkilisi, sunulacak_makam_secimi, sunulacak_kurum_adi, makam_adi_custom, makam_adi FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1'
-          )
-          .get() as
+        let kurumRow:
           | {
               kurum_adi?: string
               kurum_anteti?: string
@@ -75,6 +71,22 @@ export function registerDbSettingsHandlers(): void {
               makam_adi?: string
             }
           | undefined
+
+        try {
+          kurumRow = db
+            .prepare(
+              'SELECT kurum_adi, kurum_anteti, logo_kurum, logo_sol, logo_sag, kurum_baskani, baskan_unvani, harcama_yetkilisi, sunulacak_makam_secimi, sunulacak_kurum_adi, makam_adi_custom, makam_adi FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1'
+            )
+            .get() as any
+        } catch {
+          try {
+            kurumRow = db
+              .prepare(
+                'SELECT kurum_adi, kurum_anteti, logo_kurum, logo_sol, logo_sag, kurum_baskani, baskan_unvani, harcama_yetkilisi, sunulacak_makam_secimi, sunulacak_kurum_adi, makam_adi_custom, makam_adi FROM TANIM_Kurum ORDER BY id ASC LIMIT 1'
+              )
+              .get() as any
+          } catch {}
+        }
 
         if (kurumRow) {
           if (!settingsObj.institutionName || settingsObj.institutionName === 'Bilinmeyen Kurum') {

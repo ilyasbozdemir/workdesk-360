@@ -280,10 +280,7 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 </button>
               </div>
               <Input
-                value={
-                  data.sunulacak_kurum_adi ||
-                  (data.sunulacak_makam_secimi === "kurum" ? (data.makam_adi || "") : "")
-                }
+                value={data.sunulacak_kurum_adi ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
                   onChange("sunulacak_kurum_adi", val);
@@ -306,7 +303,7 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
               }`}
               onClick={() => {
                 onChange("sunulacak_makam_secimi", "makam");
-                const targetMakam = data.makam_adi_custom || data.makam_adi || "";
+                const targetMakam = data.makam_adi_custom || (data.sunulacak_makam_secimi !== "kurum" ? (data.makam_adi || "") : "");
                 if (targetMakam) {
                   onChange("makam_adi", targetMakam);
                   if (!data.makam_adi_custom) {
@@ -324,7 +321,7 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     onChange("sunulacak_makam_secimi", "makam");
-                    const targetMakam = data.makam_adi_custom || data.makam_adi || "";
+                    const targetMakam = data.makam_adi_custom || (data.sunulacak_makam_secimi !== "kurum" ? (data.makam_adi || "") : "");
                     if (targetMakam) {
                       onChange("makam_adi", targetMakam);
                       if (!data.makam_adi_custom) {
@@ -347,10 +344,7 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
                 </button>
               </div>
               <Input
-                value={
-                  data.makam_adi_custom ||
-                  (data.sunulacak_makam_secimi === "kurum" ? "" : (data.makam_adi || ""))
-                }
+                value={data.makam_adi_custom ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
                   onChange("makam_adi_custom", val);
