@@ -67,8 +67,8 @@ export function smartMergeDocumentData<T extends Record<string, unknown> = Recor
     }
   }
 
-  // 2. Kalem dizilerini (ihtiyacKalemleri, kalemler, items) akıllı birleştir
-  const arrayFieldNames = ['ihtiyacKalemleri', 'kalemler', 'items', 'malzemeler']
+  // 2. Kalem dizilerini (ihtiyacKalemleri, kalemler, items, malzemeler, fiyatKalemleri) akıllı birleştir
+  const arrayFieldNames = ['ihtiyacKalemleri', 'kalemler', 'items', 'malzemeler', 'fiyatKalemleri']
 
   for (const arrField of arrayFieldNames) {
     const existingArr = existingSnapshot[arrField]
@@ -106,7 +106,26 @@ export function smartMergeDocumentData<T extends Record<string, unknown> = Recor
     }
   }
 
-  // 3. Eksik olan yeni alanları tamamla (kaynakta olup snapshot'ta hiç olmayan alanlar)
+  // 3. Kaynak dinamik parasal tutarları ve para birimini güncelle
+  const sourceAmountFields = [
+    'yaklasikMaliyet',
+    'yaklasik_maliyet',
+    'toplamTutar',
+    'toplam_tutar',
+    'kdvTutari',
+    'kdv_tutari',
+    'genelToplam',
+    'genel_toplam',
+    'grandTotal',
+    'paraBirimi'
+  ]
+  for (const saf of sourceAmountFields) {
+    if (freshSourceData[saf] !== undefined && freshSourceData[saf] !== null) {
+      merged[saf] = freshSourceData[saf]
+    }
+  }
+
+  // 4. Eksik olan yeni alanları tamamla (kaynakta olup snapshot'ta hiç olmayan alanlar)
   for (const [key, value] of Object.entries(freshSourceData)) {
     if (merged[key] === undefined) {
       merged[key] = value
