@@ -1,12 +1,15 @@
 import { ColumnDef } from "../../document/DocumentTable";
 import { IhtiyacTalepFormuType } from "./IhtiyacTalepFormu.schema";
-import { detectAlimTuru, AlimTuru } from "../ihtiyac-listesi/IhtiyacListesi.template";
+import {
+  AlimTuru,
+  detectAlimTuru,
+} from "../ihtiyac-listesi/IhtiyacListesi.template";
 import { MalAlimiIhtiyacTalepFormu } from "./MalAlimi/MalAlimiIhtiyacTalepFormu";
 import { HizmetAlimiIhtiyacTalepFormu } from "./HizmetAlimi/HizmetAlimiIhtiyacTalepFormu";
 import { DanismanlikIhtiyacTalepFormu } from "./DanismanlikHizmetAlimi/DanismanlikIhtiyacTalepFormu";
 import { YapimIsleriIhtiyacTalepFormu } from "./YapimIsleri/YapimIsleriIhtiyacTalepFormu";
 
-export { detectAlimTuru, type AlimTuru };
+export { type AlimTuru, detectAlimTuru };
 
 export interface IhtiyacTalepFormuProps {
   data?: Partial<IhtiyacTalepFormuType> & Record<string, any>;

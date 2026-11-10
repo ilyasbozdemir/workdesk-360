@@ -1,0 +1,161 @@
+{
+  "Küçük (5 Kalem)": {
+    "itemCount": 5,
+    "phases": {
+      "phase1_sourceData": {
+        "min": 0.35,
+        "median": 2.1,
+        "p95": 7.82,
+        "max": 7.82
+      },
+      "phase2_mappingResolution": {
+        "min": 1.79,
+        "median": 7.18,
+        "p95": 57.28,
+        "max": 57.28
+      },
+      "phase3_templatePreparation": {
+        "min": 1.64,
+        "median": 5.23,
+        "p95": 24.03,
+        "max": 24.03
+      },
+      "phase4_snapshotLoad": {
+        "min": 0.09,
+        "median": 0.14,
+        "p95": 1.05,
+        "max": 1.05
+      },
+      "phase5_smartMerge": {
+        "min": 0.06,
+        "median": 0.07,
+        "p95": 6.93,
+        "max": 6.93
+      },
+      "phase6_reactRender": {
+        "min": 7.35,
+        "median": 20.35,
+        "p95": 285.49,
+        "max": 285.49
+      },
+      "phase7_pdfHtmlCompile": {
+        "min": 6.25,
+        "median": 15.61,
+        "p95": 59.6,
+        "max": 59.6
+      },
+      "total_endToEnd": {
+        "min": 22.2,
+        "median": 50.21,
+        "p95": 320.32,
+        "max": 320.32
+      }
+    }
+  },
+  "Orta (50 Kalem)": {
+    "itemCount": 50,
+    "phases": {
+      "phase1_sourceData": {
+        "min": 0.46,
+        "median": 1.07,
+        "p95": 3.21,
+        "max": 3.21
+      },
+      "phase2_mappingResolution": {
+        "min": 1.69,
+        "median": 9.14,
+        "p95": 13.19,
+        "max": 13.19
+      },
+      "phase3_templatePreparation": {
+        "min": 1.39,
+        "median": 4.21,
+        "p95": 11.08,
+        "max": 11.08
+      },
+      "phase4_snapshotLoad": {
+        "min": 0.14,
+        "median": 0.21,
+        "p95": 1.09,
+        "max": 1.09
+      },
+      "phase5_smartMerge": {
+        "min": 0.05,
+        "median": 0.07,
+        "p95": 0.63,
+        "max": 0.63
+      },
+      "phase6_reactRender": {
+        "min": 10.2,
+        "median": 32.19,
+        "p95": 100.32,
+        "max": 100.32
+      },
+      "phase7_pdfHtmlCompile": {
+        "min": 8.13,
+        "median": 32.18,
+        "p95": 60.71,
+        "max": 60.71
+      },
+      "total_endToEnd": {
+        "min": 32.25,
+        "median": 79.98,
+        "p95": 161.12,
+        "max": 161.12
+      }
+    }
+  },
+  "Büyük (200 Kalem)": {
+    "itemCount": 200,
+    "phases": {
+      "phase1_sourceData": {
+        "min": 1.01,
+        "median": 1.79,
+        "p95": 6.17,
+        "max": 6.17
+      },
+      "phase2_mappingResolution": {
+        "min": 3.55,
+        "median": 14,
+        "p95": 56.17,
+        "max": 56.17
+      },
+      "phase3_templatePreparation": {
+        "min": 3.13,
+        "median": 11.96,
+        "p95": 66.06,
+        "max": 66.06
+      },
+      "phase4_snapshotLoad": {
+        "min": 0.32,
+        "median": 0.52,
+        "p95": 8.72,
+        "max": 8.72
+      },
+      "phase5_smartMerge": {
+        "min": 0.06,
+        "median": 0.08,
+        "p95": 0.51,
+        "max": 0.51
+      },
+      "phase6_reactRender": {
+        "min": 10.2,
+        "median": 24.87,
+        "p95": 106.21,
+        "max": 106.21
+      },
+      "phase7_pdfHtmlCompile": {
+        "min": 9.05,
+        "median": 38.19,
+        "p95": 156.73,
+        "max": 156.73
+      },
+      "total_endToEnd": {
+        "min": 37.08,
+        "median": 115.91,
+        "p95": 295.07,
+        "max": 295.07
+      }
+    }
+  }
+}

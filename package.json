@@ -20,6 +20,8 @@
     "dev:web": "pnpm --filter app-web dev",
     "dev:website": "pnpm --filter app-landing dev",
     "analyze": "node scripts/analyze-codebase.mjs",
+    "benchmark": "node scripts/benchmarks/runBenchmarks.mjs",
+    "benchmark:engine": "pnpm --filter @temin360/document-templates test src/__tests__/documentEnginePerformance.test.ts",
     "db:up": "docker compose up -d db pocketbase minio",
     "db:down": "docker compose down",
     "services:up": "docker compose up -d pocketbase minio",

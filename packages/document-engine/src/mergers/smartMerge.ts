@@ -44,7 +44,14 @@ function isSameItem(a: any, b: any, matchKeys: string[]): boolean {
 }
 
 /**
- * Kaydedilmiş mevcut snapshot ile veritabanından taze çözümlenen kaynak veriyi birleştirir.
+ * @purpose Kaydedilmiş snapshot ile veritabanından taze çözümlenen veriyi akıllıca birleştirir (Rebase / Smart Merge).
+ * @source DATA_TeminBelgeSnapshot (kullanıcı düzenlemeleri) + Canlı SQLite tabloları (taze kalemler/fiyatlar)
+ * @scope dosyaId, templateKey
+ * @usedBy DocumentEngine.loadOrCreateDocument, DocumentPreviewModalV3
+ * @see packages/document-engine/src/DocumentEngine.ts
+ *
+ * Kullanıcının manuel düzenlemelerini korur (açıklamalar, unvanlar, sunulacak makam vb.).
+ * Canlı veritabanından eklenen yeni kalemleri ve güncel fiyatları güvenle snapshot'a ekler.
  */
 export function smartMergeDocumentData<T extends Record<string, unknown> = Record<string, unknown>>(
   existingSnapshot: T,

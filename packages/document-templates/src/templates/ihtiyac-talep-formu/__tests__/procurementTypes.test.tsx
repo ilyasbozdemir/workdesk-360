@@ -174,3 +174,4 @@ describe("İhtiyaç Talep Formu — Alım Türü Modüler Şablonları Testleri"
     expect(yapimHtml).toContain("İMALAT / İŞ KALEMİ ADI");
   });
 });
+

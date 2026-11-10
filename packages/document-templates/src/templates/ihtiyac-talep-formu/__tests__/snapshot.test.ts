@@ -72,3 +72,4 @@ describe("İhtiyaç Talep Formu — Snapshot ve Akıllı Harmanlama Testleri", (
     expect((docRecord.data as any).ihtiyacKalemleri[0].kalemAdi).toBe("Dizüstü Bilgisayar i7");
   });
 });
+

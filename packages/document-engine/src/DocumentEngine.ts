@@ -228,6 +228,16 @@ export class DocumentEngine {
   /**
    * Belgeye ait verileri TemplateRegistry ve ilişkili özel resolver ile çözümler.
    */
+  /**
+   * @purpose Şablonun resolver'ı üzerinden taze veri çözümlemesi yapar ve antet ile birleştirir.
+   * @source TemplateRegistry, DefaultDocumentResolver, InstitutionalHeaderProvider
+   * @scope dosyaId, templateKey
+   * @usedBy DocumentEngine.loadOrCreateDocument, DocumentEngine.compileHtml
+   * @see packages/document-templates/src/engine/resolvers/DefaultDocumentResolver.ts
+   *
+   * Veri çözümleme Document Engine tarafından yürütülür.
+   * Bu fonksiyon ikinci bir SQL çözümleme zinciri oluşturmamalıdır.
+   */
   static async resolveDocumentData<T = Record<string, unknown>>(params: {
     dosyaId: number;
     templateKey: string;
@@ -267,13 +277,14 @@ export class DocumentEngine {
   }
 
   /**
-   * Tekil ve Standart Belge Hazırlama Metodu (Unified Document Preparation Flow)
-   * prompt: documentEngine.prepare({ templateId, documentId })
-   * 1. Belge tanımını bulur.
-   * 2. Ortak ve belgeye özel mapping alanlarını çözer.
-   * 3. Gerekli relation ve computed alanlarını hesaplar.
-   * 4. Varsa kaydedilmiş snapshot ile kurallara göre harmanlar.
-   * 5. Tipli ve React şablonuna hazır veri döndürür.
+   * @purpose Tekil ve standart belge hazırlama giriş noktası (Unified Document Preparation Flow).
+   * @source DATA_TeminBelgeSnapshot, InstitutionalHeaderProvider, DefaultDocumentResolver
+   * @scope dosyaId, templateId
+   * @usedBy Desktop DocumentPreviewModalV3, PDF Derleyici, Dışa Aktarım Servisleri
+   * @see packages/document-engine/src/DocumentEngine.ts:loadOrCreateDocument
+   *
+   * Veri çözümleme Document Engine tarafından yürütülür.
+   * Bu fonksiyon ikinci bir SQL çözümleme zinciri oluşturmamalıdır.
    */
   static async prepare<T = Record<string, unknown>>(
     params: PrepareDocumentParams,
@@ -298,7 +309,14 @@ export class DocumentEngine {
   }
 
   /**
-   * Belgeyi disk/veritabanından yükler, yoksa ilk kez çözümler ve kaydeder.
+   * @purpose Belgeyi disk/veritabanı snapshot'ından yükler, yoksa ilk kez çözümler ve akıllı birleştirme uygular.
+   * @source DATA_TeminBelgeSnapshot, DATA_TeminKalem, DATA_TeminDosyasi, TANIM_Kurum
+   * @scope dosyaId, templateKey
+   * @usedBy DocumentPreviewModalV3, DocumentEngine.prepare
+   * @see packages/document-engine/src/mergers/smartMerge.ts
+   *
+   * Veri çözümleme Document Engine tarafından yürütülür.
+   * Kullanıcının manuel düzenlemelerini korur (smartMerge), eksik kalemleri otomatik tamamlar.
    */
   static async loadOrCreateDocument<T = Record<string, unknown>>(
     params: LoadOrCreateDocumentParams,
@@ -328,11 +346,16 @@ export class DocumentEngine {
       }
 
       if (storageRes.exists && storageRes.record) {
-        const existingData = (storageRes.record.data || {}) as Record<string, unknown>;
-        const hasKalemler =
-          (Array.isArray(existingData.ihtiyacKalemleri) && existingData.ihtiyacKalemleri.length > 0) ||
-          (Array.isArray(existingData.kalemler) && existingData.kalemler.length > 0) ||
-          (Array.isArray(existingData.malzemeler) && existingData.malzemeler.length > 0) ||
+        const existingData = (storageRes.record.data || {}) as Record<
+          string,
+          unknown
+        >;
+        const hasKalemler = (Array.isArray(existingData.ihtiyacKalemleri) &&
+          existingData.ihtiyacKalemleri.length > 0) ||
+          (Array.isArray(existingData.kalemler) &&
+            existingData.kalemler.length > 0) ||
+          (Array.isArray(existingData.malzemeler) &&
+            existingData.malzemeler.length > 0) ||
           (Array.isArray(existingData.items) && existingData.items.length > 0);
 
         let finalData = storageRes.record.data as T;
@@ -340,11 +363,13 @@ export class DocumentEngine {
         // Kaydedilmiş snapshot'ta kalemler boşsa fakat veritabanında taze kalemler varsa, akıllıca harmanla
         if (!hasKalemler) {
           try {
-            const { data: freshSourceData } = await this.resolveDocumentData<T>({
-              dosyaId,
-              templateKey: canonicalKey,
-              invitedFirms: context?.invitedFirms as unknown[],
-            });
+            const { data: freshSourceData } = await this.resolveDocumentData<T>(
+              {
+                dosyaId,
+                templateKey: canonicalKey,
+                invitedFirms: context?.invitedFirms as unknown[],
+              },
+            );
             finalData = smartMergeDocumentData(
               existingData,
               freshSourceData as Record<string, unknown>,

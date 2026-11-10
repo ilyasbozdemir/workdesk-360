@@ -1,13 +1,18 @@
-import { DocumentEngine } from '@worksuite-360/document-engine'
-import { LoadPreviewDataParams, LoadPreviewDataResult } from './types'
-import { applyRolePolicy } from '@temin360/document-templates'
+import { DocumentEngine } from "@worksuite-360/document-engine";
+import { LoadPreviewDataParams, LoadPreviewDataResult } from "./types";
+import { applyRolePolicy } from "@temin360/document-templates";
 
-export { applyRolePolicy }
+export { applyRolePolicy };
 
 /**
- * Belge önizleme verisi yükleyici (DocumentEngine adaptörü)
- * - Tüm çözümleme, üst veri bağlama ve snapshot koordinasyonu DocumentEngine tarafından yürütülür.
- * - UI katmanı SQL veya doğrudan şablon çözümleme mantığı barındırmaz.
+ * @purpose Desktop UI için DocumentEngine adaptörü. Önizleme modalı için belge ve liste verilerini yükler.
+ * @source DocumentEngine.loadOrCreateDocument
+ * @scope activeDosyaId, resolvedId/selectedDocId
+ * @usedBy useDocumentPreviewData, DocumentPreviewModalV3
+ * @see packages/document-engine/src/DocumentEngine.ts
+ *
+ * Tüm çözümleme, üst veri bağlama ve snapshot koordinasyonu DocumentEngine tarafından yürütülür.
+ * UI katmanı SQL veya doğrudan şablon çözümleme mantığı barındırmaz.
  */
 export async function loadDocumentPreviewData({
   activeDosyaId,
@@ -18,26 +23,26 @@ export async function loadDocumentPreviewData({
   showLogoRight,
   logoLeft,
   logoRight,
-  institutionLogo
+  institutionLogo,
 }: LoadPreviewDataParams): Promise<LoadPreviewDataResult> {
-  const targetKey = resolvedId || selectedDocId || ''
+  const targetKey = resolvedId || selectedDocId || "";
   const docRecord = await DocumentEngine.loadOrCreateDocument({
     dosyaId: activeDosyaId || 0,
     templateKey: targetKey,
-    context: { invitedFirms: propInvitedFirms }
-  })
+    context: { invitedFirms: propInvitedFirms },
+  });
 
-  const headerObj = (docRecord.headerData || {}) as Record<string, unknown>
+  const headerObj = (docRecord.headerData || {}) as Record<string, unknown>;
   const dataObj: Record<string, any> = {
     ...headerObj,
-    ...((docRecord.data || {}) as Record<string, unknown>)
-  }
+    ...((docRecord.data || {}) as Record<string, unknown>),
+  };
 
-  if (showLogoLeft !== undefined) dataObj.showLogoLeft = showLogoLeft
-  if (showLogoRight !== undefined) dataObj.showLogoRight = showLogoRight
-  if (logoLeft) dataObj.solLogo = logoLeft
-  if (logoRight) dataObj.sagLogo = logoRight
-  if (institutionLogo && !dataObj.solLogo) dataObj.solLogo = institutionLogo
+  if (showLogoLeft !== undefined) dataObj.showLogoLeft = showLogoLeft;
+  if (showLogoRight !== undefined) dataObj.showLogoRight = showLogoRight;
+  if (logoLeft) dataObj.solLogo = logoLeft;
+  if (logoRight) dataObj.sagLogo = logoRight;
+  if (institutionLogo && !dataObj.solLogo) dataObj.solLogo = institutionLogo;
 
   return {
     finalData: dataObj,
@@ -45,15 +50,15 @@ export async function loadDocumentPreviewData({
     firmaListesi: (docRecord.firmaListesi as any[]) || [],
     birimListesi: (docRecord.birimListesi as any[]) || [],
     dosyaRecord: docRecord.dosyaRecord || null,
-    activeLogoLeft:
-      dataObj.showLogoLeft !== undefined
-        ? Boolean(dataObj.showLogoLeft)
-        : Boolean(docRecord.headerData?.solLogo),
-    activeLogoRight:
-      dataObj.showLogoRight !== undefined
-        ? Boolean(dataObj.showLogoRight)
-        : Boolean(docRecord.headerData?.sagLogo),
-    activeOrientation: dataObj.orientation === 'landscape' ? 'landscape' : 'portrait',
-    initialSnapshotJson: JSON.stringify(dataObj)
-  }
+    activeLogoLeft: dataObj.showLogoLeft !== undefined
+      ? Boolean(dataObj.showLogoLeft)
+      : Boolean(docRecord.headerData?.solLogo),
+    activeLogoRight: dataObj.showLogoRight !== undefined
+      ? Boolean(dataObj.showLogoRight)
+      : Boolean(docRecord.headerData?.sagLogo),
+    activeOrientation: dataObj.orientation === "landscape"
+      ? "landscape"
+      : "portrait",
+    initialSnapshotJson: JSON.stringify(dataObj),
+  };
 }

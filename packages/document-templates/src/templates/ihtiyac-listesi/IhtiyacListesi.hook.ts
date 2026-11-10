@@ -103,8 +103,7 @@ export function normalizeIhtiyacKalemleri(
       ? String(k.kdvOrani).replace("%", "")
       : "20";
 
-    const koduVal =
-      k.pozNo ||
+    const koduVal = k.pozNo ||
       k.kodu ||
       k.tasinirKodu ||
       k.tasinir_kodu ||
@@ -112,8 +111,7 @@ export function normalizeIhtiyacKalemleri(
       k.hizmet_kodu ||
       k.kod ||
       "-";
-    const adiVal =
-      k.imalatAdi ||
+    const adiVal = k.imalatAdi ||
       k.hizmetAdi ||
       k.danismanlikKonusu ||
       k.malzemeAdi ||
@@ -121,8 +119,7 @@ export function normalizeIhtiyacKalemleri(
       k.kalem_adi ||
       k.ad ||
       "";
-    const ozellikVal =
-      k.teknikTarifi ||
+    const ozellikVal = k.teknikTarifi ||
       k.kapsam ||
       k.ozelligi ||
       k.aciklama ||
@@ -137,8 +134,8 @@ export function normalizeIhtiyacKalemleri(
       pozNo: k.pozNo || (koduVal !== "-" ? koduVal : ""),
       hizmetKodu: k.hizmetKodu || (koduVal !== "-" ? koduVal : ""),
       kodu: koduVal,
-      tasinirKodu:
-        k.tasinirKodu || k.tasinir_kodu || (koduVal !== "-" ? koduVal : ""),
+      tasinirKodu: k.tasinirKodu || k.tasinir_kodu ||
+        (koduVal !== "-" ? koduVal : ""),
       malzemeAdi: adiVal,
       kalemAdi: adiVal,
       imalatAdi: k.imalatAdi || adiVal,
@@ -231,8 +228,7 @@ export function useIhtiyacListesi(
     // Standart CommonDocumentFields kullanımı
     const tarih = data.dosyaTarihi || data.tarih || "";
 
-    const dosyaKonusu =
-      data.dosyaKonusu || (data as any).konu || "İhtiyaç Listesi";
+    const dosyaKonusu = data.dosyaKonusu || data.konu || "İhtiyaç Listesi";
 
     const sunulacakMakam = data.sunulacakMakamAdi ||
       (data as any).sunulacakMakam || "";

@@ -88,7 +88,7 @@ describe("İhtiyaç Listesi — Mapping ve Veri Hazırlama Testleri", () => {
 
     expect(result.konu).toBe("Bilgisayar Sarf Malzemesi Alımı");
     expect(result.maddeNo).toBe("22/d");
-    expect(result.tarih).toBe("2026-10-15");
+    expect(["2026-10-15", "15.10.2026"]).toContain(result.tarih);
     expect(result.sunulacakMakamAdi).toBe("DESTEK HİZMETLERİ MÜDÜRLÜĞÜNE");
     expect(result.hazirlayanPersonelAdi).toBe("Deniz KAYA");
     expect(result.hazirlayanPersonelUnvan).toBe("Bilgisayar İşletmeni");

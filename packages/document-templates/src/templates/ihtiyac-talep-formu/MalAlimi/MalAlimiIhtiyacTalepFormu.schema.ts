@@ -35,3 +35,4 @@ export const MalAlimiIhtiyacTalepFormuSchema = z
 export type MalAlimiIhtiyacTalepFormuType = z.infer<
   typeof MalAlimiIhtiyacTalepFormuSchema
 >;
+

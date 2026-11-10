@@ -62,8 +62,13 @@ export class TemplateRegistry {
   }
 
   /**
-   * Yeni bir belge tanımı kaydeder.
-   * Mükerrer kayıt durumunda allowOverride: true verilmedikçe DuplicateTemplateRegistrationError fırlatır.
+   * @purpose Şablon tanımını ve ilişkili resolver/renderer ikilisini TemplateRegistry defterine kaydeder.
+   * @source Uygulama ve paket başlatıcıları (registerTeminTemplates vb.)
+   * @scope Monorepo geneli, çoklu uygulama kayıt defteri
+   * @usedBy registerTeminTemplates, e2e/unit testler
+   * @see packages/document-templates/src/engine/registerTeminTemplates.ts
+   *
+   * Tekil kayıt sistemidir; mükerrer veya paralel ikinci kayıt defteri oluşturulmamalıdır.
    */
   register<TData = any>(def: DocumentDefinition<TData>, options: RegisterOptions = {}): void {
     if (!def || !def.templateKey) {
@@ -90,6 +95,20 @@ export class TemplateRegistry {
   }
 
   /**
+   * Kayıtlı bir şablona ek ad (alias) bağlar. Örn. registry anahtarı `luzum_onay_eki`,
+   * şablon kimliği `luzum-muzekkeresi-onay-eki` olduğunda her iki ad da çözümlenir.
+   * Hedef şablon kayıtlı değilse sessizce yok sayılmaz; hata fırlatılır.
+   */
+  registerAlias(alias: string, targetKey: string): void {
+    const canonicalAlias = TemplateRegistry.normalizeKey(alias)
+    if (!canonicalAlias) return
+    const def = this.get(targetKey)
+    this.definitions.set(canonicalAlias, def)
+    this.definitions.set(canonicalAlias.replace(/-/g, '_'), def)
+    this.definitions.set(canonicalAlias.replace(/_/g, '-'), def)
+  }
+
+  /**
    * Birden fazla belge tanımını topluca kaydeder.
    */
   registerMany(defs: DocumentDefinition<any>[], options: RegisterOptions = {}): void {
@@ -99,8 +118,11 @@ export class TemplateRegistry {
   }
 
   /**
-   * Belirtilen şablon anahtarına ait belge tanımını getirir.
-   * Şablon bulunamazsa InvalidTemplateKeyError fırlatır.
+   * @purpose Şablon anahtarına göre tip güvenli belge tanımını döner.
+   * @source TemplateRegistry dahili eşleme haritası
+   * @scope templateKey (snake_case / kebab-case normalizasyonu destekler)
+   * @usedBy DocumentEngine.resolveDocumentData, DocumentEngine.compileHtml, DocumentRenderer
+   * @see packages/document-engine/src/DocumentEngine.ts
    */
   get<TData = any>(templateKey: string): DocumentDefinition<TData> {
     if (!templateKey || typeof templateKey !== 'string' || templateKey.trim() === '') {

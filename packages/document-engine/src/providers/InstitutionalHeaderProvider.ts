@@ -664,7 +664,14 @@ export class InstitutionalHeaderProvider {
   }
 
   /**
-   * Belirtilen dosya için kurumsal antet ve başlık verilerini çözümler.
+   * @purpose Dosyaya ait kurumsal antet, logo, birim, harcama yetkilisi ve evrak sayısını tek elden çözümler.
+   * @source TANIM_Kurum, TANIM_Birim, DATA_TeminDosyasi, TANIM_Personel, settings
+   * @scope dosyaId
+   * @usedBy DocumentEngine.resolveHeaderData, previewDataLoader
+   * @see packages/document-engine/src/DocumentEngine.ts
+   *
+   * Veri çözümleme Document Engine tarafından yürütülür.
+   * Bu fonksiyon ikinci bir SQL çözümleme zinciri oluşturmamalıdır.
    */
   static async resolve(
     dosyaId: number,

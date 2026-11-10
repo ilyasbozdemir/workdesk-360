@@ -73,7 +73,10 @@ describe("routeDataBridge Refactor — Şablondan Bağımsız Açık Sözleşme 
       ],
     };
 
-    const result = applyResolvedRouteToDocumentData({}, testRouteWithTargets);
+    const result = applyResolvedRouteToDocumentData<Record<string, any>>(
+      {},
+      testRouteWithTargets,
+    );
 
     expect(result.onaylayanPersonelAdi).toBe("Ahmet KAYA");
     expect(result.harcamaYetkilisiAdi).toBe("Ahmet KAYA");
@@ -106,7 +109,10 @@ describe("routeDataBridge Refactor — Şablondan Bağımsız Açık Sözleşme 
       baskanUnvan: "Başkan Unvan",
     };
 
-    const extracted = extractDocumentRouteValues(docWithOnlyBaskan, strictDefinition);
+    const extracted = extractDocumentRouteValues(
+      docWithOnlyBaskan,
+      strictDefinition,
+    );
 
     // baskanAdi, onaylayan alanına sızmamalıdır!
     expect(extracted.onaylayan).toBeNull();
@@ -151,7 +157,10 @@ describe("routeDataBridge Refactor — Şablondan Bağımsız Açık Sözleşme 
       ],
     };
 
-    const standardDoc = applyResolvedRouteToDocumentData({}, standardRoute);
+    const standardDoc = applyResolvedRouteToDocumentData<Record<string, any>>(
+      {},
+      standardRoute,
+    );
     expect(standardDoc.komisyonUyeleri).toHaveLength(1);
     expect(standardDoc.komisyonUyeleri[0].adSoyad).toBe("Asil Üye 1");
 
@@ -173,7 +182,9 @@ describe("routeDataBridge Refactor — Şablondan Bağımsız Açık Sözleşme 
       ],
     };
 
-    const appointmentDoc = applyResolvedRouteToDocumentData({}, appointmentRoute);
+    const appointmentDoc = applyResolvedRouteToDocumentData<
+      Record<string, any>
+    >({}, appointmentRoute);
     expect(appointmentDoc.komisyonUyeleri).toHaveLength(2);
     expect(appointmentDoc.komisyonUyeleri[1].adSoyad).toBe("Yedek Üye 1");
   });
@@ -205,11 +216,13 @@ describe("routeDataBridge Refactor — Şablondan Bağımsız Açık Sözleşme 
       ],
     };
 
-    const doc = applyResolvedRouteToDocumentData({}, route);
+    const doc = applyResolvedRouteToDocumentData<Record<string, any>>(
+      {},
+      route,
+    );
     expect(doc.fiyatArastirmaGorevlileri).toHaveLength(1);
     expect(doc.komisyon).toHaveLength(1);
     expect(doc.fiyatKomisyonu).toHaveLength(1);
     expect(doc.fiyatArastirmaGorevlileri[0].adSoyad).toBe("Memur Can");
   });
 });
-

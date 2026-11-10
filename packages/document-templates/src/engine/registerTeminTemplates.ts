@@ -132,5 +132,15 @@ export function registerTeminTemplates(
         }
       }
     }
+
+    // 6. Şablon kimliği (definition.id) registry anahtarından farklıysa alias olarak bağla
+    //    (örn. luzum_onay_eki ↔ luzum-muzekkeresi-onay-eki). Mevcut ID'ler değişmez.
+    for (const key of baseKeys) {
+      const baseDef = (templateRegistry as any)[key];
+      const canonicalKey = (resolveTemplateKey(key) as string) || key;
+      if (baseDef?.id && registry.has(canonicalKey)) {
+        registry.registerAlias(baseDef.id, canonicalKey);
+      }
+    }
   }
 }

@@ -35,3 +35,4 @@ export function MalAlimiIhtiyacTalepFormu(props: MalAlimiIhtiyacTalepFormuProps)
     />
   );
 }
+
