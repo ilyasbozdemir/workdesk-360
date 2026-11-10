@@ -130,7 +130,7 @@ export const templateRegistry = {
   ihtiyac_listesi: {
     id: "ihtiyac-listesi",
     name: "IhtiyacListesi",
-    title: "Standart Form (): İhtiyaç Listesi Cetveli",
+    title: "İhtiyaç Listesi Cetveli",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -148,8 +148,7 @@ export const templateRegistry = {
   ihtiyac_talep_formu: {
     id: "ihtiyac-talep-formu",
     name: "IhtiyacTalepFormu",
-    title:
-      "Standart Form ( - 4734 KİK m.22): İhtiyaç Belgesi ve Harcama Talep Müzekkeresi",
+    title: "İhtiyaç Belgesi ve Harcama Talep Müzekkeresi",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -167,7 +166,7 @@ export const templateRegistry = {
   luzum_muzekkeresi: {
     id: "luzum-muzekkeresi",
     name: "LuzumMuzekkeresi",
-    title: "Standart Form (): Lüzum Müzekkeresi",
+    title: "Lüzum Müzekkeresi",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -192,7 +191,7 @@ export const templateRegistry = {
   luzum_onay_eki: {
     id: "luzum-muzekkeresi-onay-eki",
     name: "LuzumMuzekkeresiOnayEki",
-    title: "Standart Form: Lüzum Müzekkeresi Onay Eki",
+    title: "Lüzum Müzekkeresi Onay Eki",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description: "Lüzum müzekkeresine eklenen kalem ve açıklama listesi",
@@ -208,7 +207,7 @@ export const templateRegistry = {
   luzum_muzekkeresi_teslim_tesellum: {
     id: "luzum-muzekkeresi-teslim-tesellum",
     name: "LuzumMuzekkeresiTeslimTesellum",
-    title: "Standart Form: Lüzum Müzekkeresi Teslim Tesellüm Tutanağı",
+    title: "Lüzum Müzekkeresi Teslim Tesellüm Tutanağı",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description: "Lüzum müzekkeresi teslim alma ve evrak devir tutanağı",
@@ -225,8 +224,7 @@ export const templateRegistry = {
   harcama_talimati: {
     id: "harcama-talimati",
     name: "HarcamaTalimati",
-    title:
-      "Standart Form-KİK024.0/M: Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    title: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -266,8 +264,7 @@ export const templateRegistry = {
   komisyon_gorevlendirme_onayi: {
     id: "komisyon-gorevlendirme-onayi",
     name: "KomisyonGorevlendirmeOnayi",
-    title:
-      "Standart Form (4734 KİK m.22): Piyasa Fiyat Araştırması ve Muayene Kabul Görevlendirme Onayı",
+    title: "Piyasa Fiyat Araştırması ve Muayene Kabul Görevlendirme Onayı",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -320,7 +317,7 @@ export const templateRegistry = {
   komisyon_gorevlendirme_onayi_eki: {
     id: "komisyon-gorevlendirme-onayi-eki",
     name: "KomisyonGorevlendirmeOnayiEki",
-    title: "Standart Form: Görevlendirilen Komisyon ve Personel Listesi Eki",
+    title: "Görevlendirilen Komisyon ve Personel Listesi Eki",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -369,8 +366,7 @@ export const templateRegistry = {
   piyasa_fiyat_arastirma_gorevlendirmesi: {
     id: "piyasa-fiyat-arastirma-gorevlendirmesi",
     name: "PiyasaFiyatArastirmaGorevlendirmesi",
-    title:
-      "Standart Form (4734 KİK m.22): Piyasa Fiyat Araştırma Görevlendirme Onayı",
+    title: "Piyasa Fiyat Araştırma Görevlendirme Onayı",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -400,7 +396,7 @@ export const templateRegistry = {
   son_alim_fiyat_cetveli: {
     id: "son-alim-fiyat-cetveli",
     name: "SonAlimFiyatCetveli",
-    title: "Standart Form: Son Alım Fiyat Araştırma ve Mukayese Cetveli",
+    title: "Son Alım Fiyat Araştırma ve Mukayese Cetveli",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -420,8 +416,7 @@ export const templateRegistry = {
   fiyat_arastirma_mektubu: {
     id: "fiyat-arastirma-mektubu",
     name: "FiyatArastirmaMektubu",
-    title:
-      "Standart Form-KİK027.0/M: Birim Fiyat Teklif Mektubu ve Fiyat İsteme Formu",
+    title: "Birim Fiyat Teklif Mektubu ve Fiyat İsteme Formu",
     category: "2-piyasa-fiyat-arastirmasi",
     categoryLabel: "Teklifler & Piyasa",
     description:
@@ -444,7 +439,7 @@ export const templateRegistry = {
   birim_fiyat_teklif_mektubu: {
     id: "birim-fiyat-teklif-mektubu",
     name: "BirimFiyatTeklifMektubu",
-    title: "Standart Form-KİK015.1/M: Birim Fiyat Teklif Mektubu",
+    title: "Birim Fiyat Teklif Mektubu",
     category: "2-piyasa-fiyat-arastirmasi",
     categoryLabel: "Teklifler & Piyasa",
     description:
@@ -473,8 +468,7 @@ export const templateRegistry = {
   arastirma_mektubu: {
     id: "arastirma-mektubu",
     name: "ArastirmaMektubu",
-    title:
-      "Standart Form-KİK027.0/M: Piyasa Fiyat Araştırma ve Teklif İsteme Mektubu",
+    title: "Piyasa Fiyat Araştırma ve Teklif İsteme Mektubu",
     category: "2-piyasa-fiyat-arastirmasi",
     categoryLabel: "Teklifler & Piyasa",
     description:
@@ -497,7 +491,7 @@ export const templateRegistry = {
   yaklasik_maliyet_cetveli: {
     id: "yaklasik-maliyet-cetveli",
     name: "YaklasikMaliyetCetveli",
-    title: "Standart Form-KİK002.0/M: Yaklaşık Maliyet Hesap Cetveli",
+    title: "Yaklaşık Maliyet Hesap Cetveli",
     category: "2-piyasa-fiyat-arastirmasi",
     categoryLabel: "Teklifler & Piyasa",
     description:
@@ -522,8 +516,7 @@ export const templateRegistry = {
   piyasa_fiyat_arastirma_tutanagi: {
     id: "piyasa-fiyat-arastirma-tutanagi",
     name: "PiyasaFiyatArastirmaTutanagi",
-    title:
-      "Standart Form (MYHBY Örnek No: 2): Piyasa Fiyat Araştırması Tutanağı",
+    title: "Piyasa Fiyat Araştırması Tutanağı",
     category: "2-piyasa-fiyat-arastirmasi",
     categoryLabel: "Teklifler & Piyasa",
     description:
@@ -551,8 +544,7 @@ export const templateRegistry = {
   kabul_edilen_teklif: {
     id: "kabul-edilen-teklif",
     name: "KabulEdilenTeklif",
-    title:
-      "Standart Form (KİK Tebliği m.22): Sipariş Mektubu ve Tebliğ-Tebellüğ Belgesi",
+    title: "Sipariş Mektubu ve Tebliğ-Tebellüğ Belgesi",
     category: "3-siparis-ve-sozlesme",
     categoryLabel: "Sipariş & Sözleşme",
     description:
@@ -575,8 +567,7 @@ export const templateRegistry = {
   dogrudan_temin_onay_belgesi: {
     id: "dogrudan-temin-onay-belgesi",
     name: "DogrudanTeminOnayBelgesi",
-    title:
-      "Standart Form-KİK024.0/M: Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    title: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
     category: "3-siparis-ve-sozlesme",
     categoryLabel: "Sipariş & Sözleşme",
     description: "Karara bağlanan alımın yetkili makam onay belgesi",
@@ -599,8 +590,7 @@ export const templateRegistry = {
   dogrudan_temin_sonuc_onay_belgesi: {
     id: "dogrudan-temin-sonuc-onay-belgesi",
     name: "DogrudanTeminSonucOnayBelgesi",
-    title:
-      "Standart Form (4734 KİK m.22): Piyasa Fiyat Araştırması Sonuç Onay Belgesi",
+    title: "Piyasa Fiyat Araştırması Sonuç Onay Belgesi",
     category: "3-siparis-ve-sozlesme",
     categoryLabel: "Sipariş & Sözleşme",
     description: "Alım sonucunun yetkili makam onay belgesi",
@@ -623,7 +613,7 @@ export const templateRegistry = {
   butce_sorgusu: {
     id: "butce-sorgusu",
     name: "ButceSorgusu",
-    title: "Standart Form: Bütçe Ödenek Kontrol ve Bloke Belgesi",
+    title: "Bütçe Ödenek Kontrol ve Bloke Belgesi",
     category: "3-siparis-ve-sozlesme",
     categoryLabel: "Sipariş & Sözleşme",
     description:
@@ -641,8 +631,7 @@ export const templateRegistry = {
   dogrudan_temin_sozlesmesi: {
     id: "dogrudan-temin-sozlesmesi",
     name: "DogrudanTeminSozlesmesi",
-    title:
-      "Standart Form-KİK: Doğrudan Temin Mal / Hizmet Alımı Tip Sözleşmesi",
+    title: "Doğrudan Temin Mal / Hizmet Alımı Tip Sözleşmesi",
     category: "3-siparis-ve-sozlesme",
     categoryLabel: "Sipariş & Sözleşme",
     description:
@@ -665,7 +654,7 @@ export const templateRegistry = {
   sozlesmeye_davet: {
     id: "sozlesmeye-davet",
     name: "SozlesmeyeDavet",
-    title: "Standart Form-KİK023.0/M: Sözleşmeye Davet Mektubu",
+    title: "Sözleşmeye Davet Mektubu",
     category: "3-siparis-ve-sozlesme",
     categoryLabel: "Sipariş & Sözleşme",
     description:
@@ -691,8 +680,7 @@ export const templateRegistry = {
   muayene_kabul_tutanagi: {
     id: "muayene-kabul-tutanagi",
     name: "MuayeneKabulTutanagi",
-    title:
-      "Standart Form-KİK054.0/M: Mal Alımları Muayene ve Kabul Komisyonu Tutanağı",
+    title: "Mal Alımları Muayene ve Kabul Komisyonu Tutanağı",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
@@ -718,7 +706,7 @@ export const templateRegistry = {
   muayene_kabul_komisyonu: {
     id: "muayene-kabul-komisyonu",
     name: "MuayeneKabulKomisyonu",
-    title: "Standart Form-KİK054.0/M: Muayene ve Kabul Komisyon Kararı",
+    title: "Muayene ve Kabul Komisyon Kararı",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
@@ -743,7 +731,7 @@ export const templateRegistry = {
   kik048_yapim_gecici_kabul_teklif: {
     id: "kik048-yapim-gecici-kabul-teklif",
     name: "Kik048YapimGeciciKabulTeklif",
-    title: "Standart Form-KİK048.0/Y: Yapım İşleri Geçici Kabul Teklif Belgesi",
+    title: "Yapım İşleri Geçici Kabul Teklif Belgesi",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
@@ -769,7 +757,7 @@ export const templateRegistry = {
   kik049_yapim_gecici_kabul_tutanagi: {
     id: "kik049-yapim-gecici-kabul-tutanagi",
     name: "Kik049YapimGeciciKabulTutanagi",
-    title: "Standart Form-KİK049.0/Y: Yapım İşleri Geçici Kabul Tutanağı",
+    title: "Yapım İşleri Geçici Kabul Tutanağı",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
@@ -795,7 +783,7 @@ export const templateRegistry = {
   kik050_yapim_kesin_kabul_teklif: {
     id: "kik050-yapim-kesin-kabul-teklif",
     name: "Kik050YapimKesinKabulTeklif",
-    title: "Standart Form-KİK050.0/Y: Yapım İşleri Kesin Kabul Teklif Belgesi",
+    title: "Yapım İşleri Kesin Kabul Teklif Belgesi",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
@@ -821,7 +809,7 @@ export const templateRegistry = {
   kik051_yapim_kesin_kabul_tutanagi: {
     id: "kik051-yapim-kesin-kabul-tutanagi",
     name: "Kik051YapimKesinKabulTutanagi",
-    title: "Standart Form-KİK051.0/Y: Yapım İşleri Kesin Kabul Tutanağı",
+    title: "Yapım İşleri Kesin Kabul Tutanağı",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
@@ -847,8 +835,7 @@ export const templateRegistry = {
   harcama_pusulasi: {
     id: "harcama-pusulasi",
     name: "HarcamaPusulasi",
-    title:
-      "Standart Form (MYHBY Örnek No: 3): Harcama Pusulası ve Klasör Dizi Fihristi",
+    title: "Harcama Pusulası ve Klasör Dizi Fihristi",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
@@ -875,7 +862,7 @@ export const templateRegistry = {
   odeme_yazisi: {
     id: "odeme-yazisi",
     name: "OdemeYazisi",
-    title: "Standart Form: Muhasebe / Malmüdürlüğü Ödeme Gönderme Müzekkeresi",
+    title: "Muhasebe / Malmüdürlüğü Ödeme Gönderme Müzekkeresi",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
