@@ -328,11 +328,37 @@ export class DocumentEngine {
       }
 
       if (storageRes.exists && storageRes.record) {
+        const existingData = (storageRes.record.data || {}) as Record<string, unknown>;
+        const hasKalemler =
+          (Array.isArray(existingData.ihtiyacKalemleri) && existingData.ihtiyacKalemleri.length > 0) ||
+          (Array.isArray(existingData.kalemler) && existingData.kalemler.length > 0) ||
+          (Array.isArray(existingData.malzemeler) && existingData.malzemeler.length > 0) ||
+          (Array.isArray(existingData.items) && existingData.items.length > 0);
+
+        let finalData = storageRes.record.data as T;
+
+        // Kaydedilmiş snapshot'ta kalemler boşsa fakat veritabanında taze kalemler varsa, akıllıca harmanla
+        if (!hasKalemler) {
+          try {
+            const { data: freshSourceData } = await this.resolveDocumentData<T>({
+              dosyaId,
+              templateKey: canonicalKey,
+              invitedFirms: context?.invitedFirms as unknown[],
+            });
+            finalData = smartMergeDocumentData(
+              existingData,
+              freshSourceData as Record<string, unknown>,
+            ) as T;
+          } catch {
+            // Taze veri çözülemezse mevcut snapshot verisi korunur
+          }
+        }
+
         return {
           id: storageRes.record.id,
           dosyaId,
           templateKey: canonicalKey,
-          data: storageRes.record.data as T,
+          data: finalData,
           sablonVersiyon: storageRes.record.sablonVersiyon || 1,
           createdAt: storageRes.record.createdAt,
           updatedAt: storageRes.record.updatedAt,
