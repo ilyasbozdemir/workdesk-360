@@ -31,3 +31,4 @@ export function YapimIsleriIhtiyacListesi(props: YapimIsleriIhtiyacListesiProps)
     />
   );
 }
+

@@ -62,3 +62,4 @@ export const MalAlimiIhtiyacListesiSchema = z
 
 export type MalAlimiIhtiyacListesiType = z.infer<typeof MalAlimiIhtiyacListesiSchema>;
 export type MalAlimiKalemiType = z.infer<typeof MalAlimiKalemiSchema>;
+

@@ -63,3 +63,4 @@ export const HizmetAlimiIhtiyacListesiSchema = z
 
 export type HizmetAlimiIhtiyacListesiType = z.infer<typeof HizmetAlimiIhtiyacListesiSchema>;
 export type HizmetAlimiKalemiType = z.infer<typeof HizmetAlimiKalemiSchema>;
+

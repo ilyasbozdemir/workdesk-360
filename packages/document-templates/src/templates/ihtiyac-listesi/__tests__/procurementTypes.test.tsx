@@ -2,14 +2,14 @@ import React from "react";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
+  DanismanlikIhtiyacListesi,
+  DanismanlikIhtiyacListesiSchema,
+  HizmetAlimiIhtiyacListesi,
+  HizmetAlimiIhtiyacListesiSchema,
   IhtiyacListesi,
   MalAlimiIhtiyacListesi,
-  HizmetAlimiIhtiyacListesi,
-  DanismanlikIhtiyacListesi,
-  YapimIsleriIhtiyacListesi,
   MalAlimiIhtiyacListesiSchema,
-  HizmetAlimiIhtiyacListesiSchema,
-  DanismanlikIhtiyacListesiSchema,
+  YapimIsleriIhtiyacListesi,
   YapimIsleriIhtiyacListesiSchema,
 } from "../index";
 
@@ -73,7 +73,9 @@ describe("İhtiyaç Listesi — Alım Türü Modüler Şablonları Testleri", ()
     const parsed = HizmetAlimiIhtiyacListesiSchema.safeParse(data);
     expect(parsed.success).toBe(true);
 
-    const html = renderToStaticMarkup(<HizmetAlimiIhtiyacListesi data={data} />);
+    const html = renderToStaticMarkup(
+      <HizmetAlimiIhtiyacListesi data={data} />,
+    );
     expect(html).toContain("Hizmet Kodu");
     expect(html).toContain("Hizmetin Adı");
     expect(html).toContain("Bina Temizlik Hizmeti");
@@ -99,10 +101,14 @@ describe("İhtiyaç Listesi — Alım Türü Modüler Şablonları Testleri", ()
     const parsed = DanismanlikIhtiyacListesiSchema.safeParse(data);
     expect(parsed.success).toBe(true);
 
-    const html = renderToStaticMarkup(<DanismanlikIhtiyacListesi data={data} />);
+    const html = renderToStaticMarkup(
+      <DanismanlikIhtiyacListesi data={data} />,
+    );
     expect(html).toContain("Danışmanlık Hizmetinin Konusu");
     expect(html).toContain("İmar Planı Değişikliği Danışmanlığı");
-    expect(html).toContain("aşağıda yazılı danışmanlık hizmet kalemlerinin temin");
+    expect(html).toContain(
+      "aşağıda yazılı danışmanlık hizmet kalemlerinin temin",
+    );
   });
 
   it("4. YapimIsleriIhtiyacListesi: Poz No, İmalat Adı, Ölçü Birimi ile yapım metnini render eder", () => {
@@ -124,12 +130,16 @@ describe("İhtiyaç Listesi — Alım Türü Modüler Şablonları Testleri", ()
     const parsed = YapimIsleriIhtiyacListesiSchema.safeParse(data);
     expect(parsed.success).toBe(true);
 
-    const html = renderToStaticMarkup(<YapimIsleriIhtiyacListesi data={data} />);
+    const html = renderToStaticMarkup(
+      <YapimIsleriIhtiyacListesi data={data} />,
+    );
     expect(html).toContain("Poz No / İş Kalemi No");
     expect(html).toContain("İmalat / İş Kalemi Adı");
     expect(html).toContain("Y.15.001/2B");
     expect(html).toContain("C25/30 Hazır Beton Dökülmesi");
-    expect(html).toContain("aşağıda yazılı yapım / imalat iş kalemlerinin temin");
+    expect(html).toContain(
+      "aşağıda yazılı yapım / imalat iş kalemlerinin temin",
+    );
   });
 
   it("5. Ana IhtiyacListesi alimTuru prop veya verisine göre alt şablona otomatik yönlendirir", () => {
@@ -164,7 +174,9 @@ describe("İhtiyaç Listesi — Alım Türü Modüler Şablonları Testleri", ()
       ],
     };
 
-    const htmlHizmet = renderToStaticMarkup(<IhtiyacListesi data={hizmetData} />);
+    const htmlHizmet = renderToStaticMarkup(
+      <IhtiyacListesi data={hizmetData} />,
+    );
     expect(htmlHizmet).toContain("Hizmetin Adı");
     expect(htmlHizmet).toContain("Özel Güvenlik Hizmeti");
   });

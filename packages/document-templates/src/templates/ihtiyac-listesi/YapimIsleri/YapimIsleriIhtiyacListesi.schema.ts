@@ -65,3 +65,4 @@ export const YapimIsleriIhtiyacListesiSchema = z
 
 export type YapimIsleriIhtiyacListesiType = z.infer<typeof YapimIsleriIhtiyacListesiSchema>;
 export type YapimIsleriKalemiType = z.infer<typeof YapimIsleriKalemiSchema>;
+

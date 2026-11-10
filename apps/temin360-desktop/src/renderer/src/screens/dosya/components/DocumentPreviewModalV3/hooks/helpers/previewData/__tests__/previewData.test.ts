@@ -122,7 +122,7 @@ describe('DocumentPreviewModalV3 - previewData modular helpers', () => {
     expect(baseData.fiyatKalemleri).toBeUndefined()
   })
 
-  it('applyRefreshPolicy preserves manual table edits from saved snapshot and respects preserve fields', () => {
+  it('applyRefreshPolicy respects source priority for source fields and preserves manual/preserve fields', () => {
     const sourceData = {
       evrakSayisi: '2026/001',
       harcamaYetkilisiAdi: 'Ali Veli',
@@ -141,14 +141,17 @@ describe('DocumentPreviewModalV3 - previewData modular helpers', () => {
 
     const merged = applyRefreshPolicy(sourceData, savedSnapshot)
 
-    // Manual / Template table items are preserved from snapshot!
-    expect(merged.ihtiyacKalemleri[0].malzemeAdi).toBe('Kullanıcının Belgede Düzenlediği Özel Malzeme')
-    expect(merged.ihtiyacKalemleri[0].miktar).toBe(5)
+    // SOURCE fields take fresh source data when present
+    expect(merged.ihtiyacKalemleri[0].malzemeAdi).toBe('Orijinal Kaynak Malzeme')
     expect(merged.ozelGerekce).toBe('Acil ihtiyaç nedeniyle')
     // Preserve fields are preserved from snapshot when filled
     expect(merged.evrakSayisi).toBe('2026/001-Revize')
     // Source data not present in snapshot remains intact
     expect(merged.harcamaYetkilisiAdi).toBe('Ali Veli')
+
+    // If source items are empty, falls back to snapshot
+    const mergedFallback = applyRefreshPolicy({ ...sourceData, ihtiyacKalemleri: [] }, savedSnapshot)
+    expect(mergedFallback.ihtiyacKalemleri[0].malzemeAdi).toBe('Kullanıcının Belgede Düzenlediği Özel Malzeme')
   })
 
   it('applyRolePolicy can be invoked without error', () => {

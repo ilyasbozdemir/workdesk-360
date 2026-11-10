@@ -31,3 +31,4 @@ export function HizmetAlimiIhtiyacListesi(props: HizmetAlimiIhtiyacListesiProps)
     />
   );
 }
+

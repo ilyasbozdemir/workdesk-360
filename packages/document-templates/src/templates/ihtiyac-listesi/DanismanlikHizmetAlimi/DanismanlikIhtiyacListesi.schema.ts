@@ -64,3 +64,4 @@ export const DanismanlikIhtiyacListesiSchema = z
 
 export type DanismanlikIhtiyacListesiType = z.infer<typeof DanismanlikIhtiyacListesiSchema>;
 export type DanismanlikKalemiType = z.infer<typeof DanismanlikKalemiSchema>;
+
