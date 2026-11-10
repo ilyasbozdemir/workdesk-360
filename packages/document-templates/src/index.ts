@@ -84,7 +84,6 @@ export * from "./resolver/types";
 export * from "./resolver/mappingResolver";
 export * from "./resolver/TemplateResolver";
 
-export * from "./constants/template-registry";
 export * from "./constants/workflowProfiles";
 export * from "./constants/template-constants";
 export * from "./constants/all-templates.mapping";

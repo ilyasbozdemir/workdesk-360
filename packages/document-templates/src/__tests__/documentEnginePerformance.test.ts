@@ -17,6 +17,7 @@ import {
   DefaultDocumentResolver,
   getTemplateMapping
 } from '../index'
+// @ts-expect-error — .mjs benchmark yardımcısının tip bildirimi yok
 import { createSyntheticDatabase } from '../../../../scripts/benchmarks/syntheticDb.mjs'
 
 function calculateStats(latencies: number[]) {
@@ -164,9 +165,9 @@ describe('Document Engine Performans ve Aşama Analizi', () => {
         // 7. PDF HTML Derleme
         const t7_start = performance.now()
         const pdfHtml = await DocumentEngine.compileHtml({
-          dosyaId,
+          ...({ dosyaId } as Record<string, unknown>),
           templateKey: 'ihtiyac_listesi'
-        })
+        } as any)
         const t7_end = performance.now()
         phaseLatencies.phase7_pdfHtmlCompile.push(t7_end - t7_start)
 

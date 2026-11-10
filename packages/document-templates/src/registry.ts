@@ -36,7 +36,15 @@ import { Kik049YapimGeciciKabulTutanagi } from "./templates/kik049-yapim-gecici-
 import { Kik050YapimKesinKabulTeklif } from "./templates/kik050-yapim-kesin-kabul-teklif";
 import { Kik051YapimKesinKabulTutanagi } from "./templates/kik051-yapim-kesin-kabul-tutanagi";
 
-import type { TemplateCapabilities } from "./types";
+import type {
+  ExplicitState,
+  TemplateCapabilities,
+  TemplateGroup,
+  TemplateType,
+  TemplateWorkflow,
+  WorkflowProfileName,
+} from "./types";
+import { getWorkflowProfile } from "./constants/workflowProfiles";
 
 // Mapping imports from template packages
 import { dataMapping as ihtiyacListesiMapping } from "./templates/ihtiyac-listesi/data.mapping";
@@ -90,6 +98,16 @@ export interface TemplateDefinition<
   mapping?: ProcessMapping;
   routeDefinition?: TemplateRouteDefinition;
   version?: number;
+  /** Tek grup (ör. "olur_onay"). Çoklu için `groups` kullanılır. */
+  group?: TemplateGroup;
+  groups?: readonly TemplateGroup[];
+  /** Doğrudan tanımlı iş akışı (rota + imzalar). Profil kullanılmayacaksa. */
+  workflow?: TemplateWorkflow;
+  /** Ortak iş akışı profili; `workflowOverride` ile kısmen ezilebilir. */
+  workflowProfile?: WorkflowProfileName;
+  workflowOverride?: Partial<TemplateWorkflow>;
+  /** Başka bir şablonun iş akışını miras alır (zincir `resolveTemplateWorkflow` ile çözülür). */
+  inheritsFrom?: string;
 }
 
 const DEFAULT_CAPS: TemplateCapabilities = {
@@ -119,6 +137,7 @@ export const templateRegistry = {
       "Alımı yapılacak mal/hizmet kalemlerinin detaylı ihtiyaç tablosu",
     component: IhtiyacListesi,
     orientation: "portrait",
+    workflowProfile: "ic_form",
     dataMapping: ihtiyacListesiMapping,
     mapping: ihtiyacListesiMapping,
     version: 1,
@@ -137,6 +156,7 @@ export const templateRegistry = {
       "Birimlerin mal/hizmet taleplerini yetkili makama ilettiği resmi form",
     component: IhtiyacTalepFormu,
     orientation: "portrait",
+    workflowProfile: "ic_form",
     dataMapping: ihtiyacTalepFormuMapping,
     mapping: ihtiyacTalepFormuMapping,
     version: 1,
@@ -153,6 +173,7 @@ export const templateRegistry = {
     description: "Taşınır kayıt yetkilisinin ambar ve stok durumu görüşü",
     component: TasinirKayitYetkilisiGorusu,
     orientation: "portrait",
+    workflowProfile: "ic_form",
     dataMapping: tasinirKayitYetkilisiGorusuMapping,
     mapping: tasinirKayitYetkilisiGorusuMapping,
     version: 1,
@@ -168,6 +189,7 @@ export const templateRegistry = {
     description: "Alımı yapılacak mal ve hizmetlerin teknik özellikleri ve şartları",
     component: TeknikSartname,
     orientation: "portrait",
+    workflowProfile: "ic_form",
     dataMapping: teknikSartnameMapping,
     mapping: teknikSartnameMapping,
     version: 1,
@@ -184,6 +206,7 @@ export const templateRegistry = {
       "Harcama biriminin alım gerekliliğini onaylatan başlangıç müzekkeresi",
     component: LuzumMuzekkeresi,
     orientation: "portrait",
+    workflowProfile: "ic_form",
     dataMapping: luzumMuzekkeresiMapping,
     mapping: luzumMuzekkeresiMapping,
     version: 1,
@@ -207,6 +230,7 @@ export const templateRegistry = {
     description: "Lüzum müzekkeresine eklenen kalem ve açıklama listesi",
     component: LuzumMuzekkeresiOnayEki,
     orientation: "portrait",
+    inheritsFrom: "luzum-muzekkeresi",
     dataMapping: luzumOnayEkiMapping,
     mapping: luzumOnayEkiMapping,
     version: 1,
@@ -222,6 +246,8 @@ export const templateRegistry = {
     description: "Lüzum müzekkeresi teslim alma ve evrak devir tutanağı",
     component: LuzumMuzekkeresiTeslimTesellum,
     orientation: "portrait",
+    group: "muayene_kabul",
+    inheritsFrom: "luzum-muzekkeresi",
     dataMapping: luzumTeslimTesellumMapping,
     mapping: luzumTeslimTesellumMapping,
     version: 1,
@@ -239,6 +265,29 @@ export const templateRegistry = {
       "Harcama Yetkilisi tarafından imzalanan alım ve ihale başlatma oluru",
     component: HarcamaTalimati,
     orientation: "portrait",
+    group: "olur_onay",
+    workflow: {
+      routing: {
+        mode: "role",
+        targetRole: "harcama_yetkilisi",
+        usesDynamicInstitutionalHeading: true,
+        fallbackHeading: "HARCAMA YETKİLİLİĞİNE",
+      },
+      signatures: [
+        {
+          role: "gerceklestirme_gorevlisi",
+          slotType: "checked_by",
+          requirementSource: "statutory",
+        },
+        {
+          role: "harcama_yetkilisi",
+          slotType: "approved_by",
+          requirementSource: "statutory",
+        },
+      ],
+      approvalRole: "harcama_yetkilisi",
+      explicitState: "explicit_defined",
+    },
     dataMapping: harcamaTalimatiMapping,
     mapping: harcamaTalimatiMapping,
     version: 1,
@@ -257,6 +306,24 @@ export const templateRegistry = {
       "Piyasa Araştırma veya Muayene Kabul Komisyon üyelerinin görevlendirme oluru",
     component: KomisyonGorevlendirmeOnayi,
     orientation: "portrait",
+    groups: ["piyasa_arastirma", "muayene_kabul", "olur_onay"],
+    workflow: {
+      routing: {
+        mode: "role",
+        targetRole: "harcama_yetkilisi",
+        usesDynamicInstitutionalHeading: true,
+        fallbackHeading: "HARCAMA YETKİLİLİĞİNE",
+      },
+      signatures: [
+        {
+          role: "harcama_yetkilisi",
+          slotType: "approved_by",
+          requirementSource: "administrative",
+        },
+      ],
+      approvalRole: "harcama_yetkilisi",
+      explicitState: "explicit_defined",
+    },
     dataMapping: komisyonGorevlendirmeOnayiMapping,
     mapping: komisyonGorevlendirmeOnayiMapping,
     version: 1,
@@ -292,6 +359,23 @@ export const templateRegistry = {
       "Görevlendirilen komisyon üyelerinin detaylı görev dağılım listesi",
     component: KomisyonGorevlendirmeOnayiEki,
     orientation: "portrait",
+    groups: ["piyasa_arastirma", "muayene_kabul", "olur_onay"],
+    workflow: {
+      routing: { mode: "none" },
+      signatures: [
+        {
+          role: "komisyon_baskani",
+          slotType: "president",
+          requirementSource: "administrative",
+        },
+        {
+          role: "komisyon_uyesi",
+          slotType: "member",
+          requirementSource: "administrative",
+        },
+      ],
+      explicitState: "explicit_defined",
+    },
     dataMapping: komisyonGorevlendirmeOnayiEkiMapping,
     mapping: komisyonGorevlendirmeOnayiEkiMapping,
     version: 1,
@@ -325,6 +409,8 @@ export const templateRegistry = {
       "Piyasa fiyat araştırmasını yapmak üzere görevlendirilen personelin olur belgesi",
     component: PiyasaFiyatArastirmaGorevlendirmesi,
     orientation: "portrait",
+    groups: ["piyasa_arastirma", "olur_onay"],
+    workflowProfile: "olur_onay",
     dataMapping: piyasaFiyatArastirmaGorevlendirmesiMapping,
     mapping: piyasaFiyatArastirmaGorevlendirmesiMapping,
     version: 1,
@@ -353,6 +439,8 @@ export const templateRegistry = {
       "Geçmiş alımlara ait birim fiyat ve fatura karşılaştırma cetveli",
     component: SonAlimFiyatCetveli,
     orientation: "portrait",
+    group: "piyasa_arastirma",
+    workflowProfile: "ic_form",
     dataMapping: sonAlimFiyatCetveliMapping,
     mapping: sonAlimFiyatCetveliMapping,
     version: 1,
@@ -372,6 +460,8 @@ export const templateRegistry = {
       "Firmalara teklif sunmaları için gönderilen resmi davet yazısı",
     component: FiyatArastirmaMektubu,
     orientation: "portrait",
+    group: "piyasa_arastirma",
+    workflowProfile: "dis_yazi",
     dataMapping: fiyatArastirmaMektubuMapping,
     mapping: fiyatArastirmaMektubuMapping,
     version: 1,
@@ -393,6 +483,8 @@ export const templateRegistry = {
       "Firmaların birim fiyatlarını doldurarak imzaladığı teklif mektubu",
     component: BirimFiyatTeklifMektubu,
     orientation: "portrait",
+    group: "piyasa_arastirma",
+    workflowProfile: "firma_belgesi",
     dataMapping: birimFiyatTeklifMektubuMapping,
     mapping: birimFiyatTeklifMektubuMapping,
     version: 1,
@@ -421,6 +513,8 @@ export const templateRegistry = {
       "Piyasa araştırması kapsamında gönderilen bilgi ve teklif toplama yazısı",
     component: ArastirmaMektubu,
     orientation: "portrait",
+    group: "piyasa_arastirma",
+    workflowProfile: "dis_yazi",
     dataMapping: arastirmaMektubuMapping,
     mapping: arastirmaMektubuMapping,
     version: 1,
@@ -442,6 +536,8 @@ export const templateRegistry = {
       "Toplanan tekliflerden alımın yaklaşık maliyetinin hesaplandığı cetvel",
     component: YaklasikMaliyetCetveli,
     orientation: "portrait",
+    group: "piyasa_arastirma",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: yaklasikMaliyetCetveliMapping,
     mapping: yaklasikMaliyetCetveliMapping,
     version: 1,
@@ -466,6 +562,8 @@ export const templateRegistry = {
       "Piyasa fiyat araştırması görevlilerinin teklifleri değerlendirdiği ana tutanak",
     component: PiyasaFiyatArastirmaTutanagi,
     orientation: "portrait",
+    group: "piyasa_arastirma",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: piyasaFiyatArastirmaTutanagiMapping,
     mapping: piyasaFiyatArastirmaTutanagiMapping,
     version: 1,
@@ -493,6 +591,8 @@ export const templateRegistry = {
       "En avantajlı teklifi veren firmaya yapılan alım kabul bildirimi",
     component: KabulEdilenTeklif,
     orientation: "portrait",
+    group: "olur_onay",
+    workflowProfile: "dis_yazi",
     dataMapping: kabulEdilenTeklifMapping,
     mapping: kabulEdilenTeklifMapping,
     version: 1,
@@ -514,6 +614,8 @@ export const templateRegistry = {
     description: "Karara bağlanan alımın yetkili makam onay belgesi",
     component: DogrudanTeminOnayBelgesi,
     orientation: "portrait",
+    group: "olur_onay",
+    workflowProfile: "olur_onay",
     dataMapping: dogrudanTeminOnayBelgesiMapping,
     mapping: dogrudanTeminOnayBelgesiMapping,
     version: 1,
@@ -536,6 +638,8 @@ export const templateRegistry = {
     description: "Alım sonucunun yetkili makam onay belgesi",
     component: DogrudanTeminOnayBelgesi,
     orientation: "portrait",
+    group: "olur_onay",
+    workflowProfile: "olur_onay",
     dataMapping: dogrudanTeminOnayBelgesiMapping,
     mapping: dogrudanTeminOnayBelgesiMapping,
     version: 1,
@@ -558,6 +662,8 @@ export const templateRegistry = {
       "Alım tutarının ilgili bütçe tertibinden karşılanabilirliğini gösteren form",
     component: ButceSorgusu,
     orientation: "portrait",
+    group: "olur_onay",
+    workflowProfile: "olur_onay",
     dataMapping: butceSorgusuMapping,
     mapping: butceSorgusuMapping,
     version: 1,
@@ -575,6 +681,8 @@ export const templateRegistry = {
       "Yüklenici firma ile İdare arasında imzalanan matbu alım sözleşmesi",
     component: DogrudanTeminSozlesmesi,
     orientation: "portrait",
+    group: "olur_onay",
+    workflowProfile: "firma_belgesi",
     dataMapping: dogrudanTeminSozlesmesiMapping,
     mapping: dogrudanTeminSozlesmesiMapping,
     version: 1,
@@ -596,6 +704,8 @@ export const templateRegistry = {
       "Kazanan yükleniciye sözleşme imzalaması için iletilen davet yazısı",
     component: SozlesmeyeDavet,
     orientation: "portrait",
+    group: "olur_onay",
+    workflowProfile: "dis_yazi",
     dataMapping: sozlesmeyeDavetMapping,
     mapping: sozlesmeyeDavetMapping,
     version: 1,
@@ -621,6 +731,8 @@ export const templateRegistry = {
       "Teslim alınan mal veya hizmetin muayene ve kabul tutanağı cetveli",
     component: MuayeneKabulTutanagi,
     orientation: "portrait",
+    group: "muayene_kabul",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: muayeneKabulTutanagiMapping,
     mapping: muayeneKabulTutanagiMapping,
     version: 1,
@@ -645,6 +757,8 @@ export const templateRegistry = {
       "Teslim alınan mal veya hizmetin muayene kabul komisyonunca onaylanma kararı",
     component: MuayeneKabulKomisyonu,
     orientation: "portrait",
+    group: "muayene_kabul",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: muayeneKabulKomisyonuMapping,
     mapping: muayeneKabulKomisyonuMapping,
     version: 1,
@@ -668,6 +782,8 @@ export const templateRegistry = {
       "Yapım işleri yüklenici iş bitirme dilekçesi sonrası ön inceleme ve geçici kabul teklif belgesi",
     component: Kik048YapimGeciciKabulTeklif,
     orientation: "portrait",
+    group: "muayene_kabul",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: kik048Mapping,
     mapping: kik048Mapping,
     version: 1,
@@ -692,6 +808,8 @@ export const templateRegistry = {
       "Yapım işleri geçici kabul komisyonu heyeti ve yüklenici inceleme tutanağı",
     component: Kik049YapimGeciciKabulTutanagi,
     orientation: "portrait",
+    group: "muayene_kabul",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: kik049Mapping,
     mapping: kik049Mapping,
     version: 1,
@@ -716,6 +834,8 @@ export const templateRegistry = {
       "Yapım işleri teminat süresi sonu kesin kabul heyeti teşkili teklif belgesi",
     component: Kik050YapimKesinKabulTeklif,
     orientation: "portrait",
+    group: "muayene_kabul",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: kik050Mapping,
     mapping: kik050Mapping,
     version: 1,
@@ -740,6 +860,8 @@ export const templateRegistry = {
       "Yapım işleri kesin kabul komisyonu heyeti ve yüklenici kesin kabul onay tutanağı",
     component: Kik051YapimKesinKabulTutanagi,
     orientation: "portrait",
+    group: "muayene_kabul",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: kik051Mapping,
     mapping: kik051Mapping,
     version: 1,
@@ -765,6 +887,8 @@ export const templateRegistry = {
       "Fatura kesme yükümlülüğü olmayan gerçek kişilerden yapılan alımların tutanağı",
     component: HarcamaPusulasi,
     orientation: "portrait",
+    group: "muayene_kabul",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: harcamaPusulasiMapping,
     mapping: harcamaPusulasiMapping,
     version: 1,
@@ -790,6 +914,8 @@ export const templateRegistry = {
       "Mali hizmetler / muhasebe müdürlüğüne yazılan ödeme üst yazısı",
     component: OdemeYazisi,
     orientation: "portrait",
+    group: "olur_onay",
+    workflowProfile: "dis_yazi",
     dataMapping: odemeYazisiMapping,
     mapping: odemeYazisiMapping,
     version: 1,
@@ -965,4 +1091,172 @@ export function getTemplateMapping(
   }
 
   return {};
+}
+
+// =============================================================================
+// İŞ AKIŞI (WORKFLOW) KATMANI — templateRegistry'den türetilir
+// =============================================================================
+// Şablon başına rota/imza/grup bilgisi ARTIK templateRegistry girişinin içinde tanımlanır.
+// Ayrı bir `constants/template-registry.ts` defteri yoktur; aşağıdaki TEMPLATE_REGISTRY
+// yalnızca templateRegistry'nin iş akışı çözümlenmiş görünümüdür (ikinci kaynak değildir).
+
+export type TemplateInput = {
+  id: string;
+  name: string;
+  title: string;
+  category: string;
+  description?: string;
+  group?: TemplateGroup;
+  groups?: readonly TemplateGroup[];
+  capabilities?: Partial<TemplateCapabilities>;
+  workflow?: TemplateWorkflow;
+  workflowProfile?: WorkflowProfileName;
+  workflowOverride?: Partial<TemplateWorkflow>;
+  inheritsFrom?: string;
+  kikKodu?: string;
+  kikAdi?: string;
+  standartFormKodu?: string;
+  standartFormAdi?: string;
+};
+
+/** Derin nesne birleştirme yardımcısı (Workflow birleştirme için). */
+function deepMergeWorkflow(
+  base: TemplateWorkflow,
+  override?: Partial<TemplateWorkflow>,
+): TemplateWorkflow {
+  if (!override) return base;
+  return {
+    ...base,
+    ...override,
+    routing: override.routing
+      ? ({ ...base.routing, ...override.routing } as any)
+      : base.routing,
+    signatures: override.signatures
+      ? [...override.signatures]
+      : base.signatures
+      ? [...base.signatures]
+      : undefined,
+  };
+}
+
+/**
+ * @purpose Şablon girişini iş akışı çözümlenmiş TemplateType'a dönüştürür.
+ * @source templateRegistry girişleri (workflow / workflowProfile / inheritsFrom / group)
+ * @scope Tek şablon
+ * @usedBy TEMPLATE_REGISTRY, TemplateRegistryService, testler
+ *
+ * Workflow önceliği: 1) doğrudan `workflow`, 2) `inheritsFrom`, 3) `workflowProfile` (+ override).
+ */
+export function defineTemplate(input: TemplateInput): TemplateType {
+  const groups = input.groups ?? (input.group ? [input.group] : []);
+  let resolvedWorkflow: TemplateWorkflow | undefined = undefined;
+
+  if (input.workflow) {
+    resolvedWorkflow = {
+      ...input.workflow,
+      explicitState: input.workflow.explicitState ?? "explicit_defined",
+    };
+  } else if (input.inheritsFrom) {
+    resolvedWorkflow = {
+      inheritsFrom: input.inheritsFrom,
+      explicitState: "from_profile",
+      routing: { mode: "none" },
+      signatures: [],
+    };
+  } else if (input.workflowProfile) {
+    resolvedWorkflow = deepMergeWorkflow(
+      getWorkflowProfile(input.workflowProfile),
+      input.workflowOverride,
+    );
+    resolvedWorkflow.explicitState = "from_profile";
+  }
+
+  return {
+    id: input.id,
+    name: input.name,
+    title: input.title,
+    category: input.category,
+    description: input.description,
+    group: input.group ?? (groups.length > 0 ? groups[0] : undefined),
+    groups: [...groups],
+    capabilities: { ...DEFAULT_CAPS, ...input.capabilities },
+    workflow: resolvedWorkflow,
+    kikKodu: input.kikKodu,
+    kikAdi: input.kikAdi,
+    standartFormKodu: input.standartFormKodu ?? input.kikKodu,
+    standartFormAdi: input.standartFormAdi ?? input.kikAdi,
+  };
+}
+
+/** templateRegistry'nin iş akışı çözümlenmiş, bileşensiz (UI'dan bağımsız) görünümü. */
+export const TEMPLATE_REGISTRY: TemplateType[] = (
+  Object.values(templateRegistry) as TemplateDefinition<any>[]
+).map((def) => defineTemplate(def as TemplateInput));
+
+/**
+ * inheritsFrom zincirini çözümler ve döngüsel bağımlılıkları kontrol eder.
+ */
+export function resolveTemplateWorkflow(
+  templateId: string,
+  registry: TemplateType[] = TEMPLATE_REGISTRY,
+): TemplateWorkflow | undefined {
+  const templateMap = new Map<string, TemplateType>();
+  registry.forEach((t) => templateMap.set(t.id, t));
+
+  const target = templateMap.get(templateId);
+  if (!target) return undefined;
+  if (!target.workflow) return undefined;
+
+  if (!target.workflow.inheritsFrom) {
+    return target.workflow;
+  }
+
+  const visited = new Set<string>([templateId]);
+  let currentId: string | undefined = target.workflow.inheritsFrom;
+
+  while (currentId) {
+    if (visited.has(currentId)) {
+      throw new Error(
+        `Döngüsel şablon bağımlılığı tespit edildi: ${
+          Array.from(visited).join(" -> ")
+        } -> ${currentId}`,
+      );
+    }
+    visited.add(currentId);
+
+    const parent = templateMap.get(currentId);
+    if (!parent) {
+      throw new Error(
+        `Miras alınacak şablon bulunamadı: "${currentId}" (referans veren: "${templateId}")`,
+      );
+    }
+
+    if (!parent.workflow?.inheritsFrom) {
+      if (!parent.workflow) {
+        throw new Error(
+          `Miras alınacak şablonun workflow tanımı yok: "${currentId}"`,
+        );
+      }
+      return { ...parent.workflow, explicitState: "from_profile" };
+    }
+
+    currentId = parent.workflow.inheritsFrom;
+  }
+
+  return target.workflow;
+}
+
+/** 'from_profile' explicitState durumundaki tüm şablonları listeler. */
+export function getFromProfileTemplates(
+  registry: TemplateType[] = TEMPLATE_REGISTRY,
+): TemplateType[] {
+  return registry.filter((t) => t.workflow?.explicitState === "from_profile");
+}
+
+/** Belirli bir explicitState durumundaki şablonları filtreler. */
+export function getTemplatesByExplicitState(
+  state: ExplicitState,
+  registry: TemplateType[] = TEMPLATE_REGISTRY,
+): TemplateType[] {
+  return registry.filter((t) => t.workflow?.explicitState === state);
 }

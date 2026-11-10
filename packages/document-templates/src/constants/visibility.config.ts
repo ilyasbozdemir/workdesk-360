@@ -28,11 +28,15 @@ export interface MemberScopeInput {
   [key: string]: any
 }
 
-import { TEMPLATE_REGISTRY } from './template-registry'
+import { TEMPLATE_REGISTRY } from '../registry'
 
 // ───────────────────────── 2) VERİ: belge grupları ─────────────────────────
 // TEMPLATE_REGISTRY ana kaynak olarak kabul edilerek dinamik olarak türetilir.
-export const DOC_GROUPS: Record<DocGroup, readonly string[]> = (() => {
+// NOT: registry.ts şablon bileşenlerini import ettiği için (bileşenler de bu modüle dolaylı bağlanır)
+// grup haritası yükleme anında değil ilk erişimde (lazy) üretilir; döngüsel import böylece güvenli kalır.
+let docGroupsCache: Record<DocGroup, string[]> | null = null
+function buildDocGroups(): Record<DocGroup, string[]> {
+  if (docGroupsCache) return docGroupsCache
   const map: Record<DocGroup, string[]> = {
     piyasa_arastirma: [],
     muayene_kabul: [],
@@ -50,8 +54,21 @@ export const DOC_GROUPS: Record<DocGroup, readonly string[]> = (() => {
       }
     }
   }
+  docGroupsCache = map
   return map
-})()
+}
+
+export const DOC_GROUPS: Record<DocGroup, readonly string[]> = {
+  get piyasa_arastirma() {
+    return buildDocGroups().piyasa_arastirma
+  },
+  get muayene_kabul() {
+    return buildDocGroups().muayene_kabul
+  },
+  get olur_onay() {
+    return buildDocGroups().olur_onay
+  }
+}
 
 // ───────────────────────── 3) VERİ: göreve göre varsayılan kapsam ─────────────────────────
 // SIRA ÖNEMLİ: ilk eşleşen kural kazanır. Anahtar kelimeler Türkçe karakterden bağımsızdır

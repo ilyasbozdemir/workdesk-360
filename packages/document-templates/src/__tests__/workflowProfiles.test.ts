@@ -5,7 +5,7 @@ import {
   resolveTemplateWorkflow,
   getFromProfileTemplates,
   getTemplatesByExplicitState
-} from '../constants/template-registry'
+} from '../registry'
 import { WORKFLOW_PROFILES, getWorkflowProfile } from '../constants/workflowProfiles'
 import { TANIM_Roller } from '../../../database/src/tables/TANIM_Roller'
 

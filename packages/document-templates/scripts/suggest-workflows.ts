@@ -7,7 +7,7 @@
  * Çalıştırma: tsx packages/document-templates/scripts/suggest-workflows.ts
  */
 
-import { TEMPLATE_REGISTRY } from '../src/constants/template-registry'
+import { TEMPLATE_REGISTRY } from '../src/registry'
 import { TemplateCapabilities, WorkflowProfileName } from '../src/types'
 
 export interface WorkflowSuggestion {
