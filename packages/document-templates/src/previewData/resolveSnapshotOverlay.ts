@@ -1,9 +1,7 @@
-import { resolveTemplateKey } from '@temin360/document-templates'
-import { useGlobalDocumentPreviewStore } from '../../../../../../../store/globalDocumentPreviewStore'
-import { applyRolePolicy } from './previewDataUtils'
+import { resolveTemplateKey } from '../registry'
+import { applyRolePolicy, formatDateString } from './previewDataUtils'
 import { applyRefreshPolicy } from './refreshPolicy'
-import type { LoadPreviewDataResult } from '../types'
-import { formatDateString } from '../../../../../contextBuilder/dateHelpers'
+import type { LoadPreviewDataResult } from './types'
 
 export async function resolveSnapshotOverlay(
   baseData: any,
@@ -22,7 +20,7 @@ export async function resolveSnapshotOverlay(
   queryExecutor: (sql: string, params: any[]) => Promise<any[]>
 ): Promise<LoadPreviewDataResult> {
   const dosyaObj = payloadData.dosya || dosyaRecord || {}
-  const activeTab = useGlobalDocumentPreviewStore.getState().getActiveTab()
+  const activeTab = (globalThis as any).useGlobalDocumentPreviewStore?.getState?.().getActiveTab?.() || null
 
   // Fetch direct JSON Snapshot from DB if available (prefer preloaded payloadData.savedSnapshot)
   let snapshotData = payloadData?.savedSnapshot || null

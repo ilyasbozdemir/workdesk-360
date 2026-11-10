@@ -1,6 +1,6 @@
 import { DocumentEngine } from '@worksuite-360/document-engine'
 import { LoadPreviewDataParams, LoadPreviewDataResult } from './types'
-import { applyRolePolicy } from './previewData'
+import { applyRolePolicy } from '@temin360/document-templates'
 
 export { applyRolePolicy }
 

@@ -16,8 +16,8 @@ export function analyzeSplitBrainResolvers(files) {
     mainPayloadResolver: 'apps/temin360-desktop/src/main/ipc/document/documentContextResolver.ts',
     mainCiktiResolver: 'apps/temin360-desktop/src/main/ipc/document/documentCiktiResolver.ts',
     rendererDataLoader: 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewDataLoader.ts',
-    rendererAntetResolver: 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewData/resolveAntetAndBirim.ts',
-    rendererPersonnelResolver: 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewData/resolvePersonnelAndCommissions.ts',
+    rendererAntetResolver: 'packages/document-templates/src/previewData/resolveAntetAndBirim.ts',
+    rendererPersonnelResolver: 'packages/document-templates/src/previewData/resolvePersonnelAndCommissions.ts',
     headerProvider: 'packages/document-engine/src/providers/InstitutionalHeaderProvider.ts',
     templateResolver: 'packages/document-templates/src/resolver/TemplateResolver.ts'
   }
