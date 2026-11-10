@@ -152,6 +152,10 @@ describe("İhtiyaç Talep Formu — Malzeme ve Render Uyumluluk Testleri", () =>
         mudurluk: "Bilgi İşlem Dairesi Başkanlığı",
         harcamaYetkilisiAdi: "Mehmet DEMİR",
         harcamaYetkilisiUnvan: "Daire Başkanı",
+        kurumUst: "T.C.",
+        kurumAdi: "KONYA BÜYÜKŞEHİR BELEDİYESİ",
+        solLogo: null,
+        sagLogo: null,
       },
       queryExecutor: mockQueryExecutor,
     });

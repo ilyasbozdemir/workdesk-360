@@ -12,7 +12,7 @@ import {
   getRotaConfigForTemplate,
   resolveTemplateRouteForDocument
 } from '../../../../../services/rotaDefaultsService'
-import { applyRefreshPolicy } from './helpers/previewData/refreshPolicy'
+import { applyRefreshPolicy } from '@temin360/document-templates'
 import {
   compileDocumentHtml,
   exportDocumentDocx,

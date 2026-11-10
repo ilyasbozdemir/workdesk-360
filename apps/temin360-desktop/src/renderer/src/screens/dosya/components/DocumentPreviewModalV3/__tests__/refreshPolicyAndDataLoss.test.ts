@@ -3,7 +3,7 @@ import { DocumentEngine } from '@worksuite-360/document-engine'
 import {
   applyRefreshPolicy,
   getFieldRefreshPolicy
-} from '../hooks/helpers/previewData/refreshPolicy'
+} from '@temin360/document-templates'
 import { buildComparableSnapshot } from '../hooks/useDocumentPreviewData'
 import { saveDocumentToDb, refreshDocumentFromDb } from '../hooks/helpers/previewExportUtils'
 import { ihtiyacRaporuResolver } from '../hooks/helpers/sourceResolvers'

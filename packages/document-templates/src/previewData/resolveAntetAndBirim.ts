@@ -1,5 +1,5 @@
-import { formatDateString } from '../../../../../contextBuilder/dateHelpers'
-import { resolveEvrakSayisi } from '@temin360/document-templates'
+import { formatDateString } from './previewDataUtils'
+import { resolveEvrakSayisi } from '../resolver/helpers/resolveEvrakSayisi'
 import { InstitutionalHeaderProvider } from '@worksuite-360/document-engine'
 
 export async function resolveAntetAndBirim(
@@ -214,3 +214,4 @@ export async function resolveAntetAndBirim(
     baseData.sunulacakMakam = birimResolution.sunulacakMakamAdi
   }
 }
+

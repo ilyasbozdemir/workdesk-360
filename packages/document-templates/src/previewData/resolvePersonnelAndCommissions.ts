@@ -1,9 +1,9 @@
+import { TemplateRegistryService } from '../services/templateRegistryService'
 import {
-  TemplateRegistryService,
   resolveCommissionCategory,
   distributeCommissionMembersBySignatureType,
   isCommissionAppointmentDocument
-} from '@temin360/document-templates'
+} from '../services/commissionResolver'
 import { dedupeMembers, cleanPersonelName } from './previewDataUtils'
 
 export async function resolvePersonnelAndCommissions(

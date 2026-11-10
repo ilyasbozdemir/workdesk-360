@@ -1,6 +1,4 @@
-import { useGlobalDocumentPreviewStore } from '../../../../../../../store/globalDocumentPreviewStore'
-import { parseNumericPrice } from './previewDataUtils'
-import { formatDateString } from '../../../../../contextBuilder/dateHelpers'
+import { parseNumericPrice, formatDateString } from './previewDataUtils'
 
 /**
  * Dosya firmalarını, kazanan firmayı ve şablon kalemlerini koordine eder.
@@ -86,7 +84,7 @@ export function resolveFirmsAndItems(
   }
 
   // 2. Seçilen veya hedeflenen istekli firma bilgileri (Mektup ve Teklif formları için)
-  const activeTab = useGlobalDocumentPreviewStore.getState().getActiveTab()
+  const activeTab = (globalThis as any).useGlobalDocumentPreviewStore?.getState?.().getActiveTab?.() || null
   const explicitFirm =
     (activeTab?.selectedFirma as any) ||
     (activeTab?.initialData as any)?.selectedFirma ||
