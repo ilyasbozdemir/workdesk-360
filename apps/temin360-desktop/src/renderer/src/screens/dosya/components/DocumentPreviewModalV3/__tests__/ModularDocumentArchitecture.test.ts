@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   TemplateRegistry,
   InvalidTemplateKeyError,
-  InstitutionalHeaderProvider,
   DocumentEngine
 } from '@worksuite-360/document-engine'
 import {
   registerTeminTemplates,
+  InstitutionalHeaderProvider,
   LuzumMuzekkeresiResolver,
   IhtiyacListesiResolver
 } from '@temin360/document-templates'

@@ -3,8 +3,8 @@ import {
   isMemberVisibleInDocument,
   resolveCommissionCategory,
   resolveTemplateKey,
+  InstitutionalHeaderProvider,
 } from "@temin360/document-templates";
-import { InstitutionalHeaderProvider } from "@worksuite-360/document-engine";
 import {
   formatTurkishDate,
   getIpcKurumBizimText,

@@ -1,6 +1,6 @@
 import { formatDateString } from './previewDataUtils'
 import { resolveEvrakSayisi } from '../resolver/helpers/resolveEvrakSayisi'
-import { InstitutionalHeaderProvider } from '@worksuite-360/document-engine'
+import { InstitutionalHeaderProvider } from '../header'
 
 export async function resolveAntetAndBirim(
   baseData: any,

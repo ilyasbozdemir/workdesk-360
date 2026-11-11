@@ -9,11 +9,12 @@ import {
   DocumentEngine,
   TemplateRegistry,
   smartMergeDocumentData,
-  InstitutionalHeaderProvider,
   DocumentRenderer
 } from '@worksuite-360/document-engine'
+import { InstitutionalHeaderProvider } from '../header'
 import {
   registerTeminTemplates,
+  configureTeminEngine,
   DefaultDocumentResolver,
   getTemplateMapping
 } from '../index'
@@ -39,7 +40,7 @@ describe('Document Engine Performans ve Aşama Analizi', () => {
 
   beforeAll(() => {
     TemplateRegistry.clear()
-    registerTeminTemplates()
+    configureTeminEngine()
     db = createSyntheticDatabase({ fileCount: 100, itemsPerFile: 50, withIndexes: true })
 
     const queryExecutor = async (sql: string, params: any[] = []) => {

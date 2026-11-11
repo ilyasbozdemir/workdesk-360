@@ -28,11 +28,10 @@ import {
   filterPersonelByBirim,
   validateBirimAndPersonelAssignments,
   getTemplateRouteDefinition,
-  isCommissionAppointmentDocument
+  isCommissionAppointmentDocument,
+  InstitutionalHeaderProvider,
 } from '@temin360/document-templates'
 import {
-  InstitutionalHeaderProvider,
-  sanitizeBirimAntetSatiri,
   resolveRoute,
   extractDocumentRouteValues,
   applyResolvedRouteToDocumentData
@@ -49,9 +48,6 @@ import { kurumService } from '../../../../../services/kurumService'
  * kalma "Kurum > Birim" hiyerarşisini ve kurum adını ayıklar.
  */
 function cleanBirimAntet(text?: string | null, kurumAdi?: string | null): string {
-  if (typeof sanitizeBirimAntetSatiri === 'function') {
-    return sanitizeBirimAntetSatiri(text, kurumAdi)
-  }
   if (
     typeof InstitutionalHeaderProvider !== 'undefined' &&
     typeof InstitutionalHeaderProvider?.sanitizeBirimAntetSatiri === 'function'

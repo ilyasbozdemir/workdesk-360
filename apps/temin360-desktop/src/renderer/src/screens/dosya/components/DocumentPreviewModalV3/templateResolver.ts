@@ -122,10 +122,6 @@ export function resolveTemplateConfig(documentId: string | null | undefined): {
     heuristicKey = 'muayene_kabul_komisyonu'
   } else if (cleanKey.includes('odeme') && cleanKey.includes('yazi')) {
     heuristicKey = 'odeme_yazisi'
-  } else if (cleanKey.includes('tasinir') && cleanKey.includes('gorus')) {
-    heuristicKey = 'tasinir_kayit_yetkilisi_gorusu'
-  } else if (cleanKey.includes('sartname') || cleanKey.includes('teknik')) {
-    heuristicKey = 'teknik_sartname'
   } else if (cleanKey.includes('talep')) {
     heuristicKey = 'ihtiyac_talep_formu'
   }

@@ -12,6 +12,7 @@ export * from "./document/TemplateEditContext";
 export * from "./document/TableRowSplitDivider";
 export * from "./document/sayiyiYaziyaCevir";
 export * from "./utils";
+export * from "./header";
 
 // Document Templates (Components & Schemas)
 export * from "./templates/arastirma-mektubu/ArastirmaMektubu.schema";

@@ -1,11 +1,11 @@
 import React from "react";
 import { renderToString } from "react-dom/server";
 import { InvalidTemplateKeyError, TemplateRegistry } from "./TemplateRegistry";
-import { InstitutionalHeaderProvider } from "./providers/InstitutionalHeaderProvider";
 import {
   CompileHtmlParams,
   DeleteDocumentParams,
   DocumentDefinition,
+  DocumentHeaderProvider,
   DocumentRecord,
   DocumentStorageAdapter,
   InstitutionalHeaderData,
@@ -39,7 +39,7 @@ export type DocumentSavedListener = (record: {
  * - Verilen templateKey üzerinden TemplateRegistry'deki doğru belge tanımını bulur.
  * - Belgenin resolver ve renderer'ını koordine eder.
  * - Sektör bağımsız orkestrasyon motorudur; depolama adaptörü, header sağlayıcı ve çözümleyiciler dışarıdan enjekte edilir.
- * - Geçiş sürecinde dahili InstitutionalHeaderProvider ve Electron fallback'i mevcuttur; harici enjeksiyon (setHeaderResolver, setQueryExecutor) önceliklidir.
+ * - Başlık sağlayıcı ve depolama adaptörü enjeksiyon (setHeaderResolver, setQueryExecutor) ile dışarıdan verilir.
  * - UI bağımlılığı yoktur; FlowDesk veya diğer modüller tarafından doğrudan tüketilebilir.
  */
 export class DocumentEngine {
@@ -162,6 +162,13 @@ export class DocumentEngine {
   }
 
   /**
+   * Genel belge başlık sağlayıcı nesnesini tanımlar (IoC)
+   */
+  static setHeaderProvider(provider: DocumentHeaderProvider): void {
+    this.headerResolver = (dosyaId, qe) => provider.resolve(dosyaId, qe);
+  }
+
+  /**
    * Belge kaydedildiğinde bildirim dinleyicisi ekler
    */
   static onDocumentSaved(listener: DocumentSavedListener): () => void {
@@ -223,7 +230,9 @@ export class DocumentEngine {
     if (this.headerResolver) {
       return this.headerResolver(dosyaId, this.queryExecutor);
     }
-    return InstitutionalHeaderProvider.resolve(dosyaId, this.queryExecutor);
+    throw new Error(
+      `[DocumentEngine] headerResolver yapılandırılmamış. Lütfen 'configureTeminEngine()' veya 'DocumentEngine.setHeaderResolver()' çağrınız.`,
+    );
   }
 
   /**
@@ -231,7 +240,7 @@ export class DocumentEngine {
    */
   /**
    * @purpose Şablonun resolver'ı üzerinden taze veri çözümlemesi yapar ve antet ile birleştirir.
-   * @source TemplateRegistry, DefaultDocumentResolver, InstitutionalHeaderProvider
+   * @source TemplateRegistry, DefaultDocumentResolver, headerResolver (IoC)
    * @scope dosyaId, templateKey
    * @usedBy DocumentEngine.loadOrCreateDocument, DocumentEngine.compileHtml
    * @see packages/document-templates/src/engine/resolvers/DefaultDocumentResolver.ts
@@ -279,7 +288,7 @@ export class DocumentEngine {
 
   /**
    * @purpose Tekil ve standart belge hazırlama giriş noktası (Unified Document Preparation Flow).
-   * @source DATA_TeminBelgeSnapshot, InstitutionalHeaderProvider, DefaultDocumentResolver
+   * @source DATA_TeminBelgeSnapshot, headerResolver (IoC), DefaultDocumentResolver
    * @scope dosyaId, templateId
    * @usedBy Desktop DocumentPreviewModalV3, PDF Derleyici, Dışa Aktarım Servisleri
    * @see packages/document-engine/src/DocumentEngine.ts:loadOrCreateDocument

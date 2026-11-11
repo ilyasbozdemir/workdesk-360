@@ -1,4 +1,4 @@
-import { InstitutionalHeaderData } from '../types/contracts'
+import { InstitutionalHeaderData } from '@worksuite-360/document-engine'
 import {
   HeaderDefinition,
   HeaderLineDefinition,

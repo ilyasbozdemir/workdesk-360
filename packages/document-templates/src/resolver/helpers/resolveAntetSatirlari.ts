@@ -1,4 +1,4 @@
-import { InstitutionalHeaderProvider } from '@worksuite-360/document-engine';
+import { InstitutionalHeaderProvider } from '../../header';
 
 /**
  * Resolves institution header lines by combining TANIM_Kurum.kurum_anteti and DATA_TeminDosyasi.antet_ek_satir

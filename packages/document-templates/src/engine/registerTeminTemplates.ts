@@ -1,9 +1,9 @@
 import React from "react";
 import {
   DocumentEngine,
-  InstitutionalHeaderProvider,
   TemplateRegistry,
 } from "@worksuite-360/document-engine";
+import { InstitutionalHeaderProvider } from "../header";
 import { resolveTemplateKey, TemplateKey, templateRegistry } from "../registry";
 import { DocumentValidationService } from "../services/documentValidationService";
 import { resolveEvrakSayisi } from "../resolver/helpers/resolveEvrakSayisi";

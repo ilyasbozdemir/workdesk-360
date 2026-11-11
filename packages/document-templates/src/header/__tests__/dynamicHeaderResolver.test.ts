@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InstitutionalHeaderProvider } from "../providers/InstitutionalHeaderProvider";
+import { InstitutionalHeaderProvider } from "../InstitutionalHeaderProvider";
 import {
   DEFAULT_OFFICIAL_HEADER,
   HeaderDefinition,

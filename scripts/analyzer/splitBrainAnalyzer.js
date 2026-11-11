@@ -18,7 +18,7 @@ export function analyzeSplitBrainResolvers(files) {
     rendererDataLoader: 'apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewDataLoader.ts',
     rendererAntetResolver: 'packages/document-templates/src/previewData/resolveAntetAndBirim.ts',
     rendererPersonnelResolver: 'packages/document-templates/src/previewData/resolvePersonnelAndCommissions.ts',
-    headerProvider: 'packages/document-engine/src/providers/InstitutionalHeaderProvider.ts',
+    headerProvider: 'packages/document-templates/src/header/InstitutionalHeaderProvider.ts',
     templateResolver: 'packages/document-templates/src/resolver/TemplateResolver.ts'
   }
 
