@@ -696,10 +696,16 @@ export class InstitutionalHeaderProvider
     const execQuery =
       (typeof contextOrDosyaId === 'object' && contextOrDosyaId?.queryExecutor)
         ? contextOrDosyaId.queryExecutor
-        : queryExecutor!
+        : queryExecutor
 
     if (this.cache.has(dosyaId)) {
       return this.cache.get(dosyaId)!
+    }
+
+    if (!execQuery) {
+      throw new Error(
+        `[InstitutionalHeaderProvider] Sorgu yürütücüsü (queryExecutor) bulunamadı. Lütfen context.queryExecutor veya queryExecutor parametresi sağlayınız.`
+      )
     }
 
     const settings = this.settingsGetter ? this.settingsGetter() : {}

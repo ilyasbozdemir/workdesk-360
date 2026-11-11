@@ -1,4 +1,4 @@
-import { DocumentDefinition } from './types/contracts'
+import { DocumentDefinition, InstitutionalHeaderData } from './types/contracts'
 
 /**
  * Mükerrer Şablon Kayıt Hatası
@@ -124,7 +124,9 @@ export class TemplateRegistry {
    * @usedBy DocumentEngine.resolveDocumentData, DocumentEngine.compileHtml, DocumentRenderer
    * @see packages/document-engine/src/DocumentEngine.ts
    */
-  get<TData = any>(templateKey: string): DocumentDefinition<TData> {
+  get<TData = any, THeader = InstitutionalHeaderData>(
+    templateKey: string
+  ): DocumentDefinition<TData, THeader> {
     if (!templateKey || typeof templateKey !== 'string' || templateKey.trim() === '') {
       throw new InvalidTemplateKeyError(String(templateKey))
     }
@@ -139,7 +141,7 @@ export class TemplateRegistry {
       throw new InvalidTemplateKeyError(templateKey)
     }
 
-    return found as DocumentDefinition<TData>
+    return found as DocumentDefinition<TData, THeader>
   }
 
   /**
@@ -223,8 +225,10 @@ export class TemplateRegistry {
   /**
    * Varsayılan kayıt defterinden şablon çeker.
    */
-  static get<TData = any>(templateKey: string): DocumentDefinition<TData> {
-    return this.defaultInstance.get(templateKey)
+  static get<TData = any, THeader = InstitutionalHeaderData>(
+    templateKey: string
+  ): DocumentDefinition<TData, THeader> {
+    return this.defaultInstance.get<TData, THeader>(templateKey)
   }
 
   /**

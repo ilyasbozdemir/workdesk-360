@@ -1,5 +1,6 @@
 import {
   DocumentDataResolver,
+  DocumentEngine,
   DocumentResolutionContext,
 } from "@worksuite-360/document-engine";
 import { TemplateResolver } from "../../resolver/TemplateResolver";
@@ -28,7 +29,8 @@ export class DefaultDocumentResolver
   async resolve(
     context: DocumentResolutionContext,
   ): Promise<Record<string, unknown>> {
-    const { dosyaId, templateKey, headerData, queryExecutor } = context;
+    const { dosyaId, templateKey, headerData } = context;
+    const queryExecutor = context.queryExecutor || DocumentEngine.queryExecutor;
 
     const mapping = DefaultDocumentResolver.mappingProvider
       ? DefaultDocumentResolver.mappingProvider(templateKey)

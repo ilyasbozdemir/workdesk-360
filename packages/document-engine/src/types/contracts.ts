@@ -95,13 +95,10 @@ export interface DocumentHeaderContext {
 }
 
 /**
- * Genel Belge Üst Veri / Antet Sağlayıcı Sözleşmesi (Domain-Bağımsız)
+ * Genel Belge Üst Veri / Antet Sağlayıcı Sözleşmesi (Domain ve SQL Bağımsız)
  */
 export interface DocumentHeaderProvider<THeader = unknown> {
-  resolve(
-    contextOrDosyaId: DocumentHeaderContext | number,
-    queryExecutor?: (sql: string, params: any[]) => Promise<any[]>,
-  ): Promise<THeader>;
+  resolve(context: DocumentHeaderContext): Promise<THeader>;
   clearCache?(): void;
 }
 
@@ -131,11 +128,11 @@ export interface InstitutionalHeaderData {
 /**
  * Belge Çözümleme Bağlamı (Resolution Context)
  */
-export interface DocumentResolutionContext {
+export interface DocumentResolutionContext<THeader = InstitutionalHeaderData> {
   dosyaId: number;
   templateKey: string;
-  headerData: InstitutionalHeaderData;
-  queryExecutor: (sql: string, params: any[]) => Promise<any[]>;
+  headerData: THeader;
+  queryExecutor?: (sql: string, params: any[]) => Promise<any[]>;
   invitedFirms?: unknown[];
   [key: string]: unknown;
 }
@@ -143,8 +140,11 @@ export interface DocumentResolutionContext {
 /**
  * Belgeye Özel Veri Çözücü Sözleşmesi (Document Resolver Interface)
  */
-export interface DocumentDataResolver<TData = Record<string, unknown>> {
-  resolve(context: DocumentResolutionContext): Promise<TData>;
+export interface DocumentDataResolver<
+  TData = Record<string, unknown>,
+  THeader = InstitutionalHeaderData,
+> {
+  resolve(context: DocumentResolutionContext<THeader>): Promise<TData>;
 }
 
 /**
@@ -171,7 +171,10 @@ export interface DocumentRendererComponentProps<
 /**
  * Belge Tanım Sözleşmesi (Document Definition in Template Registry)
  */
-export interface DocumentDefinition<TData = Record<string, unknown>> {
+export interface DocumentDefinition<
+  TData = Record<string, unknown>,
+  THeader = InstitutionalHeaderData,
+> {
   templateKey: string;
   name: string;
   title: string;
@@ -179,7 +182,7 @@ export interface DocumentDefinition<TData = Record<string, unknown>> {
   categoryLabel: string;
   description?: string;
   orientation: "portrait" | "landscape";
-  resolver?: DocumentDataResolver<TData>;
+  resolver?: DocumentDataResolver<TData, THeader>;
   renderer: React.ComponentType<DocumentRendererComponentProps<TData>>;
   validate?: (data: TData) => ValidationReport;
   requiredProviders?: Array<
@@ -191,7 +194,10 @@ export interface DocumentDefinition<TData = Record<string, unknown>> {
 /**
  * Disk / Veritabanı Belge Kaydı Sözleşmesi
  */
-export interface DocumentRecord<T = Record<string, unknown>> {
+export interface DocumentRecord<
+  T = Record<string, unknown>,
+  THeader = InstitutionalHeaderData,
+> {
   id?: number;
   dosyaId: number;
   templateKey: string;
@@ -200,7 +206,7 @@ export interface DocumentRecord<T = Record<string, unknown>> {
   createdAt?: string;
   updatedAt?: string;
   isExisting: boolean;
-  headerData?: InstitutionalHeaderData;
+  headerData?: THeader;
   personelListesi?: unknown[];
   firmaListesi?: unknown[];
   birimListesi?: unknown[];

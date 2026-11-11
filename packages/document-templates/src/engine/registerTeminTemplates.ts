@@ -32,13 +32,16 @@ export interface ConfigureTeminEngineOptions {
  * - Kurumsal Antet sağlayıcısını bağlar (InstitutionalHeaderProvider)
  * - Tüm şablon tanımlarını kayıt defterine yükler
  */
-export function configureTeminEngine(opts: ConfigureTeminEngineOptions = {}): void {
+export function configureTeminEngine(
+  opts: ConfigureTeminEngineOptions = {},
+): void {
   // 1. Kurumsal antet sağlayıcısına DETSİS evrak sayısı üreticiyi bağla
   InstitutionalHeaderProvider.setEvrakSayisiResolver(resolveEvrakSayisi);
 
   // 2. Document Engine'e Zod şema validatörünü bağla
   DocumentEngine.setValidator((templateKey, data) => {
-    const canonicalKey = (resolveTemplateKey(templateKey) as string) || templateKey;
+    const canonicalKey = (resolveTemplateKey(templateKey) as string) ||
+      templateKey;
     const report = DocumentValidationService.validate(canonicalKey, data);
     return {
       isValid: !report.hasErrors,

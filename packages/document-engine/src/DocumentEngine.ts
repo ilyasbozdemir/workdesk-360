@@ -8,6 +8,7 @@ import {
   DocumentHeaderContext,
   DocumentHeaderProvider,
   DocumentRecord,
+  DocumentResolveContext,
   DocumentStorageAdapter,
   InstitutionalHeaderData,
   LoadOrCreateDocumentParams,
@@ -19,7 +20,7 @@ import {
 } from "./types/contracts";
 import { smartMergeDocumentData } from "./mergers/smartMerge";
 
-export type HeaderResolverFn<THeader = InstitutionalHeaderData> = (
+export type HeaderResolverFn<THeader = unknown> = (
   contextOrDosyaId: DocumentHeaderContext | number,
   queryExecutor?: (sql: string, params: any[]) => Promise<any[]>,
 ) => Promise<THeader>;
@@ -106,7 +107,7 @@ export class DocumentEngine {
   /**
    * Kurumsal başlık / antet çözümleyicisini tanımlar
    */
-  static setHeaderResolver<THeader = InstitutionalHeaderData>(
+  static setHeaderResolver<THeader = unknown>(
     resolver: HeaderResolverFn<THeader>,
   ): void {
     this.headerResolver = resolver;
@@ -115,11 +116,16 @@ export class DocumentEngine {
   /**
    * Genel belge başlık sağlayıcı nesnesini tanımlar (IoC)
    */
-  static setHeaderProvider<THeader = InstitutionalHeaderData>(
+  static setHeaderProvider<THeader = unknown>(
     provider: DocumentHeaderProvider<THeader>,
   ): void {
     this.headerProvider = provider;
-    this.headerResolver = (ctxOrId, qe) => provider.resolve(ctxOrId, qe);
+    this.headerResolver = (ctxOrId) => {
+      const ctx: DocumentHeaderContext = typeof ctxOrId === "number"
+        ? { dosyaId: ctxOrId, queryExecutor: this.queryExecutor }
+        : { queryExecutor: this.queryExecutor, ...ctxOrId };
+      return provider.resolve(ctx);
+    };
   }
 
   /**
@@ -143,7 +149,7 @@ export class DocumentEngine {
       return DocumentEngine.storageAdapter.executeQuery(sql, params);
     }
     throw new Error(
-      "[DocumentEngine] queryExecutor yapılandırılmamış. Lütfen 'DocumentEngine.setQueryExecutor()' veya 'DocumentEngine.setStorageAdapter()' ile bir sorgu yürütücü sağlayınız."
+      "[DocumentEngine] queryExecutor yapılandırılmamış. Lütfen 'DocumentEngine.setQueryExecutor()' veya 'DocumentEngine.setStorageAdapter()' ile bir sorgu yürütücü sağlayınız.",
     );
   };
 
@@ -164,26 +170,23 @@ export class DocumentEngine {
   }
 
   /**
-   * Belgeye ait kurumsal üst veriyi çözer
+   * Belgeye ait kurumsal üst veriyi çözer (Generic THeader)
    */
-  private static async resolveHeaderData(
+  static async resolveHeaderData<THeader = InstitutionalHeaderData>(
     contextOrDosyaId: DocumentHeaderContext | number,
-  ): Promise<InstitutionalHeaderData> {
+  ): Promise<THeader> {
+    const ctx: DocumentHeaderContext = typeof contextOrDosyaId === "number"
+      ? { dosyaId: contextOrDosyaId, queryExecutor: this.queryExecutor }
+      : { queryExecutor: this.queryExecutor, ...contextOrDosyaId };
+
     if (this.headerProvider) {
-      const ctx: DocumentHeaderContext =
-        typeof contextOrDosyaId === "number"
-          ? { dosyaId: contextOrDosyaId, queryExecutor: this.queryExecutor }
-          : { queryExecutor: this.queryExecutor, ...contextOrDosyaId };
-      return (await this.headerProvider.resolve(
-        ctx,
-        this.queryExecutor,
-      )) as InstitutionalHeaderData;
+      return (await this.headerProvider.resolve(ctx)) as THeader;
     }
     if (this.headerResolver) {
-      return this.headerResolver(contextOrDosyaId, this.queryExecutor);
+      return (await this.headerResolver(ctx, this.queryExecutor)) as THeader;
     }
     throw new Error(
-      `[DocumentEngine] headerResolver yapılandırılmamış. Lütfen 'configureTeminEngine()' veya 'DocumentEngine.setHeaderProvider()' çağrınız.`,
+      `[DocumentEngine] headerResolver veya headerProvider yapılandırılmamış. Lütfen 'configureTeminEngine()' veya 'DocumentEngine.setHeaderProvider()' çağrınız.`,
     );
   }
 
@@ -200,22 +203,35 @@ export class DocumentEngine {
    * Veri çözümleme Document Engine tarafından yürütülür.
    * Bu fonksiyon ikinci bir SQL çözümleme zinciri oluşturmamalıdır.
    */
-  static async resolveDocumentData<T = Record<string, unknown>>(params: {
+  static async resolveDocumentData<
+    T = Record<string, unknown>,
+    THeader = InstitutionalHeaderData,
+  >(params: {
     dosyaId: number;
+    documentId?: string | number;
     templateKey: string;
     invitedFirms?: unknown[];
+    context?: DocumentResolveContext;
   }): Promise<
     {
       data: T;
-      headerData: InstitutionalHeaderData;
-      definition: DocumentDefinition<T>;
+      headerData: THeader;
+      definition: DocumentDefinition<T, THeader>;
     }
   > {
-    const { dosyaId, templateKey, invitedFirms } = params;
+    const { dosyaId, documentId, templateKey, invitedFirms, context } = params;
     const canonicalKey = this.resolveKey(templateKey);
 
-    const definition = TemplateRegistry.get<T>(canonicalKey);
-    const headerData = await this.resolveHeaderData(dosyaId);
+    const definition = TemplateRegistry.get<T, THeader>(canonicalKey);
+    const headerContext: DocumentHeaderContext = {
+      dosyaId,
+      documentId: documentId ?? dosyaId,
+      templateKey: canonicalKey,
+      queryExecutor: this.queryExecutor,
+      invitedFirms,
+      ...(context && typeof context === "object" ? context : {}),
+    };
+    const headerData = await this.resolveHeaderData<THeader>(headerContext);
 
     if (!definition.resolver) {
       throw new Error(
@@ -229,6 +245,7 @@ export class DocumentEngine {
       headerData,
       queryExecutor: this.queryExecutor,
       invitedFirms,
+      ...headerContext,
     });
 
     return {
@@ -248,9 +265,12 @@ export class DocumentEngine {
    * Veri çözümleme Document Engine tarafından yürütülür.
    * Bu fonksiyon ikinci bir SQL çözümleme zinciri oluşturmamalıdır.
    */
-  static async prepare<T = Record<string, unknown>>(
+  static async prepare<
+    T = Record<string, unknown>,
+    THeader = InstitutionalHeaderData,
+  >(
     params: PrepareDocumentParams,
-  ): Promise<DocumentRecord<T>> {
+  ): Promise<DocumentRecord<T, THeader>> {
     const {
       templateId,
       documentId,
@@ -261,8 +281,9 @@ export class DocumentEngine {
     const dosyaId = typeof documentId === "number"
       ? documentId
       : Number(documentId) || 0;
-    return await this.loadOrCreateDocument<T>({
+    return await this.loadOrCreateDocument<T, THeader>({
       dosyaId,
+      documentId,
       templateKey: templateId,
       context,
       forceDefault,
@@ -280,18 +301,29 @@ export class DocumentEngine {
    * Veri çözümleme Document Engine tarafından yürütülür.
    * Kullanıcının manuel düzenlemelerini korur (smartMerge), eksik kalemleri otomatik tamamlar.
    */
-  static async loadOrCreateDocument<T = Record<string, unknown>>(
-    params: LoadOrCreateDocumentParams,
-  ): Promise<DocumentRecord<T>> {
+  static async loadOrCreateDocument<
+    T = Record<string, unknown>,
+    THeader = InstitutionalHeaderData,
+  >(
+    params: LoadOrCreateDocumentParams & { documentId?: string | number },
+  ): Promise<DocumentRecord<T, THeader>> {
     const {
       dosyaId,
+      documentId,
       templateKey,
       context,
       forceDefault = false,
       persistIfMissing = false,
     } = params;
     const canonicalKey = this.resolveKey(templateKey);
-    const headerData = await this.resolveHeaderData(dosyaId);
+    const headerContext: DocumentHeaderContext = {
+      dosyaId,
+      documentId: documentId ?? dosyaId,
+      templateKey: canonicalKey,
+      queryExecutor: this.queryExecutor,
+      ...(context && typeof context === "object" ? context : {}),
+    };
+    const headerData = await this.resolveHeaderData<THeader>(headerContext);
     const adapter = this.getEffectiveStorageAdapter();
 
     // 1. Mevcut kayıtlı snapshot kontrolü
@@ -469,9 +501,12 @@ export class DocumentEngine {
   /**
    * Kullanıcı açıkça talep ettiğinde belgeyi varsayılan durumuna sıfırlar.
    */
-  static async resetToDefault<T = Record<string, unknown>>(
+  static async resetToDefault<
+    T = Record<string, unknown>,
+    THeader = InstitutionalHeaderData,
+  >(
     params: ResetDocumentParams,
-  ): Promise<DocumentRecord<T>> {
+  ): Promise<DocumentRecord<T, THeader>> {
     const { dosyaId, templateKey, context } = params;
     const canonicalKey = this.resolveKey(templateKey);
     const adapter = this.getEffectiveStorageAdapter();
@@ -489,7 +524,7 @@ export class DocumentEngine {
       throw new Error(res?.error || "Belge sıfırlanırken hata oluştu.");
     }
 
-    return await this.loadOrCreateDocument<T>({
+    return await this.loadOrCreateDocument<T, THeader>({
       dosyaId,
       templateKey: canonicalKey,
       context,
@@ -502,17 +537,24 @@ export class DocumentEngine {
    * - Resolver'dan taze veriyi çeker.
    * - Kaydedilmiş mevcut snapshot ile akıllıca birleştirir (kullanıcı notları korunur, yeni kalemler eklenir).
    */
-  static async syncWithSource<T = Record<string, unknown>>(
+  static async syncWithSource<
+    T = Record<string, unknown>,
+    THeader = InstitutionalHeaderData,
+  >(
     params: SyncDocumentParams<T>,
-  ): Promise<DocumentRecord<T>> {
+  ): Promise<DocumentRecord<T, THeader>> {
     const { dosyaId, templateKey, existingData, context } = params;
     const canonicalKey = this.resolveKey(templateKey);
 
     // Resolver'dan en taze kaynak veriyi çek
-    const { data: freshData, headerData } = await this.resolveDocumentData<T>({
+    const { data: freshData, headerData } = await this.resolveDocumentData<
+      T,
+      THeader
+    >({
       dosyaId,
       templateKey: canonicalKey,
       invitedFirms: context?.invitedFirms as unknown[],
+      context,
     });
 
     // Akıllı birleştirici ile snapshot + kaynak veriyi harmanla
