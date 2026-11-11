@@ -44,14 +44,15 @@
 
 ### Faz 2: Belge Motoru (Document Engine) Bağımsızlaştırma, Eşdeğerlik ve Veri Akışı [Öncelik: P0 - P1]
 
-- [ ] **2.1. Document Engine Bağımsızlaştırma & Tersine Bağımlılık (Inversion of Control) [P0]:**
-  - **Sorun:** `@worksuite-360/document-engine` paketi, doğrudan `@temin360/document-templates` paketine bağımlıdır. Engine'in `TemplateRegistry.ts` dosyası `IhtiyacListesiResolver` ve `LuzumMuzekkeresiResolver` gibi Temin 360'a özgü şablonları doğrudan import etmektedir. Bu durum Engine'in diğer uygulamalarda (İhale 360, Hakediş 360) genel amaçlı bir motor olarak kullanılmasını engellemektedir.
-  - **Yapılacak:** 
-    1. `packages/document-engine/package.json` içinden `@temin360/document-templates` bağımlılığı kaldırılacak.
-    2. Engine yalnızca jenerik sözleşmeleri (`DocumentDefinition<T>`, `DocumentResolver<T>`, `TemplateRegistry`, `SnapshotRepository`) barındıracak.
-    3. Şablonlar (`@temin360/document-templates`), Engine sözleşmelerini uygulayacak ve `registerTeminTemplates(registry)` fonksiyonu ile uygulama ayağa kalkarken (IoC) dışarıdan enjekte edilecek.
-  - **Kısıtlar:** Mevcut belge kodları, SQLite şeması ve çalışan Mustache çıktısı bozulmayacak.
-  - **Etkilenen Dosyalar:** `packages/document-engine/`, `packages/document-templates/`, `apps/temin360-desktop/`
+- [x] **2.1. Document Engine Bağımsızlaştırma & Tersine Bağımlılık (Inversion of Control) [P0] (TAMAMLANDI):**
+  - **Uygulanan Mimari:**
+    1. `packages/document-engine` paketinde `@temin360/document-templates` bağımlılığı tamamen kaldırıldı ve ters importlar ESLint sınır kuralları (`no-restricted-imports`) ile kilitlendi.
+    2. `InstitutionalHeaderProvider` (890 satır SQL, DETSİS ve kurum anteti mantığı) Engine'den `document-templates/src/header/` paketine taşındı.
+    3. `DocumentHeaderProvider<THeader>` ve `DocumentHeaderContext` arayüzleri generic ve SQL'den bağımsız hale getirildi; context bilgisi Engine boyunca uçtan uca taşındı.
+    4. Engine içindeki tüm `window.electron.ipcRenderer`, `db:query` ve `belge:*` fallback'leri silinerek motor ortam-bağımsız kılındı.
+    5. Masaüstü için `electronDocumentStorageAdapter.ts` geliştirilerek `DocumentEngine.setStorageAdapter()` ve `DocumentEngine.setQueryExecutor()` üzerinden IoC ile dışarıdan enjekte edildi.
+    6. `configureTeminEngine()` ile şablon kaydı, kurumsal antet ve Zod doğrulayıcı tek noktadan yapılandırıldı.
+    7. Tüm paketlerde (engine, templates, desktop) typecheck 0 hata ile geçti; 26 masaüstü entegrasyon testi ve 25 şablon testi doğrulandı.
 
 - [ ] **2.2. Tek Otorite Belge Veri Akışı (Split-Brain Resolver Tekilleştirmesi) [P0]:**
   - **Sorun:** Main process'teki `documentContextResolver.ts` veri setini hazırladıktan sonra, Renderer process'teki `previewDataLoader.ts` ve `sourceResolvers.ts` aynı personel, birim ve firma listelerini `db:query` ile bağımsız olarak ikinci kez çekiyor. İki taraftaki filtre farkları (ör. `aktif_mi`) eksik veri ve tutarsızlık sorunlarına yol açıyor. Eşdeğerlik testlerinden önce tek otorite veri kaynağı sağlanmalıdır.
