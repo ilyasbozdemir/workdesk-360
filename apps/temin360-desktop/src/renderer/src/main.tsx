@@ -7,18 +7,12 @@ import { useGlobalDocumentPreviewStore } from './store/globalDocumentPreviewStor
 import { useTabStore } from './store/tabStore'
 import { configureTeminEngine } from '@temin360/document-templates'
 import { DocumentEngine } from '@worksuite-360/document-engine'
+import { createElectronStorageAdapter } from './services/electronDocumentStorageAdapter'
 
-// 1. Desktop SQLite veritabanı sorgulayıcısını DocumentEngine'e enjekte et
-DocumentEngine.setQueryExecutor(async (sql: string, params: any[]) => {
-  if (typeof window !== 'undefined' && (window as any).electron?.ipcRenderer) {
-    const res = await (window as any).electron.ipcRenderer.invoke('db:query', sql, params)
-    if (res && res.success === false) {
-      throw new Error(res.error || 'Sorgu başarısız')
-    }
-    return (res && res.data) ? res.data : (Array.isArray(res) ? res : [])
-  }
-  return []
-})
+// 1. Desktop SQLite veritabanı sorgulayıcısını ve depolama adaptörünü DocumentEngine'e enjekte et (IoC)
+const electronStorage = createElectronStorageAdapter()
+DocumentEngine.setStorageAdapter(electronStorage)
+DocumentEngine.setQueryExecutor(electronStorage.executeQuery!)
 
 // 2. Document Engine'i (validatör, header resolver, şablonlar) tek elden yapılandır
 configureTeminEngine()

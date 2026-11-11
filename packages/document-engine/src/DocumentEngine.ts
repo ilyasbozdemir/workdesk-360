@@ -89,60 +89,7 @@ export class DocumentEngine {
   }
 
   private static getEffectiveStorageAdapter(): DocumentStorageAdapter | null {
-    if (this.storageAdapter) {
-      return this.storageAdapter;
-    }
-    if (
-      typeof window !== "undefined" && (window as any).electron?.ipcRenderer
-    ) {
-      const ipc = (window as any).electron.ipcRenderer;
-      return {
-        async getDocument({ dosyaId, templateKey }) {
-          const res = await ipc.invoke("belge:get-document", {
-            dosyaId,
-            templateKey,
-          });
-          if (res?.success && res.exists && res.record) {
-            return {
-              success: true,
-              exists: true,
-              record: {
-                id: res.record.id,
-                data: res.record.data,
-                sablonVersiyon: res.record.sablonVersiyon,
-                createdAt: res.record.createdAt,
-                updatedAt: res.record.updatedAt,
-              },
-            };
-          }
-          if (res?.success === false) {
-            return { success: false, error: res.error || "Belge yüklenemedi" };
-          }
-          return { success: true, exists: false };
-        },
-        async saveDocument({ dosyaId, templateKey, data, sablonVersiyon }) {
-          return await ipc.invoke("belge:save-document", {
-            dosyaId,
-            templateKey,
-            data,
-            sablonVersiyon,
-          });
-        },
-        async resetDocument({ dosyaId, templateKey }) {
-          return await ipc.invoke("belge:reset-document", {
-            dosyaId,
-            templateKey,
-          });
-        },
-        async deleteDocument({ dosyaId, templateKey }) {
-          return await ipc.invoke("belge:delete-document", {
-            dosyaId,
-            templateKey,
-          });
-        },
-      };
-    }
-    return null;
+    return this.storageAdapter;
   }
 
   /**
@@ -188,21 +135,9 @@ export class DocumentEngine {
     if (DocumentEngine.storageAdapter?.executeQuery) {
       return DocumentEngine.storageAdapter.executeQuery(sql, params);
     }
-    // Global electron ipcRenderer fallback (çalışma zamanı uyumluluğu için standart imzayı kullanır)
-    if (
-      typeof window !== "undefined" && (window as any).electron?.ipcRenderer
-    ) {
-      const res = await (window as any).electron.ipcRenderer.invoke(
-        "db:query",
-        sql,
-        params,
-      );
-      if (!res?.success) {
-        throw new Error(res?.error || "Veritabanı sorgusu başarısız");
-      }
-      return res.data || [];
-    }
-    return [];
+    throw new Error(
+      "[DocumentEngine] queryExecutor yapılandırılmamış. Lütfen 'DocumentEngine.setQueryExecutor()' veya 'DocumentEngine.setStorageAdapter()' ile bir sorgu yürütücü sağlayınız."
+    );
   };
 
   /**
