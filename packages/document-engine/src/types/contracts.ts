@@ -84,12 +84,23 @@ export interface CommonDocumentFields {
 }
 
 /**
+ * Belge Başlık / Antet Çözümleme Bağlamı (Domain-Bağımsız)
+ */
+export interface DocumentHeaderContext {
+  dosyaId?: number;
+  documentId?: string | number;
+  templateKey?: string;
+  queryExecutor?: (sql: string, params: any[]) => Promise<any[]>;
+  [key: string]: unknown;
+}
+
+/**
  * Genel Belge Üst Veri / Antet Sağlayıcı Sözleşmesi (Domain-Bağımsız)
  */
-export interface DocumentHeaderProvider<THeader = InstitutionalHeaderData> {
+export interface DocumentHeaderProvider<THeader = unknown> {
   resolve(
-    dosyaId: number,
-    queryExecutor: (sql: string, params: any[]) => Promise<any[]>,
+    contextOrDosyaId: DocumentHeaderContext | number,
+    queryExecutor?: (sql: string, params: any[]) => Promise<any[]>,
   ): Promise<THeader>;
   clearCache?(): void;
 }

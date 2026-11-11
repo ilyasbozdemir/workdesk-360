@@ -1,4 +1,8 @@
-import { InstitutionalHeaderData } from '@worksuite-360/document-engine'
+import {
+  DocumentHeaderContext,
+  DocumentHeaderProvider,
+  InstitutionalHeaderData
+} from '@worksuite-360/document-engine'
 import {
   HeaderDefinition,
   HeaderLineDefinition,
@@ -107,7 +111,8 @@ export function sanitizeBirimAntetSatiri(
  * - Sadece kurum, birim ve dosya üst verilerini çözümler.
  * - Oturum içi önbellekleme yaparak gereksiz tekrar eden sorguları önler.
  */
-export class InstitutionalHeaderProvider {
+export class InstitutionalHeaderProvider
+  implements DocumentHeaderProvider<InstitutionalHeaderData> {
   private static cache = new Map<number, InstitutionalHeaderData>()
   private static settingsGetter: (() => InstitutionalHeaderSettings) | null = null
   private static evrakSayisiResolver: EvrakSayisiResolverFn | null = null
@@ -666,17 +671,33 @@ export class InstitutionalHeaderProvider {
   /**
    * @purpose Dosyaya ait kurumsal antet, logo, birim, harcama yetkilisi ve evrak sayısını tek elden çözümler.
    * @source TANIM_Kurum, TANIM_Birim, DATA_TeminDosyasi, TANIM_Personel, settings
-   * @scope dosyaId
+   * @scope dosyaId / context
    * @usedBy DocumentEngine.resolveHeaderData, previewDataLoader
    * @see packages/document-engine/src/DocumentEngine.ts
    *
    * Veri çözümleme Document Engine tarafından yürütülür.
    * Bu fonksiyon ikinci bir SQL çözümleme zinciri oluşturmamalıdır.
    */
-  static async resolve(
-    dosyaId: number,
-    queryExecutor: (sql: string, params: any[]) => Promise<any[]>
+  async resolve(
+    contextOrDosyaId: DocumentHeaderContext | number,
+    queryExecutor?: (sql: string, params: any[]) => Promise<any[]>
   ): Promise<InstitutionalHeaderData> {
+    return InstitutionalHeaderProvider.resolve(contextOrDosyaId, queryExecutor)
+  }
+
+  static async resolve(
+    contextOrDosyaId: DocumentHeaderContext | number,
+    queryExecutor?: (sql: string, params: any[]) => Promise<any[]>
+  ): Promise<InstitutionalHeaderData> {
+    const dosyaId =
+      typeof contextOrDosyaId === 'number'
+        ? contextOrDosyaId
+        : Number(contextOrDosyaId?.dosyaId || 0)
+    const execQuery =
+      (typeof contextOrDosyaId === 'object' && contextOrDosyaId?.queryExecutor)
+        ? contextOrDosyaId.queryExecutor
+        : queryExecutor!
+
     if (this.cache.has(dosyaId)) {
       return this.cache.get(dosyaId)!
     }
@@ -686,7 +707,7 @@ export class InstitutionalHeaderProvider {
     // 1. Dosya ve Harcama Birimi Sorgusu
     let dosyaRow: any = null
     if (dosyaId) {
-      const rows = await queryExecutor(
+      const rows = await execQuery(
         `SELECT d.id, d.temin_no, d.evrak_sayisi, d.konu, d.butce_yili, d.tarih, d.sunulacak_makam, d.birim_id,
                 d.hazirlayan_personel_id, d.talep_eden_personel_id, d.onay_personel_id, d.sunan_personel_id,
                 b.birim_adi, b.antet_ek_satir, b.harcama_yetkilisi_id, b.harcama_yetkilisi_unvan
@@ -727,7 +748,7 @@ export class InstitutionalHeaderProvider {
 
     if (personelIdsToFetch.length > 0) {
       const placeholders = personelIdsToFetch.map(() => '?').join(', ')
-      const pRows = await queryExecutor(
+      const pRows = await execQuery(
         `SELECT id, ad_soyad, unvan, telefon, eposta FROM TANIM_Personel WHERE id IN (${placeholders})`,
         personelIdsToFetch
       )
@@ -772,7 +793,7 @@ export class InstitutionalHeaderProvider {
 
     // 3. Kurum Bilgisi ve Antet Satırları
     let kurumRow: any = null
-    const kurumRows = await queryExecutor(
+    const kurumRows = await execQuery(
       `SELECT * FROM TANIM_Kurum ORDER BY is_active DESC, id ASC LIMIT 1`,
       []
     )
@@ -827,13 +848,13 @@ export class InstitutionalHeaderProvider {
       detsisEvrakSayisi = currentEvrak
     } else if (dosyaId && this.evrakSayisiResolver) {
       try {
-        detsisEvrakSayisi = await this.evrakSayisiResolver(dosyaId, queryExecutor)
+        detsisEvrakSayisi = await this.evrakSayisiResolver(dosyaId, execQuery)
         // PRESERVE: Dosyada kayıtlı değilse veya eski/hatalı formattaysa bir kez üretip veritabanına kalıcı yaz!
         // Böylece dosyanın altındaki tüm belgeler (İhtiyaç Listesi, Lüzum Müzekkeresi vs.)
         // tek bir sabit sayıyı kullanır, asla birbirinden farklılaşmaz!
         if (detsisEvrakSayisi) {
           try {
-            await queryExecutor(
+            await execQuery(
               'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
               [detsisEvrakSayisi, dosyaId]
             )

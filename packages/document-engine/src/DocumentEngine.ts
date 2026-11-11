@@ -5,6 +5,7 @@ import {
   CompileHtmlParams,
   DeleteDocumentParams,
   DocumentDefinition,
+  DocumentHeaderContext,
   DocumentHeaderProvider,
   DocumentRecord,
   DocumentStorageAdapter,
@@ -18,10 +19,10 @@ import {
 } from "./types/contracts";
 import { smartMergeDocumentData } from "./mergers/smartMerge";
 
-export type HeaderResolverFn = (
-  dosyaId: number,
-  queryExecutor: (sql: string, params: any[]) => Promise<any[]>,
-) => Promise<InstitutionalHeaderData>;
+export type HeaderResolverFn<THeader = InstitutionalHeaderData> = (
+  contextOrDosyaId: DocumentHeaderContext | number,
+  queryExecutor?: (sql: string, params: any[]) => Promise<any[]>,
+) => Promise<THeader>;
 
 export type DocumentValidatorFn = (
   templateKey: string,
@@ -47,7 +48,8 @@ export class DocumentEngine {
   private static customQueryExecutor:
     | ((sql: string, params: any[]) => Promise<any[]>)
     | null = null;
-  private static headerResolver: HeaderResolverFn | null = null;
+  private static headerProvider: DocumentHeaderProvider<any> | null = null;
+  private static headerResolver: HeaderResolverFn<any> | null = null;
   private static validator: DocumentValidatorFn | null = null;
   private static savedListeners: Set<DocumentSavedListener> = new Set();
 
@@ -104,15 +106,20 @@ export class DocumentEngine {
   /**
    * Kurumsal başlık / antet çözümleyicisini tanımlar
    */
-  static setHeaderResolver(resolver: HeaderResolverFn): void {
+  static setHeaderResolver<THeader = InstitutionalHeaderData>(
+    resolver: HeaderResolverFn<THeader>,
+  ): void {
     this.headerResolver = resolver;
   }
 
   /**
    * Genel belge başlık sağlayıcı nesnesini tanımlar (IoC)
    */
-  static setHeaderProvider(provider: DocumentHeaderProvider): void {
-    this.headerResolver = (dosyaId, qe) => provider.resolve(dosyaId, qe);
+  static setHeaderProvider<THeader = InstitutionalHeaderData>(
+    provider: DocumentHeaderProvider<THeader>,
+  ): void {
+    this.headerProvider = provider;
+    this.headerResolver = (ctxOrId, qe) => provider.resolve(ctxOrId, qe);
   }
 
   /**
@@ -160,13 +167,23 @@ export class DocumentEngine {
    * Belgeye ait kurumsal üst veriyi çözer
    */
   private static async resolveHeaderData(
-    dosyaId: number,
+    contextOrDosyaId: DocumentHeaderContext | number,
   ): Promise<InstitutionalHeaderData> {
+    if (this.headerProvider) {
+      const ctx: DocumentHeaderContext =
+        typeof contextOrDosyaId === "number"
+          ? { dosyaId: contextOrDosyaId, queryExecutor: this.queryExecutor }
+          : { queryExecutor: this.queryExecutor, ...contextOrDosyaId };
+      return (await this.headerProvider.resolve(
+        ctx,
+        this.queryExecutor,
+      )) as InstitutionalHeaderData;
+    }
     if (this.headerResolver) {
-      return this.headerResolver(dosyaId, this.queryExecutor);
+      return this.headerResolver(contextOrDosyaId, this.queryExecutor);
     }
     throw new Error(
-      `[DocumentEngine] headerResolver yapılandırılmamış. Lütfen 'configureTeminEngine()' veya 'DocumentEngine.setHeaderResolver()' çağrınız.`,
+      `[DocumentEngine] headerResolver yapılandırılmamış. Lütfen 'configureTeminEngine()' veya 'DocumentEngine.setHeaderProvider()' çağrınız.`,
     );
   }
 
@@ -458,15 +475,18 @@ export class DocumentEngine {
     const { dosyaId, templateKey, context } = params;
     const canonicalKey = this.resolveKey(templateKey);
     const adapter = this.getEffectiveStorageAdapter();
+    if (!adapter) {
+      throw new Error(
+        "Depolama adaptörü tanımlanmamış, belge sıfırlanamadı.",
+      );
+    }
 
-    if (adapter) {
-      const res = await adapter.resetDocument({
-        dosyaId,
-        templateKey: canonicalKey,
-      });
-      if (!res?.success) {
-        throw new Error(res?.error || "Belge sıfırlanırken hata oluştu.");
-      }
+    const res = await adapter.resetDocument({
+      dosyaId,
+      templateKey: canonicalKey,
+    });
+    if (!res?.success) {
+      throw new Error(res?.error || "Belge sıfırlanırken hata oluştu.");
     }
 
     return await this.loadOrCreateDocument<T>({
@@ -524,18 +544,20 @@ export class DocumentEngine {
     const { dosyaId, templateKey } = params;
     const canonicalKey = this.resolveKey(templateKey);
     const adapter = this.getEffectiveStorageAdapter();
-
-    if (adapter) {
-      const res = await adapter.deleteDocument({
-        dosyaId,
-        templateKey: canonicalKey,
-      });
-      if (!res?.success) {
-        throw new Error(res?.error || "Belge silinirken hata oluştu.");
-      }
-      return Boolean(res?.success);
+    if (!adapter) {
+      throw new Error(
+        "Depolama adaptörü tanımlanmamış, belge silinemedi.",
+      );
     }
-    return true;
+
+    const res = await adapter.deleteDocument({
+      dosyaId,
+      templateKey: canonicalKey,
+    });
+    if (!res?.success) {
+      throw new Error(res?.error || "Belge silinirken hata oluştu.");
+    }
+    return Boolean(res?.success);
   }
 
   /**

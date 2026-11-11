@@ -54,10 +54,8 @@ export function configureTeminEngine(opts: ConfigureTeminEngineOptions = {}): vo
     };
   });
 
-  // 3. Document Engine'e kurumsal antet çözücüsünü bağla
-  DocumentEngine.setHeaderResolver((dosyaId, queryExecutor) => {
-    return InstitutionalHeaderProvider.resolve(dosyaId, queryExecutor);
-  });
+  // 3. Document Engine'e kurumsal antet sağlayıcısını bağla (IoC)
+  DocumentEngine.setHeaderProvider(new InstitutionalHeaderProvider());
 
   // 4. Şablonları kayıt defterine enjekte et
   registerTeminTemplates(opts.registry);
@@ -66,29 +64,7 @@ export function configureTeminEngine(opts: ConfigureTeminEngineOptions = {}): vo
 export function registerTeminTemplates(
   registry: TemplateRegistry = TemplateRegistry.default,
 ): void {
-  // 1. Kurumsal antet sağlayıcısına DETSİS evrak sayısı üreticiyi bağla
-  InstitutionalHeaderProvider.setEvrakSayisiResolver(resolveEvrakSayisi);
-
-  // 2. Document Engine'e Zod şema validatörünü bağla
-  DocumentEngine.setValidator((templateKey, data) => {
-    const canonicalKey = (resolveTemplateKey(templateKey) as string) ||
-      templateKey;
-    const report = DocumentValidationService.validate(canonicalKey, data);
-    return {
-      isValid: !report.hasErrors,
-      errors: report.errors.map((e) => ({
-        path: e.field || "",
-        message: e.message,
-        code: e.code,
-      })),
-      warnings: report.warnings.map((w) => ({
-        path: w.field || "",
-        message: w.message,
-      })),
-    };
-  });
-
-  // 3. Pilot Belge: Lüzum Müzekkeresi (Tam İzolasyonlu Resolver & Renderer)
+  // 1. Pilot Belge: Lüzum Müzekkeresi (Tam İzolasyonlu Resolver & Renderer)
   registry.register(
     {
       templateKey: "luzum_muzekkeresi",

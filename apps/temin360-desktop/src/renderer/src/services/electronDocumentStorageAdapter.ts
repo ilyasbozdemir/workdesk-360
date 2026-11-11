@@ -81,7 +81,9 @@ export function createElectronStorageAdapter(): DocumentStorageAdapter {
       if (
         typeof window === "undefined" || !(window as any).electron?.ipcRenderer
       ) {
-        return [];
+        throw new Error(
+          "[ElectronStorageAdapter] Electron ortamı (window.electron.ipcRenderer) bulunamadı. Veritabanı sorgusu yürütülemez."
+        );
       }
       const ipc = (window as any).electron.ipcRenderer;
       const res = await ipc.invoke("db:query", sql, params);
