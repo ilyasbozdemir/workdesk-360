@@ -38,7 +38,8 @@ export type DocumentSavedListener = (record: {
  * Bağımsız Belge Yönetim ve Çıktı Motoru (DocumentEngine)
  * - Verilen templateKey üzerinden TemplateRegistry'deki doğru belge tanımını bulur.
  * - Belgenin resolver ve renderer'ını koordine eder.
- * - TEMİN 360'a özel SQL veya şema bilgisi içermez; depolama adaptörü ve çözümleyiciler üzerinden çalışır.
+ * - Sektör bağımsız orkestrasyon motorudur; depolama adaptörü, header sağlayıcı ve çözümleyiciler dışarıdan enjekte edilir.
+ * - Geçiş sürecinde dahili InstitutionalHeaderProvider ve Electron fallback'i mevcuttur; harici enjeksiyon (setHeaderResolver, setQueryExecutor) önceliklidir.
  * - UI bağımlılığı yoktur; FlowDesk veya diğer modüller tarafından doğrudan tüketilebilir.
  */
 export class DocumentEngine {

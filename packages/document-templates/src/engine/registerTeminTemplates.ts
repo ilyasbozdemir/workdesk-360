@@ -21,6 +21,48 @@ import { DefaultDocumentRenderer } from "./renderers/DefaultDocumentRenderer";
  * - Uygulama açılışında veya test ortamında çalıştırılır.
  * - Document Engine'in Temin 360'a bağımlı olmasını önler; şablonları dışarıdan kayıt eder.
  */
+export interface ConfigureTeminEngineOptions {
+  registry?: TemplateRegistry;
+}
+
+/**
+ * Document Engine'i Temin 360 ortamına göre tek elden yapılandırır.
+ * - DETSİS Evrak Sayısı üreticisini bağlar
+ * - Zod validatörünü bağlar
+ * - Kurumsal Antet sağlayıcısını bağlar (InstitutionalHeaderProvider)
+ * - Tüm şablon tanımlarını kayıt defterine yükler
+ */
+export function configureTeminEngine(opts: ConfigureTeminEngineOptions = {}): void {
+  // 1. Kurumsal antet sağlayıcısına DETSİS evrak sayısı üreticiyi bağla
+  InstitutionalHeaderProvider.setEvrakSayisiResolver(resolveEvrakSayisi);
+
+  // 2. Document Engine'e Zod şema validatörünü bağla
+  DocumentEngine.setValidator((templateKey, data) => {
+    const canonicalKey = (resolveTemplateKey(templateKey) as string) || templateKey;
+    const report = DocumentValidationService.validate(canonicalKey, data);
+    return {
+      isValid: !report.hasErrors,
+      errors: report.errors.map((e) => ({
+        path: e.field || "",
+        message: e.message,
+        code: e.code,
+      })),
+      warnings: report.warnings.map((w) => ({
+        path: w.field || "",
+        message: w.message,
+      })),
+    };
+  });
+
+  // 3. Document Engine'e kurumsal antet çözücüsünü bağla
+  DocumentEngine.setHeaderResolver((dosyaId, queryExecutor) => {
+    return InstitutionalHeaderProvider.resolve(dosyaId, queryExecutor);
+  });
+
+  // 4. Şablonları kayıt defterine enjekte et
+  registerTeminTemplates(opts.registry);
+}
+
 export function registerTeminTemplates(
   registry: TemplateRegistry = TemplateRegistry.default,
 ): void {

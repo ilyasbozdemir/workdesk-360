@@ -7,8 +7,6 @@ import type React from "react";
 // Template component imports
 import { IhtiyacListesi } from "./templates/ihtiyac-listesi";
 import { IhtiyacTalepFormu } from "./templates/ihtiyac-talep-formu";
-import { TasinirKayitYetkilisiGorusu } from "./templates/tasinir-kayit-yetkilisi-gorusu";
-import { TeknikSartname } from "./templates/teknik-sartname";
 import { LuzumMuzekkeresi } from "./templates/luzum-muzekkeresi";
 import { LuzumMuzekkeresiOnayEki } from "./templates/luzum-muzekkeresi-onay-eki";
 import { LuzumMuzekkeresiTeslimTesellum } from "./templates/luzum-muzekkeresi-teslim-tesellum";
@@ -49,8 +47,6 @@ import { getWorkflowProfile } from "./constants/workflowProfiles";
 // Mapping imports from template packages
 import { dataMapping as ihtiyacListesiMapping } from "./templates/ihtiyac-listesi/data.mapping";
 import { dataMapping as ihtiyacTalepFormuMapping } from "./templates/ihtiyac-talep-formu/data.mapping";
-import { dataMapping as tasinirKayitYetkilisiGorusuMapping } from "./templates/tasinir-kayit-yetkilisi-gorusu/data.mapping";
-import { dataMapping as teknikSartnameMapping } from "./templates/teknik-sartname/data.mapping";
 import { dataMapping as luzumMuzekkeresiMapping } from "./templates/luzum-muzekkeresi/data.mapping";
 import { dataMapping as luzumOnayEkiMapping } from "./templates/luzum-muzekkeresi-onay-eki/data.mapping";
 import { dataMapping as luzumTeslimTesellumMapping } from "./templates/luzum-muzekkeresi-teslim-tesellum/data.mapping";
@@ -902,8 +898,6 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
   // Doğrudan anahtarlar
   ihtiyac_listesi: "ihtiyac_listesi",
   ihtiyac_talep_formu: "ihtiyac_talep_formu",
-  tasinir_kayit_yetkilisi_gorusu: "tasinir_kayit_yetkilisi_gorusu",
-  teknik_sartname: "teknik_sartname",
   luzum_muzekkeresi: "luzum_muzekkeresi",
   luzum_onay_eki: "luzum_onay_eki",
   luzum_muzekkeresi_onay_eki: "luzum_onay_eki",
@@ -937,8 +931,6 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
   // Kebab-case eşleştirmeleri
   "ihtiyac-listesi": "ihtiyac_listesi",
   "ihtiyac-talep-formu": "ihtiyac_talep_formu",
-  "tasinir-kayit-yetkilisi-gorusu": "tasinir_kayit_yetkilisi_gorusu",
-  "teknik-sartname": "teknik_sartname",
   "luzum-muzekkeresi": "luzum_muzekkeresi",
   "luzum-onay-eki": "luzum_onay_eki",
   "luzum-muzekkeresi-onay-eki": "luzum_onay_eki",

@@ -6,6 +6,26 @@ export default [
     },
   },
   {
+    files: ["packages/document-engine/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@temin360/document-templates",
+                "**/document-templates/**",
+              ],
+              message:
+                "DocumentEngine genel bir motordur; @temin360/document-templates paketine bağımlı olamaz.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["packages/document-templates/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
