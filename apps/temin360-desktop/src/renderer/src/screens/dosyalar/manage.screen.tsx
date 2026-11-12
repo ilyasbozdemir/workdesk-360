@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { GenelBilgilerTab } from "./tabs/GenelBilgilerTab";
-import { IhtiyacListesiTab } from "./tabs/IhtiyacListesiTab";
 import { useYeniDosyaScreen } from "./yeni.hooks";
 import { getEmptyFormData, getMockFormData } from "./yeni.config";
 import {
@@ -81,19 +80,11 @@ export function DosyaManageScreen(): React.JSX.Element {
   const goNextSubStep = () => {
     if (activeSubStep < SUB_STEP_COUNT) {
       setActiveSubStep((s) => s + 1);
-    } else {
-      setValidationError(null);
-      setActiveTab("ihtiyac");
     }
   };
 
   const handleSelectIhtiyacTab = () => {
-    if (!formData.konu?.trim()) {
-      setValidationError("Lütfen önce dosya konusunu (İşin Adı) giriniz.");
-      return;
-    }
-    setValidationError(null);
-    setActiveTab("ihtiyac");
+    // İhtiyaç listesi tabı dosya oluştururken kaldırıldı; genel bilgilerde kalınır
   };
 
   const handleClearForm = () => {

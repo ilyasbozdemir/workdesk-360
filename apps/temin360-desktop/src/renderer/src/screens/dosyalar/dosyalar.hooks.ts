@@ -158,8 +158,61 @@ export function useDosyalarHooks() {
         console.warn('Pragma table info failed', e)
       }
 
+      let safeTeminNo = (dosya.temin_no || '').trim()
+      const targetYear =
+        dosya.butce_yili ||
+        (dosya.dosya_acilis_tarihi
+          ? new Date(dosya.dosya_acilis_tarihi).getFullYear()
+          : new Date().getFullYear())
+
+      if (safeTeminNo) {
+        try {
+          const checkRaw = await window.electron.ipcRenderer.invoke(
+            'db:query',
+            'SELECT id, temin_no, butce_yili, dosya_acilis_tarihi FROM DATA_TeminDosyasi WHERE (is_deleted = 0 OR is_deleted IS NULL)'
+          )
+          const rows: any[] = Array.isArray(checkRaw)
+            ? checkRaw
+            : Array.isArray(checkRaw?.data)
+            ? checkRaw.data
+            : []
+
+          const hasCollision = rows.some((r) => {
+            const rYear =
+              Number(r.butce_yili) ||
+              (r.dosya_acilis_tarihi ? new Date(r.dosya_acilis_tarihi).getFullYear() : targetYear)
+            if (rYear !== targetYear && rYear !== 0) return false
+            const cleanR = String(r.temin_no || '').trim()
+            return (
+              cleanR.toLowerCase() === safeTeminNo.toLowerCase() ||
+              cleanR.toLowerCase() === `${targetYear}/${safeTeminNo}`.toLowerCase() ||
+              `${targetYear}/${cleanR}`.toLowerCase() === safeTeminNo.toLowerCase()
+            )
+          })
+
+          if (hasCollision) {
+            let maxSeq = 0
+            rows.forEach((r) => {
+              const raw = String(r.temin_no || '').trim()
+              const parts = raw.split(/[/_ -]+/)
+              for (let i = parts.length - 1; i >= 0; i--) {
+                const num = parseInt(parts[i], 10)
+                if (!isNaN(num) && num !== targetYear && num > 0 && num < 100000) {
+                  if (num > maxSeq) maxSeq = num
+                  break
+                }
+              }
+            })
+            safeTeminNo = `${targetYear}/${maxSeq + 1}`
+          }
+        } catch {
+          // ignore check error
+        }
+      }
+
       const dosyaToInsert: Partial<TeminDosyasi> = {
         ...dosya,
+        temin_no: safeTeminNo || dosya.temin_no,
         komisyon_seed_edildi:
           dosya.komisyon_seed_edildi !== undefined ? dosya.komisyon_seed_edildi : 0
       }

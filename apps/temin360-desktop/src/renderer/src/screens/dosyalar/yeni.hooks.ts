@@ -3,6 +3,7 @@ import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { TeminDosyasi, useDosyalarHooks } from './dosyalar.hooks'
 import { useTabStore } from '../../store/tabStore'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useWorkspaceStore } from '../../store/workspaceStore'
 import { useKikLimitDonemleri } from '../system/kik-limitleri.hooks'
 import { DBBirim, DBPersonel, DBKodSozlugu, DBRol } from './types'
 import { buildAIFormContext, resolveDefaultPersonnel } from './yeni.config'
@@ -128,6 +129,16 @@ export function useYeniDosyaScreen(): UseYeniDosyaScreenReturn {
       : 'Yeni Doğrudan Temin Dosyası Ekle - DT'
     updateTabLabel(initialHrefRef.current, isEdit ? 'DT Dosyasını Düzenle' : 'Yeni DT Dosyası Ekle')
   }, [isEdit, updateTabLabel])
+
+  // Yeni dosya oluşturma modunda eski dosyanın sızmasını önleme
+  useEffect(() => {
+    if (!isEdit) {
+      useWorkspaceStore.getState().setIsCreatingDosya(true)
+    }
+    return () => {
+      useWorkspaceStore.getState().setIsCreatingDosya(false)
+    }
+  }, [isEdit])
 
   // DB Collections state
   const [birimler, setBirimler] = useState<DBBirim[]>([])
@@ -737,10 +748,34 @@ export function useYeniDosyaScreen(): UseYeniDosyaScreenReturn {
       })
 
       if (existingCollision) {
-        alert(
-          `KAYIT ENGELLENDİ!\n\n"${finalTeminNo}" doğrudan temin numarası ${targetYear} yılında zaten başka bir dosya (Dosya #${existingCollision.id}: "${existingCollision.konu}") tarafından kullanılmaktadır.\n\nLütfen formu kontrol edip benzersiz bir numara veriniz veya "Sıradaki No" butonunu kullanınız.`
+        // Veritabanındaki aktif yıl kayıtlarından sıradaki gerçek müsait numarayı hesapla
+        let maxSeq = 0
+        checkRows.forEach((d) => {
+          const raw = (d.temin_no || '').trim()
+          if (!raw) return
+          const parts = raw.split(/[/_ -]+/)
+          for (let i = parts.length - 1; i >= 0; i--) {
+            const num = parseInt(parts[i], 10)
+            if (!isNaN(num) && num !== targetYear && num > 0 && num < 100000) {
+              if (d.kaynak_kayit_id && String(num) === String(d.kaynak_kayit_id)) continue
+              if (num > maxSeq) maxSeq = num
+              break
+            }
+          }
+        })
+        const nextSuggestedNo = `${targetYear}/${maxSeq + 1}`
+
+        const shouldAssignNext = confirm(
+          `DİKKAT: "${finalTeminNo}" doğrudan temin numarası ${targetYear} yılında zaten başka bir dosya (Dosya #${existingCollision.id}: "${existingCollision.konu}") tarafından kullanılmaktadır.\n\nSıradaki müsait numara olan "${nextSuggestedNo}" atanarak dosyayı kaydetmek istiyor musunuz?`
         )
-        return  // ← Kayıt KESİNLİKLE engellendi
+
+        if (shouldAssignNext) {
+          finalTeminNo = nextSuggestedNo
+          setFormData((prev) => ({ ...prev, temin_no: nextSuggestedNo }))
+        } else {
+          setFormData((prev) => ({ ...prev, temin_no: nextSuggestedNo }))
+          return // Kullanıcı iptal etti; form alanına sıradaki numara yazıldı
+        }
       }
     } catch (err) {
       console.warn('Temin no doğrulama uyarısı:', err)
@@ -786,7 +821,18 @@ export function useYeniDosyaScreen(): UseYeniDosyaScreenReturn {
         )
         alert('Doğrudan temin dosyası başarıyla güncellendi.')
       } else {
-        await addDosya(payload)
+        const createRes = await addDosya(payload)
+        const insertedId =
+          (createRes as { lastInsertRowid?: number })?.lastInsertRowid ||
+          (createRes as any)?.data?.lastInsertRowid ||
+          (createRes as any)?.id
+
+        if (insertedId && Number(insertedId) > 0) {
+          const numId = Number(insertedId)
+          setFormData((prev) => ({ ...prev, id: numId }))
+          useWorkspaceStore.getState().setActiveDosyaId(numId)
+        }
+
         await logActivity(
           'Yeni Dosya Eklendi',
           `${payload.konu || 'İsimsiz'} konusuyla yeni bir temin dosyası oluşturuldu.`,

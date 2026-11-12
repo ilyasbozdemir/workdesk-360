@@ -29,7 +29,7 @@ import BkmybsMaliYonetimScreen from '@renderer/screens/bkmybs-mali-yonetim/index
 import { DosyalarVeFaturalariTab } from '@renderer/screens/bkmybs-mali-yonetim/components/tabs/DosyalarVeFaturalariTab'
 
 const DosyalarVeFaturalariWrapper: React.FC = () => {
-  return <DosyalarVeFaturalariTab activeRole="mali_hizmetler" />
+  return React.createElement(DosyalarVeFaturalariTab, { activeRole: 'mali_hizmetler' })
 }
 
 export type FinanceSectionScope = 'financial-services' | 'accounting' | 'all'

@@ -11,8 +11,6 @@ import {
   X,
 } from "lucide-react";
 import { YeniDosyaTabProps } from "../types";
-import { useWorkspaceStore } from "../../../store/workspaceStore";
-import { useDosyalarHooks } from "../dosyalar.hooks";
 import { useMalzemeListesi } from "../../dosya/sub-screens/components/MalzemeListesi/useMalzemeListesi";
 import { MalzemeEkleModal } from "../../dosya/sub-screens/components/MalzemeListesi/MalzemeEkleModal";
 import { cn } from "../../../utils/cn";
@@ -38,12 +36,16 @@ interface RelatedReport {
  * @returns {React.JSX.Element} İhtiyaç listesi sekmesinin arayüz çıktısı
  */
 export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
-  const { formData, setFormData, isEdit, editId, getNextTeminNo } = props;
-  const { activeDosyaId: workspaceDosyaId } = useWorkspaceStore();
-  const { addDosya } = useDosyalarHooks();
+  const { formData, setFormData, isEdit, editId } = props;
 
-  const targetDosyaId = editId || (formData as any)?.id || workspaceDosyaId ||
-    null;
+  // Güvenlik & Veri Bütünlüğü: Yeni dosya oluşturma akışında ASLA workspaceDosyaId fallback yapılmaz!
+  // Sadece düzenlenen dosyanın geçerli editId'si veya kaydedilmiş dosyanın gerçek formData.id'si kullanılır.
+  const targetDosyaId = (isEdit && editId && Number(editId) > 0)
+    ? Number(editId)
+    : (formData?.id && Number(formData.id) > 0)
+      ? Number(formData.id)
+      : null;
+
   const state = useMalzemeListesi(targetDosyaId);
 
   const [relatedReports, setRelatedReports] = useState<RelatedReport[]>([]);
@@ -59,39 +61,15 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
   } = useSetSelection<number>();
 
   // Ensure dossier exists in DB so items can be safely attached
+  // Kesin Kural: Arka planda kullanıcı onayı olmadan otomatik dosya oluşturulamaz!
   const ensureDosyaId = async (): Promise<number | null> => {
-    if (targetDosyaId) return targetDosyaId;
-
-    if (!formData.konu?.trim()) {
-      alert(
-        "Lütfen önce 1. Adımda (Genel Bilgiler) dosya konusunu / işin adını giriniz.",
-      );
-      return null;
+    if (targetDosyaId && targetDosyaId > 0) {
+      return targetDosyaId;
     }
 
-    try {
-      const targetYear = formData.butce_yili || new Date().getFullYear();
-      const teminNo = formData.temin_no?.trim() ||
-        (getNextTeminNo ? getNextTeminNo(targetYear) : `${targetYear}/1`);
-
-      const res = await addDosya({
-        ...formData,
-        temin_no: teminNo,
-        konu: formData.konu.trim(),
-        status: "devam_ediyor",
-      });
-
-      const newId = (res as { lastInsertRowid?: number })?.lastInsertRowid ||
-        (res as any)?.data?.lastInsertRowid ||
-        (res as any)?.id;
-
-      if (newId) {
-        setFormData((prev) => ({ ...prev, id: newId, temin_no: teminNo }));
-        return newId;
-      }
-    } catch (err: any) {
-      alert("Dosya taslağı oluşturulurken hata oluştu: " + err.message);
-    }
+    alert(
+      "Önce dosyanın genel bilgilerini kaydediniz. Ardından ihtiyaç kalemlerini ekleyebilirsiniz.",
+    );
     return null;
   };
 

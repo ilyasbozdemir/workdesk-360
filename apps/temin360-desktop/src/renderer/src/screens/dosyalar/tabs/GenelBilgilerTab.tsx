@@ -73,28 +73,16 @@ export function GenelBilgilerTab(props: YeniDosyaTabProps): React.JSX.Element {
         </div>
 
         {/* Next */}
-        <button
-          type="button"
-          onClick={goNext}
-          className={cn(
-            'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer',
-            isLast
-              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20'
-              : 'bg-slate-800 dark:bg-slate-100 hover:bg-slate-900 dark:hover:bg-white text-white dark:text-slate-900'
-          )}
-        >
-          {isLast ? (
-            <>
-              İhtiyaç Listesine Geç
-              <ArrowRight size={14} />
-            </>
-          ) : (
-            <>
-              Sonraki
-              <ChevronRight size={14} />
-            </>
-          )}
-        </button>
+        {!isLast && (
+          <button
+            type="button"
+            onClick={goNext}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-slate-800 dark:bg-slate-100 hover:bg-slate-900 dark:hover:bg-white text-white dark:text-slate-900"
+          >
+            Sonraki
+            <ChevronRight size={14} />
+          </button>
+        )}
       </div>
     </div>
   )
