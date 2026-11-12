@@ -10,7 +10,8 @@ import {
   FileCheck2,
   AlertTriangle,
   ArrowRightLeft,
-  Briefcase
+  Briefcase,
+  FolderOpen
 } from 'lucide-react'
 import { KamuRole, KAMU_ROLES, BkmybsTabKey, KikKotaModel } from '../types'
 import { formatCurrency } from '@renderer/utils/formatters'
@@ -296,6 +297,18 @@ export const BkmybsHeader: React.FC<BkmybsHeaderProps> = ({
           >
             <FileText size={14} />
             <span>6. 4734 Harcama Sözleşmeleri & Taahhüt</span>
+          </button>
+
+          <button
+            onClick={() => onTabChange('dosyalar')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              activeTab === 'dosyalar'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+            }`}
+          >
+            <FolderOpen size={14} />
+            <span>7. Dosyalar & Faturaları</span>
           </button>
         </div>
       </div>
