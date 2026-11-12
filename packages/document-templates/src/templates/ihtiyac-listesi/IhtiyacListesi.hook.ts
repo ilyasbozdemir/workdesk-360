@@ -228,7 +228,7 @@ export function useIhtiyacListesi(
     // Standart CommonDocumentFields kullanımı
     const tarih = data.dosyaTarihi || data.tarih || "";
 
-    const dosyaKonusu = data.dosyaKonusu || data.konu || "İhtiyaç Listesi";
+    const dosyaKonusu = "İhtiyaç Listesi";
 
     const sunulacakMakam = data.sunulacakMakamAdi ||
       (data as any).sunulacakMakam || "";
