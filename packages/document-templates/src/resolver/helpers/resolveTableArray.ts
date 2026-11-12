@@ -14,13 +14,23 @@ export async function resolveTableArray(
       try {
         const tkQuery = `
           SELECT tk.*, 
-                 COALESCE(NULLIF(tk.aciklama, ''), tanim.ozelligi, '') as aciklama,
-                 COALESCE(NULLIF(tk.aciklama, ''), tanim.ozelligi, '') as ozelligi
+                 COALESCE(
+                   NULLIF(tk.aciklama, ''),
+                   (SELECT tanim.ozelligi FROM TANIM_Kalem tanim 
+                    WHERE (tanim.kalem_adi = tk.kalem_adi AND tk.kalem_adi IS NOT NULL AND tk.kalem_adi != '')
+                       OR (tk.tasinir_kodu IS NOT NULL AND tk.tasinir_kodu != '' AND tk.tasinir_kodu = tanim.tasinir_kodu)
+                    LIMIT 1),
+                   ''
+                 ) as aciklama,
+                 COALESCE(
+                   NULLIF(tk.aciklama, ''),
+                   (SELECT tanim.ozelligi FROM TANIM_Kalem tanim 
+                    WHERE (tanim.kalem_adi = tk.kalem_adi AND tk.kalem_adi IS NOT NULL AND tk.kalem_adi != '')
+                       OR (tk.tasinir_kodu IS NOT NULL AND tk.tasinir_kodu != '' AND tk.tasinir_kodu = tanim.tasinir_kodu)
+                    LIMIT 1),
+                   ''
+                 ) as ozelligi
           FROM DATA_TeminKalem tk
-          LEFT JOIN TANIM_Kalem tanim ON (
-            tk.kalem_adi = tanim.kalem_adi 
-            OR (tk.tasinir_kodu IS NOT NULL AND tk.tasinir_kodu != '' AND tk.tasinir_kodu = tanim.tasinir_kodu)
-          )
           WHERE tk.temin_dosya_id = ?
           ORDER BY tk.id ASC
         `;

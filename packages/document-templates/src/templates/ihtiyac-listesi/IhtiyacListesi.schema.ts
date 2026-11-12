@@ -55,6 +55,8 @@ export const IhtiyacListesiSchema = z
     onayTarihi: z.string().optional(),
     sunulacakMakamAdi: z.string().optional(),
     ihtiyacYeri: z.string().optional(),
+    ihtiyacRaporuNo: z.string().optional(),
+    ihtiyacRaporuTarihi: z.string().optional(),
     ihtiyacKalemleri: z.array(IhtiyacKalemiSchema).optional(),
     olurYazisi: z.boolean().optional(),
     olurBaslik: z.string().optional(),

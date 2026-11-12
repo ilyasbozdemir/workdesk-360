@@ -65,6 +65,18 @@ export const dataMapping: ProcessMapping = {
     sutun: 'ihtiyac_yeri',
     aciklama: 'İhtiyaç listesi yerleri'
   },
+  ihtiyacRaporuNo: {
+    tablo: 'DATA_IhtiyacRaporu',
+    sutun: 'rapor_no',
+    iliskili_id: 'temin_dosya_id',
+    aciklama: 'Bağlı İhtiyaç Raporu Numarası'
+  },
+  ihtiyacRaporuTarihi: {
+    tablo: 'DATA_IhtiyacRaporu',
+    sutun: 'tarih',
+    iliskili_id: 'temin_dosya_id',
+    aciklama: 'Bağlı İhtiyaç Raporu Tarihi'
+  },
 
   isinAciklamasi: {
     tablo: 'DATA_TeminDosyasi',

@@ -269,4 +269,57 @@ describe("İhtiyaç Listesi — Mapping ve Veri Hazırlama Testleri", () => {
     expect(resolved.konu).toBe("Kırtasiye Alımı");
     expect(resolved.tarih).toBe("07.11.2026");
   });
+
+  it("TANIM_Kalem kütüphanesinde mükerrer veya çoklu eşleşen kayıt olsa dahi DATA_TeminKalem kalemlerini tekilleştirir, kartezyen çoğalma yapmaz", async () => {
+    const mockExecutor = vi.fn(async (sql: string, params: any[]) => {
+      if (sql.includes("FROM DATA_TeminKalem")) {
+        // SQL alt sorgusu tekil döndürdüğünden 2 satır taranır
+        return [
+          {
+            id: 1,
+            temin_dosya_id: params[0],
+            kalem_adi: "Fotokopi Kağıdı",
+            birim: "Paket",
+            miktar: 10,
+            aciklama: "80 gr A4",
+            ozelligi: "80 gr A4",
+          },
+          {
+            id: 2,
+            temin_dosya_id: params[0],
+            kalem_adi: "Mavi Klasör",
+            birim: "Adet",
+            miktar: 5,
+            aciklama: "Geniş sırt",
+            ozelligi: "Geniş sırt",
+          },
+        ];
+      }
+      return [];
+    });
+
+    const mapping = {
+      ihtiyacKalemleri: {
+        tablo: "DATA_TeminKalem",
+        sutun: "*",
+        iliskili_id: "temin_dosya_id",
+        altEslestirme: {
+          malzemeAdi: "kalem_adi",
+          miktar: "miktar",
+          birimi: "birim",
+        },
+      },
+    };
+
+    const resolved = await resolveTemplateData(
+      mapping,
+      99,
+      mockExecutor,
+      "ihtiyac-listesi",
+    );
+
+    expect(resolved.ihtiyacKalemleri).toHaveLength(2);
+    expect(resolved.ihtiyacKalemleri[0].malzemeAdi).toBe("Fotokopi Kağıdı");
+    expect(resolved.ihtiyacKalemleri[1].malzemeAdi).toBe("Mavi Klasör");
+  });
 });
