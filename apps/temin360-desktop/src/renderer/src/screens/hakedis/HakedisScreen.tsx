@@ -127,7 +127,7 @@ export default function HakedisScreen(): React.JSX.Element {
           'db:query',
           `SELECT d.*, f.unvan as yuklenici_adi 
            FROM DATA_TeminDosyasi d 
-           LEFT JOIN TANIM_Firma f ON d.kazanan_firma_id = f.id 
+           LEFT JOIN TANIM_Firma f ON d.firma_id = f.id 
            WHERE d.id = ? LIMIT 1`,
           [activeDosyaId]
         )
@@ -158,10 +158,10 @@ export default function HakedisScreen(): React.JSX.Element {
     try {
       const res = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT id, sira_no, aciklama, birim, miktar, birim_fiyat 
+        `SELECT id, sira_no, kalem_adi, aciklama, birim, miktar 
          FROM DATA_TeminKalem 
-         WHERE dosya_id = ? 
-         ORDER BY sira_no ASC`,
+         WHERE temin_dosya_id = ? 
+         ORDER BY COALESCE(sira_no, id) ASC`,
         [activeDosyaId]
       )
 
@@ -170,7 +170,7 @@ export default function HakedisScreen(): React.JSX.Element {
         const mappedKalemler: HakedisKalem[] = items.map((it: any, idx: number) => ({
           id: 'kalem-' + it.id,
           pozNo: `POZ-${idx + 1}`,
-          aciklama: it.aciklama || 'Kalem ' + (idx + 1),
+          aciklama: it.aciklama || it.kalem_adi || 'Kalem ' + (idx + 1),
           birim: it.birim || 'Adet',
           sozlesmeMiktar: Number(it.miktar) || 1,
           birimFiyat: Number(it.birim_fiyat) || 100,
