@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { DocumentEngine, TemplateRegistry } from "@worksuite-360/document-engine";
-import { registerTeminTemplates } from "../../../engine/registerTeminTemplates";
+import { configureTeminEngine } from "../../../engine/registerTeminTemplates";
 
 describe("İhtiyaç Talep Formu — Snapshot ve Akıllı Harmanlama Testleri", () => {
   it("veritabanında önceden boş kaydedilmiş snapshot olsa bile taze kalemleri smartMerge ile getirir", async () => {
     TemplateRegistry.clear();
-    registerTeminTemplates();
+    configureTeminEngine();
 
     let savedData: Record<string, unknown> | null = {
       gerekce: "Özel kullanıcı gerekçesi",

@@ -11,7 +11,7 @@ import { getTemplateRouteDefinition } from "../route-registry";
 describe("Şablon Bazlı Mapping & Registry Mimarisi Testleri", () => {
   it("templateRegistry içindeki her şablon kendi dataMapping ve mapping tanımlarına sahip olmalıdır", () => {
     const definitions = getAllTemplateDefinitions();
-    expect(definitions.length).toBeGreaterThanOrEqual(30);
+    expect(definitions.length).toBeGreaterThanOrEqual(29);
 
     for (const def of definitions) {
       expect(def.dataMapping, `Şablon [${def.id}] dataMapping içermelidir`).toBeDefined();

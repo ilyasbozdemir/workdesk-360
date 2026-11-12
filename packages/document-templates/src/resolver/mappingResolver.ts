@@ -26,6 +26,8 @@ export {
 
 /**
  * Resolves all variables in a ProcessMapping using database query execution.
+ * Production-hardened with query deduplication, automatic cache eviction on failure,
+ * single-roundtrip logo extraction and Turkish date normalization.
  */
 export async function resolveTemplateData(
   mapping: ProcessMapping,
@@ -33,27 +35,31 @@ export async function resolveTemplateData(
   rawQueryExecutor: (sql: string, params: any[]) => Promise<any[]>,
   templateId?: string,
 ): Promise<Record<string, any>> {
+  // Query cache with automatic eviction on rejection
   const queryCache = new Map<string, Promise<any[]>>();
   const queryExecutor = (sql: string, params: any[]): Promise<any[]> => {
     const key = `${sql}__${JSON.stringify(params)}`;
     if (!queryCache.has(key)) {
-      queryCache.set(key, rawQueryExecutor(sql, params));
+      const p = rawQueryExecutor(sql, params).catch((err) => {
+        // Evict failed promise so future attempts or retries can re-execute cleanly
+        queryCache.delete(key);
+        return Promise.reject(err);
+      });
+      queryCache.set(key, p);
     }
     return queryCache.get(key)!;
   };
 
-  // Pre-fetch main tables in parallel
+  // Pre-fetch main tables in parallel (only tables actually consumed downstream)
   if (activeDosyaId) {
     queryExecutor("SELECT * FROM DATA_TeminDosyasi WHERE id = ? LIMIT 1", [
       activeDosyaId,
-    ]);
-    queryExecutor("SELECT * FROM DATA_TeminKalem WHERE temin_dosya_id = ?", [
-      activeDosyaId,
-    ]);
-    queryExecutor("SELECT * FROM TANIM_Kurum LIMIT 1", []);
+    ]).catch(() => {});
+    queryExecutor("SELECT * FROM TANIM_Kurum LIMIT 1", []).catch(() => {});
   }
 
   const resolvedPayload: Record<string, any> = {};
+  let evrakSayisiResolved = false;
 
   for (const [sablonDegiskeni, rule] of Object.entries(mapping)) {
     // 0. Automatic official evrakSayisi formatting (E-DETSIS-SDP-0001)
@@ -62,6 +68,7 @@ export async function resolveTemplateData(
         activeDosyaId,
         queryExecutor,
       );
+      evrakSayisiResolved = true;
       continue;
     }
 
@@ -135,58 +142,63 @@ export async function resolveTemplateData(
     }
   }
 
-  // Automatic solLogo and sagLogo fallback from TANIM_Kurum or settings
-  if (!resolvedPayload["solLogo"]) {
+  // Automatic solLogo and sagLogo fallback: Unified single roundtrip query
+  if (!resolvedPayload["solLogo"] || !resolvedPayload["sagLogo"]) {
     try {
       const res = await queryExecutor(
-        "SELECT logo_sol FROM TANIM_Kurum LIMIT 1",
+        "SELECT logo_sol, logo_sag FROM TANIM_Kurum LIMIT 1",
         [],
       );
-      const logoSol = res?.[0]?.logo_sol
-        ? String(res[0].logo_sol).replace(/['"]+/g, "").trim()
-        : "";
-      if (logoSol) {
-        resolvedPayload["solLogo"] = res[0].logo_sol;
-      } else {
-        const ayarRes = await queryExecutor(
-          "SELECT key, value FROM settings WHERE key IN ('logoLeft', 'sol_logo')",
-          [],
-        );
-        const logoVal = ayarRes?.find((r: any) =>
-          r.key === "logoLeft"
-        )?.value || ayarRes?.find((r: any) => r.key === "sol_logo")?.value;
-        const cleanLogoVal = logoVal
-          ? String(logoVal).replace(/['"]+/g, "").trim()
-          : "";
-        if (cleanLogoVal) resolvedPayload["solLogo"] = logoVal;
+      const row = res?.[0];
+      if (row) {
+        if (!resolvedPayload["solLogo"] && row.logo_sol) {
+          const clean = String(row.logo_sol).replace(/['"]+/g, "").trim();
+          if (clean) resolvedPayload["solLogo"] = row.logo_sol;
+        }
+        if (!resolvedPayload["sagLogo"] && row.logo_sag) {
+          const clean = String(row.logo_sag).replace(/['"]+/g, "").trim();
+          if (clean) resolvedPayload["sagLogo"] = row.logo_sag;
+        }
       }
-    } catch (e) {}
-  }
-  if (!resolvedPayload["sagLogo"]) {
-    try {
-      const res = await queryExecutor(
-        "SELECT logo_sag FROM TANIM_Kurum LIMIT 1",
-        [],
+    } catch (err) {
+      console.warn(
+        "[resolveTemplateData] Kurum logoları çekilemedi:",
+        err instanceof Error ? err.message : String(err),
       );
-      const logoSag = res?.[0]?.logo_sag
-        ? String(res[0].logo_sag).replace(/['"]+/g, "").trim()
-        : "";
-      if (logoSag) {
-        resolvedPayload["sagLogo"] = res[0].logo_sag;
-      } else {
+    }
+
+    // Fallback: settings table for both left & right logos in a single query
+    if (!resolvedPayload["solLogo"] || !resolvedPayload["sagLogo"]) {
+      try {
         const ayarRes = await queryExecutor(
-          "SELECT key, value FROM settings WHERE key IN ('logoRight', 'sag_logo')",
+          "SELECT key, value FROM settings WHERE key IN ('logoLeft', 'sol_logo', 'logoRight', 'sag_logo')",
           [],
         );
-        const logoVal = ayarRes?.find((r: any) =>
-          r.key === "logoRight"
-        )?.value || ayarRes?.find((r: any) => r.key === "sag_logo")?.value;
-        const cleanLogoVal = logoVal
-          ? String(logoVal).replace(/['"]+/g, "").trim()
-          : "";
-        if (cleanLogoVal) resolvedPayload["sagLogo"] = logoVal;
+        if (!resolvedPayload["solLogo"]) {
+          const logoVal = ayarRes?.find((r: any) =>
+            r.key === "logoLeft" || r.key === "sol_logo"
+          )?.value;
+          const clean = logoVal
+            ? String(logoVal).replace(/['"]+/g, "").trim()
+            : "";
+          if (clean) resolvedPayload["solLogo"] = logoVal;
+        }
+        if (!resolvedPayload["sagLogo"]) {
+          const logoVal = ayarRes?.find((r: any) =>
+            r.key === "logoRight" || r.key === "sag_logo"
+          )?.value;
+          const clean = logoVal
+            ? String(logoVal).replace(/['"]+/g, "").trim()
+            : "";
+          if (clean) resolvedPayload["sagLogo"] = logoVal;
+        }
+      } catch (err) {
+        console.warn(
+          "[resolveTemplateData] Ayarlar tablosundan logolar çekilemedi:",
+          err instanceof Error ? err.message : String(err),
+        );
       }
-    } catch (e) {}
+    }
   }
 
   // Format all date variables into Turkish GG.AA.YYYY format & fallback to file date
@@ -202,7 +214,12 @@ export async function resolveTemplateData(
           dRes[0].created_at,
       );
     }
-  } catch (e) {}
+  } catch (err) {
+    console.warn(
+      "[resolveTemplateData] Dosya tarihi çekilemedi:",
+      err instanceof Error ? err.message : String(err),
+    );
+  }
 
   for (const key of Object.keys(resolvedPayload)) {
     let val = resolvedPayload[key];
@@ -211,7 +228,7 @@ export async function resolveTemplateData(
       (!val || String(val).trim() === "" ||
         String(val).startsWith("[Belirtilmedi"))
     ) {
-      val = defaultFileDate || formatDateTR(new Date());
+      resolvedPayload[key] = defaultFileDate || formatDateTR(new Date());
     } else if (
       typeof val === "string" &&
       (/^\d{4}-\d{2}-\d{2}/.test(val) || key.toLowerCase().includes("tarih"))
@@ -222,6 +239,7 @@ export async function resolveTemplateData(
 
   // Ensure official EBYS / E-DETSİS evrakSayisi format (E-10234521-934.01-0001) is populated for all templates
   if (
+    !evrakSayisiResolved ||
     !resolvedPayload["evrakSayisi"] ||
     String(resolvedPayload["evrakSayisi"]).trim() === "" ||
     String(resolvedPayload["evrakSayisi"]).includes("/")
