@@ -17,6 +17,7 @@ import { KamuRole, KAMU_ROLES, BkmybsTabKey, KikKotaModel } from '../types'
 import { formatCurrency } from '@renderer/utils/formatters'
 import { APP_ROUTES } from '@renderer/constants/routeConstants'
 import { useTabStore } from '@renderer/store/tabStore'
+import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
 import { useNavigate } from '@tanstack/react-router'
 
 interface BkmybsHeaderProps {
@@ -52,6 +53,7 @@ export const BkmybsHeader: React.FC<BkmybsHeaderProps> = ({
   const { addTab } = useTabStore()
 
   const handleGoToDogrudanTemin = () => {
+    useWorkspaceContextStore.getState().setActiveWorkspace('procurement')
     addTab(APP_ROUTES.DOSYALAR)
     navigate({ to: APP_ROUTES.DOSYALAR })
   }
@@ -309,6 +311,18 @@ export const BkmybsHeader: React.FC<BkmybsHeaderProps> = ({
           >
             <FolderOpen size={14} />
             <span>7. Dosyalar & Faturaları</span>
+          </button>
+
+          <button
+            onClick={() => onTabChange('mevzuat')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              activeTab === 'mevzuat'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/20'
+                : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+            }`}
+          >
+            <Scale size={14} />
+            <span>8. Mevzuat & Parametreler</span>
           </button>
         </div>
       </div>

@@ -23,6 +23,8 @@ import { GuaranteesEscrowPage } from '../modules/accounting/pages/GuaranteesEscr
 import { AccountingRecordsPage } from '../modules/accounting/pages/AccountingRecordsPage'
 import HakedisScreen from '@renderer/screens/hakedis/HakedisScreen'
 import ButceKodScreen from '@renderer/screens/butcekod/index.screen'
+import { MevzuatScreen } from '@renderer/screens/system/MevzuatScreen'
+import BkmybsMaliYonetimScreen from '@renderer/screens/bkmybs-mali-yonetim/index.screen'
 
 export type FinanceSectionScope = 'financial-services' | 'accounting' | 'all'
 
@@ -171,6 +173,30 @@ export const FINANCE_PAGE_DEFINITIONS: FinancePageDefinition[] = [
     badgeVariant: 'emerald',
     description: 'BKMYBS ve Sayıştay denetimine uygun yevmiye maddeleri',
     component: AccountingRecordsPage
+  },
+  {
+    id: 'mevzuat-parametreleri',
+    section: 'all',
+    title: 'Mevzuat ve Sistem Parametreleri',
+    shortLabel: 'Mevzuat & Parametreler',
+    breadcrumbLabel: 'Mevzuat & Parametreler',
+    icon: Scale,
+    badge: '4734 / 5018',
+    badgeVariant: 'amber',
+    description: '4734 Sayılı K.İ.K yasal limitleri, 22/d limitleri, vergi/kesinti oranları ve mevzuat parametreleri',
+    component: MevzuatScreen
+  },
+  {
+    id: 'bkmybs-yonetim',
+    section: 'all',
+    title: '5018 BKMYBS Bütçe & Mali Yönetim Masası',
+    shortLabel: 'BKMYBS Masası',
+    breadcrumbLabel: 'BKMYBS Bütçe & Harcama Masası',
+    icon: Coins,
+    badge: '5018',
+    badgeVariant: 'emerald',
+    description: 'Analitik bütçe ödenek takibi, 22/d limit kotası, MİF, TKYS zimmet ve harcama sözleşmeleri',
+    component: BkmybsMaliYonetimScreen
   }
 ]
 

@@ -28,6 +28,15 @@ interface RelatedReport {
   matchedItems: IhtiyacRaporuKalem[];
 }
 
+/**
+ * @deprecated Bu bileşen artık aktif olarak kullanılmamaktadır. İleride referans olması amacıyla tutulmaktadır.
+ *
+ * Yeni dosya oluşturma ekranındaki ihtiyaç listesi sekmesini render eder.
+ * C# tarafındaki summary yapısına benzer şekilde bileşen hakkında bilgi verir.
+ *
+ * @param {YeniDosyaTabProps} props - Sekme bileşenine aktarılan özellikler
+ * @returns {React.JSX.Element} İhtiyaç listesi sekmesinin arayüz çıktısı
+ */
 export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
   const { formData, setFormData, isEdit, editId, getNextTeminNo } = props;
   const { activeDosyaId: workspaceDosyaId } = useWorkspaceStore();
@@ -112,7 +121,8 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
       if (existing) {
         await ihtiyacRaporuService.updateRapor(existing.id, {
           baslik: formData.konu || existing.baslik,
-          birim_adi: (formData as any).harcama_birimi || (formData as any).birim || existing.birim_adi,
+          birim_adi: (formData as any).harcama_birimi ||
+            (formData as any).birim || existing.birim_adi,
           birim_id: formData.birim_id || existing.birim_id,
         }, itemsPayload);
         const updated = await ihtiyacRaporuService.getLinkedRaporForDosya(dId);
@@ -122,15 +132,20 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
         const newId = await ihtiyacRaporuService.createRapor({
           rapor_no: nextNo,
           baslik: formData.konu?.trim() || "İhtiyaç Raporu",
-          gerekce: (formData as any).isin_aciklamasi || `${formData.konu || "Alım"} için ihtiyaç tespiti`,
+          gerekce: (formData as any).isin_aciklamasi ||
+            `${formData.konu || "Alım"} için ihtiyaç tespiti`,
           birim_id: formData.birim_id || null,
-          birim_adi: (formData as any).harcama_birimi || (formData as any).birim || null,
-          talep_eden_personel_id: (formData as any).talep_eden_personel_id || (formData as any).hazirlayan_personel_id || null,
-          talep_eden_personel: (formData as any).talep_eden_personel || (formData as any).hazirlayan_personel || null,
+          birim_adi: (formData as any).harcama_birimi ||
+            (formData as any).birim || null,
+          talep_eden_personel_id: (formData as any).talep_eden_personel_id ||
+            (formData as any).hazirlayan_personel_id || null,
+          talep_eden_personel: (formData as any).talep_eden_personel ||
+            (formData as any).hazirlayan_personel || null,
           talep_eden_unvan: null,
           durum: "dosyaya_aktarildi",
           temin_dosya_id: dId,
-          tarih: (formData as any).dosya_acilis_tarihi || new Date().toISOString().split("T")[0],
+          tarih: (formData as any).dosya_acilis_tarihi ||
+            new Date().toISOString().split("T")[0],
           onay_tarihi: null,
           tahmini_butce: 0,
           notlar: null,
@@ -215,7 +230,9 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
 
       try {
         if (targetDosyaId) {
-          const linked = await ihtiyacRaporuService.getLinkedRaporForDosya(targetDosyaId);
+          const linked = await ihtiyacRaporuService.getLinkedRaporForDosya(
+            targetDosyaId,
+          );
           if (!cancelled) {
             setLinkedRapor(linked);
           }
@@ -374,60 +391,72 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
         </div>
 
         {/* İHTİYAÇ RAPORU ENTEGRASYONU & BAĞLANTI KARTI */}
-        {linkedRapor ? (
-          <div className="bg-emerald-50/80 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                <FileText size={18} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">
-                    Bağlı İhtiyaç Raporu: {linkedRapor.rapor_no}
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300">
-                    İhtiyaç Listesinde Aktif
-                  </span>
+        {linkedRapor
+          ? (
+            <div className="bg-emerald-50/80 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <FileText size={18} />
                 </div>
-                <p className="text-xs text-emerald-700/80 dark:text-emerald-400 mt-0.5">
-                  {linkedRapor.baslik} • Tarih: {linkedRapor.tarih || "-"} • {state.items.length} Kalem
-                </p>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">
+                      Bağlı İhtiyaç Raporu: {linkedRapor.rapor_no}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300">
+                      İhtiyaç Listesinde Aktif
+                    </span>
+                  </div>
+                  <p className="text-xs text-emerald-700/80 dark:text-emerald-400 mt-0.5">
+                    {linkedRapor.baslik} • Tarih: {linkedRapor.tarih || "-"} •
+                    {" "}
+                    {state.items.length} Kalem
+                  </p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={handleCreateOrSyncIhtiyacRaporu}
+                disabled={isCreatingRapor}
+                className="px-3.5 py-1.5 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs font-bold hover:bg-emerald-50 dark:hover:bg-slate-700 transition-all cursor-pointer whitespace-nowrap self-end sm:self-auto"
+              >
+                {isCreatingRapor
+                  ? "Senkronize Ediliyor..."
+                  : "Raporu Kalemlerle Güncelle"}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleCreateOrSyncIhtiyacRaporu}
-              disabled={isCreatingRapor}
-              className="px-3.5 py-1.5 bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs font-bold hover:bg-emerald-50 dark:hover:bg-slate-700 transition-all cursor-pointer whitespace-nowrap self-end sm:self-auto"
-            >
-              {isCreatingRapor ? "Senkronize Ediliyor..." : "Raporu Kalemlerle Güncelle"}
-            </button>
-          </div>
-        ) : state.items.length > 0 ? (
-          <div className="bg-amber-50/80 dark:bg-amber-950/20 p-4 rounded-2xl border border-amber-200 dark:border-amber-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                <FileText size={18} />
+          )
+          : state.items.length > 0
+          ? (
+            <div className="bg-amber-50/80 dark:bg-amber-950/20 p-4 rounded-2xl border border-amber-200 dark:border-amber-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                  <FileText size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300">
+                    Bu Dosya İçin Henüz İhtiyaç Raporu Bağlanmadı
+                  </h4>
+                  <p className="text-xs text-amber-700/80 dark:text-amber-400 mt-0.5">
+                    Dosya konusu ({formData.konu || "Mevcut Konu"}) ile tek tıkla
+                    İhtiyaç Raporu oluşturup İhtiyaç Listesi resmî çıktısına
+                    bağlayabilirsiniz.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300">
-                  Bu Dosya İçin Henüz İhtiyaç Raporu Bağlanmadı
-                </h4>
-                <p className="text-xs text-amber-700/80 dark:text-amber-400 mt-0.5">
-                  Dosya adı ({formData.konu || "Mevcut Konu"}) ile tek tıkla İhtiyaç Raporu oluşturup İhtiyaç Listesi resmî çıktısına bağlayabilirsiniz.
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={handleCreateOrSyncIhtiyacRaporu}
+                disabled={isCreatingRapor}
+                className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer whitespace-nowrap self-end sm:self-auto"
+              >
+                {isCreatingRapor
+                  ? "Oluşturuluyor..."
+                  : "+ Dosya Konusuyla İhtiyaç Raporu Oluştur"}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleCreateOrSyncIhtiyacRaporu}
-              disabled={isCreatingRapor}
-              className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer whitespace-nowrap self-end sm:self-auto"
-            >
-              {isCreatingRapor ? "Oluşturuluyor..." : "+ Dosya Adıyla İhtiyaç Raporu Oluştur"}
-            </button>
-          </div>
-        ) : null}
+          )
+          : null}
 
         {/* ITEMS LIST TABLE OR EMPTY STATE */}
         {state.items.length > 0

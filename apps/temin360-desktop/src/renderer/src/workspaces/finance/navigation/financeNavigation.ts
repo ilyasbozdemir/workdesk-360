@@ -81,6 +81,26 @@ export const FINANCE_SERVICES_NAVIGATION: FinanceNavItem[] = [
     badge: 'Hakediş',
     badgeVariant: 'emerald',
     description: 'Hakediş.org standardında yeşil defter, metraj ve tahakkuk icmali'
+  },
+  {
+    id: 'mevzuat-parametreleri',
+    label: 'Mevzuat ve Sistem Parametreleri',
+    shortLabel: 'Mevzuat & Parametreler',
+    icon: Scale,
+    badge: '4734/5018',
+    badgeVariant: 'amber',
+    permission: 'finance:compliance_check',
+    description: '4734 Sayılı K.İ.K yasal limitlerini ve oranları buradan yönetebilirsiniz'
+  },
+  {
+    id: 'bkmybs-yonetim',
+    label: 'BKMYBS Bütçe Masası (7 Sekme)',
+    shortLabel: 'BKMYBS Paneli',
+    icon: Coins,
+    badge: '5018',
+    badgeVariant: 'emerald',
+    permission: 'finance:budget_view',
+    description: 'Bütçe, 22/d limit kotası, MİF & ÖEB, TKYS ve harcama sözleşmeleri'
   }
 ]
 

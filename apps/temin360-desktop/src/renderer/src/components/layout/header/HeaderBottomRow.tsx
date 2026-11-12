@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "@tanstack/react-router";
-import { ClipboardList, Layers, Printer, Landmark, ShieldAlert, FileSpreadsheet } from "lucide-react";
+import { ClipboardList, Layers, Printer, Landmark, ShieldAlert, FileSpreadsheet, Scale } from "lucide-react";
 import { TeminSelector } from "../TeminSelector";
 import { WorkspaceSwitcher } from "@renderer/shared/components/WorkspaceSwitcher";
 import { useWorkspaceContextStore } from "@renderer/store/workspaceContextStore";
@@ -68,6 +68,15 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
             >
               <FileSpreadsheet className="w-3.5 h-3.5 shrink-0 text-blue-600" />
               <span className="hidden xl:inline">MİF & ÖEB</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFinanceTab("mevzuat-parametreleri")}
+              title="4734 Sayılı KİK Yasal Limitleri, Oranlar ve Mevzuat Parametreleri"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50 border-indigo-200/50 dark:border-indigo-900/30 cursor-pointer"
+            >
+              <Scale className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
+              <span className="hidden xl:inline">Mevzuat & Parametreler</span>
             </button>
           </div>
         </>

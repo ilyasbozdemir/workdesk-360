@@ -14,6 +14,9 @@ import {
 } from 'lucide-react'
 import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
 import { useSettingsStore } from '@renderer/store/settingsStore'
+import { useTabStore } from '@renderer/store/tabStore'
+import { APP_ROUTES } from '@renderer/constants/routeConstants'
+import { useNavigate } from '@tanstack/react-router'
 import { FINANCE_SERVICES_NAVIGATION } from '../navigation/financeNavigation'
 import { ACCOUNTING_NAVIGATION } from '../navigation/accountingNavigation'
 import { isValidTabForSection } from '../navigation/financeRegistry'
@@ -35,6 +38,18 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
     canAccessFinancialServices,
     canAccessAccounting
   } = useWorkspaceContextStore()
+
+  const navigate = useNavigate()
+  const { addTab, setActiveTab, activeTabPath } = useTabStore()
+
+  const handleGoToProcurement = () => {
+    setActiveWorkspace('procurement')
+    const isFinanceTab = activeTabPath?.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)
+    const targetPath = (!isFinanceTab && activeTabPath) ? activeTabPath : APP_ROUTES.DOSYALAR
+    addTab(targetPath)
+    setActiveTab(targetPath)
+    navigate({ to: targetPath })
+  }
 
   const handleSectionSwitch = (sec: 'financial-services' | 'accounting') => {
     setActiveFinanceSection(sec)
@@ -90,7 +105,7 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
         {/* Satın Alma Masasına (4734) Geçiş Butonu */}
         <button
           type="button"
-          onClick={() => setActiveWorkspace('procurement')}
+          onClick={handleGoToProcurement}
           className="w-full flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/25 text-xs font-bold transition-all hover:scale-[1.01] cursor-pointer"
           title="Satın Alma & Doğrudan Temin Çalışma Masasına Geç (4734 Sayılı Kanun)"
         >

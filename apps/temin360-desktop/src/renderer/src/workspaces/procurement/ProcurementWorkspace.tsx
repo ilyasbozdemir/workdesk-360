@@ -63,6 +63,8 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
     if (cleanPath.startsWith('/devlet-ihale-2886')) return '2886 Satış & Kiralama Masası'
     if (cleanPath.startsWith('/ebys')) return 'EBYS Resmî Yazışma'
     if (cleanPath.startsWith('/degiskenler')) return 'Özel Belge & Yer Tutucular'
+    if (cleanPath.startsWith('/mevzuat')) return 'Mevzuat ve Sistem Parametreleri'
+    if (cleanPath.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)) return '5018 BKMYBS & Mali Yönetim'
     return 'Satın Alma İşlemleri'
   }, [tabs, activeTabPath])
 

@@ -20,10 +20,12 @@ import {
   Tag,
   Users,
   X,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Coins
 } from 'lucide-react'
 import { getTabLabel, useTabStore } from '../../store/tabStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
+import { useWorkspaceContextStore } from '../../store/workspaceContextStore'
 import { useGlobalDocumentPreviewStore } from '../../store/globalDocumentPreviewStore'
 import { APP_ROUTES } from '../../constants/routeConstants'
 import { useShallow } from 'zustand/react/shallow'
@@ -50,7 +52,8 @@ const tabIcons: Record<string, LucideIcon> = {
   '/profil': Users,
   '/dosya': FileText,
   '/modul-magazasi': Store,
-  [APP_ROUTES.IHTIYAC_RAPORLARI]: FileSpreadsheet
+  [APP_ROUTES.IHTIYAC_RAPORLARI]: FileSpreadsheet,
+  [APP_ROUTES.BKMYBS_MALI_YONETIM]: Coins
 }
 
 export function TabsBar(): React.JSX.Element {
@@ -86,6 +89,11 @@ export function TabsBar(): React.JSX.Element {
 
   const handleTabClick = (path: string): void => {
     setActiveTab(path)
+    if (path.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)) {
+      useWorkspaceContextStore.getState().setActiveWorkspace('finance')
+    } else {
+      useWorkspaceContextStore.getState().setActiveWorkspace('procurement')
+    }
     navigate({ to: path })
   }
 
@@ -97,6 +105,11 @@ export function TabsBar(): React.JSX.Element {
     }
     const nextPath = closeTab(path)
     if (nextPath) {
+      if (nextPath.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)) {
+        useWorkspaceContextStore.getState().setActiveWorkspace('finance')
+      } else {
+        useWorkspaceContextStore.getState().setActiveWorkspace('procurement')
+      }
       navigate({ to: nextPath })
     }
   }
@@ -153,13 +166,24 @@ export function TabsBar(): React.JSX.Element {
           >
             {/* Top Indicator bar for active tab */}
             {isActive && (
-              <span className="absolute top-0 left-0 right-0 h-[3px] bg-blue-600 rounded-t-full" />
+              <span
+                className={cn(
+                  'absolute top-0 left-0 right-0 h-[3px] rounded-t-full',
+                  cleanTabPath.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)
+                    ? 'bg-emerald-600'
+                    : 'bg-blue-600'
+                )}
+              />
             )}
 
             <Icon
               className={cn(
                 'w-3.5 h-3.5 shrink-0',
-                isActive ? 'text-blue-500' : 'text-slate-400 group-hover:text-slate-500'
+                isActive
+                  ? cleanTabPath.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)
+                    ? 'text-emerald-500'
+                    : 'text-blue-500'
+                  : 'text-slate-400 group-hover:text-slate-500'
               )}
             />
 

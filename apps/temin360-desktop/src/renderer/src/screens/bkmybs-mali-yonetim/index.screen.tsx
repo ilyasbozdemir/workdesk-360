@@ -25,6 +25,7 @@ import { EmanetTeminatTab } from './components/tabs/EmanetTeminatTab'
 import { SozlesmeTaahhutTab } from './components/tabs/SozlesmeTaahhutTab'
 import { MaliIslemlereAktarModal } from './components/modals/MaliIslemlereAktarModal'
 import { DosyalarVeFaturalariTab } from './components/tabs/DosyalarVeFaturalariTab'
+import { MevzuatScreen } from '@renderer/screens/system/MevzuatScreen'
 import { useSettingsStore } from '@renderer/store/settingsStore'
 import { useTabStore } from '@renderer/store/tabStore'
 import { useGlobalDocumentPreviewStore } from '@renderer/store/globalDocumentPreviewStore'
@@ -58,7 +59,7 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<BkmybsTabKey>(queryTab || 'butce')
 
   useEffect(() => {
-    if (queryTab && ['butce', 'limit', 'mif', 'tkys', 'emanet', 'sozlesme', 'dosyalar'].includes(queryTab)) {
+    if (queryTab && ['butce', 'limit', 'mif', 'tkys', 'emanet', 'sozlesme', 'dosyalar', 'mevzuat'].includes(queryTab)) {
       setActiveTab(queryTab)
     }
   }, [queryTab])
@@ -229,6 +230,12 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
 
         {activeTab === 'dosyalar' && (
           <DosyalarVeFaturalariTab activeRole={activeRole} />
+        )}
+
+        {activeTab === 'mevzuat' && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-2 shadow-xs">
+            <MevzuatScreen />
+          </div>
         )}
       </div>
 
