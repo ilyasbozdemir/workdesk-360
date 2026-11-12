@@ -311,7 +311,11 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
         ]);
       }
       if (sql.includes("DATA_TeminKalem")) {
-        return Promise.resolve([{ id: 1, kalem_adi: "Lazer Yazıcı", miktar: 1 }]);
+        return Promise.resolve([{
+          id: 1,
+          kalem_adi: "Lazer Yazıcı",
+          miktar: 1,
+        }]);
       }
       return Promise.resolve([]);
     });
@@ -370,7 +374,10 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
         ]);
       }
       if (sql.includes("DATA_TeminFirma")) {
-        return Promise.resolve([{ temin_firma_id: 10, unvan: "Teknoloji A.Ş." }]);
+        return Promise.resolve([{
+          temin_firma_id: 10,
+          unvan: "Teknoloji A.Ş.",
+        }]);
       }
       if (sql.includes("DATA_TeminKalem")) {
         return Promise.resolve([{ id: 1, kalem_adi: "Klavye", miktar: 1 }]);
@@ -432,7 +439,10 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
         ]);
       }
       if (sql.includes("DATA_TeminFirma")) {
-        return Promise.resolve([{ temin_firma_id: 10, unvan: "Elektrik A.Ş." }]);
+        return Promise.resolve([{
+          temin_firma_id: 10,
+          unvan: "Elektrik A.Ş.",
+        }]);
       }
       if (sql.includes("DATA_TeminKalem")) {
         return Promise.resolve([{ id: 1, kalem_adi: "Kablo", miktar: 12.5 }]);
@@ -570,8 +580,11 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
     );
 
     const calledQueries = mockQuery.mock.calls.map((c) => c[0]);
-    expect(calledQueries.some((q: string) => q.includes("DATA_TeminFirma"))).toBe(false);
-    expect(calledQueries.some((q: string) => q.includes("DATA_TeminKalemTeklif"))).toBe(false);
+    expect(calledQueries.some((q: string) => q.includes("DATA_TeminFirma")))
+      .toBe(false);
+    expect(
+      calledQueries.some((q: string) => q.includes("DATA_TeminKalemTeklif")),
+    ).toBe(false);
   });
 
   // 20. Teklif detayları formatı (Türkçe para formatı)
@@ -592,10 +605,17 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
         ]);
       }
       if (sql.includes("DATA_TeminFirma")) {
-        return Promise.resolve([{ temin_firma_id: 10, unvan: "Geçerli Firma" }]);
+        return Promise.resolve([{
+          temin_firma_id: 10,
+          unvan: "Geçerli Firma",
+        }]);
       }
       if (sql.includes("DATA_TeminKalem")) {
-        return Promise.resolve([{ id: 1, kalem_adi: "Gerçek Kalem", miktar: 1 }]);
+        return Promise.resolve([{
+          id: 1,
+          kalem_adi: "Gerçek Kalem",
+          miktar: 1,
+        }]);
       }
       return Promise.resolve([]);
     });

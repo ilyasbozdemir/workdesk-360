@@ -10,6 +10,7 @@ import {
   Receipt,
   ShieldCheck,
   BookMarked,
+  FolderOpen,
   LucideIcon
 } from 'lucide-react'
 import { FinanceDashboard } from '../dashboard/FinanceDashboard'
@@ -25,6 +26,11 @@ import HakedisScreen from '@renderer/screens/hakedis/HakedisScreen'
 import ButceKodScreen from '@renderer/screens/butcekod/index.screen'
 import { MevzuatScreen } from '@renderer/screens/system/MevzuatScreen'
 import BkmybsMaliYonetimScreen from '@renderer/screens/bkmybs-mali-yonetim/index.screen'
+import { DosyalarVeFaturalariTab } from '@renderer/screens/bkmybs-mali-yonetim/components/tabs/DosyalarVeFaturalariTab'
+
+const DosyalarVeFaturalariWrapper: React.FC = () => {
+  return <DosyalarVeFaturalariTab activeRole="mali_hizmetler" />
+}
 
 export type FinanceSectionScope = 'financial-services' | 'accounting' | 'all'
 
@@ -197,6 +203,18 @@ export const FINANCE_PAGE_DEFINITIONS: FinancePageDefinition[] = [
     badgeVariant: 'emerald',
     description: 'Analitik bütçe ödenek takibi, 22/d limit kotası, MİF, TKYS zimmet ve harcama sözleşmeleri',
     component: BkmybsMaliYonetimScreen
+  },
+  {
+    id: 'dosyalar-ve-faturalari',
+    section: 'all',
+    title: 'Doğrudan Temin Dosyaları ve Faturaları',
+    shortLabel: 'Dosyalar & Faturalar',
+    breadcrumbLabel: 'Dosyalar ve Faturaları Arama Masası',
+    icon: FolderOpen,
+    badge: 'FATURALAR',
+    badgeVariant: 'emerald',
+    description: 'Tüm doğrudan temin dosyaları, fatura detayları, ödeme durumları ve filtreleme',
+    component: DosyalarVeFaturalariWrapper
   }
 ]
 
