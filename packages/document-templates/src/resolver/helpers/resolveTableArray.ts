@@ -8,6 +8,7 @@ export const ALLOWED_TABLES = new Set([
   "DATA_TeminKalem",
   "DATA_TeminFirma",
   "DATA_TeminKomisyon",
+  "DATA_TeminKomisyonUye",
   "DATA_TeminKalemTeklif",
   "DATA_TeminDosyasi",
   "DATA_IhtiyacRaporu",
@@ -28,6 +29,7 @@ export const ALLOWED_COLUMNS = new Set([
   "temin_dosya_id",
   "dosya_id",
   "rapor_id",
+  "komisyon_id",
   "sira_no",
   "kalem_adi",
   "tasinir_kodu",
@@ -46,17 +48,24 @@ export const ALLOWED_COLUMNS = new Set([
   "gorev",
   "gorevi",
   "komisyon_gorevi",
+  "komisyon_turu",
+  "karar_no",
+  "karar_tarihi",
+  "asil_yedek",
   "firma_id",
   "firma_unvani",
   "vergi_no",
   "adres",
   "telefon",
   "eposta",
+  "email",
   "personel_id",
   "sicil_no",
   "tckn",
   "teklif_tutari",
   "birim_fiyat",
+  "kdv_haric_toplam",
+  "para_birimi",
   "temin_kalem_id",
   "temin_firma_id",
   "created_at",
@@ -129,7 +138,16 @@ export function assertSafeIdentifier(
  */
 function parseValidPrice(raw: any): number | null {
   if (raw === null || raw === undefined || raw === "") return null;
-  const num = typeof raw === "number" ? raw : parseFloat(String(raw));
+  if (typeof raw === "number") {
+    if (isNaN(raw) || !isFinite(raw) || raw < 0) return null;
+    return raw;
+  }
+  let str = String(raw).trim();
+  if (!str) return null;
+  if (str.includes(",")) {
+    str = str.replace(/\./g, "").replace(",", ".");
+  }
+  const num = parseFloat(str);
   if (isNaN(num) || !isFinite(num) || num < 0) return null;
   return num;
 }
@@ -139,7 +157,16 @@ function parseValidPrice(raw: any): number | null {
  */
 function parseValidQuantity(raw: any): number {
   if (raw === null || raw === undefined || raw === "") return 1;
-  const num = typeof raw === "number" ? raw : parseFloat(String(raw));
+  if (typeof raw === "number") {
+    if (isNaN(raw) || !isFinite(raw) || raw < 0) return 0;
+    return raw;
+  }
+  let str = String(raw).trim();
+  if (!str) return 1;
+  if (str.includes(",")) {
+    str = str.replace(/\./g, "").replace(",", ".");
+  }
+  const num = parseFloat(str);
   if (isNaN(num) || !isFinite(num) || num < 0) return 0;
   return num;
 }
@@ -168,7 +195,11 @@ export async function resolveTableArray(
 ): Promise<void> {
   // 1. SQL Güvenlik ve Doğrulama
   const safeTable = assertSafeIdentifier(rule.tablo, "table");
-  const safeIliskiliId = assertSafeIdentifier(rule.iliskili_id, "column");
+  const rawIliskiliId =
+    rule.iliskili_id !== undefined && rule.iliskili_id !== ""
+      ? rule.iliskili_id
+      : "temin_dosya_id";
+  const safeIliskiliId = assertSafeIdentifier(rawIliskiliId, "column");
 
   if (rule.altEslestirme) {
     for (const [_, dbCol] of Object.entries(rule.altEslestirme)) {
@@ -215,14 +246,28 @@ export async function resolveTableArray(
       `;
       rows = await queryExecutor(tkQuery, [activeDosyaId]);
     } catch (subqueryErr) {
-      console.warn(
-        `[resolveTableArray] Correlated subquery failed, falling back to direct SELECT:`,
-        subqueryErr instanceof Error ? subqueryErr.message : String(subqueryErr),
-      );
-      rows = await queryExecutor(
-        `SELECT * FROM ${safeTable} WHERE ${safeIliskiliId} = ? ORDER BY id ASC`,
-        [activeDosyaId],
-      );
+      const errMsg =
+        subqueryErr instanceof Error ? subqueryErr.message : String(subqueryErr);
+      const isMissingTanim =
+        errMsg.includes("no such table") || errMsg.includes("no such column");
+
+      if (isMissingTanim) {
+        console.warn(
+          `[resolveTableArray] TANIM_Kalem tablosu veya kolonu bulunamadı, doğrudan SELECT ile devam ediliyor:`,
+          errMsg,
+        );
+        rows = await queryExecutor(
+          `SELECT * FROM ${safeTable} WHERE ${safeIliskiliId} = ? ORDER BY id ASC`,
+          [activeDosyaId],
+        );
+      } else {
+        // Beklenmeyen kritik SQL / bağlantı hatası fırlatılır
+        console.error(
+          `[resolveTableArray] Kritik Veritabanı Hatası: Kalem sorgusu yürütülemedi:`,
+          errMsg,
+        );
+        throw subqueryErr;
+      }
     }
   } else {
     rows = await queryExecutor(
@@ -275,16 +320,30 @@ export async function resolveTableArray(
         `SELECT temin_kalem_id, temin_firma_id, birim_fiyat FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ? ORDER BY id ASC`;
       const bidRows = await queryExecutor(bidQuery, [activeDosyaId]);
 
+      const validKalemIds = new Set(rows.map((r: any) => Number(r.id)));
+      const validFirmaIds = new Set(firms.map((f: any) => Number(f.temin_firma_id)));
+
       (bidRows || []).forEach((b: any) => {
         const kalemId = Number(b.temin_kalem_id);
         const firmaId = Number(b.temin_firma_id);
         if (!kalemId || !firmaId) return;
+
+        // Dosya dışı veya ilişkisiz kalem/firma tekliflerini filtrele (Data Integrity)
+        if (!validKalemIds.has(kalemId) || !validFirmaIds.has(firmaId)) {
+          console.warn(
+            `[resolveTableArray] Veri Bütünlüğü Uyarısı: Dosya dışı veya geçersiz kalem/firma teklifi filtrelendi (Kalem: ${kalemId}, Firma: ${firmaId})`,
+          );
+          return;
+        }
 
         const price = parseValidPrice(b.birim_fiyat);
         const key = `${kalemId}_${firmaId}`;
 
         if (price !== null) {
           if (bidsMap[key] !== undefined) {
+            console.warn(
+              `[resolveTableArray] Mükerrer Teklif Tespiti: Kalem #${kalemId} ve Firma #${firmaId} için mükerrer teklif kaydı bulundu. Deterministik en düşük fiyat korunuyor.`,
+            );
             // Mükerrer teklif varsa deterministik olarak geçerli en düşük fiyatı koru
             if (price < bidsMap[key]) {
               bidsMap[key] = price;
@@ -295,10 +354,23 @@ export async function resolveTableArray(
         }
       });
     } catch (firmErr) {
-      console.warn(
-        `[resolveTableArray] Firma/teklif verisi çözümlenirken hata oluştu:`,
-        firmErr instanceof Error ? firmErr.message : String(firmErr),
-      );
+      const errMsg = firmErr instanceof Error ? firmErr.message : String(firmErr);
+      const isMissingTable =
+        errMsg.includes("no such table") || errMsg.includes("no such column");
+
+      if (isMissingTable) {
+        console.warn(
+          `[resolveTableArray] Firma/teklif tablosu bulunamadı, fallback modunda devam ediliyor:`,
+          errMsg,
+        );
+      } else {
+        // Beklenmeyen kritik SQL / bağlantı hatası fırlatılır
+        console.error(
+          `[resolveTableArray] Kritik Veritabanı Hatası: Firma veya teklif sorgusu yürütülemedi:`,
+          errMsg,
+        );
+        throw firmErr;
+      }
     }
   }
 

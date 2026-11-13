@@ -42,8 +42,7 @@ export function useKabulVeOdemeData() {
   const cached = activeDosyaId ? kabulDataCache.get(activeDosyaId) : undefined
   const optimisticFirmaId =
     cached?.kazananFirmaId ??
-    (dosyaContext?.kazanan_firma_id ||
-      dosyaContext?.firma_id ||
+    (dosyaContext?.firma_id ||
       (dosyaContext?.enAvantajliTeklifSahibi ? 1 : undefined))
 
   const optimisticUnvan =

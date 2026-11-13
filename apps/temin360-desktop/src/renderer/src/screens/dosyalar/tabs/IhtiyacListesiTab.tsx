@@ -11,8 +11,6 @@ import {
   X,
 } from "lucide-react";
 import { YeniDosyaTabProps } from "../types";
-import { useWorkspaceStore } from "../../../store/workspaceStore";
-import { useDosyalarHooks } from "../dosyalar.hooks";
 import { useMalzemeListesi } from "../../dosya/sub-screens/components/MalzemeListesi/useMalzemeListesi";
 import { MalzemeEkleModal } from "../../dosya/sub-screens/components/MalzemeListesi/MalzemeEkleModal";
 import { cn } from "../../../utils/cn";
@@ -38,12 +36,16 @@ interface RelatedReport {
  * @returns {React.JSX.Element} İhtiyaç listesi sekmesinin arayüz çıktısı
  */
 export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
-  const { formData, setFormData, isEdit, editId, getNextTeminNo } = props;
-  const { activeDosyaId: workspaceDosyaId } = useWorkspaceStore();
-  const { addDosya } = useDosyalarHooks();
+  const { formData, setFormData, isEdit, editId } = props;
 
-  const targetDosyaId = editId || (formData as any)?.id || workspaceDosyaId ||
-    null;
+  // Güvenlik & Veri Bütünlüğü: Yeni dosya oluşturma akışında ASLA workspaceDosyaId fallback yapılmaz!
+  // Sadece düzenlenen dosyanın geçerli editId'si veya kaydedilmiş dosyanın gerçek formData.id'si kullanılır.
+  const targetDosyaId = (isEdit && editId && Number(editId) > 0)
+    ? Number(editId)
+    : (formData?.id && Number(formData.id) > 0)
+      ? Number(formData.id)
+      : null;
+
   const state = useMalzemeListesi(targetDosyaId);
 
   const [relatedReports, setRelatedReports] = useState<RelatedReport[]>([]);
@@ -59,40 +61,83 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
   } = useSetSelection<number>();
 
   // Ensure dossier exists in DB so items can be safely attached
+  // Kesin Kural: Arka planda kullanıcı onayı olmadan otomatik dosya oluşturulamaz!
   const ensureDosyaId = async (): Promise<number | null> => {
-    if (targetDosyaId) return targetDosyaId;
-
-    if (!formData.konu?.trim()) {
-      alert(
-        "Lütfen önce 1. Adımda (Genel Bilgiler) dosya konusunu / işin adını giriniz.",
-      );
-      return null;
+    if (targetDosyaId && targetDosyaId > 0) {
+      return targetDosyaId;
     }
 
+    alert(
+      "Önce dosyanın genel bilgilerini kaydediniz. Ardından ihtiyaç kalemlerini ekleyebilirsiniz.",
+    );
+    return null;
+  };
+
+  const handleCreateOrSyncIhtiyacRaporu = async (): Promise<void> => {
+    const dId = await ensureDosyaId();
+    if (!dId) return;
+
+    setIsCreatingRapor(true);
     try {
+      const existing = await ihtiyacRaporuService.getLinkedRaporForDosya(dId);
       const targetYear = formData.butce_yili || new Date().getFullYear();
-      const teminNo = formData.temin_no?.trim() ||
-        (getNextTeminNo ? getNextTeminNo(targetYear) : `${targetYear}/1`);
+      const itemsPayload = (state.items || []).map((it: any, idx: number) => ({
+        rapor_id: existing ? existing.id : 0,
+        sira_no: idx + 1,
+        kalem_adi: it.kalem_adi || "",
+        tipi: it.tipi || "Mal",
+        birim: it.birim || "Adet",
+        miktar: it.miktar || 1,
+        kdv_orani: it.kdv_orani ?? 20,
+        tasinir_kodu: it.tasinir_kodu || null,
+        okas_kodu: it.okas_kodu || null,
+        poz_no: it.poz_no || null,
+        aciklama: it.aciklama || null,
+        tahmini_birim_fiyat: it.tahmini_birim_fiyat || 0,
+      }));
 
-      const res = await addDosya({
-        ...formData,
-        temin_no: teminNo,
-        konu: formData.konu.trim(),
-        status: "devam_ediyor",
-      });
-
-      const newId = (res as { lastInsertRowid?: number })?.lastInsertRowid ||
-        (res as any)?.data?.lastInsertRowid ||
-        (res as any)?.id;
-
-      if (newId) {
-        setFormData((prev) => ({ ...prev, id: newId, temin_no: teminNo }));
-        return newId;
+      if (existing) {
+        await ihtiyacRaporuService.updateRapor(existing.id, {
+          baslik: formData.konu || existing.baslik,
+          birim_adi: (formData as any).harcama_birimi ||
+            (formData as any).birim || existing.birim_adi,
+          birim_id: formData.birim_id || existing.birim_id,
+        }, itemsPayload);
+        const updated = await ihtiyacRaporuService.getLinkedRaporForDosya(dId);
+        setLinkedRapor(updated);
+      } else {
+        const nextNo = await ihtiyacRaporuService.getNextRaporNo(targetYear);
+        const newId = await ihtiyacRaporuService.createRapor({
+          rapor_no: nextNo,
+          baslik: formData.konu?.trim() || "İhtiyaç Raporu",
+          gerekce: (formData as any).isin_aciklamasi ||
+            `${formData.konu || "Alım"} için ihtiyaç tespiti`,
+          birim_id: formData.birim_id || null,
+          birim_adi: (formData as any).harcama_birimi ||
+            (formData as any).birim || null,
+          talep_eden_personel_id: (formData as any).talep_eden_personel_id ||
+            (formData as any).hazirlayan_personel_id || null,
+          talep_eden_personel: (formData as any).talep_eden_personel ||
+            (formData as any).hazirlayan_personel || null,
+          talep_eden_unvan: null,
+          durum: "dosyaya_aktarildi",
+          temin_dosya_id: dId,
+          tarih: (formData as any).dosya_acilis_tarihi ||
+            new Date().toISOString().split("T")[0],
+          onay_tarihi: null,
+          tahmini_butce: 0,
+          notlar: null,
+          evrak_sayisi: null,
+        }, itemsPayload);
+        const created = await ihtiyacRaporuService.getRaporById(newId);
+        setLinkedRapor(created);
       }
     } catch (err: any) {
-      alert("Dosya taslağı oluşturulurken hata oluştu: " + err.message);
+      console.error("İhtiyaç Raporu oluşturma hatası:", err);
+      alert("İhtiyaç Raporu oluşturulurken hata oluştu: " + err.message);
+    } finally {
+      setIsCreatingRapor(false);
     }
-    return null;
   };
 
   const handleCreateOrSyncIhtiyacRaporu = async (): Promise<void> => {

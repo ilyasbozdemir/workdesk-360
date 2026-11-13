@@ -54,6 +54,7 @@ export const DosyaManageFooter: React.FC<DosyaManageFooterProps> = ({
               Genel Bilgilere Dön
             </button>
             <button
+              type="button"
               onClick={onSave}
               className={`px-5 py-2 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer ${
                 isEdit
@@ -67,6 +68,7 @@ export const DosyaManageFooter: React.FC<DosyaManageFooterProps> = ({
           </>
         ) : (
           <button
+            type="button"
             onClick={onSave}
             className={`px-4 py-2 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer ${
               isEdit

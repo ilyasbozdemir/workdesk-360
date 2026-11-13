@@ -8,7 +8,8 @@ import {
   FileCheck,
   Hammer,
   Scale,
-  Coins
+  Coins,
+  FolderOpen
 } from 'lucide-react'
 import { AccountingPermission } from '../modules/accounting/permissions'
 
@@ -43,6 +44,16 @@ export const ACCOUNTING_NAVIGATION: AccountingNavItem[] = [
     badgeVariant: 'emerald',
     permission: 'accounting:oeb_payment',
     description: 'Hazine ve Maliye Bakanlığı Muhasebat GM standartlarında ÖEB kayıtları'
+  },
+  {
+    id: 'dosyalar-ve-faturalari',
+    label: 'Dosyalar ve Faturaları',
+    shortLabel: 'Dosyalar & Faturalar',
+    icon: FolderOpen,
+    badge: 'FATURA',
+    badgeVariant: 'emerald',
+    permission: 'accounting:oeb_payment',
+    description: 'Doğrudan temin dosyaları ve bağlı e-faturalar kontrol masası'
   },
   {
     id: 'guarantees-escrow',

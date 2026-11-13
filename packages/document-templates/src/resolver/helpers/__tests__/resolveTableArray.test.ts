@@ -311,7 +311,11 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
         ]);
       }
       if (sql.includes("DATA_TeminKalem")) {
-        return Promise.resolve([{ id: 1, kalem_adi: "Lazer Yazıcı", miktar: 1 }]);
+        return Promise.resolve([{
+          id: 1,
+          kalem_adi: "Lazer Yazıcı",
+          miktar: 1,
+        }]);
       }
       return Promise.resolve([]);
     });
@@ -370,7 +374,10 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
         ]);
       }
       if (sql.includes("DATA_TeminFirma")) {
-        return Promise.resolve([{ temin_firma_id: 10, unvan: "Teknoloji A.Ş." }]);
+        return Promise.resolve([{
+          temin_firma_id: 10,
+          unvan: "Teknoloji A.Ş.",
+        }]);
       }
       if (sql.includes("DATA_TeminKalem")) {
         return Promise.resolve([{ id: 1, kalem_adi: "Klavye", miktar: 1 }]);
@@ -432,7 +439,10 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
         ]);
       }
       if (sql.includes("DATA_TeminFirma")) {
-        return Promise.resolve([{ temin_firma_id: 10, unvan: "Elektrik A.Ş." }]);
+        return Promise.resolve([{
+          temin_firma_id: 10,
+          unvan: "Elektrik A.Ş.",
+        }]);
       }
       if (sql.includes("DATA_TeminKalem")) {
         return Promise.resolve([{ id: 1, kalem_adi: "Kablo", miktar: 12.5 }]);
@@ -570,8 +580,11 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
     );
 
     const calledQueries = mockQuery.mock.calls.map((c) => c[0]);
-    expect(calledQueries.some((q: string) => q.includes("DATA_TeminFirma"))).toBe(false);
-    expect(calledQueries.some((q: string) => q.includes("DATA_TeminKalemTeklif"))).toBe(false);
+    expect(calledQueries.some((q: string) => q.includes("DATA_TeminFirma")))
+      .toBe(false);
+    expect(
+      calledQueries.some((q: string) => q.includes("DATA_TeminKalemTeklif")),
+    ).toBe(false);
   });
 
   // 20. Teklif detayları formatı (Türkçe para formatı)
@@ -579,5 +592,71 @@ describe("resolveTableArray — SQL Güvenliği, Veri Bütünlüğü & Test Pake
     expect(formatTR(1250000.5)).toBe("1.250.000,50");
     expect(formatTR(0)).toBe("0,00");
     expect(formatTR(14.99)).toBe("14,99");
+  });
+
+  // 21. Dosya dışından teklif ilişkilendirme girişimi
+  it("21. Dosyaya ait olmayan veya sahte kalem/firma id'li teklifler kesinlikle elenir", async () => {
+    const mockQuery = vi.fn().mockImplementation((sql: string) => {
+      if (sql.includes("DATA_TeminKalemTeklif")) {
+        return Promise.resolve([
+          { temin_kalem_id: 1, temin_firma_id: 10, birim_fiyat: 100 },
+          { temin_kalem_id: 999, temin_firma_id: 10, birim_fiyat: 50 }, // Dosyada olmayan kalem
+          { temin_kalem_id: 1, temin_firma_id: 888, birim_fiyat: 20 }, // Dosyada olmayan firma
+        ]);
+      }
+      if (sql.includes("DATA_TeminFirma")) {
+        return Promise.resolve([{
+          temin_firma_id: 10,
+          unvan: "Geçerli Firma",
+        }]);
+      }
+      if (sql.includes("DATA_TeminKalem")) {
+        return Promise.resolve([{
+          id: 1,
+          kalem_adi: "Gerçek Kalem",
+          miktar: 1,
+        }]);
+      }
+      return Promise.resolve([]);
+    });
+
+    const payload: Record<string, any> = {};
+    await resolveTableArray(
+      baseRule,
+      10,
+      mockQuery,
+      payload,
+      "kalemler",
+      "piyasa_fiyat_arastirma_tutanagi",
+    );
+
+    // Yalnızca geçerli kalem 1 ve firma 10 teklifi (100) işlenmeli, sahte 20 veya 50 fiyata itibar edilmemeli
+    expect(payload.kalemler[0].enDusukFiyat).toBe("100,00");
+    expect(payload.kalemler[0].enUygunFirmaAdi).toBe("Geçerli Firma");
+  });
+
+  // 22. Firma sorgusunda beklenmeyen kritik veritabanı hatası
+  it("22. Firma veya teklif sorgusunda disk/bağlantı hatası olduğunda hata fırlatılır, sessizce yutulmaz", async () => {
+    const mockQuery = vi.fn().mockImplementation((sql: string) => {
+      if (sql.includes("DATA_TeminKalem")) {
+        return Promise.resolve([{ id: 1, kalem_adi: "Malzeme", miktar: 1 }]);
+      }
+      if (sql.includes("DATA_TeminFirma")) {
+        return Promise.reject(new Error("SQLITE_IOERR: disk I/O error"));
+      }
+      return Promise.resolve([]);
+    });
+
+    const payload: Record<string, any> = {};
+    await expect(
+      resolveTableArray(
+        baseRule,
+        10,
+        mockQuery,
+        payload,
+        "kalemler",
+        "piyasa_fiyat_arastirma_tutanagi",
+      ),
+    ).rejects.toThrow("SQLITE_IOERR: disk I/O error");
   });
 });
