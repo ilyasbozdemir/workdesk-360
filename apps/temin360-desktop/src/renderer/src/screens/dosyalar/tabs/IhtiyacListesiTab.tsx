@@ -43,8 +43,8 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
   const targetDosyaId = (isEdit && editId && Number(editId) > 0)
     ? Number(editId)
     : (formData?.id && Number(formData.id) > 0)
-      ? Number(formData.id)
-      : null;
+    ? Number(formData.id)
+    : null;
 
   const state = useMalzemeListesi(targetDosyaId);
 
@@ -72,6 +72,8 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
     );
     return null;
   };
+
+
 
   const handleCreateOrSyncIhtiyacRaporu = async (): Promise<void> => {
     const dId = await ensureDosyaId();
@@ -139,8 +141,6 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
       setIsCreatingRapor(false);
     }
   };
-
-  // Action button handlers
   const handleOpenManualAdd = async () => {
     const dId = await ensureDosyaId();
     if (dId || targetDosyaId) {
@@ -416,9 +416,9 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
                     Bu Dosya İçin Henüz İhtiyaç Raporu Bağlanmadı
                   </h4>
                   <p className="text-xs text-amber-700/80 dark:text-amber-400 mt-0.5">
-                    Dosya konusu ({formData.konu || "Mevcut Konu"}) ile tek tıkla
-                    İhtiyaç Raporu oluşturup İhtiyaç Listesi resmî çıktısına
-                    bağlayabilirsiniz.
+                    Dosya konusu ({formData.konu || "Mevcut Konu"}) ile tek
+                    tıkla İhtiyaç Raporu oluşturup İhtiyaç Listesi resmî
+                    çıktısına bağlayabilirsiniz.
                   </p>
                 </div>
               </div>

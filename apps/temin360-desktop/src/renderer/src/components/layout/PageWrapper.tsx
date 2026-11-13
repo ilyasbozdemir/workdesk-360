@@ -121,7 +121,7 @@ export function PageWrapper(): React.ReactNode {
         }
       }
     }
-  }, [routerState.location.href, activeFilePath, isAuthenticated, addTab, isAnyWindowMode])
+  }, [routerState.location.href, routerState.location.pathname, activeFilePath, isAuthenticated, addTab, isAnyWindowMode])
 
   useEffect(() => {
     if (isAnyWindowMode) return
