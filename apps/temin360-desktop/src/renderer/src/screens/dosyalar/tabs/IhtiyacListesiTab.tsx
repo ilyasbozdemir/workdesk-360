@@ -73,72 +73,7 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
     return null;
   };
 
-  const handleCreateOrSyncIhtiyacRaporu = async (): Promise<void> => {
-    const dId = await ensureDosyaId();
-    if (!dId) return;
 
-    setIsCreatingRapor(true);
-    try {
-      const existing = await ihtiyacRaporuService.getLinkedRaporForDosya(dId);
-      const targetYear = formData.butce_yili || new Date().getFullYear();
-      const itemsPayload = (state.items || []).map((it: any, idx: number) => ({
-        rapor_id: existing ? existing.id : 0,
-        sira_no: idx + 1,
-        kalem_adi: it.kalem_adi || "",
-        tipi: it.tipi || "Mal",
-        birim: it.birim || "Adet",
-        miktar: it.miktar || 1,
-        kdv_orani: it.kdv_orani ?? 20,
-        tasinir_kodu: it.tasinir_kodu || null,
-        okas_kodu: it.okas_kodu || null,
-        poz_no: it.poz_no || null,
-        aciklama: it.aciklama || null,
-        tahmini_birim_fiyat: it.tahmini_birim_fiyat || 0,
-      }));
-
-      if (existing) {
-        await ihtiyacRaporuService.updateRapor(existing.id, {
-          baslik: formData.konu || existing.baslik,
-          birim_adi: (formData as any).harcama_birimi ||
-            (formData as any).birim || existing.birim_adi,
-          birim_id: formData.birim_id || existing.birim_id,
-        }, itemsPayload);
-        const updated = await ihtiyacRaporuService.getLinkedRaporForDosya(dId);
-        setLinkedRapor(updated);
-      } else {
-        const nextNo = await ihtiyacRaporuService.getNextRaporNo(targetYear);
-        const newId = await ihtiyacRaporuService.createRapor({
-          rapor_no: nextNo,
-          baslik: formData.konu?.trim() || "İhtiyaç Raporu",
-          gerekce: (formData as any).isin_aciklamasi ||
-            `${formData.konu || "Alım"} için ihtiyaç tespiti`,
-          birim_id: formData.birim_id || null,
-          birim_adi: (formData as any).harcama_birimi ||
-            (formData as any).birim || null,
-          talep_eden_personel_id: (formData as any).talep_eden_personel_id ||
-            (formData as any).hazirlayan_personel_id || null,
-          talep_eden_personel: (formData as any).talep_eden_personel ||
-            (formData as any).hazirlayan_personel || null,
-          talep_eden_unvan: null,
-          durum: "dosyaya_aktarildi",
-          temin_dosya_id: dId,
-          tarih: (formData as any).dosya_acilis_tarihi ||
-            new Date().toISOString().split("T")[0],
-          onay_tarihi: null,
-          tahmini_butce: 0,
-          notlar: null,
-          evrak_sayisi: null,
-        }, itemsPayload);
-        const created = await ihtiyacRaporuService.getRaporById(newId);
-        setLinkedRapor(created);
-      }
-    } catch (err: any) {
-      console.error("İhtiyaç Raporu oluşturma hatası:", err);
-      alert("İhtiyaç Raporu oluşturulurken hata oluştu: " + err.message);
-    } finally {
-      setIsCreatingRapor(false);
-    }
-  };
 
   const handleCreateOrSyncIhtiyacRaporu = async (): Promise<void> => {
     const dId = await ensureDosyaId();
@@ -206,8 +141,6 @@ export function IhtiyacListesiTab(props: YeniDosyaTabProps): React.JSX.Element {
       setIsCreatingRapor(false);
     }
   };
-
-  // Action button handlers
   const handleOpenManualAdd = async () => {
     const dId = await ensureDosyaId();
     if (dId || targetDosyaId) {
