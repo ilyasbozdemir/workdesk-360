@@ -7,7 +7,7 @@ export default {
   app: "1.0.0-current",
   suite: "workdesk-360",
   apps: {
-    "temin360-desktop": "1.0.0-rc.15",
+    "temin360-desktop": "1.0.0-rc.17",
     "ihale360-desktop": "1.0.0-beta.1",
     "devlet-ihale-2886-desktop": "1.0.0-beta.1"
   },
