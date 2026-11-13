@@ -1,0 +1,751 @@
+{
+  "metadata": {
+    "title": "Temin 360 Performans Profili, Darboğaz Analizi ve Düşük Donanım Test Raporu",
+    "date": "2026-11-10T17:01:17.492Z",
+    "environment": {
+      "nodeVersion": "v22.21.0",
+      "platform": "win32",
+      "arch": "x64"
+    }
+  },
+  "sqlite": {
+    "queryPlans": {
+      "Q1_DOSYA_LISTESI": {
+        "name": "Dosya Listesi Açılışı (Son 50)",
+        "sql": "SELECT * FROM DATA_TeminDosyasi ORDER BY id DESC LIMIT 50",
+        "planNoIndex": "SCAN DATA_TeminDosyasi",
+        "planWithIndex": "SCAN DATA_TeminDosyasi"
+      },
+      "Q2_DOSYA_DETAY": {
+        "name": "Dosya Detay Kartı Yükleme",
+        "sql": "SELECT * FROM DATA_TeminDosyasi WHERE id = ?",
+        "planNoIndex": "SEARCH DATA_TeminDosyasi USING INTEGER PRIMARY KEY (rowid=?)",
+        "planWithIndex": "SEARCH DATA_TeminDosyasi USING INTEGER PRIMARY KEY (rowid=?)"
+      },
+      "Q3_KALEMLER": {
+        "name": "İhtiyaç Kalemleri Yükleme (N+1 / Dosya Kalemleri)",
+        "sql": "SELECT * FROM DATA_TeminKalem WHERE temin_dosya_id = ? ORDER BY id ASC",
+        "planNoIndex": "SCAN DATA_TeminKalem",
+        "planWithIndex": "SEARCH DATA_TeminKalem USING INDEX idx_temin_kalem_dosya (temin_dosya_id=?)"
+      },
+      "Q4_FIRMALAR": {
+        "name": "Dosya Firmaları Yükleme",
+        "sql": "SELECT * FROM DATA_TeminFirma WHERE temin_dosya_id = ?",
+        "planNoIndex": "SCAN DATA_TeminFirma",
+        "planWithIndex": "SEARCH DATA_TeminFirma USING INDEX idx_temin_firma_dosya (temin_dosya_id=?)"
+      },
+      "Q5_TEKLIFLER": {
+        "name": "Kalem Teklifleri Yükleme (Piyasa Araştırma / Yaklaşık Maliyet)",
+        "sql": "SELECT * FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ?",
+        "planNoIndex": "SCAN DATA_TeminKalemTeklif",
+        "planWithIndex": "SEARCH DATA_TeminKalemTeklif USING INDEX idx_temin_teklif_dosya (temin_dosya_id=?)"
+      },
+      "Q6_SNAPSHOT": {
+        "name": "Belge Snapshot Yükleme (DocumentPreviewModalV3)",
+        "sql": "SELECT * FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND sablon_kodu = ?",
+        "planNoIndex": "SCAN DATA_TeminBelgeSnapshot",
+        "planWithIndex": "SEARCH DATA_TeminBelgeSnapshot USING INDEX idx_temin_snapshot_dosya_sablon (dosya_id=? AND sablon_kodu=?)"
+      },
+      "Q7_ARAMA": {
+        "name": "Dosya Konusu Metin Arama (LIKE filtreleme)",
+        "sql": "SELECT * FROM DATA_TeminDosyasi WHERE konu LIKE ? LIMIT 50",
+        "planNoIndex": "SCAN DATA_TeminDosyasi",
+        "planWithIndex": "SCAN DATA_TeminDosyasi"
+      }
+    },
+    "measurements": [
+      {
+        "datasetSize": 100,
+        "totalFiles": 100,
+        "totalKalem": 1000,
+        "totalTeklif": 3000,
+        "queryId": "Q1_DOSYA_LISTESI",
+        "queryName": "Dosya Listesi Açılışı (Son 50)",
+        "withoutIndex": {
+          "min": 0.139,
+          "median": 0.172,
+          "p95": 0.303,
+          "max": 0.406
+        },
+        "withIndex": {
+          "min": 0.135,
+          "median": 0.156,
+          "p95": 0.498,
+          "max": 0.542
+        },
+        "speedup": "1.1x"
+      },
+      {
+        "datasetSize": 100,
+        "totalFiles": 100,
+        "totalKalem": 1000,
+        "totalTeklif": 3000,
+        "queryId": "Q2_DOSYA_DETAY",
+        "queryName": "Dosya Detay Kartı Yükleme",
+        "withoutIndex": {
+          "min": 0.006,
+          "median": 0.007,
+          "p95": 0.014,
+          "max": 0.025
+        },
+        "withIndex": {
+          "min": 0.007,
+          "median": 0.008,
+          "p95": 0.042,
+          "max": 0.071
+        },
+        "speedup": "0.9x"
+      },
+      {
+        "datasetSize": 100,
+        "totalFiles": 100,
+        "totalKalem": 1000,
+        "totalTeklif": 3000,
+        "queryId": "Q3_KALEMLER",
+        "queryName": "İhtiyaç Kalemleri Yükleme (N+1 / Dosya Kalemleri)",
+        "withoutIndex": {
+          "min": 0.042,
+          "median": 0.046,
+          "p95": 0.095,
+          "max": 0.1
+        },
+        "withIndex": {
+          "min": 0.019,
+          "median": 0.022,
+          "p95": 0.043,
+          "max": 0.241
+        },
+        "speedup": "2.1x"
+      },
+      {
+        "datasetSize": 100,
+        "totalFiles": 100,
+        "totalKalem": 1000,
+        "totalTeklif": 3000,
+        "queryId": "Q4_FIRMALAR",
+        "queryName": "Dosya Firmaları Yükleme",
+        "withoutIndex": {
+          "min": 0.012,
+          "median": 0.012,
+          "p95": 0.015,
+          "max": 0.026
+        },
+        "withIndex": {
+          "min": 0.005,
+          "median": 0.005,
+          "p95": 0.007,
+          "max": 0.009
+        },
+        "speedup": "2.4x"
+      },
+      {
+        "datasetSize": 100,
+        "totalFiles": 100,
+        "totalKalem": 1000,
+        "totalTeklif": 3000,
+        "queryId": "Q5_TEKLIFLER",
+        "queryName": "Kalem Teklifleri Yükleme (Piyasa Araştırma / Yaklaşık Maliyet)",
+        "withoutIndex": {
+          "min": 0.088,
+          "median": 0.099,
+          "p95": 0.116,
+          "max": 0.123
+        },
+        "withIndex": {
+          "min": 0.031,
+          "median": 0.038,
+          "p95": 0.081,
+          "max": 0.125
+        },
+        "speedup": "2.6x"
+      },
+      {
+        "datasetSize": 100,
+        "totalFiles": 100,
+        "totalKalem": 1000,
+        "totalTeklif": 3000,
+        "queryId": "Q6_SNAPSHOT",
+        "queryName": "Belge Snapshot Yükleme (DocumentPreviewModalV3)",
+        "withoutIndex": {
+          "min": 0.005,
+          "median": 0.01,
+          "p95": 0.014,
+          "max": 0.05
+        },
+        "withIndex": {
+          "min": 0.001,
+          "median": 0.001,
+          "p95": 0.012,
+          "max": 0.013
+        },
+        "speedup": "10.0x"
+      },
+      {
+        "datasetSize": 100,
+        "totalFiles": 100,
+        "totalKalem": 1000,
+        "totalTeklif": 3000,
+        "queryId": "Q7_ARAMA",
+        "queryName": "Dosya Konusu Metin Arama (LIKE filtreleme)",
+        "withoutIndex": {
+          "min": 0.019,
+          "median": 0.021,
+          "p95": 0.049,
+          "max": 0.081
+        },
+        "withIndex": {
+          "min": 0.019,
+          "median": 0.02,
+          "p95": 0.03,
+          "max": 0.04
+        },
+        "speedup": "1.1x"
+      },
+      {
+        "datasetSize": 1000,
+        "totalFiles": 1000,
+        "totalKalem": 10000,
+        "totalTeklif": 30000,
+        "queryId": "Q1_DOSYA_LISTESI",
+        "queryName": "Dosya Listesi Açılışı (Son 50)",
+        "withoutIndex": {
+          "min": 0.161,
+          "median": 0.179,
+          "p95": 0.307,
+          "max": 0.554
+        },
+        "withIndex": {
+          "min": 0.157,
+          "median": 0.166,
+          "p95": 0.253,
+          "max": 0.519
+        },
+        "speedup": "1.1x"
+      },
+      {
+        "datasetSize": 1000,
+        "totalFiles": 1000,
+        "totalKalem": 10000,
+        "totalTeklif": 30000,
+        "queryId": "Q2_DOSYA_DETAY",
+        "queryName": "Dosya Detay Kartı Yükleme",
+        "withoutIndex": {
+          "min": 0.007,
+          "median": 0.008,
+          "p95": 0.008,
+          "max": 0.012
+        },
+        "withIndex": {
+          "min": 0.007,
+          "median": 0.007,
+          "p95": 0.008,
+          "max": 0.009
+        },
+        "speedup": "1.1x"
+      },
+      {
+        "datasetSize": 1000,
+        "totalFiles": 1000,
+        "totalKalem": 10000,
+        "totalTeklif": 30000,
+        "queryId": "Q3_KALEMLER",
+        "queryName": "İhtiyaç Kalemleri Yükleme (N+1 / Dosya Kalemleri)",
+        "withoutIndex": {
+          "min": 0.273,
+          "median": 0.287,
+          "p95": 0.447,
+          "max": 0.466
+        },
+        "withIndex": {
+          "min": 0.018,
+          "median": 0.02,
+          "p95": 0.026,
+          "max": 0.027
+        },
+        "speedup": "14.3x"
+      },
+      {
+        "datasetSize": 1000,
+        "totalFiles": 1000,
+        "totalKalem": 10000,
+        "totalTeklif": 30000,
+        "queryId": "Q4_FIRMALAR",
+        "queryName": "Dosya Firmaları Yükleme",
+        "withoutIndex": {
+          "min": 0.071,
+          "median": 0.078,
+          "p95": 0.102,
+          "max": 0.165
+        },
+        "withIndex": {
+          "min": 0.005,
+          "median": 0.007,
+          "p95": 0.016,
+          "max": 0.024
+        },
+        "speedup": "11.1x"
+      },
+      {
+        "datasetSize": 1000,
+        "totalFiles": 1000,
+        "totalKalem": 10000,
+        "totalTeklif": 30000,
+        "queryId": "Q5_TEKLIFLER",
+        "queryName": "Kalem Teklifleri Yükleme (Piyasa Araştırma / Yaklaşık Maliyet)",
+        "withoutIndex": {
+          "min": 0.62,
+          "median": 0.675,
+          "p95": 0.93,
+          "max": 1.051
+        },
+        "withIndex": {
+          "min": 0.023,
+          "median": 0.026,
+          "p95": 0.055,
+          "max": 0.088
+        },
+        "speedup": "26.0x"
+      },
+      {
+        "datasetSize": 1000,
+        "totalFiles": 1000,
+        "totalKalem": 10000,
+        "totalTeklif": 30000,
+        "queryId": "Q6_SNAPSHOT",
+        "queryName": "Belge Snapshot Yükleme (DocumentPreviewModalV3)",
+        "withoutIndex": {
+          "min": 0.003,
+          "median": 0.004,
+          "p95": 0.026,
+          "max": 0.108
+        },
+        "withIndex": {
+          "min": 0.001,
+          "median": 0.001,
+          "p95": 0.006,
+          "max": 0.009
+        },
+        "speedup": "4.0x"
+      },
+      {
+        "datasetSize": 1000,
+        "totalFiles": 1000,
+        "totalKalem": 10000,
+        "totalTeklif": 30000,
+        "queryId": "Q7_ARAMA",
+        "queryName": "Dosya Konusu Metin Arama (LIKE filtreleme)",
+        "withoutIndex": {
+          "min": 0.058,
+          "median": 0.062,
+          "p95": 0.159,
+          "max": 0.226
+        },
+        "withIndex": {
+          "min": 0.055,
+          "median": 0.056,
+          "p95": 0.071,
+          "max": 0.143
+        },
+        "speedup": "1.1x"
+      },
+      {
+        "datasetSize": 10000,
+        "totalFiles": 10000,
+        "totalKalem": 100000,
+        "totalTeklif": 300000,
+        "queryId": "Q1_DOSYA_LISTESI",
+        "queryName": "Dosya Listesi Açılışı (Son 50)",
+        "withoutIndex": {
+          "min": 0.142,
+          "median": 0.159,
+          "p95": 0.285,
+          "max": 0.461
+        },
+        "withIndex": {
+          "min": 0.139,
+          "median": 0.17,
+          "p95": 0.27,
+          "max": 0.36
+        },
+        "speedup": "0.9x"
+      },
+      {
+        "datasetSize": 10000,
+        "totalFiles": 10000,
+        "totalKalem": 100000,
+        "totalTeklif": 300000,
+        "queryId": "Q2_DOSYA_DETAY",
+        "queryName": "Dosya Detay Kartı Yükleme",
+        "withoutIndex": {
+          "min": 0.006,
+          "median": 0.007,
+          "p95": 0.012,
+          "max": 0.014
+        },
+        "withIndex": {
+          "min": 0.007,
+          "median": 0.007,
+          "p95": 0.01,
+          "max": 0.031
+        },
+        "speedup": "1.0x"
+      },
+      {
+        "datasetSize": 10000,
+        "totalFiles": 10000,
+        "totalKalem": 100000,
+        "totalTeklif": 300000,
+        "queryId": "Q3_KALEMLER",
+        "queryName": "İhtiyaç Kalemleri Yükleme (N+1 / Dosya Kalemleri)",
+        "withoutIndex": {
+          "min": 4.566,
+          "median": 5.515,
+          "p95": 6.83,
+          "max": 7.034
+        },
+        "withIndex": {
+          "min": 0.018,
+          "median": 0.021,
+          "p95": 0.06,
+          "max": 0.07
+        },
+        "speedup": "262.6x"
+      },
+      {
+        "datasetSize": 10000,
+        "totalFiles": 10000,
+        "totalKalem": 100000,
+        "totalTeklif": 300000,
+        "queryId": "Q4_FIRMALAR",
+        "queryName": "Dosya Firmaları Yükleme",
+        "withoutIndex": {
+          "min": 0.626,
+          "median": 0.719,
+          "p95": 0.83,
+          "max": 0.895
+        },
+        "withIndex": {
+          "min": 0.008,
+          "median": 0.017,
+          "p95": 0.03,
+          "max": 0.066
+        },
+        "speedup": "42.3x"
+      },
+      {
+        "datasetSize": 10000,
+        "totalFiles": 10000,
+        "totalKalem": 100000,
+        "totalTeklif": 300000,
+        "queryId": "Q5_TEKLIFLER",
+        "queryName": "Kalem Teklifleri Yükleme (Piyasa Araştırma / Yaklaşık Maliyet)",
+        "withoutIndex": {
+          "min": 8.301,
+          "median": 9.101,
+          "p95": 10.477,
+          "max": 10.602
+        },
+        "withIndex": {
+          "min": 0.028,
+          "median": 0.029,
+          "p95": 0.059,
+          "max": 0.238
+        },
+        "speedup": "313.8x"
+      },
+      {
+        "datasetSize": 10000,
+        "totalFiles": 10000,
+        "totalKalem": 100000,
+        "totalTeklif": 300000,
+        "queryId": "Q6_SNAPSHOT",
+        "queryName": "Belge Snapshot Yükleme (DocumentPreviewModalV3)",
+        "withoutIndex": {
+          "min": 0.004,
+          "median": 0.004,
+          "p95": 0.005,
+          "max": 0.024
+        },
+        "withIndex": {
+          "min": 0.001,
+          "median": 0.001,
+          "p95": 0.001,
+          "max": 0.003
+        },
+        "speedup": "4.0x"
+      },
+      {
+        "datasetSize": 10000,
+        "totalFiles": 10000,
+        "totalKalem": 100000,
+        "totalTeklif": 300000,
+        "queryId": "Q7_ARAMA",
+        "queryName": "Dosya Konusu Metin Arama (LIKE filtreleme)",
+        "withoutIndex": {
+          "min": 0.579,
+          "median": 0.768,
+          "p95": 1.625,
+          "max": 1.666
+        },
+        "withIndex": {
+          "min": 0.498,
+          "median": 0.71,
+          "p95": 1.916,
+          "max": 1.992
+        },
+        "speedup": "1.1x"
+      }
+    ]
+  },
+  "documentEngine": {
+    "Küçük (5 Kalem)": {
+      "itemCount": 5,
+      "phases": {
+        "phase1_sourceData": {
+          "min": 0.56,
+          "median": 1.41,
+          "p95": 14.17,
+          "max": 14.17
+        },
+        "phase2_mappingResolution": {
+          "min": 1.42,
+          "median": 3.19,
+          "p95": 19.86,
+          "max": 19.86
+        },
+        "phase3_templatePreparation": {
+          "min": 1.83,
+          "median": 3.76,
+          "p95": 8.45,
+          "max": 8.45
+        },
+        "phase4_snapshotLoad": {
+          "min": 0.11,
+          "median": 0.14,
+          "p95": 0.3,
+          "max": 0.3
+        },
+        "phase5_smartMerge": {
+          "min": 0.06,
+          "median": 0.08,
+          "p95": 1.22,
+          "max": 1.22
+        },
+        "phase6_reactRender": {
+          "min": 7.43,
+          "median": 12.34,
+          "p95": 163.75,
+          "max": 163.75
+        },
+        "phase7_pdfHtmlCompile": {
+          "min": 4.69,
+          "median": 9.57,
+          "p95": 33.6,
+          "max": 33.6
+        },
+        "total_endToEnd": {
+          "min": 18.36,
+          "median": 31.73,
+          "p95": 234.37,
+          "max": 234.37
+        }
+      }
+    },
+    "Orta (50 Kalem)": {
+      "itemCount": 50,
+      "phases": {
+        "phase1_sourceData": {
+          "min": 0.54,
+          "median": 0.82,
+          "p95": 3.56,
+          "max": 3.56
+        },
+        "phase2_mappingResolution": {
+          "min": 2.39,
+          "median": 2.92,
+          "p95": 3.92,
+          "max": 3.92
+        },
+        "phase3_templatePreparation": {
+          "min": 1.96,
+          "median": 2.74,
+          "p95": 4.51,
+          "max": 4.51
+        },
+        "phase4_snapshotLoad": {
+          "min": 0.14,
+          "median": 0.2,
+          "p95": 0.84,
+          "max": 0.84
+        },
+        "phase5_smartMerge": {
+          "min": 0.06,
+          "median": 0.08,
+          "p95": 0.17,
+          "max": 0.17
+        },
+        "phase6_reactRender": {
+          "min": 7.38,
+          "median": 12.22,
+          "p95": 35.97,
+          "max": 35.97
+        },
+        "phase7_pdfHtmlCompile": {
+          "min": 5.67,
+          "median": 10.69,
+          "p95": 16.11,
+          "max": 16.11
+        },
+        "total_endToEnd": {
+          "min": 19.83,
+          "median": 30.99,
+          "p95": 58.91,
+          "max": 58.91
+        }
+      }
+    },
+    "Büyük (200 Kalem)": {
+      "itemCount": 200,
+      "phases": {
+        "phase1_sourceData": {
+          "min": 1.34,
+          "median": 1.59,
+          "p95": 5.18,
+          "max": 5.18
+        },
+        "phase2_mappingResolution": {
+          "min": 2.45,
+          "median": 5.16,
+          "p95": 8.57,
+          "max": 8.57
+        },
+        "phase3_templatePreparation": {
+          "min": 3.27,
+          "median": 4.75,
+          "p95": 12.93,
+          "max": 12.93
+        },
+        "phase4_snapshotLoad": {
+          "min": 0.3,
+          "median": 0.42,
+          "p95": 2.19,
+          "max": 2.19
+        },
+        "phase5_smartMerge": {
+          "min": 0.06,
+          "median": 0.1,
+          "p95": 0.41,
+          "max": 0.41
+        },
+        "phase6_reactRender": {
+          "min": 11.27,
+          "median": 16.14,
+          "p95": 50.57,
+          "max": 50.57
+        },
+        "phase7_pdfHtmlCompile": {
+          "min": 8.83,
+          "median": 11.87,
+          "p95": 13.94,
+          "max": 13.94
+        },
+        "total_endToEnd": {
+          "min": 29.97,
+          "median": 38.21,
+          "p95": 80.49,
+          "max": 80.49
+        }
+      }
+    }
+  },
+  "hardwareAndReact": {
+    "ipcPayloadSizes": {
+      "dossierList50": {
+        "recordCount": 50,
+        "bytes": 40318,
+        "kb": 39.37
+      },
+      "previewPayload_5_items": {
+        "itemCount": 5,
+        "bytes": 7808,
+        "kb": 7.63
+      },
+      "previewPayload_50_items": {
+        "itemCount": 50,
+        "bytes": 50124,
+        "kb": 48.95
+      },
+      "previewPayload_200_items": {
+        "itemCount": 200,
+        "bytes": 193339,
+        "kb": 188.81
+      }
+    },
+    "jsonStringifyOverhead": {
+      "stringify_5_items": {
+        "itemCount": 5,
+        "averagePerRenderMs": 0.184,
+        "frequencyAt60FpsPerSecondMs": 11
+      },
+      "stringify_50_items": {
+        "itemCount": 50,
+        "averagePerRenderMs": 0.504,
+        "frequencyAt60FpsPerSecondMs": 30.3
+      },
+      "stringify_200_items": {
+        "itemCount": 200,
+        "averagePerRenderMs": 1.871,
+        "frequencyAt60FpsPerSecondMs": 112.3
+      }
+    },
+    "hardwareProfiles": {
+      "High-End (16 GB RAM, Modern CPU)": {
+        "coldStartMs": 450,
+        "warmStartMs": 180,
+        "dossierListOpenMs": 28.1,
+        "dossierDetailLoadMs": 35.1,
+        "documentPreviewOpenMs": 48,
+        "templateSwitchMs": 22,
+        "documentSaveAndReopenMs": 42.2,
+        "pdfGenerationMs": 110
+      },
+      "Mid-Range (8 GB RAM, Orta CPU)": {
+        "coldStartMs": 1025,
+        "warmStartMs": 406.5,
+        "dossierListOpenMs": 62.4,
+        "dossierDetailLoadMs": 77.8,
+        "documentPreviewOpenMs": 119.6,
+        "templateSwitchMs": 48.4,
+        "documentSaveAndReopenMs": 94,
+        "pdfGenerationMs": 259.5
+      },
+      "Low-End (4 GB RAM, Eski Çift Çekirdekli CPU)": {
+        "coldStartMs": 2570,
+        "warmStartMs": 1014,
+        "dossierListOpenMs": 159.7,
+        "dossierDetailLoadMs": 197.5,
+        "documentPreviewOpenMs": 315.2,
+        "templateSwitchMs": 118.8,
+        "documentSaveAndReopenMs": 243.8,
+        "pdfGenerationMs": 664
+      }
+    },
+    "hddVsSsdImpact": {
+      "unindexedTableScan10kKalem": {
+        "ssdLatencyMs": 4.8,
+        "hddLatencyMs": 68.5,
+        "slowdownFactor": "14.2x"
+      },
+      "indexedSearch10kKalem": {
+        "ssdLatencyMs": 0.18,
+        "hddLatencyMs": 1.25,
+        "slowdownFactor": "6.9x"
+      },
+      "coldStartIoDelay": {
+        "ssdTimeMs": 450,
+        "hddTimeMs": 2450,
+        "slowdownFactor": "5.4x"
+      }
+    }
+  }
+}

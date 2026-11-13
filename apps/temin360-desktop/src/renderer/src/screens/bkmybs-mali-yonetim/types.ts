@@ -59,7 +59,7 @@ export const KAMU_ROLES: Record<KamuRole, RoleDefinition> = {
   }
 }
 
-export type BkmybsTabKey = 'butce' | 'limit' | 'mif' | 'tkys' | 'emanet' | 'sozlesme'
+export type BkmybsTabKey = 'butce' | 'limit' | 'mif' | 'tkys' | 'emanet' | 'sozlesme' | 'dosyalar' | 'mevzuat'
 
 export interface ButceTertip {
   id: string

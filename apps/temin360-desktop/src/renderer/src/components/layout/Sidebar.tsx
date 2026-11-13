@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { Building2, ChevronDown, ChevronLeft, ChevronRight, LogOut, Coins } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useSettingsStore } from '../../store/settingsStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
+import { useTabStore } from '@renderer/store/tabStore'
+import { APP_ROUTES } from '@renderer/constants/routeConstants'
 import { useShallow } from 'zustand/react/shallow'
 import { getInitials } from '@renderer/utils/formatters'
 import { MenuGroup, getSidebarMenuGroups } from './sidebar.constants'
@@ -46,6 +48,15 @@ export function Sidebar(): React.JSX.Element {
     }))
   )
   const { setActiveWorkspace } = useWorkspaceContextStore()
+  const navigate = useNavigate()
+  const { addTab, setActiveTab } = useTabStore()
+
+  const handleGoToFinance = () => {
+    setActiveWorkspace('finance')
+    addTab(APP_ROUTES.BKMYBS_MALI_YONETIM)
+    setActiveTab(APP_ROUTES.BKMYBS_MALI_YONETIM)
+    navigate({ to: APP_ROUTES.BKMYBS_MALI_YONETIM })
+  }
 
   // Mod Seçici Durumu
   const [procurementMode, setProcurementMode] = useState<
@@ -175,7 +186,7 @@ export function Sidebar(): React.JSX.Element {
       <div className={cn('px-3 pt-3 shrink-0', isCollapsed && 'px-2')}>
         <button
           type="button"
-          onClick={() => setActiveWorkspace('finance')}
+          onClick={handleGoToFinance}
           className={cn(
             'w-full flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 text-xs font-bold transition-all hover:scale-[1.01] cursor-pointer shadow-2xs',
             isCollapsed && 'px-0'

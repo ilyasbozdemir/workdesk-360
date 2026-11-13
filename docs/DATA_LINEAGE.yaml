@@ -1,0 +1,315 @@
+# ==============================================================================
+# WORKDESK 360 / TEMİN 360 — MERKEZİ VERİ VE KOD REHBERİ (DATA LINEAGE)
+# ==============================================================================
+# Bu dosya, monorepo genelindeki SQLite veri kaynaklarını, Document Engine
+# çözümleme kurallarını, şablon sözleşmelerini ve ilgili kod yollarını belgeler.
+#
+# Mimari İlkeler:
+# 1. Template = Talimat ve görünüm (Görsel ve şema kontratı)
+# 2. Document Engine = Talimatları çalıştıran tek genel motor (@worksuite-360/document-engine)
+# 3. Data Adapter = Veritabanı işlemleri (IPC ve queryExecutor adaptörleri)
+# 4. Domain Services = Ortak iş kuralları (@temin360/contracts, rota, antet)
+# 5. PDF Generator = Bağımsız çıktı üretimi (@temin360/pdf-generator)
+# ==============================================================================
+
+version: "1.0.0"
+lastUpdated: "2026-11-10"
+system: "WorkDesk 360 / Temin 360 Monorepo"
+
+# ------------------------------------------------------------------------------
+# 1. VERİ GRUPLARI VE ÇÖZÜMLEME ZİNCİRİ
+# ------------------------------------------------------------------------------
+dataGroups:
+  kurumVeBirimler:
+    title: "Kurum ve Birimler"
+    description: "İdare antet hiyerarşisi, harcama birimi, müdürlük ve ihtiyaç yeri verileri."
+    sourceTables:
+      - table: "TANIM_Kurum"
+        columns: ["id", "kurum_adi", "ust_kurum_adi", "kurum_anteti", "antet_metni", "makam_adi", "logo_sol", "logo_sag", "adres", "telefon", "faks", "web_sitesi", "eposta", "kep_adresi", "kurum_tipi", "alt_kurum_tipi", "alt_kurum_bizim", "alt_kurum_bulunma"]
+      - table: "TANIM_Birim"
+        columns: ["id", "ad", "birim_adi", "kisa_ad", "sunum_makami", "antet_ek_satir", "harcama_yetkilisi_id", "harcama_yetkilisi_unvan", "aktif_mi"]
+    engineEntryPoints:
+      - "InstitutionalHeaderProvider.resolve(dosyaId, queryExecutor)"
+      - "InstitutionalHeaderProvider.resolveBirimAntet(input, queryExecutor)"
+    sourceFiles:
+      - "packages/document-engine/src/providers/InstitutionalHeaderProvider.ts"
+      - "packages/document-templates/src/resolver/helpers/resolveAntetSatirlari.ts"
+      - "packages/document-templates/src/resolver/helpers/resolveSingleColumn.ts"
+    fallbackPriority:
+      1: "DATA_TeminDosyasi.birim_id üzerinden seçili TANIM_Birim antet_ek_satir veya birim_adi"
+      2: "TANIM_Kurum aktif kurum_anteti (JSON dizi veya satır satır metin)"
+      3: "settings tablosundaki activeKurumId / institutionName"
+      4: "Sabit varsayılan: ['T.C.', 'İDARE BAŞKANLIĞI']"
+    consumingTemplates: "Tüm 32 şablon (kurumsal üst veri olarak)"
+    snapshotBehavior: "Header alanları (antetSatirlari, mudurluk, logolar) rebase sırasında kaynaktan yenilenir; manuel antet metinleri smartMerge ile korunur."
+
+  personelVeRoller:
+    title: "Personel ve Roller"
+    description: "Hazırlayan, talep eden, onaylayan (Harcama Yetkilisi), gerçekleştirme görevlisi ve komisyon üyeleri."
+    sourceTables:
+      - table: "TANIM_Personel"
+        columns: ["id", "ad_soyad", "unvan", "telefon", "eposta", "birim", "birim_id", "sicil_no", "aktif_mi"]
+      - table: "DATA_TeminDosyasi"
+        columns: ["hazirlayan_personel_id", "sunan_personel_id", "talep_eden_personel_id", "onay_personel_id", "harcama_yetkilisi_id", "harcama_yetkilisi_unvan"]
+    engineEntryPoints:
+      - "DefaultDocumentResolver.resolve(context)"
+      - "InstitutionalHeaderProvider.resolve(dosyaId, queryExecutor)"
+      - "resolveCommissionMembers(sablonDegiskeni, dosyaId, templateId, queryExecutor)"
+    sourceFiles:
+      - "packages/document-templates/src/engine/resolvers/DefaultDocumentResolver.ts"
+      - "packages/document-engine/src/providers/InstitutionalHeaderProvider.ts"
+      - "packages/document-templates/src/resolver/helpers/resolveCommissionMembers.ts"
+    fallbackPriority:
+      1: "DATA_TeminDosyasi üzerindeki ilgili personel foreign key'i (hazirlayan_personel_id, onay_personel_id vb.)"
+      2: "TANIM_Birim üzerindeki harcama_yetkilisi_id"
+      3: "TANIM_Personel tablosundaki aktif_mi = 1 olan ilk personel"
+      4: "Kullanıcı profil oturumu (auth store)"
+    consumingTemplates: "ihtiyac-listesi, ihtiyac-talep-formu, luzum-muzekkeresi, harcama-talimati, piyasa-fiyat-arastirma-tutanagi, komisyon-* vb."
+    snapshotBehavior: "Kullanıcı modal üzerinden personel veya unvanı elle değiştirdiyse snapshot değeri korunur (smartMerge preserves manual edits)."
+
+  dosyaBilgileri:
+    title: "Dosya Bilgileri"
+    description: "Temin dosya numarası, açılış tarihi, konusu, alım türü, ihale usulü ve işin açıklaması."
+    sourceTables:
+      - table: "DATA_TeminDosyasi"
+        columns: ["id", "temin_no", "dosya_no", "konu", "isin_aciklamasi", "dosya_acilis_tarihi", "temin_tarihi", "ihale_sekli", "tur", "alim_turu", "sunulacak_makam", "ihtiyac_yeri", "yaklasik_maliyet", "durum"]
+    engineEntryPoints:
+      - "TemplateResolver.resolve(mapping, dosyaId, templateKey)"
+      - "DefaultDocumentResolver.resolve(context)"
+    sourceFiles:
+      - "packages/document-templates/src/resolver/TemplateResolver.ts"
+      - "packages/document-templates/src/resolver/mappingResolver.ts"
+    fallbackPriority:
+      1: "DATA_TeminDosyasi canlı kolon değeri"
+      2: "data.mapping.ts içindeki varsayilan kuralı"
+      3: "Günün tarihi (tarihler için) veya boş string"
+    consumingTemplates: "Tüm şablonlar"
+    snapshotBehavior: "Dosya konusu, tarihi ve numarası snapshot'ta saklanır; veri tabanı güncellense dahi rebase kurallarına göre korunur."
+
+  ihtiyacKalemleri:
+    title: "İhtiyaç Kalemleri"
+    description: "Alımı yapılacak mal, hizmet, yapım işi veya danışmanlık kalemleri; miktar, birim, taşınır/poz kodları, KDV oranları."
+    sourceTables:
+      - table: "DATA_TeminKalem"
+        columns: ["id", "temin_dosya_id", "sira_no", "kalem_adi", "aciklama", "tasinir_kodu", "poz_no", "hizmet_kodu", "poz_tanimi", "birim", "olcu_birimi", "miktar", "kdv_orani"]
+      - table: "TANIM_Kalem"
+        columns: ["id", "kalem_adi", "tasinir_kodu", "ozelligi", "birim"]
+    engineEntryPoints:
+      - "resolveTableArray(rule, activeDosyaId, queryExecutor, resolvedPayload, sablonDegiskeni, templateId)"
+      - "normalizeIhtiyacKalemleri(data)"
+      - "paginateData(items, limits)"
+    sourceFiles:
+      - "packages/document-templates/src/resolver/helpers/resolveTableArray.ts"
+      - "packages/document-templates/src/templates/ihtiyac-listesi/IhtiyacListesi.hook.ts"
+      - "packages/document-templates/src/templates/ihtiyac-talep-formu/IhtiyacTalepFormu.hook.ts"
+    canonicalFields:
+      primary: "ihtiyacKalemleri"
+      aliases: ["kalemler", "items", "malzemeler"]
+    fallbackPriority:
+      1: "DATA_TeminKalem doğrudan dosya kayıtları"
+      2: "TANIM_Kalem tablosu ile eşleşen özellik/açıklama zenginleştirmesi"
+      3: "Snapshot'taki mevcut kalem listesi (smartMerge yeni eklenen kalemleri rebase ile ekler)"
+    consumingTemplates: "ihtiyac-listesi, ihtiyac-talep-formu, luzum-muzekkeresi, teknik-sartname, piyasa-fiyat-arastirma-tutanagi, yaklasik-maliyet-cetveli"
+    snapshotBehavior: "Kullanıcının tabloda elle değiştirdiği metinler korunur; dosyaya yeni kalem eklendiğinde smartMerge kaybolmadan yeni kalemi listeye katar."
+
+  firmalarVeTeklifler:
+    title: "Firmalar ve Teklifler"
+    description: "Davet edilen firmalar, teklif mektupları, birim fiyatlar ve en uygun teklif hesaplamaları."
+    sourceTables:
+      - table: "DATA_TeminFirma"
+        columns: ["id", "temin_dosya_id", "firma_id", "unvan", "vergi_no", "adres", "telefon", "email"]
+      - table: "TANIM_Firma"
+        columns: ["id", "unvan", "vergi_no", "adres", "telefon", "email"]
+      - table: "DATA_TeminKalemTeklif"
+        columns: ["id", "temin_dosya_id", "temin_kalem_id", "temin_firma_id", "birim_fiyat", "kdv_haric_toplam"]
+    engineEntryPoints:
+      - "resolveTableArray (needsFirms = true olduğunda)"
+      - "PiyasaAraştırma ve Yaklaşık Maliyet data.mapping.ts kuralları"
+    sourceFiles:
+      - "packages/document-templates/src/resolver/helpers/resolveTableArray.ts"
+    fallbackPriority:
+      1: "DATA_TeminFirma ve DATA_TeminKalemTeklif canlı teklifleri"
+      2: "TANIM_Firma genel firma rehberi"
+    consumingTemplates: "piyasa-fiyat-arastirma-tutanagi, yaklasik-maliyet-cetveli, birim-fiyat-teklif-mektubu, kabul-edilen-teklif, dogrudan-temin-sozlesmesi"
+    snapshotBehavior: "Kullanıcının girdiği özel teklif notları snapshot'ta korunur."
+
+  komisyonlar:
+    title: "Komisyonlar ve Görevlendirmeler"
+    description: "Piyasa fiyat araştırma komisyonu, muayene ve kabul komisyonu, ihale komisyonu üyeleri ve başkan."
+    sourceTables:
+      - table: "DATA_TeminKomisyon"
+        columns: ["id", "temin_dosya_id", "komisyon_turu", "karar_no", "karar_tarihi"]
+      - table: "DATA_TeminKomisyonUye"
+        columns: ["id", "komisyon_id", "personel_id", "gorev", "unvan", "asil_yedek"]
+      - table: "TANIM_Personel"
+        columns: ["id", "ad_soyad", "unvan"]
+    engineEntryPoints:
+      - "resolveCommissionMembers(sablonDegiskeni, activeDosyaId, templateId, queryExecutor, resolvedPayload)"
+    sourceFiles:
+      - "packages/document-templates/src/resolver/helpers/resolveCommissionMembers.ts"
+    consumingTemplates: "komisyon-gorevlendirme-onayi, piyasa-fiyat-arastirma-tutanagi, muayene-kabul-komisyonu, muayene-kabul-tutanagi"
+    snapshotBehavior: "Komisyon unvan ve sıralamaları snapshot ile korunur."
+
+  antetVeLogolar:
+    title: "Antet ve Logolar"
+    description: "Sol logo, sağ logo, T.C. ibaresi, idare hiyerarşi satırları."
+    sourceTables:
+      - table: "TANIM_Kurum"
+        columns: ["logo_sol", "logo_sag", "kurum_anteti", "kurum_adi"]
+      - table: "settings"
+        columns: ["key", "value"]
+    engineEntryPoints:
+      - "InstitutionalHeaderProvider.resolve(dosyaId, queryExecutor)"
+    sourceFiles:
+      - "packages/document-engine/src/providers/InstitutionalHeaderProvider.ts"
+    consumingTemplates: "Tüm şablonlar (DocumentLayout başlığında)"
+
+  imzaVeRota:
+    title: "İmza ve Rota Akışı"
+    description: "Belgenin paraf, imza, onay rota hiyerarşisi (ÜstYazı / Onay)."
+    engineEntryPoints:
+      - "resolveTemplateRouteForDocument(templateKey, dosyaId)"
+      - "ApprovalSignature bileşeni"
+    sourceFiles:
+      - "apps/temin360-desktop/src/renderer/src/services/rotaDefaultsService.ts"
+      - "packages/document-templates/src/document/ApprovalSignature.tsx"
+
+  snapshotVeManuelDuzenlemeler:
+    title: "Snapshot ve Manuel Düzenlemeler"
+    description: "Kullanıcının modal üzerinde doğrudan Word gibi düzenlediği verilerin SQLite'ta saklanması ve akıllı birleştirilmesi."
+    sourceTables:
+      - table: "DATA_TeminBelgeSnapshot"
+        columns: ["id", "temin_dosya_id", "sablon_kodu", "belge_snapshot_json", "sablon_versiyon", "guncelleme_tarihi"]
+    engineEntryPoints:
+      - "DocumentEngine.loadOrCreateDocument(params)"
+      - "DocumentEngine.saveDocument(params)"
+      - "smartMergeDocumentData(existingSnapshot, freshSourceData)"
+    sourceFiles:
+      - "packages/document-engine/src/DocumentEngine.ts"
+      - "packages/document-engine/src/mergers/smartMerge.ts"
+
+# ------------------------------------------------------------------------------
+# 2. ŞABLON KATALOĞU (TÜM 32 STANDART TEMİN BELGESİ)
+# ------------------------------------------------------------------------------
+templates:
+  - id: "ihtiyac-listesi"
+    canonicalKey: "ihtiyac_listesi"
+    title: "İhtiyaç Listesi Cetveli"
+    mappingFile: "packages/document-templates/src/templates/ihtiyac-listesi/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/ihtiyac-listesi/definition.ts"
+    schemaFile: "packages/document-templates/src/templates/ihtiyac-listesi/IhtiyacListesi.schema.ts"
+    rendererFile: "packages/document-templates/src/templates/ihtiyac-listesi/IhtiyacListesi.template.tsx"
+    procurementVariants: ["MalAlimi", "HizmetAlimi", "DanismanlikHizmetAlimi", "YapimIsleri"]
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "ihtiyacKalemleri", "antetVeLogolar"]
+
+  - id: "ihtiyac-talep-formu"
+    canonicalKey: "ihtiyac_talep_formu"
+    title: "İhtiyaç Belgesi ve Harcama Talep Müzekkeresi"
+    mappingFile: "packages/document-templates/src/templates/ihtiyac-talep-formu/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/ihtiyac-talep-formu/definition.ts"
+    schemaFile: "packages/document-templates/src/templates/ihtiyac-talep-formu/IhtiyacTalepFormu.schema.ts"
+    rendererFile: "packages/document-templates/src/templates/ihtiyac-talep-formu/IhtiyacTalepFormu.template.tsx"
+    procurementVariants: ["MalAlimi", "HizmetAlimi", "DanismanlikHizmetAlimi", "YapimIsleri"]
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "ihtiyacKalemleri", "antetVeLogolar"]
+
+  - id: "luzum-muzekkeresi"
+    canonicalKey: "luzum_muzekkeresi"
+    title: "Lüzum Müzekkeresi"
+    mappingFile: "packages/document-templates/src/templates/luzum-muzekkeresi/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/luzum-muzekkeresi/definition.ts"
+    schemaFile: "packages/document-templates/src/templates/luzum-muzekkeresi/schema.ts"
+    rendererFile: "packages/document-templates/src/templates/luzum-muzekkeresi/LuzumMuzekkeresi.template.tsx"
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "ihtiyacKalemleri", "antetVeLogolar"]
+
+  - id: "teknik-sartname"
+    canonicalKey: "teknik_sartname"
+    title: "Teknik Şartname"
+    mappingFile: "packages/document-templates/src/templates/teknik-sartname/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/teknik-sartname/definition.ts"
+    rendererFile: "packages/document-templates/src/templates/teknik-sartname/TeknikSartname.template.tsx"
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "ihtiyacKalemleri"]
+
+  - id: "piyasa-fiyat-arastirma-tutanagi"
+    canonicalKey: "piyasa_fiyat_arastirma_tutanagi"
+    title: "Piyasa Fiyat Araştırma Tutanağı"
+    mappingFile: "packages/document-templates/src/templates/piyasa-fiyat-arastirma-tutanagi/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/piyasa-fiyat-arastirma-tutanagi/definition.ts"
+    schemaFile: "packages/document-templates/src/templates/piyasa-fiyat-arastirma-tutanagi/schema.ts"
+    rendererFile: "packages/document-templates/src/templates/piyasa-fiyat-arastirma-tutanagi/PiyasaFiyatArastirmaTutanagi.template.tsx"
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "ihtiyacKalemleri", "firmalarVeTeklifler", "komisyonlar"]
+
+  - id: "yaklasik-maliyet-cetveli"
+    canonicalKey: "yaklasik_maliyet_cetveli"
+    title: "Yaklaşık Maliyet Hesap Cetveli"
+    mappingFile: "packages/document-templates/src/templates/yaklasik-maliyet-cetveli/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/yaklasik-maliyet-cetveli/definition.ts"
+    rendererFile: "packages/document-templates/src/templates/yaklasik-maliyet-cetveli/YaklasikMaliyetCetveli.template.tsx"
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "ihtiyacKalemleri", "firmalarVeTeklifler"]
+
+  - id: "harcama-talimati"
+    canonicalKey: "harcama_talimati"
+    title: "Harcama Talimatı Onay Belgesi"
+    mappingFile: "packages/document-templates/src/templates/harcama-talimati/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/harcama-talimati/definition.ts"
+    rendererFile: "packages/document-templates/src/templates/harcama-talimati/HarcamaTalimati.template.tsx"
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "antetVeLogolar"]
+
+  - id: "dogrudan-temin-onay-belgesi"
+    canonicalKey: "dogrudan_temin_onay_belgesi"
+    title: "Doğrudan Temin Onay Belgesi"
+    mappingFile: "packages/document-templates/src/templates/dogrudan-temin-onay-belgesi/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/dogrudan-temin-onay-belgesi/definition.ts"
+    rendererFile: "packages/document-templates/src/templates/dogrudan-temin-onay-belgesi/DogrudanTeminOnayBelgesi.template.tsx"
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "antetVeLogolar"]
+
+  - id: "muayene-kabul-tutanagi"
+    canonicalKey: "muayene_kabul_tutanagi"
+    title: "Muayene ve Kabul Komisyonu Tutanağı"
+    mappingFile: "packages/document-templates/src/templates/muayene-kabul-tutanagi/data.mapping.ts"
+    definitionFile: "packages/document-templates/src/templates/muayene-kabul-tutanagi/definition.ts"
+    rendererFile: "packages/document-templates/src/templates/muayene-kabul-tutanagi/MuayeneKabulTutanagi.template.tsx"
+    dataGroups: ["kurumVeBirimler", "personelVeRoller", "dosyaBilgileri", "ihtiyacKalemleri", "komisyonlar"]
+
+# ------------------------------------------------------------------------------
+# 3. KOD DİZİNİ (CODE INDEX)
+# ------------------------------------------------------------------------------
+codeIndex:
+  documentEngine:
+    entry: "packages/document-engine/src/DocumentEngine.ts"
+    methods:
+      - name: "prepare(params)"
+        description: "Standart dışa dönük belge hazırlama metodu. loadOrCreateDocument çağırır."
+      - name: "loadOrCreateDocument(params)"
+        description: "Snapshot'ı okur, yoksa veya kalemler eksikse taze veri derler ve smartMerge uygular."
+      - name: "resolveDocumentData(params)"
+        description: "TemplateRegistry üzerinden şablon resolver'ını çalıştırır ve antet ile bağlar."
+      - name: "compileHtml(params)"
+        description: "DocumentRenderer ile tam A4 PDF uyumlu HTML çıktısı üretir."
+      - name: "saveDocument(params)"
+        description: "Kullanıcı düzenlemelerini DATA_TeminBelgeSnapshot tablosuna yazar."
+
+  templateRegistry:
+    entry: "packages/document-engine/src/TemplateRegistry.ts"
+    description: "Şablon tanımları, resolver ve renderer eşlemelerinin tutulduğu IoC kayıt defteri."
+
+  defaultDocumentResolver:
+    entry: "packages/document-templates/src/engine/resolvers/DefaultDocumentResolver.ts"
+    description: "Tüm standart şablonlar için TemplateResolver ve InstitutionalHeaderProvider koordinatörü."
+
+  smartMerge:
+    entry: "packages/document-engine/src/mergers/smartMerge.ts"
+    description: "Snapshot düzenlemeleri ile canlı veritabanı kalemlerini birleştiren motor."
+
+  desktopPreviewAdapter:
+    entry: "apps/temin360-desktop/src/renderer/src/screens/dosya/components/DocumentPreviewModalV3/hooks/helpers/previewDataLoader.ts"
+    description: "Desktop UI'ın DocumentEngine.loadOrCreateDocument ile haberleştiği tek yetkili köprü."
+
+# ------------------------------------------------------------------------------
+# 4. BİLİNEN KISITLAR VE GEÇMİŞ UYUMLULUK NOTLARI
+# ------------------------------------------------------------------------------
+knownIssuesAndRules:
+  - "Tekil Resolver Yasağı: Artık hiçbir şablon için ayrı SQL resolver sınıfı yazılmamalıdır. data.mapping.ts kullanılmalıdır."
+  - "Kanonik Alan Kuralı: Kalem listeleri için 'ihtiyacKalemleri' kanonik alandır. Uyumluluk için 'kalemler' ve 'items' otomatik alias olarak sağlanır."
+  - "Tarih Formatı: Belgelerde tarihler daima DD.MM.YYYY (formatDateTR) olarak gösterilir."
+  - "UI Katmanı SQL Yasağı: DocumentPreviewModalV3 veya alt bileşenleri doğrudan db:query ile belge verisi çözemez. Tüm veriler DocumentEngine üzerinden yüklenmelidir."
+

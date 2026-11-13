@@ -16,10 +16,10 @@ import {
 import type { RouteAssignee, RouteOverride, RouteValues } from '@temin360/contracts'
 import {
   buildMergedPersonelList,
-  getTemplateRouteDefinition
+  getTemplateRouteDefinition,
+  InstitutionalHeaderProvider
 } from '@temin360/document-templates'
 import {
-  InstitutionalHeaderProvider,
   resolveRoute,
   extractDocumentRouteValues,
   applyResolvedRouteToDocumentData

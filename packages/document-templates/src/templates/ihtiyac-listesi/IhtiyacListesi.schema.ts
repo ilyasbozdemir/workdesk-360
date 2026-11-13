@@ -1,4 +1,10 @@
-import { z } from 'zod';
+import { z } from "zod";
+
+// Sub-schemas for specific procurement types
+export * from "./MalAlimi/MalAlimiIhtiyacListesi.schema";
+export * from "./HizmetAlimi/HizmetAlimiIhtiyacListesi.schema";
+export * from "./DanismanlikHizmetAlimi/DanismanlikIhtiyacListesi.schema";
+export * from "./YapimIsleri/YapimIsleriIhtiyacListesi.schema";
 
 export const IhtiyacKalemiSchema = z
   .object({
@@ -6,12 +12,20 @@ export const IhtiyacKalemiSchema = z
     siraNo: z.number().or(z.string()),
     kodu: z.string().optional().or(z.null()),
     tasinirKodu: z.string().optional().or(z.null()),
+    pozNo: z.string().optional().or(z.null()),
+    hizmetKodu: z.string().optional().or(z.null()),
     malzemeAdi: z.string().optional(),
     kalemAdi: z.string().optional(),
+    imalatAdi: z.string().optional(),
+    hizmetAdi: z.string().optional(),
+    danismanlikKonusu: z.string().optional(),
     ozelligi: z.string().optional().or(z.null()),
+    teknikTarifi: z.string().optional().or(z.null()),
     aciklama: z.string().optional().or(z.null()),
+    kapsam: z.string().optional().or(z.null()),
     birimi: z.string().optional().or(z.null()),
     birim: z.string().optional().or(z.null()),
+    olcuBirimi: z.string().optional().or(z.null()),
     kdvOrani: z.number().or(z.string()).optional().or(z.null()),
     miktar: z.number().or(z.string()),
   })
@@ -19,6 +33,10 @@ export const IhtiyacKalemiSchema = z
 
 export const IhtiyacListesiSchema = z
   .object({
+    alimTuru: z.string().optional(),
+    alim_turu: z.string().optional(),
+    tur: z.string().optional(),
+    isinTuru: z.string().optional(),
     antetSatirlari: z.array(z.string()).optional(),
     antetBirimGosterilsin: z.boolean().optional(),
     birimAntetteGosterilsin: z.boolean().optional(),
@@ -37,6 +55,8 @@ export const IhtiyacListesiSchema = z
     onayTarihi: z.string().optional(),
     sunulacakMakamAdi: z.string().optional(),
     ihtiyacYeri: z.string().optional(),
+    ihtiyacRaporuNo: z.string().optional(),
+    ihtiyacRaporuTarihi: z.string().optional(),
     ihtiyacKalemleri: z.array(IhtiyacKalemiSchema).optional(),
     olurYazisi: z.boolean().optional(),
     olurBaslik: z.string().optional(),

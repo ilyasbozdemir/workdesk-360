@@ -1,5 +1,5 @@
 import { resolveEvrakSayisi } from '@temin360/document-templates'
-import { InstitutionalHeaderProvider } from '@worksuite-360/document-engine'
+import { InstitutionalHeaderProvider } from '@temin360/document-templates'
 import { create } from 'zustand'
 
 export interface WorkspaceMeta {

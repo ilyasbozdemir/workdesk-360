@@ -1,0 +1,91 @@
+import { TemplateRegistryService } from '../services/templateRegistryService'
+import { cleanPersonelName } from '../utils/textHelpers'
+
+export { cleanPersonelName }
+
+export function formatDateString(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null
+  try {
+    const cleanStr = String(dateStr).trim()
+    if (/^\d{4}-\d{2}-\d{2}/.test(cleanStr)) {
+      const datePart = cleanStr.split('T')[0].split(' ')[0]
+      const [y, m, d] = datePart.split('-')
+      if (y && m && d) {
+        return `${d.padStart(2, '0')}.${m.padStart(2, '0')}.${y}`
+      }
+    }
+    if (/^\d{2}\.\d{2}\.\d{4}/.test(cleanStr)) {
+      return cleanStr.substring(0, 10)
+    }
+    const d = new Date(cleanStr)
+    if (isNaN(d.getTime())) return null
+    return new Intl.DateTimeFormat('tr-TR', {
+      timeZone: 'Europe/Istanbul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(d)
+  } catch {
+    return null
+  }
+}
+
+export function applyRolePolicy(
+  baseData: any,
+  templateId: string,
+  _komisyonSatirlari?: any[]
+): void {
+  TemplateRegistryService.applyRolePolicy(baseData, templateId)
+}
+
+export function dedupeMembers(members: any[]) {
+  if (!Array.isArray(members)) return []
+  const seenNames = new Set<string>()
+  const seenIds = new Set<string>()
+
+  return members.filter((m: any) => {
+    if (!m) return false
+    const pid = m.personel_id || m.personelId || m.id
+    const raw = m.adSoyad || m.ad_soyad || ''
+    const clean = cleanPersonelName(raw)
+    const lower = clean.toLowerCase()
+
+    if (!lower && !pid) return false
+
+    if (pid && seenIds.has(String(pid))) {
+      return false
+    }
+
+    if (lower && seenNames.has(lower)) {
+      return false
+    }
+
+    if (pid) seenIds.add(String(pid))
+    if (lower) seenNames.add(lower)
+
+    // Üye üzerindeki adı da temizlenmiş isimle güncelle
+    if (m.ad_soyad) m.ad_soyad = clean
+    if (m.adSoyad) m.adSoyad = clean
+
+    return true
+  })
+}
+
+export function parseNumericPrice(priceVal: any): number {
+  if (priceVal === undefined || priceVal === null || priceVal === '' || priceVal === '-') {
+    return 0
+  }
+  if (typeof priceVal === 'number') {
+    return isNaN(priceVal) ? 0 : priceVal
+  }
+  const clean = String(priceVal).replace(/[^0-9.,-]/g, '')
+  let parsed = 0
+  if (clean.includes(',') && !clean.includes('.')) {
+    parsed = parseFloat(clean.replace(',', '.'))
+  } else if (clean.includes('.') && clean.includes(',')) {
+    parsed = parseFloat(clean.replace(/\./g, '').replace(',', '.'))
+  } else {
+    parsed = parseFloat(clean)
+  }
+  return isNaN(parsed) ? 0 : parsed
+}

@@ -1,9 +1,9 @@
 import React from "react";
 import {
   DocumentEngine,
-  InstitutionalHeaderProvider,
   TemplateRegistry,
 } from "@worksuite-360/document-engine";
+import { InstitutionalHeaderProvider } from "../header";
 import { resolveTemplateKey, TemplateKey, templateRegistry } from "../registry";
 import { DocumentValidationService } from "../services/documentValidationService";
 import { resolveEvrakSayisi } from "../resolver/helpers/resolveEvrakSayisi";
@@ -11,6 +11,8 @@ import { LuzumMuzekkeresiResolver } from "./resolvers/LuzumMuzekkeresiResolver";
 import { LuzumMuzekkeresiRenderer } from "./renderers/LuzumMuzekkeresiRenderer";
 import { IhtiyacListesiResolver } from "./resolvers/IhtiyacListesiResolver";
 import { IhtiyacListesiRenderer } from "./renderers/IhtiyacListesiRenderer";
+import { IhtiyacTalepFormuResolver } from "./resolvers/IhtiyacTalepFormuResolver";
+import { IhtiyacTalepFormuRenderer } from "./renderers/IhtiyacTalepFormuRenderer";
 import { DefaultDocumentResolver } from "./resolvers/DefaultDocumentResolver";
 import { DefaultDocumentRenderer } from "./renderers/DefaultDocumentRenderer";
 
@@ -19,8 +21,19 @@ import { DefaultDocumentRenderer } from "./renderers/DefaultDocumentRenderer";
  * - Uygulama açılışında veya test ortamında çalıştırılır.
  * - Document Engine'in Temin 360'a bağımlı olmasını önler; şablonları dışarıdan kayıt eder.
  */
-export function registerTeminTemplates(
-  registry: TemplateRegistry = TemplateRegistry.default,
+export interface ConfigureTeminEngineOptions {
+  registry?: TemplateRegistry;
+}
+
+/**
+ * Document Engine'i Temin 360 ortamına göre tek elden yapılandırır.
+ * - DETSİS Evrak Sayısı üreticisini bağlar
+ * - Zod validatörünü bağlar
+ * - Kurumsal Antet sağlayıcısını bağlar (InstitutionalHeaderProvider)
+ * - Tüm şablon tanımlarını kayıt defterine yükler
+ */
+export function configureTeminEngine(
+  opts: ConfigureTeminEngineOptions = {},
 ): void {
   // 1. Kurumsal antet sağlayıcısına DETSİS evrak sayısı üreticiyi bağla
   InstitutionalHeaderProvider.setEvrakSayisiResolver(resolveEvrakSayisi);
@@ -44,7 +57,17 @@ export function registerTeminTemplates(
     };
   });
 
-  // 3. Pilot Belge: Lüzum Müzekkeresi (Tam İzolasyonlu Resolver & Renderer)
+  // 3. Document Engine'e kurumsal antet sağlayıcısını bağla (IoC)
+  DocumentEngine.setHeaderProvider(new InstitutionalHeaderProvider());
+
+  // 4. Şablonları kayıt defterine enjekte et
+  registerTeminTemplates(opts.registry);
+}
+
+export function registerTeminTemplates(
+  registry: TemplateRegistry = TemplateRegistry.default,
+): void {
+  // 1. Pilot Belge: Lüzum Müzekkeresi (Tam İzolasyonlu Resolver & Renderer)
   registry.register(
     {
       templateKey: "luzum_muzekkeresi",
@@ -80,6 +103,24 @@ export function registerTeminTemplates(
     { allowOverride: true },
   );
 
+  // 4.1 İhtiyaç Talep Formu (Tam İzolasyonlu Resolver & Renderer)
+  registry.register(
+    {
+      templateKey: "ihtiyac_talep_formu",
+      name: "IhtiyacTalepFormu",
+      title: "Standart Form: İhtiyaç Belgesi ve Harcama Talep Müzekkeresi",
+      category: "1-ihtiyac-tespiti-ve-baslangic",
+      categoryLabel: "Hazırlık & İhtiyaç",
+      description:
+        "Birimlerin mal/hizmet taleplerini yetkili makama ilettiği resmi form",
+      orientation: "portrait",
+      resolver: new IhtiyacTalepFormuResolver(),
+      renderer: IhtiyacTalepFormuRenderer,
+      requiredProviders: ["institutionalHeader", "items"],
+    },
+    { allowOverride: true },
+  );
+
   // 5. Diğer Şablonlar (Kademeli Geçiş Adaptörü)
   if (templateRegistry) {
     const baseKeys = Object.keys(templateRegistry) as TemplateKey[];
@@ -110,6 +151,16 @@ export function registerTeminTemplates(
             { allowOverride: true },
           );
         }
+      }
+    }
+
+    // 6. Şablon kimliği (definition.id) registry anahtarından farklıysa alias olarak bağla
+    //    (örn. luzum_onay_eki ↔ luzum-muzekkeresi-onay-eki). Mevcut ID'ler değişmez.
+    for (const key of baseKeys) {
+      const baseDef = (templateRegistry as any)[key];
+      const canonicalKey = (resolveTemplateKey(key) as string) || key;
+      if (baseDef?.id && registry.has(canonicalKey)) {
+        registry.registerAlias(baseDef.id, canonicalKey);
       }
     }
   }

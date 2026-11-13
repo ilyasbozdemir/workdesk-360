@@ -359,17 +359,75 @@ export const ApprovalSignature: React.FC<ApprovalSignatureProps> = ({
   dateField = "onayTarihi",
 }) => {
   const { isEditing, onFieldChange, personelListesi, data } = useTemplateEdit();
-  const personelList = buildMergedPersonelList(
+
+  // Olur makamı için en yüksek yetkiliyi belirle (Varsayılan Harcama Yetkilisi / Kurum Makamı)
+  const defaultHarcamaAdi =
+    (data && data.harcamaYetkilisiAdi ? data.harcamaYetkilisiAdi : "") ||
+    (data && data.onaylayanPersonelAdi ? data.onaylayanPersonelAdi : "") ||
+    (data && (data as any).kurumHarcamaYetkilisi ? (data as any).kurumHarcamaYetkilisi : "") ||
+    (data && data.baskanAdi ? data.baskanAdi : "");
+
+  const defaultHarcamaUnvan =
+    (data && data.harcamaYetkilisiUnvan ? data.harcamaYetkilisiUnvan : "") ||
+    (data && data.onaylayanPersonelUnvan ? data.onaylayanPersonelUnvan : "") ||
+    (data && data.baskanUnvan ? data.baskanUnvan : "") ||
+    "Harcama Yetkilisi";
+
+  const effectiveAdSoyad =
+    adSoyad ||
+    (data && nameField ? data[nameField] : "") ||
+    defaultHarcamaAdi ||
+    "";
+
+  const effectiveUnvan =
+    unvan ||
+    (data && unvanField ? data[unvanField] : "") ||
+    defaultHarcamaUnvan ||
+    "Harcama Yetkilisi";
+
+  // Olur havuzu: Yalnızca en üst yetkili makamlar (Varsayılan Harcama Yetkilisi, Kurum Üst Yönetimi)
+  const fullPool = buildMergedPersonelList(
     personelListesi,
     data,
-    adSoyad,
-    unvan,
+    effectiveAdSoyad,
+    effectiveUnvan,
   );
-  const matched = personelList.find(
+
+  const olurPool = React.useMemo(() => {
+    const rawHarcama = cleanPersonelName(data?.harcamaYetkilisiAdi || defaultHarcamaAdi);
+    const rawOnay = cleanPersonelName(data?.onaylayanPersonelAdi || "");
+    const rawCurrent = cleanPersonelName(effectiveAdSoyad);
+
+    const candidates = fullPool.filter((p: any) => {
+      const pName = cleanPersonelName(p.ad_soyad);
+      if (rawCurrent && pName.toLowerCase() === rawCurrent.toLowerCase()) return true;
+      if (rawHarcama && pName.toLowerCase() === rawHarcama.toLowerCase()) return true;
+      if (rawOnay && pName.toLowerCase() === rawOnay.toLowerCase()) return true;
+
+      // Kurum üst yönetimi / birim dışı yöneticiler
+      const isExecutive = !p.birim_id && (!p.birim || String(p.birim).trim() === "");
+      if (isExecutive) return true;
+
+      // Unvanında veya görevinde üst makam / harcama yetkilisi geçenler
+      const uStr = `${p.unvan || ""} ${p.gorev || ""}`.toLowerCase();
+      return (
+        uStr.includes("harcama yetkili") ||
+        uStr.includes("başkan") ||
+        uStr.includes("kaymakam") ||
+        uStr.includes("rektör") ||
+        uStr.includes("genel müdür") ||
+        uStr.includes("genel sekreter")
+      );
+    });
+
+    return candidates.length > 0 ? candidates : fullPool;
+  }, [fullPool, data, defaultHarcamaAdi, effectiveAdSoyad]);
+
+  const matched = olurPool.find(
     (p: any) =>
       p.ad_soyad &&
       cleanPersonelName(p.ad_soyad).toLowerCase() ===
-        cleanPersonelName(adSoyad).toLowerCase(),
+        cleanPersonelName(effectiveAdSoyad).toLowerCase(),
   );
   const selectedValue = matched ? String(matched.id || matched.ad_soyad) : "";
 
@@ -411,13 +469,13 @@ export const ApprovalSignature: React.FC<ApprovalSignatureProps> = ({
           />
         </div>
 
-        {isEditing && personelList.length > 0 && (
+        {isEditing && olurPool.length > 0 && (
           <div style={{ marginTop: "4px", marginBottom: "6px" }}>
             <select
               value={selectedValue}
               onChange={(e) => {
                 const val = e.target.value;
-                const p = personelList.find(
+                const p = olurPool.find(
                   (item: any) => String(item.id || item.ad_soyad) === val,
                 );
                 if (p && onFieldChange) {
@@ -450,14 +508,14 @@ export const ApprovalSignature: React.FC<ApprovalSignatureProps> = ({
                 borderRadius: "4px",
                 border: "1px solid #cbd5e1",
                 backgroundColor: "#f8fafc",
-                maxWidth: "180px",
+                maxWidth: "200px",
                 cursor: "pointer",
                 margin: "0 auto",
               }}
-              title="Kayıtlı personellerden seçim yapın"
+              title="Olur verecek Harcama Yetkilisini seçin"
             >
-              <option value="">👤 Personel Seç...</option>
-              {personelList.map((p: any, idx: number) => (
+              <option value="">👤 Harcama Yetkilisi / Makam Seç...</option>
+              {olurPool.map((p: any, idx: number) => (
                 <option key={p.id || idx} value={String(p.id || p.ad_soyad)}>
                   {p.label || `${p.ad_soyad}${p.unvan ? ` (${p.unvan})` : ""}`}
                 </option>
@@ -475,9 +533,9 @@ export const ApprovalSignature: React.FC<ApprovalSignatureProps> = ({
         >
           <EditableField
             name={nameField}
-            value={adSoyad || ""}
+            value={effectiveAdSoyad || ""}
             placeholder={
-              isEditing && personelList.length > 0
+              isEditing && olurPool.length > 0
                 ? "Adı Soyadı"
                 : "Onaylayan Adı Soyadı"
             }
@@ -487,7 +545,7 @@ export const ApprovalSignature: React.FC<ApprovalSignatureProps> = ({
         <div style={{ fontSize: "11pt" }}>
           <EditableField
             name={unvanField}
-            value={unvan || ""}
+            value={effectiveUnvan || ""}
             placeholder="Unvanı"
           />
         </div>

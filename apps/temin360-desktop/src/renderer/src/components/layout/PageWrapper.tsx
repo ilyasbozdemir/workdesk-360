@@ -110,6 +110,16 @@ export function PageWrapper(): React.ReactNode {
     if (isAnyWindowMode) return
     if (activeFilePath && isAuthenticated) {
       addTab(routerState.location.href)
+      const pathname = routerState.location.pathname
+      if (pathname.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)) {
+        if (useWorkspaceContextStore.getState().activeWorkspace !== 'finance') {
+          useWorkspaceContextStore.getState().setActiveWorkspace('finance')
+        }
+      } else {
+        if (useWorkspaceContextStore.getState().activeWorkspace !== 'procurement') {
+          useWorkspaceContextStore.getState().setActiveWorkspace('procurement')
+        }
+      }
     }
   }, [routerState.location.href, activeFilePath, isAuthenticated, addTab, isAnyWindowMode])
 
@@ -157,7 +167,7 @@ export function PageWrapper(): React.ReactNode {
       <div className="flex flex-col flex-1 min-w-0 min-h-0 h-full overflow-hidden">
         <Header />
         <TamperAlertBanner />
-        {activeWorkspace === 'procurement' && <TabsBar />}
+        <TabsBar />
         {activeWorkspace === 'finance' ? (
           <FinanceWorkspace />
         ) : (

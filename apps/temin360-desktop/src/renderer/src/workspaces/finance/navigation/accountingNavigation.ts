@@ -6,7 +6,10 @@ import {
   ShieldCheck,
   Receipt,
   FileCheck,
-  Hammer
+  Hammer,
+  Scale,
+  Coins,
+  FolderOpen
 } from 'lucide-react'
 import { AccountingPermission } from '../modules/accounting/permissions'
 
@@ -43,6 +46,16 @@ export const ACCOUNTING_NAVIGATION: AccountingNavItem[] = [
     description: 'Hazine ve Maliye Bakanlığı Muhasebat GM standartlarında ÖEB kayıtları'
   },
   {
+    id: 'dosyalar-ve-faturalari',
+    label: 'Dosyalar ve Faturaları',
+    shortLabel: 'Dosyalar & Faturalar',
+    icon: FolderOpen,
+    badge: 'FATURA',
+    badgeVariant: 'emerald',
+    permission: 'accounting:oeb_payment',
+    description: 'Doğrudan temin dosyaları ve bağlı e-faturalar kontrol masası'
+  },
+  {
     id: 'guarantees-escrow',
     label: 'Teminat Mektupları & Emanetler',
     shortLabel: 'Teminat & Emanet',
@@ -71,6 +84,26 @@ export const ACCOUNTING_NAVIGATION: AccountingNavItem[] = [
     badgeVariant: 'emerald',
     permission: 'accounting:oeb_payment',
     description: 'Hakediş tahakkuk müzekkeresi, kesintiler ve yeşil defter icmali'
+  },
+  {
+    id: 'mevzuat-parametreleri',
+    label: 'Mevzuat ve Sistem Parametreleri',
+    shortLabel: 'Mevzuat & Parametreler',
+    icon: Scale,
+    badge: '4734/5018',
+    badgeVariant: 'amber',
+    permission: 'accounting:guarantee_manage',
+    description: 'KİK limitleri, vergi ve kesinti oranları, analitik bütçe parametreleri'
+  },
+  {
+    id: 'bkmybs-yonetim',
+    label: 'BKMYBS Bütçe Masası (7 Sekme)',
+    shortLabel: 'BKMYBS Paneli',
+    icon: Coins,
+    badge: '5018',
+    badgeVariant: 'emerald',
+    permission: 'accounting:journal_entry',
+    description: 'Analitik bütçe, 22/d kotası, MİF & ÖEB, emanetler ve sözleşmeler'
   }
 ]
 

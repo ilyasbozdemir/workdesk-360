@@ -44,7 +44,14 @@ function isSameItem(a: any, b: any, matchKeys: string[]): boolean {
 }
 
 /**
- * Kaydedilmiş mevcut snapshot ile veritabanından taze çözümlenen kaynak veriyi birleştirir.
+ * @purpose Kaydedilmiş snapshot ile veritabanından taze çözümlenen veriyi akıllıca birleştirir (Rebase / Smart Merge).
+ * @source DATA_TeminBelgeSnapshot (kullanıcı düzenlemeleri) + Canlı SQLite tabloları (taze kalemler/fiyatlar)
+ * @scope dosyaId, templateKey
+ * @usedBy DocumentEngine.loadOrCreateDocument, DocumentPreviewModalV3
+ * @see packages/document-engine/src/DocumentEngine.ts
+ *
+ * Kullanıcının manuel düzenlemelerini korur (açıklamalar, unvanlar, sunulacak makam vb.).
+ * Canlı veritabanından eklenen yeni kalemleri ve güncel fiyatları güvenle snapshot'a ekler.
  */
 export function smartMergeDocumentData<T extends Record<string, unknown> = Record<string, unknown>>(
   existingSnapshot: T,
@@ -67,8 +74,8 @@ export function smartMergeDocumentData<T extends Record<string, unknown> = Recor
     }
   }
 
-  // 2. Kalem dizilerini (ihtiyacKalemleri, kalemler, items) akıllı birleştir
-  const arrayFieldNames = ['ihtiyacKalemleri', 'kalemler', 'items', 'malzemeler']
+  // 2. Kalem dizilerini (ihtiyacKalemleri, kalemler, items, malzemeler, fiyatKalemleri) akıllı birleştir
+  const arrayFieldNames = ['ihtiyacKalemleri', 'kalemler', 'items', 'malzemeler', 'fiyatKalemleri']
 
   for (const arrField of arrayFieldNames) {
     const existingArr = existingSnapshot[arrField]
@@ -106,7 +113,26 @@ export function smartMergeDocumentData<T extends Record<string, unknown> = Recor
     }
   }
 
-  // 3. Eksik olan yeni alanları tamamla (kaynakta olup snapshot'ta hiç olmayan alanlar)
+  // 3. Kaynak dinamik parasal tutarları ve para birimini güncelle
+  const sourceAmountFields = [
+    'yaklasikMaliyet',
+    'yaklasik_maliyet',
+    'toplamTutar',
+    'toplam_tutar',
+    'kdvTutari',
+    'kdv_tutari',
+    'genelToplam',
+    'genel_toplam',
+    'grandTotal',
+    'paraBirimi'
+  ]
+  for (const saf of sourceAmountFields) {
+    if (freshSourceData[saf] !== undefined && freshSourceData[saf] !== null) {
+      merged[saf] = freshSourceData[saf]
+    }
+  }
+
+  // 4. Eksik olan yeni alanları tamamla (kaynakta olup snapshot'ta hiç olmayan alanlar)
   for (const [key, value] of Object.entries(freshSourceData)) {
     if (merged[key] === undefined) {
       merged[key] = value

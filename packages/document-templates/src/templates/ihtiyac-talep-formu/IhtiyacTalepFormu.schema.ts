@@ -1,33 +1,23 @@
 import { z } from 'zod';
+import { MalAlimiIhtiyacTalepFormuSchema } from './MalAlimi/MalAlimiIhtiyacTalepFormu.schema';
+import { HizmetAlimiIhtiyacTalepFormuSchema } from './HizmetAlimi/HizmetAlimiIhtiyacTalepFormu.schema';
+import { DanismanlikIhtiyacTalepFormuSchema } from './DanismanlikHizmetAlimi/DanismanlikIhtiyacTalepFormu.schema';
+import { YapimIsleriIhtiyacTalepFormuSchema } from './YapimIsleri/YapimIsleriIhtiyacTalepFormu.schema';
 
-export const IhtiyacTalepFormuSchema = z.object({
-  antetSatirlari: z.any().optional(),
-  // KİK & Standart Form Bilgileri (İsteğe Bağlı)
-  kikKodu: z.string().optional(),
-  kikAdi: z.string().optional(),
-  standartFormKodu: z.string().optional(),
-  standartFormAdi: z.string().optional(),
-  evrakSayisi: z.any().optional(),
-  dosyaKonusu: z.any().optional(),
-  maddeNo: z.any().optional(),
-  tarih: z.any().optional(),
-  onayaSunulanTarih: z.any().optional(),
-  onayTarihi: z.any().optional(),
-  dosyaTarihi: z.any().optional(),
-  onaylayanPersonelAdi: z.any().optional(),
-  onaylayanPersonelUnvan: z.any().optional(),
-  olurBaslik: z.any().optional(),
-  hazirlayanPersonelAdi: z.any().optional(),
-  hazirlayanPersonelUnvan: z.any().optional(),
-  hazirlayanTelefon: z.any().optional(),
-  hazirlayanEposta: z.any().optional(),
-  talepEdenPersonelAdi: z.any().optional(),
-  talepEdenPersonelUnvan: z.any().optional(),
-  gerekce: z.any().optional(),
-  ihtiyacYeri: z.any().optional(),
-  altNotlar: z.any().optional(),
-  ekler: z.any().optional(),
-  ihtiyacKalemleri: z.array(z.any()).optional(),
-}).catchall(z.any());
+export * from './MalAlimi/MalAlimiIhtiyacTalepFormu.schema';
+export * from './HizmetAlimi/HizmetAlimiIhtiyacTalepFormu.schema';
+export * from './DanismanlikHizmetAlimi/DanismanlikIhtiyacTalepFormu.schema';
+export * from './YapimIsleri/YapimIsleriIhtiyacTalepFormu.schema';
 
-export type IhtiyacTalepFormuType = z.infer<typeof IhtiyacTalepFormuSchema>;
+export const IhtiyacTalepFormuSchema = z.union([
+  MalAlimiIhtiyacTalepFormuSchema,
+  HizmetAlimiIhtiyacTalepFormuSchema,
+  DanismanlikIhtiyacTalepFormuSchema,
+  YapimIsleriIhtiyacTalepFormuSchema,
+]);
+
+export type IhtiyacTalepFormuType =
+  | z.infer<typeof MalAlimiIhtiyacTalepFormuSchema>
+  | z.infer<typeof HizmetAlimiIhtiyacTalepFormuSchema>
+  | z.infer<typeof DanismanlikIhtiyacTalepFormuSchema>
+  | z.infer<typeof YapimIsleriIhtiyacTalepFormuSchema>;

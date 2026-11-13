@@ -133,7 +133,8 @@ describe('DosyaSihirbaziModal (Unified Dosya Creation)', () => {
     expect(screen.getByText('Yeni Doğrudan Temin Dosyası')).toBeTruthy()
     expect(screen.getByText('Oluşturma Modu')).toBeTruthy()
     expect(screen.getByText('Genel Bilgiler')).toBeTruthy()
-    expect(screen.getByText('İhtiyaç Listesi & Kalemler')).toBeTruthy()
+    // Mimari kural: Dosya oluşturma esnasında yetim kalemleri önlemek için İhtiyaç Listesi adımı gösterilmez
+    expect(screen.queryByText('İhtiyaç Listesi & Kalemler')).toBeNull()
   })
 
   it('form alanı ve adım gezinme kontrollerini içerir', () => {
@@ -143,18 +144,19 @@ describe('DosyaSihirbaziModal (Unified Dosya Creation)', () => {
     expect(screen.getByRole('button', { name: /Dosyayı Oluştur/i })).toBeTruthy()
   })
 
-  it('konu girilmeden İhtiyaç Listesi sekmesine geçildiğinde uyarı verir', async () => {
+  it('yeni oluşturma modunda alt adımlar arasında geçiş yapılabilir', async () => {
     renderModal(true)
 
     await waitFor(() => {
       expect(screen.queryByText('Bilgiler yükleniyor...')).toBeNull()
     })
 
-    const ihtiyacTabBtn = screen.getByRole('button', { name: /İhtiyaç Listesi & Kalemler/i })
-    fireEvent.click(ihtiyacTabBtn)
+    const maliTabBtn = screen.getByRole('button', { name: /Mali & Bütçe/i })
+    expect(maliTabBtn).toBeTruthy()
+    fireEvent.click(maliTabBtn)
 
-    await waitFor(() => {
-      expect(screen.getByText(/Lütfen önce dosya konusunu/i)).toBeTruthy()
-    })
+    const ihaleTabBtn = screen.getByRole('button', { name: /İhale & Teklif/i })
+    expect(ihaleTabBtn).toBeTruthy()
+    fireEvent.click(ihaleTabBtn)
   })
 })

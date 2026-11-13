@@ -123,8 +123,11 @@ export function getTabLabel(fullPath: string): string {
     if (tab === 'tkys') return 'BKMYBS — TKYS Taşınır & Zimmet'
     if (tab === 'emanet') return 'BKMYBS — Emanet & Teminatlar'
     if (tab === 'sozlesme') return 'BKMYBS — Harcama Sözleşmeleri'
+    if (tab === 'dosyalar') return 'BKMYBS — Dosyalar & Faturaları'
+    if (tab === 'mevzuat') return 'BKMYBS — Mevzuat & Parametreler'
     return 'BKMYBS & Mali Yönetim (5018)'
   }
+  if (path.startsWith(APP_ROUTES.MEVZUAT)) return 'Mevzuat & Sistem Parametreleri'
   if (path.startsWith(APP_ROUTES.DOSYA_DETAY)) return 'Dosya Detayları'
   if (path.startsWith(APP_ROUTES.TAKIP)) return 'Takip & Durum'
   if (path.startsWith(APP_ROUTES.RAPORLAR)) return 'Raporlar'

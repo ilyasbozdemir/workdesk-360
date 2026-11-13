@@ -88,7 +88,7 @@ describe('Common Document Fields & Standardization', () => {
 
       const html = renderToString(React.createElement(IhtiyacListesi, { data: data as any }));
 
-      expect(html).toContain('Laboratuvar Sarf Malzemesi Alımı');
+      expect(html).toContain('İhtiyaç Listesi');
       expect(html).toContain('SAĞLIK DAİRE BAŞKANLIĞINA');
       expect(html).toContain('Merkez Laboratuvarı');
       expect(html).toContain('Ayşe Kaya');

@@ -1,8 +1,11 @@
-import { describe, it, expect, vi } from 'vitest'
-import { resolveSnapshotOverlay } from '../hooks/helpers/previewData/resolveSnapshotOverlay'
-import { resolveAntetAndBirim } from '../hooks/helpers/previewData/resolveAntetAndBirim'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { resolveSnapshotOverlay, resolveAntetAndBirim } from '@temin360/document-templates'
 import { useGlobalDocumentPreviewStore } from '../../../../../store/globalDocumentPreviewStore'
 import { DocumentEngine } from '@worksuite-360/document-engine'
+
+beforeEach(() => {
+  ;(globalThis as any).useGlobalDocumentPreviewStore = useGlobalDocumentPreviewStore
+})
 
 describe('sunulacakMakamAdi persistence and reload tests', () => {
   it('1. resolveAntetAndBirim correctly resolves sunulacakMakamAdi from dosyaObj.sunulacak_makam', async () => {

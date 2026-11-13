@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InstitutionalHeaderProvider } from "@worksuite-360/document-engine";
+import { InstitutionalHeaderProvider } from "../header";
 import {
   buildMergedPersonelList,
   doesPersonelBelongToBirim,

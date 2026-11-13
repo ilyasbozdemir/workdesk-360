@@ -110,19 +110,24 @@ export function useTeminNoChecker(
 
       setIsChecking(true)
       try {
-        const res = await window.electron.ipcRenderer.invoke(
+        const rawRes = await window.electron.ipcRenderer.invoke(
           'db:query',
           `SELECT id, temin_no, konu, butce_yili, dosya_acilis_tarihi, ihale_tipi, tur 
            FROM DATA_TeminDosyasi 
            WHERE (is_deleted = 0 OR is_deleted IS NULL)`
         )
 
-        if (!res.success || !res.data) {
+        // db:query ya doğrudan dizi ya da {success, data} döndürebilir — ikisini de destekle
+        const files: any[] = Array.isArray(rawRes)
+          ? rawRes
+          : Array.isArray(rawRes?.data)
+          ? rawRes.data
+          : []
+
+        if (files.length === 0 && !Array.isArray(rawRes) && !rawRes?.success) {
           setIsChecking(false)
           return true
         }
-
-        const files: any[] = res.data
         const normalizedTarget = normalizeTeminNo(clean, targetYear)
         const exactTarget = clean.toLowerCase()
 

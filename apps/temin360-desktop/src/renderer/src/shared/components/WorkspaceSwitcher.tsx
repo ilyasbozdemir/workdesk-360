@@ -1,12 +1,28 @@
 import React from "react";
 import { Coins, ShoppingCart } from "lucide-react";
 import { useWorkspaceContextStore } from "@renderer/store/workspaceContextStore";
+import { useTabStore } from "@renderer/store/tabStore";
+import { APP_ROUTES } from "@renderer/constants/routeConstants";
+import { useNavigate } from "@tanstack/react-router";
 
 export const WorkspaceSwitcher: React.FC = () => {
   const { activeWorkspace, setActiveWorkspace } = useWorkspaceContextStore();
+  const { addTab, setActiveTab, activeTabPath } = useTabStore();
+  const navigate = useNavigate();
 
   const handleSwitch = (target: "procurement" | "finance") => {
     setActiveWorkspace(target);
+    if (target === "procurement") {
+      const isFinanceTab = activeTabPath?.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM);
+      const targetPath = (!isFinanceTab && activeTabPath) ? activeTabPath : APP_ROUTES.DOSYALAR;
+      addTab(targetPath);
+      setActiveTab(targetPath);
+      navigate({ to: targetPath });
+    } else {
+      addTab(APP_ROUTES.BKMYBS_MALI_YONETIM);
+      setActiveTab(APP_ROUTES.BKMYBS_MALI_YONETIM);
+      navigate({ to: APP_ROUTES.BKMYBS_MALI_YONETIM });
+    }
   };
 
   return (

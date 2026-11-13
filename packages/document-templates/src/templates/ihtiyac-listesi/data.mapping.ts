@@ -7,6 +7,18 @@ export const dataMapping: ProcessMapping = {
     aciklama: 'Dosyanın antet satırları'
   },
   dosyaKonusu: { deger: 'İhtiyaç Listesi', aciklama: 'Belge Başlığı / Konusu' },
+  konu: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'konu',
+    varsayilan: 'İhtiyaç Listesi',
+    aciklama: 'Dosya konusu'
+  },
+  maddeNo: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'ihale_sekli',
+    varsayilan: '22/d',
+    aciklama: 'İhale / Temin usulü maddesi'
+  },
   evrakSayisi: {
     aciklama:
       'E-DETSİS-SDP-NO standart formatına uygun resmi evrak sayısı (örn: 10234521-934.01-0001)'
@@ -52,6 +64,18 @@ export const dataMapping: ProcessMapping = {
     tablo: 'DATA_TeminDosyasi',
     sutun: 'ihtiyac_yeri',
     aciklama: 'İhtiyaç listesi yerleri'
+  },
+  ihtiyacRaporuNo: {
+    tablo: 'DATA_IhtiyacRaporu',
+    sutun: 'rapor_no',
+    iliskili_id: 'temin_dosya_id',
+    aciklama: 'Bağlı İhtiyaç Raporu Numarası'
+  },
+  ihtiyacRaporuTarihi: {
+    tablo: 'DATA_IhtiyacRaporu',
+    sutun: 'tarih',
+    iliskili_id: 'temin_dosya_id',
+    aciklama: 'Bağlı İhtiyaç Raporu Tarihi'
   },
 
   isinAciklamasi: {

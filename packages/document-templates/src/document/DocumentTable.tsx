@@ -117,7 +117,8 @@ export const DocumentTable = React.forwardRef<
 
                         const rendered = col.render
                           ? col.render(value, row, rowIdx)
-                          : value !== undefined && value !== null && String(value).trim() !== ""
+                          : value !== undefined && value !== null &&
+                              String(value).trim() !== ""
                           ? String(value)
                           : "-";
 

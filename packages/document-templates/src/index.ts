@@ -12,6 +12,7 @@ export * from "./document/TemplateEditContext";
 export * from "./document/TableRowSplitDivider";
 export * from "./document/sayiyiYaziyaCevir";
 export * from "./utils";
+export * from "./header";
 
 // Document Templates (Components & Schemas)
 export * from "./templates/arastirma-mektubu/ArastirmaMektubu.schema";
@@ -84,7 +85,6 @@ export * from "./resolver/types";
 export * from "./resolver/mappingResolver";
 export * from "./resolver/TemplateResolver";
 
-export * from "./constants/template-registry";
 export * from "./constants/workflowProfiles";
 export * from "./constants/template-constants";
 export * from "./constants/all-templates.mapping";
@@ -106,8 +106,11 @@ export * from "./DocumentPage";
 // Document Engine Bridge & IoC Registration
 export * from "./engine/resolvers/LuzumMuzekkeresiResolver";
 export * from "./engine/resolvers/IhtiyacListesiResolver";
+export * from "./engine/resolvers/IhtiyacTalepFormuResolver";
 export * from "./engine/resolvers/DefaultDocumentResolver";
 export * from "./engine/renderers/LuzumMuzekkeresiRenderer";
 export * from "./engine/renderers/IhtiyacListesiRenderer";
+export * from "./engine/renderers/IhtiyacTalepFormuRenderer";
 export * from "./engine/renderers/DefaultDocumentRenderer";
 export * from "./engine/registerTeminTemplates";
+export * from "./previewData";

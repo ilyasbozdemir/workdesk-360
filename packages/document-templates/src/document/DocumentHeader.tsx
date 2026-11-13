@@ -1,10 +1,7 @@
 import React, { useMemo } from "react";
 import { BaseTemplate } from "../base.schema";
 import { GLOBAL_THEME } from "../theme.config";
-import {
-  InstitutionalHeaderProvider,
-  sanitizeBirimAntetSatiri,
-} from "@worksuite-360/document-engine";
+import { InstitutionalHeaderProvider } from "../header";
 
 /**
  * Antet ek satırını güvenli biçimde temizler. DETSİS veya eski aktarımlardan
@@ -14,9 +11,6 @@ function safeSanitizeBirimSatiri(
   text?: string | null,
   kurumAdi?: string | null,
 ): string {
-  if (typeof sanitizeBirimAntetSatiri === "function") {
-    return sanitizeBirimAntetSatiri(text, kurumAdi);
-  }
   if (
     typeof InstitutionalHeaderProvider !== "undefined" &&
     typeof InstitutionalHeaderProvider?.sanitizeBirimAntetSatiri === "function"

@@ -1,4 +1,4 @@
-import { applyRefreshPolicy } from './previewData/refreshPolicy'
+import { applyRefreshPolicy } from '@temin360/document-templates'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { TemplateKey, resolveTemplateKey } from '@temin360/document-templates'

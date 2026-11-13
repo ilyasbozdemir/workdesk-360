@@ -472,6 +472,18 @@ export function getSidebarMenuGroups(
                     icon: Landmark
                   },
                   {
+                    name: '5018 BKMYBS Mali Masası',
+                    path: APP_ROUTES.BKMYBS_MALI_YONETIM,
+                    icon: Coins,
+                    badge: '5018'
+                  },
+                  {
+                    name: 'Mevzuat ve Sistem Parametreleri',
+                    path: APP_ROUTES.MEVZUAT,
+                    icon: Scale,
+                    badge: '4734/5018'
+                  },
+                  {
                     name: 'Süreç Akış Haritası',
                     path: APP_ROUTES.SUREC_AKISI,
                     icon: Layers
@@ -684,7 +696,7 @@ export function getSidebarMenuGroups(
           children: [
             { name: 'Genel Ayarlar', path: APP_ROUTES.AYARLAR, icon: Settings },
             { name: 'Kullanıcı Profili & Şifre', path: APP_ROUTES.PROFIL, icon: User },
-            { name: 'Mevzuat ve Parametreler', path: APP_ROUTES.MEVZUAT, icon: Scale },
+            { name: 'Mevzuat ve Sistem Parametreleri', path: APP_ROUTES.MEVZUAT, icon: Scale, badge: '4734/5018' },
             { name: 'Toplu İçe Aktarma', path: APP_ROUTES.IMPORT, icon: Database },
             {
               name: 'Form Builder v2 (Sürükle & Bırak)',

@@ -18,6 +18,7 @@ interface DosyaKomisyonCardProps {
   onOpenCopyModal: (item: DosyaKomisyonItem) => void
   onOpenDetail: (item: DosyaKomisyonItem, tab: 'kadro' | 'revizyon') => void
   onApplyToAllDossiers?: (sourceDosyaId: number) => void
+  isActive?: boolean
 }
 
 export const DosyaKomisyonCard: React.FC<DosyaKomisyonCardProps> = ({
@@ -25,14 +26,27 @@ export const DosyaKomisyonCard: React.FC<DosyaKomisyonCardProps> = ({
   onApplyTemplate,
   onOpenCopyModal,
   onOpenDetail,
-  onApplyToAllDossiers
+  onApplyToAllDossiers,
+  isActive = false
 }) => {
   return (
-    <div className="p-4 sm:p-5 rounded-2xl border bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700/60 shadow-xs hover:shadow-md transition-all duration-200">
+    <div
+      className={`p-4 sm:p-5 rounded-2xl border transition-all duration-200 ${
+        isActive
+          ? 'bg-blue-50/40 dark:bg-blue-950/20 border-blue-400 dark:border-blue-600 shadow-md ring-2 ring-blue-400/40'
+          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700/60 shadow-xs hover:shadow-md'
+      }`}
+    >
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         {/* Sol: Dosya Bilgileri */}
         <div className="space-y-3 flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            {isActive && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-200 font-black border border-blue-300 dark:border-blue-700 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
+                📌 AKTİF ÇALIŞMA DOSYASI
+              </span>
+            )}
             <span className="font-mono font-black text-xs text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800">
               {item.dosya_no}
             </span>

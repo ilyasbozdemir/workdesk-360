@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { emitAppEvent, useAppEventListener } from '../../../../../utils/appEvents'
+
+export function isValidDosyaId(id: unknown): id is number {
+  return typeof id === 'number' && !isNaN(id) && id > 0
+}
 
 export interface UseMalzemeListesiReturn {
   items: any[]
@@ -127,14 +131,23 @@ export function useMalzemeListesi(
     }
   }, [activeDosyaId, activeDosya?.tur])
 
+  const activeDosyaIdRef = useRef<number | null>(activeDosyaId)
+  activeDosyaIdRef.current = activeDosyaId
+
   const loadData = async (): Promise<void> => {
-    if (!activeDosyaId) return
+    if (!isValidDosyaId(activeDosyaId)) {
+      setItems([])
+      setLoading(false)
+      return
+    }
+
+    const currentTargetId = activeDosyaId
     setLoading(true)
     try {
       const resItems = await (window as any).electron.ipcRenderer.invoke(
         'db:query',
         'SELECT * FROM DATA_TeminKalem WHERE temin_dosya_id = ? ORDER BY id ASC',
-        [activeDosyaId]
+        [currentTargetId]
       )
       const resUnits = await (window as any).electron.ipcRenderer.invoke(
         'db:query',
@@ -144,22 +157,39 @@ export function useMalzemeListesi(
         'db:query',
         'SELECT * FROM TANIM_Kalem WHERE aktif_mi = 1 ORDER BY kalem_adi ASC'
       )
+
+      // Yarış durumu koruması: Asenkron sorgu tamamlandığında dosya değiştiyse önceki dosyanın verisiyle state'i ezme
+      if (activeDosyaIdRef.current !== currentTargetId) {
+        return
+      }
+
       if (resItems.success) setItems(resItems.data || [])
       if (resUnits.success) setUnits(resUnits.data || [])
       if (resLib.success) setLibraryItems(resLib.data || [])
     } catch (err) {
-      console.error(err)
+      console.error('Malzeme listesi yüklenirken hata:', err)
+      if (activeDosyaIdRef.current === currentTargetId) {
+        setItems([])
+      }
     } finally {
-      setLoading(false)
+      if (activeDosyaIdRef.current === currentTargetId) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
+    activeDosyaIdRef.current = activeDosyaId
+    if (!isValidDosyaId(activeDosyaId)) {
+      setItems([])
+      setLoading(false)
+      return
+    }
     loadData()
   }, [activeDosyaId])
 
   useAppEventListener(['items:changed', 'dossier:updated'], (e) => {
-    if (e.payload?.dosyaId === activeDosyaId) {
+    if (isValidDosyaId(activeDosyaId) && e.payload?.dosyaId === activeDosyaId) {
       loadData()
     }
   })
@@ -206,6 +236,11 @@ export function useMalzemeListesi(
 
   const handleAddItem = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
+    if (!isValidDosyaId(activeDosyaId)) {
+      alert('Hata: Kalem eklemek için geçerli bir dosya seçilmiş veya kaydedilmiş olmalıdır.')
+      return
+    }
+
     const nameToUse = kalemAdi.trim() || searchQuery.trim()
     if (!nameToUse) return
 
@@ -273,12 +308,16 @@ export function useMalzemeListesi(
   }
 
   const handleDeleteItem = async (id: number): Promise<void> => {
+    if (!isValidDosyaId(activeDosyaId)) {
+      alert('Hata: Kalem silmek için geçerli bir dosya seçilmiş olmalıdır.')
+      return
+    }
     if (!confirm('Bu kalemi silmek istediğinize emin misiniz?')) return
     try {
       const res = await (window as any).electron.ipcRenderer.invoke(
         'db:run',
-        'DELETE FROM DATA_TeminKalem WHERE id = ?',
-        [id]
+        'DELETE FROM DATA_TeminKalem WHERE id = ? AND temin_dosya_id = ?',
+        [id, activeDosyaId]
       )
       if (res.success) {
         await loadData()
@@ -298,11 +337,15 @@ export function useMalzemeListesi(
   }
 
   const handleSaveEdit = async (id: number): Promise<void> => {
+    if (!isValidDosyaId(activeDosyaId)) {
+      alert('Hata: Kalem düzenlemek için geçerli bir dosya seçilmiş olmalıdır.')
+      return
+    }
     try {
       const res = await (window as any).electron.ipcRenderer.invoke(
         'db:run',
-        'UPDATE DATA_TeminKalem SET miktar = ?, birim = ?, kdv_orani = ? WHERE id = ?',
-        [editMiktar, editBirim, editKdv, id]
+        'UPDATE DATA_TeminKalem SET miktar = ?, birim = ?, kdv_orani = ? WHERE id = ? AND temin_dosya_id = ?',
+        [editMiktar, editBirim, editKdv, id, activeDosyaId]
       )
       if (res.success) {
         setEditingId(null)
@@ -318,6 +361,10 @@ export function useMalzemeListesi(
   }
 
   const handleAddSelected = async (): Promise<void> => {
+    if (!isValidDosyaId(activeDosyaId)) {
+      alert('Hata: Kalem eklemek için geçerli bir dosya seçilmiş veya kaydedilmiş olmalıdır.')
+      return
+    }
     const ids = Array.from(selectedItemIds)
     if (ids.length === 0) return
     try {
@@ -373,6 +420,11 @@ export function useMalzemeListesi(
       aciklama?: string
     }>
   ): Promise<boolean> => {
+    if (!isValidDosyaId(activeDosyaId)) {
+      alert('Hata: Kalem eklemek için geçerli bir dosya seçilmiş veya kaydedilmiş olmalıdır.')
+      return false
+    }
+
     const validRows = rows.filter((r) => r.kalem_adi && r.kalem_adi.trim().length > 0)
     if (validRows.length === 0) return false
 

@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Building2,
   Check,
   CheckCircle2,
+  Edit2,
   Plus,
   Sparkles,
+  UserCheck,
+  Users,
   X,
 } from "lucide-react";
 import { Input } from "../../../components/ui/Input";
@@ -31,6 +34,67 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
 }) => {
   const { defaultKurumIci, setDefaultKurumIci } = useSettingsStore();
   const [isDetsisSearchOpen, setIsDetsisSearchOpen] = useState(false);
+  const [personelList, setPersonelList] = useState<
+    Array<{ id: number; ad_soyad: string; unvan?: string; birim?: string; birim_id?: number | null }>
+  >([]);
+  const [onlyNonUnitPersonnel, setOnlyNonUnitPersonnel] = useState(true);
+  const [isManualInput, setIsManualInput] = useState(false);
+
+  useEffect(() => {
+    window.electron?.ipcRenderer
+      ?.invoke(
+        "db:query",
+        "SELECT id, ad_soyad, unvan, birim, birim_id FROM TANIM_Personel WHERE aktif_mi = 1 OR aktif_mi IS NULL ORDER BY ad_soyad ASC"
+      )
+      .then((res: any) => {
+        if (res?.success && Array.isArray(res.data)) {
+          setPersonelList(res.data);
+        }
+      })
+      .catch((err: any) => {
+        console.error("Personel fetch error in IdariBilgilerTab:", err);
+      });
+  }, []);
+
+  const nonUnitPersonnel = personelList.filter(
+    (p) => !p.birim_id && (!p.birim || String(p.birim).trim() === "")
+  );
+  const unitPersonnel = personelList.filter(
+    (p) => p.birim_id || (p.birim && String(p.birim).trim() !== "")
+  );
+
+  const matchedHarcamaPerson = personelList.find((p) => {
+    const raw = (data.harcama_yetkilisi || "").trim().toLowerCase();
+    if (!raw) return false;
+    const pFull = `${p.ad_soyad}${p.unvan ? " - " + p.unvan : ""}`.toLowerCase();
+    return raw === pFull || raw === p.ad_soyad.toLowerCase();
+  });
+
+  const displayedPersonnel =
+    onlyNonUnitPersonnel && nonUnitPersonnel.length > 0
+      ? matchedHarcamaPerson && !nonUnitPersonnel.some((p) => p.id === matchedHarcamaPerson.id)
+        ? [matchedHarcamaPerson, ...nonUnitPersonnel]
+        : nonUnitPersonnel
+      : personelList;
+
+  const selectedHarcamaPersonelId = matchedHarcamaPerson
+    ? String(matchedHarcamaPerson.id)
+    : data.harcama_yetkilisi
+      ? "custom_current"
+      : "";
+
+  const handleSelectHarcamaPersonel = (val: string): void => {
+    if (val === "custom_current") return;
+    if (!val) {
+      onChange("harcama_yetkilisi", "");
+      return;
+    }
+    const p = personelList.find((item) => String(item.id) === val);
+    if (p) {
+      const formatted = p.unvan ? `${p.ad_soyad} - ${p.unvan}` : p.ad_soyad;
+      onChange("harcama_yetkilisi", formatted);
+    }
+  };
 
   const handleInstitutionTypeChange = (type: string): void => {
     onChange("kurum_tipi", type);
@@ -201,20 +265,139 @@ export const IdariBilgilerTab: React.FC<KurumTabProps> = ({
           />
         </div>
 
-        {/* Varsayılan Harcama Yetkilisi */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-            Varsayılan Harcama Yetkilisi (Ad Soyad / Unvan)
-          </label>
-          <Input
-            value={data.harcama_yetkilisi || ""}
-            onChange={(e) => onChange("harcama_yetkilisi", e.target.value)}
-            placeholder="Örn: Harcama Yetkilisi Adı Soyadı veya Makam Unvanı"
-            className="bg-slate-55 dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
-          />
-          <span className="text-[10px] text-slate-400 mt-0.5 block">
-            Onay belgelerinde ve harcama talimatlarında en üst seviye imza
-            yetkilisi.
+        {/* Varsayılan Harcama Yetkilisi (Birim dışı ve Kurum Olur belgelerinde imzaya sunulacak yetkili) */}
+        <div className="md:col-span-2 space-y-2.5 p-3.5 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-800/80 pb-2">
+            <div className="flex items-center gap-2">
+              <UserCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Varsayılan Harcama Yetkilisi (Ad Soyad / Unvan)
+              </label>
+              <span className="text-[10px] text-slate-400 hidden sm:inline">
+                (Birim dışı antetli üst yazılarda ve Olur belgelerinde imzaya sunulacak yetkili)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Sadece Birim Dışı Personel Filtresi */}
+              {nonUnitPersonnel.length > 0 && !isManualInput && (
+                <button
+                  type="button"
+                  onClick={() => setOnlyNonUnitPersonnel(!onlyNonUnitPersonnel)}
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                    onlyNonUnitPersonnel
+                      ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300"
+                      : "bg-slate-100 border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"
+                  }`}
+                  title="Herhangi bir alt müdürlüğe bağlı olmayan kurum üst yönetim personelini filtreler"
+                >
+                  {onlyNonUnitPersonnel
+                    ? `Birim Dışı Personeller (${nonUnitPersonnel.length})`
+                    : `Tüm Personeller (${personelList.length})`}
+                </button>
+              )}
+
+              {/* Elle Düzenle / Listeden Seç Değiştirici */}
+              <button
+                type="button"
+                onClick={() => setIsManualInput(!isManualInput)}
+                className="text-[10px] font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white flex items-center gap-1 bg-white dark:bg-slate-800 px-2.5 py-0.5 rounded-md border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+              >
+                <Edit2 className="w-3 h-3" />
+                <span>{isManualInput ? "Personel Listesinden Seç" : "Elle Düzenle"}</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+            <div className="md:col-span-2">
+              {isManualInput ? (
+                <Input
+                  value={data.harcama_yetkilisi || ""}
+                  onChange={(e) => onChange("harcama_yetkilisi", e.target.value)}
+                  placeholder="Örn: Ahmet YILMAZ - Belediye Başkanı"
+                  className="bg-white dark:bg-slate-955 border-slate-200 dark:border-slate-800 text-xs"
+                />
+              ) : (
+                <select
+                  value={selectedHarcamaPersonelId}
+                  onChange={(e) => handleSelectHarcamaPersonel(e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                >
+                  <option value="">-- Personel Listesinden Harcama Yetkilisi Seçin --</option>
+                  {!onlyNonUnitPersonnel && nonUnitPersonnel.length > 0 ? (
+                    <>
+                      <optgroup label="Kurum Üst Yönetim / Birim Dışı Personeller">
+                        {nonUnitPersonnel.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.ad_soyad}{p.unvan ? ` - ${p.unvan}` : ""} (Birim Dışı / Üst Yönetim)
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Birim / Müdürlük Personelleri">
+                        {unitPersonnel.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.ad_soyad}{p.unvan ? ` - ${p.unvan}` : ""}{p.birim ? ` (${p.birim})` : ""}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </>
+                  ) : (
+                    displayedPersonnel.map((p) => {
+                      const isNonUnit =
+                        !p.birim_id && (!p.birim || String(p.birim).trim() === "");
+                      const badge = isNonUnit
+                        ? " (Kurum Üst Yönetim / Birim Dışı)"
+                        : ` (${p.birim})`;
+                      const label = `${p.ad_soyad}${p.unvan ? " - " + p.unvan : ""}${badge}`;
+                      return (
+                        <option key={p.id} value={p.id}>
+                          {label}
+                        </option>
+                      );
+                    })
+                  )}
+                  {data.harcama_yetkilisi && !matchedHarcamaPerson && (
+                    <option value="custom_current">
+                      {data.harcama_yetkilisi} (Mevcut Kayıt)
+                    </option>
+                  )}
+                </select>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate flex-1">
+                {data.harcama_yetkilisi
+                  ? `Seçili: ${data.harcama_yetkilisi}`
+                  : "Henüz harcama yetkilisi seçilmedi"}
+              </span>
+
+              {data.harcama_yetkilisi && !data.kurum_baskani && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const raw = data.harcama_yetkilisi || "";
+                    if (raw.includes(" - ")) {
+                      const [name, ...unv] = raw.split(" - ");
+                      onChange("kurum_baskani", name.trim());
+                      if (!data.baskan_unvani) {
+                        onChange("baskan_unvani", unv.join(" - ").trim());
+                      }
+                    } else {
+                      onChange("kurum_baskani", raw.trim());
+                    }
+                  }}
+                  className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 px-2 py-1 rounded-md shrink-0 hover:bg-blue-100 transition-colors cursor-pointer"
+                  title="Bu kişiyi yukarıdaki Kurum Başkanı alanına da aktar"
+                >
+                  Başkan Olarak Aktar
+                </button>
+              )}
+            </div>
+          </div>
+          <span className="text-[10px] text-slate-400 block">
+            Resmî belgelerde birim anteti bulunmadığında (T.C. / Kurum Adı düzeyinde) veya Olur yazılarında yetkili imzacı olarak kullanılır.
           </span>
         </div>
 

@@ -1,4 +1,4 @@
-import { TEMPLATE_REGISTRY, resolveTemplateWorkflow } from '../constants/template-registry'
+import { TEMPLATE_REGISTRY, resolveTemplateWorkflow } from '../registry'
 import {
   CANONICAL_TEMPLATE_ALIASES,
   normalizeTemplateKey,
@@ -13,9 +13,15 @@ import {
 import { isMemberVisibleInDocument } from '../constants/visibility.config'
 
 export class TemplateRegistryService {
-  private static templatesMap: Map<string, TemplateType> = new Map(
-    TEMPLATE_REGISTRY.map((t) => [t.id, t])
-  )
+  private static templatesMapCache: Map<string, TemplateType> | null = null
+
+  /** Lazy: registry.ts ile döngüsel import yükleme anında patlamasın diye ilk erişimde kurulur. */
+  private static get templatesMap(): Map<string, TemplateType> {
+    if (!this.templatesMapCache) {
+      this.templatesMapCache = new Map(TEMPLATE_REGISTRY.map((t) => [t.id, t]))
+    }
+    return this.templatesMapCache
+  }
 
   /**
    * Get all registered document templates with complete metadata and capabilities

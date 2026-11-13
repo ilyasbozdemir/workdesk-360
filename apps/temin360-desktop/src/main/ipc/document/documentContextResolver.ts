@@ -3,8 +3,8 @@ import {
   isMemberVisibleInDocument,
   resolveCommissionCategory,
   resolveTemplateKey,
+  InstitutionalHeaderProvider,
 } from "@temin360/document-templates";
-import { InstitutionalHeaderProvider } from "@worksuite-360/document-engine";
 import {
   formatTurkishDate,
   getIpcKurumBizimText,
@@ -561,6 +561,67 @@ export function resolveDocumentPayload(
       } catch {}
     }
 
+    // Kurum Varsayılan Harcama Yetkilisi
+    const kurumHarcamaRaw = (
+      (kurum as any)?.harcama_yetkilisi ||
+      settingsMap.harcamaYetkilisi ||
+      ""
+    ).trim();
+    let parsedKurumHarcamaAdi = "";
+    let parsedKurumHarcamaUnvan = "";
+    if (kurumHarcamaRaw) {
+      if (kurumHarcamaRaw.includes(" - ")) {
+        const [n, ...u] = kurumHarcamaRaw.split(" - ");
+        parsedKurumHarcamaAdi = cleanPersonelName(n.trim());
+        parsedKurumHarcamaUnvan = u.join(" - ").trim();
+      } else if (kurumHarcamaRaw.includes(" / ")) {
+        const [n, ...u] = kurumHarcamaRaw.split(" / ");
+        parsedKurumHarcamaAdi = cleanPersonelName(n.trim());
+        parsedKurumHarcamaUnvan = u.join(" / ").trim();
+      } else {
+        parsedKurumHarcamaAdi = cleanPersonelName(kurumHarcamaRaw);
+        parsedKurumHarcamaUnvan =
+          (kurum as any)?.baskan_unvani || settingsMap.baskanUnvani || "Harcama Yetkilisi";
+      }
+    }
+
+    // Birim Harcama Yetkilisi
+    const matchedBirimRow = (birimListesi as any[]).find(
+      (b: any) => b.id === (dosya as any)?.birim_id
+    );
+    const birimHarcamaPersonel = matchedBirimRow?.harcama_yetkilisi_id
+      ? (personelListesi as any[]).find(
+          (p: any) => p.id === matchedBirimRow.harcama_yetkilisi_id
+        )
+      : null;
+    const birimHarcamaAdi = cleanPersonelName(birimHarcamaPersonel?.ad_soyad || "");
+    const birimHarcamaUnvan =
+      matchedBirimRow?.harcama_yetkilisi_unvan ||
+      birimHarcamaPersonel?.unvan ||
+      "Harcama Yetkilisi";
+
+    // Antette birim satırı var mı yoksa sadece Kurum anteti mi?
+    const isKurumLevelOnlyAntet =
+      antetSatirlari.length <= 2 ||
+      (dosya as any)?.antet_birim_gosterilsin === 0 ||
+      (dosya as any)?.antet_birim_gosterilsin === "0";
+
+    const effectiveHarcamaYetkilisiAdi =
+      cleanPersonelName(onaylayanPersonel?.ad_soyad) ||
+      (isKurumLevelOnlyAntet
+        ? (parsedKurumHarcamaAdi || birimHarcamaAdi)
+        : (birimHarcamaAdi || parsedKurumHarcamaAdi)) ||
+      parsedKurumHarcamaAdi ||
+      "";
+
+    const effectiveHarcamaYetkilisiUnvan =
+      onaylayanPersonel?.unvan ||
+      (isKurumLevelOnlyAntet
+        ? (parsedKurumHarcamaUnvan || birimHarcamaUnvan)
+        : (birimHarcamaUnvan || parsedKurumHarcamaUnvan)) ||
+      parsedKurumHarcamaUnvan ||
+      "Harcama Yetkilisi";
+
     const resolvedContext = {
       faturaNo: resolvedFaturaNo,
       fatura_no: resolvedFaturaNo,
@@ -664,28 +725,14 @@ export function resolveDocumentPayload(
       talepEdenPersonelAdi: cleanPersonelName(talepEdenPersonel?.ad_soyad),
       talepEdenPersonelUnvan: talepEdenPersonel?.unvan || "",
       talepEdenTelefon: talepEdenPersonel?.telefon || "",
-      onaylayanPersonelAdi: cleanPersonelName(onaylayanPersonel?.ad_soyad),
-      onaylayanPersonelUnvan: onaylayanPersonel?.unvan || "",
-      harcamaYetkilisiAdi: cleanPersonelName(onaylayanPersonel?.ad_soyad) ||
-        ((birimListesi as any[]).find((b: any) =>
-            b.id === (dosya as any)?.birim_id
-          )
-            ?.harcama_yetkilisi_id
-          ? (personelListesi as any[]).find(
-            (p: any) =>
-              p.id ===
-                (birimListesi as any[]).find((b: any) =>
-                  b.id === (dosya as any)?.birim_id
-                )
-                  ?.harcama_yetkilisi_id,
-          )?.ad_soyad || ""
-          : ""),
-      harcamaYetkilisiUnvan: onaylayanPersonel?.unvan ||
-        (birimListesi as any[]).find((b: any) =>
-          b.id === (dosya as any)?.birim_id
-        )
-          ?.harcama_yetkilisi_unvan ||
-        "Harcama Yetkilisi",
+      onaylayanPersonelAdi:
+        cleanPersonelName(onaylayanPersonel?.ad_soyad) ||
+        (isKurumLevelOnlyAntet ? effectiveHarcamaYetkilisiAdi : ""),
+      onaylayanPersonelUnvan:
+        onaylayanPersonel?.unvan ||
+        (isKurumLevelOnlyAntet ? effectiveHarcamaYetkilisiUnvan : ""),
+      harcamaYetkilisiAdi: effectiveHarcamaYetkilisiAdi,
+      harcamaYetkilisiUnvan: effectiveHarcamaYetkilisiUnvan,
       muhatapBirim: (birimListesi as any[]).find((b: any) =>
         b.id === (dosya as any)?.birim_id
       )?.sunum_makami ||

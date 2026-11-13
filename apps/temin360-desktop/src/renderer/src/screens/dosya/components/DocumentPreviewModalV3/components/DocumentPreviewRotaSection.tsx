@@ -28,11 +28,10 @@ import {
   filterPersonelByBirim,
   validateBirimAndPersonelAssignments,
   getTemplateRouteDefinition,
-  isCommissionAppointmentDocument
+  isCommissionAppointmentDocument,
+  InstitutionalHeaderProvider,
 } from '@temin360/document-templates'
 import {
-  InstitutionalHeaderProvider,
-  sanitizeBirimAntetSatiri,
   resolveRoute,
   extractDocumentRouteValues,
   applyResolvedRouteToDocumentData
@@ -49,9 +48,6 @@ import { kurumService } from '../../../../../services/kurumService'
  * kalma "Kurum > Birim" hiyerarşisini ve kurum adını ayıklar.
  */
 function cleanBirimAntet(text?: string | null, kurumAdi?: string | null): string {
-  if (typeof sanitizeBirimAntetSatiri === 'function') {
-    return sanitizeBirimAntetSatiri(text, kurumAdi)
-  }
   if (
     typeof InstitutionalHeaderProvider !== 'undefined' &&
     typeof InstitutionalHeaderProvider?.sanitizeBirimAntetSatiri === 'function'
@@ -1068,16 +1064,42 @@ export function DocumentPreviewRotaSection({
             const isApprovalStep =
               step.id === 'onaylayan' ||
               step.id === 'harcamaYetkilisi' ||
-              (step as any).role === 'harcama_yetkilisi'
+              (step as any).role === 'harcama_yetkilisi' ||
+              step.label?.toLowerCase().includes('olur') ||
+              step.label?.toLowerCase().includes('onay')
 
             const stepFilterRes = filterPersonelByBirim(baseStepPool, {
               birimId: currentBirimResolution.birimId ?? currentBirimId,
               birimAdi: currentBirimResolution.birimAdi || currentBirimAdi,
               birimList: activeBirimList,
-              includeOtherUnits: allowCrossUnitPersonnel || isApprovalStep,
+              includeOtherUnits: allowCrossUnitPersonnel,
               currentSelectedNames: currentPerson?.name ? [currentPerson.name] : []
             })
-            const stepPersonelList = stepFilterRes.filteredList
+
+            let stepPersonelList = stepFilterRes.filteredList
+            if (isApprovalStep) {
+              // Olur / Harcama Yetkilisi: Yalnızca en üst yetkili makam (Varsayılan Harcama Yetkilisi / Üst Yönetim)
+              const rawHarcama = cleanPersonelName(formData?.harcamaYetkilisiAdi || '')
+              const rawOnay = cleanPersonelName(formData?.onaylayanPersonelAdi || '')
+              const currentName = cleanPersonelName(currentPerson?.name || '')
+              const execPool = baseStepPool.filter((p: any) => {
+                const pName = cleanPersonelName(p.ad_soyad)
+                if (currentName && pName.toLowerCase() === currentName.toLowerCase()) return true
+                if (rawHarcama && pName.toLowerCase() === rawHarcama.toLowerCase()) return true
+                if (rawOnay && pName.toLowerCase() === rawOnay.toLowerCase()) return true
+                const isExecutive = !p.birim_id && (!p.birim || String(p.birim).trim() === '')
+                if (isExecutive) return true
+                const uStr = `${p.unvan || ''} ${p.gorev || ''}`.toLowerCase()
+                return (
+                  uStr.includes('harcama yetkili') ||
+                  uStr.includes('başkan') ||
+                  uStr.includes('kaymakam') ||
+                  uStr.includes('rektör') ||
+                  uStr.includes('genel müdür')
+                )
+              })
+              stepPersonelList = execPool.length > 0 ? execPool : baseStepPool
+            }
 
             const matchedP = stepPersonelList.find(
               (p) =>
@@ -1151,7 +1173,8 @@ export function DocumentPreviewRotaSection({
                     className="w-full text-[11px] px-2 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-700 dark:text-slate-300 cursor-pointer"
                   >
                     <option value="">👤 Personel Havuzundan Seç...</option>
-                    {(allowCrossUnitPersonnel || isApprovalStep) &&
+                    {!isApprovalStep &&
+                    allowCrossUnitPersonnel &&
                     stepFilterRes.hasUnitDataInPool &&
                     stepFilterRes.primaryUnitPersonel.length > 0 &&
                     stepFilterRes.otherUnitPersonel.length > 0 ? (

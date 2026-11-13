@@ -1,18 +1,17 @@
-import React, { useState } from 'react'
-import { GenelBilgilerTab } from './tabs/GenelBilgilerTab'
-import { IhtiyacListesiTab } from './tabs/IhtiyacListesiTab'
-import { useYeniDosyaScreen } from './yeni.hooks'
-import { getEmptyFormData, getMockFormData } from './yeni.config'
+import React, { useState } from "react";
+import { GenelBilgilerTab } from "./tabs/GenelBilgilerTab";
+import { useYeniDosyaScreen } from "./yeni.hooks";
+import { getEmptyFormData, getMockFormData } from "./yeni.config";
 import {
-  DosyaManageHeader,
-  DosyaManageStepper,
-  DosyaManageMaliyetModal,
   DosyaManageAlerts,
   DosyaManageFooter,
-  DosyaManageModals
-} from './components/manage'
+  DosyaManageHeader,
+  DosyaManageMaliyetModal,
+  DosyaManageModals,
+  DosyaManageStepper,
+} from "./components/manage";
 
-const SUB_STEP_COUNT = 4
+const SUB_STEP_COUNT = 4;
 
 /**
  * DosyaManageScreen
@@ -71,40 +70,32 @@ export function DosyaManageScreen(): React.JSX.Element {
     getNextTeminNo,
     validationError,
     setValidationError,
-    kurum
-  } = useYeniDosyaScreen()
+    kurum,
+  } = useYeniDosyaScreen();
 
-  const [activeSubStep, setActiveSubStep] = useState(1)
-  const [showMaliyetAyarlari, setShowMaliyetAyarlari] = useState(false)
+  const [activeSubStep, setActiveSubStep] = useState(1);
+  const [showMaliyetAyarlari, setShowMaliyetAyarlari] = useState(false);
 
-  const goPrevSubStep = () => setActiveSubStep((s) => Math.max(1, s - 1))
+  const goPrevSubStep = () => setActiveSubStep((s) => Math.max(1, s - 1));
   const goNextSubStep = () => {
     if (activeSubStep < SUB_STEP_COUNT) {
-      setActiveSubStep((s) => s + 1)
-    } else {
-      setValidationError(null)
-      setActiveTab('ihtiyac')
+      setActiveSubStep((s) => s + 1);
     }
-  }
+  };
 
   const handleSelectIhtiyacTab = () => {
-    if (!formData.konu?.trim()) {
-      setValidationError('Lütfen önce dosya konusunu (İşin Adı) giriniz.')
-      return
-    }
-    setValidationError(null)
-    setActiveTab('ihtiyac')
-  }
+    // İhtiyaç listesi tabı dosya oluştururken kaldırıldı; genel bilgilerde kalınır
+  };
 
   const handleClearForm = () => {
-    const y = new Date().getFullYear()
-    setFormData(getEmptyFormData(y, getNextTeminNo(y), birimler, personeller))
-  }
+    const y = new Date().getFullYear();
+    setFormData(getEmptyFormData(y, getNextTeminNo(y), birimler, personeller));
+  };
 
   const handleFillMockData = () => {
-    const y = new Date().getFullYear()
-    setFormData(getMockFormData(y, getNextTeminNo(y), birimler, personeller))
-  }
+    const y = new Date().getFullYear();
+    setFormData(getMockFormData(y, getNextTeminNo(y), birimler, personeller));
+  };
 
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900 overflow-hidden">
@@ -153,76 +144,65 @@ export function DosyaManageScreen(): React.JSX.Element {
             onSubmit={handleSave}
             className="max-w-[1600px] mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs space-y-6"
           >
-            {loadingDb ? (
-              <div className="p-8 text-center text-sm text-slate-500 italic">
-                Bilgiler yükleniyor...
-              </div>
-            ) : (
-              <>
-                {/* UYARI VE LİMİT MESAJLARI */}
-                <DosyaManageAlerts
-                  validationError={validationError}
-                  onClearValidationError={() => setValidationError(null)}
-                  isDonemTanimsiz={donemTanimsizMi(formData.dosya_acilis_tarihi || undefined)}
-                  dosyaAcilisTarihi={formData.dosya_acilis_tarihi}
-                />
-
-                {/* SEKME 1: GENEL BİLGİLER */}
-                {activeTab === 'genel' && (
-                  <GenelBilgilerTab
-                    formData={formData}
-                    setFormData={setFormData}
-                    isEdit={isEdit}
-                    editId={editId}
-                    birimler={birimler}
-                    kurum={kurum}
-                    personeller={personeller}
-                    roller={roller}
-                    kodSozlugu={kodSozlugu}
-                    dosyalar={dosyalar}
-                    getNextTeminNo={getNextTeminNo}
-                    isDescLoading={isDescLoading}
-                    showKonuSuggestions={showKonuSuggestions}
-                    setShowKonuSuggestions={setShowKonuSuggestions}
-                    exactMatchCount={exactMatchCount}
-                    matchedSuggestions={matchedSuggestions}
-                    handleAiDescGenerate={handleAiDescGenerate}
-                    handleCopyKonuToAciklama={handleCopyKonuToAciklama}
-                    openTextGenerator={openTextGenerator}
-                    showBirimSearch={showBirimSearch}
-                    setShowBirimSearch={setShowBirimSearch}
-                    birimSearchQuery={birimSearchQuery}
-                    setBirimSearchQuery={setBirimSearchQuery}
-                    filteredBirimler={filteredBirimler}
-                    handleSelectBirim={handleSelectBirim}
-                    handleCreateAndSelectBirim={handleCreateAndSelectBirim}
-                    showPersonelSearch={showPersonelSearch}
-                    setShowPersonelSearch={setShowPersonelSearch}
-                    personelSearchQuery={personelSearchQuery}
-                    setPersonelSearchQuery={setPersonelSearchQuery}
-                    filteredPersoneller={filteredPersoneller}
-                    onNextMainStep={handleSelectIhtiyacTab}
-                    activeSubStep={activeSubStep}
-                    setActiveSubStep={setActiveSubStep}
+            {loadingDb
+              ? (
+                <div className="p-8 text-center text-sm text-slate-500 italic">
+                  Bilgiler yükleniyor...
+                </div>
+              )
+              : (
+                <>
+                  {/* UYARI VE LİMİT MESAJLARI */}
+                  <DosyaManageAlerts
+                    validationError={validationError}
+                    onClearValidationError={() => setValidationError(null)}
+                    isDonemTanimsiz={donemTanimsizMi(
+                      formData.dosya_acilis_tarihi || undefined,
+                    )}
+                    dosyaAcilisTarihi={formData.dosya_acilis_tarihi}
                   />
-                )}
 
-                {/* SEKME 2: İHTİYAÇ LİSTESİ */}
-                {activeTab === 'ihtiyac' && (
-                  <IhtiyacListesiTab
-                    formData={formData}
-                    setFormData={setFormData}
-                    isEdit={isEdit}
-                    editId={editId}
-                    birimler={birimler}
-                    personeller={personeller}
-                    kodSozlugu={kodSozlugu}
-                    dosyalar={dosyalar}
-                    getNextTeminNo={getNextTeminNo}
-                  />
-                )}
-              </>
-            )}
+                  {/* SEKME 1: GENEL BİLGİLER */}
+                  {activeTab === "genel" && (
+                    <GenelBilgilerTab
+                      formData={formData}
+                      setFormData={setFormData}
+                      isEdit={isEdit}
+                      editId={editId}
+                      birimler={birimler}
+                      kurum={kurum}
+                      personeller={personeller}
+                      roller={roller}
+                      kodSozlugu={kodSozlugu}
+                      dosyalar={dosyalar}
+                      getNextTeminNo={getNextTeminNo}
+                      isDescLoading={isDescLoading}
+                      showKonuSuggestions={showKonuSuggestions}
+                      setShowKonuSuggestions={setShowKonuSuggestions}
+                      exactMatchCount={exactMatchCount}
+                      matchedSuggestions={matchedSuggestions}
+                      handleAiDescGenerate={handleAiDescGenerate}
+                      handleCopyKonuToAciklama={handleCopyKonuToAciklama}
+                      openTextGenerator={openTextGenerator}
+                      showBirimSearch={showBirimSearch}
+                      setShowBirimSearch={setShowBirimSearch}
+                      birimSearchQuery={birimSearchQuery}
+                      setBirimSearchQuery={setBirimSearchQuery}
+                      filteredBirimler={filteredBirimler}
+                      handleSelectBirim={handleSelectBirim}
+                      handleCreateAndSelectBirim={handleCreateAndSelectBirim}
+                      showPersonelSearch={showPersonelSearch}
+                      setShowPersonelSearch={setShowPersonelSearch}
+                      personelSearchQuery={personelSearchQuery}
+                      setPersonelSearchQuery={setPersonelSearchQuery}
+                      filteredPersoneller={filteredPersoneller}
+                      onNextMainStep={handleSelectIhtiyacTab}
+                      activeSubStep={activeSubStep}
+                      setActiveSubStep={setActiveSubStep}
+                    />
+                  )}
+                </>
+              )}
 
             {/* ALT BUTONLAR VE İŞLEMLER */}
             <DosyaManageFooter
@@ -230,7 +210,7 @@ export function DosyaManageScreen(): React.JSX.Element {
               isEdit={isEdit}
               editId={editId}
               formData={formData}
-              onGoBack={() => setActiveTab('genel')}
+              onGoBack={() => setActiveTab("genel")}
               onSave={handleSave}
             />
           </form>
@@ -255,7 +235,7 @@ export function DosyaManageScreen(): React.JSX.Element {
         />
       </div>
     </div>
-  )
+  );
 }
 
-export default DosyaManageScreen
+export default DosyaManageScreen;

@@ -579,16 +579,30 @@ export function buildMergedPersonelList(
     return isPersonelActive(p);
   });
 
-  // Belgede birim bilgisi varsa ilgili birim personellerini önceliklendir
-  if (data && (data.birimId || data.birim_id || data.birimAdi || data.birim || data.mudurluk)) {
-    const { filteredList } = filterPersonelByBirim(personelList, {
-      birimId: data.birimId ?? data.birim_id,
-      birimAdi: data.birimAdi || data.birim || data.mudurluk,
-      birimList: data.birimListesi,
-      includeOtherUnits: data.allowCrossUnitPersonnel !== false,
+  // Belgede veya antette birim bilgisi varsa ilgili birim personellerini filtrele
+  const targetBirimAdi =
+    data?.birimAdi ||
+    data?.birim ||
+    data?.mudurluk ||
+    (Array.isArray(data?.antetSatirlari) && data.antetSatirlari.length > 2
+      ? data.antetSatirlari[data.antetSatirlari.length - 1]
+      : "") ||
+    data?.antetEkSatir ||
+    data?.antet_ek_satir;
+
+  const targetBirimId = data?.birimId ?? data?.birim_id;
+
+  if (targetBirimId || targetBirimAdi) {
+    const { primaryUnitPersonel, filteredList } = filterPersonelByBirim(personelList, {
+      birimId: targetBirimId,
+      birimAdi: targetBirimAdi,
+      birimList: data?.birimListesi,
+      includeOtherUnits: data?.allowCrossUnitPersonnel === true,
       currentSelectedNames: cleanCurrent ? [cleanCurrent] : [],
     });
-    return filteredList;
+    if (primaryUnitPersonel.length > 0) {
+      return filteredList;
+    }
   }
 
   return personelList;

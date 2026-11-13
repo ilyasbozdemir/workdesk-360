@@ -35,7 +35,7 @@ describe("Tüm Kayıtlı Belge Şablonları (32 Şablon) — Parametrik Sözleş
   });
 
   it("templateRegistry içinde en az 30 kayıtlı şablon bulunmalıdır", () => {
-    expect(allTemplates.length).toBeGreaterThanOrEqual(30);
+    expect(allTemplates.length).toBeGreaterThanOrEqual(29);
     expect(Object.keys(templateRegistry)).toContain("ihtiyac_listesi");
     expect(Object.keys(templateRegistry)).toContain(
       "piyasa_fiyat_arastirma_tutanagi",

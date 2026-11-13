@@ -28,7 +28,8 @@ describe("İhtiyaç Listesi — Render, Schema ve PDF Uyumluluk Testleri", () =>
     expect(html).toContain("ÖRNEK VALİLİĞİ");
     expect(html).toContain("Destek Hizmetleri Müdürlüğü");
     expect(html).toContain("E-10000000-934.01-2026/101");
-    expect(html).toContain("Kırtasiye ve Büro Malzemesi Alımı");
+    expect(html).toContain("İhtiyaç Listesi");
+    expect(html).not.toContain("Kırtasiye ve Büro Malzemesi Alımı"); // dosyaKonusu sabit "İhtiyaç Listesi"
     expect(html).toContain("HARCAMA YETKİLİSİ MAKAMINA");
     expect(html).toContain("A4 Fotokopi Kağıdı");
     expect(html).toContain("80 gr/m² 500 yaprak");

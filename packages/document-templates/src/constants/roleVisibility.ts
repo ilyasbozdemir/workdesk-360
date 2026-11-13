@@ -1,5 +1,5 @@
 import { RoleCode, RoleVisibility, TemplateGroup } from '../types'
-import { TEMPLATE_REGISTRY } from './template-registry'
+import { TEMPLATE_REGISTRY } from '../registry'
 
 export const GROUP_DEFAULT_ROLE_VISIBILITY: Record<
   TemplateGroup,

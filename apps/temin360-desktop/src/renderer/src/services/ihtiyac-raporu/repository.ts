@@ -124,6 +124,24 @@ export const ihtiyacRaporuRepository = {
     kalemler: IhtiyacRaporuKalem[] = []
   ): Promise<number> {
     await ensureIhtiyacRaporuTables()
+
+    // Bütünlük Kontrolü: Aynı dosyaya ait mükerrer ihtiyaç raporu oluşturulamaz!
+    const targetDosyaId =
+      rapor.temin_dosya_id && Number(rapor.temin_dosya_id) > 0
+        ? Number(rapor.temin_dosya_id)
+        : null
+
+    if (targetDosyaId) {
+      const existing = await dbClient.queryFirst<{ id: number }>(
+        `SELECT id FROM DATA_IhtiyacRaporu WHERE temin_dosya_id = ? LIMIT 1`,
+        [targetDosyaId]
+      )
+      if (existing) {
+        await this.updateRapor(existing.id, rapor, kalemler)
+        return existing.id
+      }
+    }
+
     const totals = calculateTotals(kalemler)
 
     const insertSql = `
@@ -254,6 +272,9 @@ export const ihtiyacRaporuRepository = {
    * Rapor kalemlerini temizleyip topluca yeniden kaydeder
    */
   async saveKalemler(raporId: number, kalemler: IhtiyacRaporuKalem[]): Promise<void> {
+    if (!raporId || Number(raporId) <= 0) {
+      throw new Error('Geçersiz ihtiyaç raporu ID: Kalemler kaydedilemez.')
+    }
     await dbClient.run(`DELETE FROM DATA_IhtiyacRaporuKalem WHERE rapor_id = ?`, [raporId])
 
     for (let i = 0; i < kalemler.length; i++) {
