@@ -31,11 +31,11 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
 
   return (
     <div
-      className="min-h-9 py-1 flex items-center justify-between gap-1 sm:gap-2.5 bg-slate-100/50 dark:bg-slate-950/20 border-t border-slate-200/30 dark:border-slate-800/30 select-none px-2 sm:px-3 relative z-20 w-full max-w-full overflow-hidden"
+      className="min-h-9 py-1 flex items-center justify-between gap-1 sm:gap-2.5 bg-slate-100/50 dark:bg-slate-950/20 border-t border-slate-200/30 dark:border-slate-800/30 select-none px-2 sm:px-3 relative z-[100] w-full max-w-full overflow-visible"
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
     >
       {/* Sol: Çoklu Çalışma Masası Seçici (4734 Satın Alma vs 5018 Mali Hizmetler) */}
-      <div className="shrink-0 flex items-center pl-0.5">
+      <div className="flex-1 flex items-center justify-start min-w-0 pl-0.5">
         <WorkspaceSwitcher />
       </div>
 
@@ -43,7 +43,7 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
         ? (
           <>
             {/* Orta: 5018 Mali Yönetim Masası Başlığı */}
-            <div className="flex-1 min-w-0 flex items-center justify-center gap-2 px-1 sm:px-2">
+            <div className="shrink-0 flex items-center justify-center gap-2 px-1 sm:px-2 z-10">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border select-none bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-2xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <span>5018 & BKMYBS Mali Yönetim ve Muhasebe Masası</span>
@@ -51,7 +51,7 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
             </div>
 
             {/* Sağ: Mali Hızlı Geçiş Düğmeleri */}
-            <div className="flex items-center gap-1.5 shrink-0 justify-end">
+            <div className="flex-1 flex items-center gap-1.5 min-w-0 justify-end">
               <button
                 type="button"
                 onClick={() => setActiveFinanceTab("budget-tracking")}
@@ -102,15 +102,15 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
         )
         : (
           <>
-            {/* Orta: Temin Seçici */}
-            <div className="flex-1 min-w-0 flex justify-center px-1 sm:px-2">
+            {/* Orta: Temin Seçici - Hem Boşken Hem Doluyken Matematiksel Olarak Tam Ortada */}
+            <div className="shrink-0 flex items-center justify-center min-w-0 px-1 sm:px-2 z-10">
               <TeminSelector />
             </div>
 
             {/* Sağ: Süreç & Çıktı Butonları (Temin 360 - Doğrudan Temin Odaklı) */}
-            {activeDosyaId
-              ? (
-                <div className="flex items-center gap-1.5 shrink-0 justify-end">
+            <div className="flex-1 flex items-center gap-1.5 min-w-0 justify-end">
+              {activeDosyaId && (
+                <>
                   <Link
                     to={APP_ROUTES.TAKIP}
                     title="Doğrudan Temin Süreç & Dosya Takip Masası (Kanban, Liste, Grid, Detay)"
@@ -143,9 +143,9 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
                     <span className="hidden 2xl:inline">Çıktı Merkezi</span>
                     <span className="hidden xl:inline 2xl:hidden">Çıktı</span>
                   </Link>
-                </div>
-              )
-              : null}
+                </>
+              )}
+            </div>
           </>
         )}
     </div>

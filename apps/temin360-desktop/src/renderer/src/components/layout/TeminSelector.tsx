@@ -46,7 +46,7 @@ export function TeminSelector(): React.JSX.Element {
 
   return (
     <>
-      <div className="relative max-w-full min-w-0 flex justify-center" ref={containerRef}>
+      <div className="relative max-w-full min-w-0 flex justify-center z-[110]" ref={containerRef}>
         <TeminSelectorTrigger
           isOpen={isOpen}
           setIsOpen={setIsOpen}

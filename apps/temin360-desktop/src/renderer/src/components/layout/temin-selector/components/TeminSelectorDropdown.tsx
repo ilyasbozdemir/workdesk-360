@@ -64,7 +64,7 @@ export const TeminSelectorDropdown = React.memo(function TeminSelectorDropdown({
 
   return (
     <div
-      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[880px] max-w-[94vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200 select-text"
+      className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[880px] max-w-[94vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 z-[120] animate-in fade-in slide-in-from-top-2 duration-200 select-text"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
       <TeminSelectorHeader

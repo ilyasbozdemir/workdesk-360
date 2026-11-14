@@ -33,7 +33,7 @@ export const TeminSelectorActive4734: React.FC<TeminSelectorActive4734Props> = (
   return (
     <div
       onClick={(): void => setIsOpen(!isOpen)}
-      className={`group flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1 rounded-2xl bg-white dark:bg-slate-900 border transition-all duration-200 shadow-2xs hover:shadow-xs max-w-200 w-auto min-w-0 cursor-pointer select-none ${
+      className={`group flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1 rounded-2xl bg-white dark:bg-slate-900 border transition-all duration-200 shadow-2xs hover:shadow-xs max-w-200 w-auto min-w-0 cursor-pointer select-none mx-auto ${
         selectedIsIhale
           ? 'border-indigo-200 dark:border-indigo-800/80 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20'
           : 'border-blue-200 dark:border-blue-800/80 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/40 dark:hover:bg-blue-950/20'

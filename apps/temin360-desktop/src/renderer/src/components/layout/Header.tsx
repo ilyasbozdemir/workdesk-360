@@ -62,7 +62,7 @@ export function Header(): React.JSX.Element {
 
   return (
     <header
-      className="flex flex-col bg-slate-50/95 dark:bg-slate-900/95 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0 z-50 shadow-xs relative select-none"
+      className="flex flex-col bg-slate-50/95 dark:bg-slate-900/95 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0 z-[100] shadow-xs relative select-none"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
       {/* Üst Vurgu Çizgisi */}
