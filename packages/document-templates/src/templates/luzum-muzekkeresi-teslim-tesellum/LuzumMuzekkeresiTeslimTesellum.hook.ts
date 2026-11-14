@@ -222,8 +222,19 @@ export function useLuzumMuzekkeresiTeslimTesellum(
     return raw.map((item: any, idx: number) => {
       const overrideAd = (data as any)[`teslimAlan_${idx}_adSoyad`];
       const overrideUnvan = (data as any)[`teslimAlan_${idx}_unvan`];
-      const ad = overrideAd || item.adSoyad || "";
-      const unv = overrideUnvan || item.unvan || "";
+      const ad =
+        overrideAd ||
+        item.adSoyad ||
+        item.name ||
+        item.ad_soyad ||
+        "";
+      const unv =
+        overrideUnvan ||
+        item.unvan ||
+        item.title ||
+        item.gorev ||
+        item.komisyonGorevi ||
+        "";
       return {
         ...item,
         adSoyad: String(ad),
