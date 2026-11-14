@@ -108,7 +108,7 @@ export function registerTeminTemplates(
     {
       templateKey: "ihtiyac_talep_formu",
       name: "IhtiyacTalepFormu",
-      title: "Standart Form: İhtiyaç Belgesi ve Harcama Talep Müzekkeresi",
+      title: "Standart Form: İhtiyaç Talep Formu",
       category: "1-ihtiyac-tespiti-ve-baslangic",
       categoryLabel: "Hazırlık & İhtiyaç",
       description:

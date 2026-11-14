@@ -3,7 +3,7 @@
  * required alanları boş bıraktırmaz; person-list için dizi bekler;
  * diğer alanlarda tek atama bekler.
  */
-import type { ResolvedDocumentRoute, RouteAssignee } from "@temin360/contracts";
+import type { ResolvedDocumentRoute, RouteAssignee } from "./types";
 
 export function validateRoute(route: ResolvedDocumentRoute): string[] {
   const errors: string[] = [];

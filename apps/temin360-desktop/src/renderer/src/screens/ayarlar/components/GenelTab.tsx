@@ -1,5 +1,15 @@
 import React from 'react'
-import { Archive, Clock, ShieldCheck, Laptop, User, PanelLeft } from 'lucide-react'
+import {
+  Archive,
+  Clock,
+  ShieldCheck,
+  Laptop,
+  User,
+  PanelLeft,
+  LayoutDashboard,
+  LayoutGrid
+} from 'lucide-react'
+import { useSettingsStore } from '../../../store/settingsStore'
 
 interface GenelTabProps {
   disableDocumentGuidance: boolean
@@ -35,6 +45,8 @@ export const GenelTab: React.FC<GenelTabProps> = ({
   setAlwaysShowQuickMenu,
   pcInfo
 }) => {
+  const { layoutMode, setLayoutMode } = useSettingsStore()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
@@ -43,13 +55,90 @@ export const GenelTab: React.FC<GenelTabProps> = ({
             Genel Sistem Ayarları
           </h2>
           <p className="text-xs text-slate-500">
-            Uygulamanın genel davranışını, masaüstü kullanıcı tercihini, çöp kutusu saklama politikasını ve belge akış
-            yönlendirmelerini düzenleyin.
+            Uygulamanın genel davranışını, masaüstü kullanıcı tercihini, çöp kutusu saklama politikasını ve arayüz düzenini belirleyin.
           </p>
         </div>
       </div>
 
       <div className="space-y-6">
+        {/* Arayüz Düzeni: Gelişmiş Ekran vs Basit Ekran */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <label className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <LayoutDashboard className="w-4 h-4 text-emerald-500" />
+                Çalışma Alanı &amp; Arayüz Düzeni (Gelişmiş vs Basit Ekran)
+              </label>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl">
+                WorkDesk 360 arayüzünü kullanım alışkanlığınıza göre ayarlayın. Gelişmiş ekran çoklu sekmeler,
+                detaylı mali modüller ve yan paneller sunarken; basit ekran sade, tek sayfada odaklanmış ve klasik bir yönetim paneli deneyimi sağlar.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 shrink-0">
+              {layoutMode === 'simple' ? 'Basit Ekran Aktif' : 'Gelişmiş Ekran Aktif'}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+            <button
+              type="button"
+              onClick={() => setLayoutMode('advanced')}
+              className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                layoutMode !== 'simple'
+                  ? 'bg-blue-50/80 border-blue-500 text-blue-900 dark:bg-blue-950/30 dark:border-blue-400 dark:text-blue-200 shadow-sm ring-1 ring-blue-500/20'
+                  : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-700 dark:bg-slate-800/50 dark:border-slate-700/60 dark:text-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    layoutMode !== 'simple'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold">Gelişmiş Ekran (Masaüstü Çoklu Sekme)</div>
+                  <div className="text-[11px] opacity-75">Genişletilmiş profesyonel çalışma alanı</div>
+                </div>
+              </div>
+              <p className="text-[11px] opacity-80 leading-relaxed">
+                Çoklu çalışma alanı sekmeleri, gelişmiş mali yönetim panelleri, rotasyonlu diyaloglar ve tam fonksiyonlu masaüstü deneyimi.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLayoutMode('simple')}
+              className={`p-4 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                layoutMode === 'simple'
+                  ? 'bg-emerald-50/80 border-emerald-500 text-emerald-900 dark:bg-emerald-950/30 dark:border-emerald-400 dark:text-emerald-200 shadow-sm ring-1 ring-emerald-500/20'
+                  : 'bg-slate-50 hover:bg-slate-100/70 border-slate-200 text-slate-700 dark:bg-slate-800/50 dark:border-slate-700/60 dark:text-slate-300'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
+                    layoutMode === 'simple'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold">Basit Ekran (Klasik &amp; Sade Yönetim)</div>
+                  <div className="text-[11px] opacity-75">Hızlı, net ve odaklı arayüz</div>
+                </div>
+              </div>
+              <p className="text-[11px] opacity-80 leading-relaxed">
+                Klasik sol navigasyon menüsü, üstte aktif dosya seçicisi, net A4 belge önizleme ve sadeleştirilmiş sekmesiz panel düzeni.
+              </p>
+            </button>
+          </div>
+        </div>
         {/* Masaüstü ve Cihaz Kullanıcı Entegrasyonu */}
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
           <div className="flex items-start justify-between gap-3">

@@ -66,6 +66,36 @@ export async function exportUdfHandler(
   }
 }
 
+export async function getPrintersHandler(
+  event?: any
+): Promise<{
+  success: boolean
+  printers: Array<{
+    name: string
+    displayName: string
+    description: string
+    status: number
+    isDefault: boolean
+    options?: Record<string, string>
+  }>
+  error?: string
+}> {
+  try {
+    let printers: any[] = []
+    if (event?.sender && typeof event.sender.getPrintersAsync === 'function') {
+      printers = await event.sender.getPrintersAsync()
+    } else {
+      const allWindows = BrowserWindow.getAllWindows()
+      if (allWindows.length > 0) {
+        printers = await allWindows[0].webContents.getPrintersAsync()
+      }
+    }
+    return { success: true, printers }
+  } catch (err: any) {
+    return { success: false, printers: [], error: err.message }
+  }
+}
+
 export async function printHtmlHandler(
   payload: any,
   legacyOptions?: any
@@ -73,10 +103,30 @@ export async function printHtmlHandler(
   try {
     const htmlContent =
       typeof payload === 'string' ? payload : payload?.html || payload?.htmlContent || ''
-    const printOptions =
+    const rawOptions =
       (typeof payload === 'object' && (payload?.options || payload?.printOptions)) ||
       legacyOptions ||
       (typeof payload === 'object' ? payload : {})
+
+    const printOptions: Record<string, any> = {
+      printBackground: true
+    }
+
+    if (rawOptions.silent !== undefined) printOptions.silent = Boolean(rawOptions.silent)
+    if (rawOptions.deviceName) printOptions.deviceName = String(rawOptions.deviceName)
+    if (rawOptions.copies) printOptions.copies = Number(rawOptions.copies)
+    if (rawOptions.color !== undefined) printOptions.color = Boolean(rawOptions.color)
+    if (rawOptions.landscape !== undefined) {
+      printOptions.landscape = Boolean(rawOptions.landscape)
+    } else if (rawOptions.orientation === 'landscape') {
+      printOptions.landscape = true
+    } else if (rawOptions.orientation === 'portrait') {
+      printOptions.landscape = false
+    }
+    if (rawOptions.margins) printOptions.margins = rawOptions.margins
+    if (rawOptions.pageSize) printOptions.pageSize = rawOptions.pageSize
+    if (rawOptions.pageRanges) printOptions.pageRanges = rawOptions.pageRanges
+    if (rawOptions.collate !== undefined) printOptions.collate = Boolean(rawOptions.collate)
 
     const win = new BrowserWindow({
       show: false,
@@ -91,7 +141,7 @@ export async function printHtmlHandler(
 
     return await new Promise((resolve) => {
       win.webContents.print(
-        { printBackground: true, ...printOptions },
+        printOptions,
         (success, failureReason) => {
           if (!win.isDestroyed()) {
             win.destroy()

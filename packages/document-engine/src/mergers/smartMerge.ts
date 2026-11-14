@@ -74,6 +74,23 @@ export function smartMergeDocumentData<T extends Record<string, unknown> = Recor
     }
   }
 
+  // Sunulacak makam güncellemesi: Eğer mevcut snapshot'ta yalnızca çıplak kurum adı yazıyorsa fakat taze kaynaktan makam geldiyse güncelle
+  const freshMakam = freshSourceData.sunulacakMakamAdi || freshSourceData.sunulacakMakam
+  if (freshMakam) {
+    const existingMakam = String(existingSnapshot.sunulacakMakamAdi ?? existingSnapshot.sunulacakMakam ?? '').trim()
+    const kAdi = String(freshSourceData.kurumAdi || existingSnapshot.kurumAdi || '').trim()
+    const sKurum = String((freshSourceData as any).sunulacakKurumAdi || (existingSnapshot as any).sunulacakKurumAdi || '').trim()
+    const isBareKurum = Boolean(
+      existingMakam &&
+      ((kAdi && existingMakam.toLowerCase() === kAdi.toLowerCase()) ||
+       (sKurum && existingMakam.toLowerCase() === sKurum.toLowerCase()))
+    )
+    if (isBareKurum) {
+      merged.sunulacakMakamAdi = freshMakam
+      merged.sunulacakMakam = freshMakam
+    }
+  }
+
   // 2. Kalem dizilerini (ihtiyacKalemleri, kalemler, items, malzemeler, fiyatKalemleri) akıllı birleştir
   const arrayFieldNames = ['ihtiyacKalemleri', 'kalemler', 'items', 'malzemeler', 'fiyatKalemleri']
 

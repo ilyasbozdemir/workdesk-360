@@ -436,7 +436,7 @@ Kullanım:
   node scripts/repair-firms.mjs --all
 
 Örnek:
-  node scripts/repair-firms.mjs "C:\\Users\\ilyas bozdemir\\Desktop\\Güneyyurt Belediyesi İhale - Doğrudan Temin.temin"
+  node scripts/repair-firms.mjs "C:\\Users\\ilyas bozdemir\\Desktop\\Güneydere Belediyesi İhale - Doğrudan Temin.temin"
 `)
   }
 }

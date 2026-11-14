@@ -1,14 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { InstitutionalHeaderProvider } from "../InstitutionalHeaderProvider";
-import {
-  DEFAULT_OFFICIAL_HEADER,
-  HeaderDefinition,
-} from "@temin360/contracts";
+import { DEFAULT_OFFICIAL_HEADER, HeaderDefinition } from "@temin360/contracts";
 
 describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri (Codex)", () => {
   const mockSettings = {
     countryPrefix: "T.C.",
-    institutionName: "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
+    institutionName: "GÜNEYDERE BELEDİYE BAŞKANLIĞI",
     parentInstitution: "KARAMAN VALİLİĞİ",
     spendingUnit: "Fen İşleri Müdürlüğü",
   };
@@ -29,14 +26,14 @@ describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri 
         {
           settings: mockSettings,
           document: mockDocument,
-          fallbackInstitutionName: "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
-        }
+          fallbackInstitutionName: "GÜNEYDERE BELEDİYE BAŞKANLIĞI",
+        },
       );
 
       expect(lines).toEqual([
         "T.C.",
         "KARAMAN VALİLİĞİ",
-        "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
+        "GÜNEYDERE BELEDİYE BAŞKANLIĞI",
         "Fen İşleri Müdürlüğü",
       ]);
     });
@@ -44,7 +41,7 @@ describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri 
     it("DETSİS hiyerarşi ayracı '>' içeren birim adlarını temizleyip saf birim adını döner", () => {
       const docWithHierarchy = {
         resolvedTenderUnit: {
-          name: "Güneyyurt Belediye Başkanlığı > Fen İşleri Müdürlüğü",
+          name: "Güneydere Belediye Başkanlığı > Fen İşleri Müdürlüğü",
         },
       };
 
@@ -53,12 +50,14 @@ describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri 
         {
           settings: mockSettings,
           document: docWithHierarchy,
-          fallbackInstitutionName: "Güneyyurt Belediye Başkanlığı",
-        }
+          fallbackInstitutionName: "Güneydere Belediye Başkanlığı",
+        },
       );
 
       expect(lines[lines.length - 1]).toBe("Fen İşleri Müdürlüğü");
-      expect(lines).not.toContain("Güneyyurt Belediye Başkanlığı > Fen İşleri Müdürlüğü");
+      expect(lines).not.toContain(
+        "Güneydere Belediye Başkanlığı > Fen İşleri Müdürlüğü",
+      );
     });
 
     it("şablon tanımındaki satır sıralamasına harfiyen uyar", () => {
@@ -71,14 +70,17 @@ describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri 
         ],
       };
 
-      const lines = InstitutionalHeaderProvider.resolveDynamicHeader(customOrderDef, {
-        settings: mockSettings,
-        document: mockDocument,
-      });
+      const lines = InstitutionalHeaderProvider.resolveDynamicHeader(
+        customOrderDef,
+        {
+          settings: mockSettings,
+          document: mockDocument,
+        },
+      );
 
       expect(lines).toEqual([
         "Fen İşleri Müdürlüğü",
-        "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
+        "GÜNEYDERE BELEDİYE BAŞKANLIĞI",
       ]);
     });
 
@@ -93,9 +95,12 @@ describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri 
         ],
       };
 
-      const lines = InstitutionalHeaderProvider.resolveDynamicHeader(defWithEmpty, {
-        settings: { countryPrefix: "T.C.", institutionName: "ÖRNEK İDARE" },
-      });
+      const lines = InstitutionalHeaderProvider.resolveDynamicHeader(
+        defWithEmpty,
+        {
+          settings: { countryPrefix: "T.C.", institutionName: "ÖRNEK İDARE" },
+        },
+      );
 
       expect(lines).toEqual(["T.C.", "ÖRNEK İDARE"]);
     });
@@ -110,10 +115,13 @@ describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri 
         ],
       };
 
-      const lines = InstitutionalHeaderProvider.resolveDynamicHeader(defManual, {
-        settings: { institutionName: "ÖRNEK KURUM" },
-        manual: { ozelBaslik: "ÖZEL KOMİSYON BAŞKANLIĞI" },
-      });
+      const lines = InstitutionalHeaderProvider.resolveDynamicHeader(
+        defManual,
+        {
+          settings: { institutionName: "ÖRNEK KURUM" },
+          manual: { ozelBaslik: "ÖZEL KOMİSYON BAŞKANLIĞI" },
+        },
+      );
 
       expect(lines).toEqual(["ÖZEL KOMİSYON BAŞKANLIĞI", "ÖRNEK KURUM"]);
     });
@@ -139,8 +147,8 @@ describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri 
     it("temel antet dizisinde '>' varsa ayıklar ve saf birim satırını ekler", () => {
       const baseWithArrow = [
         "T.C.",
-        "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
-        "Güneyyurt Belediye Başkanlığı > Belediye Meclisi",
+        "GÜNEYDERE BELEDİYE BAŞKANLIĞI",
+        "Güneydere Belediye Başkanlığı > Belediye Meclisi",
       ];
 
       const composed = InstitutionalHeaderProvider.composeBirimAntetLines(
@@ -148,21 +156,23 @@ describe("InstitutionalHeaderProvider - Dinamik Antet ve Logo Mimarisi Testleri 
         "Fen İşleri Müdürlüğü",
         undefined,
         ["Belediye Meclisi", "Fen İşleri Müdürlüğü"],
-        "GÜNEYYURT BELEDİYE BAŞKANLIĞI"
+        "GÜNEYDERE BELEDİYE BAŞKANLIĞI",
       );
 
       expect(composed).toEqual([
         "T.C.",
-        "GÜNEYYURT BELEDİYE BAŞKANLIĞI",
+        "GÜNEYDERE BELEDİYE BAŞKANLIĞI",
         "Fen İşleri Müdürlüğü",
       ]);
     });
 
     it("birim seçilmediğinde yalnızca temel kurum antetini korur", () => {
-      const base = ["T.C.", "GÜNEYYURT BELEDİYE BAŞKANLIĞI"];
-      const composed = InstitutionalHeaderProvider.composeBirimAntetLines(base, null);
-      expect(composed).toEqual(["T.C.", "GÜNEYYURT BELEDİYE BAŞKANLIĞI"]);
+      const base = ["T.C.", "GÜNEYDERE BELEDİYE BAŞKANLIĞI"];
+      const composed = InstitutionalHeaderProvider.composeBirimAntetLines(
+        base,
+        null,
+      );
+      expect(composed).toEqual(["T.C.", "GÜNEYDERE BELEDİYE BAŞKANLIĞI"]);
     });
   });
 });
-

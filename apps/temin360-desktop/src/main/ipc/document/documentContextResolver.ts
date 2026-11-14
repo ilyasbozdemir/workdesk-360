@@ -51,7 +51,7 @@ export function resolveDocumentPayload(
     const activeId = Number(settingsMap.activeKurumId || 1);
     const kurum =
       db.prepare("SELECT * FROM TANIM_Kurum WHERE id = ?").get(activeId) ||
-      db.prepare("SELECT * FROM TANIM_Kurum WHERE is_active = 1 LIMIT 1")
+      db.prepare("SELECT * FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1")
         .get() ||
       db.prepare("SELECT * FROM TANIM_Kurum ORDER BY id ASC LIMIT 1").get() ||
       {};
@@ -655,33 +655,75 @@ export function resolveDocumentPayload(
       birimAnteti: birimAntet,
       antetEkSatir: (dosya as any)?.antet_ek_satir ||
         (dosya as any)?.birim_antet_ek_satir || birimAntet,
-      sunulacakMakamAdi: (dosya as any)?.sunulacak_makam ||
-        (kurum as any)?.makam_adi ||
-        (birimListesi as any[]).find((b: any) =>
-          b.id === (dosya as any)?.birim_id
-        )?.sunum_makami ||
-        (birimListesi as any[]).find((b: any) =>
-          b.id === (dosya as any)?.birim_id
-        )?.birim_adi ||
-        "STRATEJİ GELİŞTİRME DAİRE BAŞKANLIĞINA",
-      sunulacakMakam: (dosya as any)?.sunulacak_makam ||
-        (kurum as any)?.makam_adi ||
-        (birimListesi as any[]).find((b: any) =>
-          b.id === (dosya as any)?.birim_id
-        )?.sunum_makami ||
-        (birimListesi as any[]).find((b: any) =>
-          b.id === (dosya as any)?.birim_id
-        )?.birim_adi ||
-        "STRATEJİ GELİŞTİRME DAİRE BAŞKANLIĞINA",
-      sunulacak_makam: (dosya as any)?.sunulacak_makam ||
-        (kurum as any)?.makam_adi ||
-        (birimListesi as any[]).find((b: any) =>
-          b.id === (dosya as any)?.birim_id
-        )?.sunum_makami ||
-        (birimListesi as any[]).find((b: any) =>
-          b.id === (dosya as any)?.birim_id
-        )?.birim_adi ||
-        "STRATEJİ GELİŞTİRME DAİRE BAŞKANLIĞINA",
+      sunulacakMakamAdi: (() => {
+        const secim = (kurum as any)?.sunulacak_makam_secimi || 'makam';
+        const customMakam = (kurum as any)?.makam_adi_custom || '';
+        const kurumMakamAdi = (kurum as any)?.makam_adi || '';
+        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi || '';
+        const effectiveKurumMakam = secim === 'kurum'
+          ? (kurumKurumAdi || kurumMakamAdi || '')
+          : (customMakam || (kurumMakamAdi && kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase() ? kurumMakamAdi : '') || (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ''));
+        const dosyaMakam = (dosya as any)?.sunulacak_makam ? String((dosya as any).sunulacak_makam).trim() : '';
+        const isBare = !dosyaMakam || dosyaMakam === kurumAdi || dosyaMakam === kurumKurumAdi || !dosyaMakam.toUpperCase().includes('MAKAM');
+        if (secim === 'makam' && isBare && effectiveKurumMakam) {
+          return effectiveKurumMakam;
+        }
+        return dosyaMakam ||
+          effectiveKurumMakam ||
+          (birimListesi as any[]).find((b: any) =>
+            b.id === (dosya as any)?.birim_id
+          )?.sunum_makami ||
+          (birimListesi as any[]).find((b: any) =>
+            b.id === (dosya as any)?.birim_id
+          )?.birim_adi ||
+          "STRATEJİ GELİŞTİRME DAİRE BAŞKANLIĞINA";
+      })(),
+      sunulacakMakam: (() => {
+        const secim = (kurum as any)?.sunulacak_makam_secimi || 'makam';
+        const customMakam = (kurum as any)?.makam_adi_custom || '';
+        const kurumMakamAdi = (kurum as any)?.makam_adi || '';
+        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi || '';
+        const effectiveKurumMakam = secim === 'kurum'
+          ? (kurumKurumAdi || kurumMakamAdi || '')
+          : (customMakam || (kurumMakamAdi && kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase() ? kurumMakamAdi : '') || (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ''));
+        const dosyaMakam = (dosya as any)?.sunulacak_makam ? String((dosya as any).sunulacak_makam).trim() : '';
+        const isBare = !dosyaMakam || dosyaMakam === kurumAdi || dosyaMakam === kurumKurumAdi || !dosyaMakam.toUpperCase().includes('MAKAM');
+        if (secim === 'makam' && isBare && effectiveKurumMakam) {
+          return effectiveKurumMakam;
+        }
+        return dosyaMakam ||
+          effectiveKurumMakam ||
+          (birimListesi as any[]).find((b: any) =>
+            b.id === (dosya as any)?.birim_id
+          )?.sunum_makami ||
+          (birimListesi as any[]).find((b: any) =>
+            b.id === (dosya as any)?.birim_id
+          )?.birim_adi ||
+          "STRATEJİ GELİŞTİRME DAİRE BAŞKANLIĞINA";
+      })(),
+      sunulacak_makam: (() => {
+        const secim = (kurum as any)?.sunulacak_makam_secimi || 'makam';
+        const customMakam = (kurum as any)?.makam_adi_custom || '';
+        const kurumMakamAdi = (kurum as any)?.makam_adi || '';
+        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi || '';
+        const effectiveKurumMakam = secim === 'kurum'
+          ? (kurumKurumAdi || kurumMakamAdi || '')
+          : (customMakam || (kurumMakamAdi && kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase() ? kurumMakamAdi : '') || (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ''));
+        const dosyaMakam = (dosya as any)?.sunulacak_makam ? String((dosya as any).sunulacak_makam).trim() : '';
+        const isBare = !dosyaMakam || dosyaMakam === kurumAdi || dosyaMakam === kurumKurumAdi || !dosyaMakam.toUpperCase().includes('MAKAM');
+        if (secim === 'makam' && isBare && effectiveKurumMakam) {
+          return effectiveKurumMakam;
+        }
+        return dosyaMakam ||
+          effectiveKurumMakam ||
+          (birimListesi as any[]).find((b: any) =>
+            b.id === (dosya as any)?.birim_id
+          )?.sunum_makami ||
+          (birimListesi as any[]).find((b: any) =>
+            b.id === (dosya as any)?.birim_id
+          )?.birim_adi ||
+          "STRATEJİ GELİŞTİRME DAİRE BAŞKANLIĞINA";
+      })(),
       eButce: (dosya as any)?.e_butce || (kurum as any)?.ebutce_kodu ||
         settingsMap.eButceKodu || "",
       e_butce: (dosya as any)?.e_butce || (kurum as any)?.ebutce_kodu ||

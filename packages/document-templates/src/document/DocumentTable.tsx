@@ -5,11 +5,17 @@ import {
   ColumnDef,
   getTemplateTableColumns,
   resolveRowCellValue,
+  TABLE_COLUMN_SOURCE_INFO,
   TEMPLATE_TABLE_COLUMNS,
 } from "../constants/tableColumns.constants";
 
 export type { ColumnDef };
-export { getTemplateTableColumns, resolveRowCellValue, TEMPLATE_TABLE_COLUMNS };
+export {
+  getTemplateTableColumns,
+  resolveRowCellValue,
+  TABLE_COLUMN_SOURCE_INFO,
+  TEMPLATE_TABLE_COLUMNS,
+};
 export const DEFAULT_IHTIYAC_COLUMNS = TEMPLATE_TABLE_COLUMNS.default;
 
 export interface DocumentTableProps<T = any> {
@@ -61,22 +67,33 @@ export const DocumentTable = React.forwardRef<
         {/* HEADER */}
         <thead>
           <tr style={{ pageBreakInside: "avoid" }}>
-            {activeColumns.map((col) => (
-              <th
-                key={String(col.key)}
-                style={{
-                  border: `1px solid ${borderColor}`,
-                  backgroundColor: headerBg,
-                  padding: GLOBAL_THEME.table.cellPadding,
-                  fontWeight: "bold",
-                  textAlign: col.align || "center",
-                  width: col.width,
-                  pageBreakInside: "avoid",
-                }}
-              >
-                {col.label}
-              </th>
-            ))}
+            {activeColumns.map((col) => {
+              const colKey = String(col.key);
+              const tooltip = col.tooltip ||
+                col.title ||
+                TABLE_COLUMN_SOURCE_INFO[colKey] ||
+                TABLE_COLUMN_SOURCE_INFO[colKey.toLowerCase()] ||
+                `ℹ️ ${col.label} sütunudur.`;
+
+              return (
+                <th
+                  key={colKey}
+                  title={tooltip}
+                  style={{
+                    border: `1px solid ${borderColor}`,
+                    backgroundColor: headerBg,
+                    padding: GLOBAL_THEME.table.cellPadding,
+                    fontWeight: "bold",
+                    textAlign: col.align || "center",
+                    width: col.width,
+                    pageBreakInside: "avoid",
+                    cursor: "help",
+                  }}
+                >
+                  {col.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
 
@@ -115,16 +132,35 @@ export const DocumentTable = React.forwardRef<
                         const colKey = String(col.key);
                         const value = resolveRowCellValue(row, colKey, rowNum);
 
-                        const rendered = col.render
+                        let rendered = col.render
                           ? col.render(value, row, rowIdx)
                           : value !== undefined && value !== null &&
                               String(value).trim() !== ""
                           ? String(value)
-                          : "-";
+                          : "";
+
+                        // Resmî evrak standardı: Boş/olmayan hücrelere '-' (tire) yazılmaz, boş bırakılır
+                        if (
+                          typeof rendered === "string" &&
+                          (rendered.trim() === "-" ||
+                            rendered.trim() === "—" ||
+                            rendered.trim() === "- -")
+                        ) {
+                          rendered = "";
+                        }
+
+                        const colTooltip = col.tooltip ||
+                          col.title ||
+                          TABLE_COLUMN_SOURCE_INFO[colKey] ||
+                          TABLE_COLUMN_SOURCE_INFO[colKey.toLowerCase()];
+                        const cellTooltip = colTooltip
+                          ? `${col.label}: ${rendered}\n${colTooltip}`
+                          : undefined;
 
                         return (
                           <td
                             key={String(col.key)}
+                            title={cellTooltip}
                             style={{
                               border: `1px solid ${borderColor}`,
                               padding: GLOBAL_THEME.table.cellPadding,
@@ -197,7 +233,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = (
                 width: "30%",
               }}
             >
-              {row.value}
+              {row.value === "-" || row.value === "—" ? "" : row.value}
             </td>
           </tr>
         ))}
