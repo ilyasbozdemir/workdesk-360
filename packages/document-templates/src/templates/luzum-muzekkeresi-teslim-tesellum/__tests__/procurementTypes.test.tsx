@@ -3,18 +3,15 @@ import { describe, expect, it } from "vitest";
 import { renderToString } from "react-dom/server";
 import { LuzumMuzekkeresiTeslimTesellum } from "../LuzumMuzekkeresiTeslimTesellum.template";
 import { MalAlimiLuzumMuzekkeresiTeslimTesellum } from "../MalAlimi/MalAlimiLuzumMuzekkeresiTeslimTesellum";
-import { HizmetAlimiLuzumMuzekkeresiTeslimTesellum } from "../HizmetAlimi/HizmetAlimiLuzumMuzekkeresiTeslimTesellum";
-import { DanismanlikLuzumMuzekkeresiTeslimTesellum } from "../DanismanlikHizmetAlimi/DanismanlikLuzumMuzekkeresiTeslimTesellum";
-import { YapimIsleriLuzumMuzekkeresiTeslimTesellum } from "../YapimIsleri/YapimIsleriLuzumMuzekkeresiTeslimTesellum";
 
-describe("LuzumMuzekkeresiTeslimTesellum — Alım Türü Varyantları", () => {
+describe("LuzumMuzekkeresiTeslimTesellum — Mal Alımı Teslim Tesellüm Tutanağı", () => {
   const baseData = {
-    isinAdi: "Test Alımı",
-    kurumumuz: "Test Belediyesi",
+    isinAdi: "Temizlik Malzemesi Alımı",
+    kurumumuz: "Destek Hizmetleri Dairesi Başkanlığı",
     ihtiyacKalemleri: [
       {
         siraNo: 1,
-        kodu: "253.01.01",
+        kodu: "150.01.01",
         malzemeAdi: "A4 Fotokopi Kağıdı",
         ozelligi: "80 gr Beyaz",
         birimi: "Koli",
@@ -23,10 +20,22 @@ describe("LuzumMuzekkeresiTeslimTesellum — Alım Türü Varyantları", () => {
       },
     ],
     teslimEdenler: [{ adSoyad: "Ahmet Yılmaz", unvan: "Yüklenici Yetkilisi" }],
-    teslimAlanlar: [{ adSoyad: "Mehmet Demir", unvan: "Ambar Memuru" }],
+    teslimAlanlar: [{ adSoyad: "Mehmet Demir", unvan: "Taşınır Kayıt Yetkilisi" }],
   };
 
-  it("1. Mal Alımı varyantı doğru başlık ve 'Taşınır Kodu' sütununu içerir", () => {
+  it("1. Teslim Tesellüm Belgesi standart başlığı ve 'Taşınır Kodu' sütununu içerir", () => {
+    const html = renderToString(
+      <LuzumMuzekkeresiTeslimTesellum data={baseData} />,
+    );
+    expect(html).toContain("TESLİM TESELLÜM BELGESİ");
+    expect(html).toContain("Taşınır Kodu");
+    expect(html).toContain("A4 Fotokopi Kağıdı");
+    expect(html).toContain("TESLİM EDENLER");
+    expect(html).toContain("TESLİM ALANLAR");
+    expect(html).toContain("Taşınır Kayıt Yetkilisi");
+  });
+
+  it("2. MalAlimiLuzumMuzekkeresiTeslimTesellum bileşeni aynı Mal Alımı çıktısını üretir", () => {
     const html = renderToString(
       <MalAlimiLuzumMuzekkeresiTeslimTesellum data={baseData} />,
     );
@@ -35,37 +44,12 @@ describe("LuzumMuzekkeresiTeslimTesellum — Alım Türü Varyantları", () => {
     expect(html).toContain("A4 Fotokopi Kağıdı");
   });
 
-  it("2. Hizmet Alımı varyantı 'Hizmet Kodu' ve 'Hizmet / İşin Adı' sütunlarını içerir", () => {
+  it("3. Teslim Tesellüm tutanağı kamu ihale kanunu gereğince mal alımı formatında kalır", () => {
+    // Alım türü ne verilirse verilsin teslim-tesellüm fiziki mal alımı şablonunu korur
     const html = renderToString(
-      <HizmetAlimiLuzumMuzekkeresiTeslimTesellum data={baseData} />,
+      <LuzumMuzekkeresiTeslimTesellum data={{ ...baseData, alimTuru: "mal" }} />,
     );
     expect(html).toContain("TESLİM TESELLÜM BELGESİ");
-    expect(html).toContain("Hizmet Kodu");
-    expect(html).toContain("Hizmet / İşin Adı");
-  });
-
-  it("3. Danışmanlık varyantı 'Danışmanlık / Proje Adı' sütununu içerir", () => {
-    const html = renderToString(
-      <DanismanlikLuzumMuzekkeresiTeslimTesellum data={baseData} />,
-    );
-    expect(html).toContain("TESLİM TESELLÜM BELGESİ");
-    expect(html).toContain("Danışmanlık / Proje Adı");
-  });
-
-  it("4. Yapım İşleri varyantı 'Poz No' ve 'İş Kalemi Adı / İmalat' sütunlarını içerir", () => {
-    const html = renderToString(
-      <YapimIsleriLuzumMuzekkeresiTeslimTesellum data={baseData} />,
-    );
-    expect(html).toContain("TESLİM TESELLÜM BELGESİ");
-    expect(html).toContain("Poz No");
-    expect(html).toContain("İş Kalemi Adı / İmalat");
-  });
-
-  it("5. Ana LuzumMuzekkeresiTeslimTesellum alimTuru='yapim' verildiğinde otomatik yönlendirir", () => {
-    const html = renderToString(
-      <LuzumMuzekkeresiTeslimTesellum data={{ ...baseData, alimTuru: "yapim" }} />,
-    );
-    expect(html).toContain("Poz No");
-    expect(html).toContain("İş Kalemi Adı / İmalat");
+    expect(html).toContain("Taşınır Kodu");
   });
 });

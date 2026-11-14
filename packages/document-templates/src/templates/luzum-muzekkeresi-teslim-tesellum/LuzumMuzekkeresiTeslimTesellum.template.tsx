@@ -1,16 +1,19 @@
 import React from "react";
 import { ColumnDef } from "../../document/DocumentTable";
 import { LuzumMuzekkeresiTeslimTesellumType } from "./LuzumMuzekkeresiTeslimTesellum.schema";
-import { MalAlimiLuzumMuzekkeresiTeslimTesellum } from "./MalAlimi/MalAlimiLuzumMuzekkeresiTeslimTesellum";
-import { HizmetAlimiLuzumMuzekkeresiTeslimTesellum } from "./HizmetAlimi/HizmetAlimiLuzumMuzekkeresiTeslimTesellum";
-import { DanismanlikLuzumMuzekkeresiTeslimTesellum } from "./DanismanlikHizmetAlimi/DanismanlikLuzumMuzekkeresiTeslimTesellum";
-import { YapimIsleriLuzumMuzekkeresiTeslimTesellum } from "./YapimIsleri/YapimIsleriLuzumMuzekkeresiTeslimTesellum";
 import {
-  AlimTuru,
-  detectAlimTuru,
-} from "../ihtiyac-listesi/IhtiyacListesi.template";
+  BaseLuzumMuzekkeresiTeslimTesellum,
+  BaseLuzumTeslimTesellumProps,
+} from "./BaseLuzumMuzekkeresiTeslimTesellum";
+import {
+  MAL_ALIMI_TESLIM_COLUMNS,
+  MalAlimiLuzumMuzekkeresiTeslimTesellum,
+} from "./MalAlimi/MalAlimiLuzumMuzekkeresiTeslimTesellum";
 
-export interface LuzumMuzekkeresiTeslimTesellumProps {
+export { MAL_ALIMI_TESLIM_COLUMNS, MalAlimiLuzumMuzekkeresiTeslimTesellum };
+
+export interface LuzumMuzekkeresiTeslimTesellumProps
+  extends BaseLuzumTeslimTesellumProps {
   data?: Partial<LuzumMuzekkeresiTeslimTesellumType> & Record<string, any>;
   columns?: ColumnDef[];
   pageSize?: "A4" | "A3";
@@ -18,28 +21,24 @@ export interface LuzumMuzekkeresiTeslimTesellumProps {
   firstPageLimit?: number;
   middlePageLimit?: number;
   lastPageLimit?: number;
-  alimTuru?: AlimTuru;
+  alimTuru?: string;
   title?: string;
 }
 
 /**
  * Lüzum Müzekkeresi Teslim Tesellüm Ana Şablonu
- * Alım türüne (Mal, Hizmet, Danışmanlık, Yapım İşleri) göre ilgili alt şablonu otomatik olarak yönlendirir ve çizer.
+ * Kamu İhale Mevzuatı ve Taşınır Mal Yönetmeliği uyarınca Teslim Tesellüm Tutanağı
+ * fiziki malzeme teslimi içeren Mal Alımı süreçlerinde düzenlenir.
+ * (Hizmet ve Yapım işlerinde mevzuat gereği Kabul Tutanakları ve Puantaj düzenlenir.)
  */
 export function LuzumMuzekkeresiTeslimTesellum(
   props: LuzumMuzekkeresiTeslimTesellumProps,
 ) {
-  const tur = props.alimTuru || detectAlimTuru(props.data);
-
-  switch (tur) {
-    case "yapim":
-      return <YapimIsleriLuzumMuzekkeresiTeslimTesellum {...props} />;
-    case "hizmet":
-      return <HizmetAlimiLuzumMuzekkeresiTeslimTesellum {...props} />;
-    case "danismanlik":
-      return <DanismanlikLuzumMuzekkeresiTeslimTesellum {...props} />;
-    case "mal":
-    default:
-      return <MalAlimiLuzumMuzekkeresiTeslimTesellum {...props} />;
-  }
+  return (
+    <BaseLuzumMuzekkeresiTeslimTesellum
+      {...props}
+      columns={props.columns || MAL_ALIMI_TESLIM_COLUMNS}
+      title={props.title || "TESLİM TESELLÜM BELGESİ"}
+    />
+  );
 }

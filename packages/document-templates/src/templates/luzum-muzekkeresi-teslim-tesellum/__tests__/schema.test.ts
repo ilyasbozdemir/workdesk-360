@@ -2,9 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   LuzumMuzekkeresiTeslimTesellumSchema,
   MalAlimiLuzumMuzekkeresiTeslimTesellumSchema,
-  HizmetAlimiLuzumMuzekkeresiTeslimTesellumSchema,
-  DanismanlikLuzumMuzekkeresiTeslimTesellumSchema,
-  YapimIsleriLuzumMuzekkeresiTeslimTesellumSchema,
 } from "../index";
 
 describe("LuzumMuzekkeresiTeslimTesellum — Zod Şema Doğrulaması", () => {
@@ -31,10 +28,9 @@ describe("LuzumMuzekkeresiTeslimTesellum — Zod Şema Doğrulaması", () => {
     expect(parsed.success).toBe(true);
   });
 
-  it("2. Alt alım türü şemaları uyumlu parse üretir", () => {
-    expect(MalAlimiLuzumMuzekkeresiTeslimTesellumSchema.safeParse(validData).success).toBe(true);
-    expect(HizmetAlimiLuzumMuzekkeresiTeslimTesellumSchema.safeParse(validData).success).toBe(true);
-    expect(DanismanlikLuzumMuzekkeresiTeslimTesellumSchema.safeParse(validData).success).toBe(true);
-    expect(YapimIsleriLuzumMuzekkeresiTeslimTesellumSchema.safeParse(validData).success).toBe(true);
+  it("2. Mal Alımı şeması uyumlu parse üretir", () => {
+    expect(
+      MalAlimiLuzumMuzekkeresiTeslimTesellumSchema.safeParse(validData).success,
+    ).toBe(true);
   });
 });
