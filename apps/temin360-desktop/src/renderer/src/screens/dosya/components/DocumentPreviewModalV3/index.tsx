@@ -166,7 +166,7 @@ export function DocumentPreviewModalV3(props: DocumentPreviewModalV3Props): Reac
       />
 
       {/* 3. Ana Gövde: Sidebar + Belge Tuvali */}
-      <div className="flex-1 flex overflow-hidden min-h-0 relative">
+      <div className="flex-1 flex overflow-hidden min-h-0 relative z-0">
         <DocumentPreviewSidebar
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}

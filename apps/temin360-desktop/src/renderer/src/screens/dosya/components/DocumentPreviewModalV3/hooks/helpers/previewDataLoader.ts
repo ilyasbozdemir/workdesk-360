@@ -38,6 +38,19 @@ export async function loadDocumentPreviewData({
     ...((docRecord.data || {}) as Record<string, unknown>),
   };
 
+  const currentMakam = String(dataObj.sunulacakMakamAdi || dataObj.sunulacakMakam || '').trim();
+  const headerMakam = String(docRecord.headerData?.sunulacakMakamAdi || docRecord.headerData?.sunulacakMakam || '').trim();
+  const kAdi = String(headerObj.kurumAdi || '').trim();
+  const sKurum = String(headerObj.sunulacakKurumAdi || '').trim();
+  const isBare = !currentMakam ||
+    (kAdi && currentMakam.toLowerCase() === kAdi.toLowerCase()) ||
+    (sKurum && currentMakam.toLowerCase() === sKurum.toLowerCase()) ||
+    !currentMakam.toUpperCase().includes('MAKAM');
+  if (headerMakam && isBare) {
+    dataObj.sunulacakMakamAdi = headerMakam;
+    dataObj.sunulacakMakam = headerMakam;
+  }
+
   if (showLogoLeft !== undefined) dataObj.showLogoLeft = showLogoLeft;
   if (showLogoRight !== undefined) dataObj.showLogoRight = showLogoRight;
   if (logoLeft) dataObj.solLogo = logoLeft;

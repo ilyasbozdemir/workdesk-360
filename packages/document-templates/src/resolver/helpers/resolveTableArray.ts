@@ -64,6 +64,10 @@ export const ALLOWED_COLUMNS = new Set([
   "tckn",
   "teklif_tutari",
   "birim_fiyat",
+  "toplam_tutar",
+  "son_alim_fiyati",
+  "alim_tarihi",
+  "kazanan_firma",
   "kdv_haric_toplam",
   "para_birimi",
   "temin_kalem_id",
@@ -95,6 +99,14 @@ const VIRTUAL_COLUMNS = new Set([
   "birimi",
   "olcuBirimi",
   "kdvOrani",
+  "toplam_tutar",
+  "toplamTutar",
+  "birimFiyat",
+  "birim_fiyat",
+  "kazananFirma",
+  "kazanan_firma",
+  "alimTarihi",
+  "alim_tarihi",
 ]);
 
 const IDENTIFIER_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/;

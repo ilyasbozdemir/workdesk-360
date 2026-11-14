@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { usePrintQueueStore } from "../../../../../store/printQueueStore";
 import { useWorkspaceStore } from "../../../../../store/workspaceStore";
+import { ExcelStylePrintModal, PrintSettings } from "../../../../../components/ui/ExcelStylePrintModal";
 
 interface DocumentPreviewHeaderProps {
   onClose: () => void;
@@ -42,7 +43,7 @@ interface DocumentPreviewHeaderProps {
   isDirty?: boolean;
   handleSaveToDb: () => Promise<void>;
   isPrinting: boolean;
-  handlePrint: () => Promise<void>;
+  handlePrint: (options?: any) => Promise<void>;
   downloadOpen: boolean;
   setDownloadOpen: React.Dispatch<React.SetStateAction<boolean>>;
   dropdownRef: React.RefObject<HTMLDivElement | null>;
@@ -108,6 +109,8 @@ export function DocumentPreviewHeader({
     ? getDocumentStatus(targetDosyaId, docKey)
     : "draft";
 
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+
   const handleToggleQueue = (): void => {
     if (!targetDosyaId || !docKey) {
       alert("Belge kuyruğa eklenemedi: Dosya veya şablon tanımlanamadı.");
@@ -118,15 +121,26 @@ export function DocumentPreviewHeader({
     });
   };
 
-  const onPrintClick = async (): Promise<void> => {
+  const onPrintClick = (): void => {
+    setPrintModalOpen(true);
+  };
+
+  const handleExecutePrint = async (settings: PrintSettings): Promise<void> => {
     if (targetDosyaId && docKey) {
       markAsPrinted(targetDosyaId, docKey);
     }
-    await handlePrint();
+    await handlePrint({
+      deviceName: settings.printerName,
+      copies: settings.copies,
+      silent: settings.silent,
+      orientation: settings.orientation,
+      color: settings.color,
+    });
+    setPrintModalOpen(false);
   };
 
   return (
-    <header className="flex flex-col border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xs shrink-0 select-none min-w-0">
+    <header className="relative z-[100] flex flex-col border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xs shrink-0 select-none min-w-0">
       <div className="flex items-center justify-between px-2.5 sm:px-4 py-1.5 gap-2 shrink-0 select-none min-w-0">
         {/* Sol: Belge İkonu, Başlık ve Durum Rozetleri */}
         <div className="flex items-center gap-2 min-w-0 flex-1 mr-1">
@@ -437,7 +451,7 @@ export function DocumentPreviewHeader({
           </button>
 
           {/* Diğer Seçenekler Dropdown */}
-          <div className="relative shrink-0" ref={dropdownRef}>
+          <div className="relative shrink-0 z-[110]" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setDownloadOpen((v) => !v)}
@@ -449,7 +463,7 @@ export function DocumentPreviewHeader({
             </button>
 
             {downloadOpen && (
-              <div className="absolute top-full mt-2 right-0 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
+              <div className="absolute top-full mt-2 right-0 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl py-1.5 z-[120] animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
                 <button
                   type="button"
                   onClick={async () => {
@@ -558,6 +572,17 @@ export function DocumentPreviewHeader({
           </button>
         </div>
       )}
+
+      {/* Excel Tarzı Yazıcı Seçimi ve Baskı Masası Modalı */}
+      <ExcelStylePrintModal
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        onPrint={handleExecutePrint}
+        documentTitle={documentTitle}
+        dosyaNo={targetDosyaId ? String(targetDosyaId) : undefined}
+        defaultOrientation={orientation}
+        isPrinting={isPrinting}
+      />
     </header>
   );
 }

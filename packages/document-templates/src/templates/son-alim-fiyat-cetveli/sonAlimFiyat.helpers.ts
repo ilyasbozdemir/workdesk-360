@@ -35,7 +35,7 @@ export function normalizeKalemler(data: Record<string, any>): any[] {
   if (!(data.ihtiyacKalemleri?.length > 0)) return [];
   return data.ihtiyacKalemleri.map((k: any, idx: number) => ({
     siraNo: k.siraNo || idx + 1,
-    malzemeKodu: k.malzemeKodu || k.kodu || k.tasinir_kodu || '-',
+    malzemeKodu: k.malzemeKodu || k.kodu || k.tasinir_kodu || '',
     malzemeAdi: k.malzemeAdi || k.kalem_adi || '',
     ozelligi: k.ozelligi || k.aciklama || '',
     birimi: k.birimi || k.birim || '',
@@ -43,8 +43,8 @@ export function normalizeKalemler(data: Record<string, any>): any[] {
     miktar: k.miktar || 1,
     birimFiyat: k.birimFiyat || k.enDusukFiyat || '0,00',
     toplamTutar: k.toplamTutar || k.toplamBedel || '0,00',
-    kazananFirma: k.kazananFirma || k.enUygunFirmaAdi || '-',
-    alimTarihi: k.alimTarihi || data.tarih || '-',
+    kazananFirma: k.kazananFirma || k.enUygunFirmaAdi || '',
+    alimTarihi: k.alimTarihi || data.tarih || '',
   }));
 }
 

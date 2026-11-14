@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { useSettingsStore } from '../../store/settingsStore'
 import { emitAppEvent } from '../../utils/appEvents'
+import { InstitutionalHeaderProvider } from '@temin360/document-templates'
+import { documentPreloadService } from '../../services/documentPreloadService'
 
 export interface KurumVerisi {
   id?: number
@@ -278,6 +280,8 @@ export function useKurumHooks() {
             makamAdi: data.makam_adi || ''
           })
           await loadSettings()
+          InstitutionalHeaderProvider.clearCache()
+          documentPreloadService.invalidateCache()
           emitAppEvent('settings:changed')
           emitAppEvent('workspace:refreshed')
         }

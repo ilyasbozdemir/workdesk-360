@@ -4,6 +4,7 @@ import {
   CheckSquare,
   ChevronDown,
   DownloadCloud,
+  LayoutGrid,
   Moon,
   Store,
   Sun,
@@ -33,17 +34,29 @@ export const HeaderActions = React.memo(function HeaderActions({
   updateStatus,
   setShowUpdateModal
 }: HeaderActionsProps): React.JSX.Element {
-  const { adminName, adminUsername } = useSettingsStore()
+  const { adminName, adminUsername, setLayoutMode } = useSettingsStore()
   const initials = getInitials(adminName || adminUsername || 'SY')
   return (
     <div
-      className="flex items-center gap-1.5"
+      className="flex items-center gap-1 sm:gap-1.5 shrink-0"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
+      {/* Basit Ekran / Klasik Arayüz Hızlı Geçiş Butonu */}
+      <button
+        onClick={(): void => setLayoutMode('simple')}
+        aria-label="Basit Ekran"
+        className="hidden lg:flex h-6 px-2 items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-emerald-50/90 dark:bg-emerald-950/40 hover:bg-emerald-100/90 dark:hover:bg-emerald-900/50 border border-emerald-200/80 dark:border-emerald-800/60 rounded-md transition-all cursor-pointer shadow-2xs shrink-0"
+        title="Basit / Sade Yönetim Ekranına Geç (Klasik Görünüm)"
+      >
+        <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <span>Basit Ekran</span>
+      </button>
+
       {/* Hızlı Servis & Araç Kümesi (Mağaza & Hesaplama Araçları) */}
-      <div className="flex items-center bg-slate-100/90 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-2xs">
+      <div className="hidden md:flex items-center bg-slate-100/90 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-2xs shrink-0">
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.MODUL_MAGAZASI })}
+          aria-label="Modül Mağazası"
           className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-650 dark:text-slate-200 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
           title="Modül & Eklenti Mağazası"
         >
@@ -55,6 +68,7 @@ export const HeaderActions = React.memo(function HeaderActions({
 
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.HESAPLAMA_ARACLARI })}
+          aria-label="Mali Hesaplayıcı"
           className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-650 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
           title="Mali Hesaplama & Formül Araçları (KDV, Tevkifat, Damga, Fiyat Farkı)"
         >
@@ -64,13 +78,14 @@ export const HeaderActions = React.memo(function HeaderActions({
       </div>
 
       {/* İnce Ayırıcı */}
-      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-800 mx-0.5 shrink-0" />
+      <div className="hidden md:block w-px h-3.5 bg-slate-200 dark:bg-slate-800 mx-0.5 shrink-0" />
 
       {/* Hızlı Araçlar & Göstergeler */}
       <div className="flex items-center gap-1">
         {/* Notlar & Yapılacaklar (To-Do) */}
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.NOTLAR })}
+          aria-label="Notlar ve Yapılacaklar"
           className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           title="Notlar & Yapılacaklar Listesi (To-Do)"
         >
@@ -80,6 +95,7 @@ export const HeaderActions = React.memo(function HeaderActions({
         {/* Tema Değiştir */}
         <button
           onClick={(): void => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          aria-label="Tema Değiştir"
           className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-200/50 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           title="Tema Değiştir"
         >

@@ -18,6 +18,22 @@ declare global {
         apiKey: string
       ) => Promise<{ success: boolean; data?: string; error?: string }>
       getAppVersion?: () => Promise<string>
+      getPrinters?: () => Promise<{
+        success: boolean
+        printers: Array<{
+          name: string
+          displayName: string
+          description: string
+          status: number
+          isDefault: boolean
+          options?: Record<string, string>
+        }>
+        error?: string
+      }>
+      printHtml?: (
+        payload: any,
+        options?: any
+      ) => Promise<{ success: boolean; error?: string }>
       setDevVersion?: (mode: boolean, version: string) => Promise<void>
       getAuditHistory?: (filter?: {
         recordId?: number

@@ -204,7 +204,7 @@ templates:
 
   - id: "ihtiyac-talep-formu"
     canonicalKey: "ihtiyac_talep_formu"
-    title: "İhtiyaç Belgesi ve Harcama Talep Müzekkeresi"
+    title: "İhtiyaç Talep Formu"
     mappingFile: "packages/document-templates/src/templates/ihtiyac-talep-formu/data.mapping.ts"
     definitionFile: "packages/document-templates/src/templates/ihtiyac-talep-formu/definition.ts"
     schemaFile: "packages/document-templates/src/templates/ihtiyac-talep-formu/IhtiyacTalepFormu.schema.ts"

@@ -317,7 +317,7 @@ export function resolveFirmsAndItems(
         items[idx]?.tasinir_kodu ||
         items[idx]?.poz_no ||
         items[idx]?.hizmet_kodu ||
-        '-'
+        ''
 
       const adiVal =
         kalem.imalatAdi ||
@@ -351,7 +351,7 @@ export function resolveFirmsAndItems(
         id: kalemId,
         siraNo: kalem.siraNo || kalem.sira_no || idx + 1,
         kodu: koduVal,
-        tasinirKodu: kalem.tasinirKodu || (koduVal !== '-' ? koduVal : ''),
+        tasinirKodu: kalem.tasinirKodu || koduVal || '',
         pozNo: kalem.pozNo || items[idx]?.poz_no || '',
         hizmetKodu: kalem.hizmetKodu || items[idx]?.hizmet_kodu || '',
         malzemeAdi: adiVal,
@@ -473,7 +473,7 @@ export function resolveFirmsAndItems(
 
         return {
           siraNo: k.siraNo || idx + 1,
-          malzemeKodu: k.kodu || k.malzemeKodu || k.tasinir_kodu || '-',
+          malzemeKodu: k.kodu || k.malzemeKodu || k.tasinir_kodu || '',
           malzemeAdi: k.malzemeAdi || k.kalem_adi || '',
           ozelligi: k.ozelligi || k.aciklama || '',
           birimi: k.birimi || k.birim || '',
@@ -481,13 +481,13 @@ export function resolveFirmsAndItems(
           miktar: k.miktar || 1,
           birimFiyat: birimFiyatStr,
           toplamTutar: toplamTutarStr,
-          kazananFirma: k.kazananFirma || winnerFirm?.unvan || k.enUygunFirmaAdi || '-',
+          kazananFirma: k.kazananFirma || winnerFirm?.unvan || k.enUygunFirmaAdi || '',
           alimTarihi:
             formatDateString(k.alimTarihi) ||
             formatDateString(dosyaObj.sozlesme_tarihi) ||
             formatDateString(dosyaObj.dosya_acilis_tarihi) ||
             formatDateString(dosyaObj.tarih) ||
-            '-'
+            ''
         }
       })
     }

@@ -101,6 +101,17 @@ export function applyRefreshPolicy(
 
     if (policy === 'preserve') {
       // PRESERVE: Kullanıcının belge üzerinde veya rotada yaptığı dolu düzenlemeler senkronizasyonda korunur.
+      // Özel İstisna (sunulacakMakamAdi): Eğer snapshot'taki değer yalnızca kurumun çıplak adıysa
+      // ve kaynak veride güncel bir sunulacak makam (örn: ... MAKAMINA) çözümlendiyse, güncel makamı koru!
+      if (key === 'sunulacakMakamAdi' && isNonEmptyValue(merged[key])) {
+        const kAdi = String(sourceData.kurumAdi || '').trim().toLowerCase()
+        const sKurum = String(sourceData.sunulacakKurumAdi || '').trim().toLowerCase()
+        const valStr = String(val).trim().toLowerCase()
+        const isBareKurumVal = (kAdi && valStr === kAdi) || (sKurum && valStr === sKurum) || !valStr.toUpperCase().includes('MAKAM')
+        if (isBareKurumVal && isNonEmptyValue(merged[key])) {
+          continue
+        }
+      }
       if (isNonEmptyValue(val)) {
         merged[key] = val
       }

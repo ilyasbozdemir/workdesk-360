@@ -78,12 +78,13 @@ export function LuzumMuzekkeresiTeslimTesellum({
   const dosyaTarihiVal = (data as any).tarih || data.dosyaTarihi ||
     (data as any).onayaSunulanTarih || defaultToday;
 
-  const dosyaKonusuMetni = data.dosyaKonusu ?? data.isinAdi ?? "TESLİM TESELLÜM BELGESİ";
-  const fallbackKurum = (data as any).altKurumBizim || (data as any).kurumBizim || "İdaremiz";
-  const kurumumuzMetni =
-    data.kurumumuz && data.kurumumuz !== "Belediyemiz"
-      ? data.kurumumuz
-      : fallbackKurum;
+  const dosyaKonusuMetni = data.dosyaKonusu ?? data.isinAdi ??
+    "TESLİM TESELLÜM BELGESİ";
+  const fallbackKurum = (data as any).altKurumBizim ||
+    (data as any).kurumBizim || "İdaremiz";
+  const kurumumuzMetni = data.kurumumuz && data.kurumumuz !== "Belediyemiz"
+    ? data.kurumumuz
+    : fallbackKurum;
   const isinAdiMetni = data.isinAdi ?? "Doğrudan Temin";
 
   const firmaListesi: any[] = (data as any).firmaListesi || [];
@@ -177,7 +178,7 @@ export function LuzumMuzekkeresiTeslimTesellum({
                 >
                   <EditableField
                     name="dosyaKonusu"
-                    value={dosyaKonusuMetni}
+                    value={"TESLİM TESELLÜM BELGESİ"}
                     placeholder="TESLİM TESELLÜM BELGESİ"
                   />
                 </div>
@@ -275,10 +276,13 @@ export function LuzumMuzekkeresiTeslimTesellum({
               data={pageItems}
               emptyMessage="Kalem bulunamadı"
               striped={false}
-              startIndex={pageIdx === 0 ? 0 : limits.firstPage + (pageIdx - 1) * limits.middle}
-              currentSplitIndex={limits.firstPage ? Number(limits.firstPage) : null}
+              startIndex={pageIdx === 0
+                ? 0
+                : limits.firstPage + (pageIdx - 1) * limits.middle}
+              currentSplitIndex={limits.firstPage
+                ? Number(limits.firstPage)
+                : null}
             />
-
 
             {isLastPage && (
               <div

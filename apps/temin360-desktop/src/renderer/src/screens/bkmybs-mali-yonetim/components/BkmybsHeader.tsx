@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Coins,
   Scale,
@@ -11,13 +11,21 @@ import {
   AlertTriangle,
   ArrowRightLeft,
   Briefcase,
-  FolderOpen
+  FolderOpen,
+  Calendar,
+  ChevronDown,
+  Search,
+  Check,
+  ExternalLink,
+  X,
+  Filter
 } from 'lucide-react'
 import { KamuRole, KAMU_ROLES, BkmybsTabKey, KikKotaModel } from '../types'
 import { formatCurrency } from '@renderer/utils/formatters'
 import { APP_ROUTES } from '@renderer/constants/routeConstants'
 import { useTabStore } from '@renderer/store/tabStore'
 import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
+import { useWorkspaceStore } from '@renderer/store/workspaceStore'
 import { useNavigate } from '@tanstack/react-router'
 
 interface BkmybsHeaderProps {
@@ -33,6 +41,13 @@ interface BkmybsHeaderProps {
   bekleyenTifSayisi: number
   aktifTeminatToplami: number
   yururlukteSozlesmeBedeli: number
+  // YIL & DOSYA SEÇİCİ PROPLARI
+  selectedYil: string
+  onYilChange: (yil: string) => void
+  availableYears: string[]
+  selectedDosyaId: number | null
+  onDosyaChange: (dosyaId: number | null) => void
+  dosyalar: any[]
 }
 
 export const BkmybsHeader: React.FC<BkmybsHeaderProps> = ({
@@ -47,12 +62,58 @@ export const BkmybsHeader: React.FC<BkmybsHeaderProps> = ({
   onayliMifSayisi,
   bekleyenTifSayisi,
   aktifTeminatToplami,
-  yururlukteSozlesmeBedeli
+  yururlukteSozlesmeBedeli,
+  selectedYil,
+  onYilChange,
+  availableYears,
+  selectedDosyaId,
+  onDosyaChange,
+  dosyalar
 }) => {
   const navigate = useNavigate()
   const { addTab } = useTabStore()
 
+  const [isDosyaDropdownOpen, setIsDosyaDropdownOpen] = useState(false)
+  const [searchDosyaQuery, setSearchDosyaQuery] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Click outside listener for dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDosyaDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  const selectedDosya = dosyalar.find((d) => d.id === selectedDosyaId) || null
+
+  const filteredDropdownDosyalar = dosyalar.filter((d) => {
+    if (selectedYil !== 'ALL') {
+      const dYil = Number(d.butce_yili) || (d.tarih ? new Date(d.tarih).getFullYear() : 2026)
+      if (dYil !== Number(selectedYil)) return false
+    }
+    if (!searchDosyaQuery.trim()) return true
+    const q = searchDosyaQuery.toLowerCase()
+    return (
+      (d.temin_no && String(d.temin_no).toLowerCase().includes(q)) ||
+      (d.konu && String(d.konu).toLowerCase().includes(q)) ||
+      (d.birim && String(d.birim).toLowerCase().includes(q))
+    )
+  })
+
   const handleGoToDogrudanTemin = () => {
+    useWorkspaceContextStore.getState().setActiveWorkspace('procurement')
+    addTab(APP_ROUTES.DOSYALAR)
+    navigate({ to: APP_ROUTES.DOSYALAR })
+  }
+
+  const handleOpenDosyaInTemin = (dosyaId: number) => {
+    useWorkspaceStore.getState().setActiveDosyaId(dosyaId)
     useWorkspaceContextStore.getState().setActiveWorkspace('procurement')
     addTab(APP_ROUTES.DOSYALAR)
     navigate({ to: APP_ROUTES.DOSYALAR })
@@ -118,6 +179,183 @@ export const BkmybsHeader: React.FC<BkmybsHeaderProps> = ({
               )
             })}
           </div>
+        </div>
+      </div>
+
+      {/* 2. MALİ KAPSAM & DOSYA SEÇİCİ TOOLBAR (Bütçe Yılı ve Temin Seçici) */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-xs flex flex-wrap items-center justify-between gap-3 relative z-30">
+        {/* Sol: Bütçe Yılı Seçici */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+              <Calendar size={13} />
+            </div>
+            <span>Bütçe Yılı:</span>
+          </div>
+
+          <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+            {availableYears.map((yil) => {
+              const isSelected = selectedYil === yil
+              return (
+                <button
+                  key={yil}
+                  type="button"
+                  onClick={() => onYilChange(yil)}
+                  className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                  }`}
+                >
+                  {yil === 'ALL' ? 'Tüm Yıllar' : yil}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Sağ: Doğrudan Temin Dosyası Seçici (Temin Selector) */}
+        <div className="flex items-center gap-2 flex-1 justify-end min-w-[320px] relative" ref={dropdownRef}>
+          {selectedDosya ? (
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap max-w-full">
+              {/* Aktif Dosya Bilgi Rozeti */}
+              <button
+                type="button"
+                onClick={() => setIsDosyaDropdownOpen(!isDosyaDropdownOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-blue-300 dark:border-blue-800 bg-blue-50/80 dark:bg-blue-950/40 text-left cursor-pointer hover:bg-blue-100/70 dark:hover:bg-blue-900/40 transition-all max-w-[360px]"
+                title="Dosyayı Değiştirmek veya Tüm Dosyaları Görmek İçin Tıklayın"
+              >
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-600 text-white shrink-0">
+                  {selectedDosya.temin_no || `DT-${selectedDosya.id}`}
+                </span>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate flex-1 min-w-0">
+                  {selectedDosya.konu}
+                </span>
+                <ChevronDown size={14} className="text-blue-600 shrink-0" />
+              </button>
+
+              {/* Hızlı Aksiyon: 4734 Masasında Aç */}
+              <button
+                type="button"
+                onClick={() => handleOpenDosyaInTemin(selectedDosya.id)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-xs font-bold transition-all shrink-0 cursor-pointer"
+                title="Bu dosyayı 4734 Satın Alma ve Doğrudan Temin Masasında Aç & İncele"
+              >
+                <Briefcase size={12} />
+                <span className="hidden md:inline">🛒 4734'te Aç</span>
+              </button>
+
+              {/* Filtreyi Temizle (Tüm Dosyalar) */}
+              <button
+                type="button"
+                onClick={() => onDosyaChange(null)}
+                className="flex items-center justify-center w-7 h-7 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-all shrink-0 cursor-pointer"
+                title="Dosya Filtresini Kaldır (Tüm Dosyaları Göster)"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsDosyaDropdownOpen(!isDosyaDropdownOpen)}
+              className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-700 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+            >
+              <FolderOpen size={14} className="text-blue-500" />
+              <span>Tüm Doğrudan Temin Dosyaları</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                {filteredDropdownDosyalar.length} Dosya
+              </span>
+              <ChevronDown size={14} className="text-slate-400" />
+            </button>
+          )}
+
+          {/* AÇILIR DOSYA MENÜSÜ (DROPDOWN) */}
+          {isDosyaDropdownOpen && (
+            <div className="absolute right-0 top-full mt-2 w-96 max-w-[90vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 p-2 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+              {/* Arama Input */}
+              <div className="relative">
+                <Search size={14} className="absolute left-2.5 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Dosya no, konu veya birim ara..."
+                  value={searchDosyaQuery}
+                  onChange={(e) => setSearchDosyaQuery(e.target.value)}
+                  autoFocus
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Tüm Dosyaları Seç Seçeneği */}
+              <button
+                type="button"
+                onClick={() => {
+                  onDosyaChange(null)
+                  setIsDosyaDropdownOpen(false)
+                }}
+                className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                  selectedDosyaId === null
+                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <FolderOpen size={14} className="text-blue-500" />
+                  <span>Tüm Dosyalar (Konsolide Genel Görünüm)</span>
+                </div>
+                {selectedDosyaId === null && <Check size={14} className="text-blue-600" />}
+              </button>
+
+              <div className="w-full h-px bg-slate-100 dark:bg-slate-800 my-1" />
+
+              {/* Dosyalar Listesi */}
+              <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
+                {filteredDropdownDosyalar.length === 0 ? (
+                  <div className="text-center py-4 text-xs text-slate-400">
+                    Aramaya uygun dosya bulunamadı.
+                  </div>
+                ) : (
+                  filteredDropdownDosyalar.map((d) => {
+                    const isSelected = selectedDosyaId === d.id
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => {
+                          onDosyaChange(d.id)
+                          setIsDosyaDropdownOpen(false)
+                        }}
+                        className={`w-full flex flex-col gap-1 p-2 rounded-xl text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300">
+                            {d.temin_no || `DT-${d.id}`}
+                          </span>
+                          <span className="text-[10px] font-semibold text-slate-400">
+                            {d.butce_yili || 2026}
+                          </span>
+                          {isSelected && <Check size={13} className="text-blue-600 shrink-0 ml-auto" />}
+                        </div>
+                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+                          {d.konu}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-slate-400">
+                          <span className="capitalize">{d.tur || 'mal'} alımı • {d.birim || 'Genel İdare'}</span>
+                          <span className="font-mono font-bold text-slate-600 dark:text-slate-300">
+                            {formatCurrency(d.yaklasik_maliyet || 0)}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

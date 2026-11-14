@@ -30,9 +30,16 @@ export const AntetMakamVeIhtiyacYeriFields: React.FC<YeniDosyaTabProps> = (
           Evrakın Sunulacağı Makam
         </label>
         {(() => {
+          const activeKurumMakam = kurum?.sunulacak_makam_secimi === 'kurum'
+            ? (kurum?.sunulacak_kurum_adi || kurum?.makam_adi || kurum?.kurum_adi)
+            : (kurum?.makam_adi_custom || kurum?.makam_adi || (kurum?.kurum_adi ? `${kurum.kurum_adi} MAKAMINA` : ''));
+
           const makamOptions = Array.from(
             new Set(
               [
+                activeKurumMakam,
+                kurum?.makam_adi_custom,
+                kurum?.sunulacak_kurum_adi,
                 kurum?.makam_adi,
                 ...(birimler
                   ? birimler.map((b) => b.sunum_makami)

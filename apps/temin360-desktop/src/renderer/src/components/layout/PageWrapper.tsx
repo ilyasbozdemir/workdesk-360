@@ -40,6 +40,7 @@ import { useInactiveTabCleaner } from './hooks/useInactiveTabCleaner'
 import { useWorkspaceCloseHandler } from './hooks/useWorkspaceCloseHandler'
 import { useWorkspaceLifecycle } from './hooks/useWorkspaceLifecycle'
 import { DetachedWindowLayout } from './components/DetachedWindowLayout'
+import { SimpleLayout } from './simple/SimpleLayout'
 import { TamperAlertBanner } from '../audit/TamperAlertBanner'
 
 export function PageWrapper(): React.ReactNode {
@@ -66,7 +67,7 @@ export function PageWrapper(): React.ReactNode {
     closeWorkspace,
     fileName
   } = useWorkspaceStore()
-  const { unifiedStepperMode, alwaysShowQuickMenu, loadSettings } = useSettingsStore()
+  const { unifiedStepperMode, alwaysShowQuickMenu, loadSettings, layoutMode } = useSettingsStore()
   const { activeWorkspace } = useWorkspaceContextStore()
 
   const { tabs, activeTabPath, addTab, clearTabs, clearDosyaTabs } = useTabStore()
@@ -147,6 +148,43 @@ export function PageWrapper(): React.ReactNode {
 
   if (!isAuthenticated) {
     return <LockScreen />
+  }
+
+  if (layoutMode === 'simple') {
+    return (
+      <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-slate-100 transition-colors duration-300">
+        <DisclaimerModal />
+        <SayiyiYaziyaCevirModal
+          isOpen={isSayiModalOpen}
+          onClose={() => setIsSayiModalOpen(false)}
+          initialValue={sayiInitialVal}
+        />
+        <HesapAraclariModal
+          isOpen={isHesapModalOpen}
+          onClose={() => setIsHesapModalOpen(false)}
+          onOpenSayiYaziModal={() => setIsSayiModalOpen(true)}
+        />
+        <FindInPage />
+        <GlobalDocumentPreviewHost />
+        <div className="flex flex-col flex-1 min-w-0 min-h-0 h-full overflow-hidden">
+          <SimpleLayout />
+        </div>
+
+        <WorkspaceCloseModal
+          isOpen={isCloseModalOpen}
+          onClose={() => setIsCloseModalOpen(false)}
+          fileName={fileName}
+          onConfirm={handleConfirmClose}
+        />
+        <GoogleDriveModal isOpen={isGDriveModalOpen} onClose={() => setIsGDriveModalOpen(false)} />
+        <ShutdownOverlay
+          isOpen={isShuttingDown}
+          fileName={fileName}
+          statusText={shutdownStatusText}
+          steps={shutdownSteps}
+        />
+      </div>
+    )
   }
 
   return (

@@ -35,10 +35,17 @@ export async function resolveAntetAndBirim(
     }
   } else {
     try {
-      const kurumRows = await queryExecutor(
-        'SELECT * FROM TANIM_Kurum WHERE is_active = 1 ORDER BY id ASC LIMIT 1',
+      let kurumRows = await queryExecutor(
+        'SELECT * FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1',
         []
       )
+      if (!kurumRows || kurumRows.length === 0) {
+        try {
+          kurumRows = await queryExecutor('SELECT * FROM TANIM_Kurum ORDER BY id ASC LIMIT 1', [])
+        } catch {
+          kurumRows = []
+        }
+      }
       if (kurumRows && kurumRows[0]) {
         const kRow = kurumRows[0]
         kurumRow = kRow
@@ -102,14 +109,27 @@ export async function resolveAntetAndBirim(
   baseData.ihtiyacYeri =
     rawIhtiyac === '[]' || rawIhtiyac === '[""]' ? ctx.altKurumBulunma || 'İdaremizde' : rawIhtiyac
 
+  const institutionalMakam = ctx.sunulacakMakamAdi || ctx.sunulacakMakam || ''
+  const isBareKurum = Boolean(
+    dosyaObj.sunulacak_makam && (
+      dosyaObj.sunulacak_makam === ctx.kurumAdi ||
+      dosyaObj.sunulacak_makam === ctx.sunulacakKurumAdi ||
+      (ctx.kurumAdi && String(dosyaObj.sunulacak_makam).toLowerCase().includes(String(ctx.kurumAdi).toLowerCase())) ||
+      (ctx.sunulacakKurumAdi && String(dosyaObj.sunulacak_makam).toLowerCase().includes(String(ctx.sunulacakKurumAdi).toLowerCase()))
+    )
+  )
+
   const rawMakam =
-    dosyaObj.sunulacak_makam ||
-    baseData.sunulacakMakamAdi ||
-    baseData.sunulacakMakam ||
-    ctx.sunulacakMakamAdi ||
-    ctx.sunulacakMakam ||
-    ctx.sunumMakami ||
-    ''
+    (isBareKurum && institutionalMakam)
+      ? institutionalMakam
+      : (
+          institutionalMakam ||
+          dosyaObj.sunulacak_makam ||
+          baseData.sunulacakMakamAdi ||
+          baseData.sunulacakMakam ||
+          ctx.sunumMakami ||
+          ''
+        )
   if (rawMakam) {
     baseData.sunulacakMakamAdi = rawMakam
     baseData.sunulacakMakam = rawMakam

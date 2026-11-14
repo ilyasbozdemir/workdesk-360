@@ -132,6 +132,21 @@ class DocumentPreloadService {
 
         if (savedSnapshot && typeof savedSnapshot === 'object') {
           resolvedData = { ...savedSnapshot }
+          try {
+            const headerData = await InstitutionalHeaderProvider.resolve(dosyaId, queryExecutor)
+            const hMakam = headerData?.sunulacakMakamAdi || headerData?.sunulacakMakam
+            const curMakam = String(resolvedData.sunulacakMakamAdi || resolvedData.sunulacakMakam || '').trim()
+            const kAdi = String(headerData?.kurumAdi || '').trim()
+            const sKurum = String((headerData as any)?.sunulacakKurumAdi || '').trim()
+            const isBare = !curMakam ||
+              (kAdi && curMakam.toLowerCase() === kAdi.toLowerCase()) ||
+              (sKurum && curMakam.toLowerCase() === sKurum.toLowerCase()) ||
+              !curMakam.toUpperCase().includes('MAKAM')
+            if (hMakam && isBare) {
+              resolvedData.sunulacakMakamAdi = hMakam
+              resolvedData.sunulacakMakam = hMakam
+            }
+          } catch {}
         } else {
           try {
             const definition = TemplateRegistry.get(resolvedId)

@@ -91,16 +91,13 @@ export const dataMapping: ProcessMapping = {
     sutun: '*',
     iliskili_id: 'temin_dosya_id',
     altEslestirme: {
+      siraNo: 'sira_no',
       malzemeKodu: 'tasinir_kodu',
       malzemeAdi: 'kalem_adi',
       ozelligi: 'aciklama',
       birimi: 'birim',
       kdvOrani: 'kdv_orani',
-      miktar: 'miktar',
-      birimFiyat: 'birim_fiyat',
-      toplamTutar: 'toplam_tutar',
-      kazananFirma: 'kazanan_firma',
-      alimTarihi: 'alim_tarihi'
+      miktar: 'miktar'
     },
     aciklama: 'Son alım fiyat cetveli kalemleri'
   }

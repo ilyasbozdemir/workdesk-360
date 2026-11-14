@@ -518,13 +518,14 @@ export function useDocumentPreviewData({
   }
 
   // Print handler
-  const handlePrint = async (): Promise<void> => {
+  const handlePrint = async (options?: any): Promise<void> => {
     setIsPrinting(true)
     try {
       const htmlContent = getCompiledHtml()
       await window.electron.ipcRenderer.invoke('app:print-html', {
         html: htmlContent,
-        orientation
+        orientation: options?.orientation || orientation,
+        ...options
       })
     } catch (e) {
       console.error('Yazdırma hatası:', e)
