@@ -22,7 +22,7 @@ export function MalAlimiLuzumMuzekkeresiOnayEki(
     <BaseLuzumMuzekkeresiOnayEki
       {...props}
       columns={props.columns || MAL_ALIMI_ONAY_EKI_COLUMNS}
-      title={props.title || "LÜZUM MÜZEKKERESİ (MAL ALIMI)"}
+      title={props.title || "LÜZUM MÜZEKKERESİ"}
       talepMetniSuffix={props.talepMetniSuffix ||
         "için aşağıda müfredatı ve evsafı yazılı malzemelere ihtiyaç görüldüğünden satın alınması arz olunur."}
     />

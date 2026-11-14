@@ -32,7 +32,7 @@ export function DanismanlikLuzumMuzekkeresiTeslimTesellum(
     <BaseLuzumMuzekkeresiTeslimTesellum
       {...props}
       columns={props.columns || DANISMANLIK_TESLIM_COLUMNS}
-      title={props.title || "TESLİM TESELLÜM BELGESİ (DANIŞMANLIK HİZMETİ)"}
+      title={props.title || "TESLİM TESELLÜM BELGESİ"}
     />
   );
 }

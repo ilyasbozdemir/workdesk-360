@@ -24,8 +24,8 @@ export const luzumMuzekkeresiTeslimTesellumRoute = {
       required: true,
       fieldKey: "teslimAlan_0_adSoyad",
       titleFieldKey: "teslimAlan_0_unvan",
-      sourceFieldKeys: ["teslimAlan_0_adSoyad", "teslimAlanPersonelAdi", "talepEdenPersonelAdi", "hazirlayanPersonelAdi"],
-      sourceTitleFieldKeys: ["teslimAlan_0_unvan", "teslimAlanPersonelUnvan", "talepEdenPersonelUnvan", "hazirlayanPersonelUnvan"],
+      sourceFieldKeys: ["teslimAlan_0_adSoyad", "teslimAlanPersonelAdi", "teslimAlanAd"],
+      sourceTitleFieldKeys: ["teslimAlan_0_unvan", "teslimAlanPersonelUnvan", "teslimAlanUnvan"],
       description: "Malzemeyi veya işi teslim alan idare personeli veya komisyon üyesi",
     },
     {

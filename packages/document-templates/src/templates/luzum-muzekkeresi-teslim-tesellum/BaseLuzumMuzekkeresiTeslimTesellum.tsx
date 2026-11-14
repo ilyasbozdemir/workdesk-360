@@ -85,11 +85,7 @@ export function BaseLuzumMuzekkeresiTeslimTesellum(
                     letterSpacing: "0.5px",
                   }}
                 >
-                  <EditableField
-                    name="dosyaKonusu"
-                    value={title}
-                    placeholder={title}
-                  />
+                  {title}
                 </div>
 
                 <table

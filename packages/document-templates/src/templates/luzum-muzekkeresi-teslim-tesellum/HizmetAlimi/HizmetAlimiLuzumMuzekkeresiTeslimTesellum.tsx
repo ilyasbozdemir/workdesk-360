@@ -32,7 +32,7 @@ export function HizmetAlimiLuzumMuzekkeresiTeslimTesellum(
     <BaseLuzumMuzekkeresiTeslimTesellum
       {...props}
       columns={props.columns || HIZMET_ALIMI_TESLIM_COLUMNS}
-      title={props.title || "TESLİM TESELLÜM BELGESİ (HİZMET ALIMI)"}
+      title={props.title || "TESLİM TESELLÜM BELGESİ"}
     />
   );
 }

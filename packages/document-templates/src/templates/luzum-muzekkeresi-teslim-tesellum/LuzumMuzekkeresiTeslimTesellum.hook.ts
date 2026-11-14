@@ -207,23 +207,29 @@ export function useLuzumMuzekkeresiTeslimTesellum(
         : [
             {
               adSoyad:
+                (data as any).teslimAlan_0_adSoyad ||
                 (data as any).teslimAlanPersonelAdi ||
-                (data as any).talepEdenPersonelAdi ||
-                (data as any).hazirlayanPersonelAdi ||
+                (data as any).teslimAlanAd ||
                 "",
               unvan:
+                (data as any).teslimAlan_0_unvan ||
                 (data as any).teslimAlanPersonelUnvan ||
-                (data as any).talepEdenPersonelUnvan ||
-                (data as any).hazirlayanPersonelUnvan ||
+                (data as any).teslimAlanUnvan ||
                 "",
             },
           ];
 
-    return raw.map((item: any) => ({
-      ...item,
-      adSoyad: String(item.adSoyad || ""),
-      unvan: String(item.unvan || ""),
-    }));
+    return raw.map((item: any, idx: number) => {
+      const overrideAd = (data as any)[`teslimAlan_${idx}_adSoyad`];
+      const overrideUnvan = (data as any)[`teslimAlan_${idx}_unvan`];
+      const ad = overrideAd || item.adSoyad || "";
+      const unv = overrideUnvan || item.unvan || "";
+      return {
+        ...item,
+        adSoyad: String(ad),
+        unvan: String(unv),
+      };
+    });
   }, [data]);
 
   const getStartIndex = (pageIdx: number): number => {
