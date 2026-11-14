@@ -13,6 +13,8 @@ import { onayBelgesiRoute } from "./templates/dogrudan-temin-onay-belgesi/route.
 import { komisyonGorevlendirmeRoute } from "./templates/komisyon-gorevlendirme-onayi/route.definition";
 import { muayeneKabulRoute } from "./templates/muayene-kabul-komisyonu/route.definition";
 import { luzumMuzekkeresiRoute } from "./templates/luzum-muzekkeresi/route.definition";
+import { luzumMuzekkeresiOnayEkiRoute } from "./templates/luzum-muzekkeresi-onay-eki/route.definition";
+import { luzumMuzekkeresiTeslimTesellumRoute } from "./templates/luzum-muzekkeresi-teslim-tesellum/route.definition";
 import { toCanonicalDocId } from "./constants/template-constants";
 import { resolveTemplateKey } from "./registry";
 
@@ -24,6 +26,8 @@ export {
   komisyonGorevlendirmeRoute,
   muayeneKabulRoute,
   luzumMuzekkeresiRoute,
+  luzumMuzekkeresiOnayEkiRoute,
+  luzumMuzekkeresiTeslimTesellumRoute,
 };
 
 function normalizeRouteTemplateKey(templateId: string): string {
@@ -78,6 +82,11 @@ const BASE_ROUTE_DEFINITIONS: ReadonlyArray<TemplateRouteDefinition> = [
   ihtiyacListesiRoute,
   luzumMuzekkeresiRoute,
   { ...luzumMuzekkeresiRoute, templateId: "luzum_muzekkeresi" },
+  luzumMuzekkeresiOnayEkiRoute,
+  { ...luzumMuzekkeresiOnayEkiRoute, templateId: "luzum_onay_eki" },
+  luzumMuzekkeresiTeslimTesellumRoute,
+  { ...luzumMuzekkeresiTeslimTesellumRoute, templateId: "luzum_muzekkeresi_teslim_tesellum" },
+  { ...luzumMuzekkeresiTeslimTesellumRoute, templateId: "teslim-tesellum" },
   yaklasikMaliyetRoute,
   { ...yaklasikMaliyetRoute, templateId: "yaklasik_maliyet" },
   { ...yaklasikMaliyetRoute, templateId: "son-alim-fiyat-cetveli" },
