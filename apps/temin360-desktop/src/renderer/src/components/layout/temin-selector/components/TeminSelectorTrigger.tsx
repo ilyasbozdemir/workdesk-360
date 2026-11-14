@@ -43,7 +43,7 @@ export const TeminSelectorTrigger = React.memo(function TeminSelectorTrigger(
   return (
     <button
       onClick={(): void => setIsOpen(!isOpen)}
-      className="flex items-center gap-2 px-3 sm:px-5 py-1.5 rounded-2xl transition-all text-xs font-semibold border border-dashed max-w-150 w-auto min-w-0 justify-center cursor-pointer shadow-2xs bg-blue-50/40 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800 hover:bg-blue-50 hover:border-blue-400"
+      className="flex items-center gap-2 px-3 sm:px-5 py-1.5 rounded-2xl transition-all text-xs font-semibold border border-dashed max-w-150 w-auto min-w-0 justify-center cursor-pointer shadow-2xs bg-blue-50/40 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800 hover:bg-blue-50 hover:border-blue-400 mx-auto select-none"
       title="Doğrudan Temin Dosyası Seçmek İçin Tıkla"
     >
       <FileText className="w-4 h-4 text-blue-500 shrink-0" />
