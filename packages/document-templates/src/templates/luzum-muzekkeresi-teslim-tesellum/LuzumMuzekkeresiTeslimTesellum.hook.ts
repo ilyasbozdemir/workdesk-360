@@ -194,8 +194,14 @@ export function useLuzumMuzekkeresiTeslimTesellum(
     return raw.map((item: any, idx: number) => {
       const overrideAd = (data as any)[`teslimEden_${idx}_adSoyad`];
       const overrideUnvan = (data as any)[`teslimEden_${idx}_unvan`];
-      const ad = overrideAd || item.adSoyad || firmaUnvan || "";
-      const unv = overrideUnvan || item.unvan || (ad ? "Yüklenici Firma / Yetkilisi" : "");
+      const ad =
+        overrideAd !== undefined
+          ? overrideAd
+          : item.adSoyad || firmaUnvan || "";
+      const unv =
+        overrideUnvan !== undefined
+          ? overrideUnvan
+          : item.unvan || (ad ? "Yüklenici Firma / Yetkilisi" : "");
       return { ...item, adSoyad: ad, unvan: unv };
     });
   }, [data, firmaUnvan]);
@@ -207,15 +213,17 @@ export function useLuzumMuzekkeresiTeslimTesellum(
         : [
             {
               adSoyad:
-                (data as any).teslimAlan_0_adSoyad ||
-                (data as any).teslimAlanPersonelAdi ||
-                (data as any).teslimAlanAd ||
-                "",
+                (data as any).teslimAlan_0_adSoyad !== undefined
+                  ? (data as any).teslimAlan_0_adSoyad
+                  : (data as any).teslimAlanPersonelAdi ||
+                    (data as any).teslimAlanAd ||
+                    "",
               unvan:
-                (data as any).teslimAlan_0_unvan ||
-                (data as any).teslimAlanPersonelUnvan ||
-                (data as any).teslimAlanUnvan ||
-                "",
+                (data as any).teslimAlan_0_unvan !== undefined
+                  ? (data as any).teslimAlan_0_unvan
+                  : (data as any).teslimAlanPersonelUnvan ||
+                    (data as any).teslimAlanUnvan ||
+                    "",
             },
           ];
 
@@ -223,18 +231,20 @@ export function useLuzumMuzekkeresiTeslimTesellum(
       const overrideAd = (data as any)[`teslimAlan_${idx}_adSoyad`];
       const overrideUnvan = (data as any)[`teslimAlan_${idx}_unvan`];
       const ad =
-        overrideAd ||
-        item.adSoyad ||
-        item.name ||
-        item.ad_soyad ||
-        "";
+        overrideAd !== undefined
+          ? overrideAd
+          : item.adSoyad ||
+            item.name ||
+            item.ad_soyad ||
+            "";
       const unv =
-        overrideUnvan ||
-        item.unvan ||
-        item.title ||
-        item.gorev ||
-        item.komisyonGorevi ||
-        "";
+        overrideUnvan !== undefined
+          ? overrideUnvan
+          : item.unvan ||
+            item.title ||
+            item.gorev ||
+            item.komisyonGorevi ||
+            "";
       return {
         ...item,
         adSoyad: String(ad),

@@ -164,18 +164,29 @@ export const PersonelCard: React.FC<PersonelCardProps> = ({
       f && (f.unvan || f.label) && String(f.unvan || f.label).trim() !== "",
   );
 
+  const effectiveAdSoyad =
+    data && nameField && nameField in data
+      ? data[nameField]
+      : adSoyad || "";
+  const effectiveUnvan =
+    data && unvanField && unvanField in data
+      ? data[unvanField]
+      : unvan || "";
+
   const matched = isFirmaSelect
     ? validFirmaList.find(
         (f: any) =>
           f.unvan &&
+          effectiveAdSoyad &&
           String(f.unvan).trim().toLowerCase() ===
-            cleanPersonelName(adSoyad).toLowerCase(),
+            cleanPersonelName(effectiveAdSoyad).toLowerCase(),
       )
     : personelList.find(
         (p: any) =>
           p.ad_soyad &&
+          effectiveAdSoyad &&
           cleanPersonelName(p.ad_soyad).toLowerCase() ===
-            cleanPersonelName(adSoyad).toLowerCase(),
+            cleanPersonelName(effectiveAdSoyad).toLowerCase(),
       );
 
   const selectedValue = matched
@@ -190,11 +201,6 @@ export const PersonelCard: React.FC<PersonelCardProps> = ({
       ? "Adı Soyadı"
       : "Adı Soyadı / Kaşe");
   const unvanPlaceholder = placeholderUnvan || "Unvanı";
-
-  const effectiveAdSoyad =
-    adSoyad || (data && nameField ? data[nameField] : "") || "";
-  const effectiveUnvan =
-    unvan || (data && unvanField ? data[unvanField] : "") || "";
 
   return (
     <div
