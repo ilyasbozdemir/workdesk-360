@@ -104,26 +104,10 @@ export function BaseIhtiyacListesi(props: BaseIhtiyacListesiProps) {
                     value={data.ihtiyacYeri}
                     placeholder="İhtiyaç Yeri"
                   />{" "}
-                  {data.ihtiyacRaporuNo
-                    ? (
-                      <>
-                        tarafından hazırlanan{" "}
-                        <EditableField
-                          name="ihtiyacRaporuNo"
-                          value={data.ihtiyacRaporuNo}
-                          placeholder="İhtiyaç Rapor No"
-                        />{" "}
-                        sayılı İhtiyaç Raporu kapsamında, ihtiyacı olan aşağıda
-                        yazılı {itemDescriptionText}{" "}
-                        kalemlerinin temin edilmesi gerekmektedir;
-                      </>
-                    )
-                    : (
-                      <>
-                        ihtiyacı olan aşağıda yazılı {itemDescriptionText}{" "}
-                        kalemlerinin temin edilmesi gerekmektedir;
-                      </>
-                    )}
+                  <>
+                    ihtiyacı olan aşağıda yazılı {itemDescriptionText}{" "}
+                    kalemlerinin temin edilmesi gerekmektedir;
+                  </>
                 </div>
 
                 <div

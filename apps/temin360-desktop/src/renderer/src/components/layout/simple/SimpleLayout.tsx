@@ -1,7 +1,35 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useSettingsStore } from '../../../store/settingsStore'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
+import { useTabStore, normalizePath, getTabLabel } from '../../../store/tabStore'
+import { routeComponents } from '../routeComponents'
+import { APP_ROUTES } from '../../../constants/routeConstants'
 import { useTheme } from '../../providers/ThemeProvider'
+import { WindowControls } from '../header/WindowControls'
+import { SABLON_KATEGORILERI } from '../../../constants/sablonKategorileri'
+import { TEMPLATE_NAMES } from '../../../../../shared/constants/templateConstants'
+import { useGlobalDocumentPreviewStore } from '../../../store/globalDocumentPreviewStore'
+import {
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  X,
+  FileText,
+  Home,
+  Settings as SettingsIcon,
+  Coins,
+  ClipboardList,
+  Store,
+  FolderTree,
+  Building2,
+  Users,
+  Database,
+  BarChart3,
+  HardHat,
+  Tag,
+  PackageSearch
+} from 'lucide-react'
 
 interface SimpleFile {
   id: string
@@ -75,6 +103,8 @@ const INITIAL_FILES: SimpleFile[] = [
 ]
 
 export function SimpleLayout(): React.JSX.Element {
+  const navigate = useNavigate()
+  const routerState = useRouterState()
   const {
     institutionName,
     adminName,
@@ -82,18 +112,63 @@ export function SimpleLayout(): React.JSX.Element {
     setLayoutMode
   } = useSettingsStore()
   const { theme, setTheme } = useTheme()
-  const { setActiveDosyaId } = useWorkspaceStore()
+  const { activeDosyaId, setActiveDosyaId } = useWorkspaceStore()
+  const { tabs, activeTabPath, setActiveTab, closeTab, addTab } = useTabStore()
+
+  // Sidebar daralıp genişleme (Collapse / Expand)
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('simple_sidebar_collapsed') === 'true'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('simple_sidebar_collapsed', String(isCollapsed))
+  }, [isCollapsed])
+
+  // Görünüm modu: 'simple-dashboard' (Sade A4 ve Özet Ekranı) | 'tab-view' (Gerçek sekme ekranı)
+  const [viewMode, setViewMode] = useState<'simple-dashboard' | 'tab-view'>('simple-dashboard')
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState('Genel Bakış')
   const [currentTab, setCurrentTab] = useState('Genel Bilgiler')
   const [files, setFiles] = useState<SimpleFile[]>(INITIAL_FILES)
   const [selectedFileId, setSelectedFileId] = useState<string>(INITIAL_FILES[0].id)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('piyasa-fiyat-arastirma-tutanagi')
   const [globalSearch, setGlobalSearch] = useState('')
   const [fileSearch, setFileSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [activeModal, setActiveModal] = useState<string | null>(null)
+
+  const numericDosyaId = useMemo(() => {
+    if (activeDosyaId) return activeDosyaId
+    const num = parseInt(selectedFileId.replace(/\D/g, ''), 10)
+    return isNaN(num) ? 1 : num
+  }, [activeDosyaId, selectedFileId])
+
+  const handleOpenTemplateModal = (docId: string, title?: string) => {
+    useGlobalDocumentPreviewStore.getState().openDocument({
+      documentId: docId,
+      dosyaId: numericDosyaId,
+      documentTitle: title || TEMPLATE_NAMES[docId] || docId
+    })
+    showToast(`"${title || docId}" şablonu açılıyor...`)
+  }
+
+  const cleanPath = useMemo(() => {
+    return normalizePath(activeTabPath).split('?')[0]
+  }, [activeTabPath])
+
+  const ActiveComponent = useMemo(() => {
+    return routeComponents[cleanPath] || null
+  }, [cleanPath])
+
+  const handleNavigateTab = (path: string, pageName?: string) => {
+    if (pageName) setCurrentPage(pageName)
+    addTab(path)
+    setActiveTab(path)
+    setViewMode('tab-view')
+    navigate({ to: path })
+  }
 
   // Örnek İhtiyaç ve Teklif verileri
   const [items, setItems] = useState<ItemRecord[]>([
@@ -190,7 +265,7 @@ export function SimpleLayout(): React.JSX.Element {
           --warning: #b7791f;
           --danger: #c64747;
           --shadow: 0 8px 24px rgba(26,43,68,.07);
-          --sidebar: 258px;
+          --sidebar: ${isCollapsed ? '68px' : '258px'};
           --radius: 12px;
           width: 100vw;
           height: 100vh;
@@ -400,6 +475,79 @@ export function SimpleLayout(): React.JSX.Element {
           padding: 16px 12px 20px;
           height: calc(100vh - 64px);
           overflow-y: auto;
+          transition: width 0.2s ease, padding 0.2s ease;
+        }
+        .simple-sidebar.collapsed {
+          padding: 16px 6px 20px;
+        }
+        .simple-sidebar.collapsed .simple-nav-label {
+          display: none;
+        }
+        .simple-sidebar.collapsed .simple-nav-item {
+          justify-content: center;
+          padding: 10px 0;
+          margin: 4px 0;
+        }
+        .simple-sidebar.collapsed .simple-nav-item span:not(.simple-nav-icon) {
+          display: none;
+        }
+        .simple-sidebar.collapsed .simple-nav-count {
+          display: none;
+        }
+        .simple-sidebar.collapsed .simple-sidebar-bottom {
+          display: none;
+        }
+
+        .simple-tabs-bar {
+          background: var(--surface);
+          border-bottom: 1px solid var(--line);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 20px 0;
+          overflow-x: auto;
+          white-space: nowrap;
+          scrollbar-width: thin;
+        }
+        .simple-tab-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 14px;
+          border-radius: 8px 8px 0 0;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--muted);
+          border: 1px solid transparent;
+          border-bottom: none;
+          background: transparent;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          position: relative;
+        }
+        .simple-tab-pill:hover {
+          color: var(--text);
+          background: var(--surface-2);
+        }
+        .simple-tab-pill.active {
+          color: var(--primary);
+          background: var(--bg);
+          border-color: var(--line);
+          font-weight: 700;
+        }
+        .simple-tab-close {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          color: var(--muted);
+          transition: 0.1s;
+        }
+        .simple-tab-close:hover {
+          background: rgba(0,0,0,0.1);
+          color: var(--danger);
         }
         .simple-nav-label {
           font-size: 10px;
@@ -913,11 +1061,21 @@ export function SimpleLayout(): React.JSX.Element {
           ☰
         </button>
 
-        <div className="simple-brand">
+        <div className="simple-brand" style={{ minWidth: isCollapsed ? 'auto' : undefined }}>
           <div className="simple-logo">T</div>
-          <div className="simple-brand-name">
-            TEMİN <span>360</span>
-          </div>
+          {!isCollapsed && (
+            <div className="simple-brand-name">
+              TEMİN <span>360</span>
+            </div>
+          )}
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="simple-icon-btn"
+            style={{ width: 28, height: 28, marginLeft: isCollapsed ? 4 : 'auto' }}
+            title={isCollapsed ? "Sidebar'ı Genişlet" : "Sidebar'ı Daralt"}
+          >
+            {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+          </button>
         </div>
 
         <div className="simple-org">
@@ -997,21 +1155,30 @@ export function SimpleLayout(): React.JSX.Element {
             <small>{adminTitle || 'Satın Alma Birimi'}</small>
           </div>
         </div>
+
+        {/* PENCERE & FORM KONTROLLERİ (Masaüstü Simge Durumu, Büyüt ve Kapat) */}
+        <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 shrink-0" />
+        <WindowControls />
       </header>
 
       {/* SIDEBAR */}
-      <aside className={`simple-sidebar ${sidebarOpen ? 'open' : ''}`}>
+      <aside className={`simple-sidebar ${isCollapsed ? 'collapsed' : ''} ${sidebarOpen ? 'open' : ''}`}>
         <div className="simple-nav-label">ÇALIŞMA ALANI</div>
         <div
-          className={`simple-nav-item ${currentPage === 'Genel Bakış' ? 'active' : ''}`}
-          onClick={() => setCurrentPage('Genel Bakış')}
+          className={`simple-nav-item ${viewMode === 'simple-dashboard' && currentPage === 'Genel Bakış' ? 'active' : ''}`}
+          onClick={() => {
+            setViewMode('simple-dashboard')
+            setCurrentPage('Genel Bakış')
+          }}
+          title="Genel Bakış (Sade Masası)"
         >
           <span className="simple-nav-icon">⌂</span>
           <span>Genel Bakış</span>
         </div>
         <div
           className={`simple-nav-item ${currentPage === 'İhale Dosyaları' ? 'active' : ''}`}
-          onClick={() => setCurrentPage('İhale Dosyaları')}
+          onClick={() => handleNavigateTab(APP_ROUTES.DOSYALAR, 'İhale Dosyaları')}
+          title="Doğrudan Temin & İhale Dosyaları"
         >
           <span className="simple-nav-icon">▤</span>
           <span>İhale Dosyaları</span>
@@ -1020,18 +1187,18 @@ export function SimpleLayout(): React.JSX.Element {
 
         <div className="simple-nav-label">SATIN ALMA SÜREÇLERİ</div>
         {[
-          { name: 'İhtiyaç ve Talepler', icon: '＋' },
-          { name: 'Piyasa Araştırması', icon: '⌕' },
-          { name: 'Teklif Yönetimi', icon: '▧' },
-          { name: 'Sipariş İşlemleri', icon: '▣' },
-          { name: 'Sözleşmeler', icon: '▤' },
-          { name: 'Muayene ve Kabul', icon: '✓' },
-          { name: 'Ödeme İşlemleri', icon: '₺' }
+          { name: 'İhtiyaç ve Talepler', icon: '＋', path: '/dosya/hazirlik-ve-ihtiyac' },
+          { name: 'Piyasa Araştırması', icon: '⌕', path: '/dosya/piyasa-fiyat-arastirmasi' },
+          { name: 'Teklif Yönetimi', icon: '▧', path: '/firmalar' },
+          { name: 'Sipariş İşlemleri', icon: '▣', path: '/dosya/siparis-ve-sozlesme' },
+          { name: 'Muayene ve Kabul', icon: '✓', path: '/dosya/kabul-ve-odeme' },
+          { name: 'Ödeme & Maliye', icon: '₺', path: APP_ROUTES.BKMYBS_MALI_YONETIM }
         ].map((item) => (
           <div
             key={item.name}
             className={`simple-nav-item ${currentPage === item.name ? 'active' : ''}`}
-            onClick={() => setCurrentPage(item.name)}
+            onClick={() => handleNavigateTab(item.path, item.name)}
+            title={item.name}
           >
             <span className="simple-nav-icon">{item.icon}</span>
             <span>{item.name}</span>
@@ -1040,14 +1207,23 @@ export function SimpleLayout(): React.JSX.Element {
 
         <div className="simple-nav-label">BELGE VE RAPORLAMA</div>
         {[
-          { name: 'Doküman Havuzu', icon: '▱' },
-          { name: 'Raporlar', icon: '▥' },
-          { name: 'Ödenek Takibi', icon: '◫' }
+          { name: 'Belgeler & Şablonlar', icon: '📄', page: 'Belgeler & Şablonlar' },
+          { name: 'İhtiyaç Raporları', icon: '▱', path: APP_ROUTES.IHTIYAC_RAPORLARI },
+          { name: 'Raporlar', icon: '▥', path: '/raporlar' },
+          { name: 'Taşınır & Ambar', icon: '◫', path: '/ambar' }
         ].map((item) => (
           <div
             key={item.name}
             className={`simple-nav-item ${currentPage === item.name ? 'active' : ''}`}
-            onClick={() => setCurrentPage(item.name)}
+            onClick={() => {
+              if (item.path) {
+                handleNavigateTab(item.path, item.name)
+              } else {
+                setViewMode('simple-dashboard')
+                setCurrentPage(item.name)
+              }
+            }}
+            title={item.name}
           >
             <span className="simple-nav-icon">{item.icon}</span>
             <span>{item.name}</span>
@@ -1057,14 +1233,16 @@ export function SimpleLayout(): React.JSX.Element {
         <div className="simple-nav-label">YÖNETİM</div>
         <div
           className={`simple-nav-item ${currentPage === 'Tedarikçi Yönetimi' ? 'active' : ''}`}
-          onClick={() => setCurrentPage('Tedarikçi Yönetimi')}
+          onClick={() => handleNavigateTab('/firmalar', 'Tedarikçi Yönetimi')}
+          title="Tedarikçi Firmalar"
         >
           <span className="simple-nav-icon">♙</span>
           <span>Tedarikçi Yönetimi</span>
         </div>
         <div
           className={`simple-nav-item ${currentPage === 'Tanımlar ve Ayarlar' ? 'active' : ''}`}
-          onClick={() => setCurrentPage('Tanımlar ve Ayarlar')}
+          onClick={() => handleNavigateTab(APP_ROUTES.AYARLAR, 'Tanımlar ve Ayarlar')}
+          title="Sistem ve Parametre Ayarları"
         >
           <span className="simple-nav-icon">⚙</span>
           <span>Tanımlar ve Ayarlar</span>
@@ -1078,34 +1256,92 @@ export function SimpleLayout(): React.JSX.Element {
       </aside>
 
       {/* MAIN VIEW */}
-      <main className="simple-main">
-        <div className="simple-breadcrumb">
-          TEMİN 360 <span style={{ padding: '0 7px', color: '#b4bdc9' }}>/</span>
-          <b>{currentPage}</b>
+      <main className="simple-main" style={{ padding: 0 }}>
+        {/* BASİT EKRAN SEKME ÇUBUĞU (SIMPLE TABS BAR) */}
+        <div className="simple-tabs-bar">
+          {/* Sabit Sekme: Sade Masaüstü (Genel Bakış) */}
+          <button
+            type="button"
+            className={`simple-tab-pill ${viewMode === 'simple-dashboard' ? 'active' : ''}`}
+            onClick={() => {
+              setViewMode('simple-dashboard')
+              setCurrentPage('Genel Bakış')
+            }}
+            title="Sade Yönetim & Belge Önizleme Masası"
+          >
+            <Home size={13} />
+            <span>Sade Masaüstü</span>
+          </button>
+
+          {/* Açık Sekmeler */}
+          {tabs.map((tab) => {
+            const isTabActive = viewMode === 'tab-view' && activeTabPath === tab.path
+            const label = tab.label && !tab.label.startsWith('/') ? tab.label : getTabLabel(tab.path)
+            return (
+              <div
+                key={tab.path}
+                className={`simple-tab-pill ${isTabActive ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab(tab.path)
+                  setViewMode('tab-view')
+                  navigate({ to: tab.path })
+                }}
+                title={tab.path}
+              >
+                <FileText size={13} />
+                <span>{label}</span>
+                <span
+                  className="simple-tab-close"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    closeTab(tab.path)
+                    if (activeTabPath === tab.path) {
+                      setViewMode('simple-dashboard')
+                    }
+                  }}
+                  title="Sekmeyi Kapat"
+                >
+                  <X size={11} />
+                </span>
+              </div>
+            )
+          })}
         </div>
 
-        <div className="simple-page-head">
-          <div>
-            <div className="simple-eyebrow">SATIN ALMA VE İHALE YÖNETİMİ</div>
-            <h1>{currentPage}</h1>
-            <p className="simple-subtitle">
-              {currentPage === 'Genel Bakış'
-                ? 'Satın alma süreçlerinizi ve bekleyen işlemlerinizi tek noktadan takip edin.'
-                : `${currentPage} çalışma alanı ve yönetim görünümü.`}
-            </p>
-          </div>
-          <div className="simple-actions">
-            <button className="simple-btn" onClick={() => window.print()}>
-              ⇩ &nbsp; Raporu dışa aktar
-            </button>
-            <button
-              className="simple-btn primary"
-              onClick={() => setActiveModal('newFile')}
-            >
-              ＋ &nbsp; Yeni dosya oluştur
-            </button>
-          </div>
-        </div>
+        <div style={{ padding: '24px 28px 40px' }}>
+          {viewMode === 'tab-view' && ActiveComponent ? (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 min-h-[600px] overflow-auto">
+              <ActiveComponent />
+            </div>
+          ) : (
+            <>
+              <div className="simple-breadcrumb">
+                TEMİN 360 <span style={{ padding: '0 7px', color: '#b4bdc9' }}>/</span>
+                <b>{currentPage}</b>
+              </div>
+
+              <div className="simple-page-head">
+                <div>
+                  <div className="simple-eyebrow">SATIN ALMA VE İHALE YÖNETİMİ</div>
+                  <h1>{currentPage}</h1>
+                  <p className="simple-subtitle">
+                    {currentPage === 'Genel Bakış'
+                      ? 'Satın alma süreçlerinizi ve bekleyen işlemlerinizi tek noktadan takip edin.'
+                      : `${currentPage} çalışma alanı ve yönetim görünümü.`}
+                  </p>
+                </div>
+                <div className="simple-actions">
+                  <button className="simple-btn" onClick={() => window.print()}>
+                    ⇩ &nbsp; Raporu dışa aktar
+                  </button>
+                  <button
+                    className="simple-btn primary"
+                    onClick={() => setActiveModal('newFile')}
+                  >
+                    ＋ &nbsp; Yeni dosya oluştur
+                  </button>
+                </div>
+              </div>
 
         {/* 1. GENEL BAKIŞ */}
         {currentPage === 'Genel Bakış' && (
@@ -1700,13 +1936,49 @@ export function SimpleLayout(): React.JSX.Element {
         {/* 4. BELGE ÖNİZLEME (A4) */}
         {currentPage === 'Belge Önizleme' && (
           <div className="workspace">
-            <div className="toolbar">
+            <div className="toolbar" style={{ flexWrap: 'wrap', gap: 10 }}>
               <button
                 className="simple-btn"
                 onClick={() => setCurrentPage('Dosya Detayı')}
               >
                 ← Dosya detayına dön
               </button>
+
+              {/* GELİŞMİŞ ŞABLON SEÇİCİ */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>Şablon:</span>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => setSelectedTemplateId(e.target.value)}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    borderRadius: 8,
+                    border: '1px solid var(--line)',
+                    background: 'var(--surface)',
+                    color: 'var(--text)'
+                  }}
+                >
+                  {SABLON_KATEGORILERI.flatMap((k) =>
+                    k.sablonlar.map((s) => (
+                      <option key={s} value={s}>
+                        {k.kategori.slice(0, 18)} · {TEMPLATE_NAMES[s] || s}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <button
+                className="simple-btn"
+                style={{ background: 'var(--primary-soft)', color: 'var(--primary)', borderColor: 'var(--primary)' }}
+                onClick={() => handleOpenTemplateModal(selectedTemplateId)}
+                title="Gelişmiş Belge Motoru & Snapshot Modalı ile Aç"
+              >
+                ⊞ Tam Sayfa Düzenle (Document Engine) ↗
+              </button>
+
               <button
                 className="simple-btn primary"
                 onClick={() => window.print()}
@@ -1727,7 +1999,7 @@ export function SimpleLayout(): React.JSX.Element {
                   <br />
                   Satın Alma Birimi
                 </div>
-                <h2>PİYASA FİYAT ARAŞTIRMA TUTANAĞI</h2>
+                <h2>{TEMPLATE_NAMES[selectedTemplateId] || 'PİYASA FİYAT ARAŞTIRMA TUTANAĞI'}</h2>
                 <p>
                   <b>Dosya No:</b> {selectedFile.id}
                 </p>
@@ -1782,12 +2054,94 @@ export function SimpleLayout(): React.JSX.Element {
           </div>
         )}
 
+        {/* 4.5. BELGELER & ŞABLONLAR HAVUZU */}
+        {currentPage === 'Belgeler & Şablonlar' && (
+          <div className="workspace space-y-6">
+            <div className="toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <b style={{ fontSize: 16 }}>Resmî Belge ve Şablon Havuzu</b>
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                  Gelişmiş ekranla %100 uyumlu, Document Engine destekli {SABLON_KATEGORILERI.reduce((acc, k) => acc + k.sablonlar.length, 0)} adet şablon
+                </div>
+              </div>
+              <button
+                className="simple-btn primary"
+                onClick={() => setCurrentPage('Belge Önizleme')}
+              >
+                A4 Belge Önizleme Masasına Git ↗
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {SABLON_KATEGORILERI.map((kat) => (
+                <section key={kat.klasorAdi} className="simple-panel">
+                  <div className="simple-panel-head">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="pill">{kat.sablonlar.length} Şablon</span>
+                      <div className="simple-panel-title">{kat.kategori}</div>
+                    </div>
+                  </div>
+                  <div style={{ padding: 18, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                    {kat.sablonlar.map((sablonId) => {
+                      const sablonBaslik = TEMPLATE_NAMES[sablonId] || sablonId.replace(/-/g, ' ').toUpperCase()
+                      return (
+                        <div
+                          key={sablonId}
+                          style={{
+                            border: '1px solid var(--line)',
+                            borderRadius: 10,
+                            padding: '14px 16px',
+                            background: 'var(--surface-2)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            gap: 12
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', lineHeight: 1.4 }}>
+                              {sablonBaslik}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, fontFamily: 'monospace' }}>
+                              kod: {sablonId}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              className="simple-btn"
+                              style={{ flex: 1, padding: '6px 10px', fontSize: 11 }}
+                              onClick={() => {
+                                setSelectedTemplateId(sablonId)
+                                setCurrentPage('Belge Önizleme')
+                              }}
+                            >
+                              Sade Önizle
+                            </button>
+                            <button
+                              className="simple-btn primary"
+                              style={{ flex: 1, padding: '6px 10px', fontSize: 11 }}
+                              onClick={() => handleOpenTemplateModal(sablonId, sablonBaslik)}
+                            >
+                              Aç &amp; Düzenle ↗
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 5. DİĞER MODÜL GÖRÜNÜMLERİ (İhtiyaç, Teklif, Ödeme, vb.) */}
         {![
           'Genel Bakış',
           'İhale Dosyaları',
           'Dosya Detayı',
-          'Belge Önizleme'
+          'Belge Önizleme',
+          'Belgeler & Şablonlar'
         ].includes(currentPage) && (
           <div className="workspace">
             <section className="simple-panel">
@@ -1908,6 +2262,9 @@ export function SimpleLayout(): React.JSX.Element {
             dilediğiniz zaman Gelişmiş Ekran ve Basit Ekran arasında geçiş yapabilirsiniz.
           </div>
         </div>
+        </>
+        )}
+      </div>
       </main>
 
       {/* MODAL ROOT */}
