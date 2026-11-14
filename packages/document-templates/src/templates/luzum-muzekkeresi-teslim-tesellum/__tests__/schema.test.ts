@@ -5,7 +5,7 @@ import {
   HizmetAlimiLuzumMuzekkeresiTeslimTesellumSchema,
   DanismanlikLuzumMuzekkeresiTeslimTesellumSchema,
   YapimIsleriLuzumMuzekkeresiTeslimTesellumSchema,
-} from "../LuzumMuzekkeresiTeslimTesellum.schema";
+} from "../index";
 
 describe("LuzumMuzekkeresiTeslimTesellum — Zod Şema Doğrulaması", () => {
   const validData = {

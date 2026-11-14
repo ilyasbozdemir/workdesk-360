@@ -27,7 +27,7 @@ export function YapimIsleriLuzumMuzekkeresiTeslimTesellum(
     <BaseLuzumMuzekkeresiTeslimTesellum
       {...props}
       columns={props.columns || YAPIM_ISLERI_TESLIM_COLUMNS}
-      title={props.title || "TESLİM TESELLÜM BELGESİ"}
+      title={props.title || "TESLİM TESELLÜM BELGESİ (YAPIM İŞLERİ)"}
     />
   );
 }

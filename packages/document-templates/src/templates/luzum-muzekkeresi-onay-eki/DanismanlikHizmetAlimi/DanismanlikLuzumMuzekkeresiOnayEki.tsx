@@ -31,7 +31,7 @@ export function DanismanlikLuzumMuzekkeresiOnayEki(
     <BaseLuzumMuzekkeresiOnayEki
       {...props}
       columns={props.columns || DANISMANLIK_ONAY_EKI_COLUMNS}
-      title={props.title || "LÜZUM MÜZEKKERESİ"}
+      title={props.title || "LÜZUM MÜZEKKERESİ (DANIŞMANLIK HİZMETİ)"}
       talepMetniSuffix={props.talepMetniSuffix ||
         "için aşağıda kapsamı ve uzmanlık nitelikleri belirtilen danışmanlık hizmetine ihtiyaç görüldüğünden temin edilmesi arz olunur."}
     />

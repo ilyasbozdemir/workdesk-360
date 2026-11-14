@@ -22,7 +22,7 @@ export function MalAlimiLuzumMuzekkeresiTeslimTesellum(
     <BaseLuzumMuzekkeresiTeslimTesellum
       {...props}
       columns={props.columns || MAL_ALIMI_TESLIM_COLUMNS}
-      title={props.title || "TESLİM TESELLÜM BELGESİ"}
+      title={props.title || "TESLİM TESELLÜM BELGESİ (MAL ALIMI)"}
     />
   );
 }

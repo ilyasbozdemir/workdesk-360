@@ -26,7 +26,7 @@ export function HizmetAlimiLuzumMuzekkeresiOnayEki(
     <BaseLuzumMuzekkeresiOnayEki
       {...props}
       columns={props.columns || HIZMET_ALIMI_ONAY_EKI_COLUMNS}
-      title={props.title || "LÜZUM MÜZEKKERESİ"}
+      title={props.title || "LÜZUM MÜZEKKERESİ (HİZMET ALIMI)"}
       talepMetniSuffix={props.talepMetniSuffix ||
         "için aşağıda nev'i ve şartları yazılı hizmete ihtiyaç görüldüğünden temin edilmesi arz olunur."}
     />

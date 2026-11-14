@@ -5,7 +5,7 @@ import {
   HizmetAlimiLuzumMuzekkeresiOnayEkiSchema,
   DanismanlikLuzumMuzekkeresiOnayEkiSchema,
   YapimIsleriLuzumMuzekkeresiOnayEkiSchema,
-} from "../LuzumMuzekkeresiOnayEki.schema";
+} from "../index";
 
 describe("LuzumMuzekkeresiOnayEki — Zod Şema Doğrulaması", () => {
   const validData = {
