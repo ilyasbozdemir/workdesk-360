@@ -109,7 +109,13 @@ export function resolveRowCellValue(
   if (!row || colKey === "custom") return null;
 
   const direct = row[colKey];
-  if (direct !== undefined && direct !== null && String(direct).trim() !== "") {
+  if (
+    direct !== undefined &&
+    direct !== null &&
+    String(direct).trim() !== "" &&
+    String(direct).trim() !== "-" &&
+    String(direct).trim() !== "—"
+  ) {
     return direct;
   }
 
@@ -117,7 +123,13 @@ export function resolveRowCellValue(
   if (aliases && aliases.length > 0) {
     for (const alias of aliases) {
       const val = row[alias];
-      if (val !== undefined && val !== null && String(val).trim() !== "") {
+      if (
+        val !== undefined &&
+        val !== null &&
+        String(val).trim() !== "" &&
+        String(val).trim() !== "-" &&
+        String(val).trim() !== "—"
+      ) {
         return val;
       }
     }
@@ -125,6 +137,10 @@ export function resolveRowCellValue(
 
   if (colKey === "siraNo") {
     return row.siraNo ?? rowNum;
+  }
+
+  if (typeof direct === "string" && (direct.trim() === "-" || direct.trim() === "—")) {
+    return "";
   }
 
   return direct;

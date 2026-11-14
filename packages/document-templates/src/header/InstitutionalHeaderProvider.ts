@@ -27,6 +27,10 @@ export interface InstitutionalHeaderSettings {
   logoLeft?: string | null
   logoRight?: string | null
   institutionLogo?: string | null
+  sunulacakMakamSecimi?: string
+  makamAdiCustom?: string
+  makamAdi?: string
+  sunulacakKurumAdi?: string
 }
 
 export type EvrakSayisiResolverFn = (
@@ -544,22 +548,28 @@ export class InstitutionalHeaderProvider
         )
       : effectiveBaseLines
 
-    const effectiveKurumMakam = kurumRow?.sunulacak_makam_secimi === 'kurum'
-      ? (kurumRow?.sunulacak_kurum_adi || kurumRow?.makam_adi || kurumRow?.kurum_adi || '')
-      : (kurumRow?.makam_adi_custom || kurumRow?.makam_adi || (kurumRow?.kurum_adi ? `${kurumRow.kurum_adi} MAKAMINA` : ''))
+    const activeSecim = kurumRow?.sunulacak_makam_secimi || 'makam'
+    const customMakam = kurumRow?.makam_adi_custom || ''
+    const kurumMakamAdi = kurumRow?.makam_adi || ''
+    const kurumKurumAdi = kurumRow?.sunulacak_kurum_adi || kurumRow?.kurum_adi || fallbackInstitutionName || ''
+
+    const effectiveKurumMakam = activeSecim === 'kurum'
+      ? (kurumKurumAdi || kurumMakamAdi || '')
+      : (customMakam || (kurumMakamAdi && kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase() ? kurumMakamAdi : '') || (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ''))
 
     const birimMakam = matchedBirim?.sunum_makami ? String(matchedBirim.sunum_makami).trim() : ''
     const isBirimBareKurum = Boolean(
       birimMakam && (
         birimMakam === kurumRow?.kurum_adi ||
         birimMakam === kurumRow?.sunulacak_kurum_adi ||
-        (kurumRow?.kurum_adi && birimMakam.toLowerCase().includes(String(kurumRow.kurum_adi).toLowerCase())) ||
-        (kurumRow?.sunulacak_kurum_adi && birimMakam.toLowerCase().includes(String(kurumRow.sunulacak_kurum_adi).toLowerCase()))
+        (kurumKurumAdi && birimMakam.toLowerCase() === kurumKurumAdi.toLowerCase()) ||
+        (kurumRow?.kurum_adi && birimMakam.toLowerCase() === String(kurumRow.kurum_adi).toLowerCase()) ||
+        (kurumRow?.sunulacak_kurum_adi && birimMakam.toLowerCase() === String(kurumRow.sunulacak_kurum_adi).toLowerCase())
       )
     )
 
     const sunulacakMakamAdi = String(
-      (kurumRow?.sunulacak_makam_secimi === 'makam' && isBirimBareKurum && effectiveKurumMakam)
+      (activeSecim === 'makam' && (isBirimBareKurum || !birimMakam) && effectiveKurumMakam)
         ? effectiveKurumMakam
         : (birimMakam || effectiveKurumMakam || '')
     ).trim()
@@ -723,7 +733,23 @@ export class InstitutionalHeaderProvider
       )
     }
 
-    const settings = this.settingsGetter ? this.settingsGetter() : {}
+    const userSettings = this.settingsGetter ? this.settingsGetter() : {}
+    let dbSettings: Record<string, any> = {}
+    try {
+      const sRows = await execQuery('SELECT key, value FROM settings', [])
+      if (Array.isArray(sRows)) {
+        for (const row of sRows) {
+          if (row.key && row.value !== undefined) {
+            dbSettings[row.key] = row.value
+          }
+        }
+      }
+    } catch {}
+
+    const settings: InstitutionalHeaderSettings = {
+      ...dbSettings,
+      ...userSettings
+    }
 
     // 1. Dosya ve Harcama Birimi Sorgusu
     let dosyaRow: any = null
@@ -913,9 +939,14 @@ export class InstitutionalHeaderProvider
       }
     }
 
-    const effectiveKurumMakam = kurumRow?.sunulacak_makam_secimi === 'kurum'
-      ? (kurumRow?.sunulacak_kurum_adi || kurumRow?.makam_adi || kurumRow?.kurum_adi || '')
-      : (kurumRow?.makam_adi_custom || kurumRow?.makam_adi || (kurumRow?.kurum_adi ? `${kurumRow.kurum_adi} MAKAMINA` : ''))
+    const activeSecim = kurumRow?.sunulacak_makam_secimi || settings.sunulacakMakamSecimi || 'makam'
+    const customMakam = kurumRow?.makam_adi_custom || settings.makamAdiCustom || ''
+    const kurumMakamAdi = kurumRow?.makam_adi || settings.makamAdi || ''
+    const kurumKurumAdi = kurumRow?.sunulacak_kurum_adi || settings.sunulacakKurumAdi || kurumRow?.kurum_adi || settings.institutionName || ''
+
+    const effectiveKurumMakam = activeSecim === 'kurum'
+      ? (kurumKurumAdi || kurumMakamAdi || '')
+      : (customMakam || (kurumMakamAdi && kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase() ? kurumMakamAdi : '') || (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ''))
 
     const dosyaMakam = dosyaRow?.sunulacak_makam ? String(dosyaRow.sunulacak_makam).trim() : ''
     const isBareKurumName = Boolean(
@@ -924,13 +955,13 @@ export class InstitutionalHeaderProvider
         dosyaMakam === kurumRow?.sunulacak_kurum_adi ||
         dosyaMakam === kurumRow?.ad ||
         dosyaMakam === settings.institutionName ||
-        (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.sunulacak_kurum_adi).toLowerCase()) ||
+        (kurumKurumAdi && dosyaMakam.toLowerCase() === kurumKurumAdi.toLowerCase()) ||
         (kurumRow?.kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.kurum_adi).toLowerCase()) ||
-        (kurumRow?.kurum_adi && dosyaMakam.toLowerCase().includes(String(kurumRow.kurum_adi).toLowerCase())) ||
-        (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase().includes(String(kurumRow.sunulacak_kurum_adi).toLowerCase()))
+        (kurumRow?.kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.kurum_adi).toLowerCase()) ||
+        (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.sunulacak_kurum_adi).toLowerCase())
       )
     )
-    const effectiveSunulacakMakam = (kurumRow?.sunulacak_makam_secimi === 'makam' && isBareKurumName && effectiveKurumMakam)
+    const effectiveSunulacakMakam = (activeSecim === 'makam' && (isBareKurumName || !dosyaMakam) && effectiveKurumMakam)
       ? effectiveKurumMakam
       : (dosyaMakam || effectiveKurumMakam || '')
 
@@ -960,7 +991,8 @@ export class InstitutionalHeaderProvider
       onaylayanPersonelUnvan,
       birimId: dosyaRow?.birim_id,
       sunulacakMakam: effectiveSunulacakMakam,
-      sunulacakKurumAdi: kurumRow?.sunulacak_kurum_adi || kurumRow?.kurum_adi || ''
+      sunulacakMakamAdi: effectiveSunulacakMakam,
+      sunulacakKurumAdi: kurumRow?.sunulacak_kurum_adi || kurumRow?.kurum_adi || settings.sunulacakKurumAdi || ''
     }
 
     if (dosyaId) {

@@ -194,7 +194,9 @@ export class DefaultDocumentResolver
       evrakSayisi: headerData.evrakSayisi || (baseData.evrakSayisi as string) ||
         "",
       sunulacakMakamAdi: (() => {
-        const hMakam = headerData.sunulacakMakam ? String(headerData.sunulacakMakam).trim() : '';
+        const hMakam = (headerData.sunulacakMakamAdi || headerData.sunulacakMakam)
+          ? String(headerData.sunulacakMakamAdi || headerData.sunulacakMakam).trim()
+          : '';
         const bMakam = baseData.sunulacakMakamAdi ? String(baseData.sunulacakMakamAdi).trim() : '';
         const kAdi = headerData.kurumAdi ? String(headerData.kurumAdi).trim() : '';
         const sKurum = (headerData as any).sunulacakKurumAdi ? String((headerData as any).sunulacakKurumAdi).trim() : '';

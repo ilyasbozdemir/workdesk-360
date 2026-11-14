@@ -56,6 +56,7 @@ export interface UseLuzumMuzekkeresiResult {
   sunulacakMakam: string;
   onayTarihi: string;
   fLimit: number | null;
+  KANUN_DAYANAGI: string;
   getStartIndex: (pageIdx: number) => number;
 }
 
@@ -235,6 +236,8 @@ export function useLuzumMuzekkeresi(
     return data.onayTarihi || data.tarih || data.dosyaTarihi || defaultToday;
   }, [data, defaultToday]);
 
+  const KANUN_DAYANAGI = "ilgili"; // default oalrka bu olucak
+
   const getStartIndex = (pageIdx: number): number => {
     if (pageIdx === 0) return 0;
     return limits.firstPage + (pageIdx - 1) * limits.middle;
@@ -250,6 +253,7 @@ export function useLuzumMuzekkeresi(
     sunulacakMakam,
     onayTarihi,
     fLimit: fLimit ? Number(fLimit) : null,
+    KANUN_DAYANAGI,
     getStartIndex,
   };
 }

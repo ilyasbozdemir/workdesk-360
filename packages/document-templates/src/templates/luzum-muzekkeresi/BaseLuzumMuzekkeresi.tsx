@@ -45,6 +45,7 @@ export function BaseLuzumMuzekkeresi(props: BaseLuzumMuzekkeresiProps) {
     sunulacakMakam,
     onayTarihi,
     fLimit,
+    KANUN_DAYANAGI,
     getStartIndex,
   } = hookResult;
 
@@ -175,10 +176,10 @@ export function BaseLuzumMuzekkeresi(props: BaseLuzumMuzekkeresiProps) {
                     lineHeight: 1.5,
                   }}
                 >
-                  Söz konusu ihtiyacın 4734 sayılı Kanunun{" "}
+                  Söz konusu ihtiyacın 4734 sayılı Kamu İhale Kanununun{" "}
                   <EditableField
                     name="maddeNo"
-                    value={data.maddeNo ?? "ilgili"}
+                    value={KANUN_DAYANAGI}
                     placeholder="ilgili"
                   />{" "}
                   maddesine göre temini için gereğini olurlarınıza arz ederim.

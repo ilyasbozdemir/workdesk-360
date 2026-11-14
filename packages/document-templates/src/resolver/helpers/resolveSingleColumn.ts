@@ -165,9 +165,8 @@ export async function resolveSingleColumn(
           dosyaMakam && (
             dosyaMakam === kurumRow?.kurum_adi ||
             dosyaMakam === kurumRow?.sunulacak_kurum_adi ||
-            (kurumRow?.kurum_adi && dosyaMakam.toLowerCase().includes(String(kurumRow.kurum_adi).toLowerCase())) ||
-            (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase().includes(String(kurumRow.sunulacak_kurum_adi).toLowerCase())) ||
-            !dosyaMakam.toUpperCase().includes('MAKAM')
+            (kurumRow?.kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.kurum_adi).toLowerCase()) ||
+            (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.sunulacak_kurum_adi).toLowerCase())
           ),
         );
 

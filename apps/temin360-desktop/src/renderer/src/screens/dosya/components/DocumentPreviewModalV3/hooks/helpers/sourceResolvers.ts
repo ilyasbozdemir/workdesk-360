@@ -91,6 +91,18 @@ export const dosyaResolver: DocumentResolver = {
       ...headerObj,
       ...((docRecord.data || {}) as Record<string, unknown>)
     }
+    const currentMakam = String(dataObj.sunulacakMakamAdi || dataObj.sunulacakMakam || '').trim()
+    const headerMakam = String(docRecord.headerData?.sunulacakMakam || '').trim()
+    const kAdi = String(headerObj.kurumAdi || '').trim()
+    const sKurum = String(headerObj.sunulacakKurumAdi || '').trim()
+    const isBare = !currentMakam ||
+      (kAdi && currentMakam.toLowerCase() === kAdi.toLowerCase()) ||
+      (sKurum && currentMakam.toLowerCase() === sKurum.toLowerCase()) ||
+      !currentMakam.toUpperCase().includes('MAKAM')
+    if (headerMakam && isBare) {
+      dataObj.sunulacakMakamAdi = headerMakam
+      dataObj.sunulacakMakam = headerMakam
+    }
     const lists = await loadDosyaLists(source.dosyaId)
     const pick = (a: unknown[] | undefined, b: unknown[]) => (a && a.length > 0 ? a : b)
 

@@ -5,16 +5,16 @@ import {
   ColumnDef,
   getTemplateTableColumns,
   resolveRowCellValue,
-  TEMPLATE_TABLE_COLUMNS,
   TABLE_COLUMN_SOURCE_INFO,
+  TEMPLATE_TABLE_COLUMNS,
 } from "../constants/tableColumns.constants";
 
 export type { ColumnDef };
 export {
   getTemplateTableColumns,
   resolveRowCellValue,
-  TEMPLATE_TABLE_COLUMNS,
   TABLE_COLUMN_SOURCE_INFO,
+  TEMPLATE_TABLE_COLUMNS,
 };
 export const DEFAULT_IHTIYAC_COLUMNS = TEMPLATE_TABLE_COLUMNS.default;
 
@@ -69,8 +69,7 @@ export const DocumentTable = React.forwardRef<
           <tr style={{ pageBreakInside: "avoid" }}>
             {activeColumns.map((col) => {
               const colKey = String(col.key);
-              const tooltip =
-                col.tooltip ||
+              const tooltip = col.tooltip ||
                 col.title ||
                 TABLE_COLUMN_SOURCE_INFO[colKey] ||
                 TABLE_COLUMN_SOURCE_INFO[colKey.toLowerCase()] ||
@@ -133,15 +132,24 @@ export const DocumentTable = React.forwardRef<
                         const colKey = String(col.key);
                         const value = resolveRowCellValue(row, colKey, rowNum);
 
-                        const rendered = col.render
+                        let rendered = col.render
                           ? col.render(value, row, rowIdx)
                           : value !== undefined && value !== null &&
                               String(value).trim() !== ""
                           ? String(value)
-                          : "-";
+                          : "";
 
-                        const colTooltip =
-                          col.tooltip ||
+                        // Resmî evrak standardı: Boş/olmayan hücrelere '-' (tire) yazılmaz, boş bırakılır
+                        if (
+                          typeof rendered === "string" &&
+                          (rendered.trim() === "-" ||
+                            rendered.trim() === "—" ||
+                            rendered.trim() === "- -")
+                        ) {
+                          rendered = "";
+                        }
+
+                        const colTooltip = col.tooltip ||
                           col.title ||
                           TABLE_COLUMN_SOURCE_INFO[colKey] ||
                           TABLE_COLUMN_SOURCE_INFO[colKey.toLowerCase()];
@@ -225,7 +233,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = (
                 width: "30%",
               }}
             >
-              {row.value}
+              {row.value === "-" || row.value === "—" ? "" : row.value}
             </td>
           </tr>
         ))}
