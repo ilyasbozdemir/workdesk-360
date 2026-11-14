@@ -955,10 +955,13 @@ export class InstitutionalHeaderProvider
         dosyaMakam === kurumRow?.sunulacak_kurum_adi ||
         dosyaMakam === kurumRow?.ad ||
         dosyaMakam === settings.institutionName ||
-        (kurumKurumAdi && dosyaMakam.toLowerCase() === kurumKurumAdi.toLowerCase()) ||
-        (kurumRow?.kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.kurum_adi).toLowerCase()) ||
-        (kurumRow?.kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.kurum_adi).toLowerCase()) ||
-        (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.sunulacak_kurum_adi).toLowerCase())
+        (kurumKurumAdi && dosyaMakam.toLocaleLowerCase('tr-TR') === kurumKurumAdi.toLocaleLowerCase('tr-TR')) ||
+        (kurumRow?.kurum_adi && dosyaMakam.toLocaleLowerCase('tr-TR') === String(kurumRow.kurum_adi).toLocaleLowerCase('tr-TR')) ||
+        (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLocaleLowerCase('tr-TR') === String(kurumRow.sunulacak_kurum_adi).toLocaleLowerCase('tr-TR')) ||
+        (effectiveKurumMakam && effectiveKurumMakam.toLocaleUpperCase('tr-TR').includes('MAKAM') &&
+          !dosyaMakam.toLocaleUpperCase('tr-TR').includes('MAKAM') &&
+          !dosyaMakam.toLocaleUpperCase('tr-TR').endsWith('NE') &&
+          !dosyaMakam.toLocaleUpperCase('tr-TR').endsWith('NA'))
       )
     )
     const effectiveSunulacakMakam = (activeSecim === 'makam' && (isBareKurumName || !dosyaMakam) && effectiveKurumMakam)

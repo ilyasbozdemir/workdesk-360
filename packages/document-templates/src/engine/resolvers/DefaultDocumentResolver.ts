@@ -204,8 +204,12 @@ export class DefaultDocumentResolver
         const isBareB = !bMakam ||
           bMakam === kAdi ||
           bMakam === sKurum ||
-          (kAdi && bMakam.toLowerCase() === kAdi.toLowerCase()) ||
-          (sKurum && bMakam.toLowerCase() === sKurum.toLowerCase());
+          (kAdi && bMakam.toLocaleLowerCase('tr-TR') === kAdi.toLocaleLowerCase('tr-TR')) ||
+          (sKurum && bMakam.toLocaleLowerCase('tr-TR') === sKurum.toLocaleLowerCase('tr-TR')) ||
+          (hMakam && hMakam.toLocaleUpperCase('tr-TR').includes('MAKAM') &&
+            !bMakam.toLocaleUpperCase('tr-TR').includes('MAKAM') &&
+            !bMakam.toLocaleUpperCase('tr-TR').endsWith('NE') &&
+            !bMakam.toLocaleUpperCase('tr-TR').endsWith('NA'));
 
         if (hMakam && isBareB) {
           return hMakam;

@@ -165,8 +165,12 @@ export async function resolveSingleColumn(
           dosyaMakam && (
             dosyaMakam === kurumRow?.kurum_adi ||
             dosyaMakam === kurumRow?.sunulacak_kurum_adi ||
-            (kurumRow?.kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.kurum_adi).toLowerCase()) ||
-            (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.sunulacak_kurum_adi).toLowerCase())
+            (kurumRow?.kurum_adi && dosyaMakam.toLocaleLowerCase('tr-TR') === String(kurumRow.kurum_adi).toLocaleLowerCase('tr-TR')) ||
+            (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLocaleLowerCase('tr-TR') === String(kurumRow.sunulacak_kurum_adi).toLocaleLowerCase('tr-TR')) ||
+            (activeKurumMakam && activeKurumMakam.toLocaleUpperCase('tr-TR').includes('MAKAM') &&
+              !dosyaMakam.toLocaleUpperCase('tr-TR').includes('MAKAM') &&
+              !dosyaMakam.toLocaleUpperCase('tr-TR').endsWith('NE') &&
+              !dosyaMakam.toLocaleUpperCase('tr-TR').endsWith('NA'))
           ),
         );
 
