@@ -175,7 +175,7 @@ export const SimpleFileDetail: React.FC<SimpleFileDetailProps> = ({
 
         {/* 4. ONAY & KARAR */}
         {currentTab === 'Onay & Karar' && (
-          <div style={{ padding: 18, spaceY: 12 }}>
+          <div style={{ padding: 18 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Doğrudan Temin Onay &amp; Karar Belgesi</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
               4734 Sayılı Kamu İhale Kanununun 22/d maddesi gereğince harcama yetkilisinden alınan onay ve ihale kararı belgesidir.
@@ -188,7 +188,7 @@ export const SimpleFileDetail: React.FC<SimpleFileDetailProps> = ({
 
         {/* 5. MUAYENE & KABUL */}
         {currentTab === 'Muayene & Kabul' && (
-          <div style={{ padding: 18, spaceY: 12 }}>
+          <div style={{ padding: 18 }}>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Muayene ve Kabul Komisyonu Tutanağı</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
               Teslim edilen mal/hizmet kalemlerinin teknik şartnameye ve piyasa araştırmasına uygunluğunun komisyonca tutanağa bağlandığı belgedir.

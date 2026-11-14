@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { SimpleFile, ItemRecord, OfferRecord } from '../types'
-import { useWorkspaceStore } from '../../../store/workspaceStore'
+import { useWorkspaceStore } from '../../../../store/workspaceStore'
 
 export const INITIAL_FILES: SimpleFile[] = [
   {

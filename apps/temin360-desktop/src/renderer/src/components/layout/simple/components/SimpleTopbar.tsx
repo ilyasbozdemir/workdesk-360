@@ -1,6 +1,6 @@
 import React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { WindowControls } from '../header/WindowControls'
+import { WindowControls } from '../../header/WindowControls'
 import { SimpleFile } from '../types'
 
 export interface SimpleTopbarProps {

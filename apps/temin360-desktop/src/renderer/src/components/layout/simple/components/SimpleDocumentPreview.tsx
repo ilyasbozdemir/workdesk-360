@@ -1,7 +1,7 @@
 import React from 'react'
 import { SimpleFile, OfferRecord } from '../types'
 import { SABLON_KATEGORILERI } from '../../../../constants/sablonKategorileri'
-import { TEMPLATE_NAMES } from '../../../../../shared/constants/templateConstants'
+import { TEMPLATE_NAMES } from '../../../../../../shared/constants/templateConstants'
 
 export interface SimpleDocumentPreviewProps {
   selectedFile: SimpleFile

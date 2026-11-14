@@ -1,6 +1,6 @@
 import React from 'react'
 import { SABLON_KATEGORILERI } from '../../../../constants/sablonKategorileri'
-import { TEMPLATE_NAMES } from '../../../../../shared/constants/templateConstants'
+import { TEMPLATE_NAMES } from '../../../../../../shared/constants/templateConstants'
 
 export interface SimpleTemplateGalleryProps {
   onSelectTemplateForPreview: (templateId: string) => void
