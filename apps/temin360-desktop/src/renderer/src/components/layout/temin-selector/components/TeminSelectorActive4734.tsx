@@ -106,6 +106,7 @@ export const TeminSelectorActive4734: React.FC<TeminSelectorActive4734Props> = (
           e.stopPropagation()
           setShowInspector(true)
         }}
+        aria-label="Dosya Verilerini İncele"
         className="p-1 sm:p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all shrink-0 active:scale-90 cursor-pointer"
         title="Dosya Verilerini İncele (Inspector)"
       >
@@ -119,6 +120,7 @@ export const TeminSelectorActive4734: React.FC<TeminSelectorActive4734Props> = (
           addTab(`/dosyalar/yeni?id=${selectedDosya.id}`)
           navigate({ to: `${APP_ROUTES.YENI_DOSYA}?id=${selectedDosya.id}` })
         }}
+        aria-label="Dosya Formunu Düzenle"
         className="p-1 sm:p-1.5 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all shrink-0 active:scale-90 cursor-pointer"
         title="Dosya Formunu Düzenle"
       >
@@ -131,6 +133,7 @@ export const TeminSelectorActive4734: React.FC<TeminSelectorActive4734Props> = (
           e.stopPropagation()
           handleCloseDosya()
         }}
+        aria-label="Dosyayı Kapat"
         className="p-1 sm:p-1.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all shrink-0 active:scale-90 cursor-pointer"
         title="Dosyayı Kapat"
       >
