@@ -79,7 +79,7 @@ interface DosyalarVeFaturalariTabProps {
 
 // ─── Yardımcı Hesaplama Fonksiyonları ─────────────────────────────────────
 
-function calculateInvoiceFinancials(
+export function calculateInvoiceFinancials(
   brutTutar: number,
   kdvOrani: number,
   tevkifatOrani: string = 'Yok',
@@ -273,20 +273,22 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         if (key && !faturaNoSet.has(key)) {
           faturaNoSet.add(key)
           // Finansal tutarları hesapla
+          const kdvDegeri = Number.isFinite(Number(f.kdvOrani)) ? Number(f.kdvOrani) : 20
           const fin = calculateInvoiceFinancials(
             f.firmaTutar,
-            f.kdvOrani || 20,
+            kdvDegeri,
             f.tevkifatOrani || 'Yok',
             true
           )
           faturalar.push({
             ...f,
-            matrah: f.matrah || fin.matrah,
-            kdvTutari: f.kdvTutari || fin.kdvTutari,
-            tevkifatTutari: f.tevkifatTutari || fin.tevkifatTutari,
-            damgaVergisi: f.damgaVergisi || fin.damgaVergisi,
-            kararPulu: f.kararPulu || fin.kararPulu,
-            netOdenecek: f.netOdenecek || fin.netOdenecek
+            kdvOrani: kdvDegeri,
+            matrah: f.matrah !== undefined ? f.matrah : fin.matrah,
+            kdvTutari: f.kdvTutari !== undefined ? f.kdvTutari : fin.kdvTutari,
+            tevkifatTutari: f.tevkifatTutari !== undefined ? f.tevkifatTutari : fin.tevkifatTutari,
+            damgaVergisi: f.damgaVergisi !== undefined ? f.damgaVergisi : fin.damgaVergisi,
+            kararPulu: f.kararPulu !== undefined ? f.kararPulu : fin.kararPulu,
+            netOdenecek: f.netOdenecek !== undefined ? f.netOdenecek : fin.netOdenecek
           })
         }
       }
@@ -498,7 +500,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormFaturaNo(fatura.faturaNo)
     setFormFaturaTarihi(fatura.faturaTarihi ? fatura.faturaTarihi.slice(0, 10) : '')
     setFormFaturaTutar(fatura.firmaTutar)
-    setFormKdvOrani(fatura.kdvOrani || 20)
+    setFormKdvOrani(Number.isFinite(Number(fatura.kdvOrani)) ? Number(fatura.kdvOrani) : 20)
     setFormTevkifatOrani(fatura.tevkifatOrani || 'Yok')
     setFormOdemeYontemi(fatura.odemeYontemi || 'Hazine / Muhasebat Ödeme Emri')
     setFormDurum(fatura.durum)
@@ -535,9 +537,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         ? [...prefs.faturalar]
         : []
 
+      const kdvVal = Number.isFinite(Number(formKdvOrani)) ? Number(formKdvOrani) : 20
       const fin = calculateInvoiceFinancials(
         Number(formFaturaTutar) || 0,
-        Number(formKdvOrani) || 20,
+        kdvVal,
         formTevkifatOrani,
         true
       )
@@ -547,7 +550,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         faturaNo: formFaturaNo.trim(),
         faturaTarihi: formFaturaTarihi,
         firmaTutar: Number(formFaturaTutar) || 0,
-        kdvOrani: Number(formKdvOrani) || 20,
+        kdvOrani: kdvVal,
         matrah: fin.matrah,
         kdvTutari: fin.kdvTutari,
         tevkifatOrani: formTevkifatOrani,
@@ -559,6 +562,17 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         durum: formDurum,
         aciklama: formAciklama.trim(),
         kaynak: 'mali_giris'
+      }
+
+      // Aynı fatura numarasının mükerrer eklenmesini önle
+      const normalizedNo = formFaturaNo.trim().toLowerCase()
+      const isDuplicate = existingInvoices.some(
+        (item) => item.faturaNo.trim().toLowerCase() === normalizedNo && item.id !== duzenlenenFatura?.id
+      )
+      if (isDuplicate) {
+        alert(`Hata: "${formFaturaNo.trim()}" numaralı fatura bu dosyada zaten kayıtlıdır.`)
+        setIsSaving(false)
+        return
       }
 
       if (duzenlenenFatura) {
@@ -576,17 +590,24 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       prefs.faturaNo = updatedInvoice.faturaNo
       prefs.faturaTarihi = updatedInvoice.faturaTarihi
 
-      await window.electron.ipcRenderer.invoke(
-        'db:query',
+      const updateRes = await window.electron.ipcRenderer.invoke(
+        'db:run',
         'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ?, updated_at = datetime("now") WHERE id = ?',
         [JSON.stringify(prefs), seciliDosya.id]
       )
 
+      if (!updateRes?.success) {
+        alert('Fatura kaydedilirken veritabanı hatası oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'))
+        setIsSaving(false)
+        return
+      }
+
       setModalOpen(false)
       setIsSaving(false)
       reloadData()
-    } catch (err) {
+    } catch (err: any) {
       console.error('[DosyalarVeFaturalariTab] Fatura kaydedilemedi:', err)
+      alert('Fatura kaydedilirken beklenmeyen hata: ' + (err?.message || String(err)))
       setIsSaving(false)
     }
   }
@@ -628,15 +649,21 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
 
       prefs.faturalar = existingInvoices
 
-      await window.electron.ipcRenderer.invoke(
-        'db:query',
+      const updateRes = await window.electron.ipcRenderer.invoke(
+        'db:run',
         'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ?, updated_at = datetime("now") WHERE id = ?',
         [JSON.stringify(prefs), dosya.id]
       )
 
+      if (!updateRes?.success) {
+        alert('Fatura durumu güncellenirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'))
+        return
+      }
+
       reloadData()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Durum değiştirilemedi:', err)
+      alert('Durum güncellenirken beklenmeyen hata: ' + (err?.message || String(err)))
     }
   }
 
@@ -668,15 +695,21 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         prefs.faturalar = prefs.faturalar.filter((item: any) => item.id !== faturaId)
       }
 
-      await window.electron.ipcRenderer.invoke(
-        'db:query',
+      const updateRes = await window.electron.ipcRenderer.invoke(
+        'db:run',
         'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ?, updated_at = datetime("now") WHERE id = ?',
         [JSON.stringify(prefs), dosya.id]
       )
 
+      if (!updateRes?.success) {
+        alert('Fatura silinirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'))
+        return
+      }
+
       reloadData()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Fatura silinemedi:', err)
+      alert('Fatura silinirken beklenmeyen hata: ' + (err?.message || String(err)))
     }
   }
 
@@ -761,7 +794,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   const modalCalculations = useMemo(() => {
     return calculateInvoiceFinancials(
       formFaturaTutar || 0,
-      formKdvOrani || 20,
+      Number.isFinite(Number(formKdvOrani)) ? Number(formKdvOrani) : 20,
       formTevkifatOrani,
       true
     )
@@ -1100,7 +1133,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                   {formatCurrency(fatura.matrah || 0)}
                                 </td>
                                 <td className="px-3.5 py-2.5 text-center font-bold text-slate-500">
-                                  %{fatura.kdvOrani || 20}
+                                  %{Number.isFinite(Number(fatura.kdvOrani)) ? fatura.kdvOrani : 20}
                                 </td>
                                 <td className="px-3.5 py-2.5 text-right font-mono font-black text-slate-900 dark:text-slate-100">
                                   {formatCurrency(fatura.firmaTutar || 0)}

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type {
   ResolvedDocumentRoute,
   TemplateRouteDefinition,
-} from "@temin360/contracts";
+} from "../route/types";
 import {
   applyResolvedRouteToDocumentData,
   extractDocumentRouteValues,

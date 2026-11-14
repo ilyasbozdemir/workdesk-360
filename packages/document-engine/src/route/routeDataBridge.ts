@@ -21,7 +21,7 @@ import type {
   RouteValue,
   RouteValues,
   TemplateRouteDefinition,
-} from "@temin360/contracts";
+} from "./types";
 
 function normalizeSigType(raw: unknown): CommissionSignatureType {
   if (typeof raw !== "string") return "İmza";
@@ -357,8 +357,9 @@ export function applyResolvedRouteToDocumentData<T extends Record<string, any>>(
       continue;
     }
 
-    if (step.kind === "unit" && !Array.isArray(step.value)) {
-      const unitName = step.value.name;
+    if (step.kind === "unit" && step.value && !Array.isArray(step.value)) {
+      const unit = step.value as RouteAssignee;
+      const unitName = unit.name;
       const primaryTargetKey = step.fieldKey || step.id;
       next[primaryTargetKey] = unitName;
 
@@ -371,8 +372,8 @@ export function applyResolvedRouteToDocumentData<T extends Record<string, any>>(
       continue;
     }
 
-    if (step.kind === "person" && !Array.isArray(step.value)) {
-      const person = step.value;
+    if (step.kind === "person" && step.value && !Array.isArray(step.value)) {
+      const person = step.value as RouteAssignee;
       const primaryNameKey = step.fieldKey || `${step.id}PersonelAdi`;
       next[primaryNameKey] = person.name;
 

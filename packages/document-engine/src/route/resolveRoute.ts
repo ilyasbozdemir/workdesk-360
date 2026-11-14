@@ -12,11 +12,12 @@
  */
 import type {
   ResolvedDocumentRoute,
+  RouteAssignee,
   RouteOverride,
   RouteValue,
   RouteValues,
   TemplateRouteDefinition,
-} from "@temin360/contracts";
+} from "./types";
 import { validateRoute } from "./validateRoute";
 
 export interface ResolveRouteInput {
@@ -31,7 +32,7 @@ export interface ResolveRouteInput {
 function isNonEmptyRouteValue(val: RouteValue | undefined): val is RouteValue {
   if (val === undefined || val === null) return false;
   if (Array.isArray(val)) return val.length > 0;
-  return Boolean(val.name && String(val.name).trim() !== "");
+  return Boolean(typeof val === "object" && "name" in val && (val as RouteAssignee).name && String((val as RouteAssignee).name).trim() !== "");
 }
 
 export function resolveRoute(input: ResolveRouteInput): ResolvedDocumentRoute {

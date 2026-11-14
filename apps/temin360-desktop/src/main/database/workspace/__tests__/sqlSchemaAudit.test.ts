@@ -4,10 +4,17 @@ import path from 'path'
 import schemaSnapshot from '../../../../../../../packages/database/schema-snapshot.json'
 
 /**
- * Bu test, WorkDesk 360 monoreposundaki kod dosyalarında bulunan SQLite sorgularını tarar
+ * SQL Schema Audit & Verification Test (Current Schema Invariant)
+ * 
+ * Bu test, WorkDesk 360 masaüstü uygulamasındaki SQL sorgularını tarar
  * ve kullanılan tablo/kolon adlarının schema-snapshot.json ile %100 uyumlu olduğunu doğrular.
- * Şemada bulunmayan bir kolon (örn. "dosya_konusu", "dosya_no", "alim_turu") SQL sorgusunda
- * doğrudan kaynak kolon olarak kullanılmışsa test FAIL verir.
+ * 
+ * Kapsanan Alanlar:
+ * - bkmybs-mali-yonetim
+ * - services/finance
+ * - screens/dosyalar
+ * - screens/dosya
+ * - main/ipc
  */
 
 describe('SQL Schema Audit & Verification Test (Current Schema Invariant)', () => {
@@ -44,13 +51,16 @@ describe('SQL Schema Audit & Verification Test (Current Schema Invariant)', () =
     expect(dtColumns.has('alim_turu')).toBe(false)
   })
 
-  it('DATA_TeminDosyasi sorgularinda sema disi sutunlar (dosya_konusu, dosya_no vb.) kullanilamaz', () => {
+  it('DATA_TeminDosyasi ve bagli tablolarda sema disi kolonlar (dosya_konusu, dosya_no, alim_turu vb.) kullanilamaz', () => {
     const rootsToScan = [
       path.resolve(__dirname, '../../../../renderer/src/screens/bkmybs-mali-yonetim'),
-      path.resolve(__dirname, '../../../../renderer/src/services/finance')
+      path.resolve(__dirname, '../../../../renderer/src/services/finance'),
+      path.resolve(__dirname, '../../../../renderer/src/screens/dosyalar'),
+      path.resolve(__dirname, '../../../../renderer/src/screens/dosya'),
+      path.resolve(__dirname, '../../../ipc')
     ]
 
-    const invalidUsages: Array<{ file: string; line: number; match: string }> = []
+    const invalidUsages: Array<{ file: string; line: number; match: string; reason: string }> = []
 
     function scanDir(dir: string) {
       if (!fs.existsSync(dir)) return
@@ -63,17 +73,32 @@ describe('SQL Schema Audit & Verification Test (Current Schema Invariant)', () =
           const content = fs.readFileSync(fullPath, 'utf8')
           const lines = content.split('\n')
           lines.forEach((line, idx) => {
-            // d.dosya_konusu veya d.dosya_no doğrudan kaynak kolon olarak çağrılmış mı?
-            // (AS dosya_no / AS dosya_konusu alias tanımları serbesttir, ancak kaynak kolon d.dosya_no olamaz)
+            // d.dosya_konusu doğrudan kaynak kolon olarak çağrılmış mı?
             if (/\bd\.dosya_konusu\b/i.test(line)) {
-              invalidUsages.push({ file: fullPath, line: idx + 1, match: line.trim() })
+              invalidUsages.push({
+                file: fullPath,
+                line: idx + 1,
+                match: line.trim(),
+                reason: 'd.dosya_konusu şemada yok; d.konu kullanılmalıdır.'
+              })
             }
+            // d.dosya_no doğrudan kaynak kolon olarak çağrılmış mı? (COALESCE fallback harici)
             if (/\bd\.dosya_no\b/i.test(line) && !/COALESCE\s*\([^)]*d\.dosya_no/i.test(line)) {
-              // doğrudan d.dosya_no seçimi hata
-              invalidUsages.push({ file: fullPath, line: idx + 1, match: line.trim() })
+              invalidUsages.push({
+                file: fullPath,
+                line: idx + 1,
+                match: line.trim(),
+                reason: 'd.dosya_no şemada yok; d.temin_no kullanılmalıdır.'
+              })
             }
+            // d.alim_turu doğrudan kaynak kolon olarak çağrılmış mı?
             if (/\bd\.alim_turu\b/i.test(line)) {
-              invalidUsages.push({ file: fullPath, line: idx + 1, match: line.trim() })
+              invalidUsages.push({
+                file: fullPath,
+                line: idx + 1,
+                match: line.trim(),
+                reason: 'd.alim_turu şemada yok; d.tur kullanılmalıdır.'
+              })
             }
           })
         }
@@ -82,6 +107,51 @@ describe('SQL Schema Audit & Verification Test (Current Schema Invariant)', () =
 
     rootsToScan.forEach(scanDir)
 
-    expect(invalidUsages, `Sema disi sutun kullanimi tespit edildi:\n${JSON.stringify(invalidUsages, null, 2)}`).toEqual([])
+    expect(
+      invalidUsages,
+      `Sema disi sutun kullanimi tespit edildi:\n${JSON.stringify(invalidUsages, null, 2)}`
+    ).toEqual([])
+  })
+
+  it('SQL sorgularinda kullanilan temel veritabani tablolari schema-snapshot.json icerisinde mevcut olmalidir', () => {
+    const knownTables = Array.from(tablesMap.keys())
+    const rootsToScan = [
+      path.resolve(__dirname, '../../../../renderer/src/screens/bkmybs-mali-yonetim'),
+      path.resolve(__dirname, '../../../../renderer/src/services/finance')
+    ]
+
+    const unrecognizedTables: Array<{ file: string; line: number; table: string }> = []
+    const tablePattern = /\b(?:FROM|JOIN|INTO|UPDATE)\s+([A-Za-z_][A-Za-z0-9_]*)/gi
+
+    function scanDir(dir: string) {
+      if (!fs.existsSync(dir)) return
+      const entries = fs.readdirSync(dir, { withFileTypes: true })
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          scanDir(fullPath)
+        } else if (/\.(ts|tsx)$/.test(entry.name) && !entry.name.includes('.test.')) {
+          const content = fs.readFileSync(fullPath, 'utf8')
+          const lines = content.split('\n')
+          lines.forEach((line, idx) => {
+            let match: RegExpExecArray | null
+            tablePattern.lastIndex = 0
+            while ((match = tablePattern.exec(line)) !== null) {
+              const tbl = match[1].toLowerCase()
+              // SQL anahtar kelimeleri veya alias değilse ve TANIM_ / DATA_ / SABLON_ / LOG_ ile başlıyorsa
+              if (
+                (tbl.startsWith('data_') || tbl.startsWith('tanim_') || tbl.startsWith('sablon_') || tbl.startsWith('log_')) &&
+                !tablesMap.has(tbl)
+              ) {
+                unrecognizedTables.push({ file: fullPath, line: idx + 1, table: match[1] })
+              }
+            }
+          })
+        }
+      }
+    }
+
+    rootsToScan.forEach(scanDir)
+    expect(unrecognizedTables, `Bilinmeyen tablo kullanimi:\n${JSON.stringify(unrecognizedTables, null, 2)}`).toEqual([])
   })
 })

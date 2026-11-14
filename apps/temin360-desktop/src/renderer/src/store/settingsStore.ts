@@ -73,6 +73,8 @@ interface SettingsState {
   setUseDesktopUserAsDefault: (val: boolean) => Promise<void>
   alwaysShowQuickMenu: boolean
   setAlwaysShowQuickMenu: (val: boolean) => Promise<void>
+  layoutMode: 'advanced' | 'simple'
+  setLayoutMode: (mode: 'advanced' | 'simple') => void
   loadSettings: () => Promise<void>
 }
 
@@ -122,6 +124,23 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       }
     } catch (e) {
       console.error('Failed to save alwaysShowQuickMenu setting:', e)
+    }
+  },
+  layoutMode:
+    (typeof window !== 'undefined' &&
+      (localStorage.getItem('temin_layout_mode') as 'advanced' | 'simple')) ||
+    'advanced',
+  setLayoutMode: (mode: 'advanced' | 'simple') => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('temin_layout_mode', mode)
+    }
+    set({ layoutMode: mode })
+    if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
+      window.electron.ipcRenderer
+        .invoke('db:save-settings', {
+          layoutMode: mode
+        })
+        .catch(() => {})
     }
   },
   adminName: 'Sistem Yöneticisi',
@@ -256,7 +275,12 @@ export const useSettingsStore = create<SettingsState>((set) => ({
           settings.defaultKurumIci !== undefined ? settings.defaultKurumIci !== 'false' : true,
         useDesktopUserAsDefault: settings.useDesktopUserAsDefault === 'true',
         alwaysShowQuickMenu:
-          settings.alwaysShowQuickMenu !== undefined ? settings.alwaysShowQuickMenu !== 'false' : true
+          settings.alwaysShowQuickMenu !== undefined ? settings.alwaysShowQuickMenu !== 'false' : true,
+        layoutMode:
+          (settings.layoutMode as 'advanced' | 'simple') ||
+          (typeof window !== 'undefined' &&
+            (localStorage.getItem('temin_layout_mode') as 'advanced' | 'simple')) ||
+          'advanced'
         // isDisclaimerAccepted is intentionally not loaded from DB to show it on every app launch
       })
     } catch (error) {

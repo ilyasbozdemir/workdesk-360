@@ -251,12 +251,13 @@ export function useMalzemeListesi(
         [nameToUse]
       )
 
+      const queries: { sql: string; params: any[] }[] = []
+
       if (checkRes.success && checkRes.data.length === 0) {
-        await (window as any).electron.ipcRenderer.invoke(
-          'db:run',
-          `INSERT INTO TANIM_Kalem (kalem_adi, tipi, birim, kdv_orani, tasinir_kodu, okas_kodu, aktif_mi, barkod_id)
+        queries.push({
+          sql: `INSERT INTO TANIM_Kalem (kalem_adi, tipi, birim, kdv_orani, tasinir_kodu, okas_kodu, aktif_mi, barkod_id)
            VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
-          [
+          params: [
             nameToUse,
             tipi,
             birim,
@@ -265,15 +266,14 @@ export function useMalzemeListesi(
             okasKodu || null,
             Date.now().toString()
           ]
-        )
+        })
       }
 
-      const res = await (window as any).electron.ipcRenderer.invoke(
-        'db:run',
-        `INSERT INTO DATA_TeminKalem 
+      queries.push({
+        sql: `INSERT INTO DATA_TeminKalem 
          (temin_dosya_id, tasinir_kodu, okas_kodu, kalem_adi, tipi, birim, miktar, kdv_orani, aciklama) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
+        params: [
           activeDosyaId,
           tasinirKodu || null,
           okasKodu || null,
@@ -284,8 +284,10 @@ export function useMalzemeListesi(
           kdvOrani,
           aciklama || null
         ]
-      )
-      if (res.success) {
+      })
+
+      const res = await (window as any).electron.ipcRenderer.invoke('db:transaction', queries)
+      if (res?.success) {
         setKalemAdi('')
         setSearchQuery('')
         setTasinirKodu('')
@@ -300,7 +302,7 @@ export function useMalzemeListesi(
         emitAppEvent('items:changed', { dosyaId: activeDosyaId })
         emitAppEvent('dossier:updated', { dosyaId: activeDosyaId })
       } else {
-        alert('Kalem eklenirken hata: ' + res.error)
+        alert('Kalem eklenirken hata: ' + (res?.error || 'Bilinmeyen hata'))
       }
     } catch (err: any) {
       alert('Kalem eklenirken hata: ' + err.message)
@@ -368,16 +370,16 @@ export function useMalzemeListesi(
     const ids = Array.from(selectedItemIds)
     if (ids.length === 0) return
     try {
+      const queries: { sql: string; params: any[] }[] = []
       for (const id of ids) {
         const libItem = libraryItems.find((l) => l.id === id)
         if (!libItem) continue
         const mkt = itemMiktarlar[id] ?? 1
-        await (window as any).electron.ipcRenderer.invoke(
-          'db:run',
-          `INSERT INTO DATA_TeminKalem
+        queries.push({
+          sql: `INSERT INTO DATA_TeminKalem
            (temin_dosya_id, tasinir_kodu, okas_kodu, kalem_adi, tipi, birim, miktar, kdv_orani)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
+          params: [
             activeDosyaId,
             libItem.tasinir_kodu || null,
             libItem.okas_kodu || null,
@@ -387,8 +389,17 @@ export function useMalzemeListesi(
             mkt,
             libItem.kdv_orani
           ]
-        )
+        })
       }
+
+      if (queries.length === 0) return
+
+      const txRes = await (window as any).electron.ipcRenderer.invoke('db:transaction', queries)
+      if (!txRes?.success) {
+        alert('Kalemler eklenirken veritabanı hatası oluştu: ' + (txRes?.error || 'Bilinmeyen hata'))
+        return
+      }
+
       setSelectedItemIds(new Set())
       setItemMiktarlar({})
       setLibSearchQuery('')
@@ -429,6 +440,25 @@ export function useMalzemeListesi(
     if (validRows.length === 0) return false
 
     try {
+      const names = Array.from(new Set(validRows.map((r) => r.kalem_adi.trim())))
+      const existingNames = new Set<string>()
+
+      if (names.length > 0) {
+        const placeholders = names.map(() => '?').join(',')
+        const checkRes = await (window as any).electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT kalem_adi FROM TANIM_Kalem WHERE kalem_adi IN (${placeholders})`,
+          names
+        )
+        if (checkRes?.success && Array.isArray(checkRes.data)) {
+          checkRes.data.forEach((row: any) => {
+            if (row.kalem_adi) existingNames.add(String(row.kalem_adi).toLowerCase())
+          })
+        }
+      }
+
+      const queries: { sql: string; params: any[] }[] = []
+
       for (const row of validRows) {
         const name = row.kalem_adi.trim()
         const rowTipi = (row as any).tipi || commonData.tipi || 'Mal'
@@ -439,18 +469,13 @@ export function useMalzemeListesi(
         const rowMiktar = row.miktar > 0 ? row.miktar : 1
         const rowAciklama = row.aciklama?.trim() || null
 
-        // TANIM_Kalem kontrol ve ekleme
-        const checkRes = await (window as any).electron.ipcRenderer.invoke(
-          'db:query',
-          'SELECT id FROM TANIM_Kalem WHERE kalem_adi = ? LIMIT 1',
-          [name]
-        )
-        if (checkRes.success && checkRes.data.length === 0) {
-          await (window as any).electron.ipcRenderer.invoke(
-            'db:run',
-            `INSERT INTO TANIM_Kalem (kalem_adi, tipi, birim, kdv_orani, tasinir_kodu, okas_kodu, aktif_mi, barkod_id)
+        // TANIM_Kalem kontrol ve ekleme (atomik tranzaksiyon içinde)
+        if (!existingNames.has(name.toLowerCase())) {
+          existingNames.add(name.toLowerCase())
+          queries.push({
+            sql: `INSERT INTO TANIM_Kalem (kalem_adi, tipi, birim, kdv_orani, tasinir_kodu, okas_kodu, aktif_mi, barkod_id)
              VALUES (?, ?, ?, ?, ?, ?, 1, ?)`,
-            [
+            params: [
               name,
               rowTipi,
               rowBirim,
@@ -459,17 +484,16 @@ export function useMalzemeListesi(
               rowOkas,
               Date.now().toString() + Math.floor(Math.random() * 1000)
             ]
-          )
+          })
         }
 
         // Aktif dosya varsa DATA_TeminKalem'e de ekle
         if (activeDosyaId) {
-          await (window as any).electron.ipcRenderer.invoke(
-            'db:run',
-            `INSERT INTO DATA_TeminKalem
+          queries.push({
+            sql: `INSERT INTO DATA_TeminKalem
              (temin_dosya_id, tasinir_kodu, okas_kodu, kalem_adi, tipi, birim, miktar, kdv_orani, aciklama)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
+            params: [
               activeDosyaId,
               rowTasinir,
               rowOkas,
@@ -480,8 +504,14 @@ export function useMalzemeListesi(
               rowKdv,
               rowAciklama
             ]
-          )
+          })
         }
+      }
+
+      const txRes = await (window as any).electron.ipcRenderer.invoke('db:transaction', queries)
+      if (!txRes?.success) {
+        alert('Toplu ekleme sırasında veritabanı hatası oluştu: ' + (txRes?.error || 'Bilinmeyen hata'))
+        return false
       }
 
       await loadData()

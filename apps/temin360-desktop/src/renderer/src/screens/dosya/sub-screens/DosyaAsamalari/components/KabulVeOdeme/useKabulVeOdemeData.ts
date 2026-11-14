@@ -480,7 +480,7 @@ export function useKabulVeOdemeData() {
             'db:query',
             `SELECT d.firma_id, f.unvan, f.vergi_no,
                     d.yaklasik_maliyet, d.teslim_tarihi,
-                    d.fiyat_farki_dayanagi, COALESCE(NULLIF(d.alim_turu, ''), NULLIF(d.tur, ''), 'mal') as alim_turu,
+                    d.fiyat_farki_dayanagi, COALESCE(NULLIF(d.tur, ''), 'mal') as alim_turu,
                     d.dosya_acilis_tarihi, d.temin_tarihi, d.tarih,
                     d.ihtiyac_yeri, d.sablon_tercihleri
              FROM DATA_TeminDosyasi d

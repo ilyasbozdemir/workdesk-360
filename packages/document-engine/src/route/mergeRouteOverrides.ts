@@ -3,7 +3,7 @@
  * Aynı slot ID'si override içinde varsa önceki değerin yerini alır.
  * NOT: Tek başına kaynak önceliğini çözmez; onu resolveRoute yapar.
  */
-import type { RouteOverride, RouteValues } from "@temin360/contracts";
+import type { RouteOverride, RouteValues } from "./types";
 
 export function mergeRouteOverrides(
   values: RouteValues,

@@ -4,6 +4,7 @@ import {
   CheckSquare,
   ChevronDown,
   DownloadCloud,
+  LayoutGrid,
   Moon,
   Store,
   Sun,
@@ -33,13 +34,23 @@ export const HeaderActions = React.memo(function HeaderActions({
   updateStatus,
   setShowUpdateModal
 }: HeaderActionsProps): React.JSX.Element {
-  const { adminName, adminUsername } = useSettingsStore()
+  const { adminName, adminUsername, setLayoutMode } = useSettingsStore()
   const initials = getInitials(adminName || adminUsername || 'SY')
   return (
     <div
       className="flex items-center gap-1.5"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
+      {/* Basit Ekran / Klasik Arayüz Hızlı Geçiş Butonu */}
+      <button
+        onClick={(): void => setLayoutMode('simple')}
+        className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-emerald-50/90 dark:bg-emerald-950/40 hover:bg-emerald-100/90 dark:hover:bg-emerald-900/50 border border-emerald-200/80 dark:border-emerald-800/60 rounded-md transition-all cursor-pointer shadow-2xs"
+        title="Basit / Sade Yönetim Ekranına Geç (Klasik Görünüm)"
+      >
+        <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <span className="hidden lg:inline">Basit Ekran</span>
+      </button>
+
       {/* Hızlı Servis & Araç Kümesi (Mağaza & Hesaplama Araçları) */}
       <div className="flex items-center bg-slate-100/90 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-2xs">
         <button

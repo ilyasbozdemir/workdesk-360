@@ -1,3 +1,4 @@
+export * from "./types";
 export * from "./validateRoute";
 export * from "./mergeRouteOverrides";
 export * from "./resolveRoute";
