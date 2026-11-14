@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { usePrintQueueStore } from "../../../../../store/printQueueStore";
 import { useWorkspaceStore } from "../../../../../store/workspaceStore";
+import { ExcelStylePrintModal, PrintSettings } from "../../../../../components/ui/ExcelStylePrintModal";
 
 interface DocumentPreviewHeaderProps {
   onClose: () => void;
@@ -42,7 +43,7 @@ interface DocumentPreviewHeaderProps {
   isDirty?: boolean;
   handleSaveToDb: () => Promise<void>;
   isPrinting: boolean;
-  handlePrint: () => Promise<void>;
+  handlePrint: (options?: any) => Promise<void>;
   downloadOpen: boolean;
   setDownloadOpen: React.Dispatch<React.SetStateAction<boolean>>;
   dropdownRef: React.RefObject<HTMLDivElement | null>;
@@ -108,6 +109,8 @@ export function DocumentPreviewHeader({
     ? getDocumentStatus(targetDosyaId, docKey)
     : "draft";
 
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+
   const handleToggleQueue = (): void => {
     if (!targetDosyaId || !docKey) {
       alert("Belge kuyruğa eklenemedi: Dosya veya şablon tanımlanamadı.");
@@ -118,11 +121,22 @@ export function DocumentPreviewHeader({
     });
   };
 
-  const onPrintClick = async (): Promise<void> => {
+  const onPrintClick = (): void => {
+    setPrintModalOpen(true);
+  };
+
+  const handleExecutePrint = async (settings: PrintSettings): Promise<void> => {
     if (targetDosyaId && docKey) {
       markAsPrinted(targetDosyaId, docKey);
     }
-    await handlePrint();
+    await handlePrint({
+      deviceName: settings.printerName,
+      copies: settings.copies,
+      silent: settings.silent,
+      orientation: settings.orientation,
+      color: settings.color,
+    });
+    setPrintModalOpen(false);
   };
 
   return (
@@ -558,6 +572,17 @@ export function DocumentPreviewHeader({
           </button>
         </div>
       )}
+
+      {/* Excel Tarzı Yazıcı Seçimi ve Baskı Masası Modalı */}
+      <ExcelStylePrintModal
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        onPrint={handleExecutePrint}
+        documentTitle={documentTitle}
+        dosyaNo={targetDosyaId ? String(targetDosyaId) : undefined}
+        defaultOrientation={orientation}
+        isPrinting={isPrinting}
+      />
     </header>
   );
 }

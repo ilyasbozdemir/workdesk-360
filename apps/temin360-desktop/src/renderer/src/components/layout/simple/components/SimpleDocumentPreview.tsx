@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { SimpleFile, OfferRecord } from '../types'
 import { SABLON_KATEGORILERI } from '../../../../constants/sablonKategorileri'
 import { TEMPLATE_NAMES } from '../../../../../../shared/constants/templateConstants'
+import { ExcelStylePrintModal, PrintSettings } from '../../../../components/ui/ExcelStylePrintModal'
 
 export interface SimpleDocumentPreviewProps {
   selectedFile: SimpleFile
@@ -24,12 +25,57 @@ export const SimpleDocumentPreview: React.FC<SimpleDocumentPreviewProps> = ({
   onBackToDetail,
   onOpenDocumentEngineModal
 }) => {
+  const [printModalOpen, setPrintModalOpen] = useState(false)
+  const [isPrinting, setIsPrinting] = useState(false)
+
   const money = (n: number) =>
     new Intl.NumberFormat('tr-TR', {
       style: 'currency',
       currency: 'TRY',
       maximumFractionDigits: 0
     }).format(n)
+
+  const handleExecutePrint = async (settings: PrintSettings): Promise<void> => {
+    setIsPrinting(true)
+    try {
+      const paperEl = document.querySelector('.a4-paper')
+      const innerHtml = paperEl ? paperEl.outerHTML : ''
+      const printHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>${TEMPLATE_NAMES[selectedTemplateId] || 'Belge'}</title>
+          <style>
+            @page { size: A4 ${settings.orientation}; margin: 15mm; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #111; margin: 0; padding: 0; }
+            .a4-paper { width: 100%; box-shadow: none !important; border: none !important; padding: 0 !important; }
+            .letterhead { text-align: center; margin-bottom: 24px; }
+            h2 { text-align: center; font-size: 16px; margin: 20px 0; }
+            p { font-size: 12px; line-height: 1.6; margin: 6px 0; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 16px; }
+            th, td { padding: 6px 8px; }
+          </style>
+        </head>
+        <body>${innerHtml}</body>
+        </html>
+      `
+      await window.electron.ipcRenderer.invoke('app:print-html', {
+        html: printHtml,
+        deviceName: settings.printerName,
+        copies: settings.copies,
+        silent: settings.silent,
+        landscape: settings.orientation === 'landscape',
+        color: settings.color
+      })
+      setPrintModalOpen(false)
+    } catch (err: any) {
+      console.error('Yazdırma hatası:', err)
+      alert('Yazdırma başarısız: ' + (err.message || err))
+    } finally {
+      setIsPrinting(false)
+    }
+  }
 
   return (
     <div className="workspace">
@@ -78,9 +124,10 @@ export const SimpleDocumentPreview: React.FC<SimpleDocumentPreviewProps> = ({
 
         <button
           className="simple-btn primary"
-          onClick={() => window.print()}
+          onClick={() => setPrintModalOpen(true)}
+          title="Excel tarzı yazıcı seçimi ve yazdırma paneli"
         >
-          Yazdır / PDF
+          🖨️ Yazdır (Yazıcı Seç)
         </button>
         <span className="pill">A4 belge önizleme</span>
       </div>
@@ -148,6 +195,16 @@ export const SimpleDocumentPreview: React.FC<SimpleDocumentPreviewProps> = ({
           </div>
         </div>
       </section>
+
+      <ExcelStylePrintModal
+        isOpen={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        onPrint={handleExecutePrint}
+        documentTitle={TEMPLATE_NAMES[selectedTemplateId] || 'Piyasa Fiyat Araştırma Tutanağı'}
+        dosyaNo={String(selectedFile.id)}
+        defaultOrientation="portrait"
+        isPrinting={isPrinting}
+      />
     </div>
   )
 }
