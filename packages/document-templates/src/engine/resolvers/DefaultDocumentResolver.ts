@@ -193,11 +193,25 @@ export class DefaultDocumentResolver
       sagLogo: headerData.sagLogo,
       evrakSayisi: headerData.evrakSayisi || (baseData.evrakSayisi as string) ||
         "",
-      sunulacakMakamAdi: baseData.sunulacakMakamAdi ||
-        headerData.sunulacakMakam ||
-        (headerData.harcamaYetkilisiUnvan
+      sunulacakMakamAdi: (() => {
+        const hMakam = headerData.sunulacakMakam ? String(headerData.sunulacakMakam).trim() : '';
+        const bMakam = baseData.sunulacakMakamAdi ? String(baseData.sunulacakMakamAdi).trim() : '';
+        const kAdi = headerData.kurumAdi ? String(headerData.kurumAdi).trim() : '';
+        const sKurum = (headerData as any).sunulacakKurumAdi ? String((headerData as any).sunulacakKurumAdi).trim() : '';
+
+        const isBareB = !bMakam ||
+          bMakam === kAdi ||
+          bMakam === sKurum ||
+          (kAdi && bMakam.toLowerCase() === kAdi.toLowerCase()) ||
+          (sKurum && bMakam.toLowerCase() === sKurum.toLowerCase());
+
+        if (hMakam && isBareB) {
+          return hMakam;
+        }
+        return bMakam || hMakam || (headerData.harcamaYetkilisiUnvan
           ? `${headerData.harcamaYetkilisiUnvan.toUpperCase()}`
-          : "HARCAMA YETKİLİSİ MAKAMINA"),
+          : "HARCAMA YETKİLİSİ MAKAMINA");
+      })(),
       hazirlayanPersonelAdi: hazirlayanAdi,
       hazirlayanPersonelUnvan: hazirlayanUnvan,
       hazirlayanTelefon: hazirlayanTel,

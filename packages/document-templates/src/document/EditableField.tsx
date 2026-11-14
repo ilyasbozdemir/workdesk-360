@@ -36,6 +36,33 @@ export const FIELD_SOURCE_INFO: Record<string, string> = {
   sunulacakMakamAdi:
     "ℹ️ Kurum Ayarları -> Sunulacak Makam Adı alanından çekilir.",
   maddeNo: "ℹ️ İhale / Doğrudan Temin Usulü (Örn: 22/d) alanından çekilir.",
+  harcamaYetkilisiAdi:
+    "ℹ️ Kurum veya Birim Harcama Yetkilisinin adıdır.",
+  harcamaYetkilisiUnvan:
+    "ℹ️ Harcama Yetkilisinin resmî unvanıdır.",
+  gerceklestirmeGorevlisiAdi:
+    "ℹ️ Birim Gerçekleştirme Görevlisinin adıdır.",
+  gerceklestirmeGorevlisiUnvan:
+    "ℹ️ Gerçekleştirme Görevlisinin unvanıdır.",
+  mudurluk: "ℹ️ Dosyanın ait olduğu Harcama Birimi / Müdürlük adıdır.",
+  harcamaBirimi: "ℹ️ Kurum bütçesindeki Harcama Birimidir.",
+  kurumAdi: "ℹ️ Kurum Ayarları -> Kurum Adı alanından çekilir.",
+  kurumUst: "ℹ️ Kurum Ayarları -> Üst Kurum (Bakanlık / Valilik) alanından çekilir.",
+  teminNo: "ℹ️ Doğrudan temin takip numarasıdır (Örn: 2026/1).",
+  dosyaNo: "ℹ️ Dosya kayıt ve arşiv numarasıdır.",
+  butceYili: "ℹ️ Dosyanın bütçe ve işlem yılıdır.",
+  ihaleSekli: "ℹ️ Alım usulü ve kanun dayanağı maddesidir (4734 Sayılı KİK).",
+  alimUsulu: "ℹ️ Alım yöntemidir (Doğrudan Temin / Pazarlık vb.).",
+  isinSuresi: "ℹ️ İşin tamamlanma veya malın teslim süresidir.",
+  teslimYeri: "ℹ️ Malın teslim edileceği veya işin ifa edileceği yerdir.",
+  yaklasikMaliyet: "ℹ️ Yaklaşık Maliyet Cetvelinde hesaplanan KDV hariç toplam tutardır.",
+  yaklasikMaliyetYaziyla: "ℹ️ Yaklaşık maliyet tutarının Türkçe metinle yazılış şeklidir.",
+  teklifTutari: "ℹ️ İlgili firmanın teklif ettiği toplam bedeldir.",
+  sozlesmeBedeli: "ℹ️ Yüklenici ile akdedilen sözleşme bedelidir.",
+  muayeneTarihi: "ℹ️ Muayene ve Kabul Komisyonunun inceleme tarihidir.",
+  kararTarihi: "ℹ️ İhale / Doğrudan Temin onay ve karar tarihidir.",
+  faturaNo: "ℹ️ Yüklenici tarafından düzenlenen fatura numarasıdır.",
+  faturaTarihi: "ℹ️ Faturanın düzenleme tarihidir.",
   altNotlar:
     "ℹ️ Belge alt notları ve uyarılarıdır. Tıklayarak düzenleyebilirsiniz.",
   ekler: "ℹ️ Belgeye eklenen teknik şartname ve ek bilgisidir.",

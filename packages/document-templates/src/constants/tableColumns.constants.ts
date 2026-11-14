@@ -6,7 +6,57 @@ export interface ColumnDef<T = any> {
   width?: string;
   align?: "left" | "center" | "right";
   render?: (value: any, row: T, index: number) => React.ReactNode;
+  title?: string;
+  tooltip?: string;
 }
+
+/**
+ * Tablo kolonlarının nereden çekildiğini ve amacını açıklayan kapsamlı rehber haritası (Tooltip Source Map).
+ */
+export const TABLE_COLUMN_SOURCE_INFO: Record<string, string> = {
+  siraNo: "ℹ️ Kalemin listedeki sıra numarasıdır.",
+  sira_no: "ℹ️ Kalemin listedeki sıra numarasıdır.",
+  kodu: "ℹ️ Dosya Detayı -> İhtiyaç Listesi / Kalemler sekmesindeki Taşınır/Hizmet/Poz Kodudur.",
+  tasinirKodu: "ℹ️ Malzemenin resmî Taşınır Kodudur (TANIM_TasinirKodlari veya Dosya Kalemleri).",
+  tasinir_kodu: "ℹ️ Malzemenin resmî Taşınır Kodudur (TANIM_TasinirKodlari veya Dosya Kalemleri).",
+  pozNo: "ℹ️ Çevre ve Şehircilik Bakanlığı poz numarası veya özel yapım işi kalemi numarasıdır.",
+  poz_no: "ℹ️ Çevre ve Şehircilik Bakanlığı poz numarası veya özel yapım işi kalemi numarasıdır.",
+  hizmetKodu: "ℹ️ Hizmet alımı veya danışmanlık standart faaliyet/hizmet kodudur.",
+  hizmet_kodu: "ℹ️ Hizmet alımı veya danışmanlık standart faaliyet/hizmet kodudur.",
+  malzemeAdi: "ℹ️ Dosya Detayı -> İhtiyaç Listesi sekmesindeki 'Malzeme Adı' alanından çekilir.",
+  malzeme_adi: "ℹ️ Dosya Detayı -> İhtiyaç Listesi sekmesindeki 'Malzeme Adı' alanından çekilir.",
+  kalemAdi: "ℹ️ Dosya Detayı -> Kalemler sekmesindeki 'Malzeme / Hizmet / İmalat Adı' alanından çekilir.",
+  kalem_adi: "ℹ️ Dosya Detayı -> Kalemler sekmesindeki 'Malzeme / Hizmet / İmalat Adı' alanından çekilir.",
+  imalatAdi: "ℹ️ Yapım işine ait imalat veya iş kalemi tanımıdır.",
+  hizmetAdi: "ℹ️ Temin edilecek hizmetin adıdır.",
+  danismanlikKonusu: "ℹ️ Alınacak danışmanlık hizmetinin konusudur.",
+  ozelligi: "ℹ️ Dosya Detayı -> Kalemler sekmesindeki 'Açıklama / Teknik Özellik' alanından çekilir.",
+  aciklama: "ℹ️ Kalemin teknik şartname, marka/model veya iş tanımı açıklamasıdır.",
+  teknikTarifi: "ℹ️ Pozun veya malzemenin teknik şartname ve imalat tarif detaylarıdır.",
+  birimi: "ℹ️ Dosya Detayı -> Kalemler sekmesindeki ölçü birimidir (Adet, Metre, Kg, Paket, Saat vb.).",
+  birim: "ℹ️ Kalemin ölçü birimidir (Adet, Metre, Kg vb.).",
+  olcuBirimi: "ℹ️ Malzemenin veya hizmetin resmî ölçü birimidir.",
+  olcu_birimi: "ℹ️ Malzemenin veya hizmetin resmî ölçü birimidir.",
+  kdvOrani: "ℹ️ Dosya Detayı -> Kalemler sekmesinde seçilen KDV oranıdır (%0, %1, %10, %20).",
+  kdv_orani: "ℹ️ Dosya Detayı -> Kalemler sekmesinde seçilen KDV oranıdır (%0, %1, %10, %20).",
+  miktar: "ℹ️ Dosya Detayı -> İhtiyaç Listesi sekmesinde girilen talep miktarıdır.",
+  miktarRaw: "ℹ️ Kalemin ham sayısal miktarıdır.",
+  yaklasikMaliyet: "ℹ️ Yaklaşık Maliyet Cetvelinde hesaplanan birim maliyettir.",
+  birimFiyat: "ℹ️ Kalem için belirlenen veya teklif edilen KDV hariç birim fiyattır.",
+  birim_fiyat: "ℹ️ Kalem için belirlenen veya teklif edilen KDV hariç birim fiyattır.",
+  toplamTutar: "ℹ️ Miktar × Birim Fiyat ile hesaplanan toplam tutardır.",
+  toplam_tutar: "ℹ️ Miktar × Birim Fiyat ile hesaplanan toplam tutardır.",
+  tutar: "ℹ️ İlgili kalemin KDV hariç toplam tutarıdır.",
+  firmaAdi: "ℹ️ Dosya Detayı -> Teklifler sekmesinde teklif veren firmanın unvanıdır.",
+  firma_adi: "ℹ️ Dosya Detayı -> Teklifler sekmesinde teklif veren firmanın unvanıdır.",
+  teklifFiyati: "ℹ️ Firmanın bu kalem için sunduğu birim teklif tutarıdır.",
+  teklif_fiyati: "ℹ️ Firmanın bu kalem için sunduğu birim teklif tutarıdır.",
+  teklifTutari: "ℹ️ Firmanın bu kalem için sunduğu toplam teklif tutarıdır.",
+  teklif_tutari: "ℹ️ Firmanın bu kalem için sunduğu toplam teklif tutarıdır.",
+  pursantaj: "ℹ️ İş kaleminin toplam yapım işindeki pursantaj (ağırlık) yüzdesidir.",
+  marka: "ℹ️ Firmanın teklif ettiği malzemenin marka ve model bilgisidir.",
+  teslimSuresi: "ℹ️ Taahhüt edilen iş/mal teslim süresidir (Gün cinsinden)."
+};
 
 /**
  * Kolon anahtarları için dinamik eşleşme haritası (Alias Map).

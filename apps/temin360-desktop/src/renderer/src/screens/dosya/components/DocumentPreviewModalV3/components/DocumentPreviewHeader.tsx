@@ -140,7 +140,7 @@ export function DocumentPreviewHeader({
   };
 
   return (
-    <header className="flex flex-col border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xs shrink-0 select-none min-w-0">
+    <header className="relative z-40 flex flex-col border-b border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xs shrink-0 select-none min-w-0">
       <div className="flex items-center justify-between px-2.5 sm:px-4 py-1.5 gap-2 shrink-0 select-none min-w-0">
         {/* Sol: Belge İkonu, Başlık ve Durum Rozetleri */}
         <div className="flex items-center gap-2 min-w-0 flex-1 mr-1">
@@ -451,7 +451,7 @@ export function DocumentPreviewHeader({
           </button>
 
           {/* Diğer Seçenekler Dropdown */}
-          <div className="relative shrink-0" ref={dropdownRef}>
+          <div className="relative shrink-0 z-50" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setDownloadOpen((v) => !v)}
@@ -463,7 +463,7 @@ export function DocumentPreviewHeader({
             </button>
 
             {downloadOpen && (
-              <div className="absolute top-full mt-2 right-0 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
+              <div className="absolute top-full mt-2 right-0 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden">
                 <button
                   type="button"
                   onClick={async () => {

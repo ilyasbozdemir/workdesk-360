@@ -6,10 +6,16 @@ import {
   getTemplateTableColumns,
   resolveRowCellValue,
   TEMPLATE_TABLE_COLUMNS,
+  TABLE_COLUMN_SOURCE_INFO,
 } from "../constants/tableColumns.constants";
 
 export type { ColumnDef };
-export { getTemplateTableColumns, resolveRowCellValue, TEMPLATE_TABLE_COLUMNS };
+export {
+  getTemplateTableColumns,
+  resolveRowCellValue,
+  TEMPLATE_TABLE_COLUMNS,
+  TABLE_COLUMN_SOURCE_INFO,
+};
 export const DEFAULT_IHTIYAC_COLUMNS = TEMPLATE_TABLE_COLUMNS.default;
 
 export interface DocumentTableProps<T = any> {
@@ -61,22 +67,34 @@ export const DocumentTable = React.forwardRef<
         {/* HEADER */}
         <thead>
           <tr style={{ pageBreakInside: "avoid" }}>
-            {activeColumns.map((col) => (
-              <th
-                key={String(col.key)}
-                style={{
-                  border: `1px solid ${borderColor}`,
-                  backgroundColor: headerBg,
-                  padding: GLOBAL_THEME.table.cellPadding,
-                  fontWeight: "bold",
-                  textAlign: col.align || "center",
-                  width: col.width,
-                  pageBreakInside: "avoid",
-                }}
-              >
-                {col.label}
-              </th>
-            ))}
+            {activeColumns.map((col) => {
+              const colKey = String(col.key);
+              const tooltip =
+                col.tooltip ||
+                col.title ||
+                TABLE_COLUMN_SOURCE_INFO[colKey] ||
+                TABLE_COLUMN_SOURCE_INFO[colKey.toLowerCase()] ||
+                `ℹ️ ${col.label} sütunudur.`;
+
+              return (
+                <th
+                  key={colKey}
+                  title={tooltip}
+                  style={{
+                    border: `1px solid ${borderColor}`,
+                    backgroundColor: headerBg,
+                    padding: GLOBAL_THEME.table.cellPadding,
+                    fontWeight: "bold",
+                    textAlign: col.align || "center",
+                    width: col.width,
+                    pageBreakInside: "avoid",
+                    cursor: "help",
+                  }}
+                >
+                  {col.label}
+                </th>
+              );
+            })}
           </tr>
         </thead>
 
@@ -122,9 +140,19 @@ export const DocumentTable = React.forwardRef<
                           ? String(value)
                           : "-";
 
+                        const colTooltip =
+                          col.tooltip ||
+                          col.title ||
+                          TABLE_COLUMN_SOURCE_INFO[colKey] ||
+                          TABLE_COLUMN_SOURCE_INFO[colKey.toLowerCase()];
+                        const cellTooltip = colTooltip
+                          ? `${col.label}: ${rendered}\n${colTooltip}`
+                          : undefined;
+
                         return (
                           <td
                             key={String(col.key)}
+                            title={cellTooltip}
                             style={{
                               border: `1px solid ${borderColor}`,
                               padding: GLOBAL_THEME.table.cellPadding,

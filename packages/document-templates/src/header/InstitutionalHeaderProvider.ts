@@ -21,6 +21,7 @@ export interface HeaderResolutionContext {
 }
 
 export interface InstitutionalHeaderSettings {
+  activeKurumId?: number | string | null
   institutionName?: string
   departmentName?: string
   logoLeft?: string | null
@@ -543,10 +544,24 @@ export class InstitutionalHeaderProvider
         )
       : effectiveBaseLines
 
+    const effectiveKurumMakam = kurumRow?.sunulacak_makam_secimi === 'kurum'
+      ? (kurumRow?.sunulacak_kurum_adi || kurumRow?.makam_adi || kurumRow?.kurum_adi || '')
+      : (kurumRow?.makam_adi_custom || kurumRow?.makam_adi || (kurumRow?.kurum_adi ? `${kurumRow.kurum_adi} MAKAMINA` : ''))
+
+    const birimMakam = matchedBirim?.sunum_makami ? String(matchedBirim.sunum_makami).trim() : ''
+    const isBirimBareKurum = Boolean(
+      birimMakam && (
+        birimMakam === kurumRow?.kurum_adi ||
+        birimMakam === kurumRow?.sunulacak_kurum_adi ||
+        (kurumRow?.kurum_adi && birimMakam.toLowerCase().includes(String(kurumRow.kurum_adi).toLowerCase())) ||
+        (kurumRow?.sunulacak_kurum_adi && birimMakam.toLowerCase().includes(String(kurumRow.sunulacak_kurum_adi).toLowerCase()))
+      )
+    )
+
     const sunulacakMakamAdi = String(
-      matchedBirim?.sunum_makami ||
-        kurumRow?.makam_adi ||
-        ''
+      (kurumRow?.sunulacak_makam_secimi === 'makam' && isBirimBareKurum && effectiveKurumMakam)
+        ? effectiveKurumMakam
+        : (birimMakam || effectiveKurumMakam || '')
     ).trim()
 
     const ihtiyacYeri = String(
@@ -799,10 +814,32 @@ export class InstitutionalHeaderProvider
 
     // 3. Kurum Bilgisi ve Antet Satırları
     let kurumRow: any = null
-    const kurumRows = await execQuery(
-      `SELECT * FROM TANIM_Kurum ORDER BY is_active DESC, id ASC LIMIT 1`,
-      []
-    )
+    const activeKurumId = settings.activeKurumId ? Number(settings.activeKurumId) : null
+    let kurumRows: any[] = []
+    if (activeKurumId) {
+      try {
+        kurumRows = await execQuery(
+          `SELECT * FROM TANIM_Kurum WHERE id = ? LIMIT 1`,
+          [activeKurumId]
+        )
+      } catch {
+        kurumRows = []
+      }
+    }
+    if (!kurumRows || kurumRows.length === 0) {
+      try {
+        kurumRows = await execQuery(
+          `SELECT * FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1`,
+          []
+        )
+      } catch {
+        try {
+          kurumRows = await execQuery(`SELECT * FROM TANIM_Kurum ORDER BY id ASC LIMIT 1`, [])
+        } catch {
+          kurumRows = []
+        }
+      }
+    }
     if (kurumRows && kurumRows[0]) {
       kurumRow = kurumRows[0]
     }
@@ -876,6 +913,27 @@ export class InstitutionalHeaderProvider
       }
     }
 
+    const effectiveKurumMakam = kurumRow?.sunulacak_makam_secimi === 'kurum'
+      ? (kurumRow?.sunulacak_kurum_adi || kurumRow?.makam_adi || kurumRow?.kurum_adi || '')
+      : (kurumRow?.makam_adi_custom || kurumRow?.makam_adi || (kurumRow?.kurum_adi ? `${kurumRow.kurum_adi} MAKAMINA` : ''))
+
+    const dosyaMakam = dosyaRow?.sunulacak_makam ? String(dosyaRow.sunulacak_makam).trim() : ''
+    const isBareKurumName = Boolean(
+      dosyaMakam && (
+        dosyaMakam === kurumRow?.kurum_adi ||
+        dosyaMakam === kurumRow?.sunulacak_kurum_adi ||
+        dosyaMakam === kurumRow?.ad ||
+        dosyaMakam === settings.institutionName ||
+        (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.sunulacak_kurum_adi).toLowerCase()) ||
+        (kurumRow?.kurum_adi && dosyaMakam.toLowerCase() === String(kurumRow.kurum_adi).toLowerCase()) ||
+        (kurumRow?.kurum_adi && dosyaMakam.toLowerCase().includes(String(kurumRow.kurum_adi).toLowerCase())) ||
+        (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase().includes(String(kurumRow.sunulacak_kurum_adi).toLowerCase()))
+      )
+    )
+    const effectiveSunulacakMakam = (kurumRow?.sunulacak_makam_secimi === 'makam' && isBareKurumName && effectiveKurumMakam)
+      ? effectiveKurumMakam
+      : (dosyaMakam || effectiveKurumMakam || '')
+
     const result: InstitutionalHeaderData = {
       antetSatirlari,
       kurumUst: kurumRow?.ust_kurum_adi || '',
@@ -901,7 +959,8 @@ export class InstitutionalHeaderProvider
       onaylayanPersonelAdi,
       onaylayanPersonelUnvan,
       birimId: dosyaRow?.birim_id,
-      sunulacakMakam: dosyaRow?.sunulacak_makam || ''
+      sunulacakMakam: effectiveSunulacakMakam,
+      sunulacakKurumAdi: kurumRow?.sunulacak_kurum_adi || kurumRow?.kurum_adi || ''
     }
 
     if (dosyaId) {

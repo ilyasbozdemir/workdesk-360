@@ -51,7 +51,7 @@ export function resolveDocumentPayload(
     const activeId = Number(settingsMap.activeKurumId || 1);
     const kurum =
       db.prepare("SELECT * FROM TANIM_Kurum WHERE id = ?").get(activeId) ||
-      db.prepare("SELECT * FROM TANIM_Kurum WHERE is_active = 1 LIMIT 1")
+      db.prepare("SELECT * FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1")
         .get() ||
       db.prepare("SELECT * FROM TANIM_Kurum ORDER BY id ASC LIMIT 1").get() ||
       {};

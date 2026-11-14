@@ -131,42 +131,52 @@ export async function resolveSingleColumn(
 
     // Dynamic fallback for sunulacakMakamAdi: First check DATA_TeminDosyasi, then TANIM_Kurum
     if (sablonDegiskeni === "sunulacakMakamAdi") {
-      if (!rawValue || String(rawValue).trim() === "") {
-        try {
-          if (activeDosyaId) {
-            const dRes = await queryExecutor(
-              "SELECT sunulacak_makam FROM DATA_TeminDosyasi WHERE id = ? LIMIT 1",
-              [activeDosyaId],
-            );
-            if (
-              dRes?.[0]?.sunulacak_makam &&
-              String(dRes[0].sunulacak_makam).trim()
-            ) {
-              rawValue = String(dRes[0].sunulacak_makam).trim();
-            }
+      try {
+        let kurumRow: any = null;
+        const kRes = await queryExecutor(
+          "SELECT kurum_adi, ust_kurum_adi, makam_adi, sunulacak_makam_secimi, sunulacak_kurum_adi, makam_adi_custom FROM TANIM_Kurum LIMIT 1",
+          [],
+        );
+        if (kRes?.[0]) {
+          kurumRow = kRes[0];
+        }
+
+        const secim = kurumRow?.sunulacak_makam_secimi || "makam";
+        const activeKurumMakam = secim === "kurum"
+          ? (kurumRow?.sunulacak_kurum_adi || kurumRow?.makam_adi || kurumRow?.kurum_adi || "")
+          : (kurumRow?.makam_adi_custom || kurumRow?.makam_adi || (kurumRow?.kurum_adi ? `${kurumRow.kurum_adi} MAKAMINA` : ""));
+
+        let dosyaMakam = rawValue ? String(rawValue).trim() : "";
+        if (!dosyaMakam && activeDosyaId) {
+          const dRes = await queryExecutor(
+            "SELECT sunulacak_makam FROM DATA_TeminDosyasi WHERE id = ? LIMIT 1",
+            [activeDosyaId],
+          );
+          if (
+            dRes?.[0]?.sunulacak_makam &&
+            String(dRes[0].sunulacak_makam).trim()
+          ) {
+            dosyaMakam = String(dRes[0].sunulacak_makam).trim();
           }
-          if (!rawValue || String(rawValue).trim() === "") {
-            const kRes = await queryExecutor(
-              "SELECT kurum_adi, ust_kurum_adi, makam_adi FROM TANIM_Kurum LIMIT 1",
-              [],
-            );
-            if (kRes?.[0]) {
-              const kRow = kRes[0];
-              if (kRow.makam_adi && kRow.makam_adi.trim()) {
-                rawValue = kRow.makam_adi.trim();
-              } else if (kRow.kurum_adi && kRow.kurum_adi.trim()) {
-                const kName = kRow.kurum_adi.trim();
-                rawValue = kName.toUpperCase().endsWith("BAŞKANLIĞI")
-                  ? `${kName.toUpperCase()}NA`
-                  : `${kName.toUpperCase()} BAŞKANLIĞINA`;
-              } else if (kRow.ust_kurum_adi && kRow.ust_kurum_adi.trim()) {
-                rawValue =
-                  `${kRow.ust_kurum_adi.trim().toUpperCase()} BAŞKANLIĞINA`;
-              }
-            }
-          }
-        } catch (e) {}
-      }
+        }
+
+        // Eğer dosyadaki değer çıplak kurum adıysa (veya boşsa) ve kullanıcı "Makam Adı"nı (örn: GÜNEYYURT BELEDİYE BAŞKANLIK MAKAMINA) seçtiyse aktif makam adını uygula!
+        const isBareKurum = Boolean(
+          dosyaMakam && (
+            dosyaMakam === kurumRow?.kurum_adi ||
+            dosyaMakam === kurumRow?.sunulacak_kurum_adi ||
+            (kurumRow?.kurum_adi && dosyaMakam.toLowerCase().includes(String(kurumRow.kurum_adi).toLowerCase())) ||
+            (kurumRow?.sunulacak_kurum_adi && dosyaMakam.toLowerCase().includes(String(kurumRow.sunulacak_kurum_adi).toLowerCase())) ||
+            !dosyaMakam.toUpperCase().includes('MAKAM')
+          ),
+        );
+
+        if (!dosyaMakam || (secim === "makam" && isBareKurum && activeKurumMakam)) {
+          rawValue = activeKurumMakam || dosyaMakam;
+        } else {
+          rawValue = dosyaMakam;
+        }
+      } catch (e) {}
     }
 
     // Smart normalization for alimTuru
