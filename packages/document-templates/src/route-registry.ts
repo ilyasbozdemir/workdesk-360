@@ -12,6 +12,7 @@ import { yaklasikMaliyetRoute } from "./templates/yaklasik-maliyet-cetveli/route
 import { onayBelgesiRoute } from "./templates/dogrudan-temin-onay-belgesi/route.definition";
 import { komisyonGorevlendirmeRoute } from "./templates/komisyon-gorevlendirme-onayi/route.definition";
 import { muayeneKabulRoute } from "./templates/muayene-kabul-komisyonu/route.definition";
+import { luzumMuzekkeresiRoute } from "./templates/luzum-muzekkeresi/route.definition";
 import { toCanonicalDocId } from "./constants/template-constants";
 import { resolveTemplateKey } from "./registry";
 
@@ -22,6 +23,7 @@ export {
   onayBelgesiRoute,
   komisyonGorevlendirmeRoute,
   muayeneKabulRoute,
+  luzumMuzekkeresiRoute,
 };
 
 function normalizeRouteTemplateKey(templateId: string): string {
@@ -74,6 +76,8 @@ const globalDefaultRoute: TemplateRouteDefinition = {
 
 const BASE_ROUTE_DEFINITIONS: ReadonlyArray<TemplateRouteDefinition> = [
   ihtiyacListesiRoute,
+  luzumMuzekkeresiRoute,
+  { ...luzumMuzekkeresiRoute, templateId: "luzum_muzekkeresi" },
   yaklasikMaliyetRoute,
   { ...yaklasikMaliyetRoute, templateId: "yaklasik_maliyet" },
   { ...yaklasikMaliyetRoute, templateId: "son-alim-fiyat-cetveli" },

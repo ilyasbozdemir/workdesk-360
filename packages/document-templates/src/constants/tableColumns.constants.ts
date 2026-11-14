@@ -179,6 +179,15 @@ export const TEMPLATE_TABLE_COLUMNS: Record<string, ColumnDef[]> = {
     { key: "kdvOrani", label: "KDV  Oranı (%)", width: "10%", align: "center" },
     { key: "miktar", label: "Miktar", width: "10%", align: "center" },
   ],
+  "luzum-muzekkeresi": [
+    { key: "siraNo", label: "Sıra No", width: "8%", align: "center" },
+    { key: "kodu", label: "Kodu", width: "12%", align: "left" },
+    { key: "malzemeAdi", label: "Malzeme Adı", width: "25%", align: "left" },
+    { key: "ozelligi", label: "Özelliği", width: "20%", align: "left" },
+    { key: "birimi", label: "Birimi", width: "10%", align: "center" },
+    { key: "kdvOrani", label: "KDV  Oranı %", width: "8%", align: "center" },
+    { key: "miktar", label: "Miktar", width: "12%", align: "right" },
+  ],
   "ihtiyac-talep-formu": [
     { key: "siraNo", label: "Sıra No", width: "8%", align: "center" },
     {
