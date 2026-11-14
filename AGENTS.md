@@ -69,6 +69,22 @@ PDF Generator = Bağımsız çıktı üretimi (@temin360/pdf-generator)
    `DocumentEngine.compileHtml()` ile derlenen A4 PDF uyumlu tam HTML çıktısı
    kullanılır ve `@temin360/pdf-generator` bağımsız olarak çalıştırılır.
 
+9. **Doğrudan Temin Mevzuatı ve Tebliği (Mevzuat No: 40666) Kurallarına Tam Uyum:**
+   4734 sayılı Kamu İhale Kanunu Madde 22 ve 11.07.2023 tarihli Doğrudan Temin Yöntemiyle
+   Yapılacak Alımlara İlişkin Tebliğ (Mevzuat No: 40666) kuralları monorepo genelinde esastır:
+   - **Teslim Tesellüm Belgesi:** Yalnızca fiziki mal teslimi içeren **Mal Alımı** süreçlerinde
+     düzenlenir. Hizmet Alımlarında teslim-tesellüm yoktur; *Hizmet İşleri Kabul Tutanağı* ve
+     *Puantaj Cetveli* düzenlenir. Yapım İşlerinde ise mevzuattaki *KİK048-KİK051 Geçici/Kesin Kabul*
+     tutanakları esastır.
+   - **Teslim Alan Otoritesi:** Teslim alan kişi, dosyanın 5 kişilik Piyasa Fiyat Araştırma
+     Komisyonu değildir. Kural olarak ambardaki tek bir görevlidir (Taşınır Kayıt ve Kontrol
+     Yetkilisi / Ambar Memuru).
+   - **Rol İzolasyonu (Separation of Duties):** Harcama Yetkilisi, Gerçekleştirme Görevlisi,
+     Piyasa Fiyat Araştırma Görevlileri ve Muayene Kabul Komisyonu üyeleri birbirinin yerine
+     körü körüne kopyalanamaz veya otomatik ezilemez.
+   - Ayrıntılı iş akış kuralları için [docs/architecture/DOGRUDAN_TEMIN_TEBLIGI_40666.md](docs/architecture/DOGRUDAN_TEMIN_TEBLIGI_40666.md)
+     kılavuzuna başvurunuz.
+
 ---
 
 ## 📂 MERKEZİ VERİ DİZİNİ
