@@ -144,7 +144,7 @@ export const templateRegistry = {
   ihtiyac_talep_formu: {
     id: "ihtiyac-talep-formu",
     name: "IhtiyacTalepFormu",
-    title: "İhtiyaç Belgesi ve Harcama Talep Müzekkeresi",
+    title: "İhtiyaç Talep Formu",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -157,7 +157,7 @@ export const templateRegistry = {
     version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: false, supportsLogos: true },
     standartFormKodu: " - 4734 KİK m.22",
-    standartFormAdi: "İhtiyaç Belgesi ve Harcama Talep Müzekkeresi",
+    standartFormAdi: "İhtiyaç Talep Formu",
   },
   luzum_muzekkeresi: {
     id: "luzum-muzekkeresi",

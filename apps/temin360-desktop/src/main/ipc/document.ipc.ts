@@ -5,6 +5,7 @@ import {
   exportDocxHandler,
   exportUdfHandler,
   printHtmlHandler,
+  getPrintersHandler,
   previewPdfHandler,
   openPdfExternalHandler,
   exportPdfHandler,
@@ -62,6 +63,14 @@ export function registerDocumentIpcHandlers(): void {
   )
   ipcMain.handle('app:print-html', (_, payload: any, legacyOptions?: any) =>
     printHtmlHandler(payload, legacyOptions)
+  )
+
+  // 3.1 Get System Printers (Excel-Style Printer Listing)
+  handleDoc('belge:get-printers', 'get-printers', (event: any) =>
+    getPrintersHandler(event)
+  )
+  ipcMain.handle('app:get-printers', (event: any) =>
+    getPrintersHandler(event)
   )
 
   // 4. Preview PDF

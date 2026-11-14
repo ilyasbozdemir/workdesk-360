@@ -98,6 +98,9 @@ const allowedChannels = new Set([
   'belge:print-html',
   'print-html',
   'app:print-html',
+  'belge:get-printers',
+  'get-printers',
+  'app:get-printers',
   'belge:preview-pdf',
   'preview-pdf',
   'belge:open-pdf-external',
@@ -258,6 +261,8 @@ const api = {
   }) => ipcRenderer.invoke('ai:generate', options),
   aiTest: (provider: string, apiKey: string) => ipcRenderer.invoke('ai:test', provider, apiKey),
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
+  getPrinters: () => ipcRenderer.invoke('app:get-printers'),
+  printHtml: (payload: any, options?: any) => ipcRenderer.invoke('app:print-html', payload, options),
   setDevVersion: (mode: boolean, version: string) =>
     ipcRenderer.invoke('updater:set-dev-version', mode, version),
   runTests: () => ipcRenderer.invoke('dev:run-tests'),
