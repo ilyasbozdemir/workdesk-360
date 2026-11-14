@@ -124,6 +124,7 @@ export interface MifKayit {
 export interface TkysZimmetKayit {
   id: string
   tifNo: string
+  dosyaId?: number
   dosyaNo?: string
   malzemeAdi: string
   tasinirKodu: string // 255.02.01 vb.
@@ -141,6 +142,7 @@ export interface TkysZimmetKayit {
 
 export interface EmanetTeminatKayit {
   id: string
+  dosyaId?: number
   dosyaNo: string
   istekliUnvan: string
   istekliVkn: string
@@ -157,6 +159,7 @@ export interface EmanetTeminatKayit {
 export interface SozlesmeTaahhutKayit {
   id: string
   sozlesmeNo: string
+  dosyaId?: number
   dosyaNo: string
   yukleniciUnvan: string
   yukleniciVkn: string

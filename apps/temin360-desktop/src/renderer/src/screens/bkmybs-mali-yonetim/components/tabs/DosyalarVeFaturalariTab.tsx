@@ -75,6 +75,8 @@ export interface DosyaOzet {
 
 interface DosyalarVeFaturalariTabProps {
   activeRole: KamuRole
+  selectedYil?: string
+  selectedDosyaId?: number | null
 }
 
 // ─── Yardımcı Hesaplama Fonksiyonları ─────────────────────────────────────
@@ -411,7 +413,9 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
 // ─── Ana Bileşen ────────────────────────────────────────────────────────────
 
 export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = ({
-  activeRole: _activeRole
+  activeRole: _activeRole,
+  selectedYil,
+  selectedDosyaId
 }) => {
   const { setActiveDosyaId } = useWorkspaceStore()
   const [dosyalar, setDosyalar] = useState<DosyaOzet[]>([])
@@ -420,6 +424,13 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   const [alimFilter, setAlimFilter] = useState('all')
   const [faturaFilter, setFaturaFilter] = useState<'all' | 'with-invoice' | 'without-invoice' | 'paid' | 'pending'>('all')
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
+
+  // Seçili dosya değiştiğinde ilgili dosyayı otomatik genişlet (expand)
+  useEffect(() => {
+    if (selectedDosyaId) {
+      setExpanded((prev) => new Set([...prev, selectedDosyaId]))
+    }
+  }, [selectedDosyaId])
 
   // Fatura Ekleme/Düzenleme Modalı State
   const [modalOpen, setModalOpen] = useState(false)
@@ -786,9 +797,16 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         matchFatura = d.faturalar.some((f) => f.durum === 'beklemede')
       }
 
-      return matchSearch && matchAlim && matchFatura
+      const matchYil =
+        !selectedYil ||
+        selectedYil === 'ALL' ||
+        (d.olusturmaTarihi && new Date(d.olusturmaTarihi).getFullYear() === Number(selectedYil))
+
+      const matchDosya = !selectedDosyaId || d.id === selectedDosyaId
+
+      return matchSearch && matchAlim && matchFatura && matchYil && matchDosya
     })
-  }, [dosyalar, searchTerm, alimFilter, faturaFilter])
+  }, [dosyalar, searchTerm, alimFilter, faturaFilter, selectedYil, selectedDosyaId])
 
   // Canlı modal hesaplama
   const modalCalculations = useMemo(() => {

@@ -14,6 +14,7 @@ export interface RealMaliDataset {
   tkysListesi: TkysZimmetKayit[]
   emanetListesi: EmanetTeminatKayit[]
   sozlesmeListesi: SozlesmeTaahhutKayit[]
+  dosyalar: any[]
   hasRealData: boolean
 }
 
@@ -101,6 +102,7 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
         COALESCE(d.durum_asama_id, 1) as durum_asama_id,
         COALESCE(d.sozlesme_yapilacak_mi, 0) as sozlesme_yapilacak_mi,
         COALESCE(d.tur, 'mal') as tur,
+        COALESCE(d.butce_yili, 2026) as butce_yili,
         COALESCE(d.temin_tarihi, d.dosya_acilis_tarihi, date('now')) as tarih
       FROM DATA_TeminDosyasi d
       WHERE (d.is_deleted = 0 OR d.is_deleted IS NULL)
@@ -365,6 +367,7 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
       .map((d, idx) => ({
         id: `tkys-${d.id || idx}`,
         tifNo: `TİF-2026/${String(d.id || idx + 1).padStart(3, '0')}`,
+        dosyaId: Number(d.id),
         dosyaNo: d.temin_no,
         malzemeAdi: d.konu,
         tasinirKodu: '150.01.01',
@@ -391,6 +394,7 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
         return {
           id: `soz-${d.id || idx}`,
           sozlesmeNo: `2026/SÖZ-${String(d.id).padStart(3, '0')}`,
+          dosyaId: Number(d.id),
           dosyaNo: d.temin_no,
           yukleniciUnvan: firma.unvan,
           yukleniciVkn: firma.vergiNo,
@@ -407,6 +411,7 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
     // ── F) EMANET & TEMİNATLAR ──
     const emanetListesi: EmanetTeminatKayit[] = sozlesmeListesi.map((s, idx) => ({
       id: `emanet-${idx + 1}`,
+      dosyaId: s.dosyaId,
       dosyaNo: s.dosyaNo,
       istekliUnvan: s.yukleniciUnvan,
       istekliVkn: s.yukleniciVkn,
@@ -427,10 +432,62 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
       tkysListesi,
       emanetListesi,
       sozlesmeListesi,
+      dosyalar,
       hasRealData
     }
   } catch (err) {
     console.error('[loadRealBkmybsData] Hata:', err)
     return null
+  }
+}
+
+/**
+ * Filtrelenen tertip ve dosya listelerine göre 22/d KİK Kotasını yeniden hesaplar.
+ */
+export function calculateKikKotaFromData(
+  tertipler: ButceTertip[],
+  dosyalar: any[],
+  idareTuru: 'buyuksehir' | 'diger' = 'buyuksehir'
+): KikKotaModel {
+  const esikDeger = idareTuru === 'buyuksehir' ? 864500 : 288100
+  let gerceklesen22dToplami = 0
+  const birimTotals = new Map<string, number>()
+
+  dosyalar.forEach((d) => {
+    const ym = Number(d.yaklasik_maliyet) || 0
+    const net = Number(d.net_odenen) || ym
+    const tutar = d.status === 'tamamlandi' || Number(d.durum_asama_id) === 4 ? net : ym
+    gerceklesen22dToplami += tutar
+
+    const bAdi = d.birim || 'Genel İdare'
+    birimTotals.set(bAdi, (birimTotals.get(bAdi) || 0) + tutar)
+  })
+
+  const toplamMalHizmetButcesi = tertipler.reduce((acc, t) => acc + t.baslangicOdenegi, 0)
+  const yuzde10TavanTutari = Math.round(toplamMalHizmetButcesi * 0.1)
+  const kalanKotaTutari = Math.max(0, yuzde10TavanTutari - gerceklesen22dToplami)
+  const kullanimOrani = yuzde10TavanTutari > 0 ? (gerceklesen22dToplami / yuzde10TavanTutari) * 100 : 0
+
+  const birimDagitimlari = Array.from(birimTotals.entries()).map(([birimAdi, harcanan]) => {
+    const tahsis = Math.max(harcanan, Math.round(yuzde10TavanTutari * 0.25))
+    const oran = tahsis > 0 ? (harcanan / tahsis) * 100 : 0
+    return {
+      birimAdi,
+      tahsisEdilen: tahsis,
+      harcanan,
+      oran: Number(oran.toFixed(1))
+    }
+  })
+
+  return {
+    idareTuru,
+    esikDeger,
+    toplamMalHizmetButcesi,
+    yuzde10TavanTutari,
+    gerceklesen22dToplami,
+    kalanKotaTutari,
+    kullanimOrani: Number(kullanimOrani.toFixed(1)),
+    kikIzinRiski: kullanimOrani > 80,
+    birimDagitimlari
   }
 }

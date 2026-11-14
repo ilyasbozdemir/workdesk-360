@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useRouterState, useNavigate } from '@tanstack/react-router'
 import {
   BkmybsTabKey,
@@ -15,7 +15,10 @@ import {
   INITIAL_EMANET_LISTESI,
   INITIAL_SOZLESME_LISTESI
 } from './bkmybsMockData'
-import { loadRealBkmybsData } from '@renderer/services/finance/bkmybsDataService'
+import {
+  loadRealBkmybsData,
+  calculateKikKotaFromData
+} from '@renderer/services/finance/bkmybsDataService'
 import { BkmybsHeader } from './components/BkmybsHeader'
 import { ButceOdenekTab } from './components/tabs/ButceOdenekTab'
 import { KikLimitTab } from './components/tabs/KikLimitTab'
@@ -28,6 +31,7 @@ import { DosyalarVeFaturalariTab } from './components/tabs/DosyalarVeFaturalariT
 import { MevzuatScreen } from '@renderer/screens/system/MevzuatScreen'
 import { useSettingsStore } from '@renderer/store/settingsStore'
 import { useTabStore } from '@renderer/store/tabStore'
+import { useWorkspaceStore } from '@renderer/store/workspaceStore'
 import { useGlobalDocumentPreviewStore } from '@renderer/store/globalDocumentPreviewStore'
 
 export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
@@ -71,13 +75,41 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
     navigate({ to: newPath })
   }
 
-  // 3. MALİ VERİ MODELLERİ (Veritabanından Re'sen Yüklenir)
-  const [tertipler, setTertipler] = useState<ButceTertip[]>(INITIAL_BUTCE_TERTIPLERI)
-  const [kikKota, setKikKota] = useState<KikKotaModel>(INITIAL_KIK_KOTA)
-  const [mifListesi, setMifListesi] = useState<MifKayit[]>(INITIAL_MIF_LISTESI)
-  const [tkysListesi, setTkysListesi] = useState(INITIAL_TKYS_LISTESI)
-  const [emanetListesi, setEmanetListesi] = useState(INITIAL_EMANET_LISTESI)
-  const [sozlesmeListesi, setSozlesmeListesi] = useState(INITIAL_SOZLESME_LISTESI)
+  // 2.1 BÜTÇE YILI & TEMİN DOSYASI SEÇİCİ STATE
+  const queryYil = searchParams.get('yil')
+  const [selectedYil, setSelectedYil] = useState<string>(queryYil || '2026')
+
+  const queryDosyaId = searchParams.get('dosyaId')
+  const workspaceDosyaId = useWorkspaceStore((state) => state.activeDosyaId)
+  const [selectedDosyaId, setSelectedDosyaId] = useState<number | null>(() => {
+    if (queryDosyaId) return Number(queryDosyaId)
+    return workspaceDosyaId || null
+  })
+
+  // Store'daki activeDosyaId güncellendiğinde burayı da senkronize tut
+  useEffect(() => {
+    if (workspaceDosyaId !== undefined) {
+      setSelectedDosyaId(workspaceDosyaId)
+    }
+  }, [workspaceDosyaId])
+
+  const handleDosyaChange = (dosyaId: number | null) => {
+    setSelectedDosyaId(dosyaId)
+    useWorkspaceStore.getState().setActiveDosyaId(dosyaId)
+  }
+
+  const handleYilChange = (yil: string) => {
+    setSelectedYil(yil)
+  }
+
+  // 3. RAW MALİ VERİ MODELLERİ (Veritabanından Re'sen Yüklenir)
+  const [rawTertipler, setRawTertipler] = useState<ButceTertip[]>(INITIAL_BUTCE_TERTIPLERI)
+  const [rawKikKota, setRawKikKota] = useState<KikKotaModel>(INITIAL_KIK_KOTA)
+  const [rawMifListesi, setRawMifListesi] = useState<MifKayit[]>(INITIAL_MIF_LISTESI)
+  const [rawTkysListesi, setRawTkysListesi] = useState(INITIAL_TKYS_LISTESI)
+  const [rawEmanetListesi, setRawEmanetListesi] = useState(INITIAL_EMANET_LISTESI)
+  const [rawSozlesmeListesi, setRawSozlesmeListesi] = useState(INITIAL_SOZLESME_LISTESI)
+  const [dosyalar, setDosyalar] = useState<any[]>([])
 
   // Veritabanındaki gerçek dosyalardan yaklaşık maliyet, onay belgeleri ve hakedişleri re'sen çek
   useEffect(() => {
@@ -87,19 +119,21 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
         const realData = await loadRealBkmybsData()
         if (isMounted) {
           if (realData) {
-            setTertipler(realData.tertipler || [])
-            setKikKota(realData.kikKota || INITIAL_KIK_KOTA)
-            setMifListesi(realData.mifListesi || [])
-            setTkysListesi(realData.tkysListesi || [])
-            setEmanetListesi(realData.emanetListesi || [])
-            setSozlesmeListesi(realData.sozlesmeListesi || [])
+            setRawTertipler(realData.tertipler || [])
+            setRawKikKota(realData.kikKota || INITIAL_KIK_KOTA)
+            setRawMifListesi(realData.mifListesi || [])
+            setRawTkysListesi(realData.tkysListesi || [])
+            setRawEmanetListesi(realData.emanetListesi || [])
+            setRawSozlesmeListesi(realData.sozlesmeListesi || [])
+            setDosyalar(realData.dosyalar || [])
           } else {
-            setTertipler([])
-            setKikKota(INITIAL_KIK_KOTA)
-            setMifListesi([])
-            setTkysListesi([])
-            setEmanetListesi([])
-            setSozlesmeListesi([])
+            setRawTertipler([])
+            setRawKikKota(INITIAL_KIK_KOTA)
+            setRawMifListesi([])
+            setRawTkysListesi([])
+            setRawEmanetListesi([])
+            setRawSozlesmeListesi([])
+            setDosyalar([])
           }
         }
       } catch (err) {
@@ -121,13 +155,119 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
     }
   }, [])
 
+  // 3.1 DİNAMİK YIL LİSTESİ
+  const availableYears = useMemo(() => {
+    const yearsSet = new Set<string>(['2026', '2025', '2024'])
+    dosyalar.forEach((d) => {
+      const y = d.butce_yili || (d.tarih ? new Date(d.tarih).getFullYear() : null)
+      if (y) yearsSet.add(String(y))
+    })
+    rawTertipler.forEach((t) => {
+      if (t.yil) yearsSet.add(String(t.yil))
+    })
+    const sorted = Array.from(yearsSet).sort((a, b) => Number(b) - Number(a))
+    return [...sorted, 'ALL']
+  }, [dosyalar, rawTertipler])
+
+  // 3.2 FİLTRELENMİŞ TERTİPLER & DOSYALAR
+  const tertipler = useMemo(() => {
+    if (selectedYil === 'ALL') return rawTertipler
+    const yNum = Number(selectedYil)
+    const matched = rawTertipler.filter((t) => t.yil === yNum)
+    return matched.length > 0 ? matched : rawTertipler
+  }, [rawTertipler, selectedYil])
+
+  const filteredDosyalar = useMemo(() => {
+    if (selectedYil === 'ALL') return dosyalar
+    const yNum = Number(selectedYil)
+    return dosyalar.filter((d) => {
+      const dYil = Number(d.butce_yili) || (d.tarih ? new Date(d.tarih).getFullYear() : 2026)
+      return dYil === yNum
+    })
+  }, [dosyalar, selectedYil])
+
+  // 3.3 RE'SEN YENİDEN HESAPLANAN 22/D KİK KOTASI
+  const kikKota = useMemo(() => {
+    return calculateKikKotaFromData(tertipler, filteredDosyalar, rawKikKota.idareTuru)
+  }, [tertipler, filteredDosyalar, rawKikKota.idareTuru])
+
+  // 3.4 FİLTRELENMİŞ MİF, TKYS, SÖZLEŞME VE EMANET LİSTELERİ
+  const mifListesi = useMemo(() => {
+    return rawMifListesi.filter((m) => {
+      if (selectedDosyaId && m.dosyaId !== selectedDosyaId) return false
+      if (selectedYil !== 'ALL') {
+        const mYil = m.tarih
+          ? new Date(m.tarih).getFullYear()
+          : m.faturaTarihi
+          ? new Date(m.faturaTarihi).getFullYear()
+          : 2026
+        if (mYil !== Number(selectedYil) && !m.mifNo.includes(selectedYil)) return false
+      }
+      return true
+    })
+  }, [rawMifListesi, selectedYil, selectedDosyaId])
+
+  const tkysListesi = useMemo(() => {
+    return rawTkysListesi.filter((t) => {
+      if (selectedDosyaId) {
+        if (t.dosyaId) {
+          if (t.dosyaId !== selectedDosyaId) return false
+        } else {
+          const matchDosya = dosyalar.find((d) => d.id === selectedDosyaId)
+          if (matchDosya && t.dosyaNo !== matchDosya.temin_no) return false
+        }
+      }
+      if (selectedYil !== 'ALL') {
+        const tYil = t.muayeneKabulTarihi ? new Date(t.muayeneKabulTarihi).getFullYear() : 2026
+        if (tYil !== Number(selectedYil) && !t.tifNo.includes(selectedYil)) return false
+      }
+      return true
+    })
+  }, [rawTkysListesi, selectedYil, selectedDosyaId, dosyalar])
+
+  const sozlesmeListesi = useMemo(() => {
+    return rawSozlesmeListesi.filter((s) => {
+      if (selectedDosyaId) {
+        if (s.dosyaId) {
+          if (s.dosyaId !== selectedDosyaId) return false
+        } else {
+          const matchDosya = dosyalar.find((d) => d.id === selectedDosyaId)
+          if (matchDosya && s.dosyaNo !== matchDosya.temin_no) return false
+        }
+      }
+      if (selectedYil !== 'ALL') {
+        const sYil = s.sozlesmeTarihi ? new Date(s.sozlesmeTarihi).getFullYear() : 2026
+        if (sYil !== Number(selectedYil) && !s.sozlesmeNo.includes(selectedYil)) return false
+      }
+      return true
+    })
+  }, [rawSozlesmeListesi, selectedYil, selectedDosyaId, dosyalar])
+
+  const emanetListesi = useMemo(() => {
+    return rawEmanetListesi.filter((e) => {
+      if (selectedDosyaId) {
+        if (e.dosyaId) {
+          if (e.dosyaId !== selectedDosyaId) return false
+        } else {
+          const matchDosya = dosyalar.find((d) => d.id === selectedDosyaId)
+          if (matchDosya && e.dosyaNo !== matchDosya.temin_no) return false
+        }
+      }
+      if (selectedYil !== 'ALL') {
+        const eYil = e.alinisTarihi ? new Date(e.alinisTarihi).getFullYear() : 2026
+        if (eYil !== Number(selectedYil)) return false
+      }
+      return true
+    })
+  }, [rawEmanetListesi, selectedYil, selectedDosyaId, dosyalar])
+
   // 4. MODALLAR STATE
   const [isAktarModalOpen, setIsAktarModalOpen] = useState(false)
 
   // İdare Türü Güncelleme (Büyükşehir vs Diğer)
   const handleUpdateIdareTuru = (turu: 'buyuksehir' | 'diger') => {
     const newEsik = turu === 'buyuksehir' ? 864500 : 288100
-    setKikKota((prev) => ({
+    setRawKikKota((prev) => ({
       ...prev,
       idareTuru: turu,
       esikDeger: newEsik
@@ -136,7 +276,7 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
 
   // MİF Durum Güncelleme
   const handleMifDurumGuncelle = (mifId: string, yeniDurum: MifKayit['durum']) => {
-    setMifListesi((prev) =>
+    setRawMifListesi((prev) =>
       prev.map((m) =>
         m.id === mifId
           ? {
@@ -152,11 +292,11 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
 
   // Yeni MİF Ekleme (Mali İşlemlere Aktarım Sonrası)
   const handleYeniMifEklendi = (yeniMif: MifKayit) => {
-    setMifListesi((prev) => [yeniMif, ...prev])
+    setRawMifListesi((prev) => [yeniMif, ...prev])
     handleTabChange('mif')
   }
 
-  // Özet İstatistik Hesaplamaları
+  // Özet İstatistik Hesaplamaları (Filtrelenmiş verilere göre)
   const toplamKullanilabilirOdenek = tertipler.reduce((acc, t) => acc + t.kullanilabilirOdenek, 0)
   const toplamBaslangicOdenegi = tertipler.reduce((acc, t) => acc + t.baslangicOdenegi, 0)
   const bekleyenMifSayisi = mifListesi.filter((m) => m.durum !== 'onaylandi').length
@@ -185,6 +325,12 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
         bekleyenTifSayisi={bekleyenTifSayisi}
         aktifTeminatToplami={aktifTeminatToplami}
         yururlukteSozlesmeBedeli={yururlukteSozlesmeBedeli}
+        selectedYil={selectedYil}
+        onYilChange={handleYilChange}
+        availableYears={availableYears}
+        selectedDosyaId={selectedDosyaId}
+        onDosyaChange={handleDosyaChange}
+        dosyalar={dosyalar}
       />
 
       {/* 2. AKTİF SEKME İÇERİĞİ */}
@@ -229,7 +375,11 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
         )}
 
         {activeTab === 'dosyalar' && (
-          <DosyalarVeFaturalariTab activeRole={activeRole} />
+          <DosyalarVeFaturalariTab
+            activeRole={activeRole}
+            selectedYil={selectedYil}
+            selectedDosyaId={selectedDosyaId}
+          />
         )}
 
         {activeTab === 'mevzuat' && (
