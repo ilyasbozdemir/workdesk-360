@@ -2,9 +2,7 @@ import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
 import {
-  ApprovalSignature,
   DateEditableField,
-  EditableOlurPlaceholder,
   PersonelCard,
 } from "../../document/ApprovalSignature";
 import { KomisyonGorevlendirmeOnayiType } from "./KomisyonGorevlendirmeOnayi.schema";
@@ -162,34 +160,25 @@ export function KomisyonGorevlendirmeOnayi({
           />
         </strong>{" "}
         işine ait fiyat araştırması ile muayene ve kabulü yapmak üzere
-        aşağıdaki personeller görevlendirilecek olup,
+        aşağıdaki personeller görevlendirilmiş olup,
       </div>
       <div
         style={{
           textAlign: "justify",
           textIndent: "25px",
-          marginBottom: "8px",
+          marginBottom: "12px",
           lineHeight: 1.35,
         }}
       >
-        Gereğini olurlarınıza arz ederim.
+        {data.kapanisMetni ||
+          (data.olurYazisi === true
+            ? "Gereğini olurlarınıza arz ederim."
+            : "Gereğini rica ederim.")}
       </div>
     </>
   );
 
-  const renderPreparer = () => (
-    <PersonelCard
-      adSoyad={data.hazirlayanPersonelAdi}
-      unvan={data.hazirlayanPersonelUnvan}
-      align="right"
-      nameField="hazirlayanPersonelAdi"
-      unvanField="hazirlayanPersonelUnvan"
-      marginTop={4}
-      marginBottom={10}
-    />
-  );
-
-  const renderTablesAndOlur = () => (
+  const renderTablesAndSigner = () => (
     <>
       {/* Table 1: PİYASA ARAŞTIRMA VE SATINALMA KOMİSYONU */}
       <div
@@ -390,21 +379,16 @@ export function KomisyonGorevlendirmeOnayi({
         </>
       )}
 
-      {/* Approval / OLUR Section */}
-      {data.olurYazisi !== false
-        ? (
-          <ApprovalSignature
-            title="OLUR"
-            date={data.onayTarihi || data.tarih || data.dosyaTarihi}
-            adSoyad={data.baskanAdi || data.onaylayanPersonelAdi}
-            unvan={data.baskanUnvan || data.onaylayanPersonelUnvan}
-            nameField="baskanAdi"
-            unvanField="baskanUnvan"
-            showSpace={true}
-            marginTop={12}
-          />
-        )
-        : <EditableOlurPlaceholder />}
+      {/* Görevlendirmeyi Yapan Yetkili / Harcama Yetkilisi İmzası (Sağ) */}
+      <PersonelCard
+        adSoyad={data.baskanAdi || data.onaylayanPersonelAdi}
+        unvan={data.baskanUnvan || data.onaylayanPersonelUnvan || "Harcama Yetkilisi"}
+        align="right"
+        marginTop={20}
+        marginBottom={20}
+        nameField="baskanAdi"
+        unvanField="baskanUnvan"
+      />
     </>
   );
 
@@ -428,8 +412,7 @@ export function KomisyonGorevlendirmeOnayi({
         }}
       >
         {renderTopSection()}
-        {renderPreparer()}
-        {renderTablesAndOlur()}
+        {renderTablesAndSigner()}
       </div>
     </DocumentLayout>
   );

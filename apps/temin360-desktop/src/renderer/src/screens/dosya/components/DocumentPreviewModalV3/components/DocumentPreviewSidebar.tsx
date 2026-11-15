@@ -373,20 +373,32 @@ export function DocumentPreviewSidebar({
 
           {/* Alt Sabit Kompakt Özet Çubuğu */}
           <div className="shrink-0 px-2.5 py-2 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
-            <div className="min-w-0 flex-1 text-[10px] leading-tight">
-              <div className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-200 truncate">
-                <GitFork className="w-3 h-3 text-purple-600 shrink-0" />
-                <span className="truncate">
-                  {formData.hazirlayanPersonelAdi || 'Hazırlayan Seçilmedi'}
-                </span>
-              </div>
-              <div className="text-slate-400 truncate">
-                Onay: {formData.onaylayanPersonelAdi || 'Seçilmedi'}{' '}
-                {Array.isArray((formData as any).rota) && (formData as any).rota.length > 0
-                  ? `• ${(formData as any).rota.length} Adım`
-                  : ''}
-              </div>
-            </div>
+            {(() => {
+              const isAppointment =
+                selectedDocId?.includes('gorevlendirme') ||
+                selectedDocId?.includes('komisyon')
+              return (
+                <div className="min-w-0 flex-1 text-[10px] leading-tight">
+                  {!isAppointment && (
+                    <div className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-200 truncate">
+                      <GitFork className="w-3 h-3 text-purple-600 shrink-0" />
+                      <span className="truncate">
+                        {formData.hazirlayanPersonelAdi || 'Hazırlayan Seçilmedi'}
+                      </span>
+                    </div>
+                  )}
+                  <div className={`truncate ${isAppointment ? 'font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1' : 'text-slate-400'}`}>
+                    {isAppointment && <Users className="w-3 h-3 text-blue-600 shrink-0" />}
+                    <span>
+                      Onay: {formData.onaylayanPersonelAdi || formData.baskanAdi || 'Seçilmedi'}{' '}
+                      {Array.isArray((formData as any).rota) && (formData as any).rota.length > 0
+                        ? `• ${(formData as any).rota.length} Adım`
+                        : ''}
+                    </span>
+                  </div>
+                </div>
+              )
+            })()}
             <button
               type="button"
               onClick={() => {

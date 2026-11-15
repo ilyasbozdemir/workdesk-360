@@ -179,20 +179,16 @@
           Belgesine istinaden 4734 Sayılı kanunun {{kanunMaddesi}}* maddesine göre alımı
           gerçekleştirilen {{kurumumuz}} {{isinAdi}} işine ait muayene ve kabulünü yapmak üzere
           {{#gorevlendirilenler}}<strong>{{adSoyad}}</strong> ({{unvan}}){{#hasMore}},
-          {{/hasMore}}{{/gorevlendirilenler}} Muayene ve Kabul Komisyonunda görevlendirilecek olup,
+          {{/hasMore}}{{/gorevlendirilenler}} Muayene ve Kabul Komisyonunda görevlendirilmiş olup,
         </div>
-        <div class="konu-metni" style="margin-top: 0px">Gereğini olurlarınıza arz ederim.</div>
+        <div class="konu-metni" style="margin-top: 0px">{{kapanisMetni}}{{^kapanisMetni}}Gereğini rica ederim.{{/kapanisMetni}}</div>
 
-        <div class="hazirlayan">
-          {{hazirlayanPersonelAdi}}<br />
-          {{hazirlayanPersonelUnvan}}
-        </div>
-
-        <div class="approval" data-behavior="keep-together">
-          <strong>OLUR</strong><br />
-          {{dosyaTarihi}}<br /><br />
-          {{onaylayanPersonelAdi}}<br />
-          {{onaylayanPersonelUnvan}}
+        <!-- HARCAMA YETKİLİSİ / ONAY VEREN İMZA (SAĞ) -->
+        <div style="width: 100%; display: flow-root; margin-top: 25px; margin-bottom: 30px; break-inside: avoid; page-break-inside: avoid;">
+          <div style="float: right; text-align: center; width: 220px; line-height: 1.4;">
+            <div style="font-weight: bold;">{{onaylayanPersonelAdi}}{{^onaylayanPersonelAdi}}{{baskanAdi}}{{/onaylayanPersonelAdi}}</div>
+            <div>{{onaylayanPersonelUnvan}}{{^onaylayanPersonelUnvan}}{{baskanUnvan}}{{^baskanUnvan}}Harcama Yetkilisi{{/baskanUnvan}}{{/onaylayanPersonelUnvan}}</div>
+          </div>
         </div>
 
         <!-- DAĞITIM -->
