@@ -234,4 +234,60 @@ describe('DocumentPreviewModalV3 — Form Builder & Navbar Düzenleme Modu Testl
     // setFormData çağrılmış olmalı
     expect(setFormData).toHaveBeenCalled()
   })
+
+  it('7. Dağıtım listesi nesne dizisi ([{adSoyad, unvan}]) olduğunda [object Object] yerine temiz metin formatında textarea içine yazılır', () => {
+    const mockFormData = {
+      isAdi: 'Lisans Sözleşmesi',
+      dagitimListesi: [
+        { adSoyad: 'Münir Özkul', unvan: 'Mühendis' },
+        { adSoyad: 'Adile Naşit', unvan: 'Tekniker' }
+      ]
+    }
+    const setFormData = vi.fn()
+
+    render(
+      <DocumentPreviewFormBuilder
+        formData={mockFormData}
+        setFormData={setFormData}
+        selectedDocId="piyasa_fiyat_arastirma_gorevlendirmesi"
+      />
+    )
+
+    // Dağıtım Listesi başlığı
+    expect(screen.getAllByText('Dağıtım Listesi').length).toBeGreaterThan(0)
+
+    // Textarea değeri [object Object] İÇERMEMELİ, personelleri içermeli
+    const textarea = screen.getByPlaceholderText(/Münir Özkul \(Mühendis\)/) as HTMLTextAreaElement
+    expect(textarea.value).not.toContain('[object Object]')
+    expect(textarea.value).toContain('Münir Özkul (Mühendis)')
+    expect(textarea.value).toContain('Adile Naşit (Tekniker)')
+
+    // Düzenleme yapıldığında hem string hem tipli dizi güncellenir
+    fireEvent.change(textarea, { target: { value: 'Şener Şen (Şube Müdürü)\nİlyas Salman' } })
+    expect(setFormData).toHaveBeenCalled()
+  })
+
+  it('8. Piyasa Fiyat Araştırma Görevlendirmesi seçildiğinde dosya konusu iş adıyla ezilmez ve alakasız bütçe/süre alanları filtrelenir', () => {
+    const mockFormData = {
+      isAdi: 'Lisans Sözleşmesi',
+      dosyaKonusu: 'Lisans Sözleşmesi' // İş adıyla aynı olsa bile şablon doğru dosya konusuna normalize etmeli
+    }
+
+    render(
+      <DocumentPreviewFormBuilder
+        formData={mockFormData}
+        setFormData={vi.fn()}
+        selectedDocId="piyasa_fiyat_arastirma_gorevlendirmesi"
+      />
+    )
+
+    // Belge Konusu alanı bulunmalı ve "Piyasa Fiyat Araştırma Görevlendirmesi" göstermeli
+    const inputs = screen.getAllByRole('textbox') as HTMLInputElement[]
+    const dosyaKonusuInput = inputs.find((i) => i.value === 'Piyasa Fiyat Araştırma Görevlendirmesi')
+    expect(dosyaKonusuInput).toBeTruthy()
+
+    // Alakasız mali/süre alanları (yaklasikMaliyet, sure) öncelikli görünümde listelenmemeli
+    expect(screen.queryByText('Yaklaşık Maliyet Tutarı')).toBeNull()
+    expect(screen.queryByText('İşin Süresi')).toBeNull()
+  })
 })

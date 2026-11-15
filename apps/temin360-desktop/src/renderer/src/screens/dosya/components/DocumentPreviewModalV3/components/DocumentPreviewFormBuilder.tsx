@@ -48,6 +48,8 @@ export const TEMPLATE_PRIORITY_KEYS: Record<string, string[]> = {
   piyasa_fiyat_arastirma_gorevlendirmesi: ["dosyaKonusu", "isAdi", "evrakSayisi", "tarih", "dagitim"],
   "piyasa-fiyat-arastirma-gorevlendirmesi": ["dosyaKonusu", "isAdi", "evrakSayisi", "tarih", "dagitim"],
   "piyasa-arastirma-gorevlendirmesi": ["dosyaKonusu", "isAdi", "evrakSayisi", "tarih", "dagitim"],
+  muayene_kabul_komisyonu: ["dosyaKonusu", "isAdi", "evrakSayisi", "tarih", "dagitim"],
+  "muayene-kabul-komisyonu": ["dosyaKonusu", "isAdi", "evrakSayisi", "tarih", "dagitim"],
   piyasa_fiyat_arastirma_tutanagi: ["isAdi", "yaklasikMaliyet", "tarih", "evrakSayisi"],
   "piyasa-fiyat-arastirma-tutanagi": ["isAdi", "yaklasikMaliyet", "tarih", "evrakSayisi"],
   luzum_muzekkeresi: ["sunulacakMakamAdi", "isAdi", "gerekce", "ihtiyacYeri", "tarih", "evrakSayisi"],
@@ -243,12 +245,12 @@ const FORM_FIELD_CATALOG: FormFieldConfig[] = [
   },
   {
     key: "dagitim",
-    label: "Dağıtım",
-    type: "text",
+    label: "Dağıtım Listesi",
+    type: "textarea",
     category: "sevk",
     aliases: ["dagitimListesi"],
-    placeholder: "Örn: Mali Hizmetler Müdürlüğüne",
-    hint: "Yazının gönderileceği ek birimler",
+    placeholder: "Örn:\nMünir Özkul (Mühendis)\nAdile Naşit (Tekniker)",
+    hint: "Yazının gönderileceği ek birimler veya görevli personeller",
   },
 ];
 
@@ -265,7 +267,7 @@ export function DocumentPreviewFormBuilder({
 }: DocumentPreviewFormBuilderProps): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<FieldCategory>("all");
-  const [columnLayout, setColumnLayout] = useState<"single" | "auto">("auto");
+  const [columnLayout, setColumnLayout] = useState<"single" | "auto">("single");
   const [editedKeys, setEditedKeys] = useState<Set<string>>(new Set());
   const initialDataRef = useRef<Record<string, any>>({});
 
@@ -289,24 +291,40 @@ export function DocumentPreviewFormBuilder({
     return FORM_FIELD_CATALOG.filter((spec) => {
       // 1. Aktif şablona özel öncelikli alanlar daima dahil edilir
       if (priorityKeys.includes(spec.key)) return true;
-      // 2. formData içinde kayıtlı değeri olan alanlar
-      if (formData && formData[spec.key] !== undefined) return true;
+
+      // 2. Eğer şablonun öncelikli alanları varsa ve arama/kategori filtresi yoksa,
+      // alakasız şablonlara genel dosya alanlarının (sure, yaklasikMaliyet vb.) taşmasını engelle:
+      const isAppointmentDoc =
+        selectedDocId?.includes("gorevlendirme") ||
+        selectedDocId?.includes("komisyon");
+
+      if (isAppointmentDoc && (spec.category === "mali" || spec.key === "sure" || spec.key === "teminSekli" || spec.key === "gerekce")) {
+        return false;
+      }
+
+      // 3. formData içinde kayıtlı ve dolu değeri olan alanlar
+      if (formData && formData[spec.key] !== undefined && String(formData[spec.key]).trim() !== "") {
+        return true;
+      }
       if (
         spec.aliases &&
-        spec.aliases.some((a) => formData && formData[a] !== undefined)
+        spec.aliases.some((a) => formData && formData[a] !== undefined && String(formData[a]).trim() !== "")
       ) {
         return true;
       }
-      // 3. Temel alanlar her belgede geçerlidir
-      const coreKeys = [
-        "evrakSayisi",
-        "tarih",
-        "isAdi",
-        "gerekce",
-        "sure",
-        "teminSekli",
-        "yaklasikMaliyet",
-      ];
+
+      // 4. Temel alanlar (Görevlendirme harici belgeler için)
+      const coreKeys = isAppointmentDoc
+        ? ["evrakSayisi", "tarih", "isAdi", "dosyaKonusu"]
+        : [
+            "evrakSayisi",
+            "tarih",
+            "isAdi",
+            "gerekce",
+            "sure",
+            "teminSekli",
+            "yaklasikMaliyet",
+          ];
       return coreKeys.includes(spec.key);
     });
   }, [formData, selectedDocId, priorityKeys]);
@@ -332,17 +350,57 @@ export function DocumentPreviewFormBuilder({
 
   const getFieldValue = (spec: FormFieldConfig): string => {
     if (!formData) return "";
-    if (formData[spec.key] !== undefined && formData[spec.key] !== null) {
-      return String(formData[spec.key]);
+    let rawVal: any = undefined;
+
+    // Özel: Piyasa Fiyat Araştırma Görevlendirmesi dosya konusu için temiz varsayılan
+    if (spec.key === "dosyaKonusu" && selectedDocId?.includes("gorevlendirme")) {
+      const cur = formData.dosyaKonusu;
+      if (!cur || cur === formData.isAdi || cur === formData.isinAdi) {
+        return "Piyasa Fiyat Araştırma Görevlendirmesi";
+      }
+      return String(cur);
     }
-    if (spec.aliases) {
+
+    if (formData[spec.key] !== undefined && formData[spec.key] !== null) {
+      rawVal = formData[spec.key];
+    } else if (spec.aliases) {
       for (const alias of spec.aliases) {
         if (formData[alias] !== undefined && formData[alias] !== null) {
-          return String(formData[alias]);
+          rawVal = formData[alias];
+          break;
         }
       }
     }
-    return "";
+
+    if (rawVal === undefined || rawVal === null) return "";
+
+    // Array / Dizi değerlerini [object Object] olmadan temiz, okunabilir metne dönüştür
+    if (Array.isArray(rawVal)) {
+      return rawVal
+        .map((item) => {
+          if (!item) return "";
+          if (typeof item === "string") return item.trim();
+          if (typeof item === "object") {
+            const name = (item.adSoyad || item.ad || item.adi || item.name || "").trim();
+            const title = (item.unvan || item.unvani || item.gorev || item.title || "").trim();
+            if (name && title) return `${name} (${title})`;
+            return name || title || "";
+          }
+          return String(item);
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    if (typeof rawVal === "object") {
+      try {
+        return JSON.stringify(rawVal);
+      } catch {
+        return "";
+      }
+    }
+
+    return String(rawVal);
   };
 
   const handleFieldChange = (spec: FormFieldConfig, value: string) => {
@@ -354,6 +412,22 @@ export function DocumentPreviewFormBuilder({
           next[alias] = value;
         }
       }
+
+      // Dağıtım listesi düzenleniyorsa hem metin hem de tipli dizi formatında güncelle
+      if (spec.key === "dagitim" || spec.aliases?.includes("dagitimListesi")) {
+        const lines = value.split("\n").map((l) => l.trim()).filter(Boolean);
+        next.dagitim = value;
+        next.dagitimListesi = lines.map((l) => {
+          const match = l.match(/^(.*?)(?:\s*\((.*?)\)|\s*-\s*(.*?))?$/);
+          if (match) {
+            const name = match[1]?.trim() || l;
+            const unvan = (match[2] || match[3] || "").trim();
+            return { adSoyad: name, unvan };
+          }
+          return { adSoyad: l, unvan: "" };
+        });
+      }
+
       return next;
     });
   };
