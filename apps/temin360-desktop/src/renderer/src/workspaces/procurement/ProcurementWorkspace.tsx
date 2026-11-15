@@ -1,10 +1,13 @@
 import React, { useMemo } from 'react'
+import { Sparkles } from 'lucide-react'
 import { ActiveFileShortcuts } from '@renderer/components/layout/ActiveFileShortcuts'
 import { useWorkspaceStore } from '@renderer/store/workspaceStore'
 import { useSettingsStore } from '@renderer/store/settingsStore'
 import { routeComponents } from '@renderer/components/layout/routeComponents'
 import { normalizePath, useTabStore } from '@renderer/store/tabStore'
 import { APP_ROUTES } from '@renderer/constants/routeConstants'
+import { KurulumModal } from '@renderer/screens/kurulum/KurulumModal'
+import { useWorkspaceSetupCheck } from '@renderer/screens/kurulum/useWorkspaceSetupCheck'
 
 interface ProcurementWorkspaceProps {
   expiredPaths: Record<string, boolean>
@@ -14,6 +17,7 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
   const { activeDosyaId, fileName } = useWorkspaceStore()
   const { alwaysShowQuickMenu } = useSettingsStore()
   const { tabs, activeTabPath, addTab } = useTabStore()
+  const { needsSetup, isModalOpen, openSetupModal, closeSetupModal, recheckSetup } = useWorkspaceSetupCheck()
 
   // 4734 İhale / Doğrudan Temin Modu
   const modeLabel = useMemo(() => {
@@ -115,6 +119,17 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
           </div>
 
           <div className="flex items-center gap-2">
+            {needsSetup && (
+              <button
+                type="button"
+                onClick={openSetupModal}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1.5 shadow-xs transition-all cursor-pointer animate-pulse"
+                title="Kurum, birim ve personeller henüz tanımlanmamış. Hızlı kurulum sihirbazını açın."
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>İlk Kurulumu Yap</span>
+              </button>
+            )}
             {activeDosyaId ? (
               <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60 flex items-center gap-1.5 shadow-2xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
@@ -156,6 +171,14 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
           })}
         </main>
       </div>
+
+      <KurulumModal
+        isOpen={isModalOpen}
+        onClose={closeSetupModal}
+        onSuccess={() => {
+          recheckSetup()
+        }}
+      />
     </div>
   )
 }
