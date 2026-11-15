@@ -21,6 +21,19 @@ export const MetadataBlock: React.FC<MetadataBlockProps> = ({
 }) => {
   const displayTarih = toTrDate(tarih || onayaSunulanTarih);
 
+  // Sanitize evrakSayisi if it starts with an accidental hyphen (e.g. -934.01-0001)
+  let cleanEvrakSayisi = evrakSayisi;
+  if (typeof cleanEvrakSayisi === "string") {
+    cleanEvrakSayisi = cleanEvrakSayisi.trim();
+    if (cleanEvrakSayisi.startsWith("-")) {
+      cleanEvrakSayisi = cleanEvrakSayisi.replace(/^-+/, "");
+      // If it became just 934.01-0001, attach the default DETSIS prefix
+      if (/^\d+\.\d+-\d+$/.test(cleanEvrakSayisi)) {
+        cleanEvrakSayisi = `10234521-${cleanEvrakSayisi}`;
+      }
+    }
+  }
+
   // Sanitize dosyaKonusu if it contains accidental JSON string keys or quotes
   let cleanKonu = dosyaKonusu;
   if (typeof cleanKonu === "string") {
@@ -77,7 +90,7 @@ export const MetadataBlock: React.FC<MetadataBlockProps> = ({
                   <strong>:</strong>
                 </td>
                 <td style={{ verticalAlign: "top", padding: "1px 0" }}>
-                  <EditableField name="evrakSayisi" value={evrakSayisi} />
+                  <EditableField name="evrakSayisi" value={cleanEvrakSayisi} />
                 </td>
               </tr>
             )}

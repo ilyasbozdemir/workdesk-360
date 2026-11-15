@@ -9,7 +9,10 @@ export function formatOfficialEvrakSayisi(options: {
   teminNo?: string | null;
   yil?: number | string | null;
 }): string {
-  const current = String(options.evrakSayisi || '').replace(/^E-/i, '').trim();
+  const current = String(options.evrakSayisi || '')
+    .replace(/^E-/i, '')
+    .replace(/^-+/, '')
+    .trim();
   if (current && !current.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(current)) {
     return current;
   }
