@@ -276,7 +276,8 @@ export function DocumentPreviewFormBuilder({
         const q = searchQuery.toLocaleLowerCase("tr-TR").trim();
         const matchLabel = f.label.toLocaleLowerCase("tr-TR").includes(q);
         const matchKey = f.key.toLocaleLowerCase("tr-TR").includes(q);
-        const matchHint = f.hint && f.hint.toLocaleLowerCase("tr-TR").includes(q);
+        const matchHint = f.hint &&
+          f.hint.toLocaleLowerCase("tr-TR").includes(q);
         return Boolean(matchLabel || matchKey || matchHint);
       }
       return true;
@@ -508,7 +509,8 @@ export function DocumentPreviewFormBuilder({
           const val = getFieldValue(field);
           const badge = getOriginBadge(field, val);
           const isEdited = editedKeys.has(field.key);
-          const isFullWidth = field.type === "textarea" || columnLayout === "single";
+          const isFullWidth = field.type === "textarea" ||
+            columnLayout === "single";
 
           return (
             <div
