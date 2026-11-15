@@ -51,7 +51,9 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
     // Harcama yetkilisi, gerçekleştirme görevlisi veya muhasebe görevlileri piyasa fiyat araştırma görevlisi olarak listelenmez
     const duty = (
       typeof item === "object"
-        ? `${item.gorev || ""} ${item.gorevi || ""} ${item.komisyonGorevi || ""} ${item.unvan || ""}`
+        ? `${item.gorev || ""} ${item.gorevi || ""} ${
+          item.komisyonGorevi || ""
+        } ${item.unvan || ""}`
         : ""
     ).toLowerCase();
 
@@ -174,25 +176,26 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
 
   // Evrak sayısı oluşturma (EBYS Standart Formatı: E-DETSİS-SDP-NO)
   const evrakNo =
-    data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") && !String(data.evrakSayisi).includes("/")
+    data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") &&
+      !String(data.evrakSayisi).includes("/")
       ? data.evrakSayisi
       : formatOfficialEvrakSayisi({
-          evrakSayisi: data.evrakSayisi,
-          detsisNo: data.detsisNo,
-          tur: (data as any)?.tur,
-          sayisi: (data as any)?.sayisi,
-          teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo || (data as any)?.dosyaSayisi,
-        });
+        evrakSayisi: data.evrakSayisi,
+        detsisNo: data.detsisNo,
+        tur: (data as any)?.tur,
+        sayisi: (data as any)?.sayisi,
+        teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo ||
+          (data as any)?.dosyaSayisi,
+      });
 
-  const konuMetni =
-    data.dosyaKonusu &&
-    data.dosyaKonusu !== data.isinAdi &&
-    data.dosyaKonusu !== (data as any)?.konu &&
-    !data.dosyaKonusu.toLowerCase().includes("alımı") &&
-    !data.dosyaKonusu.toLowerCase().includes("yapımı") &&
-    !data.dosyaKonusu.toLowerCase().includes("hizmeti")
-      ? data.dosyaKonusu
-      : "Piyasa Fiyat Araştırma Görevlendirmesi";
+  const konuMetni = data.dosyaKonusu &&
+      data.dosyaKonusu !== data.isinAdi &&
+      data.dosyaKonusu !== (data as any)?.konu &&
+      !data.dosyaKonusu.toLowerCase().includes("alımı") &&
+      !data.dosyaKonusu.toLowerCase().includes("yapımı") &&
+      !data.dosyaKonusu.toLowerCase().includes("hizmeti")
+    ? data.dosyaKonusu
+    : "Piyasa Fiyat Araştırma Görevlendirmesi";
 
   const fallbackKurum = data.altKurumBizim || data.kurumBizim || "İdaremiz";
   const kurumumuzMetni = data.kurumumuz &&
@@ -201,7 +204,8 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
     ? data.kurumumuz
     : fallbackKurum;
 
-  const isinAdiMetni = data.isinAdi ?? (data as any)?.konu ?? "Alımı yapılacak iş";
+  const isinAdiMetni = data.isinAdi ?? (data as any)?.konu ??
+    "Alımı yapılacak iş";
 
   return (
     <DocumentLayout
@@ -262,7 +266,7 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
               ))
             )
             : <strong>İlgili personeller</strong>}{" "}
-          Piyasa Fiyat Araştırması için görevlendirilecek olup,
+          Piyasa Fiyat Araştırması için görevlendirilmiş olup,
         </div>
 
         <div
@@ -274,19 +278,36 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
             lineHeight: 1.6,
           }}
         >
-          Gereğini olurlarınıza arz ederim.
+          {data.olurYazisi !== false
+            ? "Gereğini olurlarınıza arz ederim."
+            : "Gereğini rica ederim."}
         </div>
 
-        {/* Hazırlayan (Sağ) */}
-        <PersonelCard
-          adSoyad={data.hazirlayanPersonelAdi}
-          unvan={data.hazirlayanPersonelUnvan}
-          align="right"
-          marginTop={20}
-          marginBottom={30}
-          nameField="hazirlayanPersonelAdi"
-          unvanField="hazirlayanPersonelUnvan"
-        />
+        {/* Hazırlayan (Sağ) - Eğer OLUR varsa hazırlayan imza atar */}
+        {data.olurYazisi !== false && (
+          <PersonelCard
+            adSoyad={data.hazirlayanPersonelAdi}
+            unvan={data.hazirlayanPersonelUnvan}
+            align="right"
+            marginTop={20}
+            marginBottom={30}
+            nameField="hazirlayanPersonelAdi"
+            unvanField="hazirlayanPersonelUnvan"
+          />
+        )}
+
+        {/* Doğrudan Görevlendirme İmzası (OLUR yoksa yetkili tek başına imzalar) */}
+        {data.olurYazisi === false && (
+          <PersonelCard
+            adSoyad={data.onaylayanPersonelAdi}
+            unvan={data.onaylayanPersonelUnvan}
+            align="right"
+            marginTop={20}
+            marginBottom={30}
+            nameField="onaylayanPersonelAdi"
+            unvanField="onaylayanPersonelUnvan"
+          />
+        )}
 
         {/* OLUR Onay Bloğu (Orta) */}
         {data.olurYazisi !== false

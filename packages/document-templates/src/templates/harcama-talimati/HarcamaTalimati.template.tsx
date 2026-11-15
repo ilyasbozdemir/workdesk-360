@@ -1,6 +1,7 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
+import { useTemplateEdit } from "../../document/TemplateEditContext";
 import {
   DateEditableField,
   PersonelCard,
@@ -8,6 +9,116 @@ import {
 } from "../../document/ApprovalSignature";
 import { HarcamaTalimatiType } from "./HarcamaTalimati.schema";
 import { formatCurrency, getDativeSuffix } from "../../utils/textHelpers";
+
+export const HARCAMA_BUDGET_PRESETS = [
+  { kod: "03.2.1.01", ad: "Kırtasiye ve Büro Malzemesi Alımları" },
+  { kod: "03.2.1.02", ad: "Büro Mefruşatı ve Donanım Alımları" },
+  { kod: "03.2.1.05", ad: "Baskı ve Cilt Giderleri" },
+  { kod: "03.2.2.01", ad: "Su ve Temizlik Malzemesi Alımları" },
+  { kod: "03.2.3.01", ad: "Akaryakıt ve Yağ Alımları" },
+  { kod: "03.2.3.02", ad: "Elektrik Alımları" },
+  { kod: "03.5.2.01", ad: "Hizmet Binası Bakım ve Onarım Giderleri" },
+  { kod: "03.5.2.02", ad: "Taşıt ve İş Makinesi Bakım Onarımı" },
+  { kod: "03.5.2.90", ad: "Diğer Bakım ve Onarım Giderleri" },
+  { kod: "03.7.1.01", ad: "Büro ve İşyeri Mal ve Malzeme Alımları" },
+  { kod: "03.7.2.01", ad: "Bilgisayar ve Yazılım Alımları" },
+];
+
+function HarcamaTalimatiButceHelper({
+  currentValue,
+}: {
+  currentValue?: any;
+}) {
+  const { isEditing, onFieldChange } = useTemplateEdit();
+  if (!isEditing || !onFieldChange) return null;
+
+  const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (!val) return;
+    const existing = currentValue
+      ? Array.isArray(currentValue)
+        ? currentValue.join("\n")
+        : String(currentValue)
+      : "";
+    const updated = existing ? `${existing}\n${val}` : val;
+    onFieldChange("butceTertibi", updated);
+    e.target.value = "";
+  };
+
+  return (
+    <div
+      className="no-print"
+      style={{
+        marginTop: "6px",
+        padding: "4px 8px",
+        backgroundColor: "#f8fafc",
+        border: "1px dashed #93c5fd",
+        borderRadius: "4px",
+        fontSize: "8.5pt",
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span style={{ fontWeight: "bold", color: "#1d4ed8", whiteSpace: "nowrap" }}>
+          ⚡ Bütçe Tertibi Seç:
+        </span>
+        <select
+          onChange={handleSelect}
+          defaultValue=""
+          style={{
+            fontSize: "8.5pt",
+            padding: "2px 6px",
+            border: "1px solid #94a3b8",
+            borderRadius: "4px",
+            backgroundColor: "#fff",
+            cursor: "pointer",
+            flex: 1,
+            color: "#1e293b",
+          }}
+        >
+          <option value="" disabled>Hazır analitik bütçe tertiplerinden ekle...</option>
+          {HARCAMA_BUDGET_PRESETS.map((p) => (
+            <option key={p.kod} value={`${p.kod} ${p.ad}`}>
+              {p.kod} - {p.ad}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "2px" }}>
+        {HARCAMA_BUDGET_PRESETS.slice(0, 4).map((p) => (
+          <button
+            key={p.kod}
+            type="button"
+            onClick={() => {
+              const existing = currentValue
+                ? Array.isArray(currentValue)
+                  ? currentValue.join("\n")
+                  : String(currentValue)
+                : "";
+              const item = `${p.kod} ${p.ad}`;
+              const updated = existing ? `${existing}\n${item}` : item;
+              onFieldChange("butceTertibi", updated);
+            }}
+            style={{
+              padding: "1px 6px",
+              backgroundColor: "#eff6ff",
+              border: "1px solid #bfdbfe",
+              borderRadius: "3px",
+              fontSize: "7.5pt",
+              color: "#1e40af",
+              cursor: "pointer",
+            }}
+            title={`${p.kod} ${p.ad} tertibini doğrudan ekle`}
+          >
+            + {p.kod}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface HarcamaTalimatiProps {
   data?: Partial<HarcamaTalimatiType> & Record<string, any>;
@@ -432,6 +543,7 @@ export function HarcamaTalimati({
                   placeholder="Ödeneğin Bütçe Tertibi (Satır satır bütçe tertiplerini giriniz...)"
                   style={{ width: "100%", display: "block" }}
                 />
+                <HarcamaTalimatiButceHelper currentValue={data.butceTertibi} />
               </td>
             </tr>
 

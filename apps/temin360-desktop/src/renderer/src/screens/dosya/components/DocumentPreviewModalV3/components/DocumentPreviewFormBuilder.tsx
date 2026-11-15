@@ -24,6 +24,38 @@ export interface FormFieldConfig {
   aliases?: string[];
 }
 
+export const BUDGET_TERTIP_PRESETS = [
+  { code: "03.2.1.01", name: "Kırtasiye ve Büro Malzemesi Alımları" },
+  { code: "03.2.1.02", name: "Büro Mefruşatı ve Donanım Alımları" },
+  { code: "03.2.1.05", name: "Baskı ve Cilt Giderleri" },
+  { code: "03.2.2.01", name: "Su ve Temizlik Malzemesi Alımları" },
+  { code: "03.2.3.01", name: "Akaryakıt ve Yağ Alımları" },
+  { code: "03.2.3.02", name: "Elektrik Alımları" },
+  { code: "03.5.2.01", name: "Hizmet Binası Bakım ve Onarım Giderleri" },
+  { code: "03.5.2.02", name: "Taşıt ve İş Makinesi Bakım Onarımı" },
+  { code: "03.5.2.90", name: "Diğer Bakım ve Onarım Giderleri" },
+  { code: "03.7.1.01", name: "Büro ve İşyeri Mal ve Malzeme Alımları" },
+  { code: "03.7.2.01", name: "Bilgisayar ve Yazılım Alımları" },
+];
+
+export const TEMPLATE_PRIORITY_KEYS: Record<string, string[]> = {
+  harcama_talimati: ["butceTertibi", "odenekTutari", "isTutari", "mutemetAdi", "isAdi", "gerekce", "teminSekli"],
+  "harcama-talimati": ["butceTertibi", "odenekTutari", "isTutari", "mutemetAdi", "isAdi", "gerekce", "teminSekli"],
+  butce_sorgusu: ["butceTertibi", "odenekTutari", "isTutari", "yaklasikMaliyet", "isAdi"],
+  "butce-sorgusu": ["butceTertibi", "odenekTutari", "isTutari", "yaklasikMaliyet", "isAdi"],
+  dogrudan_temin_onay_belgesi: ["butceTertibi", "odenekTutari", "yaklasikMaliyet", "teminSekli", "isAdi", "gerekce", "sure"],
+  "dogrudan-temin-onay-belgesi": ["butceTertibi", "odenekTutari", "yaklasikMaliyet", "teminSekli", "isAdi", "gerekce", "sure"],
+  piyasa_fiyat_arastirma_gorevlendirmesi: ["dosyaKonusu", "isAdi", "evrakSayisi", "tarih", "dagitim"],
+  "piyasa-fiyat-arastirma-gorevlendirmesi": ["dosyaKonusu", "isAdi", "evrakSayisi", "tarih", "dagitim"],
+  "piyasa-arastirma-gorevlendirmesi": ["dosyaKonusu", "isAdi", "evrakSayisi", "tarih", "dagitim"],
+  piyasa_fiyat_arastirma_tutanagi: ["isAdi", "yaklasikMaliyet", "tarih", "evrakSayisi"],
+  "piyasa-fiyat-arastirma-tutanagi": ["isAdi", "yaklasikMaliyet", "tarih", "evrakSayisi"],
+  luzum_muzekkeresi: ["sunulacakMakamAdi", "isAdi", "gerekce", "ihtiyacYeri", "tarih", "evrakSayisi"],
+  "luzum-muzekkeresi": ["sunulacakMakamAdi", "isAdi", "gerekce", "ihtiyacYeri", "tarih", "evrakSayisi"],
+  ihtiyac_listesi: ["sunulacakMakamAdi", "isAdi", "tarih", "evrakSayisi"],
+  "ihtiyac-listesi": ["sunulacakMakamAdi", "isAdi", "tarih", "evrakSayisi"],
+};
+
 const FIELD_SUGGESTIONS: Record<string, string[]> = {
   ilgi: [
     "Doğrudan Temin Onay Belgesi",
@@ -38,6 +70,7 @@ const FIELD_SUGGESTIONS: Record<string, string[]> = {
     "Fatura ve İrsaliye Örneği",
     "Birim Fiyat Teklif Cetveli",
   ],
+  butceTertibi: BUDGET_TERTIP_PRESETS.map((p) => `${p.code} ${p.name}`),
 };
 
 const FORM_FIELD_CATALOG: FormFieldConfig[] = [
@@ -241,9 +274,22 @@ export function DocumentPreviewFormBuilder({
     setEditedKeys(new Set());
   }, [selectedDocId]);
 
+  const priorityKeys = useMemo(() => {
+    if (!selectedDocId) return [];
+    const normalized = selectedDocId.toLowerCase().replace(/_/g, "-");
+    return (
+      TEMPLATE_PRIORITY_KEYS[selectedDocId] ||
+      TEMPLATE_PRIORITY_KEYS[normalized] ||
+      []
+    );
+  }, [selectedDocId]);
+
   // Şablon ve formData ile uyumlu alanların filtrelenmesi
   const relevantFields = useMemo(() => {
     return FORM_FIELD_CATALOG.filter((spec) => {
+      // 1. Aktif şablona özel öncelikli alanlar daima dahil edilir
+      if (priorityKeys.includes(spec.key)) return true;
+      // 2. formData içinde kayıtlı değeri olan alanlar
       if (formData && formData[spec.key] !== undefined) return true;
       if (
         spec.aliases &&
@@ -251,7 +297,7 @@ export function DocumentPreviewFormBuilder({
       ) {
         return true;
       }
-      // Temel alanlar her belgede geçerlidir
+      // 3. Temel alanlar her belgede geçerlidir
       const coreKeys = [
         "evrakSayisi",
         "tarih",
@@ -263,7 +309,7 @@ export function DocumentPreviewFormBuilder({
       ];
       return coreKeys.includes(spec.key);
     });
-  }, [formData, selectedDocId]);
+  }, [formData, selectedDocId, priorityKeys]);
 
   const filteredFields = useMemo(() => {
     return relevantFields.filter((f) => {
@@ -478,6 +524,41 @@ export function DocumentPreviewFormBuilder({
         })}
       </div>
 
+      {/* Şablona Özel Öncelikli Alanlar Rozetleri / Hızlı Erişim */}
+      {priorityKeys.length > 0 && (
+        <div className="p-2.5 rounded-xl bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200/80 dark:border-blue-900/60 space-y-1.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-700 dark:text-blue-300">
+            <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span>Bu Şablona Özel Alanlar:</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {priorityKeys.map((pKey) => {
+              const spec = FORM_FIELD_CATALOG.find((f) => f.key === pKey);
+              if (!spec) return null;
+              const hasVal = formData &&
+                formData[pKey] !== undefined &&
+                String(formData[pKey]).trim() !== "";
+              return (
+                <button
+                  key={pKey}
+                  type="button"
+                  onClick={() => setSearchQuery(spec.label)}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-all cursor-pointer flex items-center gap-1 ${
+                    hasVal
+                      ? "bg-white/90 dark:bg-slate-900/90 border-blue-300 dark:border-blue-800 text-blue-800 dark:text-blue-200 shadow-2xs"
+                      : "bg-blue-100/60 dark:bg-blue-900/40 border-blue-200 dark:border-blue-800/60 text-blue-600 dark:text-blue-400"
+                  }`}
+                  title={`${spec.label} alanına odaklan`}
+                >
+                  <span>{spec.label}</span>
+                  {hasVal && <Check className="w-2.5 h-2.5 text-emerald-600" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Arama Kutusu */}
       <div className="relative">
         <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
@@ -575,6 +656,57 @@ export function DocumentPreviewFormBuilder({
                     className="w-full px-2.5 py-1.5 bg-slate-50/70 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
                   />
                 )}
+
+              {/* Bütçe Tertibi için Özel Analitik Kod Seçici */}
+              {field.key === "butceTertibi" && (
+                <div className="space-y-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-blue-600" />
+                      <span>Analitik Bütçe Tertibi Seçici:</span>
+                    </span>
+                  </div>
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const cur = val ? val.trim() : "";
+                        const next = cur ? `${cur}\n${e.target.value}` : e.target.value;
+                        handleFieldChange(field, next);
+                        e.target.value = "";
+                      }
+                    }}
+                    defaultValue=""
+                    className="w-full px-2 py-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      Hazır bütçe tertiplerinden seçiniz...
+                    </option>
+                    {BUDGET_TERTIP_PRESETS.map((p) => (
+                      <option key={p.code} value={`${p.code} ${p.name}`}>
+                        {p.code} - {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex flex-wrap gap-1">
+                    {BUDGET_TERTIP_PRESETS.slice(0, 5).map((p) => (
+                      <button
+                        key={p.code}
+                        type="button"
+                        onClick={() => {
+                          const cur = val ? val.trim() : "";
+                          const item = `${p.code} ${p.name}`;
+                          const next = cur ? `${cur}\n${item}` : item;
+                          handleFieldChange(field, next);
+                        }}
+                        className="px-1.5 py-0.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 border border-blue-200/80 dark:border-blue-800/60 rounded text-[9px] font-semibold text-blue-700 dark:text-blue-300 transition-colors cursor-pointer"
+                        title={`${p.code} ${p.name} ekle`}
+                      >
+                        + {p.code}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Hızlı Öneri Kalıpları (İlgi, Ekler) */}
               {FIELD_SUGGESTIONS[field.key] && (

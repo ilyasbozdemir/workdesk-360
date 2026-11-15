@@ -27,8 +27,8 @@ describe('DocumentPreviewModalV3 — Form Builder & Navbar Düzenleme Modu Testl
     )
 
     expect(screen.getByText('Belge Form Alanları')).toBeTruthy()
-    expect(screen.getByText('Resmî Evrak Sayısı')).toBeTruthy()
-    expect(screen.getByText('İşin Adı / Konu')).toBeTruthy()
+    expect(screen.getAllByText('Resmî Evrak Sayısı').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('İşin Adı / Konu').length).toBeGreaterThan(0)
 
     // Dosyadan gelen alanlarda 📁 Dosyadan rozeti görünmeli
     const dosyadanBadges = screen.getAllByText('📁 Dosyadan')
@@ -200,11 +200,38 @@ describe('DocumentPreviewModalV3 — Form Builder & Navbar Düzenleme Modu Testl
 
     // Evrak kategorisine tıkla
     fireEvent.click(screen.getByText(/Evrak & Tarih/))
-    expect(screen.getByText('Resmî Evrak Sayısı')).toBeTruthy()
+    expect(screen.getAllByText('Resmî Evrak Sayısı').length).toBeGreaterThan(0)
 
     // Arama kutusuna yaz
     const searchInput = screen.getByPlaceholderText(/Alan adı, bütçe kodu veya konu ara.../)
     fireEvent.change(searchInput, { target: { value: 'Evrak' } })
-    expect(screen.getByText('Resmî Evrak Sayısı')).toBeTruthy()
+    expect(screen.getAllByText('Resmî Evrak Sayısı').length).toBeGreaterThan(0)
+  })
+
+  it('6. Harcama Talimatı seçildiğinde Bütçe Tertibi, Kullanılabilir Ödenek ve Mutemet Adı öncelikli gelir ve hazır bütçe kod seçici butonları render edilir', () => {
+    const setFormData = vi.fn()
+    render(
+      <DocumentPreviewFormBuilder
+        formData={{}}
+        setFormData={setFormData}
+        selectedDocId="harcama_talimati"
+      />
+    )
+
+    // Bu Şablona Özel Alanlar başlığı
+    expect(screen.getByText('Bu Şablona Özel Alanlar:')).toBeTruthy()
+
+    // Bütçe Tertibi alanı ve Analitik Bütçe Tertibi Seçici
+    expect(screen.getAllByText('Bütçe Tertibi').length).toBeGreaterThan(0)
+    expect(screen.getByText('Analitik Bütçe Tertibi Seçici:')).toBeTruthy()
+    expect(screen.getByText('Hazır bütçe tertiplerinden seçiniz...')).toBeTruthy()
+
+    // Hızlı tertip chip'leri (ör: 03.2.1.01)
+    const chip = screen.getByText('+ 03.2.1.01')
+    expect(chip).toBeTruthy()
+    fireEvent.click(chip)
+
+    // setFormData çağrılmış olmalı
+    expect(setFormData).toHaveBeenCalled()
   })
 })
