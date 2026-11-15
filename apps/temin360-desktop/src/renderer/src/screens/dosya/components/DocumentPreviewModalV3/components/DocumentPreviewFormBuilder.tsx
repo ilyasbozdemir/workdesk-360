@@ -731,13 +731,13 @@ export function DocumentPreviewFormBuilder({
                 isFullWidth ? "col-span-full" : ""
               }`}
             >
-              <div className="flex items-center justify-between gap-1.5">
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5">
-                  <span className="truncate">{field.label}</span>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-snug flex items-center gap-1.5 min-w-0">
+                  <span>{field.label}</span>
                 </label>
                 <div className="flex items-center gap-1 shrink-0">
                   <span
-                    className={`px-1.5 py-0.5 rounded-md text-[9.5px] font-bold border ${badge.className}`}
+                    className={`px-1.5 py-0.5 rounded-md text-[9.5px] font-bold border whitespace-nowrap ${badge.className}`}
                   >
                     {badge.label}
                   </span>
@@ -874,8 +874,8 @@ export function DocumentPreviewFormBuilder({
               )}
 
               {field.hint && (
-                <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
-                  <span className="truncate">{field.hint}</span>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 gap-1.5 pt-0.5">
+                  <span className="leading-tight">{field.hint}</span>
                   <span className="font-mono text-[9px] text-slate-400/80 shrink-0">
                     {field.key}
                   </span>
