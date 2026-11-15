@@ -709,11 +709,11 @@ export const templateRegistry = {
   muayene_kabul_komisyonu: {
     id: "muayene-kabul-komisyonu",
     name: "MuayeneKabulKomisyonu",
-    title: "Muayene ve Kabul Komisyon Kararı",
+    title: "Muayene ve Kabul Komisyonu Görevlendirmesi",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
-      "Teslim alınan mal veya hizmetin muayene kabul komisyonunca onaylanma kararı",
+      "Teslim alınan mal veya hizmetin muayene ve kabulünü yapmak üzere komisyon görevlendirme yazısı",
     component: MuayeneKabulKomisyonu,
     orientation: "portrait",
     group: "muayene_kabul",
@@ -723,7 +723,7 @@ export const templateRegistry = {
     version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
-      supportsOlur: true,
+      supportsOlur: false,
       supportsCommission: true,
       supportedCommissionTypes: ["muayene_kabul"],
       supportsLogos: true,

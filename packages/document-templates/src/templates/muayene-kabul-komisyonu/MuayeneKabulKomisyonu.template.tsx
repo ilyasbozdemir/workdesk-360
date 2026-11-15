@@ -2,9 +2,7 @@ import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
 import {
-  ApprovalSignature,
-  DateEditableField,
-  EditableOlurPlaceholder,
+  MetadataBlock,
   PersonelCard,
 } from "../../document/ApprovalSignature";
 import { MuayeneKabulKomisyonuData } from "./MuayeneKabulKomisyonu.schema";
@@ -26,76 +24,153 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
   hideHeader = false,
   hideFooter = false,
 }) => {
-  // Görevlendirilen muayene kabul komisyonu üyeleri (Mükerrer isimleri tekleştir)
-  const gorevlendirilenler: Array<{ adSoyad: string; unvan: string }> = (() => {
-    let raw: Array<{ adSoyad: string; unvan: string }> = [];
+  // Görevli listesinde olmaması gereken rolleri (harcama yetkilisi, gerçekleştirme vb.) ayıkla
+  const isExcludedOfficer = (item: any): boolean => {
+    if (!item) return true;
+    const adSoyad = (
+      typeof item === "string"
+        ? item
+        : item.adSoyad || item.ad_soyad || item.ad || item.adi || ""
+    ).trim();
+
+    if (!adSoyad) return true;
+
+    const lower = adSoyad.toLowerCase();
+    if (
+      lower.includes("talep eden") ||
+      lower.includes("hazırlayan personel") ||
+      lower.includes("onaylayan yetkili") ||
+      lower.includes("onaylayan personel") ||
+      lower.includes("dosyayı hazırlayan")
+    ) {
+      return true;
+    }
+
+    // Harcama yetkilisi, gerçekleştirme görevlisi veya muhasebe görevlileri muayene kabul komisyon üyesi olarak listelenmez
+    const duty = (
+      typeof item === "object"
+        ? `${item.gorev || ""} ${item.gorevi || ""} ${
+          item.komisyonGorevi || ""
+        } ${item.unvan || ""}`
+        : ""
+    ).toLowerCase();
+
+    if (
+      duty.includes("harcama yetkili") ||
+      duty.includes("gerçekleştirme") ||
+      duty.includes("gerceklestirme") ||
+      duty.includes("onaylayan") ||
+      duty.includes("muhasebe")
+    ) {
+      return true;
+    }
+
+    // Kişinin adı doğrudan onaylayan personel ile aynı ise de hariç tut
+    if (
+      data.onaylayanPersonelAdi &&
+      adSoyad.toLowerCase() === data.onaylayanPersonelAdi.trim().toLowerCase()
+    ) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Ham görevli listesini topla (muayeneKomisyonu, gorevlendirilenler, komisyonUyeleri, komisyon, gorevliler, dagitimListesi)
+  const rawList: any[] = (() => {
     if (
       data.muayeneKomisyonu && Array.isArray(data.muayeneKomisyonu) &&
       data.muayeneKomisyonu.length > 0
     ) {
-      raw = data.muayeneKomisyonu.map((g: any) => ({
-        adSoyad: g.adSoyad || g.ad_soyad || g.ad || "",
-        unvan: g.unvan || g.gorev || "",
-      }));
-    } else if (
+      return data.muayeneKomisyonu;
+    }
+    if (
       data.gorevlendirilenler && Array.isArray(data.gorevlendirilenler) &&
       data.gorevlendirilenler.length > 0
     ) {
-      raw = data.gorevlendirilenler.map((g: any) => ({
-        adSoyad: g.adSoyad || g.ad || g.adi || "",
-        unvan: g.unvan || g.unvani || g.gorev || "",
-      }));
-    } else if (
+      return data.gorevlendirilenler;
+    }
+    if (
       data.komisyonUyeleri && Array.isArray(data.komisyonUyeleri) &&
       data.komisyonUyeleri.length > 0
     ) {
-      raw = data.komisyonUyeleri.map((g: any) => ({
-        adSoyad: g.adSoyad || g.ad_soyad || g.ad || "",
-        unvan: g.unvan || g.gorev || "",
-      }));
-    } else if (
+      return data.komisyonUyeleri;
+    }
+    if (
+      data.komisyon && Array.isArray(data.komisyon) &&
+      data.komisyon.length > 0
+    ) {
+      return data.komisyon;
+    }
+    if (
       data.gorevliler && Array.isArray(data.gorevliler) &&
       data.gorevliler.length > 0
     ) {
-      raw = data.gorevliler.map((g: any) => ({
-        adSoyad: g.ad || g.adSoyad || "",
-        unvan: g.unvan || g.unvani || g.gorev || "",
-      }));
+      return data.gorevliler;
     }
+    if (
+      data.dagitimListesi && Array.isArray(data.dagitimListesi) &&
+      data.dagitimListesi.length > 0
+    ) {
+      return data.dagitimListesi;
+    }
+    return [];
+  })();
+
+  // Muayene ve Kabul Komisyonu Görevlilerini listele (Mükerrer isimleri tekleştir)
+  const gorevlendirilenler: Array<{ adSoyad: string; unvan: string }> = (() => {
+    const list = rawList
+      .filter((g) => !isExcludedOfficer(g))
+      .map((g: any) => {
+        if (typeof g === "string") {
+          return { adSoyad: g.trim(), unvan: "" };
+        }
+        return {
+          adSoyad: (g.adSoyad || g.ad_soyad || g.ad || g.adi || "").trim(),
+          unvan: (g.unvan || g.unvani || g.gorev || "").trim(),
+        };
+      })
+      .filter((g) => g.adSoyad.length > 0);
 
     const seen = new Set<string>();
-    return raw.filter((item) => {
-      const key = (item.adSoyad || "").trim().toLowerCase();
-      if (!key) return false;
+    return list.filter((item) => {
+      const key = item.adSoyad.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
   })();
 
-  // Dağıtım listesi (Mükerrer isimleri tekleştir)
+  // Dağıtım listesi (Mükerrer isimleri tekleştir, yoksa gorevlendirilenler listesine geri düş)
   const dagitimListesi: Array<{ adSoyad: string; unvan: string }> = (() => {
     if (
       data.dagitimListesi && Array.isArray(data.dagitimListesi) &&
       data.dagitimListesi.length > 0
     ) {
-      const mapped = data.dagitimListesi.map((d: any) => {
-        if (typeof d === "string") return { adSoyad: d, unvan: "" };
-        return {
-          adSoyad: d.adSoyad || d.ad || d.adi || "",
-          unvan: d.unvan || d.unvani || d.gorev || "",
-        };
-      });
-      const seen = new Set<string>();
-      return mapped.filter((item) => {
-        const key = (item.adSoyad || "").trim().toLowerCase();
-        if (!key) return false;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+      const filtered = data.dagitimListesi
+        .map((d: any) => {
+          if (typeof d === "string") {
+            return { adSoyad: d.trim(), unvan: "" };
+          }
+          return {
+            adSoyad: (d.adSoyad || d.ad || d.adi || "").trim(),
+            unvan: (d.unvan || d.unvani || d.gorev || "").trim(),
+          };
+        })
+        .filter((d: any) => !isExcludedOfficer(d) && d.adSoyad.length > 0);
+
+      if (filtered.length > 0) {
+        const seen = new Set<string>();
+        return filtered.filter((item) => {
+          const key = item.adSoyad.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
     }
-    return [];
+
+    return gorevlendirilenler;
   })();
 
   // Evrak sayısı oluşturma (EBYS Standart Formatı: E-DETSİS-SDP-NO)
@@ -113,8 +188,7 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
       });
 
   const konuMetni = "Muayene ve Kabul Komisyonu";
-
-  const isinAdiMetni = data.isinAdi ?? "Alımı yapılacak";
+  const isinAdiMetni = data.isinAdi ?? (data as any)?.konu ?? "Alımı yapılacak";
 
   return (
     <DocumentLayout
@@ -135,62 +209,13 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
           lineHeight: 1.5,
         }}
       >
-        {/* Meta Satırı (Sayı, Konu, Tarih) */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "0px",
-          }}
-        >
-          <div>
-            <table style={{ borderCollapse: "collapse" }}>
-              <tbody>
-                <tr>
-                  <td
-                    style={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      padding: "2px 10px 2px 0",
-                      verticalAlign: "top",
-                    }}
-                  >
-                    Sayı
-                  </td>
-                  <td
-                    style={{ padding: "2px 10px 2px 0", verticalAlign: "top" }}
-                  >
-                    : <EditableField name="evrakSayisi" value={evrakNo} />
-                  </td>
-                </tr>
-                <tr>
-                  <td
-                    style={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      padding: "2px 10px 2px 0",
-                      verticalAlign: "top",
-                    }}
-                  >
-                    Konu
-                  </td>
-                  <td
-                    style={{ padding: "2px 10px 2px 0", verticalAlign: "top" }}
-                  >
-                    : <EditableField name="dosyaKonusu" value={konuMetni} />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-            <strong>Tarih:</strong>{" "}
-            <DateEditableField
-              name="dosyaTarihi"
-              value={data.dosyaTarihi || data.tarih || ""}
-            />
-          </div>
-        </div>
+        {/* Standart Resmî Yazışma Meta Bloğu (Sayı, Konu, Tarih) */}
+        <MetadataBlock
+          evrakSayisi={evrakNo}
+          tarih={data.dosyaTarihi || data.tarih}
+          dosyaKonusu={konuMetni}
+          showBorder={false}
+        />
 
         {/* Görevlendirme Metni */}
         <div
@@ -227,7 +252,6 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
                 "22/d",
             )}
           />
-
           {" maddesine göre alımı gerçekleştirilen "}
           <EditableField
             name="isinAdi"
@@ -253,57 +277,23 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
             textIndent: "40px",
             textAlign: "justify",
             marginTop: "0px",
-            marginBottom: "20px",
+            marginBottom: "30px",
             lineHeight: 1.6,
           }}
         >
-          {data.olurYazisi !== false
-            ? "Gereğini olurlarınıza arz ederim."
-            : "Gereğini rica ederim."}
+          Gereğini rica ederim.
         </div>
 
-        {/* Hazırlayan (Sağ) - Eğer OLUR varsa hazırlayan imza atar */}
-        {data.olurYazisi !== false && (
-          <PersonelCard
-            adSoyad={data.hazirlayanPersonelAdi}
-            unvan={data.hazirlayanPersonelUnvan}
-            align="right"
-            marginTop={20}
-            marginBottom={30}
-            nameField="hazirlayanPersonelAdi"
-            unvanField="hazirlayanPersonelUnvan"
-          />
-        )}
-
-        {/* Doğrudan Görevlendirme İmzası (OLUR yoksa yetkili tek başına imzalar) */}
-        {data.olurYazisi === false && (
-          <PersonelCard
-            adSoyad={data.onaylayanPersonelAdi}
-            unvan={data.onaylayanPersonelUnvan}
-            align="right"
-            marginTop={20}
-            marginBottom={30}
-            nameField="onaylayanPersonelAdi"
-            unvanField="onaylayanPersonelUnvan"
-          />
-        )}
-
-        {/* OLUR Onay Bloğu (Orta) */}
-        {data.olurYazisi !== false
-          ? (
-            <ApprovalSignature
-              title={(data as any).olurBaslik || "OLUR"}
-              date={data.dosyaTarihi || data.tarih || ""}
-              adSoyad={data.onaylayanPersonelAdi}
-              unvan={data.onaylayanPersonelUnvan}
-              showSpace={true}
-              marginTop={25}
-              nameField="onaylayanPersonelAdi"
-              unvanField="onaylayanPersonelUnvan"
-              dateField="dosyaTarihi"
-            />
-          )
-          : <EditableOlurPlaceholder />}
+        {/* Görevlendirmeyi Yapan Yetkili / Harcama Yetkilisi İmzası (Sağ) */}
+        <PersonelCard
+          adSoyad={data.onaylayanPersonelAdi || data.harcamaYetkilisiAdi || data.baskanAdi}
+          unvan={data.onaylayanPersonelUnvan || data.harcamaYetkilisiUnvani || "Harcama Yetkilisi"}
+          align="right"
+          marginTop={20}
+          marginBottom={30}
+          nameField="onaylayanPersonelAdi"
+          unvanField="onaylayanPersonelUnvan"
+        />
 
         {/* DAĞITIM (Sol Alt) */}
         <div
