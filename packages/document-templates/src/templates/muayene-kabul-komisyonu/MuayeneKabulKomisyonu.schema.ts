@@ -35,6 +35,8 @@ export const MuayeneKabulKomisyonuSchema = z.object({
   hazirlayanTelefon: z.string().optional(),
   onaylayanPersonelAdi: z.string().optional(),
   onaylayanPersonelUnvan: z.string().optional(),
+  sunulacakMakamAdi: z.string().optional(),
+  hitapMetni: z.string().optional(),
   muayeneKomisyonu: z.array(z.any()).optional(),
   gorevliler: z
     .array(

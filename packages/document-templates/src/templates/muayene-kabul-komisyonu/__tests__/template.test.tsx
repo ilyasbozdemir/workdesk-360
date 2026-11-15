@@ -49,6 +49,8 @@ describe("MuayeneKabulKomisyonu — Şablon Bileşen ve Data Mapping Testleri", 
 
     // DAĞITIM
     expect(html).toContain("DAĞITIM:");
+    // DAĞITIM YERLERİNE hitabı kontrolü
+    expect(html).toContain("DAĞITIM YERLERİNE");
   });
 
   it("2. Boş veri sağlandığında çökmeksizin varsayılan metinleri ve rica ederim ifadesini çizer", () => {
@@ -105,5 +107,43 @@ describe("MuayeneKabulKomisyonu — Şablon Bileşen ve Data Mapping Testleri", 
       <MuayeneKabulKomisyonu data={{ teminSekli: "4734 Sayılı KİK Md. 22/c (Mevcut Uyumluluk)" }} />
     );
     expect(htmlC).toContain("22/c");
+  });
+
+  it("6. Dağıtım listesi olduğunda DAĞITIM YERLERİNE hitabı çizilir, özel hitapMetni veya makam adı verildiğinde önceliklendirilir", () => {
+    // Dağıtım listesi varsa otomatik DAĞITIM YERLERİNE
+    const html1 = renderToStaticMarkup(
+      <MuayeneKabulKomisyonu
+        data={{
+          dagitimListesi: [{ adSoyad: "Ali Veli", unvan: "Mühendis" }],
+        }}
+      />
+    );
+    expect(html1).toContain("DAĞITIM YERLERİNE");
+    expect(html1).toContain("DAĞITIM:");
+    expect(html1).toContain("Ali Veli");
+
+    // Özel hitapMetni verildiğinde
+    const html2 = renderToStaticMarkup(
+      <MuayeneKabulKomisyonu
+        data={{
+          hitapMetni: "DESTEK HİZMETLERİ MÜDÜRLÜĞÜNE",
+          dagitimListesi: [{ adSoyad: "Ali Veli", unvan: "Mühendis" }],
+        }}
+      />
+    );
+    expect(html2).toContain("DESTEK HİZMETLERİ MÜDÜRLÜĞÜNE");
+
+    // Dağıtım listesi yokken sunulacakMakamAdi varsa o gösterilir
+    const html3 = renderToStaticMarkup(
+      <MuayeneKabulKomisyonu
+        data={{
+          sunulacakMakamAdi: "BAŞKANLIK MAKAMINA",
+          dagitimListesi: [],
+          gorevlendirilenler: [],
+        }}
+      />
+    );
+    expect(html3).toContain("BAŞKANLIK MAKAMINA");
+    expect(html3).not.toContain("DAĞITIM:");
   });
 });

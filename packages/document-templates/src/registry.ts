@@ -955,7 +955,8 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
     "piyasa_fiyat_arastirma_gorevlendirmesi",
   "piyasa-arastirma-gorevlendirmesi": "piyasa_fiyat_arastirma_gorevlendirmesi",
   "piyasa-arastirma-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
-  "piyasa-fiyat-arastirma-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-fiyat-arastirma-gorevlendirme":
+    "piyasa_fiyat_arastirma_gorevlendirmesi",
   "piyasa-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
   "piyasa-gorevlendirmesi": "piyasa_fiyat_arastirma_gorevlendirmesi",
   "fiyat-arastirma-komisyonu": "piyasa_fiyat_arastirma_gorevlendirmesi",

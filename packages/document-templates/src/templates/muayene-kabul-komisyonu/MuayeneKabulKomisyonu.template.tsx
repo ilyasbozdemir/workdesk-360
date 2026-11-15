@@ -35,6 +35,10 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
     onaylayanUnvan,
   } = useMuayeneKabulKomisyonu({ data, pageSize, orientation });
 
+  const dagitimVar = dagitimListesi.length > 0;
+  const hitapMetni = data.hitapMetni ||
+    (dagitimVar ? "DAĞITIM YERLERİNE" : data.sunulacakMakamAdi || "");
+
   return (
     <DocumentLayout
       data={data as any}
@@ -61,6 +65,27 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
           dosyaKonusu={konuMetni}
           showBorder={false}
         />
+
+        {/* HİTAP: tek muhatap ise adı, birden çoksa "DAĞITIM YERLERİNE" */}
+        {hitapMetni && (
+          <div
+            style={{
+              textAlign: "center",
+              fontWeight: "bold",
+              fontSize: "12pt",
+              textTransform: "uppercase",
+              marginTop: "24px",
+              marginBottom: "16px",
+              pageBreakInside: "avoid",
+            }}
+          >
+            <EditableField
+              name="hitapMetni"
+              value={hitapMetni}
+              placeholder="DAĞITIM YERLERİNE"
+            />
+          </div>
+        )}
 
         {/* Görevlendirme Metni */}
         <div
@@ -130,35 +155,33 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
         />
 
         {/* DAĞITIM (Sol Alt) */}
-        <div
-          style={{
-            marginTop: "40px",
-            textAlign: "left",
-            fontSize: "10pt",
-            breakInside: "avoid",
-            pageBreakInside: "avoid",
-          }}
-        >
-          <div style={{ fontSize: "10pt", fontWeight: "bold" }}>DAĞITIM:</div>
-          <ul
+        {dagitimVar && (
+          <div
             style={{
-              listStyleType: "none",
-              paddingLeft: 0,
-              marginTop: "5px",
-              lineHeight: 1.5,
+              marginTop: "40px",
+              textAlign: "left",
+              fontSize: "10pt",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
-            {dagitimListesi.length > 0
-              ? (
-                dagitimListesi.map((d, idx) => (
-                  <li key={idx}>
-                    - {d.adSoyad} {d.unvan ? formatUnvan(d.unvan) : ""}
-                  </li>
-                ))
-              )
-              : <li>- İlgili Personel</li>}
-          </ul>
-        </div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold" }}>DAĞITIM:</div>
+            <ul
+              style={{
+                listStyleType: "none",
+                paddingLeft: 0,
+                marginTop: "5px",
+                lineHeight: 1.5,
+              }}
+            >
+              {dagitimListesi.map((d, idx) => (
+                <li key={idx}>
+                  - {d.adSoyad} {d.unvan ? formatUnvan(d.unvan) : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </DocumentLayout>
   );
