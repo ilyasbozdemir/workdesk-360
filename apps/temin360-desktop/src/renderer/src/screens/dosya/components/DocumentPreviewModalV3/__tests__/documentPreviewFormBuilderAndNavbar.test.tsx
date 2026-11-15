@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { DocumentPreviewFormBuilder } from '../components/DocumentPreviewFormBuilder'
 import { DocumentPreviewHeader } from '../components/DocumentPreviewHeader'
+import { DocumentPreviewSidebar } from '../components/DocumentPreviewSidebar'
 
 describe('DocumentPreviewModalV3 — Form Builder & Navbar Düzenleme Modu Testleri', () => {
   const initialFormData = {
@@ -146,5 +147,64 @@ describe('DocumentPreviewModalV3 — Form Builder & Navbar Düzenleme Modu Testl
     )
 
     expect(screen.getByText('Düzenleme Açık')).toBeTruthy()
+  })
+
+  it('4. DocumentPreviewSidebar yüzdelik genişlik seçicilerini (%25, %33, %40, %50) render eder ve tıklandığında genişliği günceller', () => {
+    const setSidebarPercent = vi.fn()
+
+    render(
+      <DocumentPreviewSidebar
+        sidebarOpen={true}
+        setSidebarOpen={vi.fn()}
+        sidebarPercent={33}
+        setSidebarPercent={setSidebarPercent}
+        selectedDocId="ihtiyac_listesi"
+        templateOptions={[]}
+        isEditingMode={false}
+        setIsEditingMode={vi.fn()}
+        orientation="portrait"
+        setOrientation={vi.fn()}
+        formData={initialFormData}
+        setFormData={vi.fn()}
+        localShowLogoLeft={false}
+        setLocalShowLogoLeft={vi.fn()}
+        localShowLogoRight={false}
+        setLocalShowLogoRight={vi.fn()}
+      />
+    )
+
+    // %25, %33, %40, %50 butonları görünmeli
+    expect(screen.getByText('%25')).toBeTruthy()
+    expect(screen.getByText('%33')).toBeTruthy()
+    expect(screen.getByText('%40')).toBeTruthy()
+    expect(screen.getByText('%50')).toBeTruthy()
+
+    // %50 butonuna tıklanınca genişlik güncellenmeli
+    fireEvent.click(screen.getByText('%50'))
+    expect(setSidebarPercent).toHaveBeenCalledWith(50)
+  })
+
+  it('5. Form Builder kategori filtreleme ve arama desteği sunar', () => {
+    render(
+      <DocumentPreviewFormBuilder
+        formData={initialFormData}
+        setFormData={vi.fn()}
+        selectedDocId="ihtiyac_listesi"
+      />
+    )
+
+    // Kategori sekmeleri
+    expect(screen.getByText(/Evrak & Tarih/)).toBeTruthy()
+    expect(screen.getByText(/İş & Gerekçe/)).toBeTruthy()
+    expect(screen.getByText(/Mali & Bütçe/)).toBeTruthy()
+
+    // Evrak kategorisine tıkla
+    fireEvent.click(screen.getByText(/Evrak & Tarih/))
+    expect(screen.getByText('Resmî Evrak Sayısı')).toBeTruthy()
+
+    // Arama kutusuna yaz
+    const searchInput = screen.getByPlaceholderText(/Alan adı, bütçe kodu veya konu ara.../)
+    fireEvent.change(searchInput, { target: { value: 'Evrak' } })
+    expect(screen.getByText('Resmî Evrak Sayısı')).toBeTruthy()
   })
 })

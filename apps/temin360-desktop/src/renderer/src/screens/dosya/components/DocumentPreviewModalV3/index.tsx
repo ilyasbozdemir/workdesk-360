@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import { DocumentPreviewModalV3Props } from './types'
 import { useDocumentPreviewModal } from '../../hooks/useDocumentPreviewModal'
 import { DocumentPreviewHeader } from './components/DocumentPreviewHeader'
@@ -80,6 +80,56 @@ export function DocumentPreviewModalV3(props: DocumentPreviewModalV3Props): Reac
     handleOpenPdfInNewTab,
     handleRefreshFromDb
   } = useDocumentPreviewModal(props)
+
+  const [sidebarPercent, setSidebarPercent] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('temin360_preview_sidebar_percent')
+      if (saved) {
+        const parsed = parseInt(saved, 10)
+        if (parsed >= 20 && parsed <= 60) return parsed
+      }
+    } catch {
+      // ignore
+    }
+    return 33
+  })
+
+  const bodyContainerRef = useRef<HTMLDivElement>(null)
+  const isResizingRef = useRef(false)
+
+  const handleMouseDownResize = (e: React.MouseEvent) => {
+    e.preventDefault()
+    isResizingRef.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizingRef.current || !bodyContainerRef.current) return
+      const rect = bodyContainerRef.current.getBoundingClientRect()
+      const newPercent = Math.max(
+        20,
+        Math.min(60, ((moveEvent.clientX - rect.left) / rect.width) * 100)
+      )
+      const rounded = Math.round(newPercent)
+      setSidebarPercent(rounded)
+      try {
+        localStorage.setItem('temin360_preview_sidebar_percent', String(rounded))
+      } catch {
+        // ignore
+      }
+    }
+
+    const handleMouseUp = () => {
+      isResizingRef.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+  }
 
   if (!isOpen) return null
 
@@ -167,11 +217,13 @@ export function DocumentPreviewModalV3(props: DocumentPreviewModalV3Props): Reac
         onSelectTemplate={setSelectedDocId}
       />
 
-      {/* 3. Ana Gövde: Sidebar + Belge Tuvali */}
-      <div className="flex-1 flex overflow-hidden min-h-0 relative z-0">
+      {/* 3. Ana Gövde: Sidebar + Boyutlandırma Ayırıcı + Belge Tuvali */}
+      <div ref={bodyContainerRef} className="flex-1 flex overflow-hidden min-h-0 relative z-0">
         <DocumentPreviewSidebar
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          sidebarPercent={sidebarPercent}
+          setSidebarPercent={setSidebarPercent}
           selectedDocId={selectedDocId}
           supportsOlur={activeTemplateConf?.capabilities?.supportsOlur}
           supportsLogos={activeTemplateConf?.category !== '5-klasor-ve-kapaklar'}
@@ -196,6 +248,17 @@ export function DocumentPreviewModalV3(props: DocumentPreviewModalV3Props): Reac
           personelListesi={personelListesi}
           birimListesi={birimListesi}
         />
+
+        {/* Resizable Divider Handle (Sürüklenebilir Boyutlandırıcı) */}
+        {sidebarOpen && (
+          <div
+            onMouseDown={handleMouseDownResize}
+            className="w-1.5 hover:w-2 bg-slate-200/90 dark:bg-slate-800/90 hover:bg-blue-500/80 dark:hover:bg-blue-500 cursor-col-resize transition-all shrink-0 z-10 flex items-center justify-center group select-none"
+            title="Paneli genişletmek/daraltmak için sürükleyin"
+          >
+            <div className="w-0.5 h-8 bg-slate-400/80 dark:bg-slate-600 group-hover:bg-white rounded-full transition-colors" />
+          </div>
+        )}
 
         <DocumentPreviewCanvas
           isLoading={isLoading}

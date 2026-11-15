@@ -160,7 +160,7 @@ export function DocumentPreviewCanvas({
   return (
     <div
       ref={previewContainerRef}
-      className="flex-1 bg-slate-200/50 dark:bg-slate-950 flex justify-center overflow-auto h-full py-8 custom-scrollbar min-h-0 min-w-0 select-text"
+      className="flex-1 bg-slate-100/90 dark:bg-slate-950 flex justify-center overflow-auto h-full py-8 px-4 custom-scrollbar min-h-0 min-w-0 select-text relative [background-image:radial-gradient(#cbd5e1_1px,transparent_1px)] dark:[background-image:radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px]"
     >
       <DocumentRenderer
         templateKey={effectiveTemplateKey}
@@ -207,6 +207,24 @@ export function DocumentPreviewCanvas({
         birimListesi={birimListesi}
         firstPageLimit={formData.firstPageLimit}
       />
+
+      {/* Tuval Durum Rozeti */}
+      <div className="fixed bottom-4 right-6 z-20 hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-md text-[11px] font-semibold text-slate-600 dark:text-slate-300 pointer-events-auto">
+        <span className="flex items-center gap-1.5">
+          <span
+            className={`w-2 h-2 rounded-full ${
+              isEditingMode ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'
+            }`}
+          />
+          <span>{isEditingMode ? 'Canlı Düzenleme Açık' : 'Önizleme'}</span>
+        </span>
+        <span className="text-slate-300 dark:text-slate-700">•</span>
+        <span className="font-mono text-slate-800 dark:text-slate-200 font-bold">
+          %{Math.round(previewScale * 100)}
+        </span>
+        <span className="text-slate-300 dark:text-slate-700">•</span>
+        <span>{orientation === 'portrait' ? 'A4 Dikey' : 'A4 Yatay'}</span>
+      </div>
     </div>
   );
 }

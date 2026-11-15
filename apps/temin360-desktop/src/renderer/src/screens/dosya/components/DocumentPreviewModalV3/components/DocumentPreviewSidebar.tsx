@@ -28,6 +28,8 @@ import {
 interface DocumentPreviewSidebarProps {
   sidebarOpen: boolean
   setSidebarOpen: (open: boolean) => void
+  sidebarPercent?: number
+  setSidebarPercent?: (pct: number) => void
   selectedDocId?: string
   supportsOlur?: boolean
   supportsLogos?: boolean
@@ -56,6 +58,8 @@ interface DocumentPreviewSidebarProps {
 export function DocumentPreviewSidebar({
   sidebarOpen,
   setSidebarOpen,
+  sidebarPercent = 33,
+  setSidebarPercent,
   selectedDocId,
   supportsOlur,
   supportsLogos = true,
@@ -104,22 +108,56 @@ export function DocumentPreviewSidebar({
 
   return (
     <div
-      className={`bg-slate-50 dark:bg-slate-900/50 transition-all duration-200 flex flex-col shrink-0 h-full overflow-hidden ${
+      style={
         sidebarOpen
-          ? 'w-80 border-r border-slate-200 dark:border-slate-800 opacity-100'
-          : 'w-0 border-0 opacity-0 pointer-events-none hidden'
+          ? {
+              width: `${sidebarPercent}%`,
+              minWidth: 320,
+              maxWidth: '65%'
+            }
+          : { width: 0 }
+      }
+      className={`bg-slate-50 dark:bg-slate-900/50 flex flex-col shrink-0 h-full overflow-hidden transition-[width] duration-150 ease-out ${
+        sidebarOpen
+          ? 'border-r border-slate-200 dark:border-slate-800 opacity-100'
+          : 'border-0 opacity-0 pointer-events-none hidden'
       }`}
     >
       {/* Sidebar Header & Tab Switcher */}
       <div className="flex flex-col border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shrink-0">
-        <div className="flex items-center justify-between p-2.5 sm:p-3 border-b border-slate-100 dark:border-slate-800/60">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between p-2.5 sm:p-3 border-b border-slate-100 dark:border-slate-800/60 gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
               Belge &amp; Süreç
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Yüzdelik Genişlik Seçici */}
+            {setSidebarPercent && (
+              <div
+                className="flex items-center bg-slate-100 dark:bg-slate-900 rounded-lg p-0.5 border border-slate-200/80 dark:border-slate-800"
+                title="Panel Genişliği"
+              >
+                {[25, 33, 40, 50].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setSidebarPercent(pct)}
+                    className={`px-1.5 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                      sidebarPercent === pct
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                    }`}
+                    title={`Paneli %${pct} genişliğe ayarla`}
+                  >
+                    %{pct}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={() => setIsEditingMode(!isEditingMode)}
@@ -370,7 +408,7 @@ export function DocumentPreviewSidebar({
       ) : (
         <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar min-h-0">
           {/* Hızlı Bölüm Atlama Çubuğu */}
-          <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl sticky top-0 z-10 border border-slate-200/80 dark:border-slate-800">
+          <div className="grid grid-cols-4 gap-1 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl sticky top-0 z-10 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
             <button
               type="button"
               onClick={() =>
@@ -378,7 +416,7 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-duzen')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer text-center"
+              className="px-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer text-center"
             >
               📐 Düzen
             </button>
@@ -389,7 +427,7 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-rota')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-1.5 py-1 rounded-lg text-[10px] font-bold text-purple-700 dark:text-purple-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer text-center"
+              className="px-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-all cursor-pointer text-center"
             >
               🔀 Rota
             </button>
@@ -400,7 +438,7 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-form')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-1.5 py-1 rounded-lg text-[10px] font-bold text-blue-700 dark:text-blue-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer text-center"
+              className="px-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-all cursor-pointer text-center"
             >
               📝 Alanlar
             </button>
@@ -411,7 +449,7 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-evrak')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-1.5 py-1 rounded-lg text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer text-center"
+              className="px-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all cursor-pointer text-center"
             >
               📋 Evrak
             </button>
