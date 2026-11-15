@@ -60,4 +60,28 @@ describe("KomisyonGorevlendirmeOnayi — Şablon Bileşen Render Testleri", () =
     expect(def).toBeDefined();
     expect(def?.id).toBe("komisyon-gorevlendirme-onayi");
   });
+
+  it("4. Harcama Yetkilisi veya Gerçekleştirme Görevlisi komisyon listesine kazara eklenirse filtrelenir", () => {
+    const mockData = {
+      baskanAdi: "Harcama Yetkilisi Bey",
+      baskanUnvan: "Harcama Yetkilisi",
+      fiyatKomisyonu: [
+        { adSoyad: "Harcama Yetkilisi Bey", unvan: "Harcama Yetkilisi", gorevi: "Harcama Yetkilisi" },
+        { adSoyad: "Ahmet Memur", unvan: "Memur", gorevi: "Üye" },
+      ],
+      muayeneKomisyonu: [
+        { adSoyad: "Gerçekleştirme Memuru", unvan: "Gerçekleştirme Görevlisi", gorevi: "Gerçekleştirme" },
+        { adSoyad: "Mehmet Tekniker", unvan: "Tekniker", gorevi: "Üye" },
+      ],
+    };
+
+    const html = renderToStaticMarkup(<KomisyonGorevlendirmeOnayi data={mockData} />);
+    // Tablo içinde sadece komisyon üyeleri yer almalıdır
+    expect(html).toContain("Ahmet Memur");
+    expect(html).toContain("Mehmet Tekniker");
+
+    // Fiyat tablosunda Harcama Yetkilisi Bey üye olarak listelenmemeli (yalnızca imza bloğunda çıkmalı)
+    const tablePart = html.split("PİYASA ARAŞTIRMA VE SATINALMA KOMİSYONU")[1].split("PersonelCard")[0];
+    expect(tablePart).not.toContain("Harcama Yetkilisi Bey</td>");
+  });
 });

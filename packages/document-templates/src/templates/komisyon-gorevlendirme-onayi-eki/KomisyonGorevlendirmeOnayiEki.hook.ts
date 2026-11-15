@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import { KomisyonGorevlendirmeOnayiEkiType } from "./KomisyonGorevlendirmeOnayiEki.schema";
-import { KomisyonGorevlendirmeUye } from "../komisyon-gorevlendirme-onayi/KomisyonGorevlendirmeOnayi.hook";
+import {
+  isExcludedFromCommissionTable,
+  KomisyonGorevlendirmeUye,
+} from "../komisyon-gorevlendirme-onayi/KomisyonGorevlendirmeOnayi.hook";
 
 export function formatAlimTuru(alimTuru?: string, tur?: string): string {
   const raw = (alimTuru || tur || "").trim();
@@ -59,26 +62,44 @@ export interface UseKomisyonGorevlendirmeOnayiEkiResult {
 }
 
 export function useKomisyonGorevlendirmeOnayiEki(
-  params: UseKomisyonGorevlendirmeOnayiEkiParams = {}
+  params: UseKomisyonGorevlendirmeOnayiEkiParams = {},
 ): UseKomisyonGorevlendirmeOnayiEkiResult {
   const { data = {} } = params;
 
   return useMemo(() => {
-    const rawFiyat =
-      data.fiyatKomisyonu && data.fiyatKomisyonu.length > 0
-        ? data.fiyatKomisyonu
-        : (data as any)?.gorevliler || [];
+    const onaylayanAdi = String(
+      (data as any)?.baskanAdi ||
+        (data as any)?.onaylayanPersonelAdi ||
+        (data as any)?.harcamaYetkilisiAdi ||
+        "",
+    ).trim();
+
+    const rawFiyat = data.fiyatKomisyonu && data.fiyatKomisyonu.length > 0
+      ? data.fiyatKomisyonu
+      : (data as any)?.gorevliler || [];
     const rawMuayene = data.muayeneKomisyonu || [];
 
-    const fiyatUyeleri: KomisyonGorevlendirmeUye[] = (
-      Array.isArray(rawFiyat) ? rawFiyat : []
+    const dedupe = (list: any[]) => {
+      const seen = new Set<string>();
+      return list.filter((item) => {
+        const key = (item.adSoyad || item.ad_soyad || item.adi || item.ad || "").trim().toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    };
+
+    const fiyatUyeleri: KomisyonGorevlendirmeUye[] = dedupe(
+      Array.isArray(rawFiyat) ? rawFiyat : [],
     )
+      .filter((m) => !isExcludedFromCommissionTable(m, onaylayanAdi))
       .map(normalizeMember)
       .filter((m) => m.adSoyad.length > 0);
 
-    const muayeneUyeleri: KomisyonGorevlendirmeUye[] = (
-      Array.isArray(rawMuayene) ? rawMuayene : []
+    const muayeneUyeleri: KomisyonGorevlendirmeUye[] = dedupe(
+      Array.isArray(rawMuayene) ? rawMuayene : [],
     )
+      .filter((m) => !isExcludedFromCommissionTable(m, onaylayanAdi))
       .map(normalizeMember)
       .filter((m) => m.adSoyad.length > 0);
 
@@ -95,4 +116,3 @@ export function useKomisyonGorevlendirmeOnayiEki(
     };
   }, [data]);
 }
-

@@ -30,6 +30,62 @@ export interface UseKomisyonGorevlendirmeOnayiResult {
   onaylayanUnvan: string;
 }
 
+export function isExcludedFromCommissionTable(item: any, onaylayanAdi?: string): boolean {
+  if (!item) return true;
+  const adSoyad = (
+    typeof item === "string"
+      ? item
+      : item.adSoyad || item.ad_soyad || item.adi || item.ad || ""
+  ).trim();
+
+  if (!adSoyad) return true;
+
+  const lowerName = adSoyad.toLowerCase();
+  if (
+    lowerName.includes("talep eden") ||
+    lowerName.includes("hazırlayan") ||
+    lowerName.includes("onaylayan") ||
+    lowerName.includes("harcama yetkili") ||
+    lowerName.includes("gerçekleştirme") ||
+    lowerName.includes("gerceklestirme")
+  ) {
+    return true;
+  }
+
+  const combinedRole = [
+    typeof item === "object" ? item.gorev || item.gorevi || "" : "",
+    typeof item === "object" ? item.unvan || item.unvani || "" : "",
+    typeof item === "object" ? item.rol || "" : "",
+    typeof item === "object" ? item.komisyon_turu || "" : "",
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    combinedRole.includes("harcama yetkili") ||
+    combinedRole.includes("ihale yetkili") ||
+    combinedRole.includes("onaylayan") ||
+    combinedRole.includes("gerçekleştirme") ||
+    combinedRole.includes("gerceklestirme") ||
+    combinedRole.includes("muhasebe yetkili") ||
+    combinedRole.includes("mutemet")
+  ) {
+    return true;
+  }
+
+  const scope = typeof item === "object" ? (item.belgeKapsami || item.belge_kapsami || "") : "";
+  if (scope === "gizli") return true;
+
+  if (onaylayanAdi && onaylayanAdi.trim()) {
+    const cleanOnay = onaylayanAdi.trim().toLowerCase();
+    if (lowerName === cleanOnay || cleanOnay.includes(lowerName) || lowerName.includes(cleanOnay)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function normalizeMember(u: any): KomisyonGorevlendirmeUye {
   if (typeof u === "string") {
     return {
@@ -52,20 +108,39 @@ export function useKomisyonGorevlendirmeOnayi(
   const { data = {} } = params;
 
   return useMemo(() => {
+    const onaylayanAdi = String(
+      data.baskanAdi ||
+        data.onaylayanPersonelAdi ||
+        data.harcamaYetkilisiAdi ||
+        "",
+    ).trim();
+
     const rawFiyat = data.fiyatKomisyonu && data.fiyatKomisyonu.length > 0
       ? data.fiyatKomisyonu
       : data.gorevliler || [];
     const rawMuayene = data.muayeneKomisyonu || [];
 
-    const fiyatUyeleri: KomisyonGorevlendirmeUye[] = (
-      Array.isArray(rawFiyat) ? rawFiyat : []
+    const dedupe = (list: any[]) => {
+      const seen = new Set<string>();
+      return list.filter((item) => {
+        const key = (item.adSoyad || item.ad_soyad || item.adi || item.ad || "").trim().toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    };
+
+    const fiyatUyeleri: KomisyonGorevlendirmeUye[] = dedupe(
+      Array.isArray(rawFiyat) ? rawFiyat : [],
     )
+      .filter((m) => !isExcludedFromCommissionTable(m, onaylayanAdi))
       .map(normalizeMember)
       .filter((m) => m.adSoyad.length > 0);
 
-    const muayeneUyeleri: KomisyonGorevlendirmeUye[] = (
-      Array.isArray(rawMuayene) ? rawMuayene : []
+    const muayeneUyeleri: KomisyonGorevlendirmeUye[] = dedupe(
+      Array.isArray(rawMuayene) ? rawMuayene : [],
     )
+      .filter((m) => !isExcludedFromCommissionTable(m, onaylayanAdi))
       .map(normalizeMember)
       .filter((m) => m.adSoyad.length > 0);
 
@@ -109,13 +184,6 @@ export function useKomisyonGorevlendirmeOnayi(
       (data.olurYazisi === true
         ? "Gereğini olurlarınıza arz ederim."
         : "Gereğini rica ederim.");
-
-    const onaylayanAdi = String(
-      data.baskanAdi ||
-        data.onaylayanPersonelAdi ||
-        data.harcamaYetkilisiAdi ||
-        "",
-    ).trim();
 
     const onaylayanUnvan = String(
       data.baskanUnvan ||

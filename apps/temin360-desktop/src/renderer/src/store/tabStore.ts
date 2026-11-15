@@ -169,6 +169,7 @@ export function getTabLabel(fullPath: string): string {
     return 'İhtiyaç Raporları'
   }
   if (path.startsWith(APP_ROUTES.ROTA_YONETIMI)) return 'Belge Rota & Onay Akışı'
+  if (path.startsWith(APP_ROUTES.KURULUM_SIHIRBAZI)) return 'İlk Kurulum & Yapılandırma Sihirbazı'
   if (path.startsWith(APP_ROUTES.ISLAK_IMZA)) return 'Islak İmzalı Belge Yönetimi'
   if (path.startsWith(APP_ROUTES.DEVLET_IHALE_2886)) return '2886 Satış & Kiralama Masası'
   if (path.startsWith(APP_ROUTES.HESAPLAMA_ARACLARI)) return 'Hesaplama Araçları'

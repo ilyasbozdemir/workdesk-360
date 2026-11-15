@@ -46,4 +46,33 @@ describe("KomisyonGorevlendirmeOnayiEki — Şablon Bileşen Render Testleri", (
     expect(def).toBeDefined();
     expect(def?.id).toBe("komisyon-gorevlendirme-onayi-eki");
   });
+
+  it("4. Harcama Yetkilisi onay ekinde komisyon tablosunda listelenmez ve onay ekinde hiçbir imza kartı yer almaz", () => {
+    const mockData = {
+      baskanAdi: "Kemal Bey Harcama Yetkilisi",
+      baskanUnvan: "Harcama Yetkilisi",
+      fiyatKomisyonu: [
+        { adSoyad: "Kemal Bey Harcama Yetkilisi", unvan: "Harcama Yetkilisi", gorevi: "Harcama Yetkilisi" },
+        { adSoyad: "Zeki Memur", unvan: "Memur", gorevi: "Üye" },
+      ],
+      muayeneKomisyonu: [
+        { adSoyad: "Gerçekleştirme Görevlisi Ali", unvan: "Gerçekleştirme Görevlisi", gorevi: "Gerçekleştirme" },
+        { adSoyad: "Metin Tekniker", unvan: "Tekniker", gorevi: "Üye" },
+      ],
+    };
+
+    const html = renderToStaticMarkup(<KomisyonGorevlendirmeOnayiEki data={mockData} />);
+
+    // Sadece gerçek komisyon personelleri yer alır
+    expect(html).toContain("Zeki Memur");
+    expect(html).toContain("Metin Tekniker");
+
+    // Harcama yetkilisi ve gerçekleştirme personeli komisyon tablosunda bulunmamalıdır
+    expect(html).not.toContain("Kemal Bey Harcama Yetkilisi</td>");
+    expect(html).not.toContain("Gerçekleştirme Görevlisi Ali</td>");
+
+    // Onay ekinde hiçbir alt imza kartı veya imza bloğu olmamalıdır
+    expect(html).not.toContain("PersonelCard");
+    expect(html).not.toContain("preparer-signature");
+  });
 });

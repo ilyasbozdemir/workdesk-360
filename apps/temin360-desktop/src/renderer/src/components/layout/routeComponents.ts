@@ -85,6 +85,7 @@ export const routeComponents: Record<string, () => React.ReactElement> = {
     import("../../screens/tasinirkod/index.screen")
   ),
   "/kurum": lazyRoute(() => import("../../screens/kurum/index.screen")),
+  "/kurulum": lazyRoute(() => import("../../screens/kurulum/index.screen")),
   "/profil": lazyRoute(() => import("../../screens/profil/index.screen")),
   "/dosya/kunye": lazyRoute(() =>
     import("../../screens/dosyalar/DosyaDataInspectorScreen")
