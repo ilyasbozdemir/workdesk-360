@@ -186,6 +186,9 @@ export const routeComponents: Record<string, () => React.ReactElement> = {
   "/islak-imza": lazyRoute(() =>
     import("../../screens/islak-imza/islak-imzali-belge.screen")
   ),
+  "/playground": lazyRoute(() =>
+    import("../../screens/playground/index.screen")
+  ),
 };
 
 // Doğrudan Temin (4734 m.22) sürümünde kapsam dışı ekranlar (2886, EBYS) kayıt edilmez

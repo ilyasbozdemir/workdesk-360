@@ -317,16 +317,6 @@ export function KomisyonGorevlendirmeOnayiEki({
               )}
           </tbody>
         </table>
-
-        {/* Preparer Signature */}
-        <PersonelCard
-          adSoyad={data.hazirlayanPersonelAdi}
-          unvan={data.hazirlayanPersonelUnvan}
-          align="right"
-          nameField="hazirlayanPersonelAdi"
-          unvanField="hazirlayanPersonelUnvan"
-          marginTop={20}
-        />
       </div>
     </DocumentLayout>
   );

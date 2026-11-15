@@ -168,6 +168,13 @@ export function getTabLabel(fullPath: string): string {
     if (dosyaId) return `İhtiyaç Raporları (Dosya #${dosyaId})`
     return 'İhtiyaç Raporları'
   }
+  if (path.startsWith(APP_ROUTES.ROTA_YONETIMI)) return 'Belge Rota & Onay Akışı'
+  if (path.startsWith(APP_ROUTES.ISLAK_IMZA)) return 'Islak İmzalı Belge Yönetimi'
+  if (path.startsWith(APP_ROUTES.DEVLET_IHALE_2886)) return '2886 Satış & Kiralama Masası'
+  if (path.startsWith(APP_ROUTES.HESAPLAMA_ARACLARI)) return 'Hesaplama Araçları'
+  if (path.startsWith(APP_ROUTES.BUTCE_KOD)) return 'Bütçe Kodları'
+  if (path.startsWith(APP_ROUTES.TEST_EKRANLARI)) return 'Test Ekranları & Laboratuvar'
+  if (path.startsWith(APP_ROUTES.PLAYGROUND)) return 'Şablon Deneme Alanı (Playground)'
   return 'Yeni Sekme'
 }
 
