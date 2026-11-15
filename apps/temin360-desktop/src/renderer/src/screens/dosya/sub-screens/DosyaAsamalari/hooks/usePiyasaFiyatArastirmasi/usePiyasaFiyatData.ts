@@ -78,11 +78,12 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
 
       if (resInvited.success) {
         const rawInvited: BiddingFirm[] = resInvited.data || []
-        const seenInvited = new Set<number>()
+        const seenInvited = new Set<string>()
         setInvitedFirms(
           rawInvited.filter((f) => {
-            if (seenInvited.has(f.firma_id)) return false
-            seenInvited.add(f.firma_id)
+            const key = f.id ? `id_${f.id}` : f.firma_id ? `fid_${f.firma_id}` : `unvan_${f.unvan}`
+            if (seenInvited.has(key)) return false
+            seenInvited.add(key)
             return true
           })
         )
@@ -439,7 +440,17 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
       const currentInvitedFirms: BiddingFirm[] = resInvited.success
         ? resInvited.data || []
         : invitedFirms
-      if (resInvited.success) setInvitedFirms(currentInvitedFirms)
+      if (resInvited.success) {
+        const seenInvited = new Set<string>()
+        setInvitedFirms(
+          currentInvitedFirms.filter((f) => {
+            const key = f.id ? `id_${f.id}` : f.firma_id ? `fid_${f.firma_id}` : `unvan_${f.unvan}`
+            if (seenInvited.has(key)) return false
+            seenInvited.add(key)
+            return true
+          })
+        )
+      }
 
       const isLowestBasis =
         hesaplamaEsasi?.toLowerCase().includes('en düşük') ||

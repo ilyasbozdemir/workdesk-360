@@ -131,7 +131,7 @@ export const PersonelAdimi: React.FC<PersonelAdimiProps> = ({ personeller, birim
             >
               {birimler.length > 0 ? (
                 birimler.map((b, i) => (
-                  <option key={i} value={b.birimAdi}>{b.birimAdi}</option>
+                  <option key={`birim_opt_${b.id ?? i}_${i}`} value={b.birimAdi}>{b.birimAdi}</option>
                 ))
               ) : (
                 <option value="Destek Hizmetleri Müdürlüğü">Destek Hizmetleri Müdürlüğü</option>
@@ -187,7 +187,7 @@ export const PersonelAdimi: React.FC<PersonelAdimiProps> = ({ personeller, birim
               </tr>
             ) : (
               personeller.map((p, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition-colors">
+                <tr key={`personel_row_${p.id ?? idx}_${idx}`} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition-colors">
                   <td className="py-2.5 px-4 text-center text-xs text-slate-400 font-mono">{idx + 1}</td>
                   <td className="py-2.5 px-4 font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                     <UserCheck className="w-4 h-4 text-emerald-500" />

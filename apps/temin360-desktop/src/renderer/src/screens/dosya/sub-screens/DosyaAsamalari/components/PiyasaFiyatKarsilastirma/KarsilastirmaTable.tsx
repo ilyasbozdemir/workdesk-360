@@ -68,7 +68,7 @@ export function KarsilastirmaTable({
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
             {comparisonData.map((row, idx) => (
               <tr
-                key={row.id}
+                key={`comp_row_${row.id ?? idx}_${idx}`}
                 className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">{idx + 1}</td>

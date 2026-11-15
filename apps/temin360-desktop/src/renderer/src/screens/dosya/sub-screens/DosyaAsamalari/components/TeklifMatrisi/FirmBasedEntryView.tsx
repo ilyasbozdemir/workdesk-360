@@ -18,9 +18,9 @@ export function FirmBasedEntryView({
     <div className="flex flex-col gap-4 animate-in fade-in duration-300">
       {/* Firm Select Tab List */}
       <div className="flex flex-wrap gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-        {invitedFirms.map((f) => (
+        {invitedFirms.map((f, fIdx) => (
           <button
-            key={f.id}
+            key={`btn_firm_${f.id ?? fIdx}_${fIdx}`}
             onClick={() => setSelectedFirmId(f.id)}
             className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
               selectedFirmId === f.id
@@ -54,14 +54,14 @@ export function FirmBasedEntryView({
 
       {/* Simple inputs vertical list */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {items.map((kalem) => {
+        {items.map((kalem, kIdx) => {
           const val = bids[`${kalem.id}_${selectedFirmId}`] || 0
           const lowest = getLowestBidInfo(kalem.id)
           const isLowest = lowest.price > 0 && lowest.firmaId === selectedFirmId
 
           return (
             <div
-              key={kalem.id}
+              key={`kalem_${kalem.id ?? kIdx}_${kIdx}`}
               className="p-4 bg-slate-50/50 dark:bg-slate-955/20 border border-slate-150 dark:border-slate-850 rounded-2xl flex items-center justify-between gap-4 hover:shadow-xs transition-shadow"
             >
               <div className="flex-1 min-w-0">

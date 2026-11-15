@@ -56,7 +56,7 @@ export const RotaAdimi: React.FC<RotaAdimiProps> = ({ rota, birimler, personelle
           >
             <option value="">-- Personel Seçiniz --</option>
             {(harcamaAdaylari.length > 0 ? harcamaAdaylari : personeller).map((p, idx) => (
-              <option key={idx} value={p.adSoyad}>
+              <option key={`harcama_${p.id ?? idx}_${idx}`} value={p.adSoyad}>
                 {p.adSoyad} ({p.unvan}) - {p.birim}
               </option>
             ))}
@@ -79,7 +79,7 @@ export const RotaAdimi: React.FC<RotaAdimiProps> = ({ rota, birimler, personelle
           >
             <option value="">-- Personel Seçiniz --</option>
             {(gerceklestirmeAdaylari.length > 0 ? gerceklestirmeAdaylari : personeller).map((p, idx) => (
-              <option key={idx} value={p.adSoyad}>
+              <option key={`gerceklestirme_${p.id ?? idx}_${idx}`} value={p.adSoyad}>
                 {p.adSoyad} ({p.unvan}) - {p.birim}
               </option>
             ))}
@@ -102,7 +102,7 @@ export const RotaAdimi: React.FC<RotaAdimiProps> = ({ rota, birimler, personelle
           >
             <option value="">-- Personel Seçiniz --</option>
             {(muhasebeAdaylari.length > 0 ? muhasebeAdaylari : personeller).map((p, idx) => (
-              <option key={idx} value={p.adSoyad}>
+              <option key={`muhasebe_${p.id ?? idx}_${idx}`} value={p.adSoyad}>
                 {p.adSoyad} ({p.unvan}) - {p.birim}
               </option>
             ))}
@@ -125,7 +125,7 @@ export const RotaAdimi: React.FC<RotaAdimiProps> = ({ rota, birimler, personelle
           >
             <option value="">-- Birim Seçiniz --</option>
             {birimler.map((b, idx) => (
-              <option key={idx} value={b.birimAdi}>
+              <option key={`birim_${b.id ?? idx}_${idx}`} value={b.birimAdi}>
                 {b.birimAdi}
               </option>
             ))}

@@ -144,7 +144,7 @@ export const BirimlerAdimi: React.FC<BirimlerAdimiProps> = ({ birimler, onChange
               </tr>
             ) : (
               birimler.map((b, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition-colors">
+                <tr key={`birim_row_${b.id ?? idx}_${idx}`} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40 transition-colors">
                   <td className="py-2.5 px-4 text-center text-xs text-slate-400 font-mono">{idx + 1}</td>
                   <td className="py-2.5 px-4 font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                     <Building className="w-4 h-4 text-slate-400" />

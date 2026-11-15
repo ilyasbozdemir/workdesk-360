@@ -71,7 +71,7 @@ export function PricesSummaryDashboard({
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
       {/* Firm totals summary card grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {firmTotals.map(({ firm, total }) => {
+        {firmTotals.map(({ firm, total }, fIdx) => {
           const isLowest = total > 0 && total === lowestTotal
           const isSelectedWinner = manualWinnerFirmaId
             ? manualWinnerFirmaId === firm.firma_id || manualWinnerFirmaId === firm.id
@@ -79,7 +79,7 @@ export function PricesSummaryDashboard({
 
           return (
             <div
-              key={firm.id}
+              key={`firm_card_${firm.id ?? firm.firma_id ?? fIdx}_${fIdx}`}
               className={cn(
                 'p-5 rounded-2xl border transition-all flex flex-col justify-between relative overflow-hidden',
                 isSelectedWinner
@@ -209,9 +209,9 @@ export function PricesSummaryDashboard({
               <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-455 font-extrabold">
                 <th className="py-2.5 px-3">İhtiyaç Kalemi</th>
                 <th className="py-2.5 px-3 text-center">Miktar</th>
-                {invitedFirms.map((firm: any) => (
+                {invitedFirms.map((firm: any, fIdx: number) => (
                   <th
-                    key={firm.id}
+                    key={`firm_head_${firm.id ?? firm.firma_id ?? fIdx}_${fIdx}`}
                     className="py-2.5 px-3 text-right max-w-[150px] truncate"
                     title={firm.unvan}
                   >
@@ -221,7 +221,7 @@ export function PricesSummaryDashboard({
               </tr>
             </thead>
             <tbody>
-              {items.map((item: any) => {
+              {items.map((item: any, itmIdx: number) => {
                 // Find lowest bid for this item
                 const itemBids = invitedFirms
                   .map((f: any) => {
@@ -238,7 +238,7 @@ export function PricesSummaryDashboard({
 
                 return (
                   <tr
-                    key={item.id}
+                    key={`item_row_${item.id ?? itmIdx}_${itmIdx}`}
                     className="border-b border-slate-50 dark:border-slate-900/60 hover:bg-slate-50/30 dark:hover:bg-slate-950/20 transition-colors"
                   >
                     <td className="py-3 px-3 font-bold text-slate-800 dark:text-slate-250">
@@ -247,13 +247,16 @@ export function PricesSummaryDashboard({
                     <td className="py-3 px-3 text-center text-slate-500 font-semibold">
                       {item.miktar} {item.birim}
                     </td>
-                    {invitedFirms.map((firm: any) => {
+                    {invitedFirms.map((firm: any, fIdx: number) => {
                       const key = `${item.id}_${firm.id}`
                       const bidVal = bids[key] || 0
                       const isItemWinner = bidVal > 0 && bidVal === minItemPrice
 
                       return (
-                        <td key={firm.id} className="py-3 px-3 text-right font-mono font-bold">
+                        <td
+                          key={`firm_cell_${item.id ?? itmIdx}_${firm.id ?? firm.firma_id ?? fIdx}_${fIdx}`}
+                          className="py-3 px-3 text-right font-mono font-bold"
+                        >
                           {bidVal > 0 ? (
                             <span
                               className={

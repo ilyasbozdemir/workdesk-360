@@ -56,7 +56,7 @@ export const OzetAdimi: React.FC<OzetAdimiProps> = ({ state, onComplete, isSavin
             {birimler.length > 0 ? (
               birimler.map((b, i) => (
                 <span
-                  key={i}
+                  key={`ozet_birim_${b.id ?? i}_${i}`}
                   className="px-2 py-0.5 rounded text-xs bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900 font-medium"
                 >
                   {b.birimAdi}
@@ -77,7 +77,7 @@ export const OzetAdimi: React.FC<OzetAdimiProps> = ({ state, onComplete, isSavin
           </div>
           <div className="space-y-1 max-h-28 overflow-y-auto text-xs">
             {personeller.slice(0, 4).map((p, i) => (
-              <div key={i} className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-800/60">
+              <div key={`ozet_personel_${p.id ?? i}_${i}`} className="flex items-center justify-between py-0.5 border-b border-slate-100 dark:border-slate-800/60">
                 <span className="font-semibold text-slate-700 dark:text-slate-300">{p.adSoyad}</span>
                 <span className="text-slate-400">{p.unvan}</span>
               </div>
