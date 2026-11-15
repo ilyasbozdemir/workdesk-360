@@ -65,7 +65,10 @@ export const DOCUMENT_STAGES: DocumentStageInfo[] = [
       'komisyon_gorevlendirme_onayi',
       'komisyon-gorevlendirme-onayi',
       'komisyon_gorevlendirme_onayi_eki',
-      'komisyon-gorevlendirme-onayi-eki'
+      'komisyon-gorevlendirme-onayi-eki',
+      'piyasa_fiyat_arastirma_gorevlendirmesi',
+      'piyasa-fiyat-arastirma-gorevlendirmesi',
+      'piyasa-arastirma-gorevlendirmesi'
     ]
   },
   {

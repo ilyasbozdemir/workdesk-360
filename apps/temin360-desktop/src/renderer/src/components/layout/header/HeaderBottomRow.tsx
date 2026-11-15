@@ -31,7 +31,7 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
 
   return (
     <div
-      className="min-h-9 py-1 flex items-center justify-between gap-1 sm:gap-2.5 bg-slate-100/50 dark:bg-slate-950/20 border-t border-slate-200/30 dark:border-slate-800/30 select-none px-2 sm:px-3 relative z-[100] w-full max-w-full overflow-visible"
+      className="min-h-9 py-1 flex items-center justify-between gap-1 sm:gap-2.5 bg-slate-100/50 dark:bg-slate-950/20 border-t border-slate-200/30 dark:border-slate-800/30 select-none px-2 sm:px-3 relative z-20 w-full max-w-full overflow-visible"
       style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
     >
       {/* Sol: Çoklu Çalışma Masası Seçici (4734 Satın Alma vs 5018 Mali Hizmetler) */}

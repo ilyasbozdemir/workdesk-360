@@ -175,7 +175,7 @@ export function MalzemeTablosuToolbar({
           }
           onFiyatArastirmaKomisyonu={() => handleOpenSablonByDosyaAdi('fiyat-arastirma-tutanagi')}
           onPiyasaArastirmaGorevlendirmesi={() =>
-            handleOpenSablonByDosyaAdi('piyasa-arastirma-gorevlendirmesi')
+            handleOpenSablonByDosyaAdi('piyasa-fiyat-arastirma-gorevlendirmesi')
           }
           onMuayeneKabulBelgesi={() => handleOpenSablonByDosyaAdi('muayene-kabul-komisyonu')}
           onYaklasikMaliyetKomisyonu={() =>

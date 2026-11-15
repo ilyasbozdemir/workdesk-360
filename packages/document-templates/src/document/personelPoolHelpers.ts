@@ -382,7 +382,18 @@ export function validateBirimAndPersonelAssignments(options: {
           String(rawPersonBirimId).trim() !== ""),
     );
 
+    const isExemptFromBirimMismatch =
+      assigned.slotId === "harcamaYetkilisi" ||
+      assigned.slotId === "onaylayan" ||
+      assigned.slotId === "mutemet" ||
+      assigned.slotId === "muhasebeYetkilisi" ||
+      assigned.slotId?.toLowerCase().includes("mutemet") ||
+      assigned.slotId?.toLowerCase().includes("muhasebe") ||
+      assigned.slotLabel?.toLowerCase().includes("mutemet") ||
+      assigned.slotLabel?.toLowerCase().includes("muhasebe");
+
     if (
+      !isExemptFromBirimMismatch &&
       (matchedBirim || hasExplicitBirimId || expectedBirimName) &&
       personHasUnitInfo &&
       !doesPersonelBelongToBirim(

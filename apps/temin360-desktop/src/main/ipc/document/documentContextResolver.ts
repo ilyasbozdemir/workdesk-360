@@ -1,9 +1,9 @@
 import {
   cleanPersonelName,
+  InstitutionalHeaderProvider,
   isMemberVisibleInDocument,
   resolveCommissionCategory,
   resolveTemplateKey,
-  InstitutionalHeaderProvider,
 } from "@temin360/document-templates";
 import {
   formatTurkishDate,
@@ -51,7 +51,9 @@ export function resolveDocumentPayload(
     const activeId = Number(settingsMap.activeKurumId || 1);
     const kurum =
       db.prepare("SELECT * FROM TANIM_Kurum WHERE id = ?").get(activeId) ||
-      db.prepare("SELECT * FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1")
+      db.prepare(
+        "SELECT * FROM TANIM_Kurum WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id ASC LIMIT 1",
+      )
         .get() ||
       db.prepare("SELECT * FROM TANIM_Kurum ORDER BY id ASC LIMIT 1").get() ||
       {};
@@ -397,8 +399,12 @@ export function resolveDocumentPayload(
     const birimAntet = (
       (dosya as any)?.antet_ek_satir ||
       (dosya as any)?.birim_antet_ek_satir ||
-      (birimListesi as any[]).find((b: any) => b.id === (dosya as any)?.birim_id)?.antet_ek_satir ||
-      (birimListesi as any[]).find((b: any) => b.id === (dosya as any)?.birim_id)?.birim_adi ||
+      (birimListesi as any[]).find((b: any) =>
+        b.id === (dosya as any)?.birim_id
+      )?.antet_ek_satir ||
+      (birimListesi as any[]).find((b: any) =>
+        b.id === (dosya as any)?.birim_id
+      )?.birim_adi ||
       effectiveBirim ||
       settingsMap.spendingUnit ||
       ""
@@ -406,10 +412,10 @@ export function resolveDocumentPayload(
 
     const antetSatirlari = birimAntet
       ? InstitutionalHeaderProvider.composeBirimAntetLines(
-          baseAntetLines,
-          birimAntet,
-          (dosya as any)?.antet_ek_satir,
-        )
+        baseAntetLines,
+        birimAntet,
+        (dosya as any)?.antet_ek_satir,
+      )
       : baseAntetLines;
 
     const kurumAdi = (kurum as any)?.kurum_adi ||
@@ -447,11 +453,10 @@ export function resolveDocumentPayload(
       } catch {}
     }
 
-    const firstTutanak =
-      Array.isArray(parsedPref?.kabulTutanaklari) &&
+    const firstTutanak = Array.isArray(parsedPref?.kabulTutanaklari) &&
         parsedPref.kabulTutanaklari.length > 0
-        ? parsedPref.kabulTutanaklari[0]
-        : null;
+      ? parsedPref.kabulTutanaklari[0]
+      : null;
 
     const resolvedFaturaNo = (dosya as any)?.fatura_no ||
       firstTutanak?.faturaNo || "";
@@ -485,7 +490,9 @@ export function resolveDocumentPayload(
         settingsMap.detsis_kodu ||
         "",
     ).trim();
-    if (!detsisNo) detsisNo = "10234521";
+    if (!detsisNo || detsisNo === "-" || detsisNo === "00000000") {
+      detsisNo = "10234521";
+    }
 
     const rawTur = String((dosya as any)?.tur || "mal").toLowerCase();
     let sdpAltKodu = "01";
@@ -539,19 +546,19 @@ export function resolveDocumentPayload(
     }
 
     const paddedSayi = String(seqNumber).padStart(4, "0");
-    const officialEvrakSayisi = detsisNo && detsisNo !== "00000000"
-      ? `${detsisNo}-${sdpKodu}-${paddedSayi}`
-      : `${fileYear}/${seqNumber}`;
+    const officialEvrakSayisi =
+      detsisNo && detsisNo !== "00000000" && detsisNo !== "-"
+        ? `${detsisNo}-${sdpKodu}-${paddedSayi}`
+        : `${fileYear}/${seqNumber}`;
 
-    const existingEvrak = String((dosya as any)?.evrak_sayisi || "").replace(
-      /^E-/i,
-      "",
-    ).trim();
-    const resolvedEvrakSayisi =
-      existingEvrak && !existingEvrak.includes("/") &&
+    const existingEvrak = String((dosya as any)?.evrak_sayisi || "")
+      .replace(/^E-/i, "")
+      .replace(/^-+/, "")
+      .trim();
+    const resolvedEvrakSayisi = existingEvrak && !existingEvrak.includes("/") &&
         /^\d+-\d+\.\d+-\d+$/.test(existingEvrak)
-        ? existingEvrak
-        : officialEvrakSayisi;
+      ? existingEvrak
+      : officialEvrakSayisi;
 
     if (!existingEvrak && resolvedEvrakSayisi && dosyaId) {
       try {
@@ -580,29 +587,29 @@ export function resolveDocumentPayload(
         parsedKurumHarcamaUnvan = u.join(" / ").trim();
       } else {
         parsedKurumHarcamaAdi = cleanPersonelName(kurumHarcamaRaw);
-        parsedKurumHarcamaUnvan =
-          (kurum as any)?.baskan_unvani || settingsMap.baskanUnvani || "Harcama Yetkilisi";
+        parsedKurumHarcamaUnvan = (kurum as any)?.baskan_unvani ||
+          settingsMap.baskanUnvani || "Harcama Yetkilisi";
       }
     }
 
     // Birim Harcama Yetkilisi
     const matchedBirimRow = (birimListesi as any[]).find(
-      (b: any) => b.id === (dosya as any)?.birim_id
+      (b: any) => b.id === (dosya as any)?.birim_id,
     );
     const birimHarcamaPersonel = matchedBirimRow?.harcama_yetkilisi_id
       ? (personelListesi as any[]).find(
-          (p: any) => p.id === matchedBirimRow.harcama_yetkilisi_id
-        )
+        (p: any) => p.id === matchedBirimRow.harcama_yetkilisi_id,
+      )
       : null;
-    const birimHarcamaAdi = cleanPersonelName(birimHarcamaPersonel?.ad_soyad || "");
-    const birimHarcamaUnvan =
-      matchedBirimRow?.harcama_yetkilisi_unvan ||
+    const birimHarcamaAdi = cleanPersonelName(
+      birimHarcamaPersonel?.ad_soyad || "",
+    );
+    const birimHarcamaUnvan = matchedBirimRow?.harcama_yetkilisi_unvan ||
       birimHarcamaPersonel?.unvan ||
       "Harcama Yetkilisi";
 
     // Antette birim satırı var mı yoksa sadece Kurum anteti mi?
-    const isKurumLevelOnlyAntet =
-      antetSatirlari.length <= 2 ||
+    const isKurumLevelOnlyAntet = antetSatirlari.length <= 2 ||
       (dosya as any)?.antet_birim_gosterilsin === 0 ||
       (dosya as any)?.antet_birim_gosterilsin === "0";
 
@@ -614,8 +621,7 @@ export function resolveDocumentPayload(
       parsedKurumHarcamaAdi ||
       "";
 
-    const effectiveHarcamaYetkilisiUnvan =
-      onaylayanPersonel?.unvan ||
+    const effectiveHarcamaYetkilisiUnvan = onaylayanPersonel?.unvan ||
       (isKurumLevelOnlyAntet
         ? (parsedKurumHarcamaUnvan || birimHarcamaUnvan)
         : (birimHarcamaUnvan || parsedKurumHarcamaUnvan)) ||
@@ -656,16 +662,26 @@ export function resolveDocumentPayload(
       antetEkSatir: (dosya as any)?.antet_ek_satir ||
         (dosya as any)?.birim_antet_ek_satir || birimAntet,
       sunulacakMakamAdi: (() => {
-        const secim = (kurum as any)?.sunulacak_makam_secimi || 'makam';
-        const customMakam = (kurum as any)?.makam_adi_custom || '';
-        const kurumMakamAdi = (kurum as any)?.makam_adi || '';
-        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi || '';
-        const effectiveKurumMakam = secim === 'kurum'
-          ? (kurumKurumAdi || kurumMakamAdi || '')
-          : (customMakam || (kurumMakamAdi && kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase() ? kurumMakamAdi : '') || (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ''));
-        const dosyaMakam = (dosya as any)?.sunulacak_makam ? String((dosya as any).sunulacak_makam).trim() : '';
-        const isBare = !dosyaMakam || dosyaMakam === kurumAdi || dosyaMakam === kurumKurumAdi || !dosyaMakam.toUpperCase().includes('MAKAM');
-        if (secim === 'makam' && isBare && effectiveKurumMakam) {
+        const secim = (kurum as any)?.sunulacak_makam_secimi || "makam";
+        const customMakam = (kurum as any)?.makam_adi_custom || "";
+        const kurumMakamAdi = (kurum as any)?.makam_adi || "";
+        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi ||
+          "";
+        const effectiveKurumMakam = secim === "kurum"
+          ? (kurumKurumAdi || kurumMakamAdi || "")
+          : (customMakam ||
+            (kurumMakamAdi &&
+                kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase()
+              ? kurumMakamAdi
+              : "") ||
+            (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ""));
+        const dosyaMakam = (dosya as any)?.sunulacak_makam
+          ? String((dosya as any).sunulacak_makam).trim()
+          : "";
+        const isBare = !dosyaMakam || dosyaMakam === kurumAdi ||
+          dosyaMakam === kurumKurumAdi ||
+          !dosyaMakam.toUpperCase().includes("MAKAM");
+        if (secim === "makam" && isBare && effectiveKurumMakam) {
           return effectiveKurumMakam;
         }
         return dosyaMakam ||
@@ -679,16 +695,26 @@ export function resolveDocumentPayload(
           "STRATEJİ GELİŞTİRME DAİRE BAŞKANLIĞINA";
       })(),
       sunulacakMakam: (() => {
-        const secim = (kurum as any)?.sunulacak_makam_secimi || 'makam';
-        const customMakam = (kurum as any)?.makam_adi_custom || '';
-        const kurumMakamAdi = (kurum as any)?.makam_adi || '';
-        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi || '';
-        const effectiveKurumMakam = secim === 'kurum'
-          ? (kurumKurumAdi || kurumMakamAdi || '')
-          : (customMakam || (kurumMakamAdi && kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase() ? kurumMakamAdi : '') || (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ''));
-        const dosyaMakam = (dosya as any)?.sunulacak_makam ? String((dosya as any).sunulacak_makam).trim() : '';
-        const isBare = !dosyaMakam || dosyaMakam === kurumAdi || dosyaMakam === kurumKurumAdi || !dosyaMakam.toUpperCase().includes('MAKAM');
-        if (secim === 'makam' && isBare && effectiveKurumMakam) {
+        const secim = (kurum as any)?.sunulacak_makam_secimi || "makam";
+        const customMakam = (kurum as any)?.makam_adi_custom || "";
+        const kurumMakamAdi = (kurum as any)?.makam_adi || "";
+        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi ||
+          "";
+        const effectiveKurumMakam = secim === "kurum"
+          ? (kurumKurumAdi || kurumMakamAdi || "")
+          : (customMakam ||
+            (kurumMakamAdi &&
+                kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase()
+              ? kurumMakamAdi
+              : "") ||
+            (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ""));
+        const dosyaMakam = (dosya as any)?.sunulacak_makam
+          ? String((dosya as any).sunulacak_makam).trim()
+          : "";
+        const isBare = !dosyaMakam || dosyaMakam === kurumAdi ||
+          dosyaMakam === kurumKurumAdi ||
+          !dosyaMakam.toUpperCase().includes("MAKAM");
+        if (secim === "makam" && isBare && effectiveKurumMakam) {
           return effectiveKurumMakam;
         }
         return dosyaMakam ||
@@ -702,16 +728,26 @@ export function resolveDocumentPayload(
           "STRATEJİ GELİŞTİRME DAİRE BAŞKANLIĞINA";
       })(),
       sunulacak_makam: (() => {
-        const secim = (kurum as any)?.sunulacak_makam_secimi || 'makam';
-        const customMakam = (kurum as any)?.makam_adi_custom || '';
-        const kurumMakamAdi = (kurum as any)?.makam_adi || '';
-        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi || '';
-        const effectiveKurumMakam = secim === 'kurum'
-          ? (kurumKurumAdi || kurumMakamAdi || '')
-          : (customMakam || (kurumMakamAdi && kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase() ? kurumMakamAdi : '') || (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ''));
-        const dosyaMakam = (dosya as any)?.sunulacak_makam ? String((dosya as any).sunulacak_makam).trim() : '';
-        const isBare = !dosyaMakam || dosyaMakam === kurumAdi || dosyaMakam === kurumKurumAdi || !dosyaMakam.toUpperCase().includes('MAKAM');
-        if (secim === 'makam' && isBare && effectiveKurumMakam) {
+        const secim = (kurum as any)?.sunulacak_makam_secimi || "makam";
+        const customMakam = (kurum as any)?.makam_adi_custom || "";
+        const kurumMakamAdi = (kurum as any)?.makam_adi || "";
+        const kurumKurumAdi = (kurum as any)?.sunulacak_kurum_adi || kurumAdi ||
+          "";
+        const effectiveKurumMakam = secim === "kurum"
+          ? (kurumKurumAdi || kurumMakamAdi || "")
+          : (customMakam ||
+            (kurumMakamAdi &&
+                kurumMakamAdi.toLowerCase() !== kurumKurumAdi.toLowerCase()
+              ? kurumMakamAdi
+              : "") ||
+            (kurumKurumAdi ? `${kurumKurumAdi} MAKAMINA` : ""));
+        const dosyaMakam = (dosya as any)?.sunulacak_makam
+          ? String((dosya as any).sunulacak_makam).trim()
+          : "";
+        const isBare = !dosyaMakam || dosyaMakam === kurumAdi ||
+          dosyaMakam === kurumKurumAdi ||
+          !dosyaMakam.toUpperCase().includes("MAKAM");
+        if (secim === "makam" && isBare && effectiveKurumMakam) {
           return effectiveKurumMakam;
         }
         return dosyaMakam ||
@@ -767,11 +803,9 @@ export function resolveDocumentPayload(
       talepEdenPersonelAdi: cleanPersonelName(talepEdenPersonel?.ad_soyad),
       talepEdenPersonelUnvan: talepEdenPersonel?.unvan || "",
       talepEdenTelefon: talepEdenPersonel?.telefon || "",
-      onaylayanPersonelAdi:
-        cleanPersonelName(onaylayanPersonel?.ad_soyad) ||
+      onaylayanPersonelAdi: cleanPersonelName(onaylayanPersonel?.ad_soyad) ||
         (isKurumLevelOnlyAntet ? effectiveHarcamaYetkilisiAdi : ""),
-      onaylayanPersonelUnvan:
-        onaylayanPersonel?.unvan ||
+      onaylayanPersonelUnvan: onaylayanPersonel?.unvan ||
         (isKurumLevelOnlyAntet ? effectiveHarcamaYetkilisiUnvan : ""),
       harcamaYetkilisiAdi: effectiveHarcamaYetkilisiAdi,
       harcamaYetkilisiUnvan: effectiveHarcamaYetkilisiUnvan,
@@ -950,7 +984,9 @@ export function resolveDocumentPayload(
         const seen = new Set<string>();
         return mapped.filter((item: any) => {
           const name = cleanPersonelName(item.adSoyad).toLowerCase();
-          if (!name || seen.has(name)) return false;
+          if (!name || seen.has(name)) {
+            return false;
+          }
           seen.add(name);
           return true;
         });
@@ -986,7 +1022,9 @@ export function resolveDocumentPayload(
         const seen = new Set<string>();
         return mapped.filter((item: any) => {
           const name = cleanPersonelName(item.adSoyad).toLowerCase();
-          if (!name || seen.has(name)) return false;
+          if (!name || seen.has(name)) {
+            return false;
+          }
           seen.add(name);
           return true;
         });
@@ -1022,7 +1060,9 @@ export function resolveDocumentPayload(
         const seen = new Set<string>();
         return mapped.filter((item: any) => {
           const name = cleanPersonelName(item.adSoyad).toLowerCase();
-          if (!name || seen.has(name)) return false;
+          if (!name || seen.has(name)) {
+            return false;
+          }
           seen.add(name);
           return true;
         });

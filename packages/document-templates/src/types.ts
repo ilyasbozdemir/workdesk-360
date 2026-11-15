@@ -35,6 +35,7 @@ export interface TemplateCapabilities {
   supportsDagitim?: boolean;
   supportsRota?: boolean;
   supportsLogos?: boolean;
+  supportsAntet?: boolean;
   roleVisibility?: Partial<Record<RoleCode, RoleVisibility>>;
   commissionRoleVisibility?: Record<string, RoleVisibility>;
 }

@@ -5,6 +5,7 @@ import {
   EditableOlurPlaceholder,
   MetadataBlock,
   PersonelCard,
+  SignatureBlockContainer,
 } from "../../document/ApprovalSignature";
 import { EditableField } from "../../document/EditableField";
 import { useIhtiyacListesi } from "./IhtiyacListesi.hook";
@@ -153,7 +154,7 @@ export function BaseIhtiyacListesi(props: BaseIhtiyacListesiProps) {
             {isLastPage && (
               data.olurYazisi !== false
                 ? (
-                  <div style={{ marginTop: "auto" }}>
+                  <SignatureBlockContainer marginTop="auto" align="center">
                     <ApprovalSignature
                       title={data.olurBaslik || "OLUR"}
                       date={onayTarihi}
@@ -162,7 +163,7 @@ export function BaseIhtiyacListesi(props: BaseIhtiyacListesiProps) {
                       showSpace={true}
                       marginTop={40}
                     />
-                  </div>
+                  </SignatureBlockContainer>
                 )
                 : <EditableOlurPlaceholder />
             )}

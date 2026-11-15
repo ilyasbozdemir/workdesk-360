@@ -95,24 +95,23 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
 
   // Evrak sayısı oluşturma (EBYS Standart Formatı: E-DETSİS-SDP-NO)
   const evrakNo =
-    data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") && !String(data.evrakSayisi).includes("/")
+    data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") &&
+      !String(data.evrakSayisi).includes("/")
       ? data.evrakSayisi
       : formatOfficialEvrakSayisi({
-          evrakSayisi: data.evrakSayisi,
-          detsisNo: data.detsisNo,
-          tur: (data as any)?.tur,
-          sayisi: (data as any)?.sayisi,
-          teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo || (data as any)?.dosyaSayisi,
-        });
+        evrakSayisi: data.evrakSayisi,
+        detsisNo: data.detsisNo,
+        tur: (data as any)?.tur,
+        sayisi: (data as any)?.sayisi,
+        teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo ||
+          (data as any)?.dosyaSayisi,
+      });
 
-  const konuMetni = data.dosyaKonusu ??
-    "Muayene ve Kabul Komisyonu";
+  const konuMetni = "Muayene ve Kabul Komisyonu";
 
-  const kurumumuzMetni =
-    data.kurumumuz ?? (data.kurumAdi || "Kurumumuz");
+  const kurumumuzMetni = data.kurumumuz ?? (data.kurumAdi || "Kurumumuz");
 
-  const isinAdiMetni =
-    data.isinAdi ?? "Alımı yapılacak";
+  const isinAdiMetni = data.isinAdi ?? "Alımı yapılacak";
 
   return (
     <DocumentLayout
@@ -202,27 +201,34 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
         >
           <EditableField
             name="onayBelgesiTarihi"
-            value={String(data.onayBelgesiTarihi || data.dosyaTarihi || data.tarih || "........")}
+            value={String(
+              data.onayBelgesiTarihi || data.dosyaTarihi || data.tarih ||
+                "........",
+            )}
           />
           {" tarih ve "}
           <EditableField
             name="onayBelgesiSayisi"
             value={String(
               data.onayBelgesiSayisi ||
-              (data.onayBelgesiNo && !String(data.onayBelgesiNo).includes('/') ? data.onayBelgesiNo : evrakNo)
+                (data.onayBelgesiNo && !String(data.onayBelgesiNo).includes("/")
+                  ? data.onayBelgesiNo
+                  : evrakNo),
             )}
           />
           {" sayılı Onay Belgesine istinaden 4734 Sayılı Kanunun "}
           <EditableField
             name="kanunMaddesi"
-            value={String(data.kanunMaddesi || data.ihaleSekli || data.ihale_sekli || "22/d")}
+            value={String(
+              data.kanunMaddesi || data.ihaleSekli || data.ihale_sekli ||
+                "22/d",
+            )}
           />
           {" maddesine göre alımı gerçekleştirilen "}
           <EditableField
             name="kurumumuz"
             value={kurumumuzMetni}
-          />
-          {" "}
+          />{" "}
           <EditableField
             name="isinAdi"
             value={isinAdiMetni}
@@ -232,7 +238,8 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
             ? (
               gorevlendirilenler.map((g, idx) => (
                 <React.Fragment key={idx}>
-                  <strong>{g.adSoyad}</strong> {g.unvan ? formatUnvan(g.unvan) : ""}
+                  <strong>{g.adSoyad}</strong>{" "}
+                  {g.unvan ? formatUnvan(g.unvan) : ""}
                   {idx < gorevlendirilenler.length - 1 ? ", " : " "}
                 </React.Fragment>
               ))

@@ -8,6 +8,8 @@ import {
   LANDSCAPE_LIMITS,
   PageLimitConfig,
   paginateData,
+  resolveSignatureAwareLimits,
+  type SignatureAwareLimitOptions,
 } from "../../document/DynamicPaginatedTable";
 import { IhtiyacListesiType } from "./IhtiyacListesi.schema";
 
@@ -156,29 +158,27 @@ export function normalizeIhtiyacKalemleri(
 }
 
 /**
- * Sayfa bölme sınırlarını yön (portrait/landscape) ve özel sınırlara göre hesaplar.
+ * Sayfa bölme sınırlarını yön (portrait/landscape), imza bloğu varlığı ve özel sınırlara göre hesaplar.
  */
 export function resolveIhtiyacListesiLimits(
   orientation: "portrait" | "landscape" = "portrait",
   fLimit?: any,
   mLimit?: any,
   lLimit?: any,
+  options?: Omit<
+    SignatureAwareLimitOptions,
+    "orientation" | "customFirstPage" | "customMiddlePage" | "customLastPage"
+  >,
 ): PageLimitConfig {
-  const baseLimits = orientation === "landscape"
-    ? LANDSCAPE_LIMITS
-    : DEFAULT_LIMITS;
-
-  return {
-    firstPage: fLimit !== undefined && fLimit !== null
-      ? Number(fLimit)
-      : baseLimits.firstPage,
-    middle: mLimit !== undefined && mLimit !== null
-      ? Number(mLimit)
-      : baseLimits.middle,
-    lastPage: lLimit !== undefined && lLimit !== null
-      ? Number(lLimit)
-      : baseLimits.lastPage,
-  };
+  return resolveSignatureAwareLimits({
+    orientation,
+    customFirstPage: fLimit,
+    customMiddlePage: mLimit,
+    customLastPage: lLimit,
+    hasOlur: options?.hasOlur,
+    hasHazirlayan: options?.hasHazirlayan,
+    commissionCount: options?.commissionCount,
+  });
 }
 
 /**
@@ -221,6 +221,12 @@ export function useIhtiyacListesi(
       fLimit,
       mLimit,
       lLimit,
+      {
+        hasOlur: data.olurYazisi !== false,
+        hasHazirlayan: Boolean(
+          data.hazirlayanPersonelAdi || data.talepEdenPersonelAdi,
+        ),
+      },
     );
     const items = normalizeIhtiyacKalemleri(data);
     const pages = paginateData(items, limits);

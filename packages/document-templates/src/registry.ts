@@ -119,6 +119,7 @@ const DEFAULT_CAPS: TemplateCapabilities = {
   supportsDagitim: false,
   supportsRota: false,
   supportsLogos: true,
+  supportsAntet: true,
 };
 
 export const templateRegistry = {
@@ -220,7 +221,7 @@ export const templateRegistry = {
   harcama_talimati: {
     id: "harcama-talimati",
     name: "HarcamaTalimati",
-    title: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    title: "Harcama Talimatı",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -253,9 +254,14 @@ export const templateRegistry = {
     dataMapping: harcamaTalimatiMapping,
     mapping: harcamaTalimatiMapping,
     version: 1,
-    capabilities: { ...DEFAULT_CAPS, supportsOlur: true, supportsLogos: true },
+    capabilities: {
+      ...DEFAULT_CAPS,
+      supportsOlur: true,
+      supportsLogos: false,
+      supportsAntet: false,
+    },
     kikKodu: "KİK024.0/M",
-    kikAdi: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    kikAdi: "Harcama Talimatı",
   },
   komisyon_gorevlendirme_onayi: {
     id: "komisyon-gorevlendirme-onayi",
@@ -504,7 +510,8 @@ export const templateRegistry = {
       supportsCommission: true,
       supportedCommissionTypes: ["piyasa_fiyat", "yaklasik_maliyet"],
       supportsFirmaListesi: true,
-      supportsLogos: true,
+      supportsLogos: false,
+      supportsAntet: false,
     },
     kikKodu: "KİK002.0/M",
     kikAdi: "Yaklaşık Maliyet Hesap Cetveli",
@@ -563,7 +570,7 @@ export const templateRegistry = {
   dogrudan_temin_onay_belgesi: {
     id: "dogrudan-temin-onay-belgesi",
     name: "DogrudanTeminOnayBelgesi",
-    title: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    title: "Harcama Talimatı",
     category: "3-siparis-ve-sozlesme",
     categoryLabel: "Sipariş & Sözleşme",
     description: "Karara bağlanan alımın yetkili makam onay belgesi",
@@ -581,7 +588,7 @@ export const templateRegistry = {
       supportsLogos: true,
     },
     kikKodu: "KİK024.0/M",
-    kikAdi: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    kikAdi: "Harcama Talimatı",
   },
   dogrudan_temin_sonuc_onay_belgesi: {
     id: "dogrudan-temin-sonuc-onay-belgesi",
@@ -846,7 +853,8 @@ export const templateRegistry = {
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: false,
-      supportsLogos: true,
+      supportsLogos: false,
+      supportsAntet: false,
       roleVisibility: {
         harcama_yetkilisi: "show",
         onaylayan: "show",
@@ -907,6 +915,7 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
   komisyon_gorevlendirme_onayi_eki: "komisyon_gorevlendirme_onayi_eki",
   piyasa_fiyat_arastirma_gorevlendirmesi:
     "piyasa_fiyat_arastirma_gorevlendirmesi",
+  piyasa_arastirma_gorevlendirmesi: "piyasa_fiyat_arastirma_gorevlendirmesi",
   son_alim_fiyat_cetveli: "son_alim_fiyat_cetveli",
   fiyat_arastirma_mektubu: "fiyat_arastirma_mektubu",
   birim_fiyat_teklif_mektubu: "birim_fiyat_teklif_mektubu",
@@ -940,6 +949,12 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
   "komisyon-gorevlendirme-onayi-eki": "komisyon_gorevlendirme_onayi_eki",
   "piyasa-fiyat-arastirma-gorevlendirmesi":
     "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-arastirma-gorevlendirmesi": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-arastirma-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-fiyat-arastirma-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-gorevlendirmesi": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "fiyat-arastirma-komisyonu": "piyasa_fiyat_arastirma_gorevlendirmesi",
   "son-alim-fiyat-cetveli": "son_alim_fiyat_cetveli",
   "fiyat-arastirma-mektubu": "fiyat_arastirma_mektubu",
   "birim-fiyat-teklif-mektubu": "birim_fiyat_teklif_mektubu",

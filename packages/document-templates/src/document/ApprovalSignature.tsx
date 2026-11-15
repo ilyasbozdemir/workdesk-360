@@ -36,6 +36,50 @@ import {
   type RotaKoordinasyonBlockProps,
 } from "./RotaKoordinasyonBlock";
 
+/**
+ * İmza Bloğu Kapsayıcısı (Yetim İmza ve Sayfa Bölünmesini Önleme Koruması)
+ * Sayfa geçişlerinde imza kartlarının, OLUR bloğunun ve komisyon üyelerinin
+ * ikiye bölünmesini veya birbirinden kopmasını engeller.
+ */
+export const SignatureBlockContainer: React.FC<{
+  children: React.ReactNode;
+  marginTop?: number | string;
+  align?: "left" | "center" | "right";
+  style?: React.CSSProperties;
+  className?: string;
+}> = ({
+  children,
+  marginTop = 20,
+  align = "right",
+  style = {},
+  className = "",
+}) => {
+  return (
+    <div
+      className={`signature-block-container ${className}`}
+      style={{
+        marginTop,
+        width: "100%",
+        pageBreakInside: "avoid",
+        breakInside: "avoid",
+        pageBreakBefore: "auto",
+        breakBefore: "auto",
+        display: "flex",
+        flexDirection: "column",
+        alignItems:
+          align === "center"
+            ? "center"
+            : align === "right"
+            ? "flex-end"
+            : "flex-start",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
 export {
   cleanPersonelName,
   toIsoDate,

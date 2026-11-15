@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Compass,
   Download,
+  Edit3,
   Eye,
   FileText,
   Layers,
@@ -59,6 +60,8 @@ interface DocumentPreviewHeaderProps {
   disableDocumentGuidance?: boolean;
   nextTemplate?: import("../templateResolver").TemplateOptionItem;
   onSelectTemplate?: (id: string) => void;
+  isEditingMode?: boolean;
+  setIsEditingMode?: (editing: boolean | ((prev: boolean) => boolean)) => void;
 }
 
 export function DocumentPreviewHeader({
@@ -95,6 +98,8 @@ export function DocumentPreviewHeader({
   disableDocumentGuidance,
   nextTemplate,
   onSelectTemplate,
+  isEditingMode = false,
+  setIsEditingMode,
 }: DocumentPreviewHeaderProps): React.JSX.Element {
   const { activeDosyaId: workspaceDosyaId } = useWorkspaceStore();
   const targetDosyaId = propDosyaId || workspaceDosyaId;
@@ -302,6 +307,33 @@ export function DocumentPreviewHeader({
               ? <Minimize2 className="w-3.5 h-3.5" />
               : <Maximize2 className="w-3.5 h-3.5" />}
           </button>
+
+          {/* Canlı Düzenleme Modu Toggle */}
+          {setIsEditingMode && (
+            <button
+              type="button"
+              onClick={() => setIsEditingMode((v) => !v)}
+              className={`h-8 px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer border shrink-0 ${
+                isEditingMode
+                  ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-400/40"
+                  : "bg-white text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700 hover:border-amber-300"
+              }`}
+              title={
+                isEditingMode
+                  ? "Canlı Düzenleme Modu Açık (Tıklayarak Önizleme Moduna Geç)"
+                  : "Canlı Düzenleme Modunu Aç (Metinleri ve Personelleri Düzenle)"
+              }
+            >
+              <Edit3
+                className={`w-3.5 h-3.5 ${
+                  isEditingMode ? "text-white animate-pulse" : "text-amber-600 dark:text-amber-400"
+                }`}
+              />
+              <span className="hidden md:inline">
+                {isEditingMode ? "Düzenleme Açık" : "Düzenle"}
+              </span>
+            </button>
+          )}
 
           {/* Kenar Çubuğu (Ayarlar) Toggle */}
           <button

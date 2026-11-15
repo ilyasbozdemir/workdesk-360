@@ -15,14 +15,20 @@ import { muayeneKabulRoute } from "./templates/muayene-kabul-komisyonu/route.def
 import { luzumMuzekkeresiRoute } from "./templates/luzum-muzekkeresi/route.definition";
 import { luzumMuzekkeresiOnayEkiRoute } from "./templates/luzum-muzekkeresi-onay-eki/route.definition";
 import { luzumMuzekkeresiTeslimTesellumRoute } from "./templates/luzum-muzekkeresi-teslim-tesellum/route.definition";
+import { harcamaTalimatiRoute } from "./templates/harcama-talimati/route.definition";
+import { harcamaPusulasiRoute } from "./templates/harcama-pusulasi/route.definition";
+import { piyasaFiyatGorevlendirmeRoute } from "./templates/piyasa-fiyat-arastirma-gorevlendirmesi/route.definition";
 import { toCanonicalDocId } from "./constants/template-constants";
 import { resolveTemplateKey } from "./registry";
 
 export {
   ihtiyacListesiRoute,
   piyasaFiyatRoute,
+  piyasaFiyatGorevlendirmeRoute,
   yaklasikMaliyetRoute,
   onayBelgesiRoute,
+  harcamaTalimatiRoute,
+  harcamaPusulasiRoute,
   komisyonGorevlendirmeRoute,
   muayeneKabulRoute,
   luzumMuzekkeresiRoute,
@@ -95,12 +101,19 @@ const BASE_ROUTE_DEFINITIONS: ReadonlyArray<TemplateRouteDefinition> = [
   { ...piyasaFiyatRoute, templateId: "teklif_cetveli" },
   onayBelgesiRoute,
   { ...onayBelgesiRoute, templateId: "onay_belgesi" },
-  { ...onayBelgesiRoute, templateId: "harcama-talimati" },
-  { ...onayBelgesiRoute, templateId: "harcama_talimati" },
-  { ...onayBelgesiRoute, templateId: "harcama-pusulasi" },
+  harcamaTalimatiRoute,
+  { ...harcamaTalimatiRoute, templateId: "harcama_talimati" },
+  harcamaPusulasiRoute,
+  { ...harcamaPusulasiRoute, templateId: "harcama_pusulasi" },
   { ...onayBelgesiRoute, templateId: "odeme-yazisi" },
   komisyonGorevlendirmeRoute,
   { ...komisyonGorevlendirmeRoute, templateId: "komisyon-gorevlendirme-onayi-eki" },
+  piyasaFiyatGorevlendirmeRoute,
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa_fiyat_arastirma_gorevlendirmesi" },
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa-arastirma-gorevlendirmesi" },
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa_arastirma_gorevlendirmesi" },
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa-arastirma-gorevlendirme" },
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa-fiyat-arastirma-gorevlendirme" },
   muayeneKabulRoute,
   { ...muayeneKabulRoute, templateId: "muayene_kabul" },
   { ...muayeneKabulRoute, templateId: "muayene-kabul-komisyonu", isAppointmentDocument: true },
