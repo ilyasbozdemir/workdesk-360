@@ -7,7 +7,7 @@ import {
   PersonelInlineSelect,
 } from "../../document/ApprovalSignature";
 import { HarcamaTalimatiType } from "./HarcamaTalimati.schema";
-import { getDativeSuffix, formatCurrency } from "../../utils/textHelpers";
+import { formatCurrency, getDativeSuffix } from "../../utils/textHelpers";
 
 interface HarcamaTalimatiProps {
   data?: Partial<HarcamaTalimatiType> & Record<string, any>;
@@ -33,8 +33,7 @@ export function HarcamaTalimati({
     return String(val);
   };
 
-  const rawMutemet =
-    data.mutemetAdi ||
+  const rawMutemet = data.mutemetAdi ||
     data.muhasebeYetkilisiAdi ||
     data.muhasebeYetkilisi ||
     "";
@@ -387,7 +386,12 @@ export function HarcamaTalimati({
               >
                 <EditableField
                   name="odenekTutari"
-                  value={data.odenekTutari ? String(data.odenekTutari) : ""}
+                  value={data.odenekTutari
+                    ? /tl$/i.test(String(data.odenekTutari).trim()) ||
+                        String(data.odenekTutari).includes("₺")
+                      ? String(data.odenekTutari)
+                      : String(data.odenekTutari) + " TL"
+                    : ""}
                   placeholder="Kullanılabilir Ödenek Tutarı"
                 />
               </td>
@@ -437,14 +441,32 @@ export function HarcamaTalimati({
                   padding: "4px 7px",
                 }}
               >
-                {renderArrayOrString(
-                  data.gerceklestirmeGorevlileri,
-                  data.hazirlayanPersonelAdi
-                    ? `${data.hazirlayanPersonelAdi} (${
-                      data.hazirlayanPersonelUnvan || ""
-                    })`
-                    : "-",
-                )}
+                <PersonelInlineSelect
+                  nameField="gerceklestirmeGorevlisiAdi"
+                  unvanField="gerceklestirmeGorevlisiUnvan"
+                  value={data.gerceklestirmeGorevlisiAdi ||
+                    data.hazirlayanPersonelAdi ||
+                    (typeof data.gerceklestirmeGorevlileri === "string"
+                      ? data.gerceklestirmeGorevlileri
+                      : Array.isArray(data.gerceklestirmeGorevlileri) &&
+                          data.gerceklestirmeGorevlileri.length > 0
+                      ? data.gerceklestirmeGorevlileri.join(", ")
+                      : "")}
+                  placeholder="Gerçekleştirme Görevlisi Seçiniz..."
+                />
+                {(data.gerceklestirmeGorevlisiUnvan ||
+                    data.gerceklestirmeGorevlisiUnvani ||
+                    data.hazirlayanPersonelUnvan)
+                  ? (
+                    <span style={{ marginLeft: "4px", color: "#475569" }}>
+                      (
+                      {data.gerceklestirmeGorevlisiUnvan ||
+                        data.gerceklestirmeGorevlisiUnvani ||
+                        data.hazirlayanPersonelUnvan}
+                      )
+                    </span>
+                  )
+                  : null}
               </td>
             </tr>
 

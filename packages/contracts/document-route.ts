@@ -41,6 +41,8 @@ export interface RouteSlotDefinition {
   sourceFieldKeys?: readonly string[];
   /** Tekil person seçiminde unvan için alternatif kaynak alan anahtarları */
   sourceTitleFieldKeys?: readonly string[];
+  /** İlgili slotun hedeflendiği birim kategorisi (Örn: "muhasebe", "fen_isleri") */
+  unitCategory?: string;
 }
 
 export interface TemplateRouteDefinition {

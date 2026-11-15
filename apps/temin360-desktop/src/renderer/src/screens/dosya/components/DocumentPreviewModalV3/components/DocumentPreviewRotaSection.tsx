@@ -1068,6 +1068,16 @@ export function DocumentPreviewRotaSection({
               step.label?.toLowerCase().includes('olur') ||
               step.label?.toLowerCase().includes('onay')
 
+            const isMuhasebeStep =
+              step.id === 'mutemet' ||
+              step.id === 'muhasebeYetkilisi' ||
+              step.id === 'harcamaYetkilisiMutemedi' ||
+              (step as any).unitCategory === 'muhasebe' ||
+              (step as any).role === 'muhasebe' ||
+              (step as any).role === 'mutemet' ||
+              step.label?.toLowerCase().includes('muhasebe') ||
+              step.label?.toLowerCase().includes('mutemet')
+
             const stepFilterRes = filterPersonelByBirim(baseStepPool, {
               birimId: currentBirimResolution.birimId ?? currentBirimId,
               birimAdi: currentBirimResolution.birimAdi || currentBirimAdi,
@@ -1099,6 +1109,45 @@ export function DocumentPreviewRotaSection({
                 )
               })
               stepPersonelList = execPool.length > 0 ? execPool : baseStepPool
+            } else if (isMuhasebeStep) {
+              // Harcama Yetkilisi Mutemedi / Muhasebe: İşi yapan birime zorlanamaz;
+              // Mali Hizmetler / Muhasebe personelleri veya muhasebe/mutemet unvanlı personeller öne alınır,
+              // kullanıcının seçim yapabilmesi için tüm birim personelleri erişilebilir tutulur.
+              const rawMutemet = cleanPersonelName(
+                formData?.mutemetAdi || formData?.muhasebeYetkilisiAdi || formData?.muhasebeYetkilisi || ''
+              )
+              const currentName = cleanPersonelName(currentPerson?.name || '')
+
+              const muhasebeBirim = activeBirimList.find((b: any) => {
+                const bName = String(b.birim_adi || b.ad || b.kisa_ad || '').toLowerCase()
+                return (
+                  bName.includes('mali hizmet') ||
+                  bName.includes('muhasebe') ||
+                  bName.includes('hesap iş') ||
+                  bName.includes('maliye')
+                )
+              })
+
+              const muhasebePool = baseStepPool.filter((p: any) => {
+                const pName = cleanPersonelName(p.ad_soyad).toLowerCase()
+                if (currentName && pName === currentName.toLowerCase()) return true
+                if (rawMutemet && pName === rawMutemet.toLowerCase()) return true
+                if (muhasebeBirim && p.birim_id && String(p.birim_id) === String(muhasebeBirim.id)) return true
+                const pBirim = String(p.birim || p.birim_adi || '').toLowerCase()
+                if (pBirim.includes('mali') || pBirim.includes('muhasebe') || pBirim.includes('hesap')) return true
+                const uStr = `${p.unvan || ''} ${p.gorev || ''}`.toLowerCase()
+                return uStr.includes('muhasebe') || uStr.includes('mutemet') || uStr.includes('mali')
+              })
+
+              if (muhasebePool.length > 0) {
+                const otherPool = baseStepPool.filter(
+                  (p: any) =>
+                    !muhasebePool.some((mp: any) => String(mp.id || mp.ad_soyad) === String(p.id || p.ad_soyad))
+                )
+                stepPersonelList = [...muhasebePool, ...otherPool]
+              } else {
+                stepPersonelList = baseStepPool
+              }
             }
 
             const matchedP = stepPersonelList.find(

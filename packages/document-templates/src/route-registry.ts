@@ -15,6 +15,7 @@ import { muayeneKabulRoute } from "./templates/muayene-kabul-komisyonu/route.def
 import { luzumMuzekkeresiRoute } from "./templates/luzum-muzekkeresi/route.definition";
 import { luzumMuzekkeresiOnayEkiRoute } from "./templates/luzum-muzekkeresi-onay-eki/route.definition";
 import { luzumMuzekkeresiTeslimTesellumRoute } from "./templates/luzum-muzekkeresi-teslim-tesellum/route.definition";
+import { harcamaTalimatiRoute } from "./templates/harcama-talimati/route.definition";
 import { toCanonicalDocId } from "./constants/template-constants";
 import { resolveTemplateKey } from "./registry";
 
@@ -23,6 +24,7 @@ export {
   piyasaFiyatRoute,
   yaklasikMaliyetRoute,
   onayBelgesiRoute,
+  harcamaTalimatiRoute,
   komisyonGorevlendirmeRoute,
   muayeneKabulRoute,
   luzumMuzekkeresiRoute,
@@ -95,8 +97,8 @@ const BASE_ROUTE_DEFINITIONS: ReadonlyArray<TemplateRouteDefinition> = [
   { ...piyasaFiyatRoute, templateId: "teklif_cetveli" },
   onayBelgesiRoute,
   { ...onayBelgesiRoute, templateId: "onay_belgesi" },
-  { ...onayBelgesiRoute, templateId: "harcama-talimati" },
-  { ...onayBelgesiRoute, templateId: "harcama_talimati" },
+  harcamaTalimatiRoute,
+  { ...harcamaTalimatiRoute, templateId: "harcama_talimati" },
   { ...onayBelgesiRoute, templateId: "harcama-pusulasi" },
   { ...onayBelgesiRoute, templateId: "odeme-yazisi" },
   komisyonGorevlendirmeRoute,

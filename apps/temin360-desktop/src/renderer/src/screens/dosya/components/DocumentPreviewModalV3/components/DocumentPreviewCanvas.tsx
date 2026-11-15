@@ -183,6 +183,23 @@ export function DocumentPreviewCanvas({
               updated.onayTarihi = trVal;
               updated.olurTarihi = trVal;
             }
+            const strVal = val !== undefined && val !== null ? String(val) : undefined;
+            if (key === "gerceklestirmeGorevlisiAdi" || key === "hazirlayanPersonelAdi") {
+              updated.gerceklestirmeGorevlisiAdi = strVal;
+              updated.hazirlayanPersonelAdi = strVal;
+            }
+            if (key === "gerceklestirmeGorevlisiUnvan" || key === "hazirlayanPersonelUnvan") {
+              updated.gerceklestirmeGorevlisiUnvan = strVal;
+              updated.hazirlayanPersonelUnvan = strVal;
+            }
+            if (key === "mutemetAdi" || key === "muhasebeYetkilisiAdi") {
+              (updated as any).mutemetAdi = strVal;
+              (updated as any).muhasebeYetkilisiAdi = strVal;
+            }
+            if (key === "mutemetUnvan" || key === "muhasebeYetkilisiUnvan") {
+              (updated as any).mutemetUnvan = strVal;
+              (updated as any).muhasebeYetkilisiUnvan = strVal;
+            }
             return updated;
           })}
         personelListesi={personelListesi}
