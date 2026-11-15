@@ -597,6 +597,7 @@ export class DtmWorkspace {
       const dbPath = path.join(this.tempDir, 'database.sqlite')
       this.db = new Database(dbPath)
       initializeDatabase(this.db, institutionName)
+      ensureSchemaIntegrity(this.db)
 
       try {
         const insertStmt = this.db.prepare(`

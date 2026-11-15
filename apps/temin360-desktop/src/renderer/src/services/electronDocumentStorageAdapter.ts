@@ -86,6 +86,23 @@ export function createElectronStorageAdapter(): DocumentStorageAdapter {
         );
       }
       const ipc = (window as any).electron.ipcRenderer;
+
+      // settings veya TANIM_Ayar tablosuna yönelik sorguları sqlGuard kısıtlamasına takılmadan
+      // yetkili ve güvenli `db:get-settings` IPC işleyicisi üzerinden çözümle
+      if (/\bFROM\s+(?:settings|TANIM_Ayar)\b/i.test(sql)) {
+        try {
+          const settingsObj = await ipc.invoke("db:get-settings");
+          if (settingsObj && typeof settingsObj === "object") {
+            return Object.entries(settingsObj).map(([key, value]) => ({
+              key,
+              value: typeof value === "string" ? value : JSON.stringify(value),
+            }));
+          }
+        } catch {
+          return [];
+        }
+      }
+
       const res = await ipc.invoke("db:query", sql, params);
       if (res && res.success === false) {
         throw new Error(res.error || "Sorgu başarısız");

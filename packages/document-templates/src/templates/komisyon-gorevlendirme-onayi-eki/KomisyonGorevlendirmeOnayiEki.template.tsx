@@ -3,11 +3,8 @@ import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
 import { KomisyonGorevlendirmeOnayiEkiType } from "./KomisyonGorevlendirmeOnayiEki.schema";
 import {
-  formatAlimTuru,
   useKomisyonGorevlendirmeOnayiEki,
 } from "./KomisyonGorevlendirmeOnayiEki.hook";
-
-export { formatAlimTuru };
 
 interface KomisyonGorevlendirmeOnayiEkiProps {
   data?: Partial<KomisyonGorevlendirmeOnayiEkiType> & Record<string, any>;
