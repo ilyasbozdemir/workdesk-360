@@ -1,10 +1,7 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
-import {
-  MetadataBlock,
-  PersonelCard,
-} from "../../document/ApprovalSignature";
+import { MetadataBlock, PersonelCard } from "../../document/ApprovalSignature";
 import { MuayeneKabulKomisyonuData } from "./MuayeneKabulKomisyonu.schema";
 import { formatUnvan } from "../../utils/textHelpers";
 import { useMuayeneKabulKomisyonu } from "./MuayeneKabulKomisyonu.hook";
