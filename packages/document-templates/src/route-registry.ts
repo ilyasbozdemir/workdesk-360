@@ -17,12 +17,14 @@ import { luzumMuzekkeresiOnayEkiRoute } from "./templates/luzum-muzekkeresi-onay
 import { luzumMuzekkeresiTeslimTesellumRoute } from "./templates/luzum-muzekkeresi-teslim-tesellum/route.definition";
 import { harcamaTalimatiRoute } from "./templates/harcama-talimati/route.definition";
 import { harcamaPusulasiRoute } from "./templates/harcama-pusulasi/route.definition";
+import { piyasaFiyatGorevlendirmeRoute } from "./templates/piyasa-fiyat-arastirma-gorevlendirmesi/route.definition";
 import { toCanonicalDocId } from "./constants/template-constants";
 import { resolveTemplateKey } from "./registry";
 
 export {
   ihtiyacListesiRoute,
   piyasaFiyatRoute,
+  piyasaFiyatGorevlendirmeRoute,
   yaklasikMaliyetRoute,
   onayBelgesiRoute,
   harcamaTalimatiRoute,
@@ -106,6 +108,12 @@ const BASE_ROUTE_DEFINITIONS: ReadonlyArray<TemplateRouteDefinition> = [
   { ...onayBelgesiRoute, templateId: "odeme-yazisi" },
   komisyonGorevlendirmeRoute,
   { ...komisyonGorevlendirmeRoute, templateId: "komisyon-gorevlendirme-onayi-eki" },
+  piyasaFiyatGorevlendirmeRoute,
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa_fiyat_arastirma_gorevlendirmesi" },
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa-arastirma-gorevlendirmesi" },
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa_arastirma_gorevlendirmesi" },
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa-arastirma-gorevlendirme" },
+  { ...piyasaFiyatGorevlendirmeRoute, templateId: "piyasa-fiyat-arastirma-gorevlendirme" },
   muayeneKabulRoute,
   { ...muayeneKabulRoute, templateId: "muayene_kabul" },
   { ...muayeneKabulRoute, templateId: "muayene-kabul-komisyonu", isAppointmentDocument: true },

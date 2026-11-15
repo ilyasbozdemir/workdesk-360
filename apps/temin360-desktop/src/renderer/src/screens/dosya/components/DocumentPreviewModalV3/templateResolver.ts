@@ -88,13 +88,23 @@ export function resolveTemplateConfig(documentId: string | null | undefined): {
     heuristicKey = 'dogrudan_temin_onay_belgesi'
   } else if (cleanKey.includes('sonuc')) {
     heuristicKey = 'dogrudan_temin_sonuc_onay_belgesi'
-  } else if (cleanKey.includes('komisyon') || cleanKey.includes('atama')) {
+  } else if (
+    cleanKey.includes('komisyon') ||
+    cleanKey.includes('atama') ||
+    cleanKey.includes('gorevlendirme')
+  ) {
     if (cleanKey.includes('ek')) {
       heuristicKey = 'komisyon_gorevlendirme_onayi_eki'
-    } else if (cleanKey.includes('piyasa')) {
+    } else if (cleanKey.includes('piyasa') || cleanKey.includes('arastirma')) {
       heuristicKey = 'piyasa_fiyat_arastirma_gorevlendirmesi'
     } else {
       heuristicKey = 'komisyon_gorevlendirme_onayi'
+    }
+  } else if (cleanKey.includes('piyasa') && (cleanKey.includes('arastirma') || cleanKey.includes('gorevlendirme'))) {
+    if (cleanKey.includes('tutanak')) {
+      heuristicKey = 'piyasa_fiyat_arastirma_tutanagi'
+    } else {
+      heuristicKey = 'piyasa_fiyat_arastirma_gorevlendirmesi'
     }
   } else if (cleanKey.includes('teklif') || cleanKey.includes('birim-fiyat')) {
     heuristicKey = 'birim_fiyat_teklif_mektubu'

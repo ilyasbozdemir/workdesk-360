@@ -915,6 +915,7 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
   komisyon_gorevlendirme_onayi_eki: "komisyon_gorevlendirme_onayi_eki",
   piyasa_fiyat_arastirma_gorevlendirmesi:
     "piyasa_fiyat_arastirma_gorevlendirmesi",
+  piyasa_arastirma_gorevlendirmesi: "piyasa_fiyat_arastirma_gorevlendirmesi",
   son_alim_fiyat_cetveli: "son_alim_fiyat_cetveli",
   fiyat_arastirma_mektubu: "fiyat_arastirma_mektubu",
   birim_fiyat_teklif_mektubu: "birim_fiyat_teklif_mektubu",
@@ -948,6 +949,12 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
   "komisyon-gorevlendirme-onayi-eki": "komisyon_gorevlendirme_onayi_eki",
   "piyasa-fiyat-arastirma-gorevlendirmesi":
     "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-arastirma-gorevlendirmesi": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-arastirma-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-fiyat-arastirma-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-gorevlendirmesi": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "fiyat-arastirma-komisyonu": "piyasa_fiyat_arastirma_gorevlendirmesi",
   "son-alim-fiyat-cetveli": "son_alim_fiyat_cetveli",
   "fiyat-arastirma-mektubu": "fiyat_arastirma_mektubu",
   "birim-fiyat-teklif-mektubu": "birim_fiyat_teklif_mektubu",
