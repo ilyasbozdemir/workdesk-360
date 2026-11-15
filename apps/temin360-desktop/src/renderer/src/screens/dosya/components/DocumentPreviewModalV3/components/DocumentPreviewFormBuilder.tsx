@@ -374,6 +374,47 @@ export function DocumentPreviewFormBuilder({
 
     if (rawVal === undefined || rawVal === null) return "";
 
+    // String içinde [object Object] bozulması varsa temizle ve fallback listelerinden al
+    if (typeof rawVal === "string" && rawVal.includes("[object Object]")) {
+      const fallbackList =
+        (Array.isArray(formData.dagitimListesi) && formData.dagitimListesi.length > 0 && formData.dagitimListesi) ||
+        (Array.isArray(formData.gorevlendirilenler) && formData.gorevlendirilenler.length > 0 && formData.gorevlendirilenler) ||
+        (Array.isArray(formData.fiyatKomisyonu) && formData.fiyatKomisyonu.length > 0 && formData.fiyatKomisyonu) ||
+        (Array.isArray(formData.muayeneKomisyonu) && formData.muayeneKomisyonu.length > 0 && formData.muayeneKomisyonu) ||
+        [];
+
+      if (fallbackList.length > 0) {
+        return fallbackList
+          .map((item: any) => {
+            if (!item) return "";
+            if (typeof item === "string") return item.trim();
+            const name = (
+              item.adSoyad ||
+              item.ad_soyad ||
+              item.personelAdi ||
+              item.personel_adi ||
+              item.ad ||
+              item.adi ||
+              item.name ||
+              ""
+            ).trim();
+            const title = (
+              item.unvan ||
+              item.unvani ||
+              item.gorev ||
+              item.gorevi ||
+              item.title ||
+              ""
+            ).trim();
+            if (name && title) return `${name} (${title})`;
+            return name || title || "";
+          })
+          .filter(Boolean)
+          .join("\n");
+      }
+      return "";
+    }
+
     // Array / Dizi değerlerini [object Object] olmadan temiz, okunabilir metne dönüştür
     if (Array.isArray(rawVal)) {
       return rawVal
@@ -381,8 +422,24 @@ export function DocumentPreviewFormBuilder({
           if (!item) return "";
           if (typeof item === "string") return item.trim();
           if (typeof item === "object") {
-            const name = (item.adSoyad || item.ad || item.adi || item.name || "").trim();
-            const title = (item.unvan || item.unvani || item.gorev || item.title || "").trim();
+            const name = (
+              item.adSoyad ||
+              item.ad_soyad ||
+              item.personelAdi ||
+              item.personel_adi ||
+              item.ad ||
+              item.adi ||
+              item.name ||
+              ""
+            ).trim();
+            const title = (
+              item.unvan ||
+              item.unvani ||
+              item.gorev ||
+              item.gorevi ||
+              item.title ||
+              ""
+            ).trim();
             if (name && title) return `${name} (${title})`;
             return name || title || "";
           }
