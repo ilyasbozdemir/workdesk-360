@@ -1,32 +1,13 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
-import { PersonelCard } from "../../document/ApprovalSignature";
 import { EditableField } from "../../document/EditableField";
 import { KomisyonGorevlendirmeOnayiEkiType } from "./KomisyonGorevlendirmeOnayiEki.schema";
+import {
+  formatAlimTuru,
+  useKomisyonGorevlendirmeOnayiEki,
+} from "./KomisyonGorevlendirmeOnayiEki.hook";
 
-export function formatAlimTuru(alimTuru?: string, tur?: string): string {
-  const raw = (alimTuru || tur || "").trim();
-  const lower = raw.toLowerCase();
-
-  if (!raw) return "mal alımı";
-  if (lower === "mal" || lower === "malzeme") return "mal alımı";
-  if (lower === "hizmet") return "hizmet alımı";
-  if (lower === "yapim" || lower === "yapım" || lower === "yapim_isi") {
-    return "yapım işi";
-  }
-  if (lower === "danismanlik" || lower === "danışmanlık") {
-    return "danışmanlık hizmet alımı";
-  }
-
-  if (
-    lower.includes("alım") || lower.includes("alim") || lower.includes("işi") ||
-    lower.includes("isi")
-  ) {
-    return raw;
-  }
-
-  return `${raw} alımı`;
-}
+export { formatAlimTuru };
 
 interface KomisyonGorevlendirmeOnayiEkiProps {
   data?: Partial<KomisyonGorevlendirmeOnayiEkiType> & Record<string, any>;
@@ -43,8 +24,13 @@ export function KomisyonGorevlendirmeOnayiEki({
   hideHeader = false,
   hideFooter = true,
 }: KomisyonGorevlendirmeOnayiEkiProps) {
-  const fiyatUyeleri = data.fiyatKomisyonu || [];
-  const muayeneUyeleri = data.muayeneKomisyonu || [];
+  const {
+    ekNo,
+    kurumumuzMetni,
+    alimTuruMetni,
+    fiyatUyeleri,
+    muayeneUyeleri,
+  } = useKomisyonGorevlendirmeOnayiEki({ data, pageSize, orientation });
 
   return (
     <DocumentLayout
@@ -71,7 +57,7 @@ export function KomisyonGorevlendirmeOnayiEki({
             EK:{" "}
             <EditableField
               name="ekNo"
-              value={data.ekNo || "2"}
+              value={ekNo}
               placeholder="2"
             />
           </strong>
@@ -88,13 +74,13 @@ export function KomisyonGorevlendirmeOnayiEki({
         >
           <EditableField
             name="kurumumuz"
-            value={data.kurumumuz ?? (data.kurumAdi || "Kurumumuz")}
+            value={kurumumuzMetni}
             placeholder="Kurumumuz"
           />{" "}
           birimlerinde kullanılmak üzere ekteki lüzum müzakeresinde sunulan{" "}
           <EditableField
             name="alimTuru"
-            value={formatAlimTuru(data.alimTuru, data.tur)}
+            value={alimTuruMetni}
             placeholder="mal alımı / yapım işi / hizmet alımı"
           />{" "}
           için 4734 Sayılı Kamu İhale Kanununa göre görevlendirilen kişilerin

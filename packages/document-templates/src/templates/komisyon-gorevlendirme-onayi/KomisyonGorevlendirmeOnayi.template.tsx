@@ -6,7 +6,7 @@ import {
   PersonelCard,
 } from "../../document/ApprovalSignature";
 import { KomisyonGorevlendirmeOnayiType } from "./KomisyonGorevlendirmeOnayi.schema";
-import { formatOfficialEvrakSayisi } from "../../resolver/helpers/resolveEvrakSayisi";
+import { useKomisyonGorevlendirmeOnayi } from "./KomisyonGorevlendirmeOnayi.hook";
 
 interface KomisyonGorevlendirmeOnayiProps {
   data?: Partial<KomisyonGorevlendirmeOnayiType> & Record<string, any>;
@@ -23,38 +23,20 @@ export function KomisyonGorevlendirmeOnayi({
   hideHeader = false,
   hideFooter = true,
 }: KomisyonGorevlendirmeOnayiProps) {
-  const fiyatUyeleri = data.fiyatKomisyonu && data.fiyatKomisyonu.length > 0
-    ? data.fiyatKomisyonu
-    : data.gorevliler || [];
-  const muayeneUyeleri = data.muayeneKomisyonu || [];
-
-  const mainHeaderTitle = data.idareAdi ||
-    data.sunulacakMakamAdi ||
-    (data.antetSatirlari && data.antetSatirlari[1]) ||
-    data.kurumAdi ||
-    "KURUM BAŞKANLIĞINA";
-
-  const fallbackKurum = data.altKurumBizim || data.kurumBizim || "İdaremiz";
-  const kurumumuzMetni = data.kurumumuz &&
-      data.kurumumuz !== "Belediyemiz / İdaremiz" &&
-      data.kurumumuz !== "Belediyemiz"
-    ? data.kurumumuz
-    : fallbackKurum;
-
-  const isAdiMetni = data.isAdi ?? data.isinAdi;
-
-  const evrakNo =
-    data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") &&
-      !String(data.evrakSayisi).includes("/")
-      ? data.evrakSayisi
-      : formatOfficialEvrakSayisi({
-        evrakSayisi: data.evrakSayisi,
-        detsisNo: data.detsisNo,
-        tur: (data as any)?.tur,
-        sayisi: (data as any)?.sayisi,
-        teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo ||
-          (data as any)?.dosyaSayisi,
-      });
+  const {
+    fiyatUyeleri,
+    muayeneUyeleri,
+    mainHeaderTitle,
+    fallbackKurum,
+    kurumumuzMetni,
+    isAdiMetni,
+    evrakNo,
+    tarih,
+    konu,
+    kapanisMetni,
+    onaylayanAdi,
+    onaylayanUnvan,
+  } = useKomisyonGorevlendirmeOnayi({ data, pageSize, orientation });
 
   const renderTopSection = () => (
     <>
@@ -102,7 +84,7 @@ export function KomisyonGorevlendirmeOnayi({
                   :{" "}
                   <EditableField
                     name="konu"
-                    value={data.konu || "Görevlendirme"}
+                    value={konu}
                   />
                 </td>
               </tr>
@@ -113,7 +95,7 @@ export function KomisyonGorevlendirmeOnayi({
           <strong>Tarih:</strong>{" "}
           <DateEditableField
             name="tarih"
-            value={data.tarih || data.onayaSunulanTarih || data.dosyaTarihi}
+            value={tarih}
           />
         </div>
       </div>
@@ -170,10 +152,7 @@ export function KomisyonGorevlendirmeOnayi({
           lineHeight: 1.35,
         }}
       >
-        {data.kapanisMetni ||
-          (data.olurYazisi === true
-            ? "Gereğini olurlarınıza arz ederim."
-            : "Gereğini rica ederim.")}
+        {kapanisMetni}
       </div>
     </>
   );
@@ -381,9 +360,8 @@ export function KomisyonGorevlendirmeOnayi({
 
       {/* Görevlendirmeyi Yapan Yetkili / Harcama Yetkilisi İmzası (Sağ) */}
       <PersonelCard
-        adSoyad={data.baskanAdi || data.onaylayanPersonelAdi}
-        unvan={data.baskanUnvan || data.onaylayanPersonelUnvan ||
-          "Harcama Yetkilisi"}
+        adSoyad={onaylayanAdi}
+        unvan={onaylayanUnvan}
         align="right"
         marginTop={20}
         marginBottom={20}

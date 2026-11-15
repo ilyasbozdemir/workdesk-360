@@ -194,9 +194,11 @@ export * from "./templates/harcama-pusulasi/HarcamaPusulasi.schema";
 export * from "./templates/harcama-pusulasi/HarcamaPusulasi.template";
 
 // --- 4. Komisyon & Muayene Kabul ---
+export * from "./templates/komisyon-gorevlendirme-onayi/KomisyonGorevlendirmeOnayi.hook";
 export * from "./templates/komisyon-gorevlendirme-onayi/KomisyonGorevlendirmeOnayi.schema";
 export * from "./templates/komisyon-gorevlendirme-onayi/KomisyonGorevlendirmeOnayi.template";
 
+export * from "./templates/komisyon-gorevlendirme-onayi-eki/KomisyonGorevlendirmeOnayiEki.hook";
 export * from "./templates/komisyon-gorevlendirme-onayi-eki/KomisyonGorevlendirmeOnayiEki.schema";
 export * from "./templates/komisyon-gorevlendirme-onayi-eki/KomisyonGorevlendirmeOnayiEki.template";
 

@@ -1,3 +1,4 @@
+export * from "./KomisyonGorevlendirmeOnayi.hook";
 export * from "./KomisyonGorevlendirmeOnayi.schema";
 export * from "./KomisyonGorevlendirmeOnayi.template";
 export * from './data.mapping';
