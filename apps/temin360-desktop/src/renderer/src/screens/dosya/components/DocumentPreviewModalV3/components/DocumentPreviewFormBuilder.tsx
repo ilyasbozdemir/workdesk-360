@@ -24,7 +24,7 @@ export interface FormFieldConfig {
   aliases?: string[];
 }
 
-export const BUDGET_TERTIP_PRESETS = [
+const BUDGET_TERTIP_PRESETS = [
   { code: "03.2.1.01", name: "Kırtasiye ve Büro Malzemesi Alımları" },
   { code: "03.2.1.02", name: "Büro Mefruşatı ve Donanım Alımları" },
   { code: "03.2.1.05", name: "Baskı ve Cilt Giderleri" },
@@ -38,7 +38,7 @@ export const BUDGET_TERTIP_PRESETS = [
   { code: "03.7.2.01", name: "Bilgisayar ve Yazılım Alımları" },
 ];
 
-export const TEMPLATE_PRIORITY_KEYS: Record<string, string[]> = {
+const TEMPLATE_PRIORITY_KEYS: Record<string, string[]> = {
   harcama_talimati: ["butceTertibi", "odenekTutari", "isTutari", "mutemetAdi", "isAdi", "gerekce", "teminSekli"],
   "harcama-talimati": ["butceTertibi", "odenekTutari", "isTutari", "mutemetAdi", "isAdi", "gerekce", "teminSekli"],
   butce_sorgusu: ["butceTertibi", "odenekTutari", "isTutari", "yaklasikMaliyet", "isAdi"],
