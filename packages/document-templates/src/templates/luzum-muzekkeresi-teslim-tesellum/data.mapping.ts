@@ -107,16 +107,6 @@ export const dataMapping: ProcessMapping = {
       miktar: 'miktar'
     },
     aciklama: 'Teslim tesellüm kalemleri'
-  },
-  teslimAlanlar: {
-    tablo: 'DATA_TeminKomisyon',
-    sutun: '*',
-    iliskili_id: 'temin_dosya_id',
-    altEslestirme: {
-      adSoyad: 'ad_soyad',
-      unvan: 'unvan'
-    },
-    aciklama: 'Teslim alan kişiler'
   }
 };
 

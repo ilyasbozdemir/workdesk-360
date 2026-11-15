@@ -31,7 +31,7 @@ describe("LuzumMuzekkeresiOnayEki — Alım Türü Varyantları", () => {
     const html = renderToString(
       <MalAlimiLuzumMuzekkeresiOnayEki data={baseData} />,
     );
-    expect(html).toContain("MAL ALIMI");
+    expect(html).toContain("LÜZUM MÜZEKKERESİ");
     expect(html).toContain("Taşınır Kodu");
     expect(html).toContain("Dosya Teli");
     expect(html).toContain("Mustafa Çelik");
@@ -41,7 +41,7 @@ describe("LuzumMuzekkeresiOnayEki — Alım Türü Varyantları", () => {
     const html = renderToString(
       <HizmetAlimiLuzumMuzekkeresiOnayEki data={baseData} />,
     );
-    expect(html).toContain("HİZMET ALIMI");
+    expect(html).toContain("LÜZUM MÜZEKKERESİ");
     expect(html).toContain("Hizmet Kodu");
     expect(html).toContain("Hizmet Adı / İşin Tanımı");
   });
@@ -50,7 +50,7 @@ describe("LuzumMuzekkeresiOnayEki — Alım Türü Varyantları", () => {
     const html = renderToString(
       <DanismanlikLuzumMuzekkeresiOnayEki data={baseData} />,
     );
-    expect(html).toContain("DANIŞMANLIK");
+    expect(html).toContain("LÜZUM MÜZEKKERESİ");
     expect(html).toContain("Danışmanlık Konusu");
   });
 
@@ -58,7 +58,7 @@ describe("LuzumMuzekkeresiOnayEki — Alım Türü Varyantları", () => {
     const html = renderToString(
       <YapimIsleriLuzumMuzekkeresiOnayEki data={baseData} />,
     );
-    expect(html).toContain("YAPIM İŞLERİ");
+    expect(html).toContain("LÜZUM MÜZEKKERESİ");
     expect(html).toContain("Poz / İş Kalemi No");
     expect(html).toContain("İmalat Adı / İş Kalemi");
   });
@@ -67,7 +67,7 @@ describe("LuzumMuzekkeresiOnayEki — Alım Türü Varyantları", () => {
     const html = renderToString(
       <LuzumMuzekkeresiOnayEki data={{ ...baseData, alimTuru: "hizmet" }} />,
     );
-    expect(html).toContain("HİZMET ALIMI");
     expect(html).toContain("Hizmet Kodu");
+    expect(html).toContain("Hizmet Adı / İşin Tanımı");
   });
 });

@@ -1578,6 +1578,16 @@ export function DocumentPreviewRotaSection({
                                 value={selectedVal}
                                 onChange={(e) => {
                                   const val = e.target.value
+                                  if (!val) {
+                                    handleUpdateMember(idx, {
+                                      id: '',
+                                      name: '',
+                                      title: '',
+                                      unitId: member.unitId,
+                                      unitName: member.unitName
+                                    })
+                                    return
+                                  }
                                   const p = memberPool.find(
                                     (item) => String(item.id || item.ad_soyad) === val
                                   )

@@ -15,4 +15,13 @@ describe("LuzumMuzekkeresiTeslimTesellum — Rota Tanımı", () => {
   it("2. Definition nesnesi routeDefinition ile eşleşir", () => {
     expect(definition.routeDefinition).toEqual(luzumMuzekkeresiTeslimTesellumRoute);
   });
+
+  it("3. Teslim alan slotu person-list türünde dinamik yönetilebilir olmalıdır", () => {
+    const teslimAlanSlot = luzumMuzekkeresiTeslimTesellumRoute.slots.find(
+      (s) => s.id === "teslimAlan",
+    );
+    expect(teslimAlanSlot).toBeDefined();
+    expect(teslimAlanSlot?.kind).toBe("person-list");
+    expect(teslimAlanSlot?.fieldKey).toBe("teslimAlanlar");
+  });
 });

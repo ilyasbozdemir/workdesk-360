@@ -31,7 +31,7 @@ export function YapimIsleriLuzumMuzekkeresiOnayEki(
     <BaseLuzumMuzekkeresiOnayEki
       {...props}
       columns={props.columns || YAPIM_ISLERI_ONAY_EKI_COLUMNS}
-      title={props.title || "LÜZUM MÜZEKKERESİ (YAPIM İŞLERİ)"}
+      title={props.title || "LÜZUM MÜZEKKERESİ"}
       talepMetniSuffix={props.talepMetniSuffix ||
         "için aşağıda cins ve mahal bilgileri belirtilen yapım / onarım iş kalemlerine ihtiyaç görüldüğünden yapılması/yaptırılması arz olunur."}
     />
