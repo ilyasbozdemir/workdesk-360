@@ -382,7 +382,7 @@ export const templateRegistry = {
     version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
-      supportsOlur: true,
+      supportsOlur: false,
       supportsCommission: true,
       supportedCommissionTypes: ["piyasa_fiyat", "yaklasik_maliyet"],
       supportsKalemListesi: false,

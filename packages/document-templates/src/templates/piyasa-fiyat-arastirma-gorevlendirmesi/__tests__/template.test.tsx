@@ -5,15 +5,13 @@ import { PiyasaFiyatArastirmaGorevlendirmesi } from "../PiyasaFiyatArastirmaGore
 import { getTemplateDefinition } from "../../../registry";
 
 describe("PiyasaFiyatArastirmaGorevlendirmesi — Şablon Bileşen Render Testleri", () => {
-  it("1. Görevlendirilen personeller, hazırlayan ve harcama yetkilisi eksiksiz çizilir", () => {
+  it("1. Görevlendirilen personeller, doğrudan emir yazısı ve harcama yetkilisi tekil imzası eksiksiz çizilir", () => {
     const mockData = {
       evrakSayisi: "E-10234521-934.01-0005",
       dosyaTarihi: "15.11.2026",
       kurumumuz: "Kadıköy Belediyesi Destek Hizmetleri Müdürlüğü",
       isinAdi: "Temizlik Malzemesi Temini",
       dosyaKonusu: "Piyasa Fiyat Araştırma Görevlendirmesi",
-      hazirlayanPersonelAdi: "Kemal Sunal",
-      hazirlayanPersonelUnvan: "Satınalma Şefi",
       onaylayanPersonelAdi: "Halit Akçatepe",
       onaylayanPersonelUnvan: "Destek Hizmetleri Müdürü",
       gorevlendirilenler: [
@@ -24,7 +22,6 @@ describe("PiyasaFiyatArastirmaGorevlendirmesi — Şablon Bileşen Render Testle
         { adSoyad: "Münir Özkul", unvan: "Mühendis" },
         { adSoyad: "Adile Naşit", unvan: "Tekniker" },
       ],
-      olurYazisi: true,
     };
 
     const html = renderToStaticMarkup(<PiyasaFiyatArastirmaGorevlendirmesi data={mockData} />);
@@ -36,20 +33,25 @@ describe("PiyasaFiyatArastirmaGorevlendirmesi — Şablon Bileşen Render Testle
     expect(html).toContain("Münir Özkul");
     expect(html).toContain("Adile Naşit");
 
-    // Hazırlayan ve Onaylayan imzaları
-    expect(html).toContain("Kemal Sunal");
-    expect(html).toContain("Satınalma Şefi");
+    // Doğrudan emir yazısı metni ("Gereğini rica ederim.")
+    expect(html).toContain("Gereğini rica ederim.");
+
+    // Harcama Yetkilisi / Onay Makamı tekil imzası
     expect(html).toContain("Halit Akçatepe");
     expect(html).toContain("Destek Hizmetleri Müdürü");
 
-    // OLUR onay başlığı ve DAĞITIM
-    expect(html).toContain("OLUR");
+    // OLUR onay başlığı olmamalıdır (Olur yazısı değil, amir görevlendirme emridir)
+    expect(html).not.toContain("OLUR");
+    expect(html).not.toContain("olurlarınıza arz ederim");
+
+    // DAĞITIM
     expect(html).toContain("DAĞITIM:");
   });
 
-  it("2. Boş veri sağlandığında çökmeksizin varsayılan metinleri çizer", () => {
+  it("2. Boş veri sağlandığında çökmeksizin varsayılan metinleri ve rica ederim ifadesini çizer", () => {
     const html = renderToStaticMarkup(<PiyasaFiyatArastirmaGorevlendirmesi data={{}} />);
-    expect(html).toContain("Gereğini olurlarınıza arz ederim");
+    expect(html).toContain("Gereğini rica ederim.");
+    expect(html).toContain("Harcama Yetkilisi");
   });
 
   it("3. Template Registry üzerinden `piyasa-arastirma-gorevlendirmesi` alias'ı ile çözümlenip başarıyla render edilir", () => {

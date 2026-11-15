@@ -1,11 +1,7 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
-import {
-  ApprovalSignature,
-  EditableOlurPlaceholder,
-  PersonelCard,
-} from "../../document/ApprovalSignature";
+import { PersonelCard } from "../../document/ApprovalSignature";
 import { MetadataBlock } from "../../document/MetadataBlock";
 import { PiyasaFiyatArastirmaGorevlendirmesiData } from "./PiyasaFiyatArastirmaGorevlendirmesi.schema";
 import { formatUnvan } from "../../utils/textHelpers";
@@ -271,53 +267,19 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
             lineHeight: 1.6,
           }}
         >
-          {data.olurYazisi !== false
-            ? "Gereğini olurlarınıza arz ederim."
-            : "Gereğini rica ederim."}
+          Gereğini rica ederim.
         </div>
 
-        {/* Hazırlayan (Sağ) - Eğer OLUR varsa hazırlayan imza atar */}
-        {data.olurYazisi !== false && (
-          <PersonelCard
-            adSoyad={data.hazirlayanPersonelAdi}
-            unvan={data.hazirlayanPersonelUnvan}
-            align="right"
-            marginTop={20}
-            marginBottom={30}
-            nameField="hazirlayanPersonelAdi"
-            unvanField="hazirlayanPersonelUnvan"
-          />
-        )}
-
-        {/* Doğrudan Görevlendirme İmzası (OLUR yoksa yetkili tek başına imzalar) */}
-        {data.olurYazisi === false && (
-          <PersonelCard
-            adSoyad={data.onaylayanPersonelAdi}
-            unvan={data.onaylayanPersonelUnvan}
-            align="right"
-            marginTop={20}
-            marginBottom={30}
-            nameField="onaylayanPersonelAdi"
-            unvanField="onaylayanPersonelUnvan"
-          />
-        )}
-
-        {/* OLUR Onay Bloğu (Orta) */}
-        {data.olurYazisi !== false
-          ? (
-            <ApprovalSignature
-              title={(data as any).olurBaslik || "OLUR"}
-              date={data.dosyaTarihi || data.tarih || ""}
-              adSoyad={data.onaylayanPersonelAdi}
-              unvan={data.onaylayanPersonelUnvan}
-              showSpace={true}
-              marginTop={25}
-              nameField="onaylayanPersonelAdi"
-              unvanField="onaylayanPersonelUnvan"
-              dateField="dosyaTarihi"
-            />
-          )
-          : <EditableOlurPlaceholder />}
+        {/* Görevlendirmeyi Yapan Yetkili / Harcama Yetkilisi İmzası (Sağ) */}
+        <PersonelCard
+          adSoyad={data.onaylayanPersonelAdi || data.harcamaYetkilisiAdi || data.baskanAdi}
+          unvan={data.onaylayanPersonelUnvan || data.harcamaYetkilisiUnvani || "Harcama Yetkilisi"}
+          align="right"
+          marginTop={20}
+          marginBottom={30}
+          nameField="onaylayanPersonelAdi"
+          unvanField="onaylayanPersonelUnvan"
+        />
 
         {/* DAĞITIM (Sol Alt) */}
         <div
