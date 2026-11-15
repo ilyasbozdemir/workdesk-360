@@ -12,6 +12,7 @@ export const HarcamaTalimatiSchema = BaseTemplateSchema.extend({
   teminSekli: z.string().optional(),
   yaklasikMaliyet: z.union([z.string(), z.number()]).optional(),
   odenekTutari: z.union([z.string(), z.number()]).optional(),
+  butceTertibi: z.union([z.string(), z.array(z.string())]).optional(),
   gerceklestirmeGorevlileri: z.union([z.string(), z.array(z.string())]).optional(),
   gerceklestirmeGorevlisiAdi: z.string().optional(),
   gerceklestirmeGorevlisiUnvan: z.string().optional(),

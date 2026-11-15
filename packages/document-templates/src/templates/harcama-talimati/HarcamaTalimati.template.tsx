@@ -415,9 +415,23 @@ export function HarcamaTalimati({
                   border: "1px solid #000",
                   width: "65%",
                   padding: "4px 7px",
+                  whiteSpace: "pre-wrap",
                 }}
               >
-                {renderArrayOrString(data.butceTertibi)}
+                <EditableField
+                  name="butceTertibi"
+                  value={
+                    Array.isArray(data.butceTertibi)
+                      ? data.butceTertibi.join("\n")
+                      : data.butceTertibi !== undefined &&
+                          data.butceTertibi !== null
+                      ? String(data.butceTertibi)
+                      : ""
+                  }
+                  multiline
+                  placeholder="Ödeneğin Bütçe Tertibi (Satır satır bütçe tertiplerini giriniz...)"
+                  style={{ width: "100%", display: "block" }}
+                />
               </td>
             </tr>
 

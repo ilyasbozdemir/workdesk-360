@@ -87,4 +87,17 @@ describe("HarcamaTalimati — Şablon Bileşeni Görsel & HTML Testleri", () => 
     expect(html).toContain("Canan Çetin");
     expect(html).toContain("Tekniker");
   });
+
+  it("5. Ödeneğin bütçe tertibi EditableField ile satır satır iç içe render edilir", () => {
+    const dataWithTertip = {
+      ...baseData,
+      butceTertibi: ["46.34.02.05 - 03.2.1.01", "46.34.02.05 - 03.5.2.02"],
+    };
+
+    const html = renderToStaticMarkup(<HarcamaTalimati data={dataWithTertip} />);
+    expect(html).toContain("Ödeneğin Bütçe Tertibi");
+    expect(html).toContain("46.34.02.05 - 03.2.1.01");
+    expect(html).toContain("46.34.02.05 - 03.5.2.02");
+    expect(html).toContain('data-field-name="butceTertibi"');
+  });
 });
