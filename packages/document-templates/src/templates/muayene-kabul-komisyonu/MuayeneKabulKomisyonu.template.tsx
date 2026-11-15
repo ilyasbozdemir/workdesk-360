@@ -6,7 +6,7 @@ import {
   PersonelCard,
 } from "../../document/ApprovalSignature";
 import { MuayeneKabulKomisyonuData } from "./MuayeneKabulKomisyonu.schema";
-import { formatUnvan } from "../../utils/textHelpers";
+import { formatUnvan, cleanKanunMaddesi } from "../../utils/textHelpers";
 import { formatOfficialEvrakSayisi } from "../../resolver/helpers/resolveEvrakSayisi";
 
 interface Props {
@@ -190,6 +190,14 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
   const konuMetni = "Muayene ve Kabul Komisyonu";
   const isinAdiMetni = data.isinAdi ?? (data as any)?.konu ?? "Alımı yapılacak";
 
+  const rawKanunMaddesi =
+    data.kanunMaddesi ||
+    data.ihaleSekli ||
+    data.teminSekli ||
+    data.ihale_sekli ||
+    (data as any)?.temin_sekli;
+  const kanunMaddesiMetni = cleanKanunMaddesi(rawKanunMaddesi);
+
   return (
     <DocumentLayout
       data={data as any}
@@ -247,10 +255,7 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
           {" sayılı Onay Belgesine istinaden 4734 Sayılı Kanunun "}
           <EditableField
             name="kanunMaddesi"
-            value={String(
-              data.kanunMaddesi || data.ihaleSekli || data.ihale_sekli ||
-                "22/d",
-            )}
+            value={kanunMaddesiMetni}
           />
           {" maddesine göre alımı gerçekleştirilen "}
           <EditableField

@@ -67,6 +67,31 @@ export const dataMapping: ProcessMapping = {
     sutun: 'konu',
     aciklama: 'İşin Adı'
   },
+  kanunMaddesi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'ihale_sekli',
+    aciklama: 'Kanun Maddesi / İhale Şekli'
+  },
+  ihaleSekli: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'ihale_sekli',
+    aciklama: 'İhale Şekli'
+  },
+  teminSekli: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'ihale_sekli',
+    aciklama: 'Temin Şekli'
+  },
+  onayBelgesiTarihi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'dosya_tarihi',
+    aciklama: 'Onay Belgesi Tarihi'
+  },
+  onayBelgesiSayisi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'temin_no',
+    aciklama: 'Onay Belgesi Numarası / Sayısı'
+  },
   hazirlayanPersonelAdi: {
     tablo: 'DATA_TeminDosyasi',
     sutun: 'hazirlayan_personel_ad',

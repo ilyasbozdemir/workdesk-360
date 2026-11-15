@@ -73,7 +73,7 @@ describe("MuayeneKabulKomisyonu — Şablon Bileşen ve Data Mapping Testleri", 
     expect(html).toContain("Kırtasiye Alımı");
   });
 
-  it("4. data.mapping.ts kurum ve birim alanlarını ve komisyon tablolarını eksiksiz içerir", () => {
+  it("4. data.mapping.ts kurum, birim, komisyon ve kanun maddesi alanlarını eksiksiz içerir", () => {
     expect(dataMapping.kurumAdi).toBeDefined();
     expect(dataMapping.kurumUst).toBeDefined();
     expect(dataMapping.harcamaBirimi).toBeDefined();
@@ -82,5 +82,28 @@ describe("MuayeneKabulKomisyonu — Şablon Bileşen ve Data Mapping Testleri", 
     expect(dataMapping.antetEkSatir).toBeDefined();
     expect(dataMapping.muayeneKomisyonu).toBeDefined();
     expect(dataMapping.fiyatKomisyonu).toBeDefined();
+    expect(dataMapping.kanunMaddesi).toBeDefined();
+    expect((dataMapping.kanunMaddesi as any).sutun).toBe("ihale_sekli");
+  });
+
+  it("5. Dosyadan seçilen ihale/temin şekli (kanunMaddesi) metne otomatik ve temiz formatta yansıtılır", () => {
+    // 22/a testi
+    const htmlA = renderToStaticMarkup(
+      <MuayeneKabulKomisyonu data={{ kanunMaddesi: "22/a" }} />
+    );
+    expect(htmlA).toContain("4734 Sayılı Kanunun");
+    expect(htmlA).toContain("22/a");
+
+    // 22/d* yıldızlı seçimi temizleyip 22/d olarak basma testi
+    const htmlD = renderToStaticMarkup(
+      <MuayeneKabulKomisyonu data={{ ihaleSekli: "22/d*" }} />
+    );
+    expect(htmlD).toContain("22/d");
+
+    // 4734 Sayılı KİK Md. 22/c seçiminden madde ayıklama testi
+    const htmlC = renderToStaticMarkup(
+      <MuayeneKabulKomisyonu data={{ teminSekli: "4734 Sayılı KİK Md. 22/c (Mevcut Uyumluluk)" }} />
+    );
+    expect(htmlC).toContain("22/c");
   });
 });

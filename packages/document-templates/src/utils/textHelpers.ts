@@ -350,3 +350,38 @@ export function cleanPersonelName(name?: string | null): string {
 
   return cleaned.trim();
 }
+
+/**
+ * 4734 Sayılı Kamu İhale Kanunu madde / usul bilgisini temizleyip resmî yazı formatına dönüştürür.
+ * Örnek: "22/d*" -> "22/d", "4734 Sayılı KİK Md. 22/a" -> "22/a", "22-d" -> "22/d"
+ */
+export function cleanKanunMaddesi(raw?: any): string {
+  if (!raw) return "22/d";
+  const str = String(raw).trim();
+  if (!str || str === "-") return "22/d";
+
+  // Yıldızları temizle
+  const unstarred = str.replace(/[*]+/g, "").trim();
+
+  // "22-d" formatını "22/d" formatına çevir
+  const normalized = unstarred.replace(/(\b\d+)-([a-zğüşıöçA-Z]\b)/i, "$1/$2");
+
+  // Doğrudan "22/d", "22/a", "21/f" formatındaysa
+  if (/^\d+\/[a-zğüşıöçA-Z]$/i.test(normalized)) {
+    return normalized.toLowerCase();
+  }
+
+  // Metin içinde "22/d", "22/a", "22/c", "21/b" gibi madde geçiyorsa onu çek
+  const match = normalized.match(/\b\d+\/[a-zğüşıöçA-Z]\b/i);
+  if (match) {
+    return match[0].toLowerCase();
+  }
+
+  // Sadece sayı ve madde içeriyorsa
+  const numMatch = normalized.match(/\b\d+\b/);
+  if (numMatch && normalized.toLowerCase().includes("madde")) {
+    return numMatch[0];
+  }
+
+  return normalized;
+}
