@@ -220,7 +220,7 @@ export const templateRegistry = {
   harcama_talimati: {
     id: "harcama-talimati",
     name: "HarcamaTalimati",
-    title: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    title: "Harcama Talimatı",
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
@@ -255,7 +255,7 @@ export const templateRegistry = {
     version: 1,
     capabilities: { ...DEFAULT_CAPS, supportsOlur: true, supportsLogos: true },
     kikKodu: "KİK024.0/M",
-    kikAdi: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    kikAdi: "Harcama Talimatı",
   },
   komisyon_gorevlendirme_onayi: {
     id: "komisyon-gorevlendirme-onayi",
@@ -563,7 +563,7 @@ export const templateRegistry = {
   dogrudan_temin_onay_belgesi: {
     id: "dogrudan-temin-onay-belgesi",
     name: "DogrudanTeminOnayBelgesi",
-    title: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    title: "Harcama Talimatı",
     category: "3-siparis-ve-sozlesme",
     categoryLabel: "Sipariş & Sözleşme",
     description: "Karara bağlanan alımın yetkili makam onay belgesi",
@@ -581,7 +581,7 @@ export const templateRegistry = {
       supportsLogos: true,
     },
     kikKodu: "KİK024.0/M",
-    kikAdi: "Doğrudan Temin Onay Belgesi (Harcama Talimatı)",
+    kikAdi: "Harcama Talimatı",
   },
   dogrudan_temin_sonuc_onay_belgesi: {
     id: "dogrudan-temin-sonuc-onay-belgesi",

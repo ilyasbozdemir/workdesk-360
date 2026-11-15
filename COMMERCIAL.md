@@ -66,8 +66,7 @@ kurumsal faturalandırma süreçleri için doğrudan proje sahibi ile iletişime
 geçebilirsiniz:
 
 - **Telif Sahibi:** İlyas Bozdemir
-- **E-Posta:** [bozdemir.ib70@gmail.com](mailto:bozdemir.ib70@gmail.com) _(veya
-  kurumsal iletişim adresiniz)_
+- **E-Posta:** [bozdemir.ib70@gmail.com](mailto:bozdemir.ib70@gmail.com)
 - **GitHub:** [@ilyasbozdemir](https://github.com/ilyasbozdemir)
 - **Konu Başlığı Örneği:**
   `[Temin 360 - Ticari Lisans Talebi] - <Firma / Kurum Adı>`

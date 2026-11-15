@@ -3,52 +3,52 @@
     "itemCount": 5,
     "phases": {
       "phase1_sourceData": {
-        "min": 0.4,
-        "median": 1.21,
-        "p95": 6.15,
-        "max": 6.15
+        "min": 0.39,
+        "median": 1.09,
+        "p95": 5.3,
+        "max": 5.3
       },
       "phase2_mappingResolution": {
-        "min": 2.08,
-        "median": 2.95,
-        "p95": 8.48,
-        "max": 8.48
+        "min": 1.79,
+        "median": 2.97,
+        "p95": 11.02,
+        "max": 11.02
       },
       "phase3_templatePreparation": {
-        "min": 1.87,
-        "median": 2.85,
-        "p95": 8.47,
-        "max": 8.47
+        "min": 1.78,
+        "median": 2.69,
+        "p95": 12.79,
+        "max": 12.79
       },
       "phase4_snapshotLoad": {
-        "min": 0.11,
+        "min": 0.12,
         "median": 0.14,
-        "p95": 0.3,
-        "max": 0.3
+        "p95": 0.28,
+        "max": 0.28
       },
       "phase5_smartMerge": {
-        "min": 0.08,
+        "min": 0.06,
         "median": 0.09,
-        "p95": 0.81,
-        "max": 0.81
+        "p95": 1.33,
+        "max": 1.33
       },
       "phase6_reactRender": {
-        "min": 8.65,
-        "median": 10.01,
-        "p95": 70.7,
-        "max": 70.7
+        "min": 7.43,
+        "median": 11.82,
+        "p95": 94.26,
+        "max": 94.26
       },
       "phase7_pdfHtmlCompile": {
-        "min": 6.07,
-        "median": 7.71,
-        "p95": 12.61,
-        "max": 12.61
+        "min": 5.36,
+        "median": 7.24,
+        "p95": 47.43,
+        "max": 47.43
       },
       "total_endToEnd": {
-        "min": 20.65,
-        "median": 25.47,
-        "p95": 100.96,
-        "max": 100.96
+        "min": 18.31,
+        "median": 31.62,
+        "p95": 128.23,
+        "max": 128.23
       }
     }
   },
@@ -56,52 +56,52 @@
     "itemCount": 50,
     "phases": {
       "phase1_sourceData": {
-        "min": 0.56,
-        "median": 0.72,
-        "p95": 2.19,
-        "max": 2.19
+        "min": 0.46,
+        "median": 0.57,
+        "p95": 1.71,
+        "max": 1.71
       },
       "phase2_mappingResolution": {
-        "min": 1.58,
-        "median": 2.26,
-        "p95": 10.92,
-        "max": 10.92
+        "min": 1.42,
+        "median": 2.7,
+        "p95": 15.57,
+        "max": 15.57
       },
       "phase3_templatePreparation": {
-        "min": 1.53,
-        "median": 2.05,
-        "p95": 5.95,
-        "max": 5.95
+        "min": 1.29,
+        "median": 2.69,
+        "p95": 11.92,
+        "max": 11.92
       },
       "phase4_snapshotLoad": {
-        "min": 0.14,
+        "min": 0.15,
         "median": 0.18,
-        "p95": 0.88,
-        "max": 0.88
+        "p95": 0.32,
+        "max": 0.32
       },
       "phase5_smartMerge": {
-        "min": 0.07,
+        "min": 0.06,
         "median": 0.08,
-        "p95": 0.45,
-        "max": 0.45
+        "p95": 0.08,
+        "max": 0.08
       },
       "phase6_reactRender": {
-        "min": 9.37,
-        "median": 12.06,
-        "p95": 26.87,
-        "max": 26.87
+        "min": 7.85,
+        "median": 12.02,
+        "p95": 24.12,
+        "max": 24.12
       },
       "phase7_pdfHtmlCompile": {
-        "min": 8.1,
-        "median": 11.51,
-        "p95": 21.41,
-        "max": 21.41
+        "min": 7.18,
+        "median": 10.03,
+        "p95": 17.77,
+        "max": 17.77
       },
       "total_endToEnd": {
-        "min": 23.4,
-        "median": 35.75,
-        "p95": 44.56,
-        "max": 44.56
+        "min": 24.15,
+        "median": 33.91,
+        "p95": 43.39,
+        "max": 43.39
       }
     }
   },
@@ -109,52 +109,52 @@
     "itemCount": 200,
     "phases": {
       "phase1_sourceData": {
-        "min": 0.91,
-        "median": 1.32,
-        "p95": 2.36,
-        "max": 2.36
+        "min": 1.07,
+        "median": 1.45,
+        "p95": 4.5,
+        "max": 4.5
       },
       "phase2_mappingResolution": {
-        "min": 1.94,
-        "median": 2.85,
-        "p95": 5.85,
-        "max": 5.85
+        "min": 1.89,
+        "median": 2.5,
+        "p95": 20.32,
+        "max": 20.32
       },
       "phase3_templatePreparation": {
-        "min": 1.37,
-        "median": 2.04,
-        "p95": 4.28,
-        "max": 4.28
+        "min": 1.73,
+        "median": 2.54,
+        "p95": 5.51,
+        "max": 5.51
       },
       "phase4_snapshotLoad": {
-        "min": 0.25,
-        "median": 0.35,
-        "p95": 5.75,
-        "max": 5.75
+        "min": 0.29,
+        "median": 0.37,
+        "p95": 38.63,
+        "max": 38.63
       },
       "phase5_smartMerge": {
         "min": 0.07,
         "median": 0.09,
-        "p95": 0.25,
-        "max": 0.25
+        "p95": 0.17,
+        "max": 0.17
       },
       "phase6_reactRender": {
-        "min": 9.37,
-        "median": 12.22,
-        "p95": 14.59,
-        "max": 14.59
+        "min": 10.2,
+        "median": 12.48,
+        "p95": 22.25,
+        "max": 22.25
       },
       "phase7_pdfHtmlCompile": {
-        "min": 7.19,
-        "median": 9.07,
-        "p95": 10.74,
-        "max": 10.74
+        "min": 7.15,
+        "median": 9.22,
+        "p95": 56.19,
+        "max": 56.19
       },
       "total_endToEnd": {
-        "min": 21.77,
-        "median": 29.17,
-        "p95": 32.83,
-        "max": 32.83
+        "min": 25.68,
+        "median": 35.45,
+        "p95": 75.77,
+        "max": 75.77
       }
     }
   }
