@@ -35,6 +35,7 @@ import { Kik050YapimKesinKabulTeklif } from "./templates/kik050-yapim-kesin-kabu
 import { Kik051YapimKesinKabulTutanagi } from "./templates/kik051-yapim-kesin-kabul-tutanagi";
 
 import type {
+  AlimTuru,
   ExplicitState,
   TemplateCapabilities,
   TemplateGroup,
@@ -104,6 +105,8 @@ export interface TemplateDefinition<
   workflowOverride?: Partial<TemplateWorkflow>;
   /** Başka bir şablonun iş akışını miras alır (zincir `resolveTemplateWorkflow` ile çözülür). */
   inheritsFrom?: string;
+  /** Bu şablonun geçerli olduğu alım türleri (mal, hizmet, yapim, danismanlik). Belirtilmemişse tüm türlerde geçerlidir. */
+  alimTurleri?: readonly AlimTuru[];
 }
 
 const DEFAULT_CAPS: TemplateCapabilities = {
@@ -212,6 +215,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     inheritsFrom: "luzum-muzekkeresi",
+    alimTurleri: ["mal"] as const,
     dataMapping: luzumTeslimTesellumMapping,
     mapping: luzumTeslimTesellumMapping,
     version: 1,
@@ -692,6 +696,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["mal", "hizmet", "danismanlik"] as const,
     dataMapping: muayeneKabulTutanagiMapping,
     mapping: muayeneKabulTutanagiMapping,
     version: 1,
@@ -747,6 +752,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["yapim"] as const,
     dataMapping: kik048Mapping,
     mapping: kik048Mapping,
     version: 1,
@@ -773,6 +779,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["yapim"] as const,
     dataMapping: kik049Mapping,
     mapping: kik049Mapping,
     version: 1,
@@ -799,6 +806,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["yapim"] as const,
     dataMapping: kik050Mapping,
     mapping: kik050Mapping,
     version: 1,
@@ -825,6 +833,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["yapim"] as const,
     dataMapping: kik051Mapping,
     mapping: kik051Mapping,
     version: 1,

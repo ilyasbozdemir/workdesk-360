@@ -1,8 +1,5 @@
 import React from "react";
-import {
-  AlimTuru,
-  detectAlimTuru,
-} from "../ihtiyac-listesi/IhtiyacListesi.template";
+import { detectAlimTuru } from "../ihtiyac-listesi/IhtiyacListesi.template";
 import { BaseLuzumMuzekkeresiOnayEkiProps } from "./BaseLuzumMuzekkeresiOnayEki";
 import { MalAlimiLuzumMuzekkeresiOnayEki } from "./MalAlimi/MalAlimiLuzumMuzekkeresiOnayEki";
 import { HizmetAlimiLuzumMuzekkeresiOnayEki } from "./HizmetAlimi/HizmetAlimiLuzumMuzekkeresiOnayEki";

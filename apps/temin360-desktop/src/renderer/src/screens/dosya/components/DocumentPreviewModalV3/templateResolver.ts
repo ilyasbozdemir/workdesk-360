@@ -20,6 +20,7 @@ export interface TemplateOptionItem {
   standartFormKodu?: string;
   standartFormAdi?: string;
   capabilities?: any;
+  alimTurleri?: readonly ("mal" | "hizmet" | "yapim" | "danismanlik")[];
 }
 
 /**
@@ -38,6 +39,7 @@ export const TEMPLATE_OPTIONS: TemplateOptionItem[] =
     standartFormKodu: def.standartFormKodu,
     standartFormAdi: def.standartFormAdi,
     capabilities: def.capabilities,
+    alimTurleri: def.alimTurleri,
   }));
 
 export { normalizeTemplateKey };

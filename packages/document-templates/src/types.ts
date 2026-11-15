@@ -46,6 +46,11 @@ export interface TemplateCapabilities {
 export type TemplateGroup = "piyasa_arastirma" | "muayene_kabul" | "olur_onay";
 
 /**
+ * Kamu İhale Kanunu ve Doğrudan Temin Alım Türleri
+ */
+export type AlimTuru = "mal" | "hizmet" | "yapim" | "danismanlik";
+
+/**
  * Belgenin sunulacağı makam yönlendirme modu (Katman A)
  */
 export type RecipientMode =

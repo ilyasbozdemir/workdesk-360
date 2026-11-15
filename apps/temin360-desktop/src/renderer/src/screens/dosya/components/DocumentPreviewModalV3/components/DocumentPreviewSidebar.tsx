@@ -12,7 +12,12 @@ import {
   Sparkles,
   Users
 } from 'lucide-react'
-import { IhtiyacListesiType, TemplateCapabilities } from '@temin360/document-templates'
+import {
+  IhtiyacListesiType,
+  TemplateCapabilities,
+  detectAlimTuru,
+  AlimTuru
+} from '@temin360/document-templates'
 import { TemplateOptionItem } from '../templateResolver'
 import { DocumentPreviewRotaSection } from './DocumentPreviewRotaSection'
 import { DocumentPreviewFormBuilder } from './DocumentPreviewFormBuilder'
@@ -93,6 +98,12 @@ export function DocumentPreviewSidebar({
     setSelectedStageId(stageInfo?.id ?? 1)
   }
 
+  const [onlyCompatibleAlimTuru, setOnlyCompatibleAlimTuru] = useState(true)
+
+  const activeAlimTuru: AlimTuru = useMemo(() => {
+    return detectAlimTuru(formData)
+  }, [formData])
+
   const stagesList = useMemo(() => {
     if (sourceKind === 'ihtiyacRaporu') {
       return [IHTIYAC_RAPORU_STAGE]
@@ -101,11 +112,19 @@ export function DocumentPreviewSidebar({
   }, [sourceKind])
 
   const currentStageTemplates = useMemo(() => {
-    if (selectedStageId === 0) {
-      return templateOptions
+    let list = templateOptions
+    if (selectedStageId !== 0) {
+      list = filterTemplatesByStage(selectedStageId, templateOptions)
     }
-    return filterTemplatesByStage(selectedStageId, templateOptions)
-  }, [selectedStageId, templateOptions])
+
+    if (!onlyCompatibleAlimTuru) return list
+
+    // Aktif alım türüne (Mal, Hizmet, Yapım, Danışmanlık) göre filtrele:
+    return list.filter((tpl) => {
+      if (!tpl.alimTurleri || tpl.alimTurleri.length === 0) return true
+      return tpl.alimTurleri.includes(activeAlimTuru)
+    })
+  }, [selectedStageId, templateOptions, activeAlimTuru, onlyCompatibleAlimTuru])
 
   // Normalleştirilmiş aktif sekme
   const normalizedTab: 'belgeler' | 'alanlar' | 'rota' | 'duzen' =
@@ -335,20 +354,49 @@ export function DocumentPreviewSidebar({
 
           {/* Seçili Aşamaya Ait Belgeler Listesi (Tam Ekran Kaydırılabilir Alan) */}
           <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5 custom-scrollbar min-h-0">
-            <div className="flex items-center justify-between px-0.5">
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Aşama Evrakları ({currentStageTemplates.length})
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium">
-                {selectedStageId === 0
-                  ? 'Tüm Belgeler'
-                  : stagesList.find((s) => s.id === selectedStageId)?.name || ''}
-              </span>
+            <div className="flex items-center justify-between px-0.5 pb-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Aşama Evrakları ({currentStageTemplates.length})
+                </span>
+                <span
+                  className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
+                    activeAlimTuru === 'yapim'
+                      ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700'
+                      : activeAlimTuru === 'hizmet'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                        : activeAlimTuru === 'danismanlik'
+                          ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700'
+                          : 'bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
+                  }`}
+                  title={`Aktif dosya alım türü: ${activeAlimTuru.toUpperCase()}`}
+                >
+                  {activeAlimTuru === 'yapim'
+                    ? '🏗️ Yapım'
+                    : activeAlimTuru === 'hizmet'
+                      ? '💼 Hizmet'
+                      : activeAlimTuru === 'danismanlik'
+                        ? '💡 Danışmanlık'
+                        : '📦 Mal'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOnlyCompatibleAlimTuru((prev) => !prev)}
+                className={`text-[9px] font-bold px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+                  onlyCompatibleAlimTuru
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100'
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+                title={onlyCompatibleAlimTuru ? 'Tüm şablonları göster' : 'Yalnızca alım türüne uygunları göster'}
+              >
+                {onlyCompatibleAlimTuru ? 'Filtreli' : 'Tümü'}
+              </button>
             </div>
 
             {currentStageTemplates.length === 0 ? (
               <div className="p-4 text-center text-xs text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                Bu aşamada şablon bulunamadı.
+                Bu aşamada ve alım türünde ({activeAlimTuru.toUpperCase()}) şablon bulunamadı.
               </div>
             ) : (
               currentStageTemplates.map((tpl) => {
@@ -377,6 +425,17 @@ export function DocumentPreviewSidebar({
                       </div>
                       <div className="flex items-center gap-2 text-[10px] text-slate-400">
                         <span className="truncate">{tpl.categoryLabel}</span>
+                        {tpl.alimTurleri && tpl.alimTurleri.length === 1 && (
+                          <span
+                            className={`px-1 py-0.2 rounded text-[9px] font-bold shrink-0 ${
+                              tpl.alimTurleri[0] === 'yapim'
+                                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                                : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300'
+                            }`}
+                          >
+                            {tpl.alimTurleri[0] === 'yapim' ? '🏗️ Yapım' : '📦 Mal'}
+                          </span>
+                        )}
                         {tpl.capabilities?.requiresCommission && (
                           <span className="px-1 py-0.2 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 rounded text-[9px] font-semibold shrink-0">
                             Komisyon
