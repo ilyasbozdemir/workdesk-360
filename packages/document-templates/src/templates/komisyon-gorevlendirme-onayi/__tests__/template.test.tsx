@@ -25,7 +25,9 @@ describe("KomisyonGorevlendirmeOnayi — Şablon Bileşen Render Testleri", () =
       ],
     };
 
-    const html = renderToStaticMarkup(<KomisyonGorevlendirmeOnayi data={mockData} />);
+    const html = renderToStaticMarkup(
+      <KomisyonGorevlendirmeOnayi data={mockData} />,
+    );
 
     // Başlık ve iş adı
     expect(html).toContain("Bilişim Donanımları Mal Alımı");

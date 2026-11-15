@@ -47,15 +47,14 @@ function normalizeMember(u: any): KomisyonGorevlendirmeUye {
 }
 
 export function useKomisyonGorevlendirmeOnayi(
-  params: UseKomisyonGorevlendirmeOnayiParams = {}
+  params: UseKomisyonGorevlendirmeOnayiParams = {},
 ): UseKomisyonGorevlendirmeOnayiResult {
   const { data = {} } = params;
 
   return useMemo(() => {
-    const rawFiyat =
-      data.fiyatKomisyonu && data.fiyatKomisyonu.length > 0
-        ? data.fiyatKomisyonu
-        : data.gorevliler || [];
+    const rawFiyat = data.fiyatKomisyonu && data.fiyatKomisyonu.length > 0
+      ? data.fiyatKomisyonu
+      : data.gorevliler || [];
     const rawMuayene = data.muayeneKomisyonu || [];
 
     const fiyatUyeleri: KomisyonGorevlendirmeUye[] = (
@@ -70,49 +69,43 @@ export function useKomisyonGorevlendirmeOnayi(
       .map(normalizeMember)
       .filter((m) => m.adSoyad.length > 0);
 
-    const mainHeaderTitle =
-      data.idareAdi ||
+    const mainHeaderTitle = data.idareAdi ||
       data.sunulacakMakamAdi ||
       (data.antetSatirlari && data.antetSatirlari[1]) ||
       data.kurumAdi ||
       "KURUM BAŞKANLIĞINA";
 
     const fallbackKurum = data.altKurumBizim || data.kurumBizim || "İdaremiz";
-    const kurumumuzMetni =
-      data.kurumumuz &&
-      data.kurumumuz !== "Belediyemiz / İdaremiz" &&
-      data.kurumumuz !== "Belediyemiz"
-        ? data.kurumumuz
-        : fallbackKurum;
+    const kurumumuzMetni = data.kurumumuz &&
+        data.kurumumuz !== "Belediyemiz / İdaremiz" &&
+        data.kurumumuz !== "Belediyemiz"
+      ? data.kurumumuz
+      : fallbackKurum;
 
     const isAdiMetni = data.isAdi ?? data.isinAdi ?? "Alımı yapılacak iş";
 
-    const evrakNo =
-      data.evrakSayisi &&
-      String(data.evrakSayisi).startsWith("E-") &&
-      !String(data.evrakSayisi).includes("/")
-        ? data.evrakSayisi
-        : formatOfficialEvrakSayisi({
-            evrakSayisi: data.evrakSayisi,
-            detsisNo: data.detsisNo,
-            tur: (data as any)?.tur,
-            sayisi: (data as any)?.sayisi,
-            teminNo:
-              (data as any)?.teminNo ||
-              (data as any)?.dosyaNo ||
-              (data as any)?.dosyaSayisi,
-          });
+    const evrakNo = data.evrakSayisi &&
+        String(data.evrakSayisi).startsWith("E-") &&
+        !String(data.evrakSayisi).includes("/")
+      ? data.evrakSayisi
+      : formatOfficialEvrakSayisi({
+        evrakSayisi: data.evrakSayisi,
+        detsisNo: data.detsisNo,
+        tur: (data as any)?.tur,
+        sayisi: (data as any)?.sayisi,
+        teminNo: (data as any)?.teminNo ||
+          (data as any)?.dosyaNo ||
+          (data as any)?.dosyaSayisi,
+      });
 
-    const tarih =
-      data.tarih ||
+    const tarih = data.tarih ||
       data.onayaSunulanTarih ||
       data.dosyaTarihi ||
       new Date().toLocaleDateString("tr-TR");
 
     const konu = data.konu || "Görevlendirme";
 
-    const kapanisMetni =
-      data.kapanisMetni ||
+    const kapanisMetni = data.kapanisMetni ||
       (data.olurYazisi === true
         ? "Gereğini olurlarınıza arz ederim."
         : "Gereğini rica ederim.");
@@ -121,14 +114,14 @@ export function useKomisyonGorevlendirmeOnayi(
       data.baskanAdi ||
         data.onaylayanPersonelAdi ||
         data.harcamaYetkilisiAdi ||
-        ""
+        "",
     ).trim();
 
     const onaylayanUnvan = String(
       data.baskanUnvan ||
         data.onaylayanPersonelUnvan ||
         data.harcamaYetkilisiUnvani ||
-        "Harcama Yetkilisi"
+        "Harcama Yetkilisi",
     ).trim();
 
     return {

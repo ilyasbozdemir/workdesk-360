@@ -26,7 +26,9 @@ describe("KomisyonGorevlendirmeOnayi — Şema Doğrulama Test Paketi", () => {
     const parsed = KomisyonGorevlendirmeOnayiSchema.safeParse(validData);
     expect(parsed.success).toBe(true);
     if (parsed.success) {
-      expect(parsed.data.isAdi).toBe("Park ve Bahçeler Bank ve Çöp Kovası Alımı");
+      expect(parsed.data.isAdi).toBe(
+        "Park ve Bahçeler Bank ve Çöp Kovası Alımı",
+      );
       expect(parsed.data.fiyatKomisyonu).toHaveLength(2);
       expect(parsed.data.muayeneKomisyonu).toHaveLength(2);
       expect(parsed.data.baskanAdi).toBe("Kemal Sunal");

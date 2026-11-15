@@ -27,7 +27,9 @@ describe("KomisyonGorevlendirmeOnayiEki — Şablon Bileşen Render Testleri", (
       ],
     };
 
-    const html = renderToStaticMarkup(<KomisyonGorevlendirmeOnayiEki data={mockData} />);
+    const html = renderToStaticMarkup(
+      <KomisyonGorevlendirmeOnayiEki data={mockData} />,
+    );
 
     expect(html).toContain("EK:");
     expect(html).toContain("3");
