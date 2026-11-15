@@ -81,6 +81,10 @@ export async function resolvePersonnelAndCommissions(
   let hasMuhasebeRowInFile = false
   let hasGerceklestirmeRowInFile = false
 
+  const currentDocId = String(resolvedId || selectedDocId || targetDocTemplateId || '').toLowerCase()
+  const isApptDoc = isCommissionAppointmentDocument(targetDocIds.length > 0 ? targetDocIds : currentDocId)
+  const isMuayeneDoc = currentDocId.includes('muayene') || currentDocId.includes('kabul')
+
   if (activeDosyaId) {
     try {
       let dbKomisyonlar: any[] =
@@ -203,10 +207,6 @@ export async function resolvePersonnelAndCommissions(
         }
 
         // 4. Komisyon listeleri (Yedek üye kuralları ve İmza / Paraf / Koordinasyon ayrımı ile)
-        const currentDocId = String(resolvedId || selectedDocId || targetDocTemplateId || '').toLowerCase()
-        const isApptDoc = isCommissionAppointmentDocument(targetDocIds.length > 0 ? targetDocIds : currentDocId)
-        const isMuayeneDoc = currentDocId.includes('muayene') || currentDocId.includes('kabul')
-
         const maliyetMembers = dbKomisyonlar.filter((k: any) => {
           if (!TemplateRegistryService.isMemberVisibleInDocument(k, targetDocIds)) return false
           return resolveCommissionCategory(k) === 'maliyet'

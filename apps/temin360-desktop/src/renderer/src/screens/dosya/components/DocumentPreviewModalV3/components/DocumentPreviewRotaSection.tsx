@@ -40,7 +40,8 @@ import {
 import {
   buildSettingsRouteValues,
   saveRotaConfigForTemplate,
-  GLOBAL_ROTA_KEY
+  GLOBAL_ROTA_KEY,
+  type TemplateRotaConfig
 } from '../../../../../services/rotaDefaultsService'
 import { kurumService } from '../../../../../services/kurumService'
 
@@ -211,7 +212,7 @@ export function DocumentPreviewRotaSection({
               ...prev,
               kurumAdi: prev?.kurumAdi || kInfo.kurum_adi,
               kurum_adi: prev?.kurum_adi || kInfo.kurum_adi,
-              kurumUst: prev?.kurumUst || kInfo.ust_kurum_adi || undefined,
+              kurumUst: prev?.kurumUst || (kInfo as any).ust_kurum_adi || undefined,
               kurum: prev?.kurum || kInfo
             }))
           }

@@ -50,7 +50,7 @@ export interface OnayBelgesiRowItem {
   renderValue?: () => React.ReactNode;
 }
 
-export function formatCurrency(val: any, fallback = "-"): string {
+function formatCurrency(val: any, fallback = "-"): string {
   return formatCurrencyHelper(val, fallback, true);
 }
 

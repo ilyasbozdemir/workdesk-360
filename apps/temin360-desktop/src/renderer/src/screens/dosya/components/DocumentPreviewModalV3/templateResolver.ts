@@ -19,6 +19,7 @@ export interface TemplateOptionItem {
   kikAdi?: string;
   standartFormKodu?: string;
   standartFormAdi?: string;
+  capabilities?: any;
 }
 
 /**
@@ -36,6 +37,7 @@ export const TEMPLATE_OPTIONS: TemplateOptionItem[] =
     kikAdi: def.kikAdi,
     standartFormKodu: def.standartFormKodu,
     standartFormAdi: def.standartFormAdi,
+    capabilities: def.capabilities,
   }));
 
 export { normalizeTemplateKey };

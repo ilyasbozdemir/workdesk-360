@@ -3,7 +3,7 @@ import { MuayeneKabulKomisyonuData } from "./MuayeneKabulKomisyonu.schema";
 import { formatOfficialEvrakSayisi } from "../../resolver/helpers/resolveEvrakSayisi";
 import { cleanKanunMaddesi } from "../../utils/textHelpers";
 
-export interface OfficerInfo {
+export interface MuayeneOfficerInfo {
   adSoyad: string;
   unvan: string;
 }
@@ -21,14 +21,17 @@ export interface UseMuayeneKabulKomisyonuResult {
   kanunMaddesiMetni: string;
   onayBelgesiTarihi: string;
   onayBelgesiSayisi: string;
-  gorevlendirilenler: OfficerInfo[];
-  dagitimListesi: OfficerInfo[];
+  gorevlendirilenler: MuayeneOfficerInfo[];
+  dagitimListesi: MuayeneOfficerInfo[];
   kapanisMetni: string;
   onaylayanAdi: string;
   onaylayanUnvan: string;
 }
 
-export function isExcludedMuayeneOfficer(item: any, onaylayanAdi?: string): boolean {
+export function isExcludedMuayeneOfficer(
+  item: any,
+  onaylayanAdi?: string,
+): boolean {
   if (!item) return true;
   const adSoyad = (
     typeof item === "string"
@@ -51,7 +54,9 @@ export function isExcludedMuayeneOfficer(item: any, onaylayanAdi?: string): bool
 
   const duty = (
     typeof item === "object"
-      ? `${item.gorev || ""} ${item.gorevi || ""} ${item.komisyonGorevi || ""} ${item.unvan || ""}`
+      ? `${item.gorev || ""} ${item.gorevi || ""} ${
+        item.komisyonGorevi || ""
+      } ${item.unvan || ""}`
       : ""
   ).toLowerCase();
 
@@ -65,7 +70,9 @@ export function isExcludedMuayeneOfficer(item: any, onaylayanAdi?: string): bool
     return true;
   }
 
-  if (onaylayanAdi && adSoyad.toLowerCase() === onaylayanAdi.trim().toLowerCase()) {
+  if (
+    onaylayanAdi && adSoyad.toLowerCase() === onaylayanAdi.trim().toLowerCase()
+  ) {
     return true;
   }
 
@@ -73,23 +80,31 @@ export function isExcludedMuayeneOfficer(item: any, onaylayanAdi?: string): bool
 }
 
 export function useMuayeneKabulKomisyonu(
-  params: UseMuayeneKabulKomisyonuParams = {}
+  params: UseMuayeneKabulKomisyonuParams = {},
 ): UseMuayeneKabulKomisyonuResult {
   const { data = {} } = params;
 
   return useMemo(() => {
     const onaylayanAdi = String(
-      data.onaylayanPersonelAdi || data.harcamaYetkilisiAdi || data.baskanAdi || ""
+      data.onaylayanPersonelAdi || data.harcamaYetkilisiAdi || data.baskanAdi ||
+        "",
     ).trim();
 
     const rawList: any[] = (() => {
-      if (Array.isArray(data.muayeneKomisyonu) && data.muayeneKomisyonu.length > 0) {
+      if (
+        Array.isArray(data.muayeneKomisyonu) && data.muayeneKomisyonu.length > 0
+      ) {
         return data.muayeneKomisyonu;
       }
-      if (Array.isArray(data.gorevlendirilenler) && data.gorevlendirilenler.length > 0) {
+      if (
+        Array.isArray(data.gorevlendirilenler) &&
+        data.gorevlendirilenler.length > 0
+      ) {
         return data.gorevlendirilenler;
       }
-      if (Array.isArray(data.komisyonUyeleri) && data.komisyonUyeleri.length > 0) {
+      if (
+        Array.isArray(data.komisyonUyeleri) && data.komisyonUyeleri.length > 0
+      ) {
         return data.komisyonUyeleri;
       }
       if (Array.isArray(data.komisyon) && data.komisyon.length > 0) {
@@ -98,13 +113,15 @@ export function useMuayeneKabulKomisyonu(
       if (Array.isArray(data.gorevliler) && data.gorevliler.length > 0) {
         return data.gorevliler;
       }
-      if (Array.isArray(data.dagitimListesi) && data.dagitimListesi.length > 0) {
+      if (
+        Array.isArray(data.dagitimListesi) && data.dagitimListesi.length > 0
+      ) {
         return data.dagitimListesi;
       }
       return [];
     })();
 
-    const gorevlendirilenler: OfficerInfo[] = (() => {
+    const gorevlendirilenler: MuayeneOfficerInfo[] = (() => {
       const list = rawList
         .filter((g) => !isExcludedMuayeneOfficer(g, onaylayanAdi))
         .map((g: any) => {
@@ -125,8 +142,10 @@ export function useMuayeneKabulKomisyonu(
       });
     })();
 
-    const dagitimListesi: OfficerInfo[] = (() => {
-      if (Array.isArray(data.dagitimListesi) && data.dagitimListesi.length > 0) {
+    const dagitimListesi: MuayeneOfficerInfo[] = (() => {
+      if (
+        Array.isArray(data.dagitimListesi) && data.dagitimListesi.length > 0
+      ) {
         const filtered = data.dagitimListesi
           .map((d: any) => {
             if (typeof d === "string") return { adSoyad: d.trim(), unvan: "" };
@@ -135,7 +154,9 @@ export function useMuayeneKabulKomisyonu(
               unvan: (d.unvan || d.unvani || d.gorev || "").trim(),
             };
           })
-          .filter((d: any) => !isExcludedMuayeneOfficer(d, onaylayanAdi) && d.adSoyad.length > 0);
+          .filter((d: any) =>
+            !isExcludedMuayeneOfficer(d, onaylayanAdi) && d.adSoyad.length > 0
+          );
 
         if (filtered.length > 0) {
           const seen = new Set<string>();
@@ -151,21 +172,23 @@ export function useMuayeneKabulKomisyonu(
     })();
 
     const evrakNo =
-      data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") && !String(data.evrakSayisi).includes("/")
+      data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") &&
+        !String(data.evrakSayisi).includes("/")
         ? data.evrakSayisi
         : formatOfficialEvrakSayisi({
-            evrakSayisi: data.evrakSayisi,
-            detsisNo: data.detsisNo,
-            tur: (data as any)?.tur,
-            sayisi: (data as any)?.sayisi,
-            teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo || (data as any)?.dosyaSayisi,
-          });
+          evrakSayisi: data.evrakSayisi,
+          detsisNo: data.detsisNo,
+          tur: (data as any)?.tur,
+          sayisi: (data as any)?.sayisi,
+          teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo ||
+            (data as any)?.dosyaSayisi,
+        });
 
     const konuMetni = "Muayene ve Kabul Komisyonu";
-    const isinAdiMetni = data.isinAdi ?? (data as any)?.konu ?? "Alımı yapılacak";
+    const isinAdiMetni = data.isinAdi ?? (data as any)?.konu ??
+      "Alımı yapılacak";
 
-    const rawKanunMaddesi =
-      data.kanunMaddesi ||
+    const rawKanunMaddesi = data.kanunMaddesi ||
       data.ihaleSekli ||
       data.teminSekli ||
       data.ihale_sekli ||
@@ -173,22 +196,23 @@ export function useMuayeneKabulKomisyonu(
     const kanunMaddesiMetni = cleanKanunMaddesi(rawKanunMaddesi);
 
     const onayBelgesiTarihi = String(
-      data.onayBelgesiTarihi || data.dosyaTarihi || data.tarih || "........"
+      data.onayBelgesiTarihi || data.dosyaTarihi || data.tarih || "........",
     );
 
     const onayBelgesiSayisi = String(
       data.onayBelgesiSayisi ||
         (data.onayBelgesiNo && !String(data.onayBelgesiNo).includes("/")
           ? data.onayBelgesiNo
-          : evrakNo)
+          : evrakNo),
     );
 
-    const kapanisMetni =
-      data.kapanisMetni ||
-      (data.olurYazisi === true ? "Gereğini olurlarınıza arz ederim." : "Gereğini rica ederim.");
+    const kapanisMetni = data.kapanisMetni ||
+      (data.olurYazisi === true
+        ? "Gereğini olurlarınıza arz ederim."
+        : "Gereğini rica ederim.");
 
-    const onaylayanUnvan =
-      data.onaylayanPersonelUnvan || data.harcamaYetkilisiUnvani || "Harcama Yetkilisi";
+    const onaylayanUnvan = data.onaylayanPersonelUnvan ||
+      data.harcamaYetkilisiUnvani || "Harcama Yetkilisi";
 
     return {
       evrakNo,
