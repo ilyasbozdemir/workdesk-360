@@ -5,10 +5,17 @@ import {
   DEFAULT_LIMITS,
   LANDSCAPE_LIMITS,
   paginateData,
+  resolveSignatureAwareLimits,
 } from "../document/DynamicPaginatedTable";
 import { IhtiyacListesi } from "../templates/ihtiyac-listesi/IhtiyacListesi.template";
 import { LuzumMuzekkeresi } from "../templates/luzum-muzekkeresi/LuzumMuzekkeresi.template";
-import { ApprovalSignature, PersonelCard, CommissionList, MetadataBlock } from "../document/ApprovalSignature";
+import {
+  ApprovalSignature,
+  PersonelCard,
+  CommissionList,
+  MetadataBlock,
+  SignatureBlockContainer,
+} from "../document/ApprovalSignature";
 import { DocumentLayout } from "../document/DocumentLayout";
 
 describe("Issue #16: Şablon Sayfa Bölünmesi (Page Break) ve Yetim İmza (Orphan) Önleme Testleri", () => {
@@ -313,6 +320,76 @@ describe("Issue #16: Şablon Sayfa Bölünmesi (Page Break) ve Yetim İmza (Orph
 
       expect(htmlLast).toContain("break-after:avoid");
       expect(htmlLast).toContain("page-break-after:avoid");
+    });
+
+    it("SignatureBlockContainer imza kartlarını ve OLUR bloğunu tek parça tutarak bölünmeyi engeller", () => {
+      const html = renderToString(
+        <SignatureBlockContainer align="right" marginTop={30}>
+          <PersonelCard adSoyad="Ali Veli" unvan="Mühendis" />
+          <ApprovalSignature title="OLUR" adSoyad="Mehmet Müdür" unvan="Harcama Yetkilisi" />
+        </SignatureBlockContainer>
+      );
+
+      expect(html).toContain("signature-block-container");
+      expect(html).toContain("break-inside:avoid");
+      expect(html).toContain("page-break-inside:avoid");
+      expect(html).toContain("Ali Veli");
+      expect(html).toContain("Mehmet Müdür");
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // 4. resolveSignatureAwareLimits İmza Bloğu Ağırlık Algoritması Testleri
+  // --------------------------------------------------------------------------
+  describe("4. resolveSignatureAwareLimits İmza Ağırlıklı Limit Çözümleme Algoritması", () => {
+    it("Varsayılan durumda (imzasız/düz) DEFAULT_LIMITS değerlerini döner", () => {
+      const limits = resolveSignatureAwareLimits({ orientation: "portrait" });
+      expect(limits.firstPage).toBe(DEFAULT_LIMITS.firstPage);
+      expect(limits.middle).toBe(DEFAULT_LIMITS.middle);
+      expect(limits.lastPage).toBe(DEFAULT_LIMITS.lastPage);
+    });
+
+    it("OLUR bloğu olduğunda son sayfa satır limiti güvenli boşluk için 2 satır düşürülür (8 -> 6)", () => {
+      const limits = resolveSignatureAwareLimits({
+        orientation: "portrait",
+        hasOlur: true,
+      });
+      expect(limits.lastPage).toBe(6);
+      expect(limits.firstPage).toBe(DEFAULT_LIMITS.firstPage);
+    });
+
+    it("Hem OLUR hem Hazırlayan olduğunda son sayfa limiti 3 satır düşürülür (8 -> 5)", () => {
+      const limits = resolveSignatureAwareLimits({
+        orientation: "portrait",
+        hasOlur: true,
+        hasHazirlayan: true,
+      });
+      expect(limits.lastPage).toBe(5);
+    });
+
+    it("Geniş Komisyon (5 üye) olduğunda son sayfa satır limiti dengelenir", () => {
+      const limits = resolveSignatureAwareLimits({
+        orientation: "portrait",
+        commissionCount: 5,
+      });
+      expect(limits.lastPage).toBe(6);
+    });
+
+    it("Yatay (landscape) modda OLUR bloğu için lastPage limiti 4'ten 3'e düşürülür", () => {
+      const limits = resolveSignatureAwareLimits({
+        orientation: "landscape",
+        hasOlur: true,
+      });
+      expect(limits.lastPage).toBe(3);
+    });
+
+    it("Kullanıcı tarafından özel satır limiti tanımlanmışsa hesaplamayı ezer ve kullanıcı limitini korur", () => {
+      const limits = resolveSignatureAwareLimits({
+        orientation: "portrait",
+        hasOlur: true,
+        customLastPage: 7,
+      });
+      expect(limits.lastPage).toBe(7);
     });
   });
 });

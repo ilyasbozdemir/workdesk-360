@@ -19,6 +19,81 @@ export const LANDSCAPE_LIMITS: PageLimitConfig = {
   lastPage: 4,
 };
 
+export interface SignatureAwareLimitOptions {
+  orientation?: "portrait" | "landscape";
+  hasOlur?: boolean;
+  hasHazirlayan?: boolean;
+  commissionCount?: number;
+  hasExtendedHeader?: boolean;
+  customFirstPage?: number | null;
+  customMiddlePage?: number | null;
+  customLastPage?: number | null;
+}
+
+/**
+ * İmza Bloğu Koruma Algoritması (Signature-Aware Pagination Engine)
+ *
+ * Belgedeki imza bloklarının (Harcama Yetkilisi Oluru, Hazırlayan Personel,
+ * Komisyon Üyeleri) dikey kapladığı yüksekliğe göre son sayfa satır limitini
+ * otomatik olarak ayarlar.
+ *
+ * Kurallar:
+ * 1. OLUR bloğu (~180px) varsa: Son sayfadaki tablo satırı sınırı düşürülür (Dikey: 6, Yatay: 3),
+ *    böylece imza bloğu asla sayfadan taşmaz veya tek başına yetim kalmaz.
+ * 2. Hem Hazırlayan hem OLUR varsa: Son sayfa 5 satır ile dengelenir.
+ * 3. 3-5 üyeli komisyon matrisi varsa: Son sayfa satır sınırı komisyon büyüklüğüne göre ayarlanır.
+ * 4. Manuel özel limitler (customFirstPage, customLastPage) girilmişse kullanıcı tercihine öncelik verilir.
+ */
+export function resolveSignatureAwareLimits(
+  options: SignatureAwareLimitOptions = {}
+): PageLimitConfig {
+  const {
+    orientation = "portrait",
+    hasOlur = false,
+    hasHazirlayan = false,
+    commissionCount = 0,
+    hasExtendedHeader = false,
+    customFirstPage,
+    customMiddlePage,
+    customLastPage,
+  } = options;
+
+  const isLandscape = orientation === "landscape";
+  const baseLimits = isLandscape ? LANDSCAPE_LIMITS : DEFAULT_LIMITS;
+
+  let calculatedFirst = baseLimits.firstPage;
+  let calculatedMiddle = baseLimits.middle;
+  let calculatedLast = baseLimits.lastPage;
+
+  if (hasExtendedHeader) {
+    calculatedFirst = Math.max(3, calculatedFirst - 2);
+  }
+
+  // İmza bloğu yükseklik payı hesaplaması:
+  let signatureDeduction = 0;
+  if (hasOlur) signatureDeduction += isLandscape ? 1 : 2;
+  if (hasHazirlayan) signatureDeduction += isLandscape ? 0 : 1;
+  if (commissionCount >= 5) signatureDeduction += isLandscape ? 1 : 2;
+  else if (commissionCount >= 3) signatureDeduction += isLandscape ? 1 : 1;
+
+  calculatedLast = Math.max(isLandscape ? 2 : 3, calculatedLast - signatureDeduction);
+
+  return {
+    firstPage:
+      customFirstPage !== undefined && customFirstPage !== null
+        ? Number(customFirstPage)
+        : calculatedFirst,
+    middle:
+      customMiddlePage !== undefined && customMiddlePage !== null
+        ? Number(customMiddlePage)
+        : calculatedMiddle,
+    lastPage:
+      customLastPage !== undefined && customLastPage !== null
+        ? Number(customLastPage)
+        : calculatedLast,
+  };
+}
+
 export function paginateData<T>(
   data: T[],
   limits: PageLimitConfig,

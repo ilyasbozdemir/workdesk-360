@@ -97,6 +97,11 @@ export * from "./document/TemplateEditContext";
 export * from "./document/TableRowSplitDivider";
 
 /**
+ * Dinamik sayfalama motoru (`paginateData`) ve imza bloğunu koruyan akıllı limit algoritması (`resolveSignatureAwareLimits`).
+ */
+export * from "./document/DynamicPaginatedTable";
+
+/**
  * Parasal tutarları Türkçe resmî evrak formatında yazıya çeviren yardımcı motor (örn: "YALNIZ ONİKİBİN TL").
  */
 export * from "./document/sayiyiYaziyaCevir";

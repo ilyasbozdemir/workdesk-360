@@ -6,6 +6,7 @@ import {
   DateEditableField,
   EditableOlurPlaceholder,
   PersonelCard,
+  SignatureBlockContainer,
 } from "../../document/ApprovalSignature";
 import { EditableField } from "../../document/EditableField";
 import { toPossessiveSuffix } from "../../resolver/mappingResolver";
@@ -257,33 +258,36 @@ export function BaseLuzumMuzekkeresi(props: BaseLuzumMuzekkeresiProps) {
                   </div>
                 )}
 
-                {/* HAZIRLAYAN PERSONEL */}
-                <PersonelCard
-                  adSoyad={data.hazirlayanPersonelAdi}
-                  unvan={data.hazirlayanPersonelUnvan}
-                  nameField="hazirlayanPersonelAdi"
-                  unvanField="hazirlayanPersonelUnvan"
-                  placeholderName="Hazırlayan Adı Soyadı"
-                  placeholderUnvan="Hazırlayan Unvanı"
-                  align="right"
-                  marginTop={20}
-                  marginBottom={20}
-                />
+                {/* İMZA BLOĞU KAPSAYICISI (Yetim İmza & Bölünme Korumalı) */}
+                <SignatureBlockContainer marginTop="auto" align="right">
+                  {/* HAZIRLAYAN PERSONEL */}
+                  <PersonelCard
+                    adSoyad={data.hazirlayanPersonelAdi}
+                    unvan={data.hazirlayanPersonelUnvan}
+                    nameField="hazirlayanPersonelAdi"
+                    unvanField="hazirlayanPersonelUnvan"
+                    placeholderName="Hazırlayan Adı Soyadı"
+                    placeholderUnvan="Hazırlayan Unvanı"
+                    align="right"
+                    marginTop={20}
+                    marginBottom={20}
+                  />
 
-                {/* OLUR İMZA BLOĞU */}
-                {data.olurYazisi !== false
-                  ? (
-                    <div style={{ marginTop: "auto" }}>
-                      <ApprovalSignature
-                        title={data.olurBaslik || "OLUR"}
-                        date={onayTarihi}
-                        adSoyad={data.onaylayanPersonelAdi}
-                        unvan={data.onaylayanPersonelUnvan}
-                        showSpace={true}
-                      />
-                    </div>
-                  )
-                  : <EditableOlurPlaceholder />}
+                  {/* OLUR İMZA BLOĞU */}
+                  {data.olurYazisi !== false
+                    ? (
+                      <div style={{ width: "100%", marginTop: "10px" }}>
+                        <ApprovalSignature
+                          title={data.olurBaslik || "OLUR"}
+                          date={onayTarihi}
+                          adSoyad={data.onaylayanPersonelAdi}
+                          unvan={data.onaylayanPersonelUnvan}
+                          showSpace={true}
+                        />
+                      </div>
+                    )
+                    : <EditableOlurPlaceholder />}
+                </SignatureBlockContainer>
               </>
             )}
           </DocumentLayout>
