@@ -312,8 +312,12 @@ interface RefreshFromDbParams {
 export async function refreshDocumentFromDb({
   activeDosyaId,
   resolvedId,
-  currentFormData
-}: RefreshFromDbParams & { currentFormData?: Record<string, any> }): Promise<Record<string, any> | null> {
+  currentFormData,
+  overwritePersonnel = true
+}: RefreshFromDbParams & {
+  currentFormData?: Record<string, any>
+  overwritePersonnel?: boolean
+}): Promise<Record<string, any> | null> {
   if (!activeDosyaId || !resolvedId) return null
 
   let freshData: Record<string, any> | null = null
@@ -338,9 +342,10 @@ export async function refreshDocumentFromDb({
   if (!freshData) return null
 
   // Smart Refresh Policy: Retain manual user edits while updating dynamic source/preserve fields
+  // Kullanıcı "Yenile" dediğinde dosyada güncellenen komisyon kadrosu ve personeller ezilerek taze çekilir!
   const mergedData =
     currentFormData && typeof currentFormData === 'object'
-      ? applyRefreshPolicy(freshData, currentFormData)
+      ? applyRefreshPolicy(freshData, currentFormData, { overwritePersonnel })
       : freshData
 
   documentPreloadService.updateCachedResolvedData(resolvedId, activeDosyaId, mergedData)

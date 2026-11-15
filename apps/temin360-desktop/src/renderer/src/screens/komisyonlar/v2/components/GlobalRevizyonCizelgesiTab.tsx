@@ -30,12 +30,11 @@ export const GlobalRevizyonCizelgesiTab: React.FC<GlobalRevizyonCizelgesiTabProp
         <div>
           <h3 className="text-base font-black text-slate-800 dark:text-white flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-indigo-600" />
-            Fiş Bazlı Komisyon Hareketleri &amp; Revizyon Çizelgesi
+            Komisyon Atama ve Revizyon Geçmişi
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Tüm doğrudan temin dosyalarında yapılan komisyon atama, kopyalama ve toplu dağıtım
-            işlemleri <strong>Atama Fişi</strong> olarak kaydedilir. İstediğiniz fişteki kadroyu tek
-            tıkla dosyaya geri yükleyebilir veya tüm dosyalara uygulayabilirsiniz.
+            Tüm doğrudan temin dosyalarında yapılan komisyon atama, kopyalama ve revizyon hareketleri
+            kaydedilir. Geçmiş bir fişteki kadroyu tek tıkla ilgili dosyaya geri yükleyebilir veya tüm dosyalara uygulayabilirsiniz.
           </p>
         </div>
 

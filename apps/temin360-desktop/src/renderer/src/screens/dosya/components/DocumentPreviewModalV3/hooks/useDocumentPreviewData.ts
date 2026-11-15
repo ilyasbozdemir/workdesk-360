@@ -600,7 +600,8 @@ export function useDocumentPreviewData({
         const baseData = await refreshDocumentFromDb({
           activeDosyaId,
           resolvedId,
-          currentFormData: formData
+          currentFormData: formData,
+          overwritePersonnel: true
         })
 
         if (baseData) {
