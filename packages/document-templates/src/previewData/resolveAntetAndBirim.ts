@@ -201,8 +201,6 @@ export async function resolveAntetAndBirim(
     undefined
 
   const fallbackBirimName =
-    dosyaObj.islem_yapan_birim ||
-    dosyaObj.islemYapanBirim ||
     dosyaObj.birim ||
     dosyaObj.birim_adi ||
     dosyaObj.harcama_birimi ||

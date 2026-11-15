@@ -54,7 +54,7 @@ export const dataMapping: ProcessMapping = {
   },
   mudurluk: {
     tablo: 'DATA_TeminDosyasi',
-    sutun: 'islem_yapan_birim',
+    sutun: 'birim',
     aciklama: 'İşlem Yapan Birim / Müdürlük'
   },
   birimId: {
