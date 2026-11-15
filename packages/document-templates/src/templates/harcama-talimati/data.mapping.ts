@@ -55,6 +55,26 @@ export const dataMapping: ProcessMapping = {
     sutun: 'isin_aciklamasi',
     aciklama: 'İşin Açıklaması'
   },
+  teklifEdenPersonelAdi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'hazirlayan_personel_ad',
+    aciklama: 'Teklif Eden Yetkili'
+  },
+  teklifEdenPersonelUnvan: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'hazirlayan_personel_unvan',
+    aciklama: 'Teklif Eden Yetkili Ünvanı'
+  },
+  gerceklestirmeGorevlisiAdi: {
+    tablo: 'DATA_TeminKomisyon',
+    sutun: 'ad_soyad',
+    aciklama: 'Gerçekleştirme Görevlileri'
+  },
+  gerceklestirmeGorevlisiUnvan: {
+    tablo: 'DATA_TeminKomisyon',
+    sutun: 'unvan',
+    aciklama: 'Gerçekleştirme Görevlisi Ünvanı'
+  },
   hazirlayanPersonelAdi: {
     tablo: 'DATA_TeminDosyasi',
     sutun: 'hazirlayan_personel_ad',

@@ -797,6 +797,8 @@ export function DocumentPreviewSidebar({
               personelListesi={personelListesi}
               birimListesi={birimListesi}
               supportsOlur={supportsOlur}
+              supportsAntet={templateCapabilities?.supportsAntet}
+              templateCapabilities={templateCapabilities}
               templateId={selectedDocId}
               dosyaId={(formData as any)?.dosyaId}
             />

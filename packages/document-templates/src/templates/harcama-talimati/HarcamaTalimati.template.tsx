@@ -459,7 +459,6 @@ export function HarcamaTalimati({
                   nameField="gerceklestirmeGorevlisiAdi"
                   unvanField="gerceklestirmeGorevlisiUnvan"
                   value={data.gerceklestirmeGorevlisiAdi ||
-                    data.hazirlayanPersonelAdi ||
                     (typeof data.gerceklestirmeGorevlileri === "string"
                       ? data.gerceklestirmeGorevlileri
                       : Array.isArray(data.gerceklestirmeGorevlileri) &&
@@ -469,14 +468,12 @@ export function HarcamaTalimati({
                   placeholder="Gerçekleştirme Görevlisi Seçiniz..."
                 />
                 {(data.gerceklestirmeGorevlisiUnvan ||
-                    data.gerceklestirmeGorevlisiUnvani ||
-                    data.hazirlayanPersonelUnvan)
+                    data.gerceklestirmeGorevlisiUnvani)
                   ? (
                     <span style={{ marginLeft: "4px", color: "#475569" }}>
                       (
                       {data.gerceklestirmeGorevlisiUnvan ||
-                        data.gerceklestirmeGorevlisiUnvani ||
-                        data.hazirlayanPersonelUnvan}
+                        data.gerceklestirmeGorevlisiUnvani}
                       )
                     </span>
                   )
@@ -618,16 +615,16 @@ export function HarcamaTalimati({
                   />
                 </div>
                 <PersonelCard
-                  adSoyad={data.hazirlayanPersonelAdi ||
-                    data.teklifEdenPersonelAdi ||
+                  adSoyad={data.teklifEdenPersonelAdi ||
+                    data.hazirlayanPersonelAdi ||
                     data.gerceklestirmeGorevlisiAdi}
-                  unvan={data.hazirlayanPersonelUnvan ||
-                    data.teklifEdenPersonelUnvan ||
+                  unvan={data.teklifEdenPersonelUnvan ||
+                    data.hazirlayanPersonelUnvan ||
                     data.gerceklestirmeGorevlisiUnvan ||
                     "Gerçekleştirme Görevlisi"}
-                  nameField="hazirlayanPersonelAdi"
-                  unvanField="hazirlayanPersonelUnvan"
-                  placeholderName="Hazırlayan / Teklif Eden"
+                  nameField="teklifEdenPersonelAdi"
+                  unvanField="teklifEdenPersonelUnvan"
+                  placeholderName="Teklif Eden Yetkili"
                   placeholderUnvan="Unvanı"
                   marginTop={4}
                   marginBottom={0}

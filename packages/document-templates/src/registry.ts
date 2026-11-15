@@ -119,6 +119,7 @@ const DEFAULT_CAPS: TemplateCapabilities = {
   supportsDagitim: false,
   supportsRota: false,
   supportsLogos: true,
+  supportsAntet: true,
 };
 
 export const templateRegistry = {
@@ -253,7 +254,12 @@ export const templateRegistry = {
     dataMapping: harcamaTalimatiMapping,
     mapping: harcamaTalimatiMapping,
     version: 1,
-    capabilities: { ...DEFAULT_CAPS, supportsOlur: true, supportsLogos: true },
+    capabilities: {
+      ...DEFAULT_CAPS,
+      supportsOlur: true,
+      supportsLogos: false,
+      supportsAntet: false,
+    },
     kikKodu: "KİK024.0/M",
     kikAdi: "Harcama Talimatı",
   },
@@ -504,7 +510,8 @@ export const templateRegistry = {
       supportsCommission: true,
       supportedCommissionTypes: ["piyasa_fiyat", "yaklasik_maliyet"],
       supportsFirmaListesi: true,
-      supportsLogos: true,
+      supportsLogos: false,
+      supportsAntet: false,
     },
     kikKodu: "KİK002.0/M",
     kikAdi: "Yaklaşık Maliyet Hesap Cetveli",
@@ -846,7 +853,8 @@ export const templateRegistry = {
     capabilities: {
       ...DEFAULT_CAPS,
       supportsOlur: false,
-      supportsLogos: true,
+      supportsLogos: false,
+      supportsAntet: false,
       roleVisibility: {
         harcama_yetkilisi: "show",
         onaylayan: "show",

@@ -30,6 +30,7 @@ import {
   getTemplateRouteDefinition,
   isCommissionAppointmentDocument,
   InstitutionalHeaderProvider,
+  TemplateCapabilities
 } from '@temin360/document-templates'
 import {
   resolveRoute,
@@ -111,9 +112,29 @@ interface DocumentPreviewRotaSectionProps {
     aktif_mi?: number | boolean | null
   }>
   supportsOlur?: boolean
+  supportsAntet?: boolean
+  templateCapabilities?: Partial<TemplateCapabilities>
   templateId?: string
   dosyaId?: number | string | null
 }
+
+const ANTETSIZ_TEMPLATES = new Set([
+  'harcama-talimati',
+  'harcama_talimati',
+  'harcama-pusulasi',
+  'harcama_pusulasi',
+  'yaklasik-maliyet-cetveli',
+  'yaklasik_maliyet_cetveli',
+  'piyasa-fiyat-arastirma-tutanagi',
+  'piyasa_fiyat_arastirma_tutanagi',
+  'dogrudan-temin-sozlesmesi',
+  'dogrudan_temin_sozlesmesi',
+  'fiyat-arastirma-mektubu',
+  'arastirma-mektubu',
+  'birim-fiyat-teklif-mektubu',
+  'tasinir-kayit-yetkilisi-gorusu',
+  'teknik-sartname'
+])
 
 function getOriginMeta(origin: ResolvedRouteStep['origin']): {
   label: string
@@ -152,13 +173,23 @@ export function DocumentPreviewRotaSection({
   setFormData,
   personelListesi = [],
   birimListesi = [],
+  supportsOlur,
+  supportsAntet,
+  templateCapabilities,
   templateId,
   dosyaId
 }: DocumentPreviewRotaSectionProps): React.JSX.Element {
+  const isAntetsiz = React.useMemo(() => {
+    if (supportsAntet === false) return true
+    if (templateCapabilities?.supportsAntet === false) return true
+    if (templateId && ANTETSIZ_TEMPLATES.has(templateId)) return true
+    return false
+  }, [supportsAntet, templateCapabilities?.supportsAntet, templateId])
+
   const [savedFeedback, setSavedFeedback] = React.useState<string | null>(null)
   const [settingsVersion, setSettingsVersion] = React.useState(0)
   const [allowCrossUnitPersonnel, setAllowCrossUnitPersonnel] = React.useState<boolean>(
-    () => Boolean(formData?.allowCrossUnitPersonnel)
+    () => Boolean(formData?.allowCrossUnitPersonnel || isAntetsiz)
   )
   const [showAntetLinesEditor, setShowAntetLinesEditor] = React.useState<boolean>(false)
   const [memberUnitFilters, setMemberUnitFilters] = React.useState<Record<string, string>>({})
@@ -394,7 +425,7 @@ export function DocumentPreviewRotaSection({
         birimId: currentBirimResolution.birimId ?? currentBirimId,
         birimAdi: currentBirimResolution.birimAdi || currentBirimAdi,
         birimList: activeBirimList,
-        includeOtherUnits: allowCrossUnitPersonnel
+        includeOtherUnits: allowCrossUnitPersonnel || isAntetsiz
       }),
     [
       rawMergedPersonelList,
@@ -403,7 +434,8 @@ export function DocumentPreviewRotaSection({
       currentBirimId,
       currentBirimAdi,
       activeBirimList,
-      allowCrossUnitPersonnel
+      allowCrossUnitPersonnel,
+      isAntetsiz
     ]
   )
 
@@ -867,33 +899,35 @@ export function DocumentPreviewRotaSection({
           <div className="flex items-center gap-1.5 min-w-0">
             <Building2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
             <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
-              Kurumsal Antet &amp; İlgili Birim
+              {isAntetsiz ? 'Harcama / İşlem Birimi' : 'Kurumsal Antet & İlgili Birim'}
             </span>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={handleRefreshAntetFromBirim}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-indigo-600 cursor-pointer"
-              title="Kurumsal anteti veritabanından (TANIM_Kurum) yeniden yükle"
-            >
-              <RefreshCw className="w-3 h-3" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAntetLinesEditor((v) => !v)}
-              className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 cursor-pointer flex items-center gap-1"
-            >
-              <FileText className="w-2.5 h-2.5" />
-              <span>{showAntetLinesEditor ? 'Anteti Gizle' : 'Antet Satırları'}</span>
-            </button>
-          </div>
+          {!isAntetsiz && (
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={handleRefreshAntetFromBirim}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-indigo-600 cursor-pointer"
+                title="Kurumsal anteti veritabanından (TANIM_Kurum) yeniden yükle"
+              >
+                <RefreshCw className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAntetLinesEditor((v) => !v)}
+                className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 cursor-pointer flex items-center gap-1"
+              >
+                <FileText className="w-2.5 h-2.5" />
+                <span>{showAntetLinesEditor ? 'Anteti Gizle' : 'Antet Satırları'}</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* İlgili Birim Seçimi */}
         <div className="space-y-1">
           <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 block">
-            Harcama / İşlem Birimi
+            {isAntetsiz ? 'Harcama Talebinde Bulunan Birim' : 'Harcama / İşlem Birimi'}
           </label>
           <select
             data-testid="rota-birim-select"
@@ -917,41 +951,45 @@ export function DocumentPreviewRotaSection({
             })}
           </select>
 
-          {/* Birim Antette Gösterilsin mi? Şablona Özel Ayar */}
-          <div className="flex items-center justify-between px-0.5 pt-1">
-            <label className="text-[11px] font-medium text-slate-600 dark:text-slate-350 flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                data-testid="rota-antet-birim-toggle"
-                checked={formData?.antetBirimGosterilsin !== false}
-                onChange={(e) => handleToggleAntetBirim(e.target.checked)}
-                className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer border-slate-300 dark:border-slate-700"
-              />
-              <span>Birim antette gösterilsin</span>
-            </label>
-            <span className="text-[10px] text-slate-400">
-              {formData?.antetBirimGosterilsin !== false ? 'Kurum + Birim' : 'Yalnızca Üst Kurum'}
-            </span>
-          </div>
-        </div>
-
-        {/* Antet Önizleme Kutusu */}
-        <div
-          data-testid="rota-antet-preview"
-          className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-lg text-center space-y-0.5"
-        >
-          {effectiveAntetLines.map((line, idx) => (
-            <div
-              key={idx}
-              className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-tight truncate"
-            >
-              {line}
+          {/* Birim Antette Gösterilsin mi? Şablona Özel Ayar - Yalnızca Antetli Belgelerde */}
+          {!isAntetsiz && (
+            <div className="flex items-center justify-between px-0.5 pt-1">
+              <label className="text-[11px] font-medium text-slate-600 dark:text-slate-350 flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  data-testid="rota-antet-birim-toggle"
+                  checked={formData?.antetBirimGosterilsin !== false}
+                  onChange={(e) => handleToggleAntetBirim(e.target.checked)}
+                  className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer border-slate-300 dark:border-slate-700"
+                />
+                <span>Birim antette gösterilsin</span>
+              </label>
+              <span className="text-[10px] text-slate-400">
+                {formData?.antetBirimGosterilsin !== false ? 'Kurum + Birim' : 'Yalnızca Üst Kurum'}
+              </span>
             </div>
-          ))}
+          )}
         </div>
 
-        {/* Antet Satırlarını Düzenle (Açılır Panel) */}
-        {showAntetLinesEditor && (
+        {/* Antet Önizleme Kutusu - Yalnızca Antetli Belgelerde */}
+        {!isAntetsiz && (
+          <div
+            data-testid="rota-antet-preview"
+            className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 rounded-lg text-center space-y-0.5"
+          >
+            {effectiveAntetLines.map((line, idx) => (
+              <div
+                key={idx}
+                className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-tight truncate"
+              >
+                {line}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Antet Satırlarını Düzenle (Açılır Panel) - Yalnızca Antetli Belgelerde */}
+        {!isAntetsiz && showAntetLinesEditor && (
           <div className="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
             {currentAntetLines.map((line, idx) => (
               <div key={idx} className="flex items-center gap-1">
@@ -1078,11 +1116,18 @@ export function DocumentPreviewRotaSection({
               step.label?.toLowerCase().includes('muhasebe') ||
               step.label?.toLowerCase().includes('mutemet')
 
+            const isTableOnlyInfo =
+              step.id === 'gerceklestirmeGorevlisi' ||
+              (step as any).signatureType === 'none' ||
+              (step as any).signatureType === 'info' ||
+              (step as any).imzaTuru === 'Bilgi' ||
+              (step.description || '').toLowerCase().includes('imza atmaz')
+
             const stepFilterRes = filterPersonelByBirim(baseStepPool, {
               birimId: currentBirimResolution.birimId ?? currentBirimId,
               birimAdi: currentBirimResolution.birimAdi || currentBirimAdi,
               birimList: activeBirimList,
-              includeOtherUnits: allowCrossUnitPersonnel,
+              includeOtherUnits: allowCrossUnitPersonnel || isAntetsiz,
               currentSelectedNames: currentPerson?.name ? [currentPerson.name] : []
             })
 
@@ -1176,6 +1221,37 @@ export function DocumentPreviewRotaSection({
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
+                    {/* İmza / Görev Türü Rozeti */}
+                    {isApprovalStep ? (
+                      <span
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
+                        title="Harcama yetkilisi / onay makamı - Belgeyi OLUR ile onaylar"
+                      >
+                        📜 OLUR
+                      </span>
+                    ) : isMuhasebeStep ? (
+                      <span
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800"
+                        title="Harcama yetkilisi mutemedi - Belge metninde avans yetkilisi olarak yer alır (İmza atmaz)"
+                      >
+                        💰 Mutemet
+                      </span>
+                    ) : isTableOnlyInfo ? (
+                      <span
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                        title="Tablo satırında görevli personeller olarak listelenir, imza atmaz"
+                      >
+                        📋 Tablo Bilgisi (İmza Atmaz)
+                      </span>
+                    ) : (
+                      <span
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800"
+                        title="Belge altında ıslak imza atan yetkili"
+                      >
+                        ✒️ Islak İmza
+                      </span>
+                    )}
+
                     <span
                       className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${originMeta.className}`}
                     >
@@ -1223,7 +1299,7 @@ export function DocumentPreviewRotaSection({
                   >
                     <option value="">👤 Personel Havuzundan Seç...</option>
                     {!isApprovalStep &&
-                    allowCrossUnitPersonnel &&
+                    (allowCrossUnitPersonnel || isAntetsiz) &&
                     stepFilterRes.hasUnitDataInPool &&
                     stepFilterRes.primaryUnitPersonel.length > 0 &&
                     stepFilterRes.otherUnitPersonel.length > 0 ? (

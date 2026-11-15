@@ -6,9 +6,10 @@ import { getTemplateRouteDefinition } from "../../../route-registry";
 describe("HarcamaTalimati — Rota Tanımı", () => {
   it("1. Rota tanımı doğru templateId ve slotları içerir", () => {
     expect(harcamaTalimatiRoute.templateId).toBe("harcama-talimati");
-    expect(harcamaTalimatiRoute.slots.length).toBe(4);
+    expect(harcamaTalimatiRoute.slots.length).toBe(5);
 
     const slotIds = harcamaTalimatiRoute.slots.map((s) => s.id);
+    expect(slotIds).toContain("teklifEden");
     expect(slotIds).toContain("gerceklestirmeGorevlisi");
     expect(slotIds).toContain("mutemet");
     expect(slotIds).toContain("onaylayan");
