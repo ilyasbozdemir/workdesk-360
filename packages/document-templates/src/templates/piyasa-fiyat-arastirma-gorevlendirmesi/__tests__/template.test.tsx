@@ -62,10 +62,20 @@ describe("PiyasaFiyatArastirmaGorevlendirmesi — Şablon Bileşen Render Testle
       <Component
         data={{
           isinAdi: "Kırtasiye Alımı",
+          dosyaKonusu: "Kırtasiye Alımı", // Dosya konusu yerine yanlışlıkla iş adı gelse bile şablon doğru belge konusunu korumalı
           hazirlayanPersonelAdi: "Test Personel",
         }}
       />
     );
     expect(html).toContain("Kırtasiye Alımı");
+    expect(html).toContain("Piyasa Fiyat Araştırma Görevlendirmesi");
+  });
+
+  it("4. Standart MetadataBlock kullanılarak 'Konu :' alanında 'Piyasa Fiyat Araştırma Görevlendirmesi' basılır", () => {
+    const html = renderToStaticMarkup(
+      <PiyasaFiyatArastirmaGorevlendirmesi data={{}} />
+    );
+    expect(html).toContain("Konu");
+    expect(html).toContain("Piyasa Fiyat Araştırma Görevlendirmesi");
   });
 });

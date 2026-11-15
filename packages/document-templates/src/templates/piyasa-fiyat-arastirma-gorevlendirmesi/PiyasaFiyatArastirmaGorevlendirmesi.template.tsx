@@ -3,10 +3,10 @@ import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
 import {
   ApprovalSignature,
-  DateEditableField,
   EditableOlurPlaceholder,
   PersonelCard,
 } from "../../document/ApprovalSignature";
+import { MetadataBlock } from "../../document/MetadataBlock";
 import { PiyasaFiyatArastirmaGorevlendirmesiData } from "./PiyasaFiyatArastirmaGorevlendirmesi.schema";
 import { formatUnvan } from "../../utils/textHelpers";
 import { formatOfficialEvrakSayisi } from "../../resolver/helpers/resolveEvrakSayisi";
@@ -184,8 +184,15 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
           teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo || (data as any)?.dosyaSayisi,
         });
 
-  const konuMetni = data.dosyaKonusu ??
-    "Piyasa Fiyat Araştırması Görevlendirmesi";
+  const konuMetni =
+    data.dosyaKonusu &&
+    data.dosyaKonusu !== data.isinAdi &&
+    data.dosyaKonusu !== (data as any)?.konu &&
+    !data.dosyaKonusu.toLowerCase().includes("alımı") &&
+    !data.dosyaKonusu.toLowerCase().includes("yapımı") &&
+    !data.dosyaKonusu.toLowerCase().includes("hizmeti")
+      ? data.dosyaKonusu
+      : "Piyasa Fiyat Araştırma Görevlendirmesi";
 
   const fallbackKurum = data.altKurumBizim || data.kurumBizim || "İdaremiz";
   const kurumumuzMetni = data.kurumumuz &&
@@ -194,7 +201,7 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
     ? data.kurumumuz
     : fallbackKurum;
 
-  const isinAdiMetni = data.isinAdi ?? "Alımı yapılacak";
+  const isinAdiMetni = data.isinAdi ?? (data as any)?.konu ?? "Alımı yapılacak iş";
 
   return (
     <DocumentLayout
@@ -215,62 +222,13 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
           lineHeight: 1.5,
         }}
       >
-        {/* Meta Satırı (Sayı, Konu, Tarih) */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "0px",
-          }}
-        >
-          <div>
-            <table style={{ borderCollapse: "collapse" }}>
-              <tbody>
-                <tr>
-                  <td
-                    style={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      padding: "2px 10px 2px 0",
-                      verticalAlign: "top",
-                    }}
-                  >
-                    Sayı
-                  </td>
-                  <td
-                    style={{ padding: "2px 10px 2px 0", verticalAlign: "top" }}
-                  >
-                    : <EditableField name="evrakSayisi" value={evrakNo} />
-                  </td>
-                </tr>
-                <tr>
-                  <td
-                    style={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      padding: "2px 10px 2px 0",
-                      verticalAlign: "top",
-                    }}
-                  >
-                    Konu
-                  </td>
-                  <td
-                    style={{ padding: "2px 10px 2px 0", verticalAlign: "top" }}
-                  >
-                    : <EditableField name="dosyaKonusu" value={konuMetni} />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-            <strong>Tarih:</strong>{" "}
-            <DateEditableField
-              name="dosyaTarihi"
-              value={data.dosyaTarihi || data.tarih || ""}
-            />
-          </div>
-        </div>
+        {/* Standart Resmî Yazışma Meta Bloğu (Sayı, Konu, Tarih) */}
+        <MetadataBlock
+          evrakSayisi={evrakNo}
+          tarih={data.dosyaTarihi || data.tarih}
+          dosyaKonusu={konuMetni}
+          showBorder={false}
+        />
 
         {/* Görevlendirme Metni */}
         <div
