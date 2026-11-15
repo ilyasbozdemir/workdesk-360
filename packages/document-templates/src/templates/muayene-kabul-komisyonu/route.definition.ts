@@ -3,6 +3,7 @@ import type { TemplateRouteDefinition } from "@temin360/contracts";
 export const muayeneKabulRoute: TemplateRouteDefinition = {
   templateId: "muayene-kabul-komisyonu",
   version: 1,
+  isAppointmentDocument: true,
   slots: [
     {
       id: "komisyon",
@@ -27,8 +28,18 @@ export const muayeneKabulRoute: TemplateRouteDefinition = {
       targetTitleFieldKeys: ["harcamaYetkilisiUnvan"],
       sourceFieldKeys: ["onaylayanPersonelAdi", "harcamaYetkilisiAdi"],
       sourceTitleFieldKeys: ["onaylayanPersonelUnvan", "harcamaYetkilisiUnvan"],
-      description: "Muayene kabul tutanağını onaylayan harcama yetkilisi",
+      description: "Muayene kabul görevlendirmesini onaylayan harcama yetkilisi",
+    },
+    {
+      id: "antetBirim",
+      label: "Antet & Görevlendirme Makamı",
+      kind: "unit",
+      defaultSource: "settings",
+      required: false,
+      fieldKey: "kurumAdi",
+      targetFieldKeys: ["kurumAdi", "kurumumuz", "altKurumBizim"],
+      sourceFieldKeys: ["kurumAdi", "kurumumuz", "harcamaBirimi", "mudurluk"],
+      description: "Görevlendirmeyi yapan kurum veya başkanlık antet makamı",
     },
   ],
 };
-

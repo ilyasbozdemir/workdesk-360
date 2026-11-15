@@ -22,6 +22,11 @@ export const dataMapping: ProcessMapping = {
     aciklama: 'Temin Numarası'
   },
   dosyaKonusu: { deger: 'Muayene ve Kabul Komisyonu', aciklama: 'Belgenin konusu' },
+  belgeTuru: { deger: 'Onay Yazısı', aciklama: 'Belge Türü (Onay Yazısı / Görevlendirme Emri)' },
+  yaziTuru: { deger: 'onay', aciklama: 'Yazı Türü (onay)' },
+  olurYazisi: { deger: false, aciklama: 'Olur yazısı mı? (Onay yazısıdır, false)' },
+  arzRicaTuru: { deger: 'rica', aciklama: 'Resmî Nezaket İfadesi (rica)' },
+  kapanisMetni: { deger: 'Gereğini rica ederim.', aciklama: 'Resmî Kapanış İfadesi' },
   dosyaTarihi: {
     tablo: 'DATA_TeminDosyasi',
     sutun: 'dosya_tarihi',

@@ -94,7 +94,8 @@ export async function resolveAntetSatirlari(
           `SELECT d.antet_ek_satir as dosya_antet, 
                   b.antet_ek_satir as birim_antet, 
                   b.birim_adi, 
-                  d.harcama_birimi
+                  d.harcama_birimi,
+                  d.antet_birim_gosterilsin
            FROM DATA_TeminDosyasi d 
            LEFT JOIN TANIM_Birim b ON d.birim_id = b.id 
            WHERE d.id = ? LIMIT 1`,
@@ -102,6 +103,10 @@ export async function resolveAntetSatirlari(
         );
         if (birimRes && birimRes.length > 0) {
           const row = birimRes[0];
+          // EĞER rota / dosya ayarında birim antette gösterilmesin (yalnızca kurum) seçilmişse ek satır ekleme
+          if (row.antet_birim_gosterilsin === 0 || row.antet_birim_gosterilsin === '0') {
+            return result;
+          }
           const ekSatir = (
             row.dosya_antet ||
             row.birim_antet ||

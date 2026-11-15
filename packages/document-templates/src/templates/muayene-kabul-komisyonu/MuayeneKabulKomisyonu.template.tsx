@@ -286,7 +286,10 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
             lineHeight: 1.6,
           }}
         >
-          Gereğini rica ederim.
+          {data.kapanisMetni ||
+            (data.olurYazisi === true
+              ? "Gereğini olurlarınıza arz ederim."
+              : "Gereğini rica ederim.")}
         </div>
 
         {/* Görevlendirmeyi Yapan Yetkili / Harcama Yetkilisi İmzası (Sağ) */}
