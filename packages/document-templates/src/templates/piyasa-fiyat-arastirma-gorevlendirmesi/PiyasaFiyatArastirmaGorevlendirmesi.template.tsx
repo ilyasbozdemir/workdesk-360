@@ -188,14 +188,7 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
           (data as any)?.dosyaSayisi,
       });
 
-  const konuMetni = data.dosyaKonusu &&
-      data.dosyaKonusu !== data.isinAdi &&
-      data.dosyaKonusu !== (data as any)?.konu &&
-      !data.dosyaKonusu.toLowerCase().includes("alımı") &&
-      !data.dosyaKonusu.toLowerCase().includes("yapımı") &&
-      !data.dosyaKonusu.toLowerCase().includes("hizmeti")
-    ? data.dosyaKonusu
-    : "Piyasa Fiyat Araştırma Görevlendirmesi";
+  const konuMetni = "Piyasa Fiyat Araştırma Görevlendirmesi";
 
   const fallbackKurum = data.altKurumBizim || data.kurumBizim || "İdaremiz";
   const kurumumuzMetni = data.kurumumuz &&

@@ -77,7 +77,7 @@ export function Header(): React.JSX.Element {
       />
 
       {/* ÜST SATIR: Menü Çubuğu, Çalışma Dosyası Özeti ve Sistem Kontrolleri */}
-      <div className="h-9 flex items-center justify-between px-3 border-b border-slate-200/40 dark:border-slate-800/40 relative z-40">
+      <div className="h-9 flex items-center justify-between px-3 border-b border-slate-200/40 dark:border-slate-800/40 relative z-50">
         {/* Sol Alan: Uygulama Menüleri */}
         <div className="flex items-center min-w-0 shrink-0">
           <NativeMenuBar
