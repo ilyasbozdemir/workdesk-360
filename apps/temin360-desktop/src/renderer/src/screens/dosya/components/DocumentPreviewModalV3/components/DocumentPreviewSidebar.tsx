@@ -15,6 +15,7 @@ import {
 import { IhtiyacListesiType, TemplateCapabilities } from '@temin360/document-templates'
 import { TemplateOptionItem } from '../templateResolver'
 import { DocumentPreviewRotaSection } from './DocumentPreviewRotaSection'
+import { DocumentPreviewFormBuilder } from './DocumentPreviewFormBuilder'
 import { useSettingsStore } from '../../../../../store/settingsStore'
 import { getTemplateFieldMapping } from '../../tek-tik-yazdir/ciktiWizardFieldMapping'
 import {
@@ -111,20 +112,35 @@ export function DocumentPreviewSidebar({
     >
       {/* Sidebar Header & Tab Switcher */}
       <div className="flex flex-col border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shrink-0">
-        <div className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-slate-800/60">
+        <div className="flex items-center justify-between p-2.5 sm:p-3 border-b border-slate-100 dark:border-slate-800/60">
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
               Belge &amp; Süreç
             </span>
           </div>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded-lg transition-colors cursor-pointer"
-            title="Paneli Kapat"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setIsEditingMode(!isEditingMode)}
+              className={`px-2 py-1 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer border ${
+                isEditingMode
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-2xs ring-1 ring-amber-400/40'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+              title={isEditingMode ? 'Canlı düzenleme modu açık (Tıklayarak kapatın)' : 'Canlı düzenleme modunu açın'}
+            >
+              <Edit3 className="w-3 h-3" />
+              <span>{isEditingMode ? 'Düzenleme Açık' : 'Düzenle'}</span>
+            </button>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded-lg transition-colors cursor-pointer"
+              title="Paneli Kapat"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* 2 Tabs: Aşama Belgeleri vs Belge Ayarları */}
@@ -354,7 +370,7 @@ export function DocumentPreviewSidebar({
       ) : (
         <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar min-h-0">
           {/* Hızlı Bölüm Atlama Çubuğu */}
-          <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl sticky top-0 z-10 border border-slate-200/80 dark:border-slate-800">
+          <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl sticky top-0 z-10 border border-slate-200/80 dark:border-slate-800">
             <button
               type="button"
               onClick={() =>
@@ -362,7 +378,7 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-duzen')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-2 py-1 rounded-lg text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-1.5 py-1 rounded-lg text-[10px] font-bold text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer text-center"
             >
               📐 Düzen
             </button>
@@ -373,9 +389,20 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-rota')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-2 py-1 rounded-lg text-[10px] font-bold text-purple-700 dark:text-purple-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-1.5 py-1 rounded-lg text-[10px] font-bold text-purple-700 dark:text-purple-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer text-center"
             >
-              🔀 Rota &amp; Onay
+              🔀 Rota
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById('sidebar-ayarlar-form')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              className="px-1.5 py-1 rounded-lg text-[10px] font-bold text-blue-700 dark:text-blue-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer text-center"
+            >
+              📝 Alanlar
             </button>
             <button
               type="button"
@@ -384,7 +411,7 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-evrak')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-2 py-1 rounded-lg text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-1.5 py-1 rounded-lg text-[10px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer text-center"
             >
               📋 Evrak
             </button>
@@ -809,6 +836,15 @@ export function DocumentPreviewSidebar({
     dosyaId={(formData as any)?.dosyaId}
   />
 </div>
+
+          {/* ========================================================= */}
+          {/* BELGE ALANLARI & FORM BUILDER */}
+          {/* ========================================================= */}
+          <DocumentPreviewFormBuilder
+            formData={formData}
+            setFormData={setFormData}
+            selectedDocId={selectedDocId}
+          />
 
           {/* ========================================================= */}
           {/* BELGE EVRAK AYARLARI (Muhatap, İlgi, Ek, Dağıtım) */}

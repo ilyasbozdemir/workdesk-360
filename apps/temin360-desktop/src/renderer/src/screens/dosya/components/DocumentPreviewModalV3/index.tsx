@@ -141,6 +141,8 @@ export function DocumentPreviewModalV3(props: DocumentPreviewModalV3Props): Reac
         setIsFullScreen={setIsFullScreen}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
+        isEditingMode={isEditingMode}
+        setIsEditingMode={setIsEditingMode}
         isSaving={isSaving}
         saveSuccess={saveSuccess}
         saveError={saveError}
