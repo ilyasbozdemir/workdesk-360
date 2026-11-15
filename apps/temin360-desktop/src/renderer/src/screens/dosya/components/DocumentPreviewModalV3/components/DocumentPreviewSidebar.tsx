@@ -17,7 +17,6 @@ import { TemplateOptionItem } from '../templateResolver'
 import { DocumentPreviewRotaSection } from './DocumentPreviewRotaSection'
 import { DocumentPreviewFormBuilder } from './DocumentPreviewFormBuilder'
 import { useSettingsStore } from '../../../../../store/settingsStore'
-import { getTemplateFieldMapping } from '../../tek-tik-yazdir/ciktiWizardFieldMapping'
 import {
   DOCUMENT_STAGES,
   IHTIYAC_RAPORU_STAGE,
@@ -408,7 +407,7 @@ export function DocumentPreviewSidebar({
       ) : (
         <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar min-h-0">
           {/* Hızlı Bölüm Atlama Çubuğu */}
-          <div className="grid grid-cols-4 gap-1 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl sticky top-0 z-10 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+          <div className="grid grid-cols-3 gap-1.5 p-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl sticky top-0 z-10 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
             <button
               type="button"
               onClick={() =>
@@ -416,7 +415,7 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-duzen')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer text-center"
+              className="px-2 py-1.5 rounded-lg text-[10.5px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer text-center"
             >
               📐 Düzen
             </button>
@@ -427,7 +426,7 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-rota')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-all cursor-pointer text-center"
+              className="px-2 py-1.5 rounded-lg text-[10.5px] font-bold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-all cursor-pointer text-center"
             >
               🔀 Rota
             </button>
@@ -438,20 +437,9 @@ export function DocumentPreviewSidebar({
                   .getElementById('sidebar-ayarlar-form')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }
-              className="px-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-all cursor-pointer text-center"
+              className="px-2 py-1.5 rounded-lg text-[10.5px] font-bold text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-all cursor-pointer text-center"
             >
               📝 Alanlar
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                document
-                  .getElementById('sidebar-ayarlar-evrak')
-                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }
-              className="px-1.5 py-1.5 rounded-lg text-[10.5px] font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all cursor-pointer text-center"
-            >
-              📋 Evrak
             </button>
           </div>
 
@@ -468,27 +456,6 @@ export function DocumentPreviewSidebar({
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Görünüm & Düzenleme Kontrolleri
             </span>
-
-            {/* Metin Düzenleme Modu */}
-            <label className="flex items-center justify-between p-3 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 rounded-xl cursor-pointer hover:border-blue-300 transition-colors">
-              <div className="flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                <div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block">
-                    Belge Düzenleme Modu
-                  </span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
-                    {isEditingMode ? 'Canlı düzenleme açık' : 'Önizleme modu (Sabit Metin)'}
-                  </span>
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={isEditingMode}
-                onChange={(e) => setIsEditingMode(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded cursor-pointer"
-              />
-            </label>
 
             {/* Sayfa Yönü (Dikey / Yatay) */}
             <div className="p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
@@ -823,57 +790,17 @@ export function DocumentPreviewSidebar({
           {/* ========================================================= */}
           {/* BELGE ÇALIŞMA MODU & ROTA / PARAF / KOORDİNASYON AKIŞI */}
           {/* ========================================================= */}
-         <div id="sidebar-ayarlar-rota">
-  {/* DEBUG - işin bitince sil */}
-  
-  {/*
-    {process.env.NODE_ENV !== "production" && (
-    <details open style={{ marginBottom: 8, fontSize: 11 }}>
-      <summary style={{ cursor: "pointer", fontWeight: 600 }}>
-        🐞 Rota Debug
-      </summary>
-      <pre
-        style={{
-          maxHeight: 300,
-          overflow: "auto",
-          background: "#111",
-          color: "#0f0",
-          padding: 8,
-          borderRadius: 6,
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-        }}
-      >
-        {JSON.stringify(
-          {
-            templateId: selectedDocId,
-            dosyaId: (formData as any)?.dosyaId,
-            supportsOlur,
-            personelCount: personelListesi?.length ?? null,
-            birimCount: birimListesi?.length ?? null,
-            personelIlk3: personelListesi?.slice?.(0, 3),
-            birimIlk3: birimListesi?.slice?.(0, 3),
-            formData,
-          },
-          (_key, value) => (value === undefined ? "__undefined__" : value),
-          2
-        )}
-      </pre>
-    </details>
-  )}
-  */}
-
-
-  <DocumentPreviewRotaSection
-    formData={formData}
-    setFormData={setFormData}
-    personelListesi={personelListesi}
-    birimListesi={birimListesi}
-    supportsOlur={supportsOlur}
-    templateId={selectedDocId}
-    dosyaId={(formData as any)?.dosyaId}
-  />
-</div>
+          <div id="sidebar-ayarlar-rota">
+            <DocumentPreviewRotaSection
+              formData={formData}
+              setFormData={setFormData}
+              personelListesi={personelListesi}
+              birimListesi={birimListesi}
+              supportsOlur={supportsOlur}
+              templateId={selectedDocId}
+              dosyaId={(formData as any)?.dosyaId}
+            />
+          </div>
 
           {/* ========================================================= */}
           {/* BELGE ALANLARI & FORM BUILDER */}
@@ -883,215 +810,6 @@ export function DocumentPreviewSidebar({
             setFormData={setFormData}
             selectedDocId={selectedDocId}
           />
-
-          {/* ========================================================= */}
-          {/* BELGE EVRAK AYARLARI (Muhatap, İlgi, Ek, Dağıtım) */}
-          {/* Sadece şablon yeteneklerinde (capabilities) gerçekten desteklenen alanlar gösterilir */}
-          {/* ========================================================= */}
-          {(() => {
-            const mapping = selectedDocId ? getTemplateFieldMapping(selectedDocId) : {}
-            const caps = templateCapabilities
-
-            // Bir alanın gösterilmesi için şablon yeteneklerinde (capabilities) açık olması ve mapping'inin bulunması gerekir
-            const showMuhatap = Boolean(mapping.muhatapKey) && Boolean(caps?.supportsMuhatap)
-            const showIlgi = Boolean(mapping.ilgiKey) && Boolean(caps?.supportsIlgi)
-            const showEkler = Boolean(mapping.eklerKey) && Boolean(caps?.supportsEk)
-            const showDagitim = Boolean(mapping.dagitimKey) && Boolean(caps?.supportsDagitim)
-
-            if (!showMuhatap && !showIlgi && !showEkler && !showDagitim) return null
-
-            // Öneri Havuzu (Önceki Belgelerden / Standart Kalıplardan)
-            const suggestionPool = {
-              ilgi: [
-                'Doğrudan Temin Onay Belgesi',
-                'Lüzum Müzekkeresi',
-                'Piyasa Fiyat Araştırma Tutanağı',
-                'Yaklaşık Maliyet Hesap Cetveli'
-              ],
-              ekler: [
-                'Teknik Şartname',
-                'Yaklaşık Maliyet Hesap Cetveli',
-                'Piyasa Fiyat Araştırma Tutanağı',
-                'Fatura ve İrsaliye Örneği',
-                'Birim Fiyat Teklif Cetveli'
-              ]
-            }
-
-            return (
-              <div
-                id="sidebar-ayarlar-evrak"
-                className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-800"
-              >
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">
-                    Belge Evrak Ayarları
-                  </span>
-                </div>
-
-                {/* 1. MUHATAP / SUNULACAK MAKAM */}
-                {showMuhatap && mapping.muhatapKey && (
-                  <div className="p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                      <span>Muhatap / Sunulacak Makam</span>
-                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-mono">
-                        {mapping.muhatapKey}
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={String((formData as any)[mapping.muhatapKey] || '')}
-                      onChange={(e) =>
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          [mapping.muhatapKey!]: e.target.value
-                        }))
-                      }
-                      placeholder="Örn: Destek Hizmetleri Müdürlüğüne"
-                      className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500"
-                    />
-                  </div>
-                )}
-
-                {/* 2. İLGİ */}
-                {showIlgi && mapping.ilgiKey && (
-                  <div className="p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                      <span>İlgi Tutulan Evrak / Yazı</span>
-                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-mono">
-                        {mapping.ilgiKey}
-                      </span>
-                    </label>
-                    <input
-                      type="text"
-                      value={String((formData as any)[mapping.ilgiKey] || '')}
-                      onChange={(e) =>
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          [mapping.ilgiKey!]: e.target.value
-                        }))
-                      }
-                      placeholder="Örn: 10.10.2026 tarihli ve 104 sayılı Olur"
-                      className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500"
-                    />
-
-                    {/* Öneri Chipleri */}
-                    <div className="space-y-1 pt-1">
-                      <span className="text-[10px] text-slate-400 block">
-                        Önceki Belgelerden Öneriler:
-                      </span>
-                      <div className="flex flex-wrap gap-1">
-                        {suggestionPool.ilgi.map((sug, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              const current = (formData as any)[mapping.ilgiKey!]
-                              if (!current || String(current).trim() === '') {
-                                setFormData((prev: any) => ({
-                                  ...prev,
-                                  [mapping.ilgiKey!]: sug
-                                }))
-                              }
-                            }}
-                            className="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 rounded-md text-[10px] text-purple-700 dark:text-purple-300 hover:bg-purple-100 transition-colors cursor-pointer"
-                            title="Tıklayarak ilgi alanına yapıştırın"
-                          >
-                            + {sug}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. EKLER */}
-                {showEkler && mapping.eklerKey && (
-                  <div className="p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                      <span>Ekler Listesi</span>
-                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-mono">
-                        {mapping.eklerKey}
-                      </span>
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={
-                        Array.isArray((formData as any)[mapping.eklerKey])
-                          ? (formData as any)[mapping.eklerKey].join('\n')
-                          : String((formData as any)[mapping.eklerKey] || '')
-                      }
-                      onChange={(e) => {
-                        const lines = e.target.value.split('\n')
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          [mapping.eklerKey!]: lines
-                        }))
-                      }}
-                      placeholder="Her satıra bir ek yazınız"
-                      className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500 custom-scrollbar resize-none"
-                    />
-
-                    {/* Önerilen Ekler */}
-                    <div className="space-y-1 pt-1">
-                      <span className="text-[10px] text-slate-400 block">Önerilen Ekler:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {suggestionPool.ekler.map((ekItem, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              const cur = (formData as any)[mapping.eklerKey!] || []
-                              const list = Array.isArray(cur) ? [...cur] : [String(cur)]
-                              if (!list.includes(ekItem)) {
-                                setFormData((prev: any) => ({
-                                  ...prev,
-                                  [mapping.eklerKey!]: [...list.filter(Boolean), ekItem]
-                                }))
-                              }
-                            }}
-                            className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-[10px] text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors cursor-pointer"
-                            title="Tıklayarak listeye ekleyin"
-                          >
-                            + {ekItem}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 4. DAĞITIM */}
-                {showDagitim && mapping.dagitimKey && (
-                  <div className="p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-                      <span>Dağıtım Listesi</span>
-                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-mono">
-                        {mapping.dagitimKey}
-                      </span>
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={
-                        Array.isArray((formData as any)[mapping.dagitimKey])
-                          ? (formData as any)[mapping.dagitimKey].join('\n')
-                          : String((formData as any)[mapping.dagitimKey] || '')
-                      }
-                      onChange={(e) => {
-                        const lines = e.target.value.split('\n')
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          [mapping.dagitimKey!]: lines
-                        }))
-                      }}
-                      placeholder="Gereği / Bilgi birimleri (Her satıra bir birim)"
-                      className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500 custom-scrollbar resize-none"
-                    />
-                  </div>
-                )}
-              </div>
-            )
-          })()}
         </div>
       )}
     </div>

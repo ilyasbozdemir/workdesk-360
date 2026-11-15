@@ -24,6 +24,22 @@ export interface FormFieldConfig {
   aliases?: string[];
 }
 
+const FIELD_SUGGESTIONS: Record<string, string[]> = {
+  ilgi: [
+    "Doğrudan Temin Onay Belgesi",
+    "Lüzum Müzekkeresi",
+    "Piyasa Fiyat Araştırma Tutanağı",
+    "Yaklaşık Maliyet Hesap Cetveli",
+  ],
+  ekler: [
+    "Teknik Şartname",
+    "Yaklaşık Maliyet Hesap Cetveli",
+    "Piyasa Fiyat Araştırma Tutanağı",
+    "Fatura ve İrsaliye Örneği",
+    "Birim Fiyat Teklif Cetveli",
+  ],
+};
+
 const FORM_FIELD_CATALOG: FormFieldConfig[] = [
   // 1. Evrak & Tarih
   {
@@ -548,6 +564,40 @@ export function DocumentPreviewFormBuilder({
                     className="w-full px-2.5 py-1.5 bg-slate-50/70 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 transition-all"
                   />
                 )}
+
+              {/* Hızlı Öneri Kalıpları (İlgi, Ekler) */}
+              {FIELD_SUGGESTIONS[field.key] && (
+                <div className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                  <span className="text-[9.5px] text-slate-400 font-semibold block">
+                    Önerilen Kalıplar:
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {FIELD_SUGGESTIONS[field.key].map((sug, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          if (field.key === "ekler") {
+                            const cur = val ? val.split("\n") : [];
+                            if (!cur.includes(sug)) {
+                              handleFieldChange(
+                                field,
+                                [...cur.filter(Boolean), sug].join("\n"),
+                              );
+                            }
+                          } else {
+                            handleFieldChange(field, sug);
+                          }
+                        }}
+                        className="px-2 py-0.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 border border-blue-200/80 dark:border-blue-800/60 rounded-md text-[9.5px] font-semibold text-blue-700 dark:text-blue-300 transition-colors cursor-pointer"
+                        title="Tıklayarak alana aktarın"
+                      >
+                        + {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {field.hint && (
                 <div className="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
