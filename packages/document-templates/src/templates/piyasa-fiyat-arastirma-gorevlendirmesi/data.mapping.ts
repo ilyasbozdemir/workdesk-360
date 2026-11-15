@@ -35,6 +35,36 @@ export const dataMapping: ProcessMapping = {
     sutun: 'kurum_adi',
     aciklama: 'Kurum Adı'
   },
+  kurumAdi: {
+    tablo: 'TANIM_Kurum',
+    sutun: 'kurum_adi',
+    aciklama: 'Kurum Adı'
+  },
+  kurumUst: {
+    tablo: 'TANIM_Kurum',
+    sutun: 'ust_kurum_adi',
+    aciklama: 'Üst İdare Adı'
+  },
+  harcamaBirimi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'harcama_birimi',
+    aciklama: 'Harcama Birimi'
+  },
+  mudurluk: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'islem_yapan_birim',
+    aciklama: 'İşlem Yapan Birim / Müdürlük'
+  },
+  birimId: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'birim_id',
+    aciklama: 'Birim ID'
+  },
+  antetEkSatir: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'antet_ek_satir',
+    aciklama: 'Antet Ek Satırı'
+  },
   isinAdi: {
     tablo: 'DATA_TeminDosyasi',
     sutun: 'konu',

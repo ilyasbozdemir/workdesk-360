@@ -1,7 +1,12 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
-import { DateEditableField } from "../../document/ApprovalSignature";
+import {
+  ApprovalSignature,
+  DateEditableField,
+  EditableOlurPlaceholder,
+  PersonelCard,
+} from "../../document/ApprovalSignature";
 import { MuayeneKabulKomisyonuData } from "./MuayeneKabulKomisyonu.schema";
 import { formatUnvan } from "../../utils/textHelpers";
 import { formatOfficialEvrakSayisi } from "../../resolver/helpers/resolveEvrakSayisi";
@@ -108,8 +113,6 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
       });
 
   const konuMetni = "Muayene ve Kabul Komisyonu";
-
-  const kurumumuzMetni = data.kurumumuz ?? (data.kurumAdi || "Kurumumuz");
 
   const isinAdiMetni = data.isinAdi ?? "Alımı yapılacak";
 
@@ -224,16 +227,13 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
                 "22/d",
             )}
           />
+
           {" maddesine göre alımı gerçekleştirilen "}
-          <EditableField
-            name="kurumumuz"
-            value={kurumumuzMetni}
-          />{" "}
           <EditableField
             name="isinAdi"
             value={isinAdiMetni}
           />{" "}
-          işine ait muayene ve kabulünü yapmak üzere{" "}
+          işine ait muayene ve kabulü yapmak üzere{" "}
           {gorevlendirilenler.length > 0
             ? (
               gorevlendirilenler.map((g, idx) => (
@@ -245,7 +245,7 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
               ))
             )
             : <strong>İlgili personeller</strong>}{" "}
-          Muayene ve Kabul Komisyonunda görevlendirilecek olup,
+          Muayene ve Kabul Komisyonunda görevlendirilmiş olup,
         </div>
 
         <div
@@ -257,57 +257,53 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
             lineHeight: 1.6,
           }}
         >
-          Gereğini olurlarınıza arz ederim.
+          {data.olurYazisi !== false
+            ? "Gereğini olurlarınıza arz ederim."
+            : "Gereğini rica ederim."}
         </div>
 
-        {/* Hazırlayan (Sağ) */}
-        <div
-          style={{
-            textAlign: "right",
-            marginBottom: "30px",
-            lineHeight: 1.3,
-            paddingRight: "20px",
-          }}
-        >
-          <EditableField
-            name="hazirlayanPersonelAdi"
-            value={data.hazirlayanPersonelAdi || ""}
+        {/* Hazırlayan (Sağ) - Eğer OLUR varsa hazırlayan imza atar */}
+        {data.olurYazisi !== false && (
+          <PersonelCard
+            adSoyad={data.hazirlayanPersonelAdi}
+            unvan={data.hazirlayanPersonelUnvan}
+            align="right"
+            marginTop={20}
+            marginBottom={30}
+            nameField="hazirlayanPersonelAdi"
+            unvanField="hazirlayanPersonelUnvan"
           />
-          <br />
-          <EditableField
-            name="hazirlayanPersonelUnvan"
-            value={data.hazirlayanPersonelUnvan || ""}
+        )}
+
+        {/* Doğrudan Görevlendirme İmzası (OLUR yoksa yetkili tek başına imzalar) */}
+        {data.olurYazisi === false && (
+          <PersonelCard
+            adSoyad={data.onaylayanPersonelAdi}
+            unvan={data.onaylayanPersonelUnvan}
+            align="right"
+            marginTop={20}
+            marginBottom={30}
+            nameField="onaylayanPersonelAdi"
+            unvanField="onaylayanPersonelUnvan"
           />
-        </div>
+        )}
 
         {/* OLUR Onay Bloğu (Orta) */}
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "25px",
-            marginBottom: "30px",
-            breakInside: "avoid",
-            pageBreakInside: "avoid",
-          }}
-        >
-          <strong>OLUR</strong>
-          <br />
-          <DateEditableField
-            name="dosyaTarihi"
-            value={data.dosyaTarihi || data.tarih || ""}
-          />
-          <br />
-          <br />
-          <EditableField
-            name="onaylayanPersonelAdi"
-            value={data.onaylayanPersonelAdi || ""}
-          />
-          <br />
-          <EditableField
-            name="onaylayanPersonelUnvan"
-            value={data.onaylayanPersonelUnvan || ""}
-          />
-        </div>
+        {data.olurYazisi !== false
+          ? (
+            <ApprovalSignature
+              title={(data as any).olurBaslik || "OLUR"}
+              date={data.dosyaTarihi || data.tarih || ""}
+              adSoyad={data.onaylayanPersonelAdi}
+              unvan={data.onaylayanPersonelUnvan}
+              showSpace={true}
+              marginTop={25}
+              nameField="onaylayanPersonelAdi"
+              unvanField="onaylayanPersonelUnvan"
+              dateField="dosyaTarihi"
+            />
+          )
+          : <EditableOlurPlaceholder />}
 
         {/* DAĞITIM (Sol Alt) */}
         <div

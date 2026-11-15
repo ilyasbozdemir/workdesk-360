@@ -11,28 +11,10 @@ export async function resolveAntetAndBirim(
   queryExecutor: (sql: string, params: any[]) => Promise<any[]>
 ): Promise<void> {
   let kurumRow: Record<string, any> | null = null
-  if (
-    payloadData?.resolvedContext?.antetSatirlari &&
-    Array.isArray(payloadData.resolvedContext.antetSatirlari) &&
-    payloadData.resolvedContext.antetSatirlari.length > 0
-  ) {
-    baseData.antetSatirlari = payloadData.resolvedContext.antetSatirlari
-    if (payloadData.kurum) kurumRow = payloadData.kurum
-  } else if (
-    resolved?.antetSatirlari &&
-    Array.isArray(resolved.antetSatirlari) &&
-    resolved.antetSatirlari.length > 0
-  ) {
-    baseData.antetSatirlari = resolved.antetSatirlari
-    if (payloadData?.kurum) kurumRow = payloadData.kurum
-  } else if (payloadData?.kurum) {
-    const kData = payloadData.kurum
-    kurumRow = kData
-    baseData.antetSatirlari = InstitutionalHeaderProvider.parseKurumBaseAntetLines(kData)
-    if (!baseData.kurumAdi && kData.kurum_adi) baseData.kurumAdi = kData.kurum_adi
-    if (!baseData.mudurluk && (kData.harcama_birim_adi || kData.mudurluk)) {
-      baseData.mudurluk = kData.harcama_birim_adi || kData.mudurluk
-    }
+
+  // 1. Kurum verisini yükle veya tamamla
+  if (payloadData?.kurum) {
+    kurumRow = payloadData.kurum
   } else {
     try {
       let kurumRows = await queryExecutor(
@@ -47,17 +29,52 @@ export async function resolveAntetAndBirim(
         }
       }
       if (kurumRows && kurumRows[0]) {
-        const kRow = kurumRows[0]
-        kurumRow = kRow
-        baseData.antetSatirlari = InstitutionalHeaderProvider.parseKurumBaseAntetLines(kRow)
-        if (!baseData.kurumAdi && kRow.kurum_adi) baseData.kurumAdi = kRow.kurum_adi
-        if (!baseData.mudurluk && (kRow.harcama_birim_adi || kRow.mudurluk)) {
-          baseData.mudurluk = kRow.harcama_birim_adi || kRow.mudurluk
-        }
+        kurumRow = kurumRows[0]
       }
     } catch (e) {
-      console.error('Failed to load kurum_anteti fallback in previewDataLoader:', e)
+      console.warn('Failed to load kurum in resolveAntetAndBirim:', e)
     }
+  }
+
+  // 2. kurumAdi, kurumUst ve mudurluk alanlarını güvenli biçimde ata
+  if (!baseData.kurumAdi) {
+    baseData.kurumAdi =
+      kurumRow?.kurum_adi ||
+      kurumRow?.ad ||
+      payloadData?.resolvedContext?.kurumAdi ||
+      resolved?.kurumAdi ||
+      ''
+  }
+  if (!baseData.kurumUst) {
+    baseData.kurumUst =
+      kurumRow?.ust_kurum_adi ||
+      kurumRow?.ust_idare_adi ||
+      payloadData?.resolvedContext?.kurumUst ||
+      resolved?.kurumUst ||
+      ''
+  }
+  if (!baseData.mudurluk && (kurumRow?.harcama_birim_adi || kurumRow?.mudurluk)) {
+    baseData.mudurluk = kurumRow.harcama_birim_adi || kurumRow.mudurluk
+  }
+
+  // 3. Antet satırlarını belirle
+  if (
+    payloadData?.resolvedContext?.antetSatirlari &&
+    Array.isArray(payloadData.resolvedContext.antetSatirlari) &&
+    payloadData.resolvedContext.antetSatirlari.length > 0
+  ) {
+    baseData.antetSatirlari = payloadData.resolvedContext.antetSatirlari
+  } else if (
+    resolved?.antetSatirlari &&
+    Array.isArray(resolved.antetSatirlari) &&
+    resolved.antetSatirlari.length > 0
+  ) {
+    baseData.antetSatirlari = resolved.antetSatirlari
+  } else if (kurumRow) {
+    baseData.antetSatirlari = InstitutionalHeaderProvider.parseKurumBaseAntetLines(
+      kurumRow,
+      baseData.kurumAdi
+    )
   }
 
   const dosyaObj = payloadData.dosya || dosyaRecord || {}
@@ -203,7 +220,7 @@ export async function resolveAntetAndBirim(
         ? baseData.antetSatirlari
         : undefined,
     dosyaAntetEkSatir: dosyaObj.antet_ek_satir,
-    fallbackInstitutionName: baseData.kurumAdi || ''
+    fallbackInstitutionName: baseData.kurumAdi || kurumRow?.kurum_adi || ''
   })
 
   if (birimResolution.birimId !== undefined) {
