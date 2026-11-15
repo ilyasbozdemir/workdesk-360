@@ -1,9 +1,11 @@
 import React from 'react'
-import { Edit, ExternalLink, FileSpreadsheet, X } from 'lucide-react'
+import { Edit, ExternalLink, FileSpreadsheet, Layers, X } from 'lucide-react'
 import { exportDogrudanTeminMasterExcel } from '../../../../services/excelExportService'
 import { useTabStore } from '../../../../store/tabStore'
+import { useWorkspaceStore } from '../../../../store/workspaceStore'
 import { useNavigate } from '@tanstack/react-router'
 import { statusLabelMap, turLabelMap } from './types'
+import { APP_ROUTES } from '../../../../constants/routeConstants'
 
 interface InspectorHeaderProps {
   dosya: any
@@ -33,6 +35,15 @@ export const InspectorHeader: React.FC<InspectorHeaderProps> = ({
     const route = `/dosyalar/yeni?id=${dosya.id}`
     addTab(route)
     navigate({ to: route })
+  }
+
+  const handleGoToTakip = () => {
+    if (onClose) onClose()
+    if (dosya?.id) {
+      useWorkspaceStore.getState().setActiveDosyaId(dosya.id)
+    }
+    addTab(APP_ROUTES.DOSYA_DETAY)
+    navigate({ to: APP_ROUTES.DOSYA_DETAY })
   }
 
   return (
@@ -73,6 +84,15 @@ export const InspectorHeader: React.FC<InspectorHeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={handleGoToTakip}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 transition-all text-xs font-bold cursor-pointer shadow-xs active:scale-95"
+          title="Süreç Takip Paneline Git"
+        >
+          <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          Süreç Takip Paneli
+        </button>
+
         {mode === 'modal' && (
           <button
             onClick={handleOpenAsTab}

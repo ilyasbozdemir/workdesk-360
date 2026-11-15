@@ -1,6 +1,7 @@
 import React from "react";
 import { ExternalLink, Layers } from "lucide-react";
 import { useTabStore } from "../../../../store/tabStore";
+import { useWorkspaceStore } from "../../../../store/workspaceStore";
 import { useNavigate } from "@tanstack/react-router";
 import { useGlobalDocumentPreviewStore } from "../../../../store/globalDocumentPreviewStore";
 import { APP_ROUTES } from "../../../../constants/routeConstants";
@@ -23,6 +24,9 @@ export const InspectorFooter: React.FC<InspectorFooterProps> = ({
   const handleGoToTakip = () => {
     if (mode === "modal" && onClose) {
       onClose();
+    }
+    if (dosya?.id) {
+      useWorkspaceStore.getState().setActiveDosyaId(dosya.id);
     }
     addTab(APP_ROUTES.DOSYA_DETAY);
     navigate({ to: APP_ROUTES.DOSYA_DETAY });
@@ -81,7 +85,7 @@ export const InspectorFooter: React.FC<InspectorFooterProps> = ({
         onClick={handleClose}
         className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 dark:bg-slate-200 dark:hover:bg-white text-white dark:text-slate-900 text-xs font-bold transition-all cursor-pointer shadow-xs"
       >
-        {mode === "screen" ? "Sekmeyi Kapat" : "Kapat"}
+        Kapat
       </button>
     </div>
   );

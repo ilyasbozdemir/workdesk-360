@@ -97,8 +97,8 @@ export const DosyaInspectorView: React.FC<DosyaInspectorViewProps> = ({
         {activeTab === 'rawjson' && <InspectorRawJsonTab payload={fullPayload} />}
       </div>
 
-      {/* FOOTER */}
-      <InspectorFooter dosya={d} mode={mode} onClose={onClose} />
+      {/* FOOTER - Yalnızca modal modunda gösterilir, tam ekran sekmede alttaki çirkin bar gizlenir */}
+      {mode === 'modal' && <InspectorFooter dosya={d} mode={mode} onClose={onClose} />}
     </div>
   )
 }
