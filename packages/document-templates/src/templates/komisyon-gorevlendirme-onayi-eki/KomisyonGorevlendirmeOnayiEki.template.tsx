@@ -92,13 +92,11 @@ export function KomisyonGorevlendirmeOnayiEki({
             placeholder="Kurumumuz"
           />{" "}
           birimlerinde kullanılmak üzere ekteki lüzum müzakeresinde sunulan{" "}
-          <strong>
-            <EditableField
-              name="alimTuru"
-              value={formatAlimTuru(data.alimTuru, data.tur)}
-              placeholder="mal alımı / yapım işi / hizmet alımı"
-            />
-          </strong>{" "}
+          <EditableField
+            name="alimTuru"
+            value={formatAlimTuru(data.alimTuru, data.tur)}
+            placeholder="mal alımı / yapım işi / hizmet alımı"
+          />{" "}
           için 4734 Sayılı Kamu İhale Kanununa göre görevlendirilen kişilerin
           listesidir.
         </div>
