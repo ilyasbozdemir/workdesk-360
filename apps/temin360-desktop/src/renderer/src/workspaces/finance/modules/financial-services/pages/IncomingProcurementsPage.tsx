@@ -78,7 +78,8 @@ export const IncomingProcurementsPage: React.FC = () => {
         const mapped: RealProcurementItem[] = res.map((r: any) => {
           const brut = Number(r.brutTutar) || 0
           const dv = Number(r.damgaVergisi) > 0 ? Number(r.damgaVergisi) : brut * 0.00948
-          const kp = Number(r.kararPulu) > 0 ? Number(r.kararPulu) : brut * 0.00569
+          // 4734 m. 22 doğrudan teminde karar pulu kesilmez; yalnızca özel karar pulu tanımlanmışsa uygulanır
+          const kp = Number(r.kararPulu) > 0 ? Number(r.kararPulu) : 0
           const kt = Number(r.kdvTevkifati) || 0
           const net = Number(r.netOdenecek) > 0 ? Number(r.netOdenecek) : brut - dv - kp - kt
 
@@ -127,7 +128,7 @@ export const IncomingProcurementsPage: React.FC = () => {
     setFaturaTarihi(new Date().toISOString().split('T')[0])
     setFaturaTutar(brut)
     setDamgaVergisi(item.damgaVergisi > 0 ? item.damgaVergisi : brut * 0.00948)
-    setKararPulu(item.kararPulu > 0 ? item.kararPulu : brut * 0.00569)
+    setKararPulu(item.kararPulu > 0 ? item.kararPulu : 0)
     setKdvTevkifat(item.kdvTevkifati || 0)
     setMaliYorum(
       '5018 sayılı Kanun m. 31/33 uyarınca harcama yetkilisi talimatı, muayene kabul belgesi ve fatura tetkik edilmiş olup ödenek tertibinden ödenmesi uygundur.'
