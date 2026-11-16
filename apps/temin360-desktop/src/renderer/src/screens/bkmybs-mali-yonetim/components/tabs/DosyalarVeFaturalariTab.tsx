@@ -1019,6 +1019,20 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
             />
           </div>
 
+          {selectedDosyaId && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold shrink-0">
+              <span>Aktif Dosya: #{selectedDosyaId}</span>
+              <button
+                type="button"
+                onClick={() => useWorkspaceStore.getState().setActiveDosyaId(null)}
+                className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded text-blue-600 dark:text-blue-400 cursor-pointer"
+                title="Aktif dosya filtresini kaldır ve tüm doğrudan temin dosyalarını listele"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
+
           <select
             value={alimFilter}
             onChange={(e) => setAlimFilter(e.target.value)}
