@@ -15,7 +15,7 @@ interface ProcurementWorkspaceProps {
 
 export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expiredPaths }) => {
   const { activeDosyaId, fileName } = useWorkspaceStore()
-  const { alwaysShowQuickMenu } = useSettingsStore()
+  const { alwaysShowQuickMenu, isDisclaimerAccepted } = useSettingsStore()
   const { tabs, activeTabPath, addTab } = useTabStore()
   const { needsSetup, isModalOpen, openSetupModal, closeSetupModal, recheckSetup } = useWorkspaceSetupCheck()
 
@@ -174,7 +174,7 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
       </div>
 
       <KurulumModal
-        isOpen={isModalOpen}
+        isOpen={isModalOpen && isDisclaimerAccepted}
         onClose={closeSetupModal}
         onSuccess={() => {
           recheckSetup()

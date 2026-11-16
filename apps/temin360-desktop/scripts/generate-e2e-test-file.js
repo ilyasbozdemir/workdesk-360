@@ -99,12 +99,21 @@ function generateE2ETestFile(
   `)
   insertBirim.run('Bilgi İşlem Daire Başkanlığı', 'BİDB')
 
+  const insertKurum = db.prepare(`
+    INSERT OR REPLACE INTO TANIM_Kurum (
+      id, kurum_adi, ust_kurum_adi, il, ilce, harcama_birim_adi
+    ) VALUES (1, ?, 'T.C.', 'Ankara', 'Çankaya', 'Bilgi İşlem Daire Başkanlığı')
+  `)
+  insertKurum.run(institutionName)
+
   // Seed admin credentials so lock screen has configured credentials
   const insertAuth = db.prepare(`
     INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)
   `)
   insertAuth.run('adminUsername', 'admin')
   insertAuth.run('adminPassword', '123456')
+  insertAuth.run('isDisclaimerAccepted', 'true')
+  insertAuth.run('disclaimerHistory', JSON.stringify([new Date().toISOString()]))
 
   // Checkpoint database
   db.pragma('wal_checkpoint(TRUNCATE)')

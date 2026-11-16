@@ -307,6 +307,13 @@ test.describe('E2E: Dosya Bazlı Belge Yönetimi, İzolasyon ve PDF Akışı', (
       await expect(disclaimerModalButton).not.toBeVisible({ timeout: 5000 })
     }
 
+    // Kurulum modalı (ilk sihirbaz) araya girerse kapat
+    const setupCloseBtn = page.locator('button[title="Kapat (Daha sonra kur)"]').first()
+    if (await setupCloseBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await setupCloseBtn.click()
+      await expect(setupCloseBtn).not.toBeVisible({ timeout: 5000 })
+    }
+
     // 5. Word benzeri doğrudan tıklama, metin silme ve yeni paragraflar ekleme
     await editableField.click()
     await page.keyboard.press('Control+A')
