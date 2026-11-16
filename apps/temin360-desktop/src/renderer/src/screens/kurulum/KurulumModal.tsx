@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Building2,
   FolderTree,
@@ -18,6 +19,7 @@ import { PersonelAdimi } from './components/PersonelAdimi'
 import { RotaAdimi } from './components/RotaAdimi'
 import { OzetAdimi } from './components/OzetAdimi'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useModalOverlay } from '../../services/overlay/useModalOverlay'
 import type { RouteAssignee } from '@temin360/contracts'
 import {
   saveRotaConfigForTemplate,
@@ -40,6 +42,12 @@ export interface KurulumModalProps {
 
 export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps): React.JSX.Element | null {
   const { setInstitutionName, loadSettings } = useSettingsStore()
+
+  useModalOverlay({
+    id: 'kurulum-modal',
+    isOpen,
+    onClose
+  })
 
   const [formState, setFormState] = useState<KurulumFormState>({
     step: 1,
@@ -250,12 +258,14 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
     return true
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="kurulum-modal-title"
-      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-hidden animate-fadeIn"
+      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-hidden animate-fadeIn pointer-events-auto"
     >
       <div className="w-full max-w-5xl max-h-[92vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
         {/* Header Bar */}
@@ -423,6 +433,7 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

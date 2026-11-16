@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Sparkles, X, Zap, MessageSquare, ChevronRight } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import type {
@@ -15,7 +16,7 @@ import {
 } from './ai-form-fill/aiFormFill.utils'
 import { AIFormFillQuickView } from './ai-form-fill/AIFormFillQuickView'
 import { AIFormFillChatView } from './ai-form-fill/AIFormFillChatView'
-import { forceUnlockInteractivity } from '../layout/hooks/useGlobalInteractivityGuard'
+import { useModalOverlay } from '../../services/overlay/useModalOverlay'
 
 export type { AIFormContext, AIFilledValues }
 
@@ -35,6 +36,12 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
   const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  useModalOverlay({
+    id: 'ai-form-fill-modal',
+    isOpen,
+    onClose
+  })
+
   useEffect(() => {
     if (!isOpen) {
       setMode('select')
@@ -43,8 +50,6 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
       setChatMessages([])
       setChatPendingApply(null)
       setChatInput('')
-      forceUnlockInteractivity()
-      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
     }
   }, [isOpen])
 
@@ -151,8 +156,9 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
   }
 
   if (!isOpen) return null
+  if (typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center">
       {/* Backdrop */}
       <div
@@ -291,6 +297,7 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

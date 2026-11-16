@@ -1,7 +1,8 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AlertTriangle, CheckSquare, Plus, Search, Square, UserPlus, X } from 'lucide-react'
 import { Firma, FirmaEkleModaliProps, MAX_FIRMS } from './types'
-import { forceUnlockInteractivity } from '../../../../../../components/layout/hooks/useGlobalInteractivityGuard'
+import { useModalOverlay } from '../../../../../../services/overlay/useModalOverlay'
 
 export function FirmaEkleModali({
   availableFirms,
@@ -9,18 +10,17 @@ export function FirmaEkleModali({
   onConfirm,
   onOpenNewFirm,
   onClose
-}: FirmaEkleModaliProps): React.JSX.Element {
+}: FirmaEkleModaliProps): React.JSX.Element | null {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set())
 
   const remaining = MAX_FIRMS - addedCount
 
-  useEffect(() => {
-    return () => {
-      forceUnlockInteractivity()
-      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
-    }
-  }, [])
+  useModalOverlay({
+    id: 'firma-ekle-modali',
+    isOpen: true,
+    onClose
+  })
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -66,7 +66,9 @@ export function FirmaEkleModali({
     }
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[80vh] border border-slate-200 dark:border-slate-700 animate-in zoom-in-95 duration-150">
         {/* Header */}
@@ -222,6 +224,7 @@ export function FirmaEkleModali({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Sparkles, X, Loader2, Check, RefreshCw } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { sanitizeHtml } from '../../utils/sanitize'
 import { AIPrivacyModal } from './AIPrivacyModal'
-import { forceUnlockInteractivity } from '../layout/hooks/useGlobalInteractivityGuard'
+import { useModalOverlay } from '../../services/overlay/useModalOverlay'
 
 interface AITextGeneratorModalProps {
   isOpen: boolean
@@ -70,6 +71,12 @@ export function AITextGeneratorModal({
   const [error, setError] = useState('')
   const [showPrivacy, setShowPrivacy] = useState(false)
 
+  useModalOverlay({
+    id: 'ai-text-generator-modal',
+    isOpen,
+    onClose
+  })
+
   // Set default prompt when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -92,15 +99,8 @@ export function AITextGeneratorModal({
       }
       setResult('')
       setError('')
-    } else {
-      forceUnlockInteractivity()
-      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
     }
-    return () => {
-      forceUnlockInteractivity()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
+  }, [isOpen, initialPrompt, initialSubject, fieldName])
 
   const handleGenerate = async (): Promise<void> => {
     if (!prompt.trim()) {
@@ -227,8 +227,10 @@ export function AITextGeneratorModal({
     )
   }
 
-  return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center">
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
+    <div className="fixed inset-0 z-200 flex items-center justify-center pointer-events-auto">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/50 dark:bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200"
@@ -563,6 +565,7 @@ export function AITextGeneratorModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

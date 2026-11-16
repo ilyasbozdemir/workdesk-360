@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react'
-import { forceUnlockInteractivity } from '../../../../components/layout/hooks/useGlobalInteractivityGuard'
+import React from 'react'
+import { createPortal } from 'react-dom'
+import { useModalOverlay } from '../../../../services/overlay/useModalOverlay'
 
 export interface DosyaManageMaliyetModalProps {
   isOpen: boolean
@@ -14,16 +15,16 @@ export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
   formData,
   setFormData
 }) => {
-  useEffect(() => {
-    return () => {
-      forceUnlockInteractivity()
-      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
-    }
-  }, [isOpen])
+  useModalOverlay({
+    id: 'dosya-manage-maliyet-modal',
+    isOpen,
+    onClose
+  })
 
   if (!isOpen) return null
+  if (typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <>
       <div className="fixed inset-0 bg-black/25 dark:bg-black/50 z-[9998]" onClick={onClose} />
       <div className="fixed right-4 top-[52px] w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] p-4 animate-in slide-in-from-top-2 duration-200">
@@ -111,6 +112,7 @@ export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { AlertTriangle, UserPlus, X } from 'lucide-react'
-import { forceUnlockInteractivity } from '../../../../../../components/layout/hooks/useGlobalInteractivityGuard'
+import { useModalOverlay } from '../../../../../../services/overlay/useModalOverlay'
 
 import { YeniFirmaModaliProps } from './types'
 
-export function YeniFirmaModali({ onClose, onSave }: YeniFirmaModaliProps): React.JSX.Element {
+export function YeniFirmaModali({ onClose, onSave }: YeniFirmaModaliProps): React.JSX.Element | null {
   const [unvan, setUnvan] = useState('')
   const [vergiNo, setVergiNo] = useState('')
   const [telefon, setTelefon] = useState('')
@@ -13,12 +14,11 @@ export function YeniFirmaModali({ onClose, onSave }: YeniFirmaModaliProps): Reac
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    return () => {
-      forceUnlockInteractivity()
-      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
-    }
-  }, [])
+  useModalOverlay({
+    id: 'yeni-firma-modali',
+    isOpen: true,
+    onClose
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,7 +44,9 @@ export function YeniFirmaModali({ onClose, onSave }: YeniFirmaModaliProps): Reac
     }
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700 animate-in zoom-in-95 duration-150 overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850">
@@ -165,6 +167,7 @@ export function YeniFirmaModali({ onClose, onSave }: YeniFirmaModaliProps): Reac
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

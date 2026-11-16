@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useId, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { ModalErrorBoundary } from './ModalErrorBoundary'
-import { forceUnlockInteractivity } from '../layout/hooks/useGlobalInteractivityGuard'
+import { useModalOverlay } from '../../services/overlay/useModalOverlay'
 
-interface ModalProps {
+export interface ModalProps {
   isOpen: boolean
   onClose: () => void
   title: string
@@ -24,46 +25,25 @@ export function Modal({
   className,
   contentClassName,
   footer
-}: ModalProps) {
+}: ModalProps): React.JSX.Element | null {
   const modalRef = useRef<HTMLDivElement>(null)
+  const generatedId = useId()
+  const modalId = `modal-${generatedId}`
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-
-    const cleanupLocks = () => {
-      forceUnlockInteractivity()
-      document.body.style.overflow = 'unset'
-      document.body.removeAttribute('data-scroll-locked')
-      document.body.style.setProperty('pointer-events', 'auto', 'important')
-      document.documentElement.style.setProperty('pointer-events', 'auto', 'important')
-      document
-        .querySelectorAll('style[data-radix-scroll-lock], style[data-radix-body-lock]')
-        .forEach((el) => {
-          el.remove()
-        })
-      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
-    }
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
-    } else {
-      cleanupLocks()
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-      cleanupLocks()
-    }
-  }, [isOpen, onClose])
+  useModalOverlay({
+    id: modalId,
+    isOpen,
+    onClose
+  })
 
   if (!isOpen) return null
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`${modalId}-title`}
+      className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-auto"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
       {/* Backdrop */}
@@ -76,7 +56,7 @@ export function Modal({
       <div
         ref={modalRef}
         className={cn(
-          'relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col',
+          'relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-10',
           'animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300',
           className
         )}
@@ -84,12 +64,15 @@ export function Modal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
           <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{title}</h2>
+            <h2 id={`${modalId}-title`} className="text-lg font-bold text-slate-800 dark:text-slate-100">
+              {title}
+            </h2>
             {description && (
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{description}</p>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
@@ -118,4 +101,8 @@ export function Modal({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') return null
+
+  return createPortal(modalContent, document.body)
 }

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { useSettingsStore } from './settingsStore'
 import { APP_ROUTES } from '@renderer/constants/routeConstants'
+import { overlayManager } from '../services/overlay/overlayManager'
 
 export interface TabItem {
   path: string
@@ -349,6 +350,8 @@ export const useTabStore = create<TabState>((set, get) => ({
   closeTab: (path) => {
     if (path === APP_ROUTES.DASHBOARD) return null
 
+    overlayManager.closeOverlaysForTab(path)
+
     const { tabs, activeTabPath } = get()
     const newTabs = tabs.filter((t) => t.path !== path)
 
@@ -398,6 +401,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   },
 
   clearTabs: () => {
+    overlayManager.cleanRogueLocks()
     set({
       tabs: [
         {

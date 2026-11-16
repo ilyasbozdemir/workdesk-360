@@ -1,5 +1,7 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { Sliders } from 'lucide-react'
+import { useModalOverlay } from '../../../services/overlay/useModalOverlay'
 
 interface MaliyetAyarlariPopoverProps {
   selectedDosya: any | null
@@ -12,9 +14,16 @@ export const MaliyetAyarlariPopover: React.FC<MaliyetAyarlariPopoverProps> = ({
   setSelectedDosya,
   onSave
 }) => {
-  if (!selectedDosya) return null
+  useModalOverlay({
+    id: 'maliyet-ayarlari-popover',
+    isOpen: Boolean(selectedDosya),
+    onClose: () => setSelectedDosya(null)
+  })
 
-  return (
+  if (!selectedDosya) return null
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <>
       <div
         className="fixed inset-0 bg-black/25 dark:bg-black/50 z-[9998]"
@@ -161,6 +170,7 @@ export const MaliyetAyarlariPopover: React.FC<MaliyetAyarlariPopoverProps> = ({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

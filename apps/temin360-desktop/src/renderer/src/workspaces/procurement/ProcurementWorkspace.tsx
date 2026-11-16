@@ -159,6 +159,7 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
               <div
                 key={tab.path}
                 style={{ display: isActive ? 'block' : 'none' }}
+                aria-hidden={!isActive ? 'true' : undefined}
                 className={
                   cleanPath === APP_ROUTES.BELGE_ONIZLEME
                     ? 'h-full w-full absolute inset-0 p-0 overflow-hidden'

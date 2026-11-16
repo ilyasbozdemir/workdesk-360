@@ -23,7 +23,7 @@ import {
   getDosyaCounts,
   CloneDosyaCustomOptions
 } from '../../../utils/cloneDosya'
-import { forceUnlockInteractivity } from '../../../components/layout/hooks/useGlobalInteractivityGuard'
+import { useModalOverlay } from '../../../services/overlay/useModalOverlay'
 
 interface EskiDosyaKopyalaModalProps {
   isOpen: boolean
@@ -44,12 +44,11 @@ export function EskiDosyaKopyalaModal({
   const [isLoadingCounts, setIsLoadingCounts] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    return () => {
-      forceUnlockInteractivity()
-      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
-    }
-  }, [isOpen])
+  useModalOverlay({
+    id: 'eski-dosya-kopyala-modal',
+    isOpen,
+    onClose
+  })
 
   // Alt veri sayaçları
   const [counts, setCounts] = useState<{
