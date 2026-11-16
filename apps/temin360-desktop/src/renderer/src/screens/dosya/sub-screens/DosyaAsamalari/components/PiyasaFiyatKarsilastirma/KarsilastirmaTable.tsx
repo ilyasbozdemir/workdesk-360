@@ -1,6 +1,6 @@
-import React from 'react'
-import { BarChart3, Building2, FileSpreadsheet } from 'lucide-react'
-import { ComparisonRow, KarsilastirmaTableProps } from './types'
+import React from "react";
+import { BarChart3, Building2, FileSpreadsheet } from "lucide-react";
+import { ComparisonRow, KarsilastirmaTableProps } from "./types";
 
 export function KarsilastirmaTable({
   comparisonData,
@@ -9,7 +9,7 @@ export function KarsilastirmaTable({
   netSavings,
   overallSavingsRate,
   formatCurrency,
-  onExportComparison
+  onExportComparison,
 }: KarsilastirmaTableProps): React.JSX.Element {
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden">
@@ -24,7 +24,8 @@ export function KarsilastirmaTable({
               Kademeli Fiyat Analiz Matrisi (Öncesi vs Sonrası)
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Kalem bazında yaklaşık maliyet tahmini ile kesinleşen tekliflerin karşılaştırması
+              Kalem bazında yaklaşık maliyet tahmini ile kesinleşen tekliflerin
+              karşılaştırması
             </p>
           </div>
         </div>
@@ -71,7 +72,9 @@ export function KarsilastirmaTable({
                 key={`comp_row_${row.id ?? idx}_${idx}`}
                 className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
               >
-                <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">{idx + 1}</td>
+                <td className="py-2.5 px-3.5 text-center text-slate-400 font-mono">
+                  {idx + 1}
+                </td>
                 <td className="py-2.5 px-3.5 font-bold text-slate-800 dark:text-slate-200">
                   {row.kalemAdi}
                 </td>
@@ -93,28 +96,31 @@ export function KarsilastirmaTable({
                 <td
                   className={`py-2.5 px-3.5 text-right font-mono font-bold ${
                     row.diffTotal >= 0
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-rose-600 dark:text-rose-400'
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-rose-600 dark:text-rose-400"
                   }`}
                 >
-                  {row.diffTotal >= 0 ? '-' : '+'}
+                  {row.diffTotal >= 0 ? "-" : "+"}
                   {formatCurrency(Math.abs(row.diffTotal))}
                 </td>
                 <td className="py-2.5 px-3.5 text-center font-mono">
                   <span
                     className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       row.percentage >= 0
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                        : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                        : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
                     }`}
                   >
-                    {row.percentage >= 0 ? '-%' : '+%'}
+                    {row.percentage >= 0 ? "-%" : "+%"}
                     {Math.abs(row.percentage).toFixed(1)}
                   </span>
                 </td>
                 <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
                   <Building2 size={13} className="text-slate-400 shrink-0" />
-                  <span className="truncate max-w-[160px] font-medium" title={row.winnerFirmName}>
+                  <span
+                    className="truncate max-w-[160px] font-medium"
+                    title={row.winnerFirmName}
+                  >
                     {row.winnerFirmName}
                   </span>
                 </td>
@@ -123,7 +129,10 @@ export function KarsilastirmaTable({
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-slate-300 dark:border-slate-700 bg-slate-100/90 dark:bg-slate-950/90 font-black text-slate-900 dark:text-white">
-              <td colSpan={4} className="py-3 px-3.5 text-right uppercase tracking-wider">
+              <td
+                colSpan={4}
+                className="py-3 px-3.5 text-right uppercase tracking-wider"
+              >
                 TOPLAM TUTARLAR:
               </td>
               <td className="py-3 px-3.5 text-right font-mono text-blue-600 dark:text-blue-400">
@@ -136,11 +145,11 @@ export function KarsilastirmaTable({
               <td
                 className={`py-3 px-3.5 text-right font-mono ${
                   netSavings >= 0
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400"
                 }`}
               >
-                {netSavings >= 0 ? '-' : '+'}
+                {netSavings >= 0 ? "-" : "+"}
                 {formatCurrency(Math.abs(netSavings))}
               </td>
               <td className="py-3 px-3.5 text-center font-mono text-emerald-600 dark:text-emerald-400">
@@ -152,5 +161,5 @@ export function KarsilastirmaTable({
         </table>
       </div>
     </div>
-  )
+  );
 }
