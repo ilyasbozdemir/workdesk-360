@@ -15,6 +15,7 @@ import {
 } from './ai-form-fill/aiFormFill.utils'
 import { AIFormFillQuickView } from './ai-form-fill/AIFormFillQuickView'
 import { AIFormFillChatView } from './ai-form-fill/AIFormFillChatView'
+import { forceUnlockInteractivity } from '../layout/hooks/useGlobalInteractivityGuard'
 
 export type { AIFormContext, AIFilledValues }
 
@@ -42,6 +43,8 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
       setChatMessages([])
       setChatPendingApply(null)
       setChatInput('')
+      forceUnlockInteractivity()
+      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
     }
   }, [isOpen])
 

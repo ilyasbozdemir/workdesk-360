@@ -24,7 +24,7 @@ export interface FormFieldConfig {
   aliases?: string[];
 }
 
-const BUDGET_TERTIP_PRESETS = [
+export const BUDGET_TERTIP_PRESETS = [
   { code: "03.2.1.01", name: "Kırtasiye ve Büro Malzemesi Alımları" },
   { code: "03.2.1.02", name: "Büro Mefruşatı ve Donanım Alımları" },
   { code: "03.2.1.05", name: "Baskı ve Cilt Giderleri" },
@@ -38,7 +38,7 @@ const BUDGET_TERTIP_PRESETS = [
   { code: "03.7.2.01", name: "Bilgisayar ve Yazılım Alımları" },
 ];
 
-const TEMPLATE_PRIORITY_KEYS: Record<string, string[]> = {
+export const TEMPLATE_PRIORITY_KEYS: Record<string, string[]> = {
   harcama_talimati: ["butceTertibi", "odenekTutari", "isTutari", "mutemetAdi", "isAdi", "gerekce", "teminSekli"],
   "harcama-talimati": ["butceTertibi", "odenekTutari", "isTutari", "mutemetAdi", "isAdi", "gerekce", "teminSekli"],
   butce_sorgusu: ["butceTertibi", "odenekTutari", "isTutari", "yaklasikMaliyet", "isAdi"],
@@ -291,7 +291,6 @@ export function DocumentPreviewFormBuilder({
     return FORM_FIELD_CATALOG.filter((spec) => {
       // 1. Aktif şablona özel öncelikli alanlar daima dahil edilir
       if (priorityKeys.includes(spec.key)) return true;
-
       // 2. Eğer şablonun öncelikli alanları varsa ve arama/kategori filtresi yoksa,
       // alakasız şablonlara genel dosya alanlarının (sure, yaklasikMaliyet vb.) taşmasını engelle:
       const isAppointmentDoc =
@@ -469,7 +468,6 @@ export function DocumentPreviewFormBuilder({
           next[alias] = value;
         }
       }
-
       // Dağıtım listesi düzenleniyorsa hem metin hem de tipli dizi formatında güncelle
       if (spec.key === "dagitim" || spec.aliases?.includes("dagitimListesi")) {
         const lines = value.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -484,7 +482,6 @@ export function DocumentPreviewFormBuilder({
           return { adSoyad: l, unvan: "" };
         });
       }
-
       return next;
     });
   };

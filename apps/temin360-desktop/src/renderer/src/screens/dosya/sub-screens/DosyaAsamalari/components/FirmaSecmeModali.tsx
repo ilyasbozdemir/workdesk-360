@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Search, LayoutGrid, List, Table } from 'lucide-react'
+import { forceUnlockInteractivity } from '../../../../../components/layout/hooks/useGlobalInteractivityGuard'
 
 interface PoolFirm {
   id: number
@@ -37,6 +38,13 @@ export const FirmaSecmeModali: React.FC<FirmaSecmeModaliProps> = ({
 }) => {
   const [viewType, setViewType] = useState<'table' | 'grid' | 'list'>('table')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      forceUnlockInteractivity()
+      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 

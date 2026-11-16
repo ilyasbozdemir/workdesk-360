@@ -48,6 +48,37 @@ describe("PiyasaFiyatArastirmaGorevlendirmesi — Şablon Bileşen Render Testle
     expect(html).toContain("DAĞITIM:");
   });
 
+  it("1b. Olur yazısı formatında teklif eden hazırlayan personeli ve OLUR onay bloğunu çizer", () => {
+    const mockData = {
+      evrakSayisi: "E-10234521-934.01-0005",
+      dosyaTarihi: "15.11.2026",
+      kurumumuz: "Kadıköy Belediyesi Destek Hizmetleri Müdürlüğü",
+      isinAdi: "Temizlik Malzemesi Temini",
+      dosyaKonusu: "Piyasa Fiyat Araştırma Görevlendirmesi",
+      hazirlayanPersonelAdi: "Kemal Sunal",
+      hazirlayanPersonelUnvan: "Satınalma Şefi",
+      onaylayanPersonelAdi: "Halit Akçatepe",
+      onaylayanPersonelUnvan: "Destek Hizmetleri Müdürü",
+      gorevlendirilenler: [
+        { adSoyad: "Münir Özkul", unvan: "Mühendis" },
+        { adSoyad: "Adile Naşit", unvan: "Tekniker" },
+      ],
+      olurYazisi: true,
+    };
+
+    const html = renderToStaticMarkup(<PiyasaFiyatArastirmaGorevlendirmesi data={mockData} />);
+
+    // Hazırlayan ve Onaylayan imzaları
+    expect(html).toContain("Kemal Sunal");
+    expect(html).toContain("Satınalma Şefi");
+    expect(html).toContain("Halit Akçatepe");
+    expect(html).toContain("Destek Hizmetleri Müdürü");
+
+    // OLUR onay başlığı ve kapanış
+    expect(html).toContain("OLUR");
+    expect(html).toContain("Gereğini olurlarınıza arz ederim.");
+  });
+
   it("2. Boş veri sağlandığında çökmeksizin varsayılan metinleri ve rica ederim ifadesini çizer", () => {
     const html = renderToStaticMarkup(<PiyasaFiyatArastirmaGorevlendirmesi data={{}} />);
     expect(html).toContain("Gereğini rica ederim.");

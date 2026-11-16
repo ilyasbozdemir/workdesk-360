@@ -234,7 +234,6 @@ describe('DocumentPreviewModalV3 — Form Builder & Navbar Düzenleme Modu Testl
     // setFormData çağrılmış olmalı
     expect(setFormData).toHaveBeenCalled()
   })
-
   it('7. Dağıtım listesi nesne dizisi ([{adSoyad, unvan}]) olduğunda [object Object] yerine temiz metin formatında textarea içine yazılır', () => {
     const mockFormData = {
       isAdi: 'Lisans Sözleşmesi',

@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { AlertTriangle, CheckSquare, Plus, Search, Square, UserPlus, X } from 'lucide-react'
 import { Firma, FirmaEkleModaliProps, MAX_FIRMS } from './types'
+import { forceUnlockInteractivity } from '../../../../../../components/layout/hooks/useGlobalInteractivityGuard'
 
 export function FirmaEkleModali({
   availableFirms,
@@ -13,6 +14,13 @@ export function FirmaEkleModali({
   const [selected, setSelected] = useState<Set<number>>(new Set())
 
   const remaining = MAX_FIRMS - addedCount
+
+  useEffect(() => {
+    return () => {
+      forceUnlockInteractivity()
+      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
+    }
+  }, [])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()

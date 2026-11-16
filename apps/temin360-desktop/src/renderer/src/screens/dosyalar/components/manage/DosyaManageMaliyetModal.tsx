@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect } from 'react'
+import { forceUnlockInteractivity } from '../../../../components/layout/hooks/useGlobalInteractivityGuard'
 
 export interface DosyaManageMaliyetModalProps {
   isOpen: boolean
@@ -13,6 +14,13 @@ export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
   formData,
   setFormData
 }) => {
+  useEffect(() => {
+    return () => {
+      forceUnlockInteractivity()
+      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   return (

@@ -12,9 +12,9 @@ describe("PiyasaFiyatArastirmaGorevlendirmesi — Rota ve Alias Tanımı", () =>
 
     const slotIds = route.slots.map((s) => s.id);
     expect(slotIds).toContain("komisyon");
+    expect(slotIds).toContain("hazirlayan");
     expect(slotIds).toContain("onaylayan");
     expect(slotIds).toContain("antetBirim");
-    expect(slotIds).not.toContain("hazirlayan");
   });
 
   it("2. Alias anahtarları (piyasa-arastirma-gorevlendirmesi, piyasa_arastirma_gorevlendirmesi) rotayı ve tanımı doğru çözer", () => {
@@ -47,22 +47,25 @@ describe("PiyasaFiyatArastirmaGorevlendirmesi — Rota ve Alias Tanımı", () =>
     expect(komisyonSlot?.targetFieldKeys).toContain("dagitimListesi");
   });
 
-  it("4. Onaylayan (person) ve Antet Birim (unit) slotları doğru yapılandırılmıştır, hazırlayan bulunmaz", () => {
+  it("4. Hazırlayan, Onaylayan ve Antet Birim slotları doğru yapılandırılmıştır", () => {
     const hazirlayan = piyasaFiyatGorevlendirmeRoute.slots.find(
       (s) => s.id === "hazirlayan"
     );
-    expect(hazirlayan).toBeUndefined();
-
     const onaylayan = piyasaFiyatGorevlendirmeRoute.slots.find(
       (s) => s.id === "onaylayan"
     );
+    const antetBirim = piyasaFiyatGorevlendirmeRoute.slots.find(
+      (s) => s.id === "antetBirim"
+    );
+
+    expect(hazirlayan?.kind).toBe("person");
+    expect(hazirlayan?.fieldKey).toBe("hazirlayanPersonelAdi");
+    expect(hazirlayan?.required).toBe(false);
+
     expect(onaylayan?.kind).toBe("person");
     expect(onaylayan?.fieldKey).toBe("onaylayanPersonelAdi");
     expect(onaylayan?.required).toBe(true);
 
-    const antetBirim = piyasaFiyatGorevlendirmeRoute.slots.find(
-      (s) => s.id === "antetBirim"
-    );
     expect(antetBirim?.kind).toBe("unit");
     expect(antetBirim?.fieldKey).toBe("kurumAdi");
   });

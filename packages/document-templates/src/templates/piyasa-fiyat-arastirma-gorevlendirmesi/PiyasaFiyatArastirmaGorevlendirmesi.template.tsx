@@ -1,7 +1,11 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
-import { PersonelCard } from "../../document/ApprovalSignature";
+import {
+  ApprovalSignature,
+  EditableOlurPlaceholder,
+  PersonelCard,
+} from "../../document/ApprovalSignature";
 import { MetadataBlock } from "../../document/MetadataBlock";
 import { PiyasaFiyatArastirmaGorevlendirmesiData } from "./PiyasaFiyatArastirmaGorevlendirmesi.schema";
 import { formatUnvan } from "../../utils/textHelpers";
@@ -65,7 +69,6 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
           dosyaKonusu={konuMetni}
           showBorder={false}
         />
-
         {/* HİTAP: tek muhatap ise adı, birden çoksa "DAĞITIM YERLERİNE" */}
         {hitapMetni && (
           <div
@@ -134,16 +137,46 @@ export const PiyasaFiyatArastirmaGorevlendirmesi: React.FC<Props> = ({
           {kapanisMetni}
         </div>
 
+        {/* Hazırlayan (Sağ) - Eğer OLUR varsa teklif eden hazirlayan personel imza atar */}
+        {data.olurYazisi === true && (
+          <PersonelCard
+            adSoyad={data.hazirlayanPersonelAdi}
+            unvan={data.hazirlayanPersonelUnvan}
+            align="right"
+            marginTop={20}
+            marginBottom={30}
+            nameField="hazirlayanPersonelAdi"
+            unvanField="hazirlayanPersonelUnvan"
+          />
+        )}
+
         {/* Görevlendirmeyi Yapan Yetkili / Harcama Yetkilisi İmzası (Sağ) */}
-        <PersonelCard
-          adSoyad={onaylayanAdi}
-          unvan={onaylayanUnvan}
-          align="right"
-          marginTop={20}
-          marginBottom={30}
-          nameField="onaylayanPersonelAdi"
-          unvanField="onaylayanPersonelUnvan"
-        />
+        {data.olurYazisi !== true && (
+          <PersonelCard
+            adSoyad={onaylayanAdi}
+            unvan={onaylayanUnvan}
+            align="right"
+            marginTop={20}
+            marginBottom={30}
+            nameField="onaylayanPersonelAdi"
+            unvanField="onaylayanPersonelUnvan"
+          />
+        )}
+
+        {/* OLUR Onay Bloğu (Orta) */}
+        {data.olurYazisi === true && (
+          <ApprovalSignature
+            title={(data as any).olurBaslik || "OLUR"}
+            date={data.dosyaTarihi || data.tarih || ""}
+            adSoyad={onaylayanAdi}
+            unvan={onaylayanUnvan}
+            showSpace={true}
+            marginTop={25}
+            nameField="onaylayanPersonelAdi"
+            unvanField="onaylayanPersonelUnvan"
+            dateField="dosyaTarihi"
+          />
+        )}
 
         {/* DAĞITIM (Sol Alt) */}
         {dagitimVar && (

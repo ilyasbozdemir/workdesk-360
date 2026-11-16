@@ -112,6 +112,14 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
             value={kanunMaddesiMetni}
           />
           {" maddesine göre alımı gerçekleştirilen "}
+          {data.kurumumuz || data.kurumAdi ? (
+            <>
+              <EditableField
+                name="kurumumuz"
+                value={String(data.kurumumuz || data.kurumAdi || "Kurumumuz")}
+              />{" "}
+            </>
+          ) : null}
           <EditableField
             name="isinAdi"
             value={isinAdiMetni}

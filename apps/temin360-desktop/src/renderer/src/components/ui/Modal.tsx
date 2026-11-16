@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { ModalErrorBoundary } from './ModalErrorBoundary'
+import { forceUnlockInteractivity } from '../layout/hooks/useGlobalInteractivityGuard'
 
 interface ModalProps {
   isOpen: boolean
@@ -32,6 +33,7 @@ export function Modal({
     }
 
     const cleanupLocks = () => {
+      forceUnlockInteractivity()
       document.body.style.overflow = 'unset'
       document.body.removeAttribute('data-scroll-locked')
       document.body.style.setProperty('pointer-events', 'auto', 'important')
@@ -41,6 +43,7 @@ export function Modal({
         .forEach((el) => {
           el.remove()
         })
+      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
     }
 
     if (isOpen) {

@@ -14,6 +14,8 @@ import {
   useHarcamaTalimati,
 } from "./HarcamaTalimati.hook";
 
+export { HARCAMA_BUDGET_PRESETS };
+
 function HarcamaTalimatiButceHelper({
   currentValue,
 }: {
@@ -143,6 +145,7 @@ export function HarcamaTalimati({
     }
     return String(val);
   };
+
 
   return (
     <DocumentLayout

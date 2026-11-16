@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { AlertTriangle, UserPlus, X } from 'lucide-react'
+import { forceUnlockInteractivity } from '../../../../../../components/layout/hooks/useGlobalInteractivityGuard'
 
 import { YeniFirmaModaliProps } from './types'
 
@@ -11,6 +12,13 @@ export function YeniFirmaModali({ onClose, onSave }: YeniFirmaModaliProps): Reac
   const [sehir, setSehir] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    return () => {
+      forceUnlockInteractivity()
+      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -29,6 +29,18 @@ export const piyasaFiyatGorevlendirmeRoute: TemplateRouteDefinition = {
         "Piyasa araştırması yapmak üzere görevlendirilen asıl ve yedek görevliler",
     },
     {
+      id: "hazirlayan",
+      label: "Teklif Eden / Hazırlayan Personel",
+      kind: "person",
+      defaultSource: "document",
+      required: false,
+      fieldKey: "hazirlayanPersonelAdi",
+      titleFieldKey: "hazirlayanPersonelUnvan",
+      sourceFieldKeys: ["hazirlayanPersonelAdi", "talepEdenPersonelAdi"],
+      sourceTitleFieldKeys: ["hazirlayanPersonelUnvan", "talepEdenPersonelUnvan"],
+      description: "Görevlendirme olurunu teklif eden / hazırlayan personel",
+    },
+    {
       id: "onaylayan",
       label: "Onay Makamı (Harcama Yetkilisi)",
       kind: "person",

@@ -3,6 +3,7 @@ import { Sparkles, X, Loader2, Check, RefreshCw } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { sanitizeHtml } from '../../utils/sanitize'
 import { AIPrivacyModal } from './AIPrivacyModal'
+import { forceUnlockInteractivity } from '../layout/hooks/useGlobalInteractivityGuard'
 
 interface AITextGeneratorModalProps {
   isOpen: boolean
@@ -91,6 +92,12 @@ export function AITextGeneratorModal({
       }
       setResult('')
       setError('')
+    } else {
+      forceUnlockInteractivity()
+      window.dispatchEvent(new CustomEvent('app:clear-overlays'))
+    }
+    return () => {
+      forceUnlockInteractivity()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])

@@ -875,6 +875,7 @@ export function DocumentPreviewSidebar({
               </p>
             </div>
           </div>
+
         </div>
       )}
     </div>
