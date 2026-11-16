@@ -25,6 +25,12 @@ import {
   saveRotaConfigForTemplate,
   GLOBAL_ROTA_KEY
 } from '../../services/rotaDefaultsService'
+import {
+  syncAndFetchKurulumTakip,
+  completeKurulumInDatabase,
+  type KurulumTakipItem
+} from './kurulumTakipService'
+import { TabloTakipPaneli } from './components/TabloTakipPaneli'
 
 const STEPS = [
   { id: 1, title: 'Kurum & Antet', icon: Building2, desc: 'Kurum adı ve resmî antet' },
@@ -63,6 +69,7 @@ export default function KurulumSihirbaziScreen(): React.JSX.Element {
 
   const [isSaving, setIsSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [takipItems, setTakipItems] = useState<KurulumTakipItem[]>([])
 
   // Sayfa açıldığında varsa mevcut kurum ve birim bilgilerini önceden çek
   useEffect(() => {
@@ -88,6 +95,9 @@ export default function KurulumSihirbaziScreen(): React.JSX.Element {
               }
             }))
           }
+
+          const syncRes = await syncAndFetchKurulumTakip()
+          setTakipItems(syncRes.items)
         }
       } catch (err) {
         console.warn('[KurulumSihirbazi] Mevcut veriler çekilemedi:', err)
@@ -222,6 +232,9 @@ export default function KurulumSihirbaziScreen(): React.JSX.Element {
         // Store güncellemesi
         if (kurum.kurumAdi && typeof setInstitutionName === 'function') setInstitutionName(kurum.kurumAdi)
         if (typeof loadSettings === 'function') await loadSettings()
+
+        // Veritabanı kurulum durumunu mühürle
+        await completeKurulumInDatabase()
       }
 
       setSuccessMessage('Kurulum başarıyla tamamlandı! Çalışma alanına yönlendiriliyorsunuz...')
@@ -323,7 +336,12 @@ export default function KurulumSihirbaziScreen(): React.JSX.Element {
               </p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm">
+            <div className="space-y-6">
+              {takipItems.length > 0 && (
+                <TabloTakipPaneli items={takipItems} compact={formState.step < 5} />
+              )}
+
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 shadow-sm">
               {formState.step === 1 && (
                 <KurumAdimi
                   data={formState.kurum}
@@ -389,6 +407,7 @@ export default function KurulumSihirbaziScreen(): React.JSX.Element {
                   </button>
                 </div>
               )}
+            </div>
             </div>
           )}
         </div>

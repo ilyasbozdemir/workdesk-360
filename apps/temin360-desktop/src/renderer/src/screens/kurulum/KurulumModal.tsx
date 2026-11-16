@@ -25,6 +25,13 @@ import {
   saveRotaConfigForTemplate,
   GLOBAL_ROTA_KEY
 } from '../../services/rotaDefaultsService'
+import {
+  syncAndFetchKurulumTakip,
+  dismissKurulumInDatabase,
+  completeKurulumInDatabase,
+  type KurulumTakipItem
+} from './kurulumTakipService'
+import { TabloTakipPaneli } from './components/TabloTakipPaneli'
 
 const STEPS = [
   { id: 1, title: 'Kurum & Antet', icon: Building2, desc: 'Kurum adı ve resmî antet' },
@@ -74,6 +81,12 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
 
   const [isSaving, setIsSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [takipItems, setTakipItems] = useState<KurulumTakipItem[]>([])
+
+  const handleClose = () => {
+    dismissKurulumInDatabase().catch(() => {})
+    onClose()
+  }
 
   // Modal her açıldığında veritabanındaki mevcut kurum bilgilerini getir
   useEffect(() => {
@@ -100,6 +113,9 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
               }
             }))
           }
+
+          const syncRes = await syncAndFetchKurulumTakip()
+          setTakipItems(syncRes.items)
         }
       } catch (err) {
         console.warn('[KurulumModal] Mevcut veriler çekilemedi:', err)
@@ -234,6 +250,9 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
         // Store güncellemesi
         if (kurum.kurumAdi && typeof setInstitutionName === 'function') setInstitutionName(kurum.kurumAdi)
         if (typeof loadSettings === 'function') await loadSettings()
+
+        // Veritabanı kurulum durumunu ve SYS_KurulumTakip çizelgesini mühürle
+        await completeKurulumInDatabase()
       }
 
       setSuccessMessage('Kurulum başarıyla tamamlandı!')
@@ -288,7 +307,7 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
             </span>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
               title="Kapat (Daha sonra kur)"
             >
@@ -352,6 +371,10 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
             </div>
           ) : (
             <div className="space-y-6">
+              {takipItems.length > 0 && (
+                <TabloTakipPaneli items={takipItems} compact={formState.step < 5} />
+              )}
+
               {formState.step === 1 && (
                 <KurumAdimi
                   data={formState.kurum}

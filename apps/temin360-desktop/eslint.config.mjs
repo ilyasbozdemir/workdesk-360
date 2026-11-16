@@ -28,5 +28,21 @@ export default defineConfig(
       ...eslintPluginReactRefresh.configs.vite.rules
     }
   },
+  {
+    files: ['src/renderer/**/*.{ts,tsx}'],
+    ignores: ['**/__tests__/**'],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        { name: 'confirm', message: 'Native confirm yerine dialogs.confirm() / useConfirm() kullan.' },
+        { name: 'prompt', message: 'Native prompt Electron’da desteklenmiyor, özel modal kullan.' }
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'window', property: 'confirm', message: 'dialogs.confirm() kullan.' },
+        { object: 'window', property: 'prompt', message: 'Özel modal kullan.' }
+      ]
+    }
+  },
   eslintConfigPrettier
 )
