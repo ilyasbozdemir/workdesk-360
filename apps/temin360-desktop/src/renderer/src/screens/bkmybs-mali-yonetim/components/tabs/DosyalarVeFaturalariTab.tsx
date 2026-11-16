@@ -46,6 +46,7 @@ export interface FaturaKayit {
   tevkifatTutari?: number
   damgaVergisi?: number // Binde 9,48
   kararPulu?: number // Binde 5,69
+  kararPuluUygula?: boolean
   netOdenecek?: number
   odemeYontemi?: string | null
   durum: 'beklemede' | 'odendi' | 'iptal'
@@ -278,28 +279,41 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         const key = (f.faturaNo || '').trim().toLowerCase()
         if (key && !faturaNoSet.has(key)) {
           faturaNoSet.add(key)
-          // Finansal tutarları hesapla (Doğrudan teminde ihale kararı alınmadığından karar pulu kesilmez)
+          // Finansal tutarları hesapla (4734 m. 22 doğrudan teminde ihale kararı alınmadığından karar pulu kesilmez)
+          // Yalnızca dosya sözleşmeli ise veya faturada kararPuluUygula açıkça true seçilmişse uygulanır.
           const kdvDegeri = Number.isFinite(Number(f.kdvOrani)) ? Number(f.kdvOrani) : 20
-          const kpUygula = Boolean(
-            (f as any).kararPuluUygula ||
-            (f.kararPulu && f.kararPulu > 0) ||
-            (d.kesinti_karar_pulu && Number(d.kesinti_karar_pulu) > 0)
+          const isDosyaSozlesmeli = Boolean(
+            Number(d.sozlesme_yapilacak_mi) === 1
           )
+          const kpUygula = (f as any).kararPuluUygula !== undefined
+            ? Boolean((f as any).kararPuluUygula)
+            : isDosyaSozlesmeli
+
           const fin = calculateInvoiceFinancials(
             f.firmaTutar,
             kdvDegeri,
             f.tevkifatOrani || 'Yok',
             kpUygula
           )
+
+          const kararPuluTutari = kpUygula
+            ? (f.kararPulu !== undefined && Number(f.kararPulu) > 0 ? Number(f.kararPulu) : fin.kararPulu)
+            : 0
+
+          const netOdenecekTutari = Number(
+            (f.firmaTutar - fin.damgaVergisi - kararPuluTutari - fin.tevkifatTutari).toFixed(2)
+          )
+
           faturalar.push({
             ...f,
             kdvOrani: kdvDegeri,
-            matrah: f.matrah !== undefined ? f.matrah : fin.matrah,
-            kdvTutari: f.kdvTutari !== undefined ? f.kdvTutari : fin.kdvTutari,
-            tevkifatTutari: f.tevkifatTutari !== undefined ? f.tevkifatTutari : fin.tevkifatTutari,
-            damgaVergisi: f.damgaVergisi !== undefined ? f.damgaVergisi : fin.damgaVergisi,
-            kararPulu: f.kararPulu !== undefined ? f.kararPulu : fin.kararPulu,
-            netOdenecek: f.netOdenecek !== undefined ? f.netOdenecek : fin.netOdenecek
+            matrah: fin.matrah,
+            kdvTutari: fin.kdvTutari,
+            tevkifatTutari: fin.tevkifatTutari,
+            damgaVergisi: fin.damgaVergisi,
+            kararPulu: kararPuluTutari,
+            netOdenecek: netOdenecekTutari,
+            kararPuluUygula: kpUygula
           })
         }
       }
@@ -528,7 +542,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormOdemeYontemi(fatura.odemeYontemi || 'Hazine / Muhasebat Ödeme Emri')
     setFormDurum(fatura.durum)
     setFormAciklama(fatura.aciklama || '')
-    setFormKararPuluUygula(Boolean(fatura.kararPulu && fatura.kararPulu > 0))
+    setFormKararPuluUygula(Boolean(fatura.kararPuluUygula ?? (fatura.kararPulu && fatura.kararPulu > 0)))
     setModalOpen(true)
   }
 
@@ -581,6 +595,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         tevkifatTutari: fin.tevkifatTutari,
         damgaVergisi: fin.damgaVergisi,
         kararPulu: fin.kararPulu,
+        kararPuluUygula: formKararPuluUygula,
         netOdenecek: fin.netOdenecek,
         odemeYontemi: formOdemeYontemi,
         durum: formDurum,

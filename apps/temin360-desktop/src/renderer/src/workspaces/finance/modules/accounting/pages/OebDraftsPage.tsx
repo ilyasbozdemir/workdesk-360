@@ -54,7 +54,8 @@ export const OebDraftsPage: React.FC = () => {
         const mapped: RealOebItem[] = res.map((r: any) => {
           const brut = Number(r.brutTutar) || 0
           const dv = Number(r.damgaVergisi) > 0 ? Number(r.damgaVergisi) : brut * 0.00948
-          const kp = Number(r.kararPulu) > 0 ? Number(r.kararPulu) : brut * 0.00569
+          // 4734 m. 22 doğrudan teminde karar pulu kesilmez; yalnızca özel karar pulu tanımlanmışsa uygulanır
+          const kp = Number(r.kararPulu) > 0 ? Number(r.kararPulu) : 0
           const kt = Number(r.kdvTevkifat) || 0
           const net = Number(r.netOdenecekTutar) > 0 ? Number(r.netOdenecekTutar) : brut - dv - kp - kt
           const isPaid = r.status === 'tamamlandi' || r.status === 'ODENDI'
