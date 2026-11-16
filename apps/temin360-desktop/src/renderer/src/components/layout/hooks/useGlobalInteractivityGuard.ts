@@ -32,42 +32,52 @@ export function useGlobalInteractivityGuard(activeRouteOrTab: string): void {
     overlayManager.handleTabSwitch(prevTab, activeRouteOrTab)
     forceUnlockInteractivity()
 
-    // Sayfa üzerinde herhangi bir tık veya tuş basıldığında kilit kalmışsa anında çöz
+    // Sayfa üzerinde herhangi bir etkileşim veya tık gerçekleştiğinde kilit kalmışsa anında çöz
     const handleGlobalInteraction = (e: Event): void => {
       const root = document.getElementById('root')
       const isRootLocked =
         root && (root.hasAttribute('inert') || root.getAttribute('aria-hidden') === 'true')
       const isBodyLocked =
         document.body.style.pointerEvents === 'none' ||
-        document.documentElement.style.pointerEvents === 'none'
+        document.documentElement.style.pointerEvents === 'none' ||
+        document.body.hasAttribute('data-scroll-locked')
 
       const target = e.target as HTMLElement | null
       const isInput =
         target &&
         (target.tagName === 'INPUT' ||
           target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
           target.isContentEditable ||
-          Boolean(target.closest('input, textarea, [contenteditable="true"]')))
+          Boolean(target.closest('input, textarea, select, [contenteditable="true"]')))
 
-      if (isInput || isRootLocked || isBodyLocked) {
+      if (isInput || isRootLocked || isBodyLocked || !overlayManager.hasVisibleModalInDOM()) {
         forceUnlockInteractivity()
       }
     }
 
+    window.addEventListener('pointerdown', handleGlobalInteraction, { passive: true, capture: true })
     window.addEventListener('mousedown', handleGlobalInteraction, { passive: true, capture: true })
+    window.addEventListener('click', handleGlobalInteraction, { passive: true, capture: true })
     window.addEventListener('keydown', handleGlobalInteraction, { passive: true, capture: true })
     window.addEventListener('focusin', handleGlobalInteraction, { passive: true, capture: true })
 
-    // MutationObserver: DOM'da body stilleri veya data-scroll-locked değiştiğinde kontrol et
+    // MutationObserver: DOM'da body stilleri veya data-scroll-locked değiştiğinde anında kontrol et
     let observer: MutationObserver | null = null
     try {
       observer = new MutationObserver(() => {
-        if (
-          (document.body.style.pointerEvents === 'none' ||
-            document.documentElement.style.pointerEvents === 'none') &&
-          !overlayManager.isAnyOverlayActive()
-        ) {
-          forceUnlockInteractivity()
+        if (!overlayManager.hasVisibleModalInDOM()) {
+          const root = document.getElementById('root')
+          const isRootLocked =
+            root && (root.hasAttribute('inert') || root.getAttribute('aria-hidden') === 'true')
+          const isBodyLocked =
+            document.body.style.pointerEvents === 'none' ||
+            document.documentElement.style.pointerEvents === 'none' ||
+            document.body.hasAttribute('data-scroll-locked')
+
+          if (isRootLocked || isBodyLocked) {
+            forceUnlockInteractivity()
+          }
         }
       })
       observer.observe(document.body, {
@@ -79,7 +89,9 @@ export function useGlobalInteractivityGuard(activeRouteOrTab: string): void {
     }
 
     return () => {
+      window.removeEventListener('pointerdown', handleGlobalInteraction, { capture: true })
       window.removeEventListener('mousedown', handleGlobalInteraction, { capture: true })
+      window.removeEventListener('click', handleGlobalInteraction, { capture: true })
       window.removeEventListener('keydown', handleGlobalInteraction, { capture: true })
       window.removeEventListener('focusin', handleGlobalInteraction, { capture: true })
       observer?.disconnect()

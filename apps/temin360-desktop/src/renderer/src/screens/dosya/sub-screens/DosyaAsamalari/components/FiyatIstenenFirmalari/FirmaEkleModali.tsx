@@ -30,12 +30,6 @@ export function FirmaEkleModali({
     onClose,
   });
 
-  useModalOverlay({
-    id: "firma-ekle-modali",
-    isOpen: true,
-    onClose,
-  });
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return availableFirms;

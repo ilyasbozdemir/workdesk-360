@@ -149,13 +149,20 @@ export function AlertDialogProvider({ children }: { children: React.ReactNode })
     // Safe monkey patch for native window.alert to prevent Windows Electron focus death (#20400, #41603)
     if (typeof window !== 'undefined') {
       const originalAlert = window.alert
-      window.alert = (message?: any) => {
-        alert(String(message ?? ''))
+      const hasNativeDialogBridge = Boolean(
+        (window as any).electronDialogs || (window as any).electron?.dialog
+      )
+      if (!hasNativeDialogBridge) {
+        window.alert = (message?: any) => {
+          alert(String(message ?? ''))
+        }
       }
 
       return () => {
         globalDialogHandler = null
-        window.alert = originalAlert
+        if (!hasNativeDialogBridge) {
+          window.alert = originalAlert
+        }
       }
     }
 

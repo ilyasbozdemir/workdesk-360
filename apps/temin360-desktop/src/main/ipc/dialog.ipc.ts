@@ -21,4 +21,58 @@ export function registerDialogIpcHandlers(): void {
     })
     return { canceled, filePath: filePaths && filePaths.length > 0 ? filePaths[0] : null }
   })
+
+  // Electron Issue #20400 & #41603 Focus Bug Çözümü:
+  // Native window.alert() ve window.confirm() yerine showMessageBoxSync çalıştırıp odağı BrowserWindow'a geri kazandırır
+  ipcMain.on('dialog:alert-sync', (event, message: string) => {
+    const win =
+      BrowserWindow.fromWebContents(event.sender) ||
+      BrowserWindow.getFocusedWindow() ||
+      BrowserWindow.getAllWindows()[0]
+
+    dialog.showMessageBoxSync(win || undefined, {
+      type: 'info',
+      title: 'TEMİN 360',
+      message: String(message ?? ''),
+      buttons: ['Tamam'],
+      noLink: true
+    })
+
+    if (win && !win.isDestroyed()) {
+      win.focus()
+      try {
+        win.webContents.focus()
+      } catch {
+        // ignore
+      }
+    }
+    event.returnValue = undefined
+  })
+
+  ipcMain.on('dialog:confirm-sync', (event, message: string) => {
+    const win =
+      BrowserWindow.fromWebContents(event.sender) ||
+      BrowserWindow.getFocusedWindow() ||
+      BrowserWindow.getAllWindows()[0]
+
+    const choice = dialog.showMessageBoxSync(win || undefined, {
+      type: 'question',
+      title: 'TEMİN 360',
+      message: String(message ?? ''),
+      buttons: ['Tamam', 'Vazgeç'],
+      defaultId: 0,
+      cancelId: 1,
+      noLink: true
+    })
+
+    if (win && !win.isDestroyed()) {
+      win.focus()
+      try {
+        win.webContents.focus()
+      } catch {
+        // ignore
+      }
+    }
+    event.returnValue = choice === 0
+  })
 }

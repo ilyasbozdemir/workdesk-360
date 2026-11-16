@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../../../../store/settingsStore'
 import { useDosyalarHooks } from '../../../../dosyalar/dosyalar.hooks'
 import { TagInput } from '../../../../../components/ui/TagInput'
 import { ProjectInlineSection } from '../../../../../components/ui/ProjectInlineSection'
+import { dialogs } from '../../../../../components/ui/AlertDialogProvider'
 
 export function IhaleVeTeklifFinansalSection(props: YeniDosyaTabProps): React.JSX.Element {
   const { formData, setFormData, limitType, getIhaleSekliExplanation } = props
@@ -25,7 +26,11 @@ export function IhaleVeTeklifFinansalSection(props: YeniDosyaTabProps): React.JS
 
   const handleAiCheckType = async () => {
     if (!formData.konu) {
-      alert("Lütfen önce Genel Bilgiler sekmesinden 'İşin Konusu / İhale Adı' alanını doldurun.")
+      await dialogs.alert({
+        title: 'Eksik Bilgi',
+        message: "Lütfen önce Genel Bilgiler sekmesinden 'İşin Konusu / İhale Adı' alanını doldurun.",
+        variant: 'warning'
+      })
       return
     }
 
@@ -60,36 +65,48 @@ export function IhaleVeTeklifFinansalSection(props: YeniDosyaTabProps): React.JS
         if (matchedType && matchedType !== formData.tur) {
           const currentType = formData.tur || 'mal'
           if (matchedType !== 'mal') {
-            alert(
-              `Yapay Zeka bu işin "${
-                typeNames[matchedType]
-              }" niteliğinde olduğunu değerlendirdi.\n\nAncak şu anki sürümde şablon ve evrak süreçleri yalnızca "Mal Alımı" için tam olarak optimize edilmiştir. Hizmet ve Yapım işleri çok yakında aktif olacaktır.`
-            )
+            await dialogs.alert({
+              title: 'Yapay Zeka Değerlendirmesi',
+              message: `Yapay Zeka bu işin "${typeNames[matchedType]}" niteliğinde olduğunu değerlendirdi.\n\nAncak şu anki sürümde şablon ve evrak süreçleri yalnızca "Mal Alımı" için tam olarak optimize edilmiştir. Hizmet ve Yapım işleri çok yakında aktif olacaktır.`,
+              variant: 'info'
+            })
           } else {
-            const userConfirm = window.confirm(
-              `Yapay Zeka bu işin "${
-                typeNames[matchedType]
-              }" olması gerektiğini düşünüyor. Şu an "${typeNames[currentType]}" seçili.\n\nTürü "${
-                typeNames[matchedType]
-              }" olarak güncellemek ister misiniz?`
-            )
+            const userConfirm = await dialogs.confirm({
+              title: 'Tür Güncellemesi',
+              message: `Yapay Zeka bu işin "${typeNames[matchedType]}" olması gerektiğini düşünüyor. Şu an "${typeNames[currentType]}" seçili.\n\nTürü "${typeNames[matchedType]}" olarak güncellemek ister misiniz?`,
+              variant: 'default',
+              confirmText: 'Evet, Güncelle'
+            })
             if (userConfirm) {
               setFormData({ ...formData, tur: matchedType })
             }
           }
         } else if (matchedType === formData.tur) {
-          alert(`Yapay Zeka da sizinle aynı fikirde. Doğru tür seçilmiş: ${typeNames[matchedType]}`)
+          await dialogs.alert({
+            title: 'Doğrulandı',
+            message: `Yapay Zeka da sizinle aynı fikirde. Doğru tür seçilmiş: ${typeNames[matchedType]}`,
+            variant: 'success'
+          })
         } else {
-          alert(`Yapay Zeka öneride bulunamadı veya anlaşılamayan bir sonuç döndü: ${res.data}`)
+          await dialogs.alert({
+            title: 'Belirsiz Sonuç',
+            message: `Yapay Zeka öneride bulunamadı veya anlaşılamayan bir sonuç döndü: ${res.data}`,
+            variant: 'info'
+          })
         }
       } else {
-        alert(
-          'Yapay Zeka isteği başarısız oldu: ' +
-            (res.error || 'Bilinmeyen hata (Ayarlardan API anahtarını kontrol edin)')
-        )
+        await dialogs.alert({
+          title: 'Yapay Zeka Hatası',
+          message: 'Yapay Zeka isteği başarısız oldu: ' + (res.error || 'Bilinmeyen hata (Ayarlardan API anahtarını kontrol edin)'),
+          variant: 'warning'
+        })
       }
     } catch (err: any) {
-      alert('Hata oluştu: ' + err.message)
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Hata oluştu: ' + err.message,
+        variant: 'danger'
+      })
     } finally {
       setIsAiChecking(false)
     }

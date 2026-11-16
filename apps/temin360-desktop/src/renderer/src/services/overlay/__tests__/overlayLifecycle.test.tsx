@@ -256,4 +256,40 @@ describe('OverlayManager & Modal Lifecycle Suite', () => {
     fireEvent.change(input, { target: { value: 'New Data' } })
     expect(input.value).toBe('New Data')
   })
+
+  it('8. should completely strip radix scroll-lock style tags and clear inert from #root when no visible modal exists', () => {
+    // Simulate rogue Radix style tag injected into head
+    const styleEl = document.createElement('style')
+    styleEl.setAttribute('data-radix-scroll-lock', '')
+    styleEl.textContent = 'body { pointer-events: none !important; }'
+    document.head.appendChild(styleEl)
+
+    // Simulate rogue attributes on body and root
+    document.body.setAttribute('data-scroll-locked', '1')
+    document.body.style.pointerEvents = 'none'
+    rootElement.setAttribute('inert', '')
+    rootElement.setAttribute('aria-hidden', 'true')
+
+    // Also simulate a stale ghost overlay in activeOverlays
+    overlayManager.register({ id: 'ghost-overlay-modal' })
+    expect(overlayManager.isAnyOverlayActive()).toBe(true)
+
+    // Run emergency reset / clean locks
+    overlayManager.forceResetLocksIfNoOverlays()
+
+    // 1. Ghost overlay should be purged because no modal is physically visible
+    expect(overlayManager.getActiveCount()).toBe(0)
+    expect(overlayManager.hasVisibleModalInDOM()).toBe(false)
+
+    // 2. Radix style tag should be removed from DOM
+    expect(document.querySelector('style[data-radix-scroll-lock]')).toBeNull()
+
+    // 3. Body attributes & pointerEvents should be clean
+    expect(document.body.hasAttribute('data-scroll-locked')).toBe(false)
+    expect(document.body.style.pointerEvents).toBe('')
+
+    // 4. #root inert & aria-hidden must be removed
+    expect(rootElement.hasAttribute('inert')).toBe(false)
+    expect(rootElement.getAttribute('aria-hidden')).toBeNull()
+  })
 })

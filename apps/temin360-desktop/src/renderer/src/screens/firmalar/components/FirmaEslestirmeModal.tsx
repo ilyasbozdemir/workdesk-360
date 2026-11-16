@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { Modal } from '../../../components/ui/Modal'
 import { Button } from '../../../components/ui/Button'
+import { dialogs } from '../../../components/ui/AlertDialogProvider'
 import { Input } from '../../../components/ui/Input'
 import { Badge } from '../../../components/ui/Badge'
 import { formatCurrency } from '@renderer/utils/formatters'
@@ -549,13 +550,21 @@ export function FirmaEslestirmeModal({
     if (!stub) return
     const usage = usages[stubId]
     if (usage && usage.dosya_sayisi > 0) {
-      if (!confirm(`Bu firmaya ait ${usage.dosya_sayisi} adet doğrudan temin dosyası bulunmaktadır. Silmek yerine ana havuzdaki bir firmayla birleştirmeniz önerilir. Yine de silmek istiyor musunuz?`)) {
-        return
-      }
+      const ok = await dialogs.confirm({
+        title: 'Taslak Firmayı Sil',
+        message: `Bu firmaya ait ${usage.dosya_sayisi} adet doğrudan temin dosyası bulunmaktadır. Silmek yerine ana havuzdaki bir firmayla birleştirmeniz önerilir. Yine de silmek istiyor musunuz?`,
+        variant: 'danger',
+        confirmText: 'Evet, Sil'
+      })
+      if (!ok) return
     } else {
-      if (!confirm(`"${stub.unvan}" taslak firmasını kalıcı olarak silmek istiyor musunuz?`)) {
-        return
-      }
+      const ok = await dialogs.confirm({
+        title: 'Taslak Firmayı Sil',
+        message: `"${stub.unvan}" taslak firmasını kalıcı olarak silmek istiyor musunuz?`,
+        variant: 'danger',
+        confirmText: 'Evet, Sil'
+      })
+      if (!ok) return
     }
 
     setActionInProgress(stubId)
@@ -581,15 +590,21 @@ export function FirmaEslestirmeModal({
     )
 
     if (highConfidenceItems.length === 0) {
-      alert('Yüksek güvenilirlikte (%80 ve üzeri) otomatik birleştirilebilecek firma bulunamadı.')
+      await dialogs.alert({
+        title: 'Eşleşme Bulunamadı',
+        message: 'Yüksek güvenilirlikte (%80 ve üzeri) otomatik birleştirilebilecek firma bulunamadı.',
+        variant: 'info'
+      })
       return
     }
 
-    if (
-      !confirm(
-        `Yüksek güvenilirlikli (${highConfidenceItems.length} adet) firma ana havuzdaki karşılıkları ile otomatik olarak birleştirilecektir.\n\nDevam etmek istiyor musunuz?`
-      )
-    ) {
+    const ok = await dialogs.confirm({
+      title: 'Toplu Otomatik Birleştirme',
+      message: `Yüksek güvenilirlikli (${highConfidenceItems.length} adet) firma ana havuzdaki karşılıkları ile otomatik olarak birleştirilecektir.\n\nDevam etmek istiyor musunuz?`,
+      variant: 'default',
+      confirmText: 'Evet, Birleştir'
+    })
+    if (!ok) {
       return
     }
 
@@ -1122,9 +1137,15 @@ export function FirmaEslestirmeModal({
 
             <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
               <Button
-                onClick={() => {
+                onClick={async () => {
                   if (manualSourceId && manualTargetId) {
-                    if (confirm('Kaynak firmanın tüm teklif ve dosya ilişkileri hedef firmaya aktarılacak ve kaynak firma silinecektir. Onaylıyor musunuz?')) {
+                    const ok = await dialogs.confirm({
+                      title: 'Firmaları Birleştir',
+                      message: 'Kaynak firmanın tüm teklif ve dosya ilişkileri hedef firmaya aktarılacak ve kaynak firma silinecektir. Onaylıyor musunuz?',
+                      variant: 'warning',
+                      confirmText: 'Evet, Aktar ve Birleştir'
+                    })
+                    if (ok) {
                       executeMerge(manualSourceId, manualTargetId)
                     }
                   }
