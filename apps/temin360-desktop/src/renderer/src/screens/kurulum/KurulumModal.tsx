@@ -41,11 +41,11 @@ export interface KurulumModalProps {
 }
 
 export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps): React.JSX.Element | null {
-  const { setInstitutionName, loadSettings } = useSettingsStore()
+  const { setInstitutionName, loadSettings, isDisclaimerAccepted } = useSettingsStore()
 
   useModalOverlay({
     id: 'kurulum-modal',
-    isOpen,
+    isOpen: isOpen && isDisclaimerAccepted,
     onClose
   })
 
@@ -107,8 +107,6 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
     }
     fetchExisting()
   }, [isOpen])
-
-  if (!isOpen) return null
 
   const nextStep = () => {
     if (formState.step < 5) {
@@ -258,6 +256,7 @@ export function KurulumModal({ isOpen, onClose, onSuccess }: KurulumModalProps):
     return true
   }
 
+  if (!isOpen || !isDisclaimerAccepted) return null
   if (typeof document === 'undefined') return null
 
   return createPortal(

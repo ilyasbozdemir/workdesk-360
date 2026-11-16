@@ -26,6 +26,7 @@ class OverlayManagerService {
   private previousOverflow: string = ''
   private isScrollLocked: boolean = false
   private rootObserver: MutationObserver | null = null
+  private isCleaningRogueLocks: boolean = false
 
   constructor() {
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
@@ -157,6 +158,8 @@ class OverlayManagerService {
    */
   public cleanRogueLocks(): void {
     if (typeof document === 'undefined') return
+    if (this.isCleaningRogueLocks) return
+    this.isCleaningRogueLocks = true
 
     try {
       // 1. Reset body and documentElement pointer-events
@@ -191,6 +194,8 @@ class OverlayManagerService {
       }
     } catch {
       // ignore
+    } finally {
+      this.isCleaningRogueLocks = false
     }
   }
 

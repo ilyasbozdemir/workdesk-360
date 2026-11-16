@@ -6,6 +6,7 @@ export interface UseModalOverlayOptions {
   isOpen: boolean
   onClose?: () => void
   tabPath?: string
+  priority?: number
   disableEscape?: boolean
 }
 
@@ -24,6 +25,7 @@ export function useModalOverlay({
   isOpen,
   onClose,
   tabPath,
+  priority,
   disableEscape = false
 }: UseModalOverlayOptions): void {
   const onCloseRef = useRef(onClose)
@@ -43,6 +45,7 @@ export function useModalOverlay({
     const unregister = overlayManager.register({
       id,
       tabPath,
+      priority,
       onClose: () => onCloseRef.current?.()
     })
 

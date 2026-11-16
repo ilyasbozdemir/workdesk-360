@@ -32,10 +32,6 @@ export function useGlobalInteractivityGuard(activeRouteOrTab: string): void {
     overlayManager.handleTabSwitch(prevTab, activeRouteOrTab)
     forceUnlockInteractivity()
 
-    const handleClearOverlays = (): void => {
-      forceUnlockInteractivity()
-    }
-
     // Sayfa üzerinde herhangi bir tık veya tuş basıldığında kilit kalmışsa anında çöz
     const handleGlobalInteraction = (e: Event): void => {
       const root = document.getElementById('root')
@@ -58,7 +54,6 @@ export function useGlobalInteractivityGuard(activeRouteOrTab: string): void {
       }
     }
 
-    window.addEventListener('app:clear-overlays', handleClearOverlays)
     window.addEventListener('mousedown', handleGlobalInteraction, { passive: true, capture: true })
     window.addEventListener('keydown', handleGlobalInteraction, { passive: true, capture: true })
     window.addEventListener('focusin', handleGlobalInteraction, { passive: true, capture: true })
@@ -84,7 +79,6 @@ export function useGlobalInteractivityGuard(activeRouteOrTab: string): void {
     }
 
     return () => {
-      window.removeEventListener('app:clear-overlays', handleClearOverlays)
       window.removeEventListener('mousedown', handleGlobalInteraction, { capture: true })
       window.removeEventListener('keydown', handleGlobalInteraction, { capture: true })
       window.removeEventListener('focusin', handleGlobalInteraction, { capture: true })

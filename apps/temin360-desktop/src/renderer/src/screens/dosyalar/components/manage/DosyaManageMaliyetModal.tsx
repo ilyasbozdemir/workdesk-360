@@ -23,14 +23,7 @@ export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
     onClose,
   });
 
-  useModalOverlay({
-    id: "dosya-manage-maliyet-modal",
-    isOpen,
-    onClose,
-  });
-
   if (!isOpen) return null;
-  if (typeof document === "undefined") return null;
   if (typeof document === "undefined") return null;
 
   return createPortal(
