@@ -29,6 +29,8 @@ import {
 import { KamuRole } from '../../types'
 import { formatCurrency, formatDate } from '@renderer/utils/formatters'
 import { useWorkspaceStore } from '@renderer/store/workspaceStore'
+import { dialogs } from '@renderer/components/ui/AlertDialogProvider'
+import { cn } from '@renderer/utils/cn'
 
 // ─── Tipler ────────────────────────────────────────────────────────────────
 
@@ -70,6 +72,7 @@ export interface DosyaOzet {
   kesintiDamga: number
   kesintiKararPulu: number
   kesintiKdvTevkifat: number
+  sozlesmeYapilacakMi: boolean
   faturalar: FaturaKayit[]
 }
 
@@ -85,7 +88,7 @@ export function calculateInvoiceFinancials(
   brutTutar: number,
   kdvOrani: number,
   tevkifatOrani: string = 'Yok',
-  kararPuluUygula: boolean = true
+  kararPuluUygula: boolean = false
 ) {
   const kdvMultiplier = (100 + kdvOrani) / 100
   const matrah = brutTutar > 0 ? Number((brutTutar / kdvMultiplier).toFixed(2)) : 0
@@ -199,6 +202,7 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
          d.kesinti_damga,
          d.kesinti_karar_pulu,
          d.kesinti_kdv_tevkifat,
+         COALESCE(d.sozlesme_yapilacak_mi, 0) AS sozlesme_yapilacak_mi,
          d.butce_kodu,
          d.ekonomik_kod,
          d.harcama_birimi,
@@ -274,13 +278,18 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         const key = (f.faturaNo || '').trim().toLowerCase()
         if (key && !faturaNoSet.has(key)) {
           faturaNoSet.add(key)
-          // Finansal tutarları hesapla
+          // Finansal tutarları hesapla (Doğrudan teminde ihale kararı alınmadığından karar pulu kesilmez)
           const kdvDegeri = Number.isFinite(Number(f.kdvOrani)) ? Number(f.kdvOrani) : 20
+          const kpUygula = Boolean(
+            (f as any).kararPuluUygula ||
+            (f.kararPulu && f.kararPulu > 0) ||
+            (d.kesinti_karar_pulu && Number(d.kesinti_karar_pulu) > 0)
+          )
           const fin = calculateInvoiceFinancials(
             f.firmaTutar,
             kdvDegeri,
             f.tevkifatOrani || 'Yok',
-            true
+            kpUygula
           )
           faturalar.push({
             ...f,
@@ -401,6 +410,7 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         kesintiDamga: Number(d.kesinti_damga || 0),
         kesintiKararPulu: Number(d.kesinti_karar_pulu || 0),
         kesintiKdvTevkifat: Number(d.kesinti_kdv_tevkifat || 0),
+        sozlesmeYapilacakMi: Boolean(d.sozlesme_yapilacak_mi),
         faturalar
       }
     })
@@ -444,6 +454,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   const [formOdemeYontemi, setFormOdemeYontemi] = useState('Hazine / Muhasebat Ödeme Emri')
   const [formDurum, setFormDurum] = useState<'beklemede' | 'odendi' | 'iptal'>('beklemede')
   const [formAciklama, setFormAciklama] = useState('')
+  const [formKararPuluUygula, setFormKararPuluUygula] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState(false)
 
   const reloadData = () => {
@@ -501,6 +512,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormOdemeYontemi('Hazine / Muhasebat Ödeme Emri')
     setFormDurum('beklemede')
     setFormAciklama(`${dosya.konu} alımı hak ediş ve fatura kaydı.`)
+    setFormKararPuluUygula(false)
     setModalOpen(true)
   }
 
@@ -516,6 +528,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormOdemeYontemi(fatura.odemeYontemi || 'Hazine / Muhasebat Ödeme Emri')
     setFormDurum(fatura.durum)
     setFormAciklama(fatura.aciklama || '')
+    setFormKararPuluUygula(Boolean(fatura.kararPulu && fatura.kararPulu > 0))
     setModalOpen(true)
   }
 
@@ -553,7 +566,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         Number(formFaturaTutar) || 0,
         kdvVal,
         formTevkifatOrani,
-        true
+        formKararPuluUygula
       )
 
       const updatedInvoice: FaturaKayit = {
@@ -581,7 +594,11 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         (item) => item.faturaNo.trim().toLowerCase() === normalizedNo && item.id !== duzenlenenFatura?.id
       )
       if (isDuplicate) {
-        alert(`Hata: "${formFaturaNo.trim()}" numaralı fatura bu dosyada zaten kayıtlıdır.`)
+        await dialogs.alert({
+          title: 'Mükerrer Fatura',
+          message: `Hata: "${formFaturaNo.trim()}" numaralı fatura bu dosyada zaten kayıtlıdır.`,
+          variant: 'warning'
+        })
         setIsSaving(false)
         return
       }
@@ -601,6 +618,24 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       prefs.faturaNo = updatedInvoice.faturaNo
       prefs.faturaTarihi = updatedInvoice.faturaTarihi
 
+      // Muayene ve Kabul Tutanakları ile senkronize et
+      if (Array.isArray(prefs.kabulTutanaklari)) {
+        prefs.kabulTutanaklari = prefs.kabulTutanaklari.map((t: any) => {
+          if (
+            (t.faturaNo && t.faturaNo.trim().toLowerCase() === normalizedNo) ||
+            (!t.faturaNo && prefs.kabulTutanaklari.length === 1)
+          ) {
+            return {
+              ...t,
+              faturaNo: updatedInvoice.faturaNo,
+              faturaTarihi: updatedInvoice.faturaTarihi || t.faturaTarihi,
+              tutar: updatedInvoice.firmaTutar || t.tutar
+            }
+          }
+          return t
+        })
+      }
+
       const updateRes = await window.electron.ipcRenderer.invoke(
         'db:run',
         'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ?, updated_at = datetime("now") WHERE id = ?',
@@ -608,7 +643,11 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       )
 
       if (!updateRes?.success) {
-        alert('Fatura kaydedilirken veritabanı hatası oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'))
+        await dialogs.alert({
+          title: 'Kayıt Hatası',
+          message: 'Fatura kaydedilirken veritabanı hatası oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'),
+          variant: 'danger'
+        })
         setIsSaving(false)
         return
       }
@@ -618,8 +657,44 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       reloadData()
     } catch (err: any) {
       console.error('[DosyalarVeFaturalariTab] Fatura kaydedilemedi:', err)
-      alert('Fatura kaydedilirken beklenmeyen hata: ' + (err?.message || String(err)))
+      await dialogs.alert({
+        title: 'Beklenmeyen Hata',
+        message: 'Fatura kaydedilirken beklenmeyen hata: ' + (err?.message || String(err)),
+        variant: 'danger'
+      })
       setIsSaving(false)
+    }
+  }
+
+  // Sözleşme Durumunu Değiştir (Sözleşmeli / Sözleşmesiz Sipariş Usulü)
+  const handleToggleSozlesme = async (dosya: DosyaOzet) => {
+    if (!window.electron?.ipcRenderer) return
+    const yeniDurum = !dosya.sozlesmeYapilacakMi
+
+    try {
+      const updateRes = await window.electron.ipcRenderer.invoke(
+        'db:run',
+        'UPDATE DATA_TeminDosyasi SET sozlesme_yapilacak_mi = ?, updated_at = datetime("now") WHERE id = ?',
+        [yeniDurum ? 1 : 0, dosya.id]
+      )
+
+      if (!updateRes?.success) {
+        await dialogs.alert({
+          title: 'Hata',
+          message: 'Sözleşme durumu güncellenirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'),
+          variant: 'danger'
+        })
+        return
+      }
+
+      reloadData()
+    } catch (err: any) {
+      console.error('Sözleşme durumu değiştirilemedi:', err)
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Sözleşme durumu güncellenirken beklenmeyen hata: ' + (err?.message || String(err)),
+        variant: 'danger'
+      })
     }
   }
 
@@ -667,20 +742,35 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       )
 
       if (!updateRes?.success) {
-        alert('Fatura durumu güncellenirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'))
+        await dialogs.alert({
+          title: 'Hata',
+          message: 'Fatura durumu güncellenirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'),
+          variant: 'danger'
+        })
         return
       }
 
       reloadData()
     } catch (err: any) {
       console.error('Durum değiştirilemedi:', err)
-      alert('Durum güncellenirken beklenmeyen hata: ' + (err?.message || String(err)))
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Durum güncellenirken beklenmeyen hata: ' + (err?.message || String(err)),
+        variant: 'danger'
+      })
     }
   }
 
   // Fatura Sil
   const handleDeleteInvoice = async (dosya: DosyaOzet, faturaId: string | number) => {
-    if (!confirm('Bu fatura kaydını silmek istediğinize emin misiniz?')) return
+    const ok = await dialogs.confirm({
+      title: 'Faturayı Sil',
+      message: 'Bu fatura kaydını silmek istediğinize emin misiniz?',
+      confirmText: 'Sil',
+      cancelText: 'Vazgeç',
+      variant: 'danger'
+    })
+    if (!ok) return
     if (!window.electron?.ipcRenderer) return
 
     try {
@@ -713,14 +803,22 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       )
 
       if (!updateRes?.success) {
-        alert('Fatura silinirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'))
+        await dialogs.alert({
+          title: 'Hata',
+          message: 'Fatura silinirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'),
+          variant: 'danger'
+        })
         return
       }
 
       reloadData()
     } catch (err: any) {
       console.error('Fatura silinemedi:', err)
-      alert('Fatura silinirken beklenmeyen hata: ' + (err?.message || String(err)))
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Fatura silinirken beklenmeyen hata: ' + (err?.message || String(err)),
+        variant: 'danger'
+      })
     }
   }
 
@@ -814,9 +912,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       formFaturaTutar || 0,
       Number.isFinite(Number(formKdvOrani)) ? Number(formKdvOrani) : 20,
       formTevkifatOrani,
-      true
+      formKararPuluUygula
     )
-  }, [formFaturaTutar, formKdvOrani, formTevkifatOrani])
+  }, [formFaturaTutar, formKdvOrani, formTevkifatOrani, formKararPuluUygula])
 
   return (
     <div className="space-y-6">
@@ -921,6 +1019,20 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
             />
           </div>
 
+          {selectedDosyaId && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold shrink-0">
+              <span>Aktif Dosya: #{selectedDosyaId}</span>
+              <button
+                type="button"
+                onClick={() => useWorkspaceStore.getState().setActiveDosyaId(null)}
+                className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded text-blue-600 dark:text-blue-400 cursor-pointer"
+                title="Aktif dosya filtresini kaldır ve tüm doğrudan temin dosyalarını listele"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
+
           <select
             value={alimFilter}
             onChange={(e) => setAlimFilter(e.target.value)}
@@ -1016,6 +1128,22 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                         {dosya.teminNo}
                       </span>
                       <AlimTuruBadge turu={dosya.tur} />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleSozlesme(dosya)
+                        }}
+                        className={cn(
+                          'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border cursor-pointer transition-colors',
+                          dosya.sozlesmeYapilacakMi
+                            ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200/60 hover:bg-purple-100'
+                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        )}
+                        title="Sözleşme durumunu değiştirmek için tıklayın (Sözleşmeli / Sözleşmesiz Sipariş Usulü)"
+                      >
+                        {dosya.sozlesmeYapilacakMi ? '📜 Sözleşmeli' : '📦 Sözleşmesiz (Sipariş Usulü)'}
+                      </button>
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -1159,7 +1287,14 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                 <td className="px-3.5 py-2.5 text-right font-mono text-rose-600 dark:text-rose-400">
                                   {formatCurrency(fatura.damgaVergisi || 0)}
                                 </td>
-                                <td className="px-3.5 py-2.5 text-right font-mono text-rose-600 dark:text-rose-400">
+                                <td
+                                  className={cn(
+                                    'px-3.5 py-2.5 text-right font-mono',
+                                    fatura.kararPulu && fatura.kararPulu > 0
+                                      ? 'text-rose-600 dark:text-rose-400 font-bold'
+                                      : 'text-slate-400 dark:text-slate-500 font-normal'
+                                  )}
+                                >
                                   {formatCurrency(fatura.kararPulu || 0)}
                                 </td>
                                 <td className="px-3.5 py-2.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400">
@@ -1321,6 +1456,23 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                     <option value="Tam">Tam Tevkifat</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Karar Pulu Kesintisi Checkbox */}
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                <input
+                  type="checkbox"
+                  id="kararPuluCheck"
+                  checked={formKararPuluUygula}
+                  onChange={(e) => setFormKararPuluUygula(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="kararPuluCheck" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                  İhale Karar Pulu Kesintisi Uygula (%0.569 - Binde 5,69)
+                  <span className="text-[11px] text-slate-400 font-normal block mt-0.5">
+                    Doğrudan temin (4734 m. 22) bir ihale usulü olmadığından ihale karar pulu mevzuat gereği <strong>kesilmez</strong>. Yalnızca özel bir ihale kararı alınmışsa işaretleyiniz.
+                  </span>
+                </label>
               </div>
 
               {/* Otomatik Yasal Kesinti Kartı */}

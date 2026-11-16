@@ -5,6 +5,10 @@ import { useDosyaAsamasiSablons } from '../../useDosyaAsamasiSablons'
 import { FirmaStats, KabulTutanakItem, KomisyonUye } from './types'
 import { formatCurrency, formatDate } from '@renderer/utils/formatters'
 import { resolveCommissionCategory } from '@temin360/document-templates'
+import {
+  FaturaKayit,
+  calculateInvoiceFinancials
+} from '@renderer/screens/bkmybs-mali-yonetim/components/tabs/DosyalarVeFaturalariTab'
 
 interface KabulDataCacheEntry {
   kazananFirmaId: number | null
@@ -77,6 +81,7 @@ export function useKabulVeOdemeData() {
 
   const [faturaNo, setFaturaNo] = useState<string>(cached?.faturaNo || '')
   const [faturaTarihi, setFaturaTarihi] = useState<string>(cached?.faturaTarihi || '')
+  const [dosyaFaturalari, setDosyaFaturalari] = useState<FaturaKayit[]>([])
   const [isTifModalOpen, setIsTifModalOpen] = useState(false)
   const [isKomisyonModalOpen, setIsKomisyonModalOpen] = useState(false)
 
@@ -119,6 +124,13 @@ export function useKabulVeOdemeData() {
 
     setTutanaklar(updated)
 
+    if (tutanakItem.faturaNo) {
+      setFaturaNo(tutanakItem.faturaNo)
+    }
+    if (tutanakItem.faturaTarihi) {
+      setFaturaTarihi(tutanakItem.faturaTarihi)
+    }
+
     if (activeDosyaId && window.electron) {
       try {
         const fileRes = await window.electron.ipcRenderer.invoke(
@@ -136,10 +148,73 @@ export function useKabulVeOdemeData() {
           } catch {}
         }
         existingObj.kabulTutanaklari = updated
+
+        // ─── 5018 / BKMYBS Fatura Entegrasyonu ───
+        // Tutanakta fatura bilgisi varsa mali masadaki faturalara otomatik senkronize et
+        if (tutanakItem.faturaNo && tutanakItem.faturaNo.trim()) {
+          const rawFatNo = tutanakItem.faturaNo.trim()
+          const normFatNo = rawFatNo.toLowerCase()
+          const currentFaturalar: FaturaKayit[] = Array.isArray(existingObj.faturalar)
+            ? [...existingObj.faturalar]
+            : []
+
+          const idx = currentFaturalar.findIndex(
+            (f) => f.faturaNo && f.faturaNo.trim().toLowerCase() === normFatNo
+          )
+
+          const tutarNum = Number(tutanakItem.tutar) || 0
+          const fin = calculateInvoiceFinancials(tutarNum, 20, 'Yok', false)
+
+          if (idx !== -1) {
+            const existingFat = currentFaturalar[idx]
+            currentFaturalar[idx] = {
+              ...existingFat,
+              faturaTarihi: tutanakItem.faturaTarihi || existingFat.faturaTarihi,
+              firmaTutar: tutarNum > 0 ? tutarNum : existingFat.firmaTutar,
+              matrah: tutarNum > 0 ? fin.matrah : existingFat.matrah,
+              kdvTutari: tutarNum > 0 ? fin.kdvTutari : existingFat.kdvTutari,
+              damgaVergisi: tutarNum > 0 ? fin.damgaVergisi : existingFat.damgaVergisi,
+              kararPulu: 0, // Doğrudan teminde ihale karar pulu kesilmez
+              netOdenecek: tutarNum > 0 ? fin.netOdenecek : existingFat.netOdenecek
+            }
+          } else {
+            const newFat: FaturaKayit = {
+              id: `fat-${Date.now()}`,
+              faturaNo: rawFatNo,
+              faturaTarihi: tutanakItem.faturaTarihi || new Date().toISOString().slice(0, 10),
+              firmaTutar: tutarNum,
+              kdvOrani: 20,
+              matrah: fin.matrah,
+              kdvTutari: fin.kdvTutari,
+              tevkifatOrani: 'Yok',
+              tevkifatTutari: 0,
+              damgaVergisi: fin.damgaVergisi,
+              kararPulu: 0,
+              netOdenecek: fin.netOdenecek,
+              odemeYontemi: 'Hazine / Muhasebat Ödeme Emri',
+              durum: 'beklemede',
+              aciklama: `${tutanakItem.tutanakNo || 'Kabul Tutanağı'} ile oluşturulan fatura.`,
+              kaynak: 'kabul_tutanagi'
+            }
+            currentFaturalar.push(newFat)
+          }
+
+          existingObj.faturalar = currentFaturalar
+          existingObj.faturaNo = rawFatNo
+          existingObj.faturaTarihi = tutanakItem.faturaTarihi
+          setDosyaFaturalari(currentFaturalar)
+        }
+
         await window.electron.ipcRenderer.invoke(
           'db:run',
           'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ? WHERE id = ?',
           [JSON.stringify(existingObj), activeDosyaId]
+        )
+
+        window.dispatchEvent(
+          new CustomEvent('dossier:updated', {
+            detail: { dosyaId: activeDosyaId }
+          })
         )
       } catch (e) {
         console.error('Failed to save kabulTutanaklari:', e)
@@ -514,6 +589,18 @@ export function useKabulVeOdemeData() {
               if (Array.isArray(prefs?.kabulTutanaklari)) {
                 setTutanaklar(prefs.kabulTutanaklari)
               }
+              if (Array.isArray(prefs?.faturalar)) {
+                setDosyaFaturalari(prefs.faturalar)
+                if (prefs.faturalar.length > 0) {
+                  const firstFat = prefs.faturalar[0]
+                  if (firstFat.faturaNo) setFaturaNo(firstFat.faturaNo)
+                  if (firstFat.faturaTarihi) setFaturaTarihi(firstFat.faturaTarihi.slice(0, 10))
+                }
+              }
+              if (prefs?.faturaNo && !faturaNo) {
+                setFaturaNo(prefs.faturaNo)
+                if (prefs.faturaTarihi) setFaturaTarihi(prefs.faturaTarihi.slice(0, 10))
+              }
             } catch (err) {
               console.warn('Failed to parse kabulTutanaklari from prefs:', err)
             }
@@ -677,6 +764,8 @@ export function useKabulVeOdemeData() {
     setFaturaNo,
     faturaTarihi,
     setFaturaTarihi,
+    dosyaFaturalari,
+    setDosyaFaturalari,
     isTifModalOpen,
     setIsTifModalOpen,
     isKomisyonModalOpen,

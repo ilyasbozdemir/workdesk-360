@@ -467,17 +467,6 @@ export function getSidebarMenuGroups(
                         }
                       ]),
                   {
-                    name: 'Harcama & Hakediş Merkezi',
-                    path: APP_ROUTES.HARCAMA_MERKEZI,
-                    icon: Landmark
-                  },
-                  {
-                    name: '5018 BKMYBS Mali Masası',
-                    path: APP_ROUTES.BKMYBS_MALI_YONETIM,
-                    icon: Coins,
-                    badge: '5018'
-                  },
-                  {
                     name: 'Mevzuat ve Sistem Parametreleri',
                     path: APP_ROUTES.MEVZUAT,
                     icon: Scale,

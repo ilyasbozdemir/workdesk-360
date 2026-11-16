@@ -39,109 +39,97 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
         <WorkspaceSwitcher />
       </div>
 
-      {activeWorkspace === "finance"
-        ? (
-          <>
-            {/* Orta: 5018 Mali Yönetim Masası Başlığı */}
-            <div className="shrink-0 flex items-center justify-center gap-2 px-1 sm:px-2 z-10">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border select-none bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span>5018 & BKMYBS Mali Yönetim ve Muhasebe Masası</span>
-              </div>
-            </div>
+      {/* Orta: Temin Seçici - Hem Satın Alma Hem Mali Hizmetler Masasında Matematiksel Olarak Tam Ortada */}
+      <div className="shrink-0 flex items-center justify-center min-w-0 px-1 sm:px-2 z-10">
+        <TeminSelector />
+      </div>
 
-            {/* Sağ: Mali Hızlı Geçiş Düğmeleri */}
-            <div className="flex-1 flex items-center gap-1.5 min-w-0 justify-end">
-              <button
-                type="button"
-                onClick={() => setActiveFinanceTab("budget-tracking")}
-                title="Analitik Bütçe Kodları ve Ödenek Takibi"
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50 border-emerald-200/50 dark:border-emerald-900/30 cursor-pointer"
+      {activeWorkspace === "finance" ? (
+        <div className="flex-1 flex items-center gap-1.5 min-w-0 justify-end">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border select-none bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 shadow-2xs mr-1 hidden 2xl:inline-flex">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span>5018 & BKMYBS</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveFinanceTab("budget-tracking")}
+            title="Analitik Bütçe Kodları ve Ödenek Takibi"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50 border-emerald-200/50 dark:border-emerald-900/30 cursor-pointer"
+          >
+            <Landmark className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+            <span className="hidden xl:inline">Bütçe & Ödenek</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveFinanceTab("compliance-check")}
+            title="22/d Parasal Limit ve %10 KİK Kotası"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-amber-700 bg-amber-50/80 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50 border-amber-200/50 dark:border-amber-900/30 cursor-pointer"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+            <span className="hidden xl:inline">%10 KİK Kotası</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveFinanceTab("mif-drafts")}
+            title="MİF ve Ödeme Emri Belgesi (ÖEB) Masası"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-blue-700 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 border-blue-200/50 dark:border-blue-900/30 cursor-pointer"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 shrink-0 text-blue-600" />
+            <span className="hidden xl:inline">MİF & ÖEB</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveFinanceTab("dosyalar-ve-faturalari")}
+            title="Doğrudan Temin Dosyaları ve Fatura Arama Masası"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-teal-700 bg-teal-50/80 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-300 dark:hover:bg-teal-900/50 border-teal-200/50 dark:border-teal-900/30 cursor-pointer"
+          >
+            <FolderOpen className="w-3.5 h-3.5 shrink-0 text-teal-600" />
+            <span className="hidden xl:inline">Dosyalar & Faturalar</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveFinanceTab("mevzuat-parametreleri")}
+            title="4734 Sayılı KİK Yasal Limitleri, Oranlar ve Mevzuat Parametreleri"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50 border-indigo-200/50 dark:border-indigo-900/30 cursor-pointer"
+          >
+            <Scale className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
+            <span className="hidden xl:inline">Mevzuat & Parametreler</span>
+          </button>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center gap-1.5 min-w-0 justify-end">
+          {activeDosyaId && (
+            <>
+              <Link
+                to={APP_ROUTES.TAKIP}
+                title="Doğrudan Temin Süreç & Dosya Takip Masası (Kanban, Liste, Grid, Detay)"
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all shadow-2xs hover:shadow-xs border text-blue-700 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 border-blue-200/50 dark:border-blue-900/30"
               >
-                <Landmark className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                <span className="hidden xl:inline">Bütçe & Ödenek</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFinanceTab("compliance-check")}
-                title="22/d Parasal Limit ve %10 KİK Kotası"
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-amber-700 bg-amber-50/80 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50 border-amber-200/50 dark:border-amber-900/30 cursor-pointer"
+                <ClipboardList className="w-3.5 h-3.5 shrink-0" />
+                Dosya Detayı
+              </Link>
+              <Link
+                to={APP_ROUTES.SUREC_AKISI}
+                title="Doğrudan Temin Süreç Akış Haritası"
+                className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-purple-700 bg-purple-50/80 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/50 border border-purple-200/50 dark:border-purple-900/30 rounded-md transition-colors shadow-2xs hover:shadow-xs"
               >
-                <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-amber-600" />
-                <span className="hidden xl:inline">%10 KİK Kotası</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFinanceTab("mif-drafts")}
-                title="MİF ve Ödeme Emri Belgesi (ÖEB) Masası"
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-blue-700 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 border-blue-200/50 dark:border-blue-900/30 cursor-pointer"
+                <Layers className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden 2xl:inline">Süreç Akışı</span>
+                <span className="hidden xl:inline 2xl:hidden">Akış</span>
+              </Link>
+              <Link
+                to={APP_ROUTES.CIKTI_MERKEZI_DASHBOARD}
+                title="Çıktı Merkezi & Yazdırma"
+                className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50 border border-emerald-100/50 dark:border-emerald-900/30 rounded-md transition-colors shadow-2xs hover:shadow-xs"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 shrink-0 text-blue-600" />
-                <span className="hidden xl:inline">MİF & ÖEB</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFinanceTab("dosyalar-ve-faturalari")}
-                title="Doğrudan Temin Dosyaları ve Fatura Arama Masası"
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-teal-700 bg-teal-50/80 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-300 dark:hover:bg-teal-900/50 border-teal-200/50 dark:border-teal-900/30 cursor-pointer"
-              >
-                <FolderOpen className="w-3.5 h-3.5 shrink-0 text-teal-600" />
-                <span className="hidden xl:inline">Dosyalar & Faturalar</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFinanceTab("mevzuat-parametreleri")}
-                title="4734 Sayılı KİK Yasal Limitleri, Oranlar ve Mevzuat Parametreleri"
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all border text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50 border-indigo-200/50 dark:border-indigo-900/30 cursor-pointer"
-              >
-                <Scale className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
-                <span className="hidden xl:inline">Mevzuat & Parametreler</span>
-              </button>
-            </div>
-          </>
-        )
-        : (
-          <>
-            {/* Orta: Temin Seçici - Hem Boşken Hem Doluyken Matematiksel Olarak Tam Ortada */}
-            <div className="shrink-0 flex items-center justify-center min-w-0 px-1 sm:px-2 z-10">
-              <TeminSelector />
-            </div>
-
-            {/* Sağ: Süreç & Çıktı Butonları (Temin 360 - Doğrudan Temin Odaklı) */}
-            <div className="flex-1 flex items-center gap-1.5 min-w-0 justify-end">
-              {activeDosyaId && (
-                <>
-                  <Link
-                    to={APP_ROUTES.TAKIP}
-                    title="Doğrudan Temin Süreç & Dosya Takip Masası (Kanban, Liste, Grid, Detay)"
-                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all shadow-2xs hover:shadow-xs border text-blue-700 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 border-blue-200/50 dark:border-blue-900/30"
-                  >
-                    <ClipboardList className="w-3.5 h-3.5 shrink-0" />
-                    Dosya Detayı
-                  </Link>
-                  <Link
-                    to={APP_ROUTES.SUREC_AKISI}
-                    title="Doğrudan Temin Süreç Akış Haritası"
-                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-purple-700 bg-purple-50/80 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/50 border border-purple-200/50 dark:border-purple-900/30 rounded-md transition-colors shadow-2xs hover:shadow-xs"
-                  >
-                    <Layers className="w-3.5 h-3.5 shrink-0" />
-                    <span className="hidden 2xl:inline">Süreç Akışı</span>
-                    <span className="hidden xl:inline 2xl:hidden">Akış</span>
-                  </Link>
-                  <Link
-                    to={APP_ROUTES.CIKTI_MERKEZI_DASHBOARD}
-                    title="Çıktı Merkezi & Yazdırma"
-                    className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50 border border-emerald-100/50 dark:border-emerald-900/30 rounded-md transition-colors shadow-2xs hover:shadow-xs"
-                  >
-                    <Printer className="w-3.5 h-3.5 shrink-0" />
-                    <span className="hidden 2xl:inline">Çıktı Merkezi</span>
-                    <span className="hidden xl:inline 2xl:hidden">Çıktı</span>
-                  </Link>
-                </>
-              )}
-            </div>
-          </>
-        )}
+                <Printer className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden 2xl:inline">Çıktı Merkezi</span>
+                <span className="hidden xl:inline 2xl:hidden">Çıktı</span>
+              </Link>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 });
