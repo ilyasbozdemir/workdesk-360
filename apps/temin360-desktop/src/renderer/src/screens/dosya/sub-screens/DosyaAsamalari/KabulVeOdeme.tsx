@@ -43,6 +43,7 @@ export function KabulVeOdeme(): React.JSX.Element {
     setFaturaNo,
     faturaTarihi,
     setFaturaTarihi,
+    dosyaFaturalari,
     isTifModalOpen,
     setIsTifModalOpen,
     isKomisyonModalOpen,
@@ -177,6 +178,7 @@ export function KabulVeOdeme(): React.JSX.Element {
         onSave={handleSaveTutanak}
         initialTutanak={editingTutanak}
         existingTutanaklar={tutanaklar}
+        existingFaturalar={dosyaFaturalari}
         defaultTutar={firmaStats.teklifToplami || undefined}
         defaultFaturaNo={faturaNo}
         defaultFaturaTarihi={faturaTarihi}

@@ -31,7 +31,8 @@ export const MaliIslemlereAktarModal: React.FC<MaliIslemlereAktarModalProps> = (
   const [faturaNo, setFaturaNo] = useState<string>('FAT2026-001')
   const [kdvOrani, setKdvOrani] = useState<number>(20)
   const [kdvTevkifat, setKdvTevkifat] = useState<string>('Yok')
-  const [kararPuluKesintisi, setKararPuluKesintisi] = useState<boolean>(true)
+  // 4734 m. 22 doğrudan teminde ihale kararı alınmadığından karar pulu varsayılan olarak kesilmez (false)
+  const [kararPuluKesintisi, setKararPuluKesintisi] = useState<boolean>(false)
 
   // Otomatik Yasal Kesinti Hesaplamaları
   const kdvTutari = (brutTutar * kdvOrani) / 100
