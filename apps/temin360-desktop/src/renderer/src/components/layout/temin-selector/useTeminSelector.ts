@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useShallow } from 'zustand/react/shallow'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
+import { useWorkspaceContextStore } from '../../../store/workspaceContextStore'
 import { useTabStore } from '../../../store/tabStore'
 import { useClickOutside } from '../../../hooks/useClickOutside'
 import { useDosyalarHooks } from '../../../screens/dosyalar/dosyalar.hooks'
@@ -124,7 +125,18 @@ export function useTeminSelector(): UseTeminSelectorReturn {
     (id: number): void => {
       setActiveDosyaId(id)
       setIsOpen(false)
-      navigate({ to: APP_ROUTES.TAKIP })
+      const currentPath = window.location.hash || window.location.pathname
+      const isFinanceContext =
+        useWorkspaceContextStore.getState().activeWorkspace === 'finance' ||
+        currentPath.includes('bkmybs')
+      if (isFinanceContext) {
+        navigate({
+          to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+          search: { dosyaId: id } as any
+        })
+      } else {
+        navigate({ to: APP_ROUTES.TAKIP })
+      }
     },
     [setActiveDosyaId, navigate]
   )
@@ -142,7 +154,15 @@ export function useTeminSelector(): UseTeminSelectorReturn {
   const handleCloseDosya = useCallback((): void => {
     setActiveDosyaId(null)
     setIsOpen(false)
-    navigate({ to: APP_ROUTES.DASHBOARD })
+    const currentPath = window.location.hash || window.location.pathname
+    const isFinanceContext =
+      useWorkspaceContextStore.getState().activeWorkspace === 'finance' ||
+      currentPath.includes('bkmybs')
+    if (isFinanceContext) {
+      navigate({ to: APP_ROUTES.BKMYBS_MALI_YONETIM })
+    } else {
+      navigate({ to: APP_ROUTES.DASHBOARD })
+    }
   }, [setActiveDosyaId, navigate])
 
   const handleClose2886Dosya = useCallback((): void => {
