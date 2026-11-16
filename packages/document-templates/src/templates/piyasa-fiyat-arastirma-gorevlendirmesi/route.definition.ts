@@ -52,5 +52,16 @@ export const piyasaFiyatGorevlendirmeRoute: TemplateRouteDefinition = {
       sourceTitleFieldKeys: ["onaylayanPersonelUnvan"],
       description: "Görevlendirmeyi onaylayan harcama yetkilisi",
     },
+    {
+      id: "antetBirim",
+      label: "Antet & Görevlendirme Makamı",
+      kind: "unit",
+      defaultSource: "settings",
+      required: false,
+      fieldKey: "kurumAdi",
+      targetFieldKeys: ["kurumAdi", "kurumumuz", "altKurumBizim"],
+      sourceFieldKeys: ["kurumAdi", "kurumumuz", "harcamaBirimi", "mudurluk"],
+      description: "Görevlendirmeyi yapan kurum veya başkanlık antet makamı",
+    },
   ],
 };

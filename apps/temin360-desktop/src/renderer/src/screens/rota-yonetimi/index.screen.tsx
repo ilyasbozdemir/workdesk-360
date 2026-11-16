@@ -4,14 +4,19 @@ import {
   Check,
   CheckCircle2,
   Compass,
+  Eye,
+  EyeOff,
   FileText,
   FolderOpen,
   GitFork,
   Globe,
   RotateCcw,
   Save,
+  Search,
   Sparkles,
-  Users
+  Users,
+  ZoomIn,
+  ZoomOut
 } from 'lucide-react'
 import type { RouteAssignee, RouteOverride, RouteValues } from '@temin360/contracts'
 import {
@@ -20,6 +25,8 @@ import {
   InstitutionalHeaderProvider
 } from '@temin360/document-templates'
 import {
+  DocumentEngine,
+  DocumentRenderer,
   resolveRoute,
   extractDocumentRouteValues,
   applyResolvedRouteToDocumentData
@@ -32,6 +39,7 @@ import {
   filterTemplatesByStage
 } from '../dosya/components/DocumentPreviewModalV3/stages'
 import { DocumentPreviewRotaSection } from '../dosya/components/DocumentPreviewModalV3/components/DocumentPreviewRotaSection'
+import { TemplateErrorBoundary } from '../dosya/components/DocumentPreviewModalV3/TemplateErrorBoundary'
 import {
   GLOBAL_ROTA_KEY,
   applyRotaConfigToAllTemplates,
@@ -45,7 +53,7 @@ import {
 
 export default function RotaYonetimiScreen(): React.JSX.Element {
   const { activeDosyaId } = useWorkspaceStore()
-  const { institutionName } = useSettingsStore()
+  const { institutionName, logoLeft, logoRight } = useSettingsStore()
   const [scopeMode, setScopeMode] = useState<'global' | 'dosya'>(() =>
     activeDosyaId ? 'dosya' : 'global'
   )
@@ -53,6 +61,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
 
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(GLOBAL_ROTA_KEY)
   const [selectedStageId, setSelectedStageId] = useState<number | 'all'>('all')
+  const [templateSearch, setTemplateSearch] = useState<string>('')
   const [personelListesi, setPersonelListesi] = useState<any[]>([])
   const [birimListesi, setBirimListesi] = useState<any[]>([])
   const [kurumInfo, setKurumInfo] = useState<any>(null)
@@ -61,6 +70,15 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     getAllSavedRotaConfigs()
   )
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+
+  // Canlı A4 Belge Önizleme Durumları
+  const [showPreview, setShowPreview] = useState<boolean>(true)
+  const [previewScale, setPreviewScale] = useState<number>(0.45)
+  const [samplePreviewTemplateKey, setSamplePreviewTemplateKey] = useState<string>(
+    'piyasa-fiyat-arastirma-gorevlendirmesi'
+  )
+  const [baseDocData, setBaseDocData] = useState<Record<string, any>>({})
+  const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false)
 
   const showToast = (msg: string) => {
     setToastMsg(msg)
@@ -230,7 +248,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
 
     const resolvedBirimName = birimRes.birimAdi || initialBirimAdi
 
-    const baseDocData: Record<string, any> = {
+    const baseDocDataObj: Record<string, any> = {
       kurumAdi: fallbackKurumAdi,
       birimId: birimRes.birimId ?? initialBirimId,
       birim_id: birimRes.birimId ?? initialBirimId,
@@ -284,7 +302,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
       routeOverrides: []
     }
 
-    const docValues = extractDocumentRouteValues(baseDocData, activeDefinition)
+    const docValues = extractDocumentRouteValues(baseDocDataObj, activeDefinition)
     const resolved = resolveRoute({
       definition: activeDefinition,
       settings: settingsValues,
@@ -293,7 +311,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
       strict: false
     })
 
-    setFormData(applyResolvedRouteToDocumentData(baseDocData, resolved))
+    setFormData(applyResolvedRouteToDocumentData(baseDocDataObj, resolved))
   }, [
     selectedTemplateId,
     effectiveDosyaId,
@@ -321,9 +339,22 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
   )
 
   const filteredTemplates = useMemo(() => {
-    if (selectedStageId === 'all') return TEMPLATE_OPTIONS
-    return filterTemplatesByStage(selectedStageId, TEMPLATE_OPTIONS)
-  }, [selectedStageId])
+    let list =
+      selectedStageId === 'all'
+        ? TEMPLATE_OPTIONS
+        : filterTemplatesByStage(selectedStageId, TEMPLATE_OPTIONS)
+
+    if (templateSearch.trim()) {
+      const q = templateSearch.trim().toLocaleLowerCase('tr-TR')
+      list = list.filter(
+        (t) =>
+          t.title.toLocaleLowerCase('tr-TR').includes(q) ||
+          t.id.toLocaleLowerCase('tr-TR').includes(q) ||
+          (t.categoryLabel && t.categoryLabel.toLocaleLowerCase('tr-TR').includes(q))
+      )
+    }
+    return list
+  }, [selectedStageId, templateSearch])
 
   const activeTemplateTitle = useMemo(() => {
     if (selectedTemplateId === GLOBAL_ROTA_KEY) {
@@ -332,6 +363,107 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     const found = TEMPLATE_OPTIONS.find((t) => t.id === selectedTemplateId)
     return found?.title || selectedTemplateId
   }, [selectedTemplateId])
+
+  // Önizlenecek şablon anahtarı (Genel seçiliyken örnek şablonu, aksi halde doğrudan seçili şablonu gösterir)
+  const effectivePreviewTemplateKey = useMemo(() => {
+    if (selectedTemplateId === GLOBAL_ROTA_KEY) {
+      return samplePreviewTemplateKey || 'piyasa-fiyat-arastirma-gorevlendirmesi'
+    }
+    return selectedTemplateId
+  }, [selectedTemplateId, samplePreviewTemplateKey])
+
+  // Önizlenecek şablonun temel veri modelini DocumentEngine üzerinden yükle
+  useEffect(() => {
+    let mounted = true
+    const loadBase = async () => {
+      setIsLoadingPreview(true)
+      try {
+        const targetKey = effectivePreviewTemplateKey
+        if (!targetKey) return
+
+        const docRecord = await DocumentEngine.loadOrCreateDocument({
+          dosyaId: effectiveDosyaId || 0,
+          templateKey: targetKey,
+          forceDefault: !effectiveDosyaId
+        })
+        if (mounted && docRecord) {
+          setBaseDocData({
+            ...(docRecord.headerData || {}),
+            ...(docRecord.data || {})
+          })
+        }
+      } catch (err) {
+        console.warn('Rota önizleme ana verisi yüklenemedi:', err)
+      } finally {
+        if (mounted) setIsLoadingPreview(false)
+      }
+    }
+    loadBase()
+    return () => {
+      mounted = false
+    }
+  }, [effectivePreviewTemplateKey, effectiveDosyaId])
+
+  // Rota editöründeki canlı değişiklikleri şablonun tam verisine harmanla
+  const previewMergedData = useMemo(() => {
+    const merged: Record<string, any> = {
+      ...(baseDocData || {}),
+      ...formData
+    }
+
+    if (
+      formData.antetSatirlari &&
+      Array.isArray(formData.antetSatirlari) &&
+      formData.antetSatirlari.length > 0
+    ) {
+      merged.antetSatirlari = formData.antetSatirlari
+    }
+    if (formData.birimAdi) {
+      merged.birimAdi = formData.birimAdi
+      merged.birim = formData.birimAdi
+      merged.mudurluk = formData.birimAdi
+      merged.harcamaBirimi = formData.birimAdi
+    }
+    if (formData.kurumAdi) {
+      merged.kurumAdi = formData.kurumAdi
+    }
+    if (formData.onaylayanPersonelAdi) {
+      merged.onaylayanPersonelAdi = formData.onaylayanPersonelAdi
+      merged.onaylayanPersonelUnvan = formData.onaylayanPersonelUnvan
+      merged.harcamaYetkilisiAdi = formData.onaylayanPersonelAdi
+      merged.harcamaYetkilisiUnvan = formData.onaylayanPersonelUnvan
+      merged.baskanAdi = formData.onaylayanPersonelAdi
+    }
+    if (formData.hazirlayanPersonelAdi) {
+      merged.hazirlayanPersonelAdi = formData.hazirlayanPersonelAdi
+      merged.hazirlayanPersonelUnvan = formData.hazirlayanPersonelUnvan
+      merged.gerceklestirmeGorevlisiAdi =
+        formData.gerceklestirmeGorevlisiAdi || formData.hazirlayanPersonelAdi
+      merged.gerceklestirmeGorevlisiUnvan =
+        formData.gerceklestirmeGorevlisiUnvan || formData.hazirlayanPersonelUnvan
+    }
+    if (Array.isArray(formData.komisyonUyeleri)) {
+      merged.komisyonUyeleri = formData.komisyonUyeleri
+      merged.gorevliler = formData.komisyonUyeleri
+      merged.fiyatKomisyonu = formData.komisyonUyeleri
+      merged.muayeneKomisyonu = formData.komisyonUyeleri
+      merged.gorevlendirilenler = formData.komisyonUyeleri
+      merged.dagitimListesi = formData.komisyonUyeleri
+    }
+    if (formData.sunulacakMakamAdi) {
+      merged.sunulacakMakamAdi = formData.sunulacakMakamAdi
+      merged.sunulacakMakam = formData.sunulacakMakamAdi
+      merged.makam = formData.sunulacakMakamAdi
+    }
+    if (formData.olurYazisi !== undefined) {
+      merged.olurYazisi = formData.olurYazisi
+    }
+
+    merged.solLogo = formData.solLogo || logoLeft || null
+    merged.sagLogo = formData.sagLogo || logoRight || null
+
+    return merged
+  }, [baseDocData, formData, logoLeft, logoRight])
 
   const buildCurrentConfigToSave = () => {
     const docValues = extractDocumentRouteValues(formData, activeDefinition)
@@ -358,15 +490,12 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     }
 
     const hazirlayanVal = slots.hazirlayan as RouteAssignee | undefined
-    const gerceklestirmeVal = slots.gerceklestirmeGorevlisi as RouteAssignee | undefined
+    const gerceklestirmeVal = slots.gerceklestirme as RouteAssignee | undefined
     const onaylayanVal = slots.onaylayan as RouteAssignee | undefined
-    const makamVal = slots.sunulacakMakam as RouteAssignee | undefined
-    const komisyonVal = (slots.komisyon ||
-      slots.fiyatArastirmaGorevlileri ||
-      slots.muayeneKomisyonu) as RouteAssignee[] | undefined
+    const makamVal = slots.makam as RouteAssignee | undefined
+    const komisyonVal = slots.komisyon as RouteAssignee[] | undefined
 
     return {
-      belgeModu: (formData.belgeModu || 'standart') as any,
       rota: Array.isArray(formData.rota) ? formData.rota : [],
       slots,
       birimId: formData.birimId ?? formData.birim_id ?? undefined,
@@ -433,46 +562,60 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
   return (
     <div className="w-full h-full min-h-0 flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
       {/* Üst Başlık ve Kapsam Seçici */}
-      <div className="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400">
-            <GitFork className="w-5 h-5" />
+      <div className="shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+            <GitFork className="w-4 h-4" />
           </div>
-          <div>
-            <h1 className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2 truncate">
               <span>Şablon Bazlı Belge Rota &amp; Görevli Yönetimi</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 font-bold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 font-bold shrink-0">
                 SLOT ROTA SİSTEMİ
               </span>
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Her belgenin kendi şablonundaki Kurumsal Antet, İlgili Birim / Müdürlük, Hazırlayan,
-              Onaylayan, Komisyon / Araştırma Görevlileri (`person-list`) ve Sunulacak Makam (`unit`)
-              alanlarını Belge Önizleme ile birebir aynı yapıda merkezi olarak yapılandırın.
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              Kurumsal Antet, İlgili Birim, Hazırlayan, Onaylayan ve Komisyon Görevlilerini canlı A4 önizlemesiyle yönetin.
             </p>
           </div>
         </div>
 
-        {/* Kapsam Seçimi: Genel Kurum vs Aktif Dosya */}
-        <div className="flex items-center gap-2">
+        {/* Eylem Çubuğu: Önizleme Toggle + Kapsam Seçimi */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Canlı Önizleme Aç/Kapat Butonu */}
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              showPreview
+                ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 shadow-xs ring-1 ring-blue-500/20'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+            }`}
+            title={showPreview ? 'Canlı A4 Önizleme Panelini Gizle' : 'Canlı A4 Önizleme Panelini Aç'}
+          >
+            {showPreview ? <Eye className="w-3.5 h-3.5 text-blue-600" /> : <EyeOff className="w-3.5 h-3.5" />}
+            <span>{showPreview ? 'Canlı Önizleme Açık' : 'Önizlemeyi Göster'}</span>
+          </button>
+
+          {/* Kapsam Seçimi: Genel Kurum vs Aktif Dosya */}
           <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setScopeMode('global')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 scopeMode === 'global'
                   ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>Genel Varsayılan (Settings)</span>
+              <span>Genel Varsayılan</span>
             </button>
             {activeDosyaId && (
               <button
                 type="button"
                 onClick={() => setScopeMode('dosya')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                   scopeMode === 'dosya'
                     ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -488,37 +631,37 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
 
       {/* Bildirim Toast */}
       {toastMsg && (
-        <div className="mx-6 mt-3 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-200 shrink-0">
+        <div className="mx-5 mt-2.5 px-4 py-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-200 shrink-0">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* Ana İçerik: Sol Şablon Listesi + Sağ Dinamik Slot Yapılandırma */}
-      <div className="flex-1 min-h-0 grid grid-cols-12 gap-6 p-6 overflow-hidden">
-        {/* SOL PANEL: Şablon Seçici */}
-        <div className="col-span-5 flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+      {/* Ana İçerik: Sol Şablon Listesi + Orta Dinamik Slot Yapılandırma + Sağ Canlı A4 Önizleme */}
+      <div className="flex-1 min-h-0 flex gap-4 p-4 lg:p-5 overflow-hidden">
+        {/* SOL PANEL: Şablon Seçici (Kompakt ve Arama Destekli) */}
+        <div className="w-64 lg:w-72 xl:w-80 shrink-0 flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
           {/* Genel Varsayılan Kartı */}
-          <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
+          <div className="p-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
             <button
               type="button"
               onClick={() => setSelectedTemplateId(GLOBAL_ROTA_KEY)}
-              className={`w-full p-3 rounded-xl border text-left transition-all flex items-center justify-between gap-3 cursor-pointer ${
+              className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
                 selectedTemplateId === GLOBAL_ROTA_KEY
                   ? 'bg-purple-50/90 dark:bg-purple-950/60 border-purple-300 dark:border-purple-700 text-purple-950 dark:text-purple-100 shadow-xs'
                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-purple-300'
               }`}
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4" />
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0">
+                  <Sparkles className="w-3.5 h-3.5" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs font-extrabold truncate">
-                    🌐 Tüm Belgeler İçin Genel Varsayılan Rota
+                    🌐 Genel Varsayılan Rota
                   </div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                    Özel ayarı olmayan tüm şablonlar buradaki görevli/makam atamalarını kullanır
+                    Tüm belgelerin ortak slot atamaları
                   </div>
                 </div>
               </div>
@@ -528,16 +671,24 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
             </button>
           </div>
 
-          {/* Aşama Filtreleri */}
-          <div className="p-3 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Aşamaya Göre Belgeler
-            </span>
+          {/* Arama ve Aşama Filtreleri */}
+          <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-2">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={templateSearch}
+                onChange={(e) => setTemplateSearch(e.target.value)}
+                placeholder="Şablon ara..."
+                className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500 transition-colors"
+              />
+            </div>
+
             <div className="flex flex-wrap gap-1">
               <button
                 type="button"
                 onClick={() => setSelectedStageId('all')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
                   selectedStageId === 'all'
                     ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -550,7 +701,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
                   key={stg.id}
                   type="button"
                   onClick={() => setSelectedStageId(stg.id)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition-colors ${
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
                     selectedStageId === stg.id
                       ? `${stg.badgeBg} ${stg.badgeText} ring-1 ring-blue-500/30`
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
@@ -563,7 +714,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
           </div>
 
           {/* Şablon Listesi */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar min-h-0">
+          <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar min-h-0">
             {filteredTemplates.map((tpl) => {
               const isSelected = tpl.id === selectedTemplateId
               const directConf = getDirectRotaConfig(tpl.id, effectiveDosyaId)
@@ -575,35 +726,35 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
                   key={tpl.id}
                   type="button"
                   onClick={() => setSelectedTemplateId(tpl.id)}
-                  className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                  className={`w-full p-2 rounded-xl border text-left transition-all flex items-center justify-between gap-1.5 cursor-pointer ${
                     isSelected
                       ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-300 dark:border-blue-800 text-blue-950 dark:text-blue-100 shadow-2xs'
                       : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
                   }`}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <FileText
-                      className={`w-4 h-4 shrink-0 ${
+                      className={`w-3.5 h-3.5 shrink-0 ${
                         isSelected ? 'text-blue-600' : 'text-slate-400'
                       }`}
                     />
                     <div className="min-w-0">
                       <div className="text-xs font-bold truncate">{tpl.title}</div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="text-[9.5px] text-slate-400 truncate">
                         {tpl.categoryLabel} &bull; {tplDef.slots.length} Slot
-                        {hasListSlot ? ' (Komisyon/Liste)' : ''}
+                        {hasListSlot ? ' (Komisyon)' : ''}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     {directConf ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">
-                        Özel Tanımlı
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">
+                        Özel
                       </span>
                     ) : (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500">
-                        Varsayılan
+                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                        Genel
                       </span>
                     )}
                   </div>
@@ -613,30 +764,35 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
           </div>
         </div>
 
-        {/* SAĞ PANEL: Seçili Şablon İçin Dinamik Slot & Görevli Düzenleyici */}
-        <div className="col-span-7 flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
-          {/* Sağ Üst Başlık ve Kaydet Aksiyonları */}
-          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
-            <div>
-              <div className="flex items-center gap-2">
+        {/* ORTA PANEL: Seçili Şablon İçin Dinamik Slot & Görevli Düzenleyici */}
+        <div
+          className={`${
+            showPreview ? 'w-[420px] lg:w-[460px] xl:w-[490px] shrink-0' : 'flex-1 min-w-0'
+          } flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs transition-all`}
+        >
+          {/* Üst Başlık ve Kaydet Aksiyonları */}
+          <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                  Şablon Rota Şeması ({activeDefinition.slots.length} Slot)
+                  {selectedTemplateId === GLOBAL_ROTA_KEY
+                    ? 'Genel Slot Şeması'
+                    : `Şablon Slot Şeması (${activeDefinition.slots.length} Slot)`}
                 </span>
                 <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                  &bull; <Users className="w-3 h-3" /> {mergedPersonel.length} Personel &bull;{' '}
-                  <Building2 className="w-3 h-3" /> {birimListesi.length} Birim
+                  &bull; <Users className="w-3 h-3" /> {mergedPersonel.length} Personel
                 </span>
               </div>
-              <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+              <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 truncate">
                 {activeTemplateTitle}
               </h2>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={handleResetCurrent}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold flex items-center gap-1 cursor-pointer"
                 title="Özel ayarı sil ve genel varsayılana dön"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -645,25 +801,25 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
               <button
                 type="button"
                 onClick={handleApplyToAll}
-                className="px-3 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 dark:bg-purple-950/70 border border-purple-300 dark:border-purple-800 text-purple-800 dark:text-purple-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 dark:bg-purple-950/70 border border-purple-300 dark:border-purple-800 text-purple-800 dark:text-purple-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
                 title="Bu ayarları tüm 30 şablona uygula"
               >
                 <Compass className="w-3.5 h-3.5" />
-                <span>Tüm Belgelere Uygula</span>
+                <span>Tümüne Uygula</span>
               </button>
               <button
                 type="button"
                 onClick={handleSaveCurrent}
-                className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer"
               >
                 <Save className="w-3.5 h-3.5" />
-                <span>Varsayılan Olarak Kaydet</span>
+                <span>Kaydet</span>
               </button>
             </div>
           </div>
 
-          {/* Sağ Gövde: Şablonun Slotlarına Göre Dinamik Rota Formu */}
-          <div className="flex-1 overflow-y-auto p-5 custom-scrollbar min-h-0">
+          {/* Gövde: DocumentPreviewRotaSection */}
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar min-h-0">
             <DocumentPreviewRotaSection
               formData={formData}
               setFormData={setFormData}
@@ -675,6 +831,122 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
             />
           </div>
         </div>
+
+        {/* SAĞ PANEL: Canlı Belge Önizlemesi (A4 Tuvali) */}
+        {showPreview && (
+          <div className="flex-1 min-w-[360px] flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs animate-in fade-in duration-200">
+            {/* Önizleme Araç Çubuğu */}
+            <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-between gap-2 shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Eye className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate">
+                    Canlı Belge Önizlemesi
+                  </span>
+                  {selectedTemplateId === GLOBAL_ROTA_KEY ? (
+                    <div className="flex items-center gap-1 text-[10px] text-purple-600 dark:text-purple-400 font-semibold truncate">
+                      <span>Örnek Şablon:</span>
+                      <select
+                        value={samplePreviewTemplateKey}
+                        onChange={(e) => setSamplePreviewTemplateKey(e.target.value)}
+                        className="bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 rounded px-1.5 py-0.5 text-[10px] font-bold text-purple-800 dark:text-purple-200 cursor-pointer max-w-[200px] truncate"
+                      >
+                        {TEMPLATE_OPTIONS.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-slate-400 block truncate">
+                      {activeTemplateTitle}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Zoom & Kontroller */}
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setPreviewScale((prev) => Math.max(0.25, parseFloat((prev - 0.05).toFixed(2))))}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-500 cursor-pointer"
+                  title="Küçült"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200/80 dark:border-slate-700">
+                  {[0.35, 0.45, 0.55].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setPreviewScale(s)}
+                      className={`px-1.5 py-0.5 text-[9.5px] font-bold rounded cursor-pointer transition-all ${
+                        Math.abs(previewScale - s) < 0.01
+                          ? 'bg-blue-600 text-white shadow-2xs'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                      }`}
+                    >
+                      %{Math.round(s * 100)}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewScale((prev) => Math.min(1.0, parseFloat((prev + 0.05).toFixed(2))))}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-500 cursor-pointer"
+                  title="Büyüt"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(false)}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer ml-1"
+                  title="Önizlemeyi Gizle"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* A4 Kağıt Çizim Alanı */}
+            <div className="flex-1 bg-slate-100/90 dark:bg-slate-950 flex justify-center overflow-auto p-4 custom-scrollbar min-h-0 min-w-0 relative [background-image:radial-gradient(#cbd5e1_1px,transparent_1px)] dark:[background-image:radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px]">
+              {isLoadingPreview ? (
+                <div className="flex flex-col items-center justify-center gap-2 text-slate-400">
+                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs font-semibold">Belge şablonu hazırlanıyor...</span>
+                </div>
+              ) : (
+                <TemplateErrorBoundary>
+                  <div className="origin-top transition-transform duration-150">
+                    <DocumentRenderer
+                      templateKey={effectivePreviewTemplateKey}
+                      data={previewMergedData}
+                      orientation="portrait"
+                      chrome="paper"
+                      scale={previewScale}
+                      isEditing={false}
+                    />
+                  </div>
+                </TemplateErrorBoundary>
+              )}
+            </div>
+
+            {/* Alt Bilgilendirme Çubuğu */}
+            <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 shrink-0">
+              <span className="truncate">
+                💡 Rota panelindeki yetkili ve komisyon seçimleri anında A4 sayfasına yansıtılır.
+              </span>
+              <span className="font-mono text-[9px] text-slate-400/80 shrink-0 ml-2">
+                Ölçek: %{Math.round(previewScale * 100)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

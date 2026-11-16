@@ -1,4 +1,6 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
+import { useModalOverlay } from '../../../services/overlay/useModalOverlay'
 
 interface EkapIknModalProps {
   isOpen: boolean
@@ -15,11 +17,24 @@ export const EkapIknModal: React.FC<EkapIknModalProps> = ({
   setInputVal,
   onSubmit
 }) => {
-  if (!isOpen) return null
+  useModalOverlay({
+    id: 'ekap-ikn-modal',
+    isOpen,
+    onClose
+  })
 
-  return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 animate-in zoom-in-95 duration-200">
+  if (!isOpen) return null
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
+    <div
+      className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in duration-200 pointer-events-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-2">
           EKAP İhale Kayıt Numarası (İKN)
         </h3>
@@ -55,6 +70,7 @@ export const EkapIknModal: React.FC<EkapIknModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

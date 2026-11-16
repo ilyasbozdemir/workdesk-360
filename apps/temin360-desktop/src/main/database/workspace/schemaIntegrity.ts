@@ -130,6 +130,17 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     `
       CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
       CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS SYS_KurulumTakip (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        adim_kodu TEXT NOT NULL UNIQUE,
+        adim_adi TEXT NOT NULL,
+        tablo_adi TEXT NOT NULL,
+        kayit_sayisi INTEGER DEFAULT 0,
+        durum TEXT NOT NULL DEFAULT 'bekliyor',
+        ozet_bilgi TEXT,
+        eklenen_detay TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
       CREATE TABLE IF NOT EXISTS TANIM_ButceOdenek (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         birim_id INTEGER,

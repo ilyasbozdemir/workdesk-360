@@ -1,10 +1,10 @@
 import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
-import { DateEditableField } from "../../document/ApprovalSignature";
+import { MetadataBlock, PersonelCard } from "../../document/ApprovalSignature";
 import { MuayeneKabulKomisyonuData } from "./MuayeneKabulKomisyonu.schema";
 import { formatUnvan } from "../../utils/textHelpers";
-import { formatOfficialEvrakSayisi } from "../../resolver/helpers/resolveEvrakSayisi";
+import { useMuayeneKabulKomisyonu } from "./MuayeneKabulKomisyonu.hook";
 
 interface Props {
   data?: Partial<MuayeneKabulKomisyonuData> & Record<string, any>;
@@ -21,97 +21,23 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
   hideHeader = false,
   hideFooter = false,
 }) => {
-  // Görevlendirilen muayene kabul komisyonu üyeleri (Mükerrer isimleri tekleştir)
-  const gorevlendirilenler: Array<{ adSoyad: string; unvan: string }> = (() => {
-    let raw: Array<{ adSoyad: string; unvan: string }> = [];
-    if (
-      data.muayeneKomisyonu && Array.isArray(data.muayeneKomisyonu) &&
-      data.muayeneKomisyonu.length > 0
-    ) {
-      raw = data.muayeneKomisyonu.map((g: any) => ({
-        adSoyad: g.adSoyad || g.ad_soyad || g.ad || "",
-        unvan: g.unvan || g.gorev || "",
-      }));
-    } else if (
-      data.gorevlendirilenler && Array.isArray(data.gorevlendirilenler) &&
-      data.gorevlendirilenler.length > 0
-    ) {
-      raw = data.gorevlendirilenler.map((g: any) => ({
-        adSoyad: g.adSoyad || g.ad || g.adi || "",
-        unvan: g.unvan || g.unvani || g.gorev || "",
-      }));
-    } else if (
-      data.komisyonUyeleri && Array.isArray(data.komisyonUyeleri) &&
-      data.komisyonUyeleri.length > 0
-    ) {
-      raw = data.komisyonUyeleri.map((g: any) => ({
-        adSoyad: g.adSoyad || g.ad_soyad || g.ad || "",
-        unvan: g.unvan || g.gorev || "",
-      }));
-    } else if (
-      data.gorevliler && Array.isArray(data.gorevliler) &&
-      data.gorevliler.length > 0
-    ) {
-      raw = data.gorevliler.map((g: any) => ({
-        adSoyad: g.ad || g.adSoyad || "",
-        unvan: g.unvan || g.unvani || g.gorev || "",
-      }));
-    }
+  const {
+    evrakNo,
+    konuMetni,
+    isinAdiMetni,
+    kanunMaddesiMetni,
+    onayBelgesiTarihi,
+    onayBelgesiSayisi,
+    gorevlendirilenler,
+    dagitimListesi,
+    kapanisMetni,
+    onaylayanAdi,
+    onaylayanUnvan,
+  } = useMuayeneKabulKomisyonu({ data, pageSize, orientation });
 
-    const seen = new Set<string>();
-    return raw.filter((item) => {
-      const key = (item.adSoyad || "").trim().toLowerCase();
-      if (!key) return false;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  })();
-
-  // Dağıtım listesi (Mükerrer isimleri tekleştir)
-  const dagitimListesi: Array<{ adSoyad: string; unvan: string }> = (() => {
-    if (
-      data.dagitimListesi && Array.isArray(data.dagitimListesi) &&
-      data.dagitimListesi.length > 0
-    ) {
-      const mapped = data.dagitimListesi.map((d: any) => {
-        if (typeof d === "string") return { adSoyad: d, unvan: "" };
-        return {
-          adSoyad: d.adSoyad || d.ad || d.adi || "",
-          unvan: d.unvan || d.unvani || d.gorev || "",
-        };
-      });
-      const seen = new Set<string>();
-      return mapped.filter((item) => {
-        const key = (item.adSoyad || "").trim().toLowerCase();
-        if (!key) return false;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
-    return [];
-  })();
-
-  // Evrak sayısı oluşturma (EBYS Standart Formatı: E-DETSİS-SDP-NO)
-  const evrakNo =
-    data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") &&
-      !String(data.evrakSayisi).includes("/")
-      ? data.evrakSayisi
-      : formatOfficialEvrakSayisi({
-        evrakSayisi: data.evrakSayisi,
-        detsisNo: data.detsisNo,
-        tur: (data as any)?.tur,
-        sayisi: (data as any)?.sayisi,
-        teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo ||
-          (data as any)?.dosyaSayisi,
-      });
-
-  const konuMetni = "Muayene ve Kabul Komisyonu";
-
-  const kurumumuzMetni = data.kurumumuz ?? (data.kurumAdi || "Kurumumuz");
-
-  const isinAdiMetni = data.isinAdi ?? "Alımı yapılacak";
+  const dagitimVar = dagitimListesi.length > 0;
+  const hitapMetni = data.hitapMetni ||
+    (dagitimVar ? "DAĞITIM YERLERİNE" : data.sunulacakMakamAdi || "");
 
   return (
     <DocumentLayout
@@ -132,62 +58,34 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
           lineHeight: 1.5,
         }}
       >
-        {/* Meta Satırı (Sayı, Konu, Tarih) */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "0px",
-          }}
-        >
-          <div>
-            <table style={{ borderCollapse: "collapse" }}>
-              <tbody>
-                <tr>
-                  <td
-                    style={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      padding: "2px 10px 2px 0",
-                      verticalAlign: "top",
-                    }}
-                  >
-                    Sayı
-                  </td>
-                  <td
-                    style={{ padding: "2px 10px 2px 0", verticalAlign: "top" }}
-                  >
-                    : <EditableField name="evrakSayisi" value={evrakNo} />
-                  </td>
-                </tr>
-                <tr>
-                  <td
-                    style={{
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      padding: "2px 10px 2px 0",
-                      verticalAlign: "top",
-                    }}
-                  >
-                    Konu
-                  </td>
-                  <td
-                    style={{ padding: "2px 10px 2px 0", verticalAlign: "top" }}
-                  >
-                    : <EditableField name="dosyaKonusu" value={konuMetni} />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-            <strong>Tarih:</strong>{" "}
-            <DateEditableField
-              name="dosyaTarihi"
-              value={data.dosyaTarihi || data.tarih || ""}
+        {/* Standart Resmî Yazışma Meta Bloğu (Sayı, Konu, Tarih) */}
+        <MetadataBlock
+          evrakSayisi={evrakNo}
+          tarih={data.dosyaTarihi || data.tarih}
+          dosyaKonusu={konuMetni}
+          showBorder={false}
+        />
+
+        {/* HİTAP: tek muhatap ise adı, birden çoksa "DAĞITIM YERLERİNE" */}
+        {hitapMetni && (
+          <div
+            style={{
+              textAlign: "center",
+              fontWeight: "bold",
+              fontSize: "12pt",
+              textTransform: "uppercase",
+              marginTop: "24px",
+              marginBottom: "16px",
+              pageBreakInside: "avoid",
+            }}
+          >
+            <EditableField
+              name="hitapMetni"
+              value={hitapMetni}
+              placeholder="DAĞITIM YERLERİNE"
             />
           </div>
-        </div>
+        )}
 
         {/* Görevlendirme Metni */}
         <div
@@ -201,39 +99,32 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
         >
           <EditableField
             name="onayBelgesiTarihi"
-            value={String(
-              data.onayBelgesiTarihi || data.dosyaTarihi || data.tarih ||
-                "........",
-            )}
+            value={onayBelgesiTarihi}
           />
           {" tarih ve "}
           <EditableField
             name="onayBelgesiSayisi"
-            value={String(
-              data.onayBelgesiSayisi ||
-                (data.onayBelgesiNo && !String(data.onayBelgesiNo).includes("/")
-                  ? data.onayBelgesiNo
-                  : evrakNo),
-            )}
+            value={onayBelgesiSayisi}
           />
           {" sayılı Onay Belgesine istinaden 4734 Sayılı Kanunun "}
           <EditableField
             name="kanunMaddesi"
-            value={String(
-              data.kanunMaddesi || data.ihaleSekli || data.ihale_sekli ||
-                "22/d",
-            )}
+            value={kanunMaddesiMetni}
           />
           {" maddesine göre alımı gerçekleştirilen "}
-          <EditableField
-            name="kurumumuz"
-            value={kurumumuzMetni}
-          />{" "}
+          {data.kurumumuz || data.kurumAdi ? (
+            <>
+              <EditableField
+                name="kurumumuz"
+                value={String(data.kurumumuz || data.kurumAdi || "Kurumumuz")}
+              />{" "}
+            </>
+          ) : null}
           <EditableField
             name="isinAdi"
             value={isinAdiMetni}
           />{" "}
-          işine ait muayene ve kabulünü yapmak üzere{" "}
+          işine ait muayene ve kabulü yapmak üzere{" "}
           {gorevlendirilenler.length > 0
             ? (
               gorevlendirilenler.map((g, idx) => (
@@ -245,7 +136,7 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
               ))
             )
             : <strong>İlgili personeller</strong>}{" "}
-          Muayene ve Kabul Komisyonunda görevlendirilecek olup,
+          Muayene ve Kabul Komisyonunda görevlendirilmiş olup,
         </div>
 
         <div
@@ -253,92 +144,52 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
             textIndent: "40px",
             textAlign: "justify",
             marginTop: "0px",
-            marginBottom: "20px",
+            marginBottom: "30px",
             lineHeight: 1.6,
           }}
         >
-          Gereğini olurlarınıza arz ederim.
+          {kapanisMetni}
         </div>
 
-        {/* Hazırlayan (Sağ) */}
-        <div
-          style={{
-            textAlign: "right",
-            marginBottom: "30px",
-            lineHeight: 1.3,
-            paddingRight: "20px",
-          }}
-        >
-          <EditableField
-            name="hazirlayanPersonelAdi"
-            value={data.hazirlayanPersonelAdi || ""}
-          />
-          <br />
-          <EditableField
-            name="hazirlayanPersonelUnvan"
-            value={data.hazirlayanPersonelUnvan || ""}
-          />
-        </div>
-
-        {/* OLUR Onay Bloğu (Orta) */}
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "25px",
-            marginBottom: "30px",
-            breakInside: "avoid",
-            pageBreakInside: "avoid",
-          }}
-        >
-          <strong>OLUR</strong>
-          <br />
-          <DateEditableField
-            name="dosyaTarihi"
-            value={data.dosyaTarihi || data.tarih || ""}
-          />
-          <br />
-          <br />
-          <EditableField
-            name="onaylayanPersonelAdi"
-            value={data.onaylayanPersonelAdi || ""}
-          />
-          <br />
-          <EditableField
-            name="onaylayanPersonelUnvan"
-            value={data.onaylayanPersonelUnvan || ""}
-          />
-        </div>
+        {/* Görevlendirmeyi Yapan Yetkili / Harcama Yetkilisi İmzası (Sağ) */}
+        <PersonelCard
+          adSoyad={onaylayanAdi}
+          unvan={onaylayanUnvan}
+          align="right"
+          marginTop={20}
+          marginBottom={30}
+          nameField="onaylayanPersonelAdi"
+          unvanField="onaylayanPersonelUnvan"
+        />
 
         {/* DAĞITIM (Sol Alt) */}
-        <div
-          style={{
-            marginTop: "40px",
-            textAlign: "left",
-            fontSize: "10pt",
-            breakInside: "avoid",
-            pageBreakInside: "avoid",
-          }}
-        >
-          <div style={{ fontSize: "10pt", fontWeight: "bold" }}>DAĞITIM:</div>
-          <ul
+        {dagitimVar && (
+          <div
             style={{
-              listStyleType: "none",
-              paddingLeft: 0,
-              marginTop: "5px",
-              lineHeight: 1.5,
+              marginTop: "40px",
+              textAlign: "left",
+              fontSize: "10pt",
+              breakInside: "avoid",
+              pageBreakInside: "avoid",
             }}
           >
-            {dagitimListesi.length > 0
-              ? (
-                dagitimListesi.map((d, idx) => (
-                  <li key={idx}>
-                    - {d.adSoyad} {d.unvan ? formatUnvan(d.unvan) : ""}
-                  </li>
-                ))
-              )
-              : <li>- İlgili Personel</li>}
-          </ul>
-        </div>
+            <div style={{ fontSize: "10pt", fontWeight: "bold" }}>DAĞITIM:</div>
+            <ul
+              style={{
+                listStyleType: "none",
+                paddingLeft: 0,
+                marginTop: "5px",
+                lineHeight: 1.5,
+              }}
+            >
+              {dagitimListesi.map((d, idx) => (
+                <li key={idx}>
+                  - {d.adSoyad} {d.unvan ? formatUnvan(d.unvan) : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </DocumentLayout>
   );

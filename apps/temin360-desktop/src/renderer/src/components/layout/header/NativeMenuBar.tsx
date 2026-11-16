@@ -41,7 +41,7 @@ export const NativeMenuBar = React.memo(function NativeMenuBar({
     <div
       ref={containerRef}
       id="native-menu-bar"
-      className="flex items-center gap-0.5 z-50 text-[11px] font-medium"
+      className="relative flex items-center gap-0.5 z-50 text-[11px] font-medium"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
       {/* App / Kurum Logo */}
@@ -60,7 +60,7 @@ export const NativeMenuBar = React.memo(function NativeMenuBar({
 
       {/* Görünür Ana Menüler */}
       {visibleMenus.map((m) => (
-        <div key={m.name} className="relative">
+        <div key={m.name} className={`relative ${activeMenu === m.name ? 'z-[100]' : ''}`}>
           <button
             onClick={() => {
               if (m.onClick) {
@@ -120,7 +120,7 @@ export const NativeMenuBar = React.memo(function NativeMenuBar({
 
       {/* TAŞAN MENÜLER (...) BUTONU */}
       {overflowMenus.length > 0 && (
-        <div className="relative">
+        <div className={`relative ${activeMenu === '__overflow__' ? 'z-[100]' : ''}`}>
           <button
             onClick={() => {
               setActiveMenu(activeMenu === '__overflow__' ? null : '__overflow__')

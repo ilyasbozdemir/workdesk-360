@@ -1,72 +1,88 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { overlayManager } from '../../../services/overlay/overlayManager'
 
 /**
- * Global Interactivity Guard (Performans Optimize Edilmiş Sürüm)
- * Sekme veya rota değiştiğinde arka planda kalan modal scroll lock ve overlay kilitlerini
- * layout thrashing (sürekli reflow) yapmadan temizler.
+ * forceUnlockInteractivity
+ * Radix UI, Headless UI veya özel modal/backdrop bileşenlerinin kapanırken
+ * body veya #root üzerinde bıraktığı tüm pointer-events, scroll-lock, inert ve
+ * aria-hidden kilitlerini OverlayManager üzerinden mimari düzeyde temizleyerek
+ * inputların donmasını/yazılamaz hale gelmesini önler.
+ */
+export function forceUnlockInteractivity(): void {
+  try {
+    overlayManager.forceResetLocksIfNoOverlays()
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Global Interactivity Guard
+ * Modal açılıp kapandığında, sekme/rota değiştiğinde ve global kullanıcı etkileşimlerinde
+ * arka planda takılı kalan overlay kilitlerini anında çözerek inputların yazılabilir kalmasını sağlar.
  */
 export function useGlobalInteractivityGuard(activeRouteOrTab: string): void {
+  const prevTabRef = useRef<string>(activeRouteOrTab)
+
   useEffect(() => {
-    // Rota değiştiğinde açık custom dropdown veya geçici overlay'leri temizle
-    window.dispatchEvent(new CustomEvent('app:clear-overlays'))
+    const prevTab = prevTabRef.current
+    prevTabRef.current = activeRouteOrTab
 
-    const cleanupStuckLocks = (): void => {
-      // 1. Body & HTML pointer events kilidini hafifçe kontrol et
-      if (document.body.style.pointerEvents === 'none') {
-        document.body.style.pointerEvents = 'auto'
-      }
-      if (document.documentElement.style.pointerEvents === 'none') {
-        document.documentElement.style.pointerEvents = 'auto'
-      }
+    // Rota veya sekme değiştiğinde OverlayManager üzerinden sekme geçişini yönet
+    overlayManager.handleTabSwitch(prevTab, activeRouteOrTab)
+    forceUnlockInteractivity()
 
-      // 2. Kalan scroll kilitlerini kaldır
-      if (document.body.hasAttribute('data-scroll-locked')) {
-        document.body.removeAttribute('data-scroll-locked')
-      }
+    // Sayfa üzerinde herhangi bir tık veya tuş basıldığında kilit kalmışsa anında çöz
+    const handleGlobalInteraction = (e: Event): void => {
+      const root = document.getElementById('root')
+      const isRootLocked =
+        root && (root.hasAttribute('inert') || root.getAttribute('aria-hidden') === 'true')
+      const isBodyLocked =
+        document.body.style.pointerEvents === 'none' ||
+        document.documentElement.style.pointerEvents === 'none'
 
-      if (document.body.style.overflow === 'hidden') {
-        // Eğer sahnede görünür bir modal yoksa overflow'u sıfırla
-        const modal = document.querySelector('[role="dialog"]')
-        if (!modal) {
-          document.body.style.overflow = ''
-        }
-      }
+      const target = e.target as HTMLElement | null
+      const isInput =
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          Boolean(target.closest('input, textarea, [contenteditable="true"]')))
 
-      // 3. Radix veya Headless UI kilit stillerini temizle
-      const lockStyles = document.querySelectorAll(
-        'style[data-radix-scroll-lock], style[data-radix-body-lock]'
-      )
-      lockStyles.forEach((el) => {
-        try {
-          el.remove()
-        } catch {
-          // ignore
+      if (isInput || isRootLocked || isBodyLocked) {
+        forceUnlockInteractivity()
+      }
+    }
+
+    window.addEventListener('mousedown', handleGlobalInteraction, { passive: true, capture: true })
+    window.addEventListener('keydown', handleGlobalInteraction, { passive: true, capture: true })
+    window.addEventListener('focusin', handleGlobalInteraction, { passive: true, capture: true })
+
+    // MutationObserver: DOM'da body stilleri veya data-scroll-locked değiştiğinde kontrol et
+    let observer: MutationObserver | null = null
+    try {
+      observer = new MutationObserver(() => {
+        if (
+          (document.body.style.pointerEvents === 'none' ||
+            document.documentElement.style.pointerEvents === 'none') &&
+          !overlayManager.isAnyOverlayActive()
+        ) {
+          forceUnlockInteractivity()
         }
       })
-
-      // 4. Root üzerindeki hatalı inert/aria-hidden kilitlerini temizle
-      const root = document.getElementById('root')
-      if (root) {
-        if (root.getAttribute('aria-hidden') === 'true') {
-          root.removeAttribute('aria-hidden')
-        }
-        if (root.hasAttribute('inert')) {
-          root.removeAttribute('inert')
-        }
-      }
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['style', 'data-scroll-locked']
+      })
+    } catch {
+      // ignore
     }
-
-    // Yalnızca rota/sekme değiştiğinde 1 kez çalıştır
-    cleanupStuckLocks()
-
-    const handleClearOverlays = (): void => {
-      cleanupStuckLocks()
-    }
-
-    window.addEventListener('app:clear-overlays', handleClearOverlays)
 
     return () => {
-      window.removeEventListener('app:clear-overlays', handleClearOverlays)
+      window.removeEventListener('mousedown', handleGlobalInteraction, { capture: true })
+      window.removeEventListener('keydown', handleGlobalInteraction, { capture: true })
+      window.removeEventListener('focusin', handleGlobalInteraction, { capture: true })
+      observer?.disconnect()
     }
   }, [activeRouteOrTab])
 }

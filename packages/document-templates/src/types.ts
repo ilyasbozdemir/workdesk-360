@@ -1,18 +1,21 @@
-import React from 'react';
-import type { RoleCode, Scope } from './constants/roles';
-import type { CommonDocumentFields, PrepareDocumentParams } from '@worksuite-360/document-engine';
+import React from "react";
+import type { RoleCode, Scope } from "./constants/roles";
+import type {
+  CommonDocumentFields,
+  PrepareDocumentParams,
+} from "@worksuite-360/document-engine";
 
 export type { CommonDocumentFields, PrepareDocumentParams };
 
 export type { RoleCode, Scope };
 
 export type CommissionTypeCategory =
-  | 'piyasa_fiyat'
-  | 'muayene_kabul'
-  | 'yaklasik_maliyet'
-  | 'ihale_komisyonu'
-  | 'all'
-  | 'none';
+  | "piyasa_fiyat"
+  | "muayene_kabul"
+  | "yaklasik_maliyet"
+  | "ihale_komisyonu"
+  | "all"
+  | "none";
 
 /**
  * Belge/Rol Görünürlük Kuralı:
@@ -20,7 +23,7 @@ export type CommissionTypeCategory =
  * - 'hide': Gizli (Görünmez)
  * - 'optional': İsteğe bağlı / Koşullu (Komisyonda/belgede atanmış üye/kişi varsa gösterilir)
  */
-export type RoleVisibility = 'show' | 'hide' | 'optional';
+export type RoleVisibility = "show" | "hide" | "optional";
 
 export interface TemplateCapabilities {
   supportsOlur: boolean;
@@ -40,41 +43,52 @@ export interface TemplateCapabilities {
   commissionRoleVisibility?: Record<string, RoleVisibility>;
 }
 
-export type TemplateGroup = 'piyasa_arastirma' | 'muayene_kabul' | 'olur_onay';
+export type TemplateGroup = "piyasa_arastirma" | "muayene_kabul" | "olur_onay";
+
+/**
+ * Kamu İhale Kanunu ve Doğrudan Temin Alım Türleri
+ */
+export type AlimTuru = "mal" | "hizmet" | "yapim" | "danismanlik";
 
 /**
  * Belgenin sunulacağı makam yönlendirme modu (Katman A)
  */
-export type RecipientMode = 'role' | 'commission' | 'unit' | 'none' | 'external' | 'firma';
+export type RecipientMode =
+  | "role"
+  | "commission"
+  | "unit"
+  | "none"
+  | "external"
+  | "firma";
 
 /**
  * İmza zorunluluğunun dayanak kaynağı
  */
 export type RequirementSource =
-  | 'statutory'            // Hukuken / Mevzuaten Zorunlu (Örn: 5018 S.K. Harcama Yetkilisi Oluru)
-  | 'administrative'       // İdari Usul / Yönetmelik Gereği (Örn: Muayene Kabul Tutanak Onayı)
-  | 'optional_custom'      // Kurum Tercihine Bağlı / İsteğe Bağlı
-  | 'unspecified';         // Dayanağı henüz belirtilmemiş / nötr durum
+  | "statutory" // Hukuken / Mevzuaten Zorunlu (Örn: 5018 S.K. Harcama Yetkilisi Oluru)
+  | "administrative" // İdari Usul / Yönetmelik Gereği (Örn: Muayene Kabul Tutanak Onayı)
+  | "optional_custom" // Kurum Tercihine Bağlı / İsteğe Bağlı
+  | "unspecified"; // Dayanağı henüz belirtilmemiş / nötr durum
 
 /**
  * Metadata tanımlanma durumu (Eksik metadata ile bilinçli yokluğu ayırt eder)
  */
 export type ExplicitState =
-  | 'explicit_defined'      // Tanımları bilinçli ve doğrulanmış olarak yapılmış
-  | 'explicit_none'         // Makam/İmza olmadığı bilinçli olarak belirtilmiş
-  | 'unspecified_fallback'  // Henüz tanımlanmamış / varsayılan fallback durumu
-  | 'from_profile';         // Arketip profilden türetilmiş (henüz elle doğrulanmamış)
+  | "explicit_defined" // Tanımları bilinçli ve doğrulanmış olarak yapılmış
+  | "explicit_none" // Makam/İmza olmadığı bilinçli olarak belirtilmiş
+  | "unspecified_fallback" // Henüz tanımlanmamış / varsayılan fallback durumu
+  | "from_profile"; // Arketip profilden türetilmiş (henüz elle doğrulanmamış)
 
 /**
  * Arketip İş Akışı Profilleri
  */
 export type WorkflowProfileName =
-  | 'olur_onay'
-  | 'komisyon_tutanagi'
-  | 'dis_yazi'
-  | 'ic_form'
-  | 'firma_belgesi'
-  | 'ek_belge';
+  | "olur_onay"
+  | "komisyon_tutanagi"
+  | "dis_yazi"
+  | "ic_form"
+  | "firma_belgesi"
+  | "ek_belge";
 
 /**
  * Sunulacak Makam Yönlendirme Metadata'sı (Katman A)
@@ -91,7 +105,13 @@ export interface TemplateRouting {
  */
 export interface TemplateSignatureRule {
   role: RoleCode;
-  slotType: 'prepared_by' | 'checked_by' | 'approved_by' | 'member' | 'president' | 'signatory';
+  slotType:
+    | "prepared_by"
+    | "checked_by"
+    | "approved_by"
+    | "member"
+    | "president"
+    | "signatory";
   requirementSource: RequirementSource;
   labelOverride?: string;
 }
@@ -139,7 +159,7 @@ export type TemplateComponentType = React.ComponentType<TemplateComponentProps>;
  * - 'warning': Uyarı / İdari usul eksikliği (kullanıcı onayı gerektirebilir)
  * - 'info': Bilgilendirme / Format veya görsel iyileştirme tavsiyesi
  */
-export type ValidationSeverity = 'error' | 'warning' | 'info';
+export type ValidationSeverity = "error" | "warning" | "info";
 
 /**
  * Belge doğrulama bulgusu / sorunu
@@ -169,7 +189,7 @@ export interface ValidationContext {
  */
 export type ValidationRuleFn = (
   payload: Record<string, any>,
-  context: ValidationContext
+  context: ValidationContext,
 ) => ValidationIssue | ValidationIssue[] | null | undefined;
 
 /**

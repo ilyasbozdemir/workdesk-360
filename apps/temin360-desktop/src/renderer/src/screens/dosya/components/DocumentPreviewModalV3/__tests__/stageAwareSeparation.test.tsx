@@ -205,5 +205,90 @@ describe('DocumentPreviewModalV3 Stage-Aware Separation & Guidance Mode', () => 
       expect(screen.getByText('Piyasa Fiyat Araştırma Tutanağı')).toBeTruthy()
       expect(screen.getByText('Yaklaşık Maliyet Cetveli')).toBeTruthy()
     })
+
+    it('dosyanın alım türüne göre (Mal vs Yapım) şablonları filtreler ve rozet gösterir', () => {
+      const templatesWithType: TemplateOptionItem[] = [
+        {
+          id: 'luzum_muzekkeresi_teslim_tesellum',
+          name: 'Teslim Tesellüm Belgesi',
+          title: 'Teslim Tesellüm Belgesi',
+          category: '4-kabul-ve-odeme-islemleri',
+          categoryLabel: 'Muayene & Kabul',
+          alimTurleri: ['mal']
+        },
+        {
+          id: 'kik049_yapim_gecici_kabul_tutanagi',
+          name: 'Yapım Geçici Kabul Tutanağı (KİK049)',
+          title: 'Yapım Geçici Kabul Tutanağı',
+          category: '4-kabul-ve-odeme-islemleri',
+          categoryLabel: 'Muayene & Kabul',
+          alimTurleri: ['yapim']
+        },
+        {
+          id: 'muayene_kabul_tutanagi',
+          name: 'Muayene ve Kabul Tutanağı',
+          title: 'Muayene ve Kabul Tutanağı',
+          category: '4-kabul-ve-odeme-islemleri',
+          categoryLabel: 'Muayene & Kabul',
+          alimTurleri: ['mal', 'hizmet', 'danismanlik']
+        }
+      ]
+
+      // 1. Durum: Dosya "Yapım İşi" olduğunda Teslim Tesellüm gizlenmeli, KİK049 görünmeli
+      const { unmount } = render(
+        <DocumentPreviewSidebar
+          sidebarOpen={true}
+          setSidebarOpen={vi.fn()}
+          selectedDocId="kik049_yapim_gecici_kabul_tutanagi"
+          templateOptions={templatesWithType}
+          isEditingMode={false}
+          setIsEditingMode={vi.fn()}
+          orientation="portrait"
+          setOrientation={vi.fn()}
+          formData={{ dosyaRecord: { tur: 'Yapım İşi' } }}
+          setFormData={vi.fn()}
+          localShowLogoLeft={true}
+          setLocalShowLogoLeft={vi.fn()}
+          localShowLogoRight={true}
+          setLocalShowLogoRight={vi.fn()}
+          stageInfo={DOCUMENT_STAGES[3]}
+          disableDocumentGuidance={false}
+          onSelectTemplate={vi.fn()}
+        />
+      )
+
+      expect(screen.getAllByText('🏗️ Yapım').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText('Yapım Geçici Kabul Tutanağı')).toBeTruthy()
+      expect(screen.queryByText('Teslim Tesellüm Belgesi')).toBeNull()
+
+      unmount()
+
+      // 2. Durum: Dosya "Mal Alımı" olduğunda KİK049 gizlenmeli, Teslim Tesellüm görünmeli
+      render(
+        <DocumentPreviewSidebar
+          sidebarOpen={true}
+          setSidebarOpen={vi.fn()}
+          selectedDocId="luzum_muzekkeresi_teslim_tesellum"
+          templateOptions={templatesWithType}
+          isEditingMode={false}
+          setIsEditingMode={vi.fn()}
+          orientation="portrait"
+          setOrientation={vi.fn()}
+          formData={{ dosyaRecord: { tur: 'Mal Alımı' } }}
+          setFormData={vi.fn()}
+          localShowLogoLeft={true}
+          setLocalShowLogoLeft={vi.fn()}
+          localShowLogoRight={true}
+          setLocalShowLogoRight={vi.fn()}
+          stageInfo={DOCUMENT_STAGES[3]}
+          disableDocumentGuidance={false}
+          onSelectTemplate={vi.fn()}
+        />
+      )
+
+      expect(screen.getAllByText('📦 Mal').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText('Teslim Tesellüm Belgesi')).toBeTruthy()
+      expect(screen.queryByText('Yapım Geçici Kabul Tutanağı (KİK049)')).toBeNull()
+    })
   })
 })

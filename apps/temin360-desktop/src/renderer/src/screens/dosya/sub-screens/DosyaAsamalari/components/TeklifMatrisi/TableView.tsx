@@ -23,9 +23,9 @@ export function TableView({
             <th className="p-3 border border-slate-200 dark:border-slate-800 font-bold text-slate-700 dark:text-slate-300 text-center w-28">
               Miktar / Birim
             </th>
-            {invitedFirms.map((firma) => (
+            {invitedFirms.map((firma, fIdx) => (
               <th
-                key={firma.id}
+                key={`th_firm_${firma.id ?? fIdx}_${fIdx}`}
                 className="p-3 border border-slate-200 dark:border-slate-800 font-bold text-slate-700 dark:text-slate-300 text-right min-w-[150px]"
               >
                 <div className="truncate w-36 ml-auto text-right" title={firma.unvan}>
@@ -42,13 +42,13 @@ export function TableView({
           </tr>
         </thead>
         <tbody>
-          {items.map((kalem) => {
+          {items.map((kalem, kIdx) => {
             const lowest = getLowestBidInfo(kalem.id)
             const avgPrice = getAverageBid(kalem.id)
 
             return (
               <tr
-                key={kalem.id}
+                key={`tr_kalem_${kalem.id ?? kIdx}_${kIdx}`}
                 className="hover:bg-slate-50/30 dark:hover:bg-slate-950/10 transition-colors"
               >
                 <td className="p-3 border border-slate-200 dark:border-slate-805 font-semibold text-slate-800 dark:text-slate-200 bg-slate-50/20 dark:bg-slate-950/5">
@@ -57,13 +57,13 @@ export function TableView({
                 <td className="p-3 border border-slate-200 dark:border-slate-805 text-center text-slate-500">
                   {kalem.miktar} {kalem.birim}
                 </td>
-                {invitedFirms.map((firma) => {
+                {invitedFirms.map((firma, fIdx) => {
                   const val = bids[`${kalem.id}_${firma.id}`] || 0
                   const isLowest = lowest.price > 0 && lowest.firmaId === firma.id
 
                   return (
                     <td
-                      key={firma.id}
+                      key={`td_firm_${kalem.id ?? kIdx}_${firma.id ?? fIdx}_${fIdx}`}
                       className={`p-0 border border-slate-200 dark:border-slate-805 text-right transition-colors ${
                         isLowest
                           ? 'bg-emerald-500/[0.05] dark:bg-emerald-500/[0.02]'
@@ -114,9 +114,9 @@ export function TableView({
               Toplam Teklif Tutarı
             </td>
             <td className="p-3.5 border border-slate-200 dark:border-slate-800"></td>
-            {invitedFirms.map((firma) => (
+            {invitedFirms.map((firma, fIdx) => (
               <td
-                key={firma.id}
+                key={`td_total_firm_${firma.id ?? fIdx}_${fIdx}`}
                 className="p-3.5 border border-slate-200 dark:border-slate-800 text-right text-sm font-extrabold text-slate-900 dark:text-slate-100 font-mono"
               >
                 {firma.teklif_toplami

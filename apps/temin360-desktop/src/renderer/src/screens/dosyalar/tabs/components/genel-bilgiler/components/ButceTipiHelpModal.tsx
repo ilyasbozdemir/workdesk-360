@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   BookOpen,
   Building2,
@@ -12,6 +13,7 @@ import {
   UserCheck,
   X
 } from 'lucide-react'
+import { useModalOverlay } from '@renderer/services/overlay/useModalOverlay'
 
 interface ButceTipiHelpModalProps {
   isOpen: boolean
@@ -26,10 +28,20 @@ export function ButceTipiHelpModal({
 }: ButceTipiHelpModalProps): React.JSX.Element | null {
   const [activeTab, setActiveTab] = useState<'tanimlar' | 'etkileri'>('tanimlar')
 
-  if (!isOpen) return null
+  useModalOverlay({
+    id: 'butce-tipi-help-modal',
+    isOpen,
+    onClose
+  })
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+  if (!isOpen) return null
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div
         className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -299,6 +311,7 @@ export function ButceTipiHelpModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

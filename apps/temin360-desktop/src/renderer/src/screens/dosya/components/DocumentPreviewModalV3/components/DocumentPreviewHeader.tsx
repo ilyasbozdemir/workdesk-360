@@ -362,7 +362,7 @@ export function DocumentPreviewHeader({
             onClick={handleRefreshFromDb}
             disabled={isSaving}
             className="w-8 h-8 2xl:w-auto 2xl:px-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer border bg-white hover:bg-teal-50 text-slate-700 hover:text-teal-700 border-slate-200 hover:border-teal-300 dark:bg-slate-900 dark:hover:bg-teal-950/40 dark:text-slate-200 dark:hover:text-teal-300 dark:border-slate-800 dark:hover:border-teal-800 shadow-2xs group shrink-0"
-            title="Dosyadaki güncel kalem ve teklifleri kullanıcı düzenlemelerini ezmeden akıllıca senkronize eder (Smart Refresh)"
+            title="Dosyadaki güncel kalemleri, teklifleri ve güncellenen komisyon kadrosunu senkronize eder (Smart Refresh)"
           >
             <RefreshCw className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 group-hover:rotate-180 transition-transform duration-500" />
             <span className="hidden 2xl:inline">Verileri Senkronize Et</span>

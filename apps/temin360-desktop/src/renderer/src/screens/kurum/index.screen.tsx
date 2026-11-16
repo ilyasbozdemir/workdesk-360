@@ -11,6 +11,7 @@ import {
   MapPin,
   Save,
   ShieldCheck,
+  Sparkles,
   Users,
   Warehouse,
   Wallet
@@ -213,6 +214,11 @@ export default function KurumScreen(): React.JSX.Element {
   const { addTab } = useTabStore()
 
   const handleTabChange = (tabId: string): void => {
+    if (tabId === 'kurulum') {
+      addTab('/kurulum')
+      navigate({ to: '/kurulum' as any })
+      return
+    }
     if (
       ['birimler', 'personel', 'komisyonlar', 'komisyon-gorevleri', 'ambar', 'projeler'].includes(
         tabId
@@ -314,6 +320,23 @@ export default function KurumScreen(): React.JSX.Element {
       id: 'projeler',
       label: 'Proje Yönetimi',
       icon: <FolderKanban className="w-4 h-4 shrink-0 text-blue-500" />
+    },
+    {
+      id: 'div-sep-wizard',
+      isDivider: true,
+      label: '',
+      icon: null
+    },
+    {
+      id: 'hdr-wizard',
+      isHeader: true,
+      label: 'Kurulum & Sihirbazlar',
+      icon: null
+    },
+    {
+      id: 'kurulum',
+      label: '🚀 Hızlı Kurulum Sihirbazı',
+      icon: <Sparkles className="w-4 h-4 shrink-0 text-amber-500 animate-pulse" />
     }
   ]
 
@@ -361,6 +384,18 @@ export default function KurumScreen(): React.JSX.Element {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      addTab('/kurulum')
+                      navigate({ to: '/kurulum' as any })
+                    }}
+                    className="gap-1.5 text-xs font-bold rounded-xl py-2 px-3.5 border-amber-300 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 cursor-pointer shadow-sm"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    🚀 İlk Kurulum Sihirbazı
+                  </Button>
                   {activeTab !== 'onizleme' ? (
                     <>
                       <Button

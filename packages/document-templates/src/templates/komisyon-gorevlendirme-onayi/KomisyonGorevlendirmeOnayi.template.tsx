@@ -2,13 +2,11 @@ import React from "react";
 import { DocumentLayout } from "../../document/DocumentLayout";
 import { EditableField } from "../../document/EditableField";
 import {
-  ApprovalSignature,
   DateEditableField,
-  EditableOlurPlaceholder,
   PersonelCard,
 } from "../../document/ApprovalSignature";
 import { KomisyonGorevlendirmeOnayiType } from "./KomisyonGorevlendirmeOnayi.schema";
-import { formatOfficialEvrakSayisi } from "../../resolver/helpers/resolveEvrakSayisi";
+import { useKomisyonGorevlendirmeOnayi } from "./KomisyonGorevlendirmeOnayi.hook";
 
 interface KomisyonGorevlendirmeOnayiProps {
   data?: Partial<KomisyonGorevlendirmeOnayiType> & Record<string, any>;
@@ -25,38 +23,20 @@ export function KomisyonGorevlendirmeOnayi({
   hideHeader = false,
   hideFooter = true,
 }: KomisyonGorevlendirmeOnayiProps) {
-  const fiyatUyeleri = data.fiyatKomisyonu && data.fiyatKomisyonu.length > 0
-    ? data.fiyatKomisyonu
-    : data.gorevliler || [];
-  const muayeneUyeleri = data.muayeneKomisyonu || [];
-
-  const mainHeaderTitle = data.idareAdi ||
-    data.sunulacakMakamAdi ||
-    (data.antetSatirlari && data.antetSatirlari[1]) ||
-    data.kurumAdi ||
-    "KURUM BAŞKANLIĞINA";
-
-  const fallbackKurum = data.altKurumBizim || data.kurumBizim || "İdaremiz";
-  const kurumumuzMetni =
-    data.kurumumuz &&
-    data.kurumumuz !== "Belediyemiz / İdaremiz" &&
-    data.kurumumuz !== "Belediyemiz"
-      ? data.kurumumuz
-      : fallbackKurum;
-
-  const isAdiMetni =
-    data.isAdi ?? data.isinAdi;
-
-  const evrakNo =
-    data.evrakSayisi && String(data.evrakSayisi).startsWith("E-") && !String(data.evrakSayisi).includes("/")
-      ? data.evrakSayisi
-      : formatOfficialEvrakSayisi({
-          evrakSayisi: data.evrakSayisi,
-          detsisNo: data.detsisNo,
-          tur: (data as any)?.tur,
-          sayisi: (data as any)?.sayisi,
-          teminNo: (data as any)?.teminNo || (data as any)?.dosyaNo || (data as any)?.dosyaSayisi,
-        });
+  const {
+    fiyatUyeleri,
+    muayeneUyeleri,
+    mainHeaderTitle,
+    fallbackKurum,
+    kurumumuzMetni,
+    isAdiMetni,
+    evrakNo,
+    tarih,
+    konu,
+    kapanisMetni,
+    onaylayanAdi,
+    onaylayanUnvan,
+  } = useKomisyonGorevlendirmeOnayi({ data, pageSize, orientation });
 
   const renderTopSection = () => (
     <>
@@ -104,7 +84,7 @@ export function KomisyonGorevlendirmeOnayi({
                   :{" "}
                   <EditableField
                     name="konu"
-                    value={data.konu || "Görevlendirme"}
+                    value={konu}
                   />
                 </td>
               </tr>
@@ -115,7 +95,7 @@ export function KomisyonGorevlendirmeOnayi({
           <strong>Tarih:</strong>{" "}
           <DateEditableField
             name="tarih"
-            value={data.tarih || data.onayaSunulanTarih || data.dosyaTarihi}
+            value={tarih}
           />
         </div>
       </div>
@@ -161,35 +141,23 @@ export function KomisyonGorevlendirmeOnayi({
             placeholder="İşin Adı"
           />
         </strong>{" "}
-        işine ait fiyat araştırması ile muayene ve kabulü yapmak üzere
-        aşağıdaki personeller görevlendirilecek olup,
+        işine ait fiyat araştırması ile muayene ve kabulü yapmak üzere aşağıdaki
+        personeller görevlendirilmiş olup,
       </div>
       <div
         style={{
           textAlign: "justify",
           textIndent: "25px",
-          marginBottom: "8px",
+          marginBottom: "12px",
           lineHeight: 1.35,
         }}
       >
-        Gereğini olurlarınıza arz ederim.
+        {kapanisMetni}
       </div>
     </>
   );
 
-  const renderPreparer = () => (
-    <PersonelCard
-      adSoyad={data.hazirlayanPersonelAdi}
-      unvan={data.hazirlayanPersonelUnvan}
-      align="right"
-      nameField="hazirlayanPersonelAdi"
-      unvanField="hazirlayanPersonelUnvan"
-      marginTop={4}
-      marginBottom={10}
-    />
-  );
-
-  const renderTablesAndOlur = () => (
+  const renderTablesAndSigner = () => (
     <>
       {/* Table 1: PİYASA ARAŞTIRMA VE SATINALMA KOMİSYONU */}
       <div
@@ -390,21 +358,16 @@ export function KomisyonGorevlendirmeOnayi({
         </>
       )}
 
-      {/* Approval / OLUR Section */}
-      {data.olurYazisi !== false
-        ? (
-          <ApprovalSignature
-            title="OLUR"
-            date={data.onayTarihi || data.tarih || data.dosyaTarihi}
-            adSoyad={data.baskanAdi || data.onaylayanPersonelAdi}
-            unvan={data.baskanUnvan || data.onaylayanPersonelUnvan}
-            nameField="baskanAdi"
-            unvanField="baskanUnvan"
-            showSpace={true}
-            marginTop={12}
-          />
-        )
-        : <EditableOlurPlaceholder />}
+      {/* Görevlendirmeyi Yapan Yetkili / Harcama Yetkilisi İmzası (Sağ) */}
+      <PersonelCard
+        adSoyad={onaylayanAdi}
+        unvan={onaylayanUnvan}
+        align="right"
+        marginTop={20}
+        marginBottom={20}
+        nameField="baskanAdi"
+        unvanField="baskanUnvan"
+      />
     </>
   );
 
@@ -428,8 +391,7 @@ export function KomisyonGorevlendirmeOnayi({
         }}
       >
         {renderTopSection()}
-        {renderPreparer()}
-        {renderTablesAndOlur()}
+        {renderTablesAndSigner()}
       </div>
     </DocumentLayout>
   );

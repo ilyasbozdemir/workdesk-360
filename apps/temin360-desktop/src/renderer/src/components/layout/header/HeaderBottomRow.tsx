@@ -117,13 +117,7 @@ export const HeaderBottomRow = React.memo(function HeaderBottomRow({
                     className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all shadow-2xs hover:shadow-xs border text-blue-700 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 border-blue-200/50 dark:border-blue-900/30"
                   >
                     <ClipboardList className="w-3.5 h-3.5 shrink-0" />
-                    <span className="hidden 2xl:inline">
-                      Doğrudan Temin Takip
-                    </span>
-                    <span className="hidden xl:inline 2xl:hidden">
-                      DT Takip
-                    </span>
-                    <span className="hidden sm:inline xl:hidden">Takip</span>
+                    Dosya Detayı
                   </Link>
                   <Link
                     to={APP_ROUTES.SUREC_AKISI}

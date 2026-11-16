@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, LayoutGrid, List, Table } from 'lucide-react'
+import { useModalOverlay } from '../../../../../services/overlay/useModalOverlay'
 
 interface PoolFirm {
   id: number
@@ -38,6 +40,12 @@ export const FirmaSecmeModali: React.FC<FirmaSecmeModaliProps> = ({
   const [viewType, setViewType] = useState<'table' | 'grid' | 'list'>('table')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  useModalOverlay({
+    id: 'firma-secme-modali',
+    isOpen,
+    onClose
+  })
+
   if (!isOpen) return null
 
   const handleAddFirmsWithLoading = async () => {
@@ -74,7 +82,9 @@ export const FirmaSecmeModali: React.FC<FirmaSecmeModaliProps> = ({
     }
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-4xl flex flex-col max-h-[85vh] overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
         {/* Header */}
@@ -327,6 +337,7 @@ export const FirmaSecmeModali: React.FC<FirmaSecmeModaliProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

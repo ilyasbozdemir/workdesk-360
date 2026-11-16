@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { useSettingsStore } from './settingsStore'
 import { APP_ROUTES } from '@renderer/constants/routeConstants'
+import { overlayManager } from '../services/overlay/overlayManager'
 
 export interface TabItem {
   path: string
@@ -168,6 +169,14 @@ export function getTabLabel(fullPath: string): string {
     if (dosyaId) return `İhtiyaç Raporları (Dosya #${dosyaId})`
     return 'İhtiyaç Raporları'
   }
+  if (path.startsWith(APP_ROUTES.ROTA_YONETIMI)) return 'Belge Rota & Onay Akışı'
+  if (path.startsWith(APP_ROUTES.KURULUM_SIHIRBAZI)) return 'İlk Kurulum & Yapılandırma Sihirbazı'
+  if (path.startsWith(APP_ROUTES.ISLAK_IMZA)) return 'Islak İmzalı Belge Yönetimi'
+  if (path.startsWith(APP_ROUTES.DEVLET_IHALE_2886)) return '2886 Satış & Kiralama Masası'
+  if (path.startsWith(APP_ROUTES.HESAPLAMA_ARACLARI)) return 'Hesaplama Araçları'
+  if (path.startsWith(APP_ROUTES.BUTCE_KOD)) return 'Bütçe Kodları'
+  if (path.startsWith(APP_ROUTES.TEST_EKRANLARI)) return 'Test Ekranları & Laboratuvar'
+  if (path.startsWith(APP_ROUTES.PLAYGROUND)) return 'Şablon Deneme Alanı (Playground)'
   return 'Yeni Sekme'
 }
 
@@ -341,6 +350,8 @@ export const useTabStore = create<TabState>((set, get) => ({
   closeTab: (path) => {
     if (path === APP_ROUTES.DASHBOARD) return null
 
+    overlayManager.closeOverlaysForTab(path)
+
     const { tabs, activeTabPath } = get()
     const newTabs = tabs.filter((t) => t.path !== path)
 
@@ -390,6 +401,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   },
 
   clearTabs: () => {
+    overlayManager.cleanRogueLocks()
     set({
       tabs: [
         {

@@ -35,6 +35,7 @@ import { Kik050YapimKesinKabulTeklif } from "./templates/kik050-yapim-kesin-kabu
 import { Kik051YapimKesinKabulTutanagi } from "./templates/kik051-yapim-kesin-kabul-tutanagi";
 
 import type {
+  AlimTuru,
   ExplicitState,
   TemplateCapabilities,
   TemplateGroup,
@@ -104,6 +105,8 @@ export interface TemplateDefinition<
   workflowOverride?: Partial<TemplateWorkflow>;
   /** Başka bir şablonun iş akışını miras alır (zincir `resolveTemplateWorkflow` ile çözülür). */
   inheritsFrom?: string;
+  /** Bu şablonun geçerli olduğu alım türleri (mal, hizmet, yapim, danismanlik). Belirtilmemişse tüm türlerde geçerlidir. */
+  alimTurleri?: readonly AlimTuru[];
 }
 
 const DEFAULT_CAPS: TemplateCapabilities = {
@@ -212,6 +215,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     inheritsFrom: "luzum-muzekkeresi",
+    alimTurleri: ["mal"] as const,
     dataMapping: luzumTeslimTesellumMapping,
     mapping: luzumTeslimTesellumMapping,
     version: 1,
@@ -372,17 +376,17 @@ export const templateRegistry = {
     category: "1-ihtiyac-tespiti-ve-baslangic",
     categoryLabel: "Hazırlık & İhtiyaç",
     description:
-      "Piyasa fiyat araştırmasını yapmak üzere görevlendirilen personelin olur belgesi",
+      "Piyasa fiyat araştırmasını yapmak üzere görevlendirilen personelin görevlendirme onay yazısı",
     component: PiyasaFiyatArastirmaGorevlendirmesi,
     orientation: "portrait",
     groups: ["piyasa_arastirma", "olur_onay"],
-    workflowProfile: "olur_onay",
+    workflowProfile: "komisyon_tutanagi",
     dataMapping: piyasaFiyatArastirmaGorevlendirmesiMapping,
     mapping: piyasaFiyatArastirmaGorevlendirmesiMapping,
     version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
-      supportsOlur: true,
+      supportsOlur: false,
       supportsCommission: true,
       supportedCommissionTypes: ["piyasa_fiyat", "yaklasik_maliyet"],
       supportsKalemListesi: false,
@@ -692,6 +696,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["mal", "hizmet", "danismanlik"] as const,
     dataMapping: muayeneKabulTutanagiMapping,
     mapping: muayeneKabulTutanagiMapping,
     version: 1,
@@ -709,24 +714,28 @@ export const templateRegistry = {
   muayene_kabul_komisyonu: {
     id: "muayene-kabul-komisyonu",
     name: "MuayeneKabulKomisyonu",
-    title: "Muayene ve Kabul Komisyon Kararı",
+    title: "Muayene ve Kabul Komisyonu Görevlendirmesi",
     category: "4-kabul-ve-odeme-islemleri",
     categoryLabel: "Muayene & Kabul & Ödeme",
     description:
-      "Teslim alınan mal veya hizmetin muayene kabul komisyonunca onaylanma kararı",
+      "Teslim alınan mal veya hizmetin muayene ve kabulünü yapmak üzere komisyon görevlendirme yazısı",
     component: MuayeneKabulKomisyonu,
     orientation: "portrait",
-    group: "muayene_kabul",
+    groups: ["muayene_kabul", "olur_onay"],
     workflowProfile: "komisyon_tutanagi",
     dataMapping: muayeneKabulKomisyonuMapping,
     mapping: muayeneKabulKomisyonuMapping,
     version: 1,
     capabilities: {
       ...DEFAULT_CAPS,
-      supportsOlur: true,
+      supportsOlur: false,
       supportsCommission: true,
       supportedCommissionTypes: ["muayene_kabul"],
       supportsLogos: true,
+      roleVisibility: {
+        harcama_yetkilisi: "show",
+        onaylayan: "show",
+      },
     },
     kikKodu: "KİK054.0/M",
     kikAdi: "Muayene ve Kabul Komisyon Kararı",
@@ -743,6 +752,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["yapim"] as const,
     dataMapping: kik048Mapping,
     mapping: kik048Mapping,
     version: 1,
@@ -769,6 +779,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["yapim"] as const,
     dataMapping: kik049Mapping,
     mapping: kik049Mapping,
     version: 1,
@@ -795,6 +806,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["yapim"] as const,
     dataMapping: kik050Mapping,
     mapping: kik050Mapping,
     version: 1,
@@ -821,6 +833,7 @@ export const templateRegistry = {
     orientation: "portrait",
     group: "muayene_kabul",
     workflowProfile: "komisyon_tutanagi",
+    alimTurleri: ["yapim"] as const,
     dataMapping: kik051Mapping,
     mapping: kik051Mapping,
     version: 1,
@@ -951,7 +964,8 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
     "piyasa_fiyat_arastirma_gorevlendirmesi",
   "piyasa-arastirma-gorevlendirmesi": "piyasa_fiyat_arastirma_gorevlendirmesi",
   "piyasa-arastirma-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
-  "piyasa-fiyat-arastirma-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
+  "piyasa-fiyat-arastirma-gorevlendirme":
+    "piyasa_fiyat_arastirma_gorevlendirmesi",
   "piyasa-gorevlendirme": "piyasa_fiyat_arastirma_gorevlendirmesi",
   "piyasa-gorevlendirmesi": "piyasa_fiyat_arastirma_gorevlendirmesi",
   "fiyat-arastirma-komisyonu": "piyasa_fiyat_arastirma_gorevlendirmesi",

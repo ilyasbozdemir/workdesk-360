@@ -1,12 +1,21 @@
 import React from 'react'
+import { createPortal } from 'react-dom'
 import { AlertTriangle, CheckCircle } from 'lucide-react'
 import { useSettingsStore } from '../../store/settingsStore'
+import { useModalOverlay } from '../../services/overlay/useModalOverlay'
 
 export const DisclaimerModal: React.FC = () => {
   const { isDisclaimerAccepted, setDisclaimerAccepted, disclaimerHistory, setDisclaimerHistory } =
     useSettingsStore()
 
+  useModalOverlay({
+    id: 'disclaimer-modal',
+    isOpen: !isDisclaimerAccepted,
+    priority: 99999
+  })
+
   if (isDisclaimerAccepted) return null
+  if (typeof document === 'undefined') return null
 
   const handleAccept = async () => {
     try {
@@ -39,8 +48,8 @@ export const DisclaimerModal: React.FC = () => {
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 pointer-events-auto">
       <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="p-6 bg-red-50 dark:bg-red-900/10 border-b border-red-100 dark:border-red-900/20 flex items-start gap-4">
           <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full text-red-600 dark:text-red-400 flex-shrink-0">
@@ -107,6 +116,7 @@ export const DisclaimerModal: React.FC = () => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

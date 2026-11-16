@@ -164,6 +164,7 @@ export * from "./templates/fiyat-arastirma-mektubu/FiyatArastirmaMektubu.templat
 export * from "./templates/birim-fiyat-teklif-mektubu/BirimFiyatTeklifMektubu.schema";
 export * from "./templates/birim-fiyat-teklif-mektubu/BirimFiyatTeklifMektubu.template";
 
+export * from "./templates/piyasa-fiyat-arastirma-gorevlendirmesi/PiyasaFiyatArastirmaGorevlendirmesi.hook";
 export * from "./templates/piyasa-fiyat-arastirma-gorevlendirmesi/PiyasaFiyatArastirmaGorevlendirmesi.schema";
 export * from "./templates/piyasa-fiyat-arastirma-gorevlendirmesi/PiyasaFiyatArastirmaGorevlendirmesi.template";
 
@@ -172,9 +173,11 @@ export * from "./templates/piyasa-fiyat-arastirma-tutanagi/PiyasaFiyatArastirmaT
 export * from "./templates/piyasa-fiyat-arastirma-tutanagi/PiyasaFiyatArastirmaTutanagi.template";
 
 // --- 3. Harcama Talimatı, Onay & Sözleşme ---
+export * from "./templates/harcama-talimati/HarcamaTalimati.hook";
 export * from "./templates/harcama-talimati/HarcamaTalimati.schema";
 export * from "./templates/harcama-talimati/HarcamaTalimati.template";
 
+export * from "./templates/dogrudan-temin-onay-belgesi/DogrudanTeminOnayBelgesi.hook";
 export * from "./templates/dogrudan-temin-onay-belgesi/DogrudanTeminOnayBelgesi.schema";
 export * from "./templates/dogrudan-temin-onay-belgesi/DogrudanTeminOnayBelgesi.template";
 
@@ -191,12 +194,15 @@ export * from "./templates/harcama-pusulasi/HarcamaPusulasi.schema";
 export * from "./templates/harcama-pusulasi/HarcamaPusulasi.template";
 
 // --- 4. Komisyon & Muayene Kabul ---
+export * from "./templates/komisyon-gorevlendirme-onayi/KomisyonGorevlendirmeOnayi.hook";
 export * from "./templates/komisyon-gorevlendirme-onayi/KomisyonGorevlendirmeOnayi.schema";
 export * from "./templates/komisyon-gorevlendirme-onayi/KomisyonGorevlendirmeOnayi.template";
 
+export * from "./templates/komisyon-gorevlendirme-onayi-eki/KomisyonGorevlendirmeOnayiEki.hook";
 export * from "./templates/komisyon-gorevlendirme-onayi-eki/KomisyonGorevlendirmeOnayiEki.schema";
 export * from "./templates/komisyon-gorevlendirme-onayi-eki/KomisyonGorevlendirmeOnayiEki.template";
 
+export * from "./templates/muayene-kabul-komisyonu/MuayeneKabulKomisyonu.hook";
 export * from "./templates/muayene-kabul-komisyonu/MuayeneKabulKomisyonu.schema";
 export * from "./templates/muayene-kabul-komisyonu/MuayeneKabulKomisyonu.template";
 

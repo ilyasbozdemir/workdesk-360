@@ -19,6 +19,8 @@ export interface TemplateOptionItem {
   kikAdi?: string;
   standartFormKodu?: string;
   standartFormAdi?: string;
+  capabilities?: any;
+  alimTurleri?: readonly ("mal" | "hizmet" | "yapim" | "danismanlik")[];
 }
 
 /**
@@ -36,6 +38,8 @@ export const TEMPLATE_OPTIONS: TemplateOptionItem[] =
     kikAdi: def.kikAdi,
     standartFormKodu: def.standartFormKodu,
     standartFormAdi: def.standartFormAdi,
+    capabilities: def.capabilities,
+    alimTurleri: def.alimTurleri,
   }));
 
 export { normalizeTemplateKey };

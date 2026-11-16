@@ -77,6 +77,13 @@ test.describe('E2E: Kullanıcı Arayüzü Üzerinden Gerçek Dosya Açma ve Etki
       await expect(passwordInput).not.toBeVisible({ timeout: 15000 })
     }
 
+    // Yasal Sorumluluk Reddi (Disclaimer) modalı çıkarsa onayla
+    const disclaimerButton = page.locator('button:has-text("Anladım, Kabul Ediyorum")')
+    if (await disclaimerButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await disclaimerButton.click()
+      await expect(disclaimerButton).not.toBeVisible({ timeout: 5000 })
+    }
+
     // 8. Gösterge panelinde kurum verisinin yüklendiğini kontrol et
     await expect(institutionLocator).toBeVisible({ timeout: 15000 })
 
@@ -86,6 +93,13 @@ test.describe('E2E: Kullanıcı Arayüzü Üzerinden Gerçek Dosya Açma ve Etki
 
   test('3. Dosya açıldıktan sonra gerçek arayüz etkileşimi test edilmeli', async () => {
     const { page } = appInstance
+
+    // Yasal Sorumluluk Reddi (Disclaimer) modalı hala açıksa güvenli bir şekilde onayla
+    const disclaimerButton = page.locator('button:has-text("Anladım, Kabul Ediyorum")')
+    if (await disclaimerButton.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await disclaimerButton.click()
+      await expect(disclaimerButton).not.toBeVisible({ timeout: 5000 })
+    }
 
     // Gerçek arayüz etkileşimi 1: Sabit Doğrudan Temin (Md. 22) rozetinin varlığı ve doğruluğu
     const modeBadge = page.locator('[title*="Doğrudan Temin"]').first()

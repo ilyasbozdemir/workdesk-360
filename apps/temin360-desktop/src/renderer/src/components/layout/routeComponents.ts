@@ -85,6 +85,7 @@ export const routeComponents: Record<string, () => React.ReactElement> = {
     import("../../screens/tasinirkod/index.screen")
   ),
   "/kurum": lazyRoute(() => import("../../screens/kurum/index.screen")),
+  "/kurulum": lazyRoute(() => import("../../screens/kurulum/index.screen")),
   "/profil": lazyRoute(() => import("../../screens/profil/index.screen")),
   "/dosya/kunye": lazyRoute(() =>
     import("../../screens/dosyalar/DosyaDataInspectorScreen")
@@ -185,6 +186,9 @@ export const routeComponents: Record<string, () => React.ReactElement> = {
   ),
   "/islak-imza": lazyRoute(() =>
     import("../../screens/islak-imza/islak-imzali-belge.screen")
+  ),
+  "/playground": lazyRoute(() =>
+    import("../../screens/playground/index.screen")
   ),
 };
 

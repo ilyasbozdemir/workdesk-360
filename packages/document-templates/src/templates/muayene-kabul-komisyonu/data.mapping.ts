@@ -22,6 +22,11 @@ export const dataMapping: ProcessMapping = {
     aciklama: 'Temin Numarası'
   },
   dosyaKonusu: { deger: 'Muayene ve Kabul Komisyonu', aciklama: 'Belgenin konusu' },
+  belgeTuru: { deger: 'Onay Yazısı', aciklama: 'Belge Türü (Onay Yazısı / Görevlendirme Emri)' },
+  yaziTuru: { deger: 'onay', aciklama: 'Yazı Türü (onay)' },
+  olurYazisi: { deger: false, aciklama: 'Olur yazısı mı? (Onay yazısıdır, false)' },
+  arzRicaTuru: { deger: 'rica', aciklama: 'Resmî Nezaket İfadesi (rica)' },
+  kapanisMetni: { deger: 'Gereğini rica ederim.', aciklama: 'Resmî Kapanış İfadesi' },
   dosyaTarihi: {
     tablo: 'DATA_TeminDosyasi',
     sutun: 'dosya_tarihi',
@@ -32,10 +37,65 @@ export const dataMapping: ProcessMapping = {
     sutun: 'kurum_adi',
     aciklama: 'Kurum Adı'
   },
+  kurumAdi: {
+    tablo: 'TANIM_Kurum',
+    sutun: 'kurum_adi',
+    aciklama: 'Kurum Adı'
+  },
+  kurumUst: {
+    tablo: 'TANIM_Kurum',
+    sutun: 'ust_kurum_adi',
+    aciklama: 'Üst İdare Adı'
+  },
+  harcamaBirimi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'harcama_birimi',
+    aciklama: 'Harcama Birimi'
+  },
+  mudurluk: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'birim',
+    aciklama: 'İşlem Yapan Birim / Müdürlük'
+  },
+  birimId: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'birim_id',
+    aciklama: 'Birim ID'
+  },
+  antetEkSatir: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'antet_ek_satir',
+    aciklama: 'Antet Ek Satırı'
+  },
   isinAdi: {
     tablo: 'DATA_TeminDosyasi',
     sutun: 'konu',
     aciklama: 'İşin Adı'
+  },
+  kanunMaddesi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'ihale_sekli',
+    aciklama: 'Kanun Maddesi / İhale Şekli'
+  },
+  ihaleSekli: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'ihale_sekli',
+    aciklama: 'İhale Şekli'
+  },
+  teminSekli: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'ihale_sekli',
+    aciklama: 'Temin Şekli'
+  },
+  onayBelgesiTarihi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'dosya_tarihi',
+    aciklama: 'Onay Belgesi Tarihi'
+  },
+  onayBelgesiSayisi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'temin_no',
+    aciklama: 'Onay Belgesi Numarası / Sayısı'
   },
   hazirlayanPersonelAdi: {
     tablo: 'DATA_TeminDosyasi',
@@ -90,6 +150,16 @@ export const dataMapping: ProcessMapping = {
   kurumIci: {
     deger: true,
     aciklama: 'Kurum içi mi?'
+  },
+  fiyatKomisyonu: {
+    tablo: 'DATA_TeminKomisyon',
+    sutun: '*',
+    aciklama: 'Piyasa Araştırma ve Satınalma Komisyon Üyeleri'
+  },
+  muayeneKomisyonu: {
+    tablo: 'DATA_TeminKomisyon',
+    sutun: '*',
+    aciklama: 'Muayene Kabul ve Teslim Alma Komisyon Üyeleri'
   }
 };
 

@@ -25,13 +25,18 @@ export const MuayeneKabulKomisyonuSchema = z.object({
   standartFormAdi: z.string().optional(),
   onayBelgesiTarihi: z.string().optional(),
   onayBelgesiNo: z.union([z.string(), z.number()]).optional(),
+  onayBelgesiSayisi: z.union([z.string(), z.number()]).optional(),
   onayBelgesiYili: z.union([z.string(), z.number()]).optional(),
   kanunMaddesi: z.string().optional(),
+  ihaleSekli: z.string().optional(),
+  teminSekli: z.string().optional(),
   hazirlayanPersonelAdi: z.string().optional(),
   hazirlayanPersonelUnvan: z.string().optional(),
   hazirlayanTelefon: z.string().optional(),
   onaylayanPersonelAdi: z.string().optional(),
   onaylayanPersonelUnvan: z.string().optional(),
+  sunulacakMakamAdi: z.string().optional(),
+  hitapMetni: z.string().optional(),
   muayeneKomisyonu: z.array(z.any()).optional(),
   gorevliler: z
     .array(

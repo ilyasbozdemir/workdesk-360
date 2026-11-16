@@ -32,6 +32,7 @@ import { FirmaModal } from "./components/FirmaModal";
 import { FirmaEslestirmeModal } from "./components/FirmaEslestirmeModal";
 import { ExcelActions } from "../../components/ui/ExcelActions";
 import { useQueryClient } from "@tanstack/react-query";
+import { useConfirm, useAlert } from "../../components/ui/AlertDialogProvider";
 
 const emptyFirma: FirmaInput = {
   firma_kodu: "",
@@ -66,6 +67,8 @@ const emptyFirma: FirmaInput = {
 
 export default function FirmalarScreen(): React.JSX.Element {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
+  const alert = useAlert();
   const { firmalar, isLoadingFirmalar, addFirma, updateFirma, deleteFirma } =
     useFirmalarHooks();
   const [form, setForm] = useState<FirmaInput>({ ...emptyFirma });
@@ -122,7 +125,11 @@ export default function FirmalarScreen(): React.JSX.Element {
       setShowExtraFields(false);
       setIsModalOpen(false);
     } catch (err: any) {
-      alert(err.message || "İşlem sırasında hata oluştu!");
+      await alert({
+        title: "Firma Kayıt Hatası",
+        message: err.message || "İşlem sırasında hata oluştu!",
+        variant: "warning",
+      });
     }
   };
 
@@ -131,11 +138,21 @@ export default function FirmalarScreen(): React.JSX.Element {
     id: number,
   ): Promise<void> => {
     e.stopPropagation();
-    if (confirm("Bu firmayı silmek istediğinize emin misiniz?")) {
+    const confirmed = await confirm({
+      title: "Firmayı Sil",
+      message: "Bu firmayı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+      confirmText: "Evet, Sil",
+      variant: "danger",
+    });
+    if (confirmed) {
       try {
         await deleteFirma(id);
       } catch {
-        alert("Silme sırasında hata oluştu!");
+        await alert({
+          title: "Hata",
+          message: "Silme sırasında hata oluştu!",
+          variant: "danger",
+        });
       }
     }
   };
@@ -158,7 +175,11 @@ export default function FirmalarScreen(): React.JSX.Element {
       );
       const stubs = stubsRes.data || [];
       if (stubs.length === 0) {
-        alert("Tüm firmaların geçerli firma kodları mevcut.");
+        await alert({
+          title: "Bilgi",
+          message: "Tüm firmaların geçerli firma kodları mevcut.",
+          variant: "info",
+        });
         return;
       }
 
@@ -172,11 +193,17 @@ export default function FirmalarScreen(): React.JSX.Element {
         );
       }
       queryClient.invalidateQueries({ queryKey: ["firmalar"] });
-      alert(
-        `${stubs.length} adet firmaya sıralı firma kodu başarıyla tanımlandı!`,
-      );
+      await alert({
+        title: "Başarılı",
+        message: `${stubs.length} adet firmaya sıralı firma kodu başarıyla tanımlandı!`,
+        variant: "success",
+      });
     } catch (err: any) {
-      alert("Kod atama hatası: " + (err.message || err));
+      await alert({
+        title: "Hata",
+        message: "Kod atama hatası: " + (err.message || err),
+        variant: "danger",
+      });
     }
   };
 
@@ -192,16 +219,24 @@ export default function FirmalarScreen(): React.JSX.Element {
            LIMIT 1
          )
          WHERE (firma_id IS NULL OR firma_id = 0)
-           AND EXISTS (
-             SELECT 1 FROM TANIM_Firma f
-             WHERE (f.vergi_no IS NOT NULL AND f.vergi_no != '' AND f.vergi_no = DATA_TeminFirma.vergi_no)
-                OR (LOWER(TRIM(f.unvan)) = LOWER(TRIM(DATA_TeminFirma.unvan)))
-           )`,
+         AND EXISTS (
+           SELECT 1 FROM TANIM_Firma f
+           WHERE (f.vergi_no IS NOT NULL AND f.vergi_no != '' AND f.vergi_no = DATA_TeminFirma.vergi_no)
+              OR (LOWER(TRIM(f.unvan)) = LOWER(TRIM(DATA_TeminFirma.unvan)))
+         )`,
       );
       queryClient.invalidateQueries({ queryKey: ["firmalar"] });
-      alert("Firma ve dosya teklif ilişkileri başarıyla senkronize edildi!");
+      await alert({
+        title: "Başarılı",
+        message: "Firma ve dosya teklif ilişkileri başarıyla senkronize edildi!",
+        variant: "success",
+      });
     } catch (err: any) {
-      alert("Senkronizasyon hatası: " + (err.message || err));
+      await alert({
+        title: "Hata",
+        message: "Senkronizasyon hatası: " + (err.message || err),
+        variant: "danger",
+      });
     }
   };
 

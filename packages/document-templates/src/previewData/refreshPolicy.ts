@@ -49,6 +49,33 @@ export const PRESERVE_FIELDS = new Set([
   'routeOverrides'
 ])
 
+/**
+ * Komisyon kadrosu ve rota görevlileri alanları.
+ * Dosyada komisyon güncellendiğinde veya "Yenile" dendiğinde veritabanındaki
+ * güncel komisyon üyeleri snapshot'taki eski kişilerin üzerine yazılarak (ezerek) çekilir.
+ */
+export const COMMISSION_PERSONNEL_FIELDS = new Set([
+  'fiyatArastirmaGorevlileri',
+  'fiyatKomisyonu',
+  'muayeneKomisyonu',
+  'komisyonUyeleri',
+  'komisyon',
+  'gorevliler',
+  'gorevlendirilenler',
+  'dagitimListesi',
+  'harcamaYetkilisiAdi',
+  'harcamaYetkilisiUnvan',
+  'onaylayanPersonelAdi',
+  'onaylayanPersonelUnvan',
+  'hazirlayanPersonelAdi',
+  'hazirlayanPersonelUnvan',
+  'gerceklestirmeGorevlisiAdi',
+  'gerceklestirmeGorevlisiUnvani',
+  'rota',
+  'routeOverrides',
+  'slots'
+])
+
 export const SOURCE_FIELDS = new Set([
   'items',
   'bids',
@@ -78,21 +105,35 @@ function isNonEmptyValue(value: unknown): boolean {
   return true
 }
 
+export interface RefreshPolicyOptions {
+  /**
+   * Dosyada komisyon veya personel kadrosu güncellendiğinde, "Yenile" dendiğinde
+   * belgedeki eski komisyon üyelerini ve görevlileri veritabanından gelen
+   * güncel kadroyla ezer (Smart Rebase).
+   * @default true
+   */
+  overwritePersonnel?: boolean
+}
+
 /**
  * Akıllı Belge Birleştirici (Smart Merge with Refresh Policy)
  *
  * @param sourceData DB ve kurumsal başlıktan çekilen taze kaynak veriler
  * @param savedSnapshot Kullanıcının önceden kaydettiği veya canlı düzenlediği snapshot verileri
+ * @param options Yenileme politikası opsiyonları
  * @returns Refresh Policy kurallarına göre harmanlanmış nihai veri
  */
 export function applyRefreshPolicy(
   sourceData: Record<string, any>,
-  savedSnapshot?: Record<string, any> | null
+  savedSnapshot?: Record<string, any> | null,
+  options?: RefreshPolicyOptions
 ): Record<string, any> {
   const merged: Record<string, any> = { ...sourceData }
   if (!savedSnapshot || typeof savedSnapshot !== 'object') {
     return merged
   }
+
+  const shouldOverwritePersonnel = options?.overwritePersonnel === true
 
   for (const [key, val] of Object.entries(savedSnapshot)) {
     if (val === undefined || val === null) continue
@@ -100,6 +141,16 @@ export function applyRefreshPolicy(
     const policy = getFieldRefreshPolicy(key)
 
     if (policy === 'preserve') {
+      // KOMİSYON & PERSONEL EZME KURALI:
+      // Kullanıcı komisyonu güncelledikten sonra belgede "Yenile" dediğinde,
+      // veritabanından gelen güncel komisyon kadrosu snapshot'taki eski kişileri ezer!
+      if (shouldOverwritePersonnel && COMMISSION_PERSONNEL_FIELDS.has(key)) {
+        if (isNonEmptyValue(sourceData[key])) {
+          // Kaynaktaki güncel veriyi koru, snapshot'taki eski kişiyi yazma!
+          continue
+        }
+      }
+
       // PRESERVE: Kullanıcının belge üzerinde veya rotada yaptığı dolu düzenlemeler senkronizasyonda korunur.
       // Özel İstisna (sunulacakMakamAdi): Eğer snapshot'taki değer yalnızca kurumun çıplak adıysa
       // ve kaynak veride güncel bir sunulacak makam (örn: ... MAKAMINA) çözümlendiyse, güncel makamı koru!

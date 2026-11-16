@@ -620,4 +620,35 @@ describe('TEMİN 360 — Belge Veri Kaybı Düzeltme ve Regresyon Testleri', () 
     expect((merged.muayeneKomisyonu as any[])[0].imzaTuru).toBe('İmza')
     expect((merged.rota as any[])[0].personel).toBe('Ali Veli')
   })
+
+  it('Senaryo (Komisyon Güncellemesi & Yenile): Yenile dendiğinde (overwritePersonnel = true) dosyadaki güncel komisyon kadrosu snapshot taki eski üyeleri ezmelidir', () => {
+    const updatedSourceData = {
+      fiyatArastirmaGorevlileri: [
+        { id: 101, adSoyad: 'Yeni Görevli 1', unvan: 'Mühendis', gorevi: 'Başkan' },
+        { id: 102, adSoyad: 'Yeni Görevli 2', unvan: 'Tekniker', gorevi: 'Üye' },
+        { id: 103, adSoyad: 'Yeni Görevli 3', unvan: 'Memur', gorevi: 'Üye' }
+      ],
+      harcamaYetkilisiAdi: 'Yeni Harcama Yetkilisi',
+      onaylayanPersonelAdi: 'Yeni Onaylayan'
+    }
+
+    const oldSnapshotData = {
+      fiyatArastirmaGorevlileri: [
+        { id: 1, adSoyad: 'Eski Görevli A', unvan: 'Eski', gorevi: 'Başkan' }
+      ],
+      harcamaYetkilisiAdi: 'Eski Harcama Yetkilisi',
+      onaylayanPersonelAdi: 'Eski Onaylayan',
+      kullaniciNotu: 'Kullanıcının yazdığı manuel not korunmalı'
+    }
+
+    const merged = applyRefreshPolicy(updatedSourceData, oldSnapshotData, { overwritePersonnel: true })
+
+    // Güncel komisyon üyeleri snapshot'taki eski kişiyi ezmeli:
+    expect(merged.fiyatArastirmaGorevlileri).toHaveLength(3)
+    expect(merged.fiyatArastirmaGorevlileri[0].adSoyad).toBe('Yeni Görevli 1')
+    expect(merged.harcamaYetkilisiAdi).toBe('Yeni Harcama Yetkilisi')
+    expect(merged.onaylayanPersonelAdi).toBe('Yeni Onaylayan')
+    // Kullanıcının manuel metin notu ise korunmalı:
+    expect(merged.kullaniciNotu).toBe('Kullanıcının yazdığı manuel not korunmalı')
+  })
 })

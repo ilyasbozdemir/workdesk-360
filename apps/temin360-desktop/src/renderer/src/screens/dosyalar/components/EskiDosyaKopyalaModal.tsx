@@ -1,146 +1,162 @@
-import React, { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom'
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
-  X,
-  Search,
-  FileText,
-  Calendar,
-  Copy,
-  ChevronRight,
   ArrowLeft,
-  CheckCircle2,
-  Package,
   Building2,
-  Users2,
-  Sparkles,
+  Calendar,
+  CheckCircle2,
+  ChevronRight,
+  Copy,
+  FileText,
   Info,
-  Loader2
-} from 'lucide-react'
-import { TeminDosyasi } from '../dosyalar.hooks'
-import { cn } from '../../../utils/cn'
+  Loader2,
+  Package,
+  Search,
+  Sparkles,
+  Users2,
+  X,
+} from "lucide-react";
+import { TeminDosyasi } from "../dosyalar.hooks";
+import { cn } from "../../../utils/cn";
 import {
   calculateNextTeminNo,
+  CloneDosyaCustomOptions,
   getDosyaCounts,
-  CloneDosyaCustomOptions
-} from '../../../utils/cloneDosya'
+} from "../../../utils/cloneDosya";
+import { useModalOverlay } from "../../../services/overlay/useModalOverlay";
 
 interface EskiDosyaKopyalaModalProps {
-  isOpen: boolean
-  onClose: () => void
-  dosyalar: TeminDosyasi[]
-  onSelect: (dosya: TeminDosyasi, options: CloneDosyaCustomOptions) => Promise<void> | void
+  isOpen: boolean;
+  onClose: () => void;
+  dosyalar: TeminDosyasi[];
+  onSelect: (
+    dosya: TeminDosyasi,
+    options: CloneDosyaCustomOptions,
+  ) => Promise<void> | void;
 }
 
 export function EskiDosyaKopyalaModal({
   isOpen,
   onClose,
   dosyalar,
-  onSelect
+  onSelect,
 }: EskiDosyaKopyalaModalProps): React.JSX.Element | null {
-  const [step, setStep] = useState<1 | 2>(1)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedDosya, setSelectedDosya] = useState<TeminDosyasi | null>(null)
-  const [isLoadingCounts, setIsLoadingCounts] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [step, setStep] = useState<1 | 2>(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDosya, setSelectedDosya] = useState<TeminDosyasi | null>(null);
+  const [isLoadingCounts, setIsLoadingCounts] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useModalOverlay({
+    id: "eski-dosya-kopyala-modal",
+    isOpen,
+    onClose,
+  });
+
+  useModalOverlay({
+    id: "eski-dosya-kopyala-modal",
+    isOpen,
+    onClose,
+  });
 
   // Alt veri sayaçları
   const [counts, setCounts] = useState<{
-    itemCount: number
-    firmCount: number
-    commissionCount: number
-  }>({ itemCount: 0, firmCount: 0, commissionCount: 0 })
+    itemCount: number;
+    firmCount: number;
+    commissionCount: number;
+  }>({ itemCount: 0, firmCount: 0, commissionCount: 0 });
 
   // Kopyalama Form Değerleri
   const [formData, setFormData] = useState<CloneDosyaCustomOptions>({
-    temin_no: '',
+    temin_no: "",
     butce_yili: new Date().getFullYear(),
-    konu: '',
-    dosya_acilis_tarihi: new Date().toISOString().split('T')[0],
-    son_teklif_verme_tarihi: '',
-    teslim_tarihi: '',
+    konu: "",
+    dosya_acilis_tarihi: new Date().toISOString().split("T")[0],
+    son_teklif_verme_tarihi: "",
+    teslim_tarihi: "",
     cloneItems: true,
     cloneFirms: true,
-    cloneCommissions: false
-  })
+    cloneCommissions: false,
+  });
 
   // Modal açıldığında state sıfırlama
   useEffect(() => {
     if (isOpen) {
-      setStep(1)
-      setSearchQuery('')
-      setSelectedDosya(null)
-      setIsSubmitting(false)
+      setStep(1);
+      setSearchQuery("");
+      setSelectedDosya(null);
+      setIsSubmitting(false);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   // Filtreleme
   const filteredDosyalar = dosyalar.filter((d) => {
-    const q = searchQuery.toLowerCase()
+    const q = searchQuery.toLowerCase();
     return (
       (d.konu && d.konu.toLowerCase().includes(q)) ||
       (d.temin_no && d.temin_no.toLowerCase().includes(q)) ||
       (d.birim_adi && d.birim_adi.toLowerCase().includes(q))
-    )
-  })
+    );
+  });
 
   // Dosya seçildiğinde 2. adıma geçiş ve form ön doldurma
   const handleSelectOldDosya = async (dosya: TeminDosyasi) => {
-    setSelectedDosya(dosya)
-    setIsLoadingCounts(true)
-    setStep(2)
+    setSelectedDosya(dosya);
+    setIsLoadingCounts(true);
+    setStep(2);
 
     try {
-      const currentYear = new Date().getFullYear()
-      const nextNo = await calculateNextTeminNo(currentYear, dosyalar)
+      const currentYear = new Date().getFullYear();
+      const nextNo = await calculateNextTeminNo(currentYear, dosyalar);
 
       // 7 gün sonraki tarihi son teklif olarak öner
-      const futureDate = new Date()
-      futureDate.setDate(futureDate.getDate() + 7)
-      const defaultSonTeklif = futureDate.toISOString().split('T')[0]
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+      const defaultSonTeklif = futureDate.toISOString().split("T")[0];
 
       const dosyaCounts = dosya.id
         ? await getDosyaCounts(dosya.id)
-        : { itemCount: 0, firmCount: 0, commissionCount: 0 }
-      setCounts(dosyaCounts)
+        : { itemCount: 0, firmCount: 0, commissionCount: 0 };
+      setCounts(dosyaCounts);
 
       setFormData({
         temin_no: nextNo,
         butce_yili: currentYear,
-        konu: `${dosya.konu || 'Doğrudan Temin'} (Kopya)`,
-        dosya_acilis_tarihi: new Date().toISOString().split('T')[0],
+        konu: `${dosya.konu || "Doğrudan Temin"} (Kopya)`,
+        dosya_acilis_tarihi: new Date().toISOString().split("T")[0],
         son_teklif_verme_tarihi: defaultSonTeklif,
-        teslim_tarihi: '',
+        teslim_tarihi: "",
         cloneItems: true,
         cloneFirms: true,
-        cloneCommissions: false
-      })
+        cloneCommissions: false,
+      });
     } catch (err) {
-      console.error('Kopyalama hazırlık hatası:', err)
+      console.error("Kopyalama hazırlık hatası:", err);
     } finally {
-      setIsLoadingCounts(false)
+      setIsLoadingCounts(false);
     }
-  }
+  };
 
   // Kopyalamayı onayla ve çalıştır
   const handleConfirmCopy = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedDosya) return
+    e.preventDefault();
+    if (!selectedDosya) return;
     try {
-      setIsSubmitting(true)
-      await onSelect(selectedDosya, formData)
+      setIsSubmitting(true);
+      await onSelect(selectedDosya, formData);
     } catch (err) {
-      console.error('Kopyalama onay hatası:', err)
+      console.error("Kopyalama onay hatası:", err);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return createPortal(
     <div
       className="fixed inset-0 z-[99999] overflow-y-auto p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xs flex min-h-full items-center justify-center animate-in fade-in duration-200"
-      style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+      style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
       onClick={onClose}
     >
       <div
@@ -164,12 +180,14 @@ export function EskiDosyaKopyalaModal({
             <div>
               <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                 <Copy className="text-blue-600" size={20} />
-                {step === 1 ? 'Mevcut Dosyadan Kopyala' : 'Kopyalama & Tarih Yapılandırması'}
+                {step === 1
+                  ? "Mevcut Dosyadan Kopyala"
+                  : "Kopyalama & Tarih Yapılandırması"}
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
                 {step === 1
-                  ? 'Kopyalamak istediğiniz kaynak doğrudan temin dosyasını seçin.'
-                  : 'Yeni dosyanın tarihlerini, numarasını ve kopyalanacak veri kapsamını belirleyin.'}
+                  ? "Kopyalamak istediğiniz kaynak doğrudan temin dosyasını seçin."
+                  : "Yeni dosyanın tarihlerini, numarasını ve kopyalanacak veri kapsamını belirleyin."}
               </p>
             </div>
           </div>
@@ -206,85 +224,99 @@ export function EskiDosyaKopyalaModal({
 
             {/* LIST */}
             <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50 dark:bg-slate-950/50 custom-scrollbar">
-              {filteredDosyalar.length === 0 ? (
-                <div className="py-12 flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                    <FileText className="text-slate-400" size={24} />
+              {filteredDosyalar.length === 0
+                ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                      <FileText className="text-slate-400" size={24} />
+                    </div>
+                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      Kayıtlı Dosya Bulunamadı
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                      Arama kriterinize uygun kopyalanabilecek geçmiş dosya
+                      kaydı yok.
+                    </p>
                   </div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                    Kayıtlı Dosya Bulunamadı
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
-                    Arama kriterinize uygun kopyalanabilecek geçmiş dosya kaydı yok.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-2.5">
-                  {filteredDosyalar.map((dosya) => (
-                    <button
-                      key={dosya.id}
-                      type="button"
-                      onClick={() => handleSelectOldDosya(dosya)}
-                      className="w-full text-left p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-blue-500/60 dark:hover:border-blue-500/60 hover:shadow-md transition-all group flex items-center justify-between cursor-pointer"
-                    >
-                      <div className="flex-1 min-w-0 pr-4">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-[11px] font-mono font-black text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
-                            {dosya.temin_no || 'NO BELİRSİZ'}
-                          </span>
-                          <span
-                            className={cn(
-                              'text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded',
-                              dosya.tur === 'mal'
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
-                                : dosya.tur === 'hizmet'
-                                  ? 'bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300'
-                                  : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
-                            )}
-                          >
-                            {dosya.tur === 'mal'
-                              ? 'MAL ALIMI'
-                              : dosya.tur === 'hizmet'
-                                ? 'HİZMET ALIMI'
-                                : dosya.tur === 'yapim_isi'
-                                  ? 'YAPIM İŞİ'
-                                  : 'DANIŞMANLIK'}
-                          </span>
-                        </div>
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {dosya.konu}
-                        </h3>
-                        <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                          <span className="truncate max-w-[220px]" title={dosya.birim_adi || ''}>
-                            🏢 {dosya.birim_adi || 'Birim Belirtilmemiş'}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar size={11} />
-                            {dosya.dosya_acilis_tarihi
-                              ? new Date(dosya.dosya_acilis_tarihi).toLocaleDateString('tr-TR')
-                              : '-'}
-                          </span>
-                          {dosya.yaklasik_maliyet ? (
-                            <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                              ₺ {dosya.yaklasik_maliyet.toLocaleString('tr-TR')}
+                )
+                : (
+                  <div className="grid gap-2.5">
+                    {filteredDosyalar.map((dosya) => (
+                      <button
+                        key={dosya.id}
+                        type="button"
+                        onClick={() => handleSelectOldDosya(dosya)}
+                        className="w-full text-left p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-blue-500/60 dark:hover:border-blue-500/60 hover:shadow-md transition-all group flex items-center justify-between cursor-pointer"
+                      >
+                        <div className="flex-1 min-w-0 pr-4">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-[11px] font-mono font-black text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                              {dosya.temin_no || "NO BELİRSİZ"}
                             </span>
-                          ) : null}
+                            <span
+                              className={cn(
+                                "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded",
+                                dosya.tur === "mal"
+                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                                  : dosya.tur === "hizmet"
+                                  ? "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
+                                  : "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+                              )}
+                            >
+                              {dosya.tur === "mal"
+                                ? "MAL ALIMI"
+                                : dosya.tur === "hizmet"
+                                ? "HİZMET ALIMI"
+                                : dosya.tur === "yapim_isi"
+                                ? "YAPIM İŞİ"
+                                : "DANIŞMANLIK"}
+                            </span>
+                          </div>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {dosya.konu}
+                          </h3>
+                          <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span
+                              className="truncate max-w-[220px]"
+                              title={dosya.birim_adi || ""}
+                            >
+                              🏢 {dosya.birim_adi || "Birim Belirtilmemiş"}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar size={11} />
+                              {dosya.dosya_acilis_tarihi
+                                ? new Date(dosya.dosya_acilis_tarihi)
+                                  .toLocaleDateString("tr-TR")
+                                : "-"}
+                            </span>
+                            {dosya.yaklasik_maliyet
+                              ? (
+                                <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                                  ₺ {dosya.yaklasik_maliyet.toLocaleString(
+                                    "tr-TR",
+                                  )}
+                                </span>
+                              )
+                              : null}
+                          </div>
                         </div>
-                      </div>
-                      <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all text-slate-400 shrink-0 shadow-xs">
-                        <ChevronRight size={18} />
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+                        <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all text-slate-400 shrink-0 shadow-xs">
+                          <ChevronRight size={18} />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
             </div>
           </>
         )}
 
         {/* STEP 2: YAPILANDIRMA VE TARİH FORMU */}
         {step === 2 && selectedDosya && (
-          <form onSubmit={handleConfirmCopy} className="flex flex-col flex-1 overflow-hidden">
+          <form
+            onSubmit={handleConfirmCopy}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
             <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 custom-scrollbar bg-slate-50/50 dark:bg-slate-950/50">
               {/* Kaynak Dosya Özeti */}
               <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/60 flex items-start gap-3">
@@ -294,10 +326,10 @@ export function EskiDosyaKopyalaModal({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-black font-mono text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/80 px-2 py-0.5 rounded">
-                      KAYNAK: {selectedDosya.temin_no || 'Belirsiz'}
+                      KAYNAK: {selectedDosya.temin_no || "Belirsiz"}
                     </span>
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">
-                      {selectedDosya.birim_adi || 'Birim Yok'}
+                      {selectedDosya.birim_adi || "Birim Yok"}
                     </span>
                   </div>
                   <div className="text-xs font-bold text-slate-900 dark:text-white mt-1 truncate">
@@ -316,13 +348,15 @@ export function EskiDosyaKopyalaModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                      Yeni DT / Dosya Numarası <span className="text-red-500">*</span>
+                      Yeni DT / Dosya Numarası{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      value={formData.temin_no || ''}
-                      onChange={(e) => setFormData({ ...formData, temin_no: e.target.value })}
+                      value={formData.temin_no || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, temin_no: e.target.value })}
                       placeholder="2026/1"
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     />
@@ -339,22 +373,24 @@ export function EskiDosyaKopyalaModal({
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          butce_yili: parseInt(e.target.value, 10) || new Date().getFullYear()
-                        })
-                      }
+                          butce_yili: parseInt(e.target.value, 10) ||
+                            new Date().getFullYear(),
+                        })}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                      Yeni Dosya Konusu / Başlığı <span className="text-red-500">*</span>
+                      Yeni Dosya Konusu / Başlığı{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
-                      value={formData.konu || ''}
-                      onChange={(e) => setFormData({ ...formData, konu: e.target.value })}
+                      value={formData.konu || ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, konu: e.target.value })}
                       placeholder="Doğrudan temin konusu..."
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     />
@@ -362,15 +398,18 @@ export function EskiDosyaKopyalaModal({
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
-                      Dosya Açılış / Onay Tarihi <span className="text-red-500">*</span>
+                      Dosya Açılış / Onay Tarihi{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
                       required
-                      value={formData.dosya_acilis_tarihi || ''}
+                      value={formData.dosya_acilis_tarihi || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, dosya_acilis_tarihi: e.target.value })
-                      }
+                        setFormData({
+                          ...formData,
+                          dosya_acilis_tarihi: e.target.value,
+                        })}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     />
                   </div>
@@ -381,10 +420,12 @@ export function EskiDosyaKopyalaModal({
                     </label>
                     <input
                       type="date"
-                      value={formData.son_teklif_verme_tarihi || ''}
+                      value={formData.son_teklif_verme_tarihi || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, son_teklif_verme_tarihi: e.target.value })
-                      }
+                        setFormData({
+                          ...formData,
+                          son_teklif_verme_tarihi: e.target.value,
+                        })}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     />
                   </div>
@@ -400,7 +441,8 @@ export function EskiDosyaKopyalaModal({
                   </h3>
                   {isLoadingCounts && (
                     <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                      <Loader2 size={12} className="animate-spin" /> Veriler sayılıyor...
+                      <Loader2 size={12} className="animate-spin" />{" "}
+                      Veriler sayılıyor...
                     </span>
                   )}
                 </div>
@@ -409,16 +451,20 @@ export function EskiDosyaKopyalaModal({
                   {/* Kalemler Checkbox */}
                   <label
                     className={cn(
-                      'flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none',
+                      "flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
                       formData.cloneItems
-                        ? 'border-blue-500/50 bg-blue-50/40 dark:bg-blue-950/20'
-                        : 'border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100'
+                        ? "border-blue-500/50 bg-blue-50/40 dark:bg-blue-950/20"
+                        : "border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100",
                     )}
                   >
                     <input
                       type="checkbox"
                       checked={formData.cloneItems ?? true}
-                      onChange={(e) => setFormData({ ...formData, cloneItems: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          cloneItems: e.target.checked,
+                        })}
                       className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     />
                     <div className="flex-1 min-w-0">
@@ -432,7 +478,8 @@ export function EskiDosyaKopyalaModal({
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Ürün adları, açıklamalar, birimler, miktarlar, taşınır ve KDV oranları.
+                        Ürün adları, açıklamalar, birimler, miktarlar, taşınır
+                        ve KDV oranları.
                       </p>
                     </div>
                   </label>
@@ -440,16 +487,20 @@ export function EskiDosyaKopyalaModal({
                   {/* Firmalar Checkbox */}
                   <label
                     className={cn(
-                      'flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none',
+                      "flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
                       formData.cloneFirms
-                        ? 'border-indigo-500/50 bg-indigo-50/40 dark:bg-indigo-950/20'
-                        : 'border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100'
+                        ? "border-indigo-500/50 bg-indigo-50/40 dark:bg-indigo-950/20"
+                        : "border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100",
                     )}
                   >
                     <input
                       type="checkbox"
                       checked={formData.cloneFirms ?? true}
-                      onChange={(e) => setFormData({ ...formData, cloneFirms: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          cloneFirms: e.target.checked,
+                        })}
                       className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
                     <div className="flex-1 min-w-0">
@@ -463,7 +514,8 @@ export function EskiDosyaKopyalaModal({
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Firma unvanları, vergi numaraları, yetkili ve iletişim bilgileri.
+                        Firma unvanları, vergi numaraları, yetkili ve iletişim
+                        bilgileri.
                       </p>
                     </div>
                   </label>
@@ -471,18 +523,20 @@ export function EskiDosyaKopyalaModal({
                   {/* Komisyon Üyeleri Checkbox */}
                   <label
                     className={cn(
-                      'flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none',
+                      "flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer select-none",
                       formData.cloneCommissions
-                        ? 'border-amber-500/50 bg-amber-50/40 dark:bg-amber-950/20'
-                        : 'border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100'
+                        ? "border-amber-500/50 bg-amber-50/40 dark:bg-amber-950/20"
+                        : "border-slate-200 dark:border-slate-800 opacity-60 hover:opacity-100",
                     )}
                   >
                     <input
                       type="checkbox"
                       checked={formData.cloneCommissions ?? false}
                       onChange={(e) =>
-                        setFormData({ ...formData, cloneCommissions: e.target.checked })
-                      }
+                        setFormData({
+                          ...formData,
+                          cloneCommissions: e.target.checked,
+                        })}
                       className="mt-0.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                     />
                     <div className="flex-1 min-w-0">
@@ -496,7 +550,8 @@ export function EskiDosyaKopyalaModal({
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                        Muayene ve kabul veya yaklaşık maliyet komisyon personelleri.
+                        Muayene ve kabul veya yaklaşık maliyet komisyon
+                        personelleri.
                       </p>
                     </div>
                   </label>
@@ -506,9 +561,10 @@ export function EskiDosyaKopyalaModal({
                 <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-start gap-2 text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed">
                   <Info size={15} className="text-blue-500 shrink-0 mt-0.5" />
                   <span>
-                    <strong>Temiz Başlangıç Güvencesi:</strong> Eski dosyaya ait geçmiş teklif
-                    fiyatları, faturalar ve kabul tutanakları aktarılmaz. Yeni dosyanız temiz ve
-                    teklif toplamaya hazır olarak açılır.
+                    <strong>Temiz Başlangıç Güvencesi:</strong>{" "}
+                    Eski dosyaya ait geçmiş teklif fiyatları, faturalar ve kabul
+                    tutanakları aktarılmaz. Yeni dosyanız temiz ve teklif
+                    toplamaya hazır olarak açılır.
                   </span>
                 </div>
               </div>
@@ -530,21 +586,24 @@ export function EskiDosyaKopyalaModal({
                 disabled={isSubmitting || !formData.temin_no || !formData.konu}
                 className="px-6 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" /> Kopyalanıyor...
-                  </>
-                ) : (
-                  <>
-                    <Copy size={14} /> Kopyala ve Dosyayı Başlat
-                  </>
-                )}
+                {isSubmitting
+                  ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />{" "}
+                      Kopyalanıyor...
+                    </>
+                  )
+                  : (
+                    <>
+                      <Copy size={14} /> Kopyala ve Dosyayı Başlat
+                    </>
+                  )}
               </button>
             </div>
           </form>
         )}
       </div>
     </div>,
-    document.body
-  )
+    document.body,
+  );
 }

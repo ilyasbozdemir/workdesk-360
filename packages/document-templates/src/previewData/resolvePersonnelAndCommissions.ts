@@ -81,6 +81,10 @@ export async function resolvePersonnelAndCommissions(
   let hasMuhasebeRowInFile = false
   let hasGerceklestirmeRowInFile = false
 
+  const currentDocId = String(resolvedId || selectedDocId || targetDocTemplateId || '').toLowerCase()
+  const isApptDoc = isCommissionAppointmentDocument(targetDocIds.length > 0 ? targetDocIds : currentDocId)
+  const isMuayeneDoc = currentDocId.includes('muayene') || currentDocId.includes('kabul')
+
   if (activeDosyaId) {
     try {
       let dbKomisyonlar: any[] =
@@ -203,10 +207,6 @@ export async function resolvePersonnelAndCommissions(
         }
 
         // 4. Komisyon listeleri (Yedek üye kuralları ve İmza / Paraf / Koordinasyon ayrımı ile)
-        const currentDocId = String(resolvedId || selectedDocId || targetDocTemplateId || '').toLowerCase()
-        const isApptDoc = isCommissionAppointmentDocument(targetDocIds.length > 0 ? targetDocIds : currentDocId)
-        const isMuayeneDoc = currentDocId.includes('muayene') || currentDocId.includes('kabul')
-
         const maliyetMembers = dbKomisyonlar.filter((k: any) => {
           if (!TemplateRegistryService.isMemberVisibleInDocument(k, targetDocIds)) return false
           return resolveCommissionCategory(k) === 'maliyet'
@@ -477,9 +477,11 @@ export async function resolvePersonnelAndCommissions(
           (m.adSoyad || m.ad_soyad)
         )
       })
-      baseData.gorevlendirilenler = activeFromCtx.length > 0 ? activeFromCtx : ctx.fiyatKomisyonu
-      baseData.gorevliler = baseData.gorevlendirilenler
-      baseData.dagitimListesi = baseData.gorevlendirilenler
+      if (!isMuayeneDoc) {
+        baseData.gorevlendirilenler = activeFromCtx.length > 0 ? activeFromCtx : ctx.fiyatKomisyonu
+        baseData.gorevliler = baseData.gorevlendirilenler
+        baseData.dagitimListesi = baseData.gorevlendirilenler
+      }
     } else if (globalKomisyonlar && globalKomisyonlar.length > 0) {
       const gMaliyet = globalKomisyonlar.filter((g: any) => {
         if (!TemplateRegistryService.isMemberVisibleInDocument(g, targetDocIds)) return false
@@ -516,9 +518,11 @@ export async function resolvePersonnelAndCommissions(
             !combined.includes('onaylayan')
           )
         })
-        baseData.gorevlendirilenler = activeOfficers.length > 0 ? activeOfficers : formatted
-        baseData.gorevliler = baseData.gorevlendirilenler
-        baseData.dagitimListesi = baseData.gorevlendirilenler
+        if (!isMuayeneDoc) {
+          baseData.gorevlendirilenler = activeOfficers.length > 0 ? activeOfficers : formatted
+          baseData.gorevliler = baseData.gorevlendirilenler
+          baseData.dagitimListesi = baseData.gorevlendirilenler
+        }
       }
     }
   }
@@ -529,7 +533,53 @@ export async function resolvePersonnelAndCommissions(
   ) {
     if (ctx.muayeneKomisyonu && ctx.muayeneKomisyonu.length > 0) {
       baseData.muayeneKomisyonu = ctx.muayeneKomisyonu
+      if (isMuayeneDoc) {
+        baseData.gorevlendirilenler = ctx.muayeneKomisyonu
+        baseData.gorevliler = ctx.muayeneKomisyonu
+        baseData.dagitimListesi = ctx.muayeneKomisyonu
+      }
+    } else if (globalKomisyonlar && globalKomisyonlar.length > 0) {
+      const gMuayene = globalKomisyonlar.filter((g: any) => {
+        if (!TemplateRegistryService.isMemberVisibleInDocument(g, targetDocIds)) return false
+        return resolveCommissionCategory(g) === 'muayene'
+      })
+      if (gMuayene.length > 0) {
+        const currentDocId = String(resolvedId || selectedDocId || targetDocTemplateId || '').toLowerCase()
+        const isApptDoc = isCommissionAppointmentDocument(
+          targetDocIds.length > 0 ? targetDocIds : currentDocId
+        )
+        const distGlobalMuayene = distributeCommissionMembersBySignatureType(
+          dedupeMembers(gMuayene),
+          {
+            docId: targetDocIds.length > 0 ? targetDocIds : currentDocId,
+            defaultRole: 'Muayene Kabul Görevlisi',
+            existingRota: Array.isArray(baseData.rota) ? baseData.rota : []
+          }
+        )
+        const formattedMuayene = isApptDoc
+          ? distGlobalMuayene.allEligibleMembers
+          : distGlobalMuayene.wetSignatureMembers
+
+        baseData.muayeneKomisyonu = formattedMuayene
+        if (isMuayeneDoc) {
+          baseData.gorevlendirilenler = formattedMuayene
+          baseData.gorevliler = formattedMuayene
+          baseData.dagitimListesi = formattedMuayene
+        }
+      }
     }
+  }
+
+  if (
+    isMuayeneDoc &&
+    baseData.muayeneKomisyonu &&
+    Array.isArray(baseData.muayeneKomisyonu) &&
+    baseData.muayeneKomisyonu.length > 0 &&
+    (!baseData.gorevlendirilenler || baseData.gorevlendirilenler.length === 0)
+  ) {
+    baseData.gorevlendirilenler = baseData.muayeneKomisyonu
+    baseData.gorevliler = baseData.muayeneKomisyonu
+    baseData.dagitimListesi = baseData.muayeneKomisyonu
   }
   if (!baseData.komisyon || (Array.isArray(baseData.komisyon) && baseData.komisyon.length === 0)) {
     if (ctx.komisyon && ctx.komisyon.length > 0) {

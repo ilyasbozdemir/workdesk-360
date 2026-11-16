@@ -1,11 +1,10 @@
 import { ColumnDef } from "../../document/DocumentTable";
+import { AlimTuru } from "../../types";
 import { IhtiyacListesiType } from "./IhtiyacListesi.schema";
 import { MalAlimiIhtiyacListesi } from "./MalAlimi/MalAlimiIhtiyacListesi";
 import { HizmetAlimiIhtiyacListesi } from "./HizmetAlimi/HizmetAlimiIhtiyacListesi";
 import { DanismanlikIhtiyacListesi } from "./DanismanlikHizmetAlimi/DanismanlikIhtiyacListesi";
 import { YapimIsleriIhtiyacListesi } from "./YapimIsleri/YapimIsleriIhtiyacListesi";
-
-export type AlimTuru = "mal" | "hizmet" | "danismanlik" | "yapim";
 
 /**
  * Belge verisindeki alım türünü tespit eder (mal, hizmet, yapım, danışmanlık).

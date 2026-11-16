@@ -116,7 +116,11 @@ export function useDocumentPreviewModal(props: DocumentPreviewModalV3Props) {
     onClose()
   }, [onClose, previewData.isDirty, setIsBalloon])
 
-  const docTitle = previewData.activeTemplateConf?.name.replace(/([A-Z])/g, ' $1').trim()
+  const docTitle =
+    previewData.activeTemplateConf?.title ||
+    previewData.activeTemplateConf?.standartFormAdi ||
+    previewData.activeTemplateConf?.name?.replace(/([A-Z])/g, ' $1').trim() ||
+    'Belge Önizleme'
 
   const debugData = useMemo(
     () => ({

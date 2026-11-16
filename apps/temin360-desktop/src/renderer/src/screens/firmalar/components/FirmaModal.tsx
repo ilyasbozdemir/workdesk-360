@@ -28,7 +28,7 @@ const Field = ({
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <Input
-      value={form[field] as string}
+      value={(form[field] ?? '') as string}
       onChange={(e) => !readOnly && handleChange(field, e.target.value)}
       placeholder={placeholder || label}
       required={required}

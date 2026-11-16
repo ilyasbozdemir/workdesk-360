@@ -13,6 +13,11 @@ export interface SmartMergeOptions {
    * Kalemlerde kaynak verinin öncelikli olduğu alanlar (örn. miktar, birim, kdv, fiyat)
    */
   sourcePriorityFields?: string[]
+  /**
+   * Dosyada komisyon veya yetkili personel güncellendiğinde, belgedeki eski komisyon kadrosunu
+   * ve onay yetkililerini veritabanındaki taze kadroyla ezer (Smart Rebase).
+   */
+  overwritePersonnel?: boolean
 }
 
 const DEFAULT_ITEM_MATCH_KEYS = ['id', 'tasinirKodu', 'tasinir_kodu', 'siraNo', 'sira_no']
@@ -71,6 +76,37 @@ export function smartMergeDocumentData<T extends Record<string, unknown> = Recor
   for (const hf of headerFields) {
     if (freshSourceData[hf] !== undefined) {
       merged[hf] = freshSourceData[hf]
+    }
+  }
+
+  // 1.1 Komisyon ve Yetkili Personel Güncellemesi (overwritePersonnel = true veya opsiyonel tetikleme)
+  // Dosyada komisyon güncellendiğinde belgede "Yenile" denince taze komisyon üyeleri ve görevliler belgede ezilerek güncellenir.
+  if (options?.overwritePersonnel) {
+    const commissionPersonnelFields = [
+      'komisyonUyeleri',
+      'komisyon',
+      'fiyatArastirmaGorevlileri',
+      'fiyatKomisyonu',
+      'muayeneKomisyonu',
+      'gorevliler',
+      'gorevlendirilenler',
+      'dagitimListesi',
+      'harcamaYetkilisiAdi',
+      'harcamaYetkilisiUnvan',
+      'onaylayanPersonelAdi',
+      'onaylayanPersonelUnvan',
+      'hazirlayanPersonelAdi',
+      'hazirlayanPersonelUnvan',
+      'gerceklestirmeGorevlisiAdi',
+      'gerceklestirmeGorevlisiUnvani',
+      'slots',
+      'rota',
+      'routeOverrides'
+    ]
+    for (const cpf of commissionPersonnelFields) {
+      if (freshSourceData[cpf] !== undefined && freshSourceData[cpf] !== null) {
+        merged[cpf] = freshSourceData[cpf]
+      }
     }
   }
 

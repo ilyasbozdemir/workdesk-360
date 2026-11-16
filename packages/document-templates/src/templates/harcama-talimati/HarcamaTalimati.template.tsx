@@ -9,20 +9,12 @@ import {
 } from "../../document/ApprovalSignature";
 import { HarcamaTalimatiType } from "./HarcamaTalimati.schema";
 import { formatCurrency, getDativeSuffix } from "../../utils/textHelpers";
+import {
+  HARCAMA_BUDGET_PRESETS,
+  useHarcamaTalimati,
+} from "./HarcamaTalimati.hook";
 
-export const HARCAMA_BUDGET_PRESETS = [
-  { kod: "03.2.1.01", ad: "Kırtasiye ve Büro Malzemesi Alımları" },
-  { kod: "03.2.1.02", ad: "Büro Mefruşatı ve Donanım Alımları" },
-  { kod: "03.2.1.05", ad: "Baskı ve Cilt Giderleri" },
-  { kod: "03.2.2.01", ad: "Su ve Temizlik Malzemesi Alımları" },
-  { kod: "03.2.3.01", ad: "Akaryakıt ve Yağ Alımları" },
-  { kod: "03.2.3.02", ad: "Elektrik Alımları" },
-  { kod: "03.5.2.01", ad: "Hizmet Binası Bakım ve Onarım Giderleri" },
-  { kod: "03.5.2.02", ad: "Taşıt ve İş Makinesi Bakım Onarımı" },
-  { kod: "03.5.2.90", ad: "Diğer Bakım ve Onarım Giderleri" },
-  { kod: "03.7.1.01", ad: "Büro ve İşyeri Mal ve Malzeme Alımları" },
-  { kod: "03.7.2.01", ad: "Bilgisayar ve Yazılım Alımları" },
-];
+export { HARCAMA_BUDGET_PRESETS };
 
 function HarcamaTalimatiButceHelper({
   currentValue,
@@ -135,6 +127,16 @@ export function HarcamaTalimati({
   hideHeader,
   hideFooter,
 }: HarcamaTalimatiProps) {
+  const {
+    cleanMutemet,
+    mutemetSuffix,
+    formattedYaklasikMaliyet,
+    formattedIsTutari,
+    shouldHideHeader,
+    shouldHideFooter,
+    idareAdi,
+  } = useHarcamaTalimati({ data, pageSize, orientation, hideHeader, hideFooter });
+
   const renderArrayOrString = (val: any, fallback = "-") => {
     if (!val) return fallback;
     if (Array.isArray(val)) {
@@ -144,39 +146,6 @@ export function HarcamaTalimati({
     return String(val);
   };
 
-  const rawMutemet = data.mutemetAdi ||
-    data.muhasebeYetkilisiAdi ||
-    data.muhasebeYetkilisi ||
-    "";
-  const cleanMutemet = typeof rawMutemet === "string"
-    ? rawMutemet.split("(")[0].trim()
-    : "";
-  const mutemetSuffix = cleanMutemet ? getDativeSuffix(cleanMutemet) : "’a";
-
-  const rawYaklasikMaliyet = data.yaklasikMaliyet;
-  const formattedYaklasikMaliyet =
-    rawYaklasikMaliyet !== undefined && rawYaklasikMaliyet !== null &&
-      rawYaklasikMaliyet !== ""
-      ? `${formatCurrency(rawYaklasikMaliyet)} ₺`
-      : "-";
-
-  const rawTutari = data.isTutari ?? data.yaklasikMaliyet;
-  const formattedIsTutari =
-    rawTutari !== undefined && rawTutari !== null && rawTutari !== ""
-      ? formatCurrency(rawTutari, "")
-      : "";
-
-  const shouldHideHeader = hideHeader !== undefined
-    ? hideHeader
-    : (data as any)?.hideHeader !== undefined
-    ? (data as any).hideHeader
-    : true;
-
-  const shouldHideFooter = hideFooter !== undefined
-    ? hideFooter
-    : (data as any)?.hideFooter !== undefined
-    ? (data as any).hideFooter
-    : true;
 
   return (
     <DocumentLayout

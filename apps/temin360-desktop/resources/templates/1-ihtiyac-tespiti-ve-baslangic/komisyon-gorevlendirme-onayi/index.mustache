@@ -96,14 +96,6 @@
         margin-bottom: 8px;
         line-height: 1.35;
       }
-      .preparer-signature {
-        float: right;
-        text-align: center;
-        margin-bottom: 12px;
-        margin-top: 4px;
-        width: 220px;
-        font-size: 10pt;
-      }
       .commission-title {
         text-align: center;
         font-weight: bold;
@@ -129,19 +121,19 @@
         font-weight: bold;
         background-color: #f9f9f9;
       }
-      .olur-section {
-        margin-top: 14px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        page-break-inside: avoid;
+      .signer-container {
+        width: 100%;
+        display: flow-root;
+        margin-top: 25px;
+        margin-bottom: 20px;
         break-inside: avoid;
+        page-break-inside: avoid;
       }
-      .olur-title {
-        font-weight: bold;
-        font-size: 10.5pt;
-        margin-bottom: 3px;
+      .signer-box {
+        float: right;
+        text-align: center;
+        width: 220px;
+        line-height: 1.4;
       }
     </style>
   </head>
@@ -185,18 +177,10 @@
         <!-- BODY TEXT -->
         <div class="body-paragraph">
           {{kurumumuz}} bünyesindeki <strong>{{isAdi}}</strong> işine ait fiyat araştırması ile
-          muayene ve kabulü yapmak üzere aşağıdaki personeller görevlendirilecek olup,
+          muayene ve kabulü yapmak üzere aşağıdaki personeller görevlendirilmiş olup,
         </div>
         <div class="body-paragraph" style="margin-bottom: 12px">
-          Gereğini olurlarınıza arz ederim.
-        </div>
-
-        <!-- PREPARER SIGNATURE -->
-        <div style="width: 100%; display: flow-root">
-          <div class="preparer-signature">
-            <strong>{{hazirlayanPersonelAdi}}</strong><br />
-            {{hazirlayanPersonelUnvan}}
-          </div>
+          {{kapanisMetni}}{{^kapanisMetni}}Gereğini rica ederim.{{/kapanisMetni}}
         </div>
 
         <!-- COMMISSION 1: PİYASA ARAŞTIRMA VE SATINALMA KOMİSYONU -->
@@ -253,12 +237,12 @@
           </tbody>
         </table>
 
-        <!-- APPROVAL / OLUR SECTION -->
-        <div class="olur-section">
-          <div class="olur-title">OLUR</div>
-          <div style="margin-bottom: 6px">{{tarih}}</div>
-          <div style="font-weight: bold; font-size: 10.5pt">{{baskanAdi}}</div>
-          <div style="font-size: 10pt">{{baskanUnvan}}</div>
+        <!-- ONAY MAKAMI / HARCAMA YETKİLİSİ İMZASI (SAĞDA) -->
+        <div class="signer-container">
+          <div class="signer-box">
+            <div style="font-weight: bold; font-size: 10.5pt">{{baskanAdi}}{{^baskanAdi}}{{onaylayanPersonelAdi}}{{/baskanAdi}}</div>
+            <div style="font-size: 10pt">{{baskanUnvan}}{{^baskanUnvan}}{{onaylayanPersonelUnvan}}{{^onaylayanPersonelUnvan}}Harcama Yetkilisi{{/onaylayanPersonelUnvan}}{{/baskanUnvan}}</div>
+          </div>
         </div>
       </div>
       <!-- END CONTENT BODY -->

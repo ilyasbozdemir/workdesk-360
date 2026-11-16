@@ -40,7 +40,8 @@ import {
 import {
   buildSettingsRouteValues,
   saveRotaConfigForTemplate,
-  GLOBAL_ROTA_KEY
+  GLOBAL_ROTA_KEY,
+  type TemplateRotaConfig
 } from '../../../../../services/rotaDefaultsService'
 import { kurumService } from '../../../../../services/kurumService'
 
@@ -199,6 +200,26 @@ export function DocumentPreviewRotaSection({
     window.addEventListener('temin360:rota-defaults-updated', onUpdated)
     return () => window.removeEventListener('temin360:rota-defaults-updated', onUpdated)
   }, [])
+
+  // Kurum adı veya üst idare boşsa TANIM_Kurum üzerinden güvenli bir şekilde doldur
+  React.useEffect(() => {
+    if (!formData?.kurumAdi) {
+      kurumService
+        .getKurumInfo()
+        .then((kInfo) => {
+          if (kInfo?.kurum_adi) {
+            setFormData((prev: any) => ({
+              ...prev,
+              kurumAdi: prev?.kurumAdi || kInfo.kurum_adi,
+              kurum_adi: prev?.kurum_adi || kInfo.kurum_adi,
+              kurumUst: prev?.kurumUst || (kInfo as any).ust_kurum_adi || undefined,
+              kurum: prev?.kurum || kInfo
+            }))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [formData?.kurumAdi])
 
   const definition = React.useMemo(
     () => getTemplateRouteDefinition(templateId || GLOBAL_ROTA_KEY),
@@ -806,7 +827,11 @@ export function DocumentPreviewRotaSection({
   }
 
   // Mevcut çözülmüş slotları ve birim/antet ayarlarını varsayılan ayar (settings) olarak kaydet
-  const handleSaveAsDefault = (targetKey: string, successText: string) => {
+  const handleSaveAsDefault = (
+    targetKey: string,
+    successText: string,
+    scope: 'file' | 'template' | 'global' = 'template'
+  ) => {
     const slotsToSave: RouteValues = {}
     for (const step of resolvedRoute.steps) {
       if (step.value !== null) {
@@ -822,47 +847,64 @@ export function DocumentPreviewRotaSection({
       slotsToSave.fiyatArastirmaGorevlileri ||
       slotsToSave.muayeneKomisyonu) as RouteAssignee[] | undefined
 
+    const configToSave: TemplateRotaConfig = {
+      belgeModu: 'standart',
+      rota: [],
+      slots: slotsToSave,
+      birimId: currentBirimResolution.birimId ?? currentBirimId ?? undefined,
+      birimAdi: currentBirimResolution.birimAdi || currentBirimAdi || undefined,
+      antetEkSatir:
+        currentBirimResolution.antetEkSatir ||
+        formData?.antetEkSatir ||
+        formData?.antet_ek_satir ||
+        undefined,
+      kurumAdi: formData?.kurumAdi || undefined,
+      antetSatirlari: currentAntetLines.length > 0 ? currentAntetLines : undefined,
+      hazirlayanPersonelAdi: hazirlayanVal?.name || formData?.hazirlayanPersonelAdi,
+      hazirlayanPersonelUnvan: hazirlayanVal?.title || formData?.hazirlayanPersonelUnvan,
+      gerceklestirmeGorevlisiAdi:
+        gerceklestirmeVal?.name || formData?.gerceklestirmeGorevlisiAdi,
+      gerceklestirmeGorevlisiUnvani:
+        gerceklestirmeVal?.title || formData?.gerceklestirmeGorevlisiUnvani,
+      onaylayanPersonelAdi: onaylayanVal?.name || formData?.onaylayanPersonelAdi,
+      onaylayanPersonelUnvan: onaylayanVal?.title || formData?.onaylayanPersonelUnvan,
+      sunulacakMakamAdi: makamVal?.name || formData?.sunulacakMakamAdi,
+      komisyonUyeleri: Array.isArray(komisyonVal)
+        ? komisyonVal.map((m) => ({
+            id: m.id,
+            adSoyad: m.name,
+            unvan: m.title,
+            gorevi: m.role,
+            imzaTuru: m.imzaTuru || 'İmza',
+            asilMi: m.asilMi ?? 1,
+            birimId: m.unitId,
+            birim: m.unitName
+          }))
+        : undefined,
+      antetBirimGosterilsin: formData?.antetBirimGosterilsin !== false,
+      olurYazisi: formData?.olurYazisi
+    }
+
+    const effectiveScopeDosyaId = scope === 'file' ? dosyaId : null
+
     saveRotaConfigForTemplate(
       targetKey,
-      {
-        belgeModu: 'standart',
-        rota: [],
-        slots: slotsToSave,
-        birimId: currentBirimResolution.birimId ?? currentBirimId ?? undefined,
-        birimAdi: currentBirimResolution.birimAdi || currentBirimAdi || undefined,
-        antetEkSatir:
-          currentBirimResolution.antetEkSatir ||
-          formData?.antetEkSatir ||
-          formData?.antet_ek_satir ||
-          undefined,
-        kurumAdi: formData?.kurumAdi || undefined,
-        antetSatirlari: currentAntetLines.length > 0 ? currentAntetLines : undefined,
-        hazirlayanPersonelAdi: hazirlayanVal?.name || formData?.hazirlayanPersonelAdi,
-        hazirlayanPersonelUnvan: hazirlayanVal?.title || formData?.hazirlayanPersonelUnvan,
-        gerceklestirmeGorevlisiAdi:
-          gerceklestirmeVal?.name || formData?.gerceklestirmeGorevlisiAdi,
-        gerceklestirmeGorevlisiUnvani:
-          gerceklestirmeVal?.title || formData?.gerceklestirmeGorevlisiUnvani,
-        onaylayanPersonelAdi: onaylayanVal?.name || formData?.onaylayanPersonelAdi,
-        onaylayanPersonelUnvan: onaylayanVal?.title || formData?.onaylayanPersonelUnvan,
-        sunulacakMakamAdi: makamVal?.name || formData?.sunulacakMakamAdi,
-        komisyonUyeleri: Array.isArray(komisyonVal)
-          ? komisyonVal.map((m) => ({
-              id: m.id,
-              adSoyad: m.name,
-              unvan: m.title,
-              gorevi: m.role,
-              imzaTuru: m.imzaTuru || 'İmza',
-              asilMi: m.asilMi ?? 1,
-              birimId: m.unitId,
-              birim: m.unitName
-            }))
-          : undefined,
-        antetBirimGosterilsin: formData?.antetBirimGosterilsin !== false,
-        olurYazisi: formData?.olurYazisi
-      },
-      dosyaId
+      configToSave,
+      effectiveScopeDosyaId
     )
+
+    // Eğer bu dosyaya özel arşivleniyorsa, formData'yı da dondur (snapshot kalıcılığı - AGENTS.md Kural 5)
+    if (scope === 'file') {
+      setFormData((prev: any) => ({
+        ...prev,
+        ...configToSave,
+        routeOverrides: resolvedRoute.steps.map((s) => ({
+          slotId: s.id,
+          value: s.value
+        }))
+      }))
+    }
+
     setSavedFeedback(successText)
     setTimeout(() => setSavedFeedback(null), 2500)
   }
@@ -1971,32 +2013,54 @@ export function DocumentPreviewRotaSection({
         })}
       </div>
 
-      {/* Varsayılan Olarak Kaydet Aksiyonları */}
+      {/* Varsayılan / Dosyaya Özel Kaydet Aksiyonları */}
       <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
-        <div className="grid grid-cols-2 gap-1.5">
+        {dosyaId && (
           <button
             type="button"
+            data-testid="rota-save-file-archive-btn"
             onClick={() =>
               handleSaveAsDefault(
                 templateId || GLOBAL_ROTA_KEY,
-                'Bu şablon için varsayılan rota kaydedildi'
+                'Bu dosya için rota ve antet donduruldu (Kalıcı Arşiv)',
+                'file'
               )
             }
-            className="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-            title="Bu görevli/rota atamalarını seçili şablon için varsayılan yap"
+            className="w-full px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-lg text-[11px] font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+            title="Bu dosyadaki görevli ve antet seçimlerini dondurur. Gelecekte kurum başkanı veya personeller değişse dahi bu dosyanın resmî çıktısı bozulmaz."
+          >
+            <span>📁 Bu Dosya İçin Kalıcı Kaydet (Arşivle)</span>
+          </button>
+        )}
+
+        <div className="grid grid-cols-2 gap-1.5">
+          <button
+            type="button"
+            data-testid="rota-save-template-default-btn"
+            onClick={() =>
+              handleSaveAsDefault(
+                templateId || GLOBAL_ROTA_KEY,
+                'Bu şablon için gelecek dosyalara varsayılan rota kaydedildi',
+                'template'
+              )
+            }
+            className="px-2 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer text-center"
+            title="Bu görevli/rota atamalarını seçili şablon için gelecek tüm dosyalarda geçerli olacak varsayılan yapar"
           >
             📌 Şablon Varsayılanı Yap
           </button>
           <button
             type="button"
+            data-testid="rota-save-global-default-btn"
             onClick={() =>
               handleSaveAsDefault(
                 GLOBAL_ROTA_KEY,
-                'Tüm belgeler için genel varsayılan yapıldı'
+                'Tüm belgeler için genel varsayılan yapıldı',
+                'global'
               )
             }
-            className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-            title="Bu görevli/rota atamalarını tüm belgeler için genel varsayılan yap"
+            className="px-2 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 rounded-lg text-[10px] font-bold transition-colors cursor-pointer text-center"
+            title="Bu görevli/rota atamalarını kurumdaki tüm belgeler için genel varsayılan yapar"
           >
             🌐 Genel Varsayılan Yap
           </button>

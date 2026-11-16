@@ -561,6 +561,27 @@ export class DtmWorkspace {
             .prepare("SELECT value FROM settings WHERE key = 'lastEmailSyncHash'")
             .get() as { value?: string } | undefined
           this.lastSyncedEmailHash = eHash?.value || null
+
+          // Farklı bilgisayardan taşınan veya mevcut dosyaların sıfır kurulum sanılmasını engelle:
+          if (!this.isReadOnly) {
+            const newWsRow = this.db.prepare("SELECT value FROM settings WHERE key = 'is_new_workspace'").get() as { value?: string } | undefined
+            if (!newWsRow) {
+              const checkData = this.db.prepare(`
+                SELECT 
+                  (SELECT COUNT(*) FROM DATA_TeminDosyasi) as dosyaCount,
+                  (SELECT COUNT(*) FROM TANIM_Birim) as birimCount,
+                  (SELECT COUNT(*) FROM TANIM_Personel) as personelCount,
+                  (SELECT kurum_adi FROM TANIM_Kurum LIMIT 1) as kurumAdi
+              `).get() as any
+
+              const hasExistingData = (checkData?.dosyaCount > 0) || (checkData?.birimCount > 0) || (checkData?.personelCount > 0) || (checkData?.kurumAdi && checkData.kurumAdi !== 'Yeni Kurum')
+              if (hasExistingData) {
+                this.db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('is_new_workspace', 'false')").run()
+                this.db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('is_initial_setup_completed', 'true')").run()
+                this.db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('setup_dismissed', 'true')").run()
+              }
+            }
+          }
         }
       } catch {}
       return meta
@@ -597,6 +618,7 @@ export class DtmWorkspace {
       const dbPath = path.join(this.tempDir, 'database.sqlite')
       this.db = new Database(dbPath)
       initializeDatabase(this.db, institutionName)
+      ensureSchemaIntegrity(this.db)
 
       try {
         const insertStmt = this.db.prepare(`
@@ -640,6 +662,35 @@ export class DtmWorkspace {
       fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2))
       fs.mkdirSync(path.join(this.tempDir, 'attachments'))
       seedTemplates(this.db)
+
+      // Sıfırdan oluşturulan yeni veritabanı için kurulum takibi başlat
+      try {
+        this.db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('is_new_workspace', 'true')").run()
+        this.db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('is_initial_setup_completed', 'false')").run()
+        this.db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('setup_dismissed', 'false')").run()
+
+        const insertStep = this.db.prepare(`
+          INSERT OR REPLACE INTO SYS_KurulumTakip (adim_kodu, adim_adi, tablo_adi, kayit_sayisi, durum, ozet_bilgi, detay_json, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        `)
+        const isBareInst = !institutionName || institutionName === 'Yeni Kurum'
+        insertStep.run(
+          'kurum',
+          'Kurum & Antet',
+          'TANIM_Kurum',
+          isBareInst ? 0 : 1,
+          isBareInst ? 'bekliyor' : 'tamamlandi',
+          isBareInst ? 'Kurum bilgisi tanımlanmadı' : institutionName,
+          null
+        )
+        insertStep.run('birimler', 'Birimler', 'TANIM_Birim', 0, 'bekliyor', 'Henüz birim eklenmedi', null)
+        insertStep.run('personeller', 'Personel Kadrosu', 'TANIM_Personel', 0, 'bekliyor', 'Henüz personel eklenmedi', null)
+        insertStep.run('rota', 'Onay Rotası', 'TANIM_RotaDefaults', 0, 'bekliyor', 'Onay rotası yapılandırılmadı', null)
+        insertStep.run('tamamlandi', 'Yapılandırma Onayı', 'settings', 0, 'bekliyor', 'Kurulum aşamasında', null)
+      } catch (trackErr) {
+        console.warn('[DtmWorkspace] KurulumTakip başlatılamadı:', trackErr)
+      }
+
       this.saveWorkspace(true)
       this.meta = meta
       this.initialHash = this.calculateCurrentHash()

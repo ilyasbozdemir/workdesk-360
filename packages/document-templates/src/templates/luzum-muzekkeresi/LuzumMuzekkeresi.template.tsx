@@ -1,10 +1,11 @@
 import { ColumnDef } from "../../document/DocumentTable";
+import { AlimTuru } from "../../types";
 import { LuzumMuzekkeresiType } from "./LuzumMuzekkeresi.schema";
 import { MalAlimiLuzumMuzekkeresi } from "./MalAlimi/MalAlimiLuzumMuzekkeresi";
 import { HizmetAlimiLuzumMuzekkeresi } from "./HizmetAlimi/HizmetAlimiLuzumMuzekkeresi";
 import { DanismanlikLuzumMuzekkeresi } from "./DanismanlikHizmetAlimi/DanismanlikLuzumMuzekkeresi";
 import { YapimIsleriLuzumMuzekkeresi } from "./YapimIsleri/YapimIsleriLuzumMuzekkeresi";
-import { AlimTuru, detectAlimTuru } from "../ihtiyac-listesi/IhtiyacListesi.template";
+import { detectAlimTuru } from "../ihtiyac-listesi/IhtiyacListesi.template";
 
 export interface LuzumMuzekkeresiProps {
   data?: Partial<LuzumMuzekkeresiType> & Record<string, any>;

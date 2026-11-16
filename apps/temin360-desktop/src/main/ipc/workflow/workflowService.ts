@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { workspaceManager } from '../../database/workspace'
+import { ensureSchemaIntegrity } from '../../database/workspace/schemaIntegrity'
 import {
   DIRECT_PROCUREMENT_WORKFLOW_DEFINITION,
   evaluateTransition,
@@ -477,6 +478,22 @@ export class WorkflowService {
    */
   public static getTasks(filter?: { dosyaId?: number; role?: string; status?: string }): WorkflowTask[] {
     const db = workspaceManager.getDb()
+    try {
+      return this.executeGetTasks(db, filter)
+    } catch (err: any) {
+      if (err?.message?.includes('no such table')) {
+        try {
+          ensureSchemaIntegrity(db)
+          return this.executeGetTasks(db, filter)
+        } catch {
+          return []
+        }
+      }
+      return []
+    }
+  }
+
+  private static executeGetTasks(db: any, filter?: { dosyaId?: number; role?: string; status?: string }): WorkflowTask[] {
     let sql = `
       SELECT 
         id, 
@@ -521,6 +538,22 @@ export class WorkflowService {
    */
   public static getNotifications(unreadOnly: boolean = false): WorkflowNotification[] {
     const db = workspaceManager.getDb()
+    try {
+      return this.executeGetNotifications(db, unreadOnly)
+    } catch (err: any) {
+      if (err?.message?.includes('no such table')) {
+        try {
+          ensureSchemaIntegrity(db)
+          return this.executeGetNotifications(db, unreadOnly)
+        } catch {
+          return []
+        }
+      }
+      return []
+    }
+  }
+
+  private static executeGetNotifications(db: any, unreadOnly: boolean = false): WorkflowNotification[] {
     let sql = `
       SELECT 
         id, 
@@ -547,17 +580,25 @@ export class WorkflowService {
    * Bildirimi okundu olarak işaretle.
    */
   public static markNotificationRead(notificationId: string): void {
-    const db = workspaceManager.getDb()
-    db.prepare("UPDATE WORKFLOW_Notification SET read_at = CURRENT_TIMESTAMP WHERE id = ?").run(
-      notificationId
-    )
+    try {
+      const db = workspaceManager.getDb()
+      db.prepare("UPDATE WORKFLOW_Notification SET read_at = CURRENT_TIMESTAMP WHERE id = ?").run(
+        notificationId
+      )
+    } catch {
+      // sessiz yut
+    }
   }
 
   /**
    * Tüm bildirimleri okundu olarak işaretle.
    */
   public static markAllNotificationsRead(): void {
-    const db = workspaceManager.getDb()
-    db.prepare("UPDATE WORKFLOW_Notification SET read_at = CURRENT_TIMESTAMP WHERE read_at IS NULL").run()
+    try {
+      const db = workspaceManager.getDb()
+      db.prepare("UPDATE WORKFLOW_Notification SET read_at = CURRENT_TIMESTAMP WHERE read_at IS NULL").run()
+    } catch {
+      // sessiz yut
+    }
   }
 }

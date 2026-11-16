@@ -113,7 +113,7 @@ export function MalzemeTablosuBody({
             const isEditing = editingId === item.id
             return (
               <tr
-                key={item.id}
+                key={`kalem_${item.id ?? index}_${index}`}
                 className={cn(
                   'hover:bg-slate-50/50 dark:hover:bg-slate-800/10',
                   selectedIds.has(item.id) && 'bg-blue-50/30 dark:bg-blue-955/15'
