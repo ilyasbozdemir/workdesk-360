@@ -1,162 +1,176 @@
-import { useState, useRef, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import { Sparkles, X, Zap, MessageSquare, ChevronRight } from 'lucide-react'
-import { cn } from '../../utils/cn'
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { ChevronRight, MessageSquare, Sparkles, X, Zap } from "lucide-react";
+import { cn } from "../../utils/cn";
 import type {
-  AIFormContext,
   AIFilledValues,
+  AIFormContext,
+  AIFormFillModalProps,
   ChatMessage,
-  AIFormFillModalProps
-} from './ai-form-fill/aiFormFill.types'
+} from "./ai-form-fill/aiFormFill.types";
 import {
-  buildQuickFillPrompt,
   buildChatSystemPrompt,
+  buildQuickFillPrompt,
   tryParseApplyBlock,
-  tryParseJson
-} from './ai-form-fill/aiFormFill.utils'
-import { AIFormFillQuickView } from './ai-form-fill/AIFormFillQuickView'
-import { AIFormFillChatView } from './ai-form-fill/AIFormFillChatView'
-import { useModalOverlay } from '../../services/overlay/useModalOverlay'
+  tryParseJson,
+} from "./ai-form-fill/aiFormFill.utils";
+import { AIFormFillQuickView } from "./ai-form-fill/AIFormFillQuickView";
+import { AIFormFillChatView } from "./ai-form-fill/AIFormFillChatView";
+import { useModalOverlay } from "../../services/overlay/useModalOverlay";
 
-export type { AIFormContext, AIFilledValues }
+export type { AIFilledValues, AIFormContext };
 
-export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFillModalProps) {
-  const [mode, setMode] = useState<'select' | 'quick' | 'chat'>('select')
+export function AIFormFillModal(
+  { isOpen, onClose, context, onApply }: AIFormFillModalProps,
+) {
+  const [mode, setMode] = useState<"select" | "quick" | "chat">("select");
 
   // Quick fill state
-  const [quickLoading, setQuickLoading] = useState(false)
-  const [quickResult, setQuickResult] = useState<AIFilledValues | null>(null)
-  const [quickError, setQuickError] = useState('')
+  const [quickLoading, setQuickLoading] = useState(false);
+  const [quickResult, setQuickResult] = useState<AIFilledValues | null>(null);
+  const [quickError, setQuickError] = useState("");
 
   // Chat state
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [chatInput, setChatInput] = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
-  const [chatPendingApply, setChatPendingApply] = useState<AIFilledValues | null>(null)
-  const chatEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatPendingApply, setChatPendingApply] = useState<
+    AIFilledValues | null
+  >(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useModalOverlay({
-    id: 'ai-form-fill-modal',
+    id: "ai-form-fill-modal",
     isOpen,
-    onClose
-  })
+    onClose,
+  });
 
   useEffect(() => {
     if (!isOpen) {
-      setMode('select')
-      setQuickResult(null)
-      setQuickError('')
-      setChatMessages([])
-      setChatPendingApply(null)
-      setChatInput('')
+      setMode("select");
+      setQuickResult(null);
+      setQuickError("");
+      setChatMessages([]);
+      setChatPendingApply(null);
+      setChatInput("");
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [chatMessages])
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
 
   // ── Quick Fill ──────────────────────────────────────────────────────────────
   const handleQuickFill = async () => {
-    setQuickLoading(true)
-    setQuickResult(null)
-    setQuickError('')
+    setQuickLoading(true);
+    setQuickResult(null);
+    setQuickError("");
     try {
-      const prompt = buildQuickFillPrompt(context)
-      const res = await window.api.aiGenerate({ prompt })
+      const prompt = buildQuickFillPrompt(context);
+      const res = await window.api.aiGenerate({ prompt });
       if (res.success && res.data) {
-        const parsed = tryParseJson(res.data)
+        const parsed = tryParseJson(res.data);
         if (parsed) {
-          setQuickResult(parsed)
+          setQuickResult(parsed);
         } else {
-          setQuickError('AI geçerli bir JSON döndürmedi. Tekrar deneyin.')
+          setQuickError("AI geçerli bir JSON döndürmedi. Tekrar deneyin.");
         }
       } else {
         setQuickError(
-          res.error || 'AI hatası. Ayarlar > Yapay Zeka bölümünden API anahtarınızı kontrol edin.'
-        )
+          res.error ||
+            "AI hatası. Ayarlar > Yapay Zeka bölümünden API anahtarınızı kontrol edin.",
+        );
       }
     } catch {
-      setQuickError('Beklenmeyen hata oluştu.')
+      setQuickError("Beklenmeyen hata oluştu.");
     } finally {
-      setQuickLoading(false)
+      setQuickLoading(false);
     }
-  }
+  };
 
   // ── Chat ────────────────────────────────────────────────────────────────────
   const handleChatStart = () => {
-    setMode('chat')
+    setMode("chat");
     const welcome: ChatMessage = {
-      role: 'assistant',
-      content: `Merhaba! Ben TEMİN 360 Asistanınızım 👋\n\n**${context.formTitle}** formunu doldurmana yardımcı olabilirim.\n\nHızlı bir şekilde doldurmak için bana şunu söyle:\n> "X malzemesi alımı için doğrudan temin dosyası aç"\n\nYa da adım adım gidelim — hangi birimin alımı bu?`,
-      timestamp: new Date()
-    }
-    setChatMessages([welcome])
-    setTimeout(() => inputRef.current?.focus(), 100)
-  }
+      role: "assistant",
+      content:
+        `Merhaba! Ben TEMİN 360 Asistanınızım 👋\n\n**${context.formTitle}** formunu doldurmana yardımcı olabilirim.\n\nHızlı bir şekilde doldurmak için bana şunu söyle:\n> "X malzemesi alımı için doğrudan temin dosyası aç"\n\nYa da adım adım gidelim — hangi birimin alımı bu?`,
+      timestamp: new Date(),
+    };
+    setChatMessages([welcome]);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
 
   const handleSendMessage = async () => {
-    const text = chatInput.trim()
-    if (!text || chatLoading) return
+    const text = chatInput.trim();
+    if (!text || chatLoading) return;
 
-    const userMsg: ChatMessage = { role: 'user', content: text, timestamp: new Date() }
-    setChatMessages((prev) => [...prev, userMsg])
-    setChatInput('')
-    setChatLoading(true)
+    const userMsg: ChatMessage = {
+      role: "user",
+      content: text,
+      timestamp: new Date(),
+    };
+    setChatMessages((prev) => [...prev, userMsg]);
+    setChatInput("");
+    setChatLoading(true);
 
     try {
-      const systemPrompt = buildChatSystemPrompt(context)
-      const history = [...chatMessages, userMsg]
+      const systemPrompt = buildChatSystemPrompt(context);
+      const history = [...chatMessages, userMsg];
       const conversationText = history
-        .map((m) => `${m.role === 'user' ? 'Kullanıcı' : 'Asistan'}: ${m.content}`)
-        .join('\n\n')
+        .map((m) =>
+          `${m.role === "user" ? "Kullanıcı" : "Asistan"}: ${m.content}`
+        )
+        .join("\n\n");
 
-      const prompt = `${systemPrompt}\n\n--- SOHBET GEÇMİŞİ ---\n${conversationText}\n\nAsistan:`
-      const res = await window.api.aiGenerate({ prompt })
+      const prompt =
+        `${systemPrompt}\n\n--- SOHBET GEÇMİŞİ ---\n${conversationText}\n\nAsistan:`;
+      const res = await window.api.aiGenerate({ prompt });
 
       if (res.success && res.data) {
-        const aiText = res.data.trim()
-        const applyValues = tryParseApplyBlock(aiText)
-        const cleanText = aiText.replace(/<APPLY>[\s\S]*?<\/APPLY>/, '').trim()
+        const aiText = res.data.trim();
+        const applyValues = tryParseApplyBlock(aiText);
+        const cleanText = aiText.replace(/<APPLY>[\s\S]*?<\/APPLY>/, "").trim();
 
         const assistantMsg: ChatMessage = {
-          role: 'assistant',
-          content: cleanText || 'Form değerleri hazır! Aşağıdan uygulayabilirsin.',
-          timestamp: new Date()
-        }
-        setChatMessages((prev) => [...prev, assistantMsg])
+          role: "assistant",
+          content: cleanText ||
+            "Form değerleri hazır! Aşağıdan uygulayabilirsin.",
+          timestamp: new Date(),
+        };
+        setChatMessages((prev) => [...prev, assistantMsg]);
 
         if (applyValues) {
-          setChatPendingApply(applyValues)
+          setChatPendingApply(applyValues);
         }
       } else {
         const errMsg: ChatMessage = {
-          role: 'assistant',
-          content: `⚠️ Hata: ${res.error || 'AI yanıt vermedi.'}`,
-          timestamp: new Date()
-        }
-        setChatMessages((prev) => [...prev, errMsg])
+          role: "assistant",
+          content: `⚠️ Hata: ${res.error || "AI yanıt vermedi."}`,
+          timestamp: new Date(),
+        };
+        setChatMessages((prev) => [...prev, errMsg]);
       }
     } catch {
       const errMsg: ChatMessage = {
-        role: 'assistant',
-        content: '⚠️ Beklenmeyen hata oluştu.',
-        timestamp: new Date()
-      }
-      setChatMessages((prev) => [...prev, errMsg])
+        role: "assistant",
+        content: "⚠️ Beklenmeyen hata oluştu.",
+        timestamp: new Date(),
+      };
+      setChatMessages((prev) => [...prev, errMsg]);
     } finally {
-      setChatLoading(false)
+      setChatLoading(false);
     }
-  }
+  };
 
   const handleApplyAndClose = (values: AIFilledValues) => {
-    onApply(values)
-    onClose()
-  }
+    onApply(values);
+    onClose();
+  };
 
-  if (!isOpen) return null
-  if (typeof document === 'undefined') return null
+  if (!isOpen) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[200] flex items-center justify-center">
@@ -169,9 +183,9 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden',
-          'animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300',
-          mode === 'chat' ? 'max-w-2xl h-[85vh]' : 'max-w-xl'
+          "relative w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden",
+          "animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300",
+          mode === "chat" ? "max-w-2xl h-[85vh]" : "max-w-xl",
         )}
       >
         {/* Header */}
@@ -184,7 +198,9 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
               <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">
                 AI ile Forma Yardım
               </h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">{context.formTitle}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {context.formTitle}
+              </p>
             </div>
           </div>
           <button
@@ -196,7 +212,7 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
         </div>
 
         {/* ── Mode Select ── */}
-        {mode === 'select' && (
+        {mode === "select" && (
           <div className="p-5 space-y-3">
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Formu nasıl doldurmak istiyorsunuz?
@@ -205,8 +221,8 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
             {/* Quick Fill */}
             <button
               onClick={() => {
-                setMode('quick')
-                handleQuickFill()
+                setMode("quick");
+                handleQuickFill();
               }}
               className="w-full flex items-center gap-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800 rounded-xl hover:border-amber-400 dark:hover:border-amber-600 transition-all group text-left cursor-pointer"
             >
@@ -223,7 +239,8 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Kurum bilgilerini bilerek formu tek hamlede doldurur. Onaylamanız yeterli.
+                  Kurum bilgilerini bilerek formu tek hamlede doldurur.
+                  Onaylamanız yeterli.
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors flex-none" />
@@ -242,7 +259,8 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
                   Sohbet Modu
                 </span>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Asistana ne almak istediğinizi anlatın, o formu adım adım doldursun.
+                  Asistana ne almak istediğinizi anlatın, o formu adım adım
+                  doldursun.
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-500 transition-colors flex-none" />
@@ -254,7 +272,7 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
                   <span className="font-bold text-slate-700 dark:text-slate-300">
                     Kullanılacak Bağlam:
-                  </span>{' '}
+                  </span>{" "}
                   {context.kurumBilgisi.birimAdi}
                   {context.kurumBilgisi.sunulacakMakam &&
                     ` · ${context.kurumBilgisi.sunulacakMakam}`}
@@ -265,7 +283,7 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
         )}
 
         {/* ── Quick Fill ── */}
-        {mode === 'quick' && (
+        {mode === "quick" && (
           <AIFormFillQuickView
             context={context}
             quickLoading={quickLoading}
@@ -274,15 +292,15 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
             onApplyAndClose={handleApplyAndClose}
             onQuickFill={handleQuickFill}
             onBack={() => {
-              setMode('select')
-              setQuickResult(null)
-              setQuickError('')
+              setMode("select");
+              setQuickResult(null);
+              setQuickError("");
             }}
           />
         )}
 
         {/* ── Chat Mode ── */}
-        {mode === 'chat' && (
+        {mode === "chat" && (
           <AIFormFillChatView
             chatMessages={chatMessages}
             chatLoading={chatLoading}
@@ -298,6 +316,6 @@ export function AIFormFillModal({ isOpen, onClose, context, onApply }: AIFormFil
         )}
       </div>
     </div>,
-    document.body
-  )
+    document.body,
+  );
 }

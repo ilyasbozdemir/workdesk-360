@@ -1,32 +1,44 @@
-import React from 'react'
-import { createPortal } from 'react-dom'
-import { useModalOverlay } from '../../../../services/overlay/useModalOverlay'
+import React from "react";
+import { createPortal } from "react-dom";
+import { useModalOverlay } from "../../../../services/overlay/useModalOverlay";
 
 export interface DosyaManageMaliyetModalProps {
-  isOpen: boolean
-  onClose: () => void
-  formData: any
-  setFormData: React.Dispatch<React.SetStateAction<any>>
+  isOpen: boolean;
+  onClose: () => void;
+  formData: any;
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
 }
 
-export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = ({
-  isOpen,
-  onClose,
-  formData,
-  setFormData
-}) => {
-  useModalOverlay({
-    id: 'dosya-manage-maliyet-modal',
+export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
+  {
     isOpen,
-    onClose
-  })
+    onClose,
+    formData,
+    setFormData,
+  },
+) => {
+  useModalOverlay({
+    id: "dosya-manage-maliyet-modal",
+    isOpen,
+    onClose,
+  });
 
-  if (!isOpen) return null
-  if (typeof document === 'undefined') return null
+  useModalOverlay({
+    id: "dosya-manage-maliyet-modal",
+    isOpen,
+    onClose,
+  });
+
+  if (!isOpen) return null;
+  if (typeof document === "undefined") return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <>
-      <div className="fixed inset-0 bg-black/25 dark:bg-black/50 z-[9998]" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/25 dark:bg-black/50 z-[9998]"
+        onClick={onClose}
+      />
       <div className="fixed right-4 top-[52px] w-80 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] p-4 animate-in slide-in-from-top-2 duration-200">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
           <h3 className="text-xs font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
@@ -61,13 +73,12 @@ export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
             </label>
             <input
               type="number"
-              value={formData.yaklasik_maliyet || ''}
+              value={formData.yaklasik_maliyet || ""}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  yaklasik_maliyet: Number(e.target.value)
-                })
-              }
+                  yaklasik_maliyet: Number(e.target.value),
+                })}
               placeholder="0.00"
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
             />
@@ -82,9 +93,8 @@ export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  yaklasik_maliyet_kdv_dahil_mi: parseInt(e.target.value, 10)
-                })
-              }
+                  yaklasik_maliyet_kdv_dahil_mi: parseInt(e.target.value, 10),
+                })}
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
             >
               <option value={0}>KDV Hariç</option>
@@ -97,13 +107,12 @@ export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
               Hesaplama Yöntemi
             </label>
             <select
-              value={formData.yaklasik_maliyet_hesaplamasi || 'kdv_haric'}
+              value={formData.yaklasik_maliyet_hesaplamasi || "kdv_haric"}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  yaklasik_maliyet_hesaplamasi: e.target.value
-                })
-              }
+                  yaklasik_maliyet_hesaplamasi: e.target.value,
+                })}
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200"
             >
               <option value="kdv_haric">KDV Hariç Hesapla</option>
@@ -113,6 +122,6 @@ export const DosyaManageMaliyetModal: React.FC<DosyaManageMaliyetModalProps> = (
         </div>
       </div>
     </>,
-    document.body
-  )
-}
+    document.body,
+  );
+};
