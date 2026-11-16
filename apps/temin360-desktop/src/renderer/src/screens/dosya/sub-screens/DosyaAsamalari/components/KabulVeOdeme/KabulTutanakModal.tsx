@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { Building2, Info, Truck } from 'lucide-react'
+import { Building2, Info, Truck, Receipt } from 'lucide-react'
 import { Modal } from '../../../../../../components/ui/Modal'
 import { Button } from '../../../../../../components/ui/Button'
 import { Input } from '../../../../../../components/ui/Input'
 import { KabulTutanakItem, MalKalemiItem } from './types'
 import { KabulTutanakKalemlerTable } from './tutanaklar/KabulTutanakKalemlerTable'
+import { formatCurrency, formatDate } from '@renderer/utils/formatters'
 
 interface KabulTutanakModalProps {
   isOpen: boolean
@@ -12,6 +13,13 @@ interface KabulTutanakModalProps {
   onSave: (tutanak: KabulTutanakItem) => void
   initialTutanak?: KabulTutanakItem | null
   existingTutanaklar?: KabulTutanakItem[]
+  existingFaturalar?: Array<{
+    id?: string | number
+    faturaNo?: string
+    faturaTarihi?: string
+    firmaTutar?: number
+    durum?: string
+  }>
   defaultFaturaNo?: string
   defaultFaturaTarihi?: string
   defaultTeslimYeri?: string
@@ -50,6 +58,7 @@ export function KabulTutanakModal({
   onSave,
   initialTutanak,
   existingTutanaklar = [],
+  existingFaturalar = [],
   defaultFaturaNo = '',
   defaultFaturaTarihi = '',
   defaultTeslimYeri = '',
@@ -136,14 +145,22 @@ export function KabulTutanakModal({
       const autoTutanakNo = `KT-${new Date().getFullYear()}-${String(nextIndex).padStart(3, '0')}`
       setTutanakNo(autoTutanakNo)
       setTutanakTarihi(defaultFaturaTarihi || todayStr)
-      setFaturaNo(defaultFaturaNo)
-      setFaturaTarihi(defaultFaturaTarihi || todayStr)
+      const initialFat =
+        existingFaturalar && existingFaturalar.length > 0 ? existingFaturalar[0] : null
+      setFaturaNo(defaultFaturaNo || initialFat?.faturaNo || '')
+      setFaturaTarihi(
+        defaultFaturaTarihi ||
+          (initialFat?.faturaTarihi ? initialFat.faturaTarihi.slice(0, 10) : todayStr)
+      )
       setIrsaliyeNo('')
       setIrsaliyeTarihi(todayStr)
       setTeslimYeri(defaultTeslimYeri || DEFAULT_AMBARLAR[0])
       setTeslimAlan(defaultTeslimAlan || DEFAULT_TESLİM_ALANLAR[0])
       setDurum('kabul')
       setNotlar('')
+      if (initialFat?.firmaTutar && !defaultTutar) {
+        setTutar(String(initialFat.firmaTutar))
+      }
     }
 
     const initialKalemMap = new Map<number, MalKalemiItem>()
@@ -211,6 +228,7 @@ export function KabulTutanakModal({
   }, [
     isOpen,
     initialTutanak,
+    existingFaturalar,
     dosyaKalemler,
     defaultFaturaNo,
     defaultFaturaTarihi,
@@ -359,6 +377,62 @@ export function KabulTutanakModal({
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ─── 5018 / BKMYBS Fatura Entegrasyonu (Kayıtlı Fatura Seçimi) ─── */}
+        {existingFaturalar && existingFaturalar.length > 0 && (
+          <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                <Receipt className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>Mali Hizmetlerde (5018 / BKMYBS) Kayıtlı Faturayı Bağla</span>
+              </span>
+              <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-md">
+                {existingFaturalar.length} Fatura Tanımlı
+              </span>
+            </div>
+            <select
+              value={
+                existingFaturalar.some(
+                  (f) =>
+                    f.faturaNo &&
+                    f.faturaNo.trim().toLowerCase() === (faturaNo || '').trim().toLowerCase()
+                )
+                  ? existingFaturalar.find(
+                      (f) =>
+                        f.faturaNo &&
+                        f.faturaNo.trim().toLowerCase() === (faturaNo || '').trim().toLowerCase()
+                    )?.faturaNo
+                  : '__custom__'
+              }
+              onChange={(e) => {
+                const val = e.target.value
+                if (val === '__custom__') {
+                  return
+                }
+                const found = existingFaturalar.find((f) => f.faturaNo === val)
+                if (found) {
+                  setFaturaNo(found.faturaNo || '')
+                  if (found.faturaTarihi) setFaturaTarihi(found.faturaTarihi.slice(0, 10))
+                  if (found.firmaTutar && (!tutar || Number(tutar) === 0)) {
+                    setTutar(String(found.firmaTutar))
+                  }
+                }
+              }}
+              className="w-full px-3 py-1.5 text-xs bg-white dark:bg-slate-900 border border-blue-300 dark:border-blue-700 rounded-lg font-semibold text-slate-800 dark:text-slate-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="__custom__">-- Farklı / Yeni Fatura Numarası Gir --</option>
+              {existingFaturalar.map((f) => (
+                <option key={f.id || f.faturaNo} value={f.faturaNo}>
+                  {f.faturaNo} — {formatDate(f.faturaTarihi)} ({formatCurrency(f.firmaTutar || 0)}) [
+                  {f.durum === 'odendi' ? 'Ödendi' : 'Ödeme Bekliyor'}]
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-blue-600/90 dark:text-blue-400">
+              Mali masada kayıtlı faturayı seçtiğinizde veya yeni fatura girdiğinizde, tutanak ve fatura birbirine entegre olarak kaydedilir.
+            </p>
           </div>
         )}
 

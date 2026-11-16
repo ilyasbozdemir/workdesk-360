@@ -325,7 +325,8 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
         const brut = Number(d.net_odenen) || ym || 0
         const kdv = brut * 0.2
         const damga = brut * 0.00948
-        const karar = brut * 0.00569
+        // 4734 m. 22 doğrudan teminde ihale kararı alınmadığından kural olarak karar pulu (%0.569) kesilmez
+        const karar = (d.kesinti_karar_pulu && Number(d.kesinti_karar_pulu) > 0) ? brut * 0.00569 : 0
         const netOdenecek = brut + kdv - damga - karar
         const isTamam = d.status === 'tamamlandi' || Number(d.durum_asama_id) === 4
         const firma = firmaMap.get(d.id) || { unvan: `${d.konu} İsteklisi`, vergiNo: '1111111111' }

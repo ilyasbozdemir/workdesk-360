@@ -65,4 +65,14 @@ describe('calculateInvoiceFinancials - Mali ve KDV Doğruluk Testleri', () => {
     expect(res.toplamKesinti).toBe(res.damgaVergisi)
     expect(res.netOdenecek).toBe(Number((12000 - res.damgaVergisi).toFixed(2)))
   })
+
+  it('Doğrudan Temin (4734 m. 22) varsayılanında ihale karar pulu kesilmemelidir (Kullanıcı faturası örneği)', () => {
+    // 180.958,00 TL fatura tutarı, %20 KDV, karar pulu varsayılan olarak kapalı (false)
+    const res = calculateInvoiceFinancials(180958, 20, 'Yok')
+    expect(res.matrah).toBe(150798.33)
+    expect(res.damgaVergisi).toBe(1429.57)
+    expect(res.kararPulu).toBe(0)
+    expect(res.toplamKesinti).toBe(1429.57)
+    expect(res.netOdenecek).toBe(179528.43)
+  })
 })
