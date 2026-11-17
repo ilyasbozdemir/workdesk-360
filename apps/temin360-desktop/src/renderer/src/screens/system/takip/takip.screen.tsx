@@ -82,7 +82,7 @@ export function TakipScreen(): React.JSX.Element {
   const queryClient = useQueryClient();
 
   // Ana Görünüm Modu: Kullanıcının son seçtiği görünüm (localStorage ile korunur)
-  const [viewMode, setViewModeSate] = useState<TakipViewMode>(() => {
+  const [viewMode, setViewModeState] = useState<TakipViewMode>(() => {
     try {
       const saved = localStorage.getItem(
         "temin_takip_view_mode",
@@ -99,7 +99,7 @@ export function TakipScreen(): React.JSX.Element {
   });
 
   const setViewMode = (mode: TakipViewMode) => {
-    setViewModeSate(mode);
+    setViewModeState(mode);
     try {
       localStorage.setItem("temin_takip_view_mode", mode);
     } catch {
