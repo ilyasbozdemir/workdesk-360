@@ -6,6 +6,7 @@ import { useRouterState } from '@tanstack/react-router'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
 import { logActivity } from '../../../utils/logger'
 import { formatDosyaNo } from '../../../utils/formatDosyaNo'
+import { dialogs } from '../../../components/ui/AlertDialogProvider'
 
 export function useDosyalarScreenLogic() {
   const {
@@ -107,12 +108,16 @@ export function useDosyalarScreenLogic() {
   }
 
   const handleDelete = async (id: number, skipConfirm = false): Promise<void> => {
-    if (
-      skipConfirm ||
-      confirm(
-        'Bu dosyayı iptal etmek istediğinize emin misiniz? Dosya listelerde "İptal Edildi" olarak işaretlenecektir.'
-      )
-    ) {
+    let proceed = skipConfirm
+    if (!proceed) {
+      proceed = await dialogs.confirm({
+        title: 'Dosyayı İptal Et',
+        message: 'Bu dosyayı iptal etmek istediğinize emin misiniz? Dosya listelerde "İptal Edildi" olarak işaretlenecektir.',
+        variant: 'warning',
+        confirmText: 'Evet, İptal Et'
+      })
+    }
+    if (proceed) {
       const dosya = dosyalar.find((d) => d.id === id)
       await deleteDosya(id)
       if (dosya) {
@@ -127,11 +132,13 @@ export function useDosyalarScreenLogic() {
   }
 
   const handleHardDelete = async (id: number): Promise<void> => {
-    if (
-      confirm(
-        'DİKKAT: Bu dosyayı veritabanından KALICI OLARAK SİLMEK istediğinize emin misiniz? Bu işlem geri alınamaz!'
-      )
-    ) {
+    const ok = await dialogs.confirm({
+      title: 'Kalıcı Olarak Sil',
+      message: 'DİKKAT: Bu dosyayı veritabanından KALICI OLARAK SİLMEK istediğinize emin misiniz? Bu işlem geri alınamaz!',
+      variant: 'danger',
+      confirmText: 'Evet, Kalıcı Olarak Sil'
+    })
+    if (ok) {
       try {
         await hardDeleteDosya(id)
         if (activeDosyaId === id) setActiveDosyaId(null)
@@ -142,7 +149,11 @@ export function useDosyalarScreenLogic() {
             'Bu dosyayı silemezsiniz çünkü bu dosyaya bağlı alt kayıtlar (fatura, komisyon üyeleri, yüklenen evraklar vb.) mevcut. Dosyayı kalıcı olarak silebilmek için önce o kayıtları silmeniz gerekmektedir.\n\nTeknik Hata: ' +
             errorMsg
         }
-        alert('Silme İşlemi Başarısız!\n\n' + errorMsg)
+        await dialogs.alert({
+          title: 'Silme İşlemi Başarısız',
+          message: errorMsg,
+          variant: 'danger'
+        })
       }
     }
   }
@@ -163,7 +174,11 @@ export function useDosyalarScreenLogic() {
       if (activeDosyaId && ids.includes(activeDosyaId)) setActiveDosyaId(null)
     } catch (error: any) {
       const errorMsg = error?.message || 'Bilinmeyen bir hata oluştu.'
-      alert('Toplu Silme İşlemi Başarısız!\n\n' + errorMsg)
+      await dialogs.alert({
+        title: 'Toplu Silme İşlemi Başarısız',
+        message: errorMsg,
+        variant: 'danger'
+      })
     }
   }
 
@@ -213,11 +228,13 @@ export function useDosyalarScreenLogic() {
   }
 
   const handleKilidiAc = async (id: number): Promise<void> => {
-    if (
-      confirm(
-        'Kilidi açarsanız dosyanın EKAP bağlantısı/kilit durumu iptal edilecektir. Düzenlemeye devam edebilmek için emin misiniz?'
-      )
-    ) {
+    const ok = await dialogs.confirm({
+      title: 'EKAP Kilit Kaldırma',
+      message: 'Kilidi açarsanız dosyanın EKAP bağlantısı/kilit durumu iptal edilecektir. Düzenlemeye devam edebilmek için emin misiniz?',
+      variant: 'warning',
+      confirmText: 'Evet, Kilidi Aç'
+    })
+    if (ok) {
       await updateDosya({ id, is_ekap_sent: 0, ekap_no: null })
       const dosya = dosyalar.find((d) => d.id === id)
       if (dosya) {

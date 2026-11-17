@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useWorkspaceStore } from '../../../../store/workspaceStore'
+import { dialogs } from '../../../../components/ui/AlertDialogProvider'
 
 export interface TeminFirmaItem {
   id: number
@@ -59,15 +60,23 @@ export function useIstekliFirmalarLogic() {
 
   const handleAddFirm = async (firma: TeminFirmaItem): Promise<void> => {
     if (associatedFirms.some((af) => af.id === firma.id || af.firma_id === firma.id)) {
-      alert('Bu firma zaten eklenmiş.')
+      await dialogs.alert({
+        title: 'Firma Zaten Ekli',
+        message: 'Bu firma zaten eklenmiş.',
+        variant: 'warning'
+      })
       return
     }
     if (firma.kara_liste === 1) {
-      const confirmAdd = confirm(
-        `⚠️ DİKKAT: "${firma.unvan}" firması KARA LİSTEDEDİR!\n\n` +
+      const confirmAdd = await dialogs.confirm({
+        title: 'Kara Liste Uyarısı',
+        message:
+          `⚠️ DİKKAT: "${firma.unvan}" firması KARA LİSTEDEDİR!\n\n` +
           `Gerekçe: ${firma.kara_liste_neden || 'Belirtilmemiş.'}\n\n` +
-          `Yine de bu doğrudan temin dosyasına eklemek istiyor musunuz?`
-      )
+          `Yine de bu doğrudan temin dosyasına eklemek istiyor musunuz?`,
+        variant: 'danger',
+        confirmText: 'Yine de Ekle'
+      })
       if (!confirmAdd) return
     }
     try {
@@ -79,15 +88,29 @@ export function useIstekliFirmalarLogic() {
       if (res.success) {
         loadFirms()
       } else {
-        alert('Firma eklenirken hata: ' + res.error)
+        await dialogs.alert({
+          title: 'Hata',
+          message: 'Firma eklenirken hata: ' + res.error,
+          variant: 'danger'
+        })
       }
     } catch (err: any) {
-      alert(err.message)
+      await dialogs.alert({
+        title: 'Hata',
+        message: err.message,
+        variant: 'danger'
+      })
     }
   }
 
   const handleRemoveFirm = async (teminFirmaId: number): Promise<void> => {
-    if (!confirm('Bu tedarikçiyi dosyadan çıkarmak istediğinize emin misiniz?')) return
+    const ok = await dialogs.confirm({
+      title: 'Tedarikçiyi Kaldır',
+      message: 'Bu tedarikçiyi dosyadan çıkarmak istediğinize emin misiniz?',
+      variant: 'warning',
+      confirmText: 'Evet, Çıkar'
+    })
+    if (!ok) return
     try {
       await window.electron.ipcRenderer.invoke(
         'db:run',
@@ -101,7 +124,11 @@ export function useIstekliFirmalarLogic() {
       )
       if (res.success) loadFirms()
     } catch (err: any) {
-      alert(err.message)
+      await dialogs.alert({
+        title: 'Hata',
+        message: err.message,
+        variant: 'danger'
+      })
     }
   }
 
@@ -112,7 +139,13 @@ export function useIstekliFirmalarLogic() {
 
   const handleDeleteBelge = async (): Promise<void> => {
     if (!activeFirmaForQuery) return
-    if (!confirm('Bu belgeyi dosyadan kaldırmak istediğinize emin misiniz?')) return
+    const ok = await dialogs.confirm({
+      title: 'Belgeyi Kaldır',
+      message: 'Bu belgeyi dosyadan kaldırmak istediğinize emin misiniz?',
+      variant: 'warning',
+      confirmText: 'Evet, Kaldır'
+    })
+    if (!ok) return
     try {
       const res = await window.electron.ipcRenderer.invoke(
         'db:run',
@@ -126,7 +159,11 @@ export function useIstekliFirmalarLogic() {
         })
       }
     } catch (err: any) {
-      alert('Belge kaldırılırken hata: ' + err.message)
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Belge kaldırılırken hata: ' + err.message,
+        variant: 'danger'
+      })
     }
   }
 
@@ -150,16 +187,32 @@ export function useIstekliFirmalarLogic() {
               ...activeFirmaForQuery,
               yasaklilik_belgesi: uploadRes.relativePath
             })
-            alert('Sorgulama belgesi başarıyla dosyaya kaydedildi.')
+            await dialogs.alert({
+              title: 'Başarılı',
+              message: 'Sorgulama belgesi başarıyla dosyaya kaydedildi.',
+              variant: 'success'
+            })
           } else {
-            alert('Veritabanına kaydedilirken hata: ' + dbRes.error)
+            await dialogs.alert({
+              title: 'Hata',
+              message: 'Veritabanına kaydedilirken hata: ' + dbRes.error,
+              variant: 'danger'
+            })
           }
         } else {
-          alert('Dosya yüklenirken hata: ' + uploadRes.error)
+          await dialogs.alert({
+            title: 'Hata',
+            message: 'Dosya yüklenirken hata: ' + uploadRes.error,
+            variant: 'danger'
+          })
         }
       }
     } catch (err: any) {
-      alert('Hata: ' + err.message)
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Hata: ' + err.message,
+        variant: 'danger'
+      })
     }
   }
 
@@ -178,7 +231,11 @@ export function useIstekliFirmalarLogic() {
         })
       }
     } catch (err: any) {
-      alert('Durum güncellenirken hata: ' + err.message)
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Durum güncellenirken hata: ' + err.message,
+        variant: 'danger'
+      })
     }
   }
 

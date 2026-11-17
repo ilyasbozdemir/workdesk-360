@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webFrame } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Whitelist of authorized IPC channels for Preload gatekeeper
@@ -231,8 +231,21 @@ const allowedChannels = new Set([
   'workflow:get-tasks',
   'workflow:get-notifications',
   'workflow:mark-notification-read',
-  'workflow:mark-all-notifications-read'
+  'workflow:mark-all-notifications-read',
+  // Native Electron Dialog Sync Channels (Issue #20400 Focus Lock Fix)
+  'dialog:alert-sync',
+  'dialog:confirm-sync'
 ])
+
+// Native Dialogs synchronous bridge for standard alert() and confirm() APIs
+const electronDialogs = {
+  alertSync: (message: string): void => {
+    ipcRenderer.sendSync('dialog:alert-sync', String(message ?? ''))
+  },
+  confirmSync: (message: string): boolean => {
+    return Boolean(ipcRenderer.sendSync('dialog:confirm-sync', String(message ?? '')))
+  }
+}
 
 // Secure gated wrapper exposing only authorized channels to renderer
 const secureElectronAPI = {
@@ -240,6 +253,7 @@ const secureElectronAPI = {
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url)
   },
+  dialog: electronDialogs,
   ipcRenderer: {
     ...electronAPI.ipcRenderer,
     invoke: (channel: string, ...args: any[]) => {
@@ -248,6 +262,13 @@ const secureElectronAPI = {
         return Promise.reject(new Error(`[Preload Security] Channel access denied: '${channel}'`))
       }
       return ipcRenderer.invoke(channel, ...args)
+    },
+    sendSync: (channel: string, ...args: any[]) => {
+      if (!allowedChannels.has(channel)) {
+        console.error(`[Preload Security] Access denied for unauthorized channel: '${channel}'`)
+        return undefined
+      }
+      return ipcRenderer.sendSync(channel, ...args)
     }
   }
 }
@@ -312,6 +333,27 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', secureElectronAPI)
     contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('electronDialogs', electronDialogs)
+
+    // Electron Windows Focus-Bug (#20400, #41603) Çözümü:
+    // Standart window.alert ve window.confirm çağrılarını Main World içinde anında bağla
+    webFrame.executeJavaScript(`
+      try {
+        window.alert = function(message) {
+          if (window.electronDialogs && typeof window.electronDialogs.alertSync === 'function') {
+            window.electronDialogs.alertSync(String(message ?? ''));
+          }
+        };
+        window.confirm = function(message) {
+          if (window.electronDialogs && typeof window.electronDialogs.confirmSync === 'function') {
+            return Boolean(window.electronDialogs.confirmSync(String(message ?? '')));
+          }
+          return false;
+        };
+      } catch (e) {
+        console.error('[Preload] Failed to inject dialog polyfills into main world:', e);
+      }
+    `)
   } catch (error) {
     console.error(error)
   }
@@ -320,4 +362,10 @@ if (process.contextIsolated) {
   window.electron = secureElectronAPI
   // @ts-ignore
   window.api = api
+  // @ts-ignore
+  window.electronDialogs = electronDialogs
+  // @ts-ignore
+  window.alert = (message?: any) => electronDialogs.alertSync(String(message ?? ''))
+  // @ts-ignore
+  window.confirm = (message?: any) => electronDialogs.confirmSync(String(message ?? ''))
 }

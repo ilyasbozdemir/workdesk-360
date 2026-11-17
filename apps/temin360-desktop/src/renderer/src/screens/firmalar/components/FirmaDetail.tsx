@@ -18,6 +18,7 @@ import {
   AlertTriangle
 } from 'lucide-react'
 import { Button } from '../../../components/ui/Button'
+import { dialogs } from '../../../components/ui/AlertDialogProvider'
 import { FirmaGecmisTeminler } from './FirmaGecmisTeminler'
 import { useFirmaNotlariHooks } from '../firmalar.hooks'
 import { cn } from '../../../utils/cn'
@@ -51,18 +52,32 @@ export const FirmaDetail: React.FC<FirmaDetailProps> = ({ viewingFirma, setViewi
       })
       setNewNot((prev) => ({ ...prev, not_metni: '' }))
     } catch (err: any) {
-      alert('Not eklenirken hata oluştu: ' + (err.message || err))
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Not eklenirken hata oluştu: ' + (err.message || err),
+        variant: 'warning'
+      })
     } finally {
       setIsSubmittingNot(false)
     }
   }
 
   const handleDeleteNot = async (id: number) => {
-    if (confirm('Bu iletişim notunu silmek istediğinize emin misiniz?')) {
+    const ok = await dialogs.confirm({
+      title: 'Notu Sil',
+      message: 'Bu iletişim notunu silmek istediğinize emin misiniz?',
+      variant: 'danger',
+      confirmText: 'Evet, Sil'
+    })
+    if (ok) {
       try {
         await deleteNot({ id, firma_id: viewingFirma.id })
       } catch {
-        alert('Not silinemedi!')
+        await dialogs.alert({
+          title: 'Hata',
+          message: 'Not silinemedi!',
+          variant: 'danger'
+        })
       }
     }
   }
