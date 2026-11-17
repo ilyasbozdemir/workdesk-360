@@ -44,7 +44,7 @@ export function resolveFirmsAndItems(
     dosyaRecord?.firma_id ||
     safeFileFirms.find((f: any) => f.kazandi_mi === 1 || f.kazanan_mi === 1 || f.isWinner)?.id
 
-  const winnerFirm =
+  let winnerFirm =
     safeFileFirms.find(
       (f: any) =>
         (winnerFirmaId &&
@@ -55,6 +55,26 @@ export function resolveFirmsAndItems(
         f.kazanan_mi === 1 ||
         f.isWinner
     )
+
+  // Re'sen (otomatik) kazanan firma tespiti: En düşük teklif veren veya tek istekli firma
+  if (!winnerFirm && safeFileFirms.length > 0) {
+    const firmsWithBids = safeFileFirms.filter(
+      (f: any) =>
+        Number(f.teklif_toplami) > 0 || Number(f.total) > 0 || Number(f.calculated_teklif) > 0
+    )
+    if (firmsWithBids.length > 0) {
+      firmsWithBids.sort((a: any, b: any) => {
+        const totalA =
+          Number(a.teklif_toplami) || Number(a.total) || Number(a.calculated_teklif) || 0
+        const totalB =
+          Number(b.teklif_toplami) || Number(b.total) || Number(b.calculated_teklif) || 0
+        return totalA - totalB
+      })
+      winnerFirm = firmsWithBids[0]
+    } else if (safeFileFirms.length === 1) {
+      winnerFirm = safeFileFirms[0]
+    }
+  }
 
   if (winnerFirm && (winnerFirm.unvan || winnerFirm.firma_adi)) {
     const resolvedUnvan = winnerFirm.unvan || winnerFirm.firma_adi

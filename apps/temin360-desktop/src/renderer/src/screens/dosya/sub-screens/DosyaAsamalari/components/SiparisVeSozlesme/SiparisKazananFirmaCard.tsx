@@ -51,6 +51,14 @@ export const SiparisKazananFirmaCard: React.FC<Props> = ({
               <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider">
                 Kazanan / Yüklenici Firma
               </span>
+              {firmaStats.isResenWinner && (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[8.5px] font-extrabold uppercase tracking-wider flex items-center gap-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                  title="Kazanan firma teklifler veya ıslak belge snapshot kayıtlarına göre re'sen (otomatik) belirlendi."
+                >
+                  ⚡ Re'sen Belirlendi {firmaStats.resenReason === 'LOWEST_BID' ? '(En Düşük Teklif)' : firmaStats.resenReason === 'SINGLE_FIRM' ? '(Tek İstekli)' : '(Belge Korumalı)'}
+                </span>
+              )}
               {firmaStats.yasaklilikDurumu && (
                 <span
                   className={cn(

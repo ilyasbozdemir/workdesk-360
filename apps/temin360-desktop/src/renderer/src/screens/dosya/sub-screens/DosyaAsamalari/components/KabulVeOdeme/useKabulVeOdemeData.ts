@@ -9,6 +9,7 @@ import {
   FaturaKayit,
   calculateInvoiceFinancials
 } from '@renderer/screens/bkmybs-mali-yonetim/components/tabs/DosyalarVeFaturalariTab'
+import { resolveResenWinner } from '../../../../../../services/dossier/winnerSyncService'
 
 interface KabulDataCacheEntry {
   kazananFirmaId: number | null
@@ -615,6 +616,20 @@ export function useKabulVeOdemeData() {
           let effectiveFirmaId = row.firma_id || null
           let effectiveUnvan = row.unvan || ''
           let effectiveVergiNo = row.vergi_no || null
+
+          // Eğer dosyada atanmış kazanan firma yoksa re'sen çözümle (En Düşük Teklif / Tek İstekli / Islak Belge)
+          if (!effectiveFirmaId) {
+            try {
+              const resen = await resolveResenWinner(activeDosyaId)
+              if (resen.winner) {
+                effectiveFirmaId = resen.winner.master_firma_id || resen.winner.temin_firma_id
+                effectiveUnvan = resen.winner.unvan
+                effectiveVergiNo = resen.winner.vergi_no
+              }
+            } catch (resenErr) {
+              console.warn('Re\'sen kazanan firma çözümleme hatası:', resenErr)
+            }
+          }
 
           if (row.sablon_tercihleri) {
             try {

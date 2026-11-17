@@ -9,6 +9,8 @@ export interface FirmaStats {
   teklifSozlesmeTuru: string | null
   sozlesmeYapilacakMi: number
   istekliFirmaSayisi: number
+  isResenWinner?: boolean
+  resenReason?: string
 }
 
 export interface IslemlerData {

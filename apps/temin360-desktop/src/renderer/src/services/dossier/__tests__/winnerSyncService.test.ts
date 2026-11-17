@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import {
   executeSetWinnerTransaction,
   inspectWinnerIntegrity,
+  resolveResenWinner,
   WinnerSyncDbExecutor
 } from '../winnerSyncService'
 
@@ -194,6 +195,141 @@ describe('Faz 1.2: winnerSyncService (Kazanan Firma Senkronizasyonu & Güvenlik)
       expect(report.issueType).toBe('CONFLICTING_FLAGS')
       expect(report.kazandiCount).toBe(1)
       expect(report.kazananCount).toBe(1)
+    })
+  })
+
+  describe('resolveResenWinner (Re\'sen Kazanan Firma Çözümleme ve Koruma)', () => {
+    it('Açıkça seçilmiş kazanan firma varsa (EXPLICIT) doğrudan korumalı ve isResen=false dönmeli', async () => {
+      const mockQuery = vi.fn()
+        // dosya
+        .mockResolvedValueOnce({
+          success: true,
+          data: [{ id: 1, firma_id: 100 }]
+        })
+        // firms
+        .mockResolvedValueOnce({
+          success: true,
+          data: [
+            { temin_firma_id: 10, master_firma_id: 100, unvan: 'Firma 100', kazandi_mi: 1, teklif_toplami: 5000 },
+            { temin_firma_id: 20, master_firma_id: 200, unvan: 'Firma 200', kazandi_mi: 0, teklif_toplami: 4000 }
+          ]
+        })
+        // bids
+        .mockResolvedValueOnce({ success: true, data: [] })
+
+      const executor: WinnerSyncDbExecutor = {
+        query: mockQuery,
+        transaction: vi.fn()
+      }
+
+      const res = await resolveResenWinner(1, executor, false)
+      expect(res.winner?.unvan).toBe('Firma 100')
+      expect(res.reason).toBe('EXPLICIT')
+      expect(res.isResen).toBe(false)
+    })
+
+    it('Açık kazanan yoksa ama Islak/Snapshot belgede firma varsa (SNAPSHOT_PROTECTED) onu korumalı', async () => {
+      const mockQuery = vi.fn()
+        // dosya (kazanan yok)
+        .mockResolvedValueOnce({
+          success: true,
+          data: [{ id: 2, firma_id: null }]
+        })
+        // firms (kazandi_mi=0)
+        .mockResolvedValueOnce({
+          success: true,
+          data: [
+            { temin_firma_id: 10, master_firma_id: 100, unvan: 'Örnek Firma A', kazandi_mi: 0, teklif_toplami: 6000 },
+            { temin_firma_id: 20, master_firma_id: 200, unvan: 'Örnek Firma B', kazandi_mi: 0, teklif_toplami: 5000 }
+          ]
+        })
+        // bids
+        .mockResolvedValueOnce({ success: true, data: [] })
+        // snapshot
+        .mockResolvedValueOnce({
+          success: true,
+          data: [
+            {
+              sablon_kodu: 'piyasa-fiyat-arastirma-tutanagi',
+              veri_json: JSON.stringify({ kazananFirmaUnvan: 'Örnek Firma A', kazananFirmaId: 100 })
+            }
+          ]
+        })
+
+      const mockTx = vi.fn().mockResolvedValue({ success: true })
+      const executor: WinnerSyncDbExecutor = {
+        query: mockQuery,
+        transaction: mockTx
+      }
+
+      const res = await resolveResenWinner(2, executor, true)
+      expect(res.winner?.unvan).toBe('Örnek Firma A')
+      expect(res.reason).toBe('SNAPSHOT_PROTECTED')
+      expect(res.isResen).toBe(true)
+    })
+
+    it('Açık kazanan ve snapshot yoksa en düşük teklif veren firmayı (LOWEST_BID) re\'sen belirlemeli', async () => {
+      const mockQuery = vi.fn()
+        // dosya
+        .mockResolvedValueOnce({
+          success: true,
+          data: [{ id: 3, firma_id: null }]
+        })
+        // firms
+        .mockResolvedValueOnce({
+          success: true,
+          data: [
+            { temin_firma_id: 10, master_firma_id: 100, unvan: 'Pahalı Firma', kazandi_mi: 0, teklif_toplami: 10000 },
+            { temin_firma_id: 20, master_firma_id: 200, unvan: 'En Ucuz Firma', kazandi_mi: 0, teklif_toplami: 3500 }
+          ]
+        })
+        // bids
+        .mockResolvedValueOnce({ success: true, data: [] })
+        // snapshot (yok)
+        .mockResolvedValueOnce({ success: true, data: [] })
+
+      const mockTx = vi.fn().mockResolvedValue({ success: true })
+      const executor: WinnerSyncDbExecutor = {
+        query: mockQuery,
+        transaction: mockTx
+      }
+
+      const res = await resolveResenWinner(3, executor, true)
+      expect(res.winner?.unvan).toBe('En Ucuz Firma')
+      expect(res.winner?.temin_firma_id).toBe(20)
+      expect(res.reason).toBe('LOWEST_BID')
+      expect(res.isResen).toBe(true)
+    })
+
+    it('Dosyada tek firma varsa (SINGLE_FIRM) teklifsiz de olsa re\'sen belirlemeli', async () => {
+      const mockQuery = vi.fn()
+        // dosya
+        .mockResolvedValueOnce({
+          success: true,
+          data: [{ id: 4, firma_id: null }]
+        })
+        // firms (tek firma)
+        .mockResolvedValueOnce({
+          success: true,
+          data: [
+            { temin_firma_id: 15, master_firma_id: 150, unvan: 'Tek İstekli Ltd.', kazandi_mi: 0, teklif_toplami: 0 }
+          ]
+        })
+        // bids
+        .mockResolvedValueOnce({ success: true, data: [] })
+        // snapshot (yok)
+        .mockResolvedValueOnce({ success: true, data: [] })
+
+      const mockTx = vi.fn().mockResolvedValue({ success: true })
+      const executor: WinnerSyncDbExecutor = {
+        query: mockQuery,
+        transaction: mockTx
+      }
+
+      const res = await resolveResenWinner(4, executor, true)
+      expect(res.winner?.unvan).toBe('Tek İstekli Ltd.')
+      expect(res.reason).toBe('SINGLE_FIRM')
+      expect(res.isResen).toBe(true)
     })
   })
 })
