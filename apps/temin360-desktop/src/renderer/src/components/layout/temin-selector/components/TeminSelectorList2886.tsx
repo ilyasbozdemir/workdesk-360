@@ -34,7 +34,7 @@ export const TeminSelectorList2886: React.FC<TeminSelectorList2886Props> = ({
 
   return (
     <>
-      {filtered2886Dosyalar.map((dosya) => {
+      {filtered2886Dosyalar.map((dosya, idx) => {
         const isActive = active2886Dosya?.id === dosya.id
         const turBadge = get2886IslemTuruBadge(dosya.islemTuru)
         const mevzuatBadge = get2886MevzuatBadge(dosya)
@@ -43,7 +43,7 @@ export const TeminSelectorList2886: React.FC<TeminSelectorList2886Props> = ({
 
         return (
           <div
-            key={dosya.id}
+            key={`dt2886_${dosya.id}_${idx}`}
             onClick={() => handleSelect2886(dosya)}
             className={`group w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all border cursor-pointer ${
               isActive

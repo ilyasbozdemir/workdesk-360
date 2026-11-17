@@ -24,7 +24,10 @@ import {
   ShieldCheck,
   Percent,
   Layers,
-  ArrowRight
+  ArrowRight,
+  FolderCheck,
+  Table,
+  LayoutGrid
 } from 'lucide-react'
 import { KamuRole } from '../../types'
 import { formatCurrency, formatDate } from '@renderer/utils/formatters'
@@ -52,6 +55,10 @@ export interface FaturaKayit {
   durum: 'beklemede' | 'odendi' | 'iptal'
   aciklama?: string
   kaynak?: 'sablon' | 'kabul_tutanagi' | 'mali_giris' | 'tahakkuk'
+  tutanakNo?: string
+  tutanakTarihi?: string
+  irsaliyeNo?: string
+  teslimYeri?: string
 }
 
 export interface DosyaOzet {
@@ -231,6 +238,15 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
     const rawRows = dosyaRes?.success ? dosyaRes.data : Array.isArray(dosyaRes) ? dosyaRes : []
     if (!Array.isArray(rawRows) || rawRows.length === 0) return []
 
+    // JOIN'lerden kaynaklanan d.id mükerrerliğini (örn. DATA_TeminFirma çift eşleşmesi) re'sen önle
+    const seenDosyaIds = new Set<number>()
+    const uniqueRows = rawRows.filter((r: any) => {
+      const idNum = Number(r?.id)
+      if (!idNum || seenDosyaIds.has(idNum)) return false
+      seenDosyaIds.add(idNum)
+      return true
+    })
+
     // 2. DATA_TeminBelgeSnapshot tablosundan kabul & fatura şablonlarını re'sen oku
     const snapshotsByDosya = new Map<number, any[]>()
     try {
@@ -259,7 +275,7 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
       console.warn('[DosyalarVeFaturalariTab] Snapshot verileri okunamadı:', e)
     }
 
-    return rawRows.map((d: any) => {
+    return uniqueRows.map((d: any) => {
       let preferences: any = {}
       if (d.sablon_tercihleri) {
         try {
@@ -279,15 +295,14 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         const key = (f.faturaNo || '').trim().toLowerCase()
         if (key && !faturaNoSet.has(key)) {
           faturaNoSet.add(key)
-          // Finansal tutarları hesapla (4734 m. 22 doğrudan teminde ihale kararı alınmadığından karar pulu kesilmez)
-          // Yalnızca dosya sözleşmeli ise veya faturada kararPuluUygula açıkça true seçilmişse uygulanır.
+          // Finansal tutarları hesapla:
+          // 4734 sayılı Kanun md. 22 doğrudan temin bir ihale usulü olmadığından ve ihale komisyonu
+          // kararı bulunmadığından 488 sayılı Damga Vergisi Kanunu uyarınca ihale karar damga vergisi
+          // (karar pulu %0.569) KANUNEN KESİLMEZ (Maliye Bakanlığı Tebliği ve Sayıştay Kararları).
+          // Dosya sözleşmeli olsa dahi doğrudan teminde ihale karar pulu kesilmez.
+          // Yalnızca kullanıcı açıkça faturada kararPuluUygula = true seçmişse uygulanır.
           const kdvDegeri = Number.isFinite(Number(f.kdvOrani)) ? Number(f.kdvOrani) : 20
-          const isDosyaSozlesmeli = Boolean(
-            Number(d.sozlesme_yapilacak_mi) === 1
-          )
-          const kpUygula = (f as any).kararPuluUygula !== undefined
-            ? Boolean((f as any).kararPuluUygula)
-            : isDosyaSozlesmeli
+          const kpUygula = Boolean((f as any).kararPuluUygula === true)
 
           const fin = calculateInvoiceFinancials(
             f.firmaTutar,
@@ -448,10 +463,18 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   const [alimFilter, setAlimFilter] = useState('all')
   const [faturaFilter, setFaturaFilter] = useState<'all' | 'with-invoice' | 'without-invoice' | 'paid' | 'pending'>('all')
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
+  const [scopeFilter, setScopeFilter] = useState<'active' | 'all'>(() => (selectedDosyaId ? 'active' : 'all'))
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
 
-  // Seçili dosya değiştiğinde ilgili dosyayı otomatik genişlet (expand)
+  const activeDosya = useMemo(
+    () => (selectedDosyaId ? dosyalar.find((d) => d.id === selectedDosyaId) : null),
+    [dosyalar, selectedDosyaId]
+  )
+
+  // Seçili dosya değiştiğinde scope'u 'active' yap ve ilgili dosyayı genişlet
   useEffect(() => {
     if (selectedDosyaId) {
+      setScopeFilter('active')
       setExpanded((prev) => new Set([...prev, selectedDosyaId]))
     }
   }, [selectedDosyaId])
@@ -462,6 +485,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   const [duzenlenenFatura, setDuzenlenenFatura] = useState<FaturaKayit | null>(null)
   const [formFaturaNo, setFormFaturaNo] = useState('')
   const [formFaturaTarihi, setFormFaturaTarihi] = useState('')
+  const [formTutanakNo, setFormTutanakNo] = useState('')
+  const [formTutanakTarihi, setFormTutanakTarihi] = useState('')
+  const [formIrsaliyeNo, setFormIrsaliyeNo] = useState('')
+  const [formTeslimYeri, setFormTeslimYeri] = useState('')
   const [formFaturaTutar, setFormFaturaTutar] = useState<number>(0)
   const [formKdvOrani, setFormKdvOrani] = useState<number>(20)
   const [formTevkifatOrani, setFormTevkifatOrani] = useState<string>('Yok')
@@ -514,28 +541,38 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setExpanded(new Set())
   }
 
-  // Fatura Ekle Modal Aç
+  // Fatura & Muayene Kabul Ekle Modal Aç
   const handleOpenAddInvoice = (dosya: DosyaOzet) => {
     setSeciliDosya(dosya)
     setDuzenlenenFatura(null)
-    setFormFaturaNo(`FAT-${dosya.teminNo?.replace(/[^a-zA-Z0-9]/g, '') || dosya.id}-${(dosya.faturalar.length + 1).toString().padStart(2, '0')}`)
-    setFormFaturaTarihi(new Date().toISOString().slice(0, 10))
+    const nextIdx = (dosya.faturalar.length + 1).toString().padStart(2, '0')
+    const todayStr = new Date().toISOString().slice(0, 10)
+    setFormFaturaNo('')
+    setFormFaturaTarihi(todayStr)
+    setFormTutanakNo(`KT-${new Date().getFullYear()}-${nextIdx}`)
+    setFormTutanakTarihi(todayStr)
+    setFormIrsaliyeNo('')
+    setFormTeslimYeri('Kurum Ambarı / İhtiyaç Yeri')
     setFormFaturaTutar(dosya.netOdenen || dosya.yaklasikMaliyet || 0)
     setFormKdvOrani(20)
     setFormTevkifatOrani('Yok')
     setFormOdemeYontemi('Hazine / Muhasebat Ödeme Emri')
     setFormDurum('beklemede')
-    setFormAciklama(`${dosya.konu} alımı hak ediş ve fatura kaydı.`)
+    setFormAciklama(`${dosya.konu} alımı muayene kabul ve fatura hak ediş kaydı.`)
     setFormKararPuluUygula(false)
     setModalOpen(true)
   }
 
-  // Fatura Düzenle Modal Aç
+  // Fatura & Muayene Kabul Düzenle Modal Aç
   const handleOpenEditInvoice = (dosya: DosyaOzet, fatura: FaturaKayit) => {
     setSeciliDosya(dosya)
     setDuzenlenenFatura(fatura)
     setFormFaturaNo(fatura.faturaNo)
     setFormFaturaTarihi(fatura.faturaTarihi ? fatura.faturaTarihi.slice(0, 10) : '')
+    setFormTutanakNo(fatura.tutanakNo || `KT-${new Date().getFullYear()}-001`)
+    setFormTutanakTarihi(fatura.tutanakTarihi || (fatura.faturaTarihi ? fatura.faturaTarihi.slice(0, 10) : ''))
+    setFormIrsaliyeNo(fatura.irsaliyeNo || '')
+    setFormTeslimYeri(fatura.teslimYeri || 'Kurum Ambarı / İhtiyaç Yeri')
     setFormFaturaTutar(fatura.firmaTutar)
     setFormKdvOrani(Number.isFinite(Number(fatura.kdvOrani)) ? Number(fatura.kdvOrani) : 20)
     setFormTevkifatOrani(fatura.tevkifatOrani || 'Yok')
@@ -546,7 +583,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setModalOpen(true)
   }
 
-  // Faturayı Kaydet (sablon_tercihleri içine kalıcı yazılır)
+  // Faturayı Kaydet (sablon_tercihleri içine hem fatura hem kabul tutanağı kalıcı yazılır)
   const handleSaveInvoice = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!seciliDosya || !window.electron?.ipcRenderer) return
@@ -600,7 +637,11 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         odemeYontemi: formOdemeYontemi,
         durum: formDurum,
         aciklama: formAciklama.trim(),
-        kaynak: 'mali_giris'
+        kaynak: 'mali_giris',
+        tutanakNo: formTutanakNo.trim(),
+        tutanakTarihi: formTutanakTarihi,
+        irsaliyeNo: formIrsaliyeNo.trim(),
+        teslimYeri: formTeslimYeri.trim()
       }
 
       // Aynı fatura numarasının mükerrer eklenmesini önle
@@ -633,23 +674,41 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       prefs.faturaNo = updatedInvoice.faturaNo
       prefs.faturaTarihi = updatedInvoice.faturaTarihi
 
-      // Muayene ve Kabul Tutanakları ile senkronize et
-      if (Array.isArray(prefs.kabulTutanaklari)) {
-        prefs.kabulTutanaklari = prefs.kabulTutanaklari.map((t: any) => {
-          if (
-            (t.faturaNo && t.faturaNo.trim().toLowerCase() === normalizedNo) ||
-            (!t.faturaNo && prefs.kabulTutanaklari.length === 1)
-          ) {
-            return {
-              ...t,
-              faturaNo: updatedInvoice.faturaNo,
-              faturaTarihi: updatedInvoice.faturaTarihi || t.faturaTarihi,
-              tutar: updatedInvoice.firmaTutar || t.tutar
-            }
-          }
-          return t
-        })
+      // ─── Muayene ve Kabul Tutanakları ile %100 Senkronize Et ───
+      const currentTutanaklar: any[] = Array.isArray(prefs.kabulTutanaklari)
+        ? [...prefs.kabulTutanaklari]
+        : []
+
+      const tutIdx = currentTutanaklar.findIndex(
+        (t) =>
+          (t.faturaNo && t.faturaNo.trim().toLowerCase() === normalizedNo) ||
+          (t.id && duzenlenenFatura?.id && t.id === duzenlenenFatura.id)
+      )
+
+      const tutanakPayload = {
+        id: tutIdx !== -1 ? currentTutanaklar[tutIdx].id : `tut_${Date.now()}`,
+        tutanakNo: formTutanakNo.trim() || `KT-${new Date().getFullYear()}-001`,
+        tutanakTarihi: formTutanakTarihi || formFaturaTarihi,
+        faturaNo: formFaturaNo.trim(),
+        faturaTarihi: formFaturaTarihi,
+        irsaliyeNo: formIrsaliyeNo.trim() || undefined,
+        teslimYeri: formTeslimYeri.trim() || undefined,
+        durum: formDurum === 'odendi' ? 'kabul' : formDurum === 'iptal' ? 'red' : 'kabul',
+        tutar: Number(formFaturaTutar) || 0,
+        notlar: formAciklama.trim() || `${formFaturaNo.trim()} faturasına ait muayene kabul kaydı.`,
+        created_at: tutIdx !== -1 ? currentTutanaklar[tutIdx].created_at : new Date().toISOString()
       }
+
+      if (tutIdx !== -1) {
+        currentTutanaklar[tutIdx] = {
+          ...currentTutanaklar[tutIdx],
+          ...tutanakPayload
+        }
+      } else {
+        currentTutanaklar.push(tutanakPayload)
+      }
+
+      prefs.kabulTutanaklari = currentTutanaklar
 
       const updateRes = await window.electron.ipcRenderer.invoke(
         'db:run',
@@ -666,6 +725,12 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         setIsSaving(false)
         return
       }
+
+      window.dispatchEvent(
+        new CustomEvent('dossier:updated', {
+          detail: { dosyaId: seciliDosya.id }
+        })
+      )
 
       setModalOpen(false)
       setIsSaving(false)
@@ -807,8 +872,15 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         }
       }
 
+      const deletedFatura = (prefs.faturalar || []).find((item: any) => item.id === faturaId)
       if (Array.isArray(prefs.faturalar)) {
         prefs.faturalar = prefs.faturalar.filter((item: any) => item.id !== faturaId)
+      }
+      if (deletedFatura?.faturaNo && Array.isArray(prefs.kabulTutanaklari)) {
+        const delNorm = deletedFatura.faturaNo.trim().toLowerCase()
+        prefs.kabulTutanaklari = prefs.kabulTutanaklari.filter(
+          (t: any) => !t.faturaNo || t.faturaNo.trim().toLowerCase() !== delNorm
+        )
       }
 
       const updateRes = await window.electron.ipcRenderer.invoke(
@@ -826,6 +898,12 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         return
       }
 
+      window.dispatchEvent(
+        new CustomEvent('dossier:updated', {
+          detail: { dosyaId: dosya.id }
+        })
+      )
+
       reloadData()
     } catch (err: any) {
       console.error('Fatura silinemedi:', err)
@@ -842,47 +920,6 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setActiveDosyaId(dosyaId)
     window.location.hash = '#/dosya'
   }
-
-  // Canlı Hesaplanan İstatistikler
-  const stats = useMemo(() => {
-    let totalFaturalar = 0
-    let totalHarcama = 0
-    let paidHarcama = 0
-    let pendingHarcama = 0
-    let totalDamga = 0
-    let totalKararPulu = 0
-    let totalTevkifat = 0
-
-    dosyalar.forEach((d) => {
-      d.faturalar.forEach((f) => {
-        totalFaturalar++
-        const tutar = Number(f.firmaTutar || 0)
-        totalHarcama += tutar
-
-        if (f.durum === 'odendi') {
-          paidHarcama += tutar
-        } else if (f.durum === 'beklemede') {
-          pendingHarcama += tutar
-        }
-
-        totalDamga += Number(f.damgaVergisi || 0)
-        totalKararPulu += Number(f.kararPulu || 0)
-        totalTevkifat += Number(f.tevkifatTutari || 0)
-      })
-    })
-
-    return {
-      totalDosya: dosyalar.length,
-      totalFaturalar,
-      totalHarcama,
-      paidHarcama,
-      pendingHarcama,
-      totalDamga,
-      totalKararPulu,
-      totalTevkifat,
-      netHazineCikisi: totalHarcama - (totalDamga + totalKararPulu + totalTevkifat)
-    }
-  }, [dosyalar])
 
   // Filtreleme
   const filteredDosyalar = useMemo(() => {
@@ -915,11 +952,88 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         selectedYil === 'ALL' ||
         (d.olusturmaTarihi && new Date(d.olusturmaTarihi).getFullYear() === Number(selectedYil))
 
-      const matchDosya = !selectedDosyaId || d.id === selectedDosyaId
+      const matchDosya =
+        scopeFilter === 'all' || !selectedDosyaId || d.id === selectedDosyaId
 
       return matchSearch && matchAlim && matchFatura && matchYil && matchDosya
     })
-  }, [dosyalar, searchTerm, alimFilter, faturaFilter, selectedYil, selectedDosyaId])
+  }, [dosyalar, searchTerm, alimFilter, faturaFilter, selectedYil, selectedDosyaId, scopeFilter])
+
+  // Toplu Fatura Kontrol Listesi için düzleştirilmiş faturalar
+  const allFilteredInvoices = useMemo(() => {
+    const list: Array<
+      FaturaKayit & {
+        dosyaId: number
+        dosyaTeminNo: string
+        dosyaKonu: string
+        dosyaTur: string
+        dosyaFirma: string
+        dosyaVkn: string
+        dosyaButceKodu: string
+        dosyaSozlesmeli: boolean
+      }
+    > = []
+
+    filteredDosyalar.forEach((d) => {
+      d.faturalar.forEach((f) => {
+        list.push({
+          ...f,
+          dosyaId: d.id,
+          dosyaTeminNo: d.teminNo,
+          dosyaKonu: d.konu,
+          dosyaTur: d.tur,
+          dosyaFirma: d.kazananFirmaUnvani,
+          dosyaVkn: d.kazananFirmaVkn,
+          dosyaButceKodu: d.butceKodu,
+          dosyaSozlesmeli: d.sozlesmeYapilacakMi
+        })
+      })
+    })
+
+    return list
+  }, [filteredDosyalar])
+
+  // Canlı Hesaplanan İstatistikler (Filtrelenen Kapsama Göre)
+  const stats = useMemo(() => {
+    let totalFaturalar = 0
+    let totalHarcama = 0
+    let paidHarcama = 0
+    let pendingHarcama = 0
+    let totalDamga = 0
+    let totalKararPulu = 0
+    let totalTevkifat = 0
+
+    filteredDosyalar.forEach((d) => {
+      d.faturalar.forEach((f) => {
+        totalFaturalar++
+        const tutar = Number(f.firmaTutar || 0)
+        totalHarcama += tutar
+
+        if (f.durum === 'odendi') {
+          paidHarcama += tutar
+        } else if (f.durum === 'beklemede') {
+          pendingHarcama += tutar
+        }
+
+        totalDamga += Number(f.damgaVergisi || 0)
+        totalKararPulu += Number(f.kararPulu || 0)
+        totalTevkifat += Number(f.tevkifatTutari || 0)
+      })
+    })
+
+    return {
+      totalDosya: filteredDosyalar.length,
+      allDosyaCount: dosyalar.length,
+      totalFaturalar,
+      totalHarcama,
+      paidHarcama,
+      pendingHarcama,
+      totalDamga,
+      totalKararPulu,
+      totalTevkifat,
+      netHazineCikisi: totalHarcama - (totalDamga + totalKararPulu + totalTevkifat)
+    }
+  }, [filteredDosyalar, dosyalar.length])
 
   // Canlı modal hesaplama
   const modalCalculations = useMemo(() => {
@@ -1021,75 +1135,152 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       </div>
 
       {/* ── Filtreleme & Arama Çubuğu ── */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3 flex-1 min-w-[280px]">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Dosya no, konu, firma unvanı, VKN veya fatura no ara..."
-              className="w-full pl-9.5 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs space-y-3">
+        {/* Üst Sıra: Dosya Kapsamı (Scope) & Görünüm Modu (Cards / Table) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              Kapsam:
+            </span>
+            <div className="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs font-bold shrink-0">
+              {selectedDosyaId ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setScopeFilter('active')}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+                      scopeFilter === 'active'
+                        ? 'bg-blue-600 text-white shadow-xs font-black'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                    )}
+                    title={`Yalnızca aktif doğrudan temin dosyasını (${activeDosya?.teminNo || `#${selectedDosyaId}`}) göster`}
+                  >
+                    <FolderCheck size={14} className={scopeFilter === 'active' ? 'text-white' : 'text-blue-500'} />
+                    <span>Aktif Dosya ({activeDosya?.teminNo || `#${selectedDosyaId}`})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScopeFilter('all')}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+                      scopeFilter === 'all'
+                        ? 'bg-blue-600 text-white shadow-xs font-black'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                    )}
+                    title="Tüm doğrudan temin dosyalarını ve faturalarını sorgula / kontrol et"
+                  >
+                    <Layers size={14} className={scopeFilter === 'all' ? 'text-white' : 'text-slate-400'} />
+                    <span>Tüm Dosyalar ({dosyalar.length})</span>
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1 text-slate-600 dark:text-slate-300 text-xs font-bold">
+                  <Layers size={14} className="text-slate-400" />
+                  <span>Tüm Doğrudan Temin Dosyaları ({dosyalar.length})</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {selectedDosyaId && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold shrink-0">
-              <span>Aktif Dosya: #{selectedDosyaId}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+              Görünüm:
+            </span>
+            <div className="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs font-bold">
               <button
                 type="button"
-                onClick={() => useWorkspaceStore.getState().setActiveDosyaId(null)}
-                className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded text-blue-600 dark:text-blue-400 cursor-pointer"
-                title="Aktif dosya filtresini kaldır ve tüm doğrudan temin dosyalarını listele"
+                onClick={() => setViewMode('cards')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+                  viewMode === 'cards'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-black'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                )}
+                title="Dosya bazlı kart ve akordeon görünümü"
               >
-                <X size={12} />
+                <LayoutGrid size={13} />
+                <span>Dosya Kartları</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('table')}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+                  viewMode === 'table'
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-black'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                )}
+                title="Tüm faturaların tek çizelgede denetlendiği Fatura Kontrol Listesi"
+              >
+                <Table size={13} />
+                <span>Fatura Kontrol Çizelgesi ({allFilteredInvoices.length})</span>
               </button>
             </div>
-          )}
-
-          <select
-            value={alimFilter}
-            onChange={(e) => setAlimFilter(e.target.value)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
-          >
-            <option value="all">Tüm Alım Türleri</option>
-            <option value="mal">Mal Alımı</option>
-            <option value="hizmet">Hizmet Alımı</option>
-            <option value="danismanlik">Danışmanlık</option>
-            <option value="yapim">Yapım İşi</option>
-          </select>
-
-          <select
-            value={faturaFilter}
-            onChange={(e) => setFaturaFilter(e.target.value as any)}
-            className="px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
-          >
-            <option value="all">Tüm Durumlar</option>
-            <option value="with-invoice">Faturası Olanlar</option>
-            <option value="without-invoice">Faturası Beklenenler</option>
-            <option value="paid">Ödenen Faturalar</option>
-            <option value="pending">Ödeme Bekleyenler</option>
-          </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={expandAll}
-            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors"
-          >
-            Tümünü Aç
-          </button>
-          <button
-            onClick={collapseAll}
-            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors"
-          >
-            Tümünü Kapat
-          </button>
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
-          <span className="text-xs text-slate-500 font-bold">
-            Toplam <strong>{filteredDosyalar.length}</strong> dosya listeleniyor
-          </span>
+        {/* Alt Sıra: Arama & Filtreler */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-[280px]">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Dosya no, konu, firma unvanı, VKN veya fatura no ara..."
+                className="w-full pl-9.5 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <select
+              value={alimFilter}
+              onChange={(e) => setAlimFilter(e.target.value)}
+              className="px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
+            >
+              <option value="all">Tüm Alım Türleri</option>
+              <option value="mal">Mal Alımı</option>
+              <option value="hizmet">Hizmet Alımı</option>
+              <option value="danismanlik">Danışmanlık</option>
+              <option value="yapim">Yapım İşi</option>
+            </select>
+
+            <select
+              value={faturaFilter}
+              onChange={(e) => setFaturaFilter(e.target.value as any)}
+              className="px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer"
+            >
+              <option value="all">Tüm Durumlar</option>
+              <option value="with-invoice">Faturası Olanlar</option>
+              <option value="without-invoice">Faturası Beklenenler</option>
+              <option value="paid">Ödenen Faturalar</option>
+              <option value="pending">Ödeme Bekleyenler</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {viewMode === 'cards' && (
+              <>
+                <button
+                  onClick={expandAll}
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                >
+                  Tümünü Aç
+                </button>
+                <button
+                  onClick={collapseAll}
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                >
+                  Tümünü Kapat
+                </button>
+                <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+              </>
+            )}
+            <span className="text-xs text-slate-500 font-bold">
+              Toplam <strong>{filteredDosyalar.length}</strong> dosya ({allFilteredInvoices.length} fatura)
+            </span>
+          </div>
         </div>
       </div>
 
@@ -1114,15 +1305,202 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
               </p>
             </div>
           </div>
+        ) : viewMode === 'table' ? (
+          /* Görünüm 1: Fatura Kontrol Çizelgesi (Toplu Fatura Denetim Tablosu) */
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  5018 / BKMYBS Fatura Denetim ve Kontrol Çizelgesi
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                  {allFilteredInvoices.length} Fatura
+                </span>
+              </div>
+              <div className="text-[11px] font-semibold text-slate-500">
+                {scopeFilter === 'active' && activeDosya ? (
+                  <span>
+                    Yalnızca <strong>{activeDosya.teminNo}</strong> dosyası faturaları listeleniyor
+                  </span>
+                ) : (
+                  <span>Tüm doğrudan temin dosyalarının faturaları denetleniyor</span>
+                )}
+              </div>
+            </div>
+
+            {allFilteredInvoices.length === 0 ? (
+              <div className="py-16 text-center">
+                <Receipt className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                  Kriterlere uygun kayıtlı fatura bulunamadı.
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Filtreleri değiştirerek veya dosya kartlarından yeni fatura ekleyerek işlem yapabilirsiniz.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                    <tr>
+                      <th className="px-3.5 py-3">Dosya No</th>
+                      <th className="px-3.5 py-3">Fatura No</th>
+                      <th className="px-3.5 py-3">Tarih</th>
+                      <th className="px-3.5 py-3">Yüklenici Firma</th>
+                      <th className="px-3.5 py-3 text-right">KDV Matrahı (₺)</th>
+                      <th className="px-3.5 py-3 text-center">KDV (%)</th>
+                      <th className="px-3.5 py-3 text-right font-black">Fatura Tutarı (Brüt)</th>
+                      <th className="px-3.5 py-3 text-right">Damga Vergisi (%0.948)</th>
+                      <th className="px-3.5 py-3 text-right">Karar Pulu (%0.569)</th>
+                      <th className="px-3.5 py-3 text-right font-black text-blue-600 dark:text-blue-400">
+                        Net Ödenecek (₺)
+                      </th>
+                      <th className="px-3.5 py-3 text-center">Ödeme Durumu</th>
+                      <th className="px-3.5 py-3 text-right">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-semibold text-slate-700 dark:text-slate-300">
+                    {allFilteredInvoices.map((fatura, idx) => {
+                      const parentDosya = dosyalar.find((d) => d.id === fatura.dosyaId)
+                      const isPaid = fatura.durum === 'odendi'
+
+                      return (
+                        <tr
+                          key={`flat_table_${fatura.dosyaId}_${fatura.id}_${idx}`}
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-950/40 transition-colors"
+                        >
+                          <td className="px-3.5 py-2.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveDosyaId(fatura.dosyaId)
+                                setScopeFilter('active')
+                                setViewMode('cards')
+                              }}
+                              className="font-mono text-[11px] font-extrabold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-100 cursor-pointer"
+                              title="Bu dosyaya odaklan"
+                            >
+                              {fatura.dosyaTeminNo}
+                            </button>
+                          </td>
+                          <td className="px-3.5 py-2.5 font-mono font-bold text-slate-900 dark:text-slate-100">
+                            {fatura.faturaNo}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-slate-500 text-[11px]">
+                            {formatDate(fatura.faturaTarihi)}
+                          </td>
+                          <td className="px-3.5 py-2.5 max-w-[200px] truncate" title={fatura.dosyaFirma}>
+                            <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">
+                              {fatura.dosyaFirma}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              VKN: {fatura.dosyaVkn}
+                            </span>
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right font-mono text-slate-600 dark:text-slate-400">
+                            {formatCurrency(fatura.matrah || 0)}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-center font-bold text-slate-500">
+                            %{fatura.kdvOrani || 20}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right font-mono font-black text-slate-900 dark:text-slate-100">
+                            {formatCurrency(fatura.firmaTutar || 0)}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right font-mono text-rose-600 dark:text-rose-400">
+                            {formatCurrency(fatura.damgaVergisi || 0)}
+                          </td>
+                          <td
+                            className={cn(
+                              'px-3.5 py-2.5 text-right font-mono',
+                              fatura.kararPulu && fatura.kararPulu > 0
+                                ? 'text-rose-600 dark:text-rose-400 font-bold'
+                                : 'text-slate-400 dark:text-slate-500 font-normal'
+                            )}
+                          >
+                            {fatura.kararPulu && fatura.kararPulu > 0 ? (
+                              formatCurrency(fatura.kararPulu)
+                            ) : (
+                              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                                0,00 ₺ <span className="text-[9.5px] text-emerald-600 dark:text-emerald-400 font-semibold">(Muaf)</span>
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(fatura.netOdenecek || fatura.firmaTutar)}
+                          </td>
+                          <td className="px-3.5 py-2.5 text-center">
+                            <FaturaDurumBadge durum={fatura.durum} />
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {parentDosya && (
+                                <>
+                                  <button
+                                    onClick={() => handleToggleDurum(parentDosya, fatura)}
+                                    title={isPaid ? 'Beklemeye Al' : 'Ödendi Olarak İşaretle'}
+                                    className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                                      isPaid
+                                        ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                                    }`}
+                                  >
+                                    {isPaid ? 'Beklet' : 'Ödendi Yap'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleOpenEditInvoice(parentDosya, fatura)}
+                                    title="Faturayı Düzenle"
+                                    className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                                  >
+                                    <Edit2 size={13} />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot className="bg-slate-100/80 dark:bg-slate-950 border-t-2 border-slate-200 dark:border-slate-800 font-black text-slate-800 dark:text-slate-200 text-xs">
+                    <tr>
+                      <td colSpan={4} className="px-3.5 py-3 text-left">
+                        TOPLAM ({allFilteredInvoices.length} Fatura)
+                      </td>
+                      <td className="px-3.5 py-3 text-right font-mono">
+                        {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.matrah || 0), 0))}
+                      </td>
+                      <td className="px-3.5 py-3 text-center">-</td>
+                      <td className="px-3.5 py-3 text-right font-mono text-slate-900 dark:text-slate-100">
+                        {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.firmaTutar || 0), 0))}
+                      </td>
+                      <td className="px-3.5 py-3 text-right font-mono text-rose-600 dark:text-rose-400">
+                        {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.damgaVergisi || 0), 0))}
+                      </td>
+                      <td className="px-3.5 py-3 text-right font-mono text-slate-500">
+                        {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.kararPulu || 0), 0))}
+                      </td>
+                      <td className="px-3.5 py-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                        {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.netOdenecek || f.firmaTutar), 0))}
+                      </td>
+                      <td colSpan={2} className="px-3.5 py-3 text-right text-[11px] text-slate-500">
+                        Ödenen: {allFilteredInvoices.filter((f) => f.durum === 'odendi').length} | Bekleyen: {allFilteredInvoices.filter((f) => f.durum === 'beklemede').length}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </div>
         ) : (
-          filteredDosyalar.map((dosya) => {
+          filteredDosyalar.map((dosya, idx) => {
             const isExp = expanded.has(dosya.id)
             const faturaSayisi = dosya.faturalar.length
             const dosyaFaturaToplam = dosya.faturalar.reduce((acc, f) => acc + (f.firmaTutar || 0), 0)
 
             return (
               <div
-                key={dosya.id}
+                key={`card_dosya_${dosya.id}_${idx}`}
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all"
               >
                 {/* Dosya Başlık Şeridi */}
@@ -1142,6 +1520,12 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                       <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
                         {dosya.teminNo}
                       </span>
+                      {selectedDosyaId === dosya.id && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 shadow-xs">
+                          <FolderCheck size={11} className="text-emerald-600 dark:text-emerald-400" />
+                          Aktif Dosya
+                        </span>
+                      )}
                       <AlimTuruBadge turu={dosya.tur} />
                       <button
                         type="button"
@@ -1247,7 +1631,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all cursor-pointer"
                         >
                           <Plus size={13} />
-                          Fatura Ekle
+                          Kabul Tutanağı & Fatura Ekle
                         </button>
                       </div>
                     </div>
@@ -1256,10 +1640,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                     {dosya.faturalar.length === 0 ? (
                       <div className="py-6 px-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 text-center">
                         <p className="text-xs font-bold text-slate-500">
-                          Bu dosyaya henüz bir fatura veya hak ediş kaydı bağlanmadı.
+                          Bu dosyaya henüz bir fatura veya muayene kabul kaydı bağlanmadı.
                         </p>
                         <p className="text-[11px] text-slate-400 mt-0.5">
-                          Doğrudan Temin ekranında Muayene ve Kabul Tutanağı düzenlendiğinde veya buradan Fatura Ekle butonuna tıklandığında fatura listelenecektir.
+                          Doğrudan Temin ekranında Muayene ve Kabul Tutanağı düzenlendiğinde veya buradan Kabul Tutanağı & Fatura Ekle butonuna tıklandığında senkronize listelenecektir.
                         </p>
                       </div>
                     ) : (
@@ -1273,7 +1657,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                               <th className="px-3.5 py-2.5 text-center">KDV (%)</th>
                               <th className="px-3.5 py-2.5 text-right">Fatura Tutarı (Brüt)</th>
                               <th className="px-3.5 py-2.5 text-right">Damga Vergisi (%0.948)</th>
-                              <th className="px-3.5 py-2.5 text-right">Karar Pulu (%0.569)</th>
+                              <th className="px-3.5 py-2.5 text-right" title="4734 m. 22 Doğrudan teminde ihale karar pulu kesilmez (muaf)">Karar Pulu (%0.569)</th>
                               <th className="px-3.5 py-2.5 text-right font-black text-blue-600 dark:text-blue-400">
                                 Net Ödenecek (₺)
                               </th>
@@ -1282,8 +1666,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-semibold text-slate-700 dark:text-slate-300">
-                            {dosya.faturalar.map((fatura) => (
-                              <tr key={fatura.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-colors">
+                            {dosya.faturalar.map((fatura, fIdx) => (
+                              <tr key={`card_fat_${dosya.id}_${fatura.id}_${fIdx}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-colors">
                                 <td className="px-3.5 py-2.5 font-mono font-bold text-slate-900 dark:text-slate-100">
                                   {fatura.faturaNo}
                                 </td>
@@ -1310,7 +1694,13 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                       : 'text-slate-400 dark:text-slate-500 font-normal'
                                   )}
                                 >
-                                  {formatCurrency(fatura.kararPulu || 0)}
+                                  {fatura.kararPulu && fatura.kararPulu > 0 ? (
+                                    formatCurrency(fatura.kararPulu)
+                                  ) : (
+                                    <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                                      0,00 ₺ <span className="text-[9.5px] text-emerald-600 dark:text-emerald-400 font-semibold">(Muaf)</span>
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="px-3.5 py-2.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400">
                                   {formatCurrency(fatura.netOdenecek || fatura.firmaTutar)}
@@ -1363,7 +1753,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         )}
       </div>
 
-      {/* ── Fatura Ekleme & Düzenleme Modalı ── */}
+      {/* ── Muayene Kabul & Fatura Ekleme/Düzenleme Modalı ── */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -1375,10 +1765,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-800 dark:text-slate-100">
-                    {duzenlenenFatura ? 'Faturayı Düzenle' : 'Yeni Fatura & Hak Ediş Kaydı Ekle'}
+                    {duzenlenenFatura ? 'Muayene Kabul & Fatura Düzenle' : 'Yeni Muayene Kabul Tutanağı & Fatura Kaydet'}
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    {seciliDosya?.teminNo} — {seciliDosya?.konu}
+                    {seciliDosya?.teminNo} — {seciliDosya?.konu} <span className="text-blue-600 dark:text-blue-400 font-semibold">(5018 & Kabul Aşaması ile Entegre)</span>
                   </p>
                 </div>
               </div>
@@ -1391,7 +1781,71 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleSaveInvoice} className="p-6 space-y-4">
+            <form onSubmit={handleSaveInvoice} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+              {/* Muayene ve Kabul Tutanağı Entegrasyon Kartı */}
+              <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                    <CheckCircle size={14} className="text-blue-600 dark:text-blue-400" />
+                    <span>Muayene ve Kabul Tutanağı Entegrasyonu (5018 / MYHBY)</span>
+                  </span>
+                  <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-md">
+                    Otomatik Senkronize
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Kabul Tutanağı No *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formTutanakNo}
+                      onChange={(e) => setFormTutanakNo(e.target.value)}
+                      placeholder="Örn: KT-2026-001"
+                      className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-semibold font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Kabul / Muayene Tarihi *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formTutanakTarihi}
+                      onChange={(e) => setFormTutanakTarihi(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      İrsaliye No (Opsiyonel)
+                    </label>
+                    <input
+                      type="text"
+                      value={formIrsaliyeNo}
+                      onChange={(e) => setFormIrsaliyeNo(e.target.value)}
+                      placeholder="Örn: İRS-2026-104"
+                      className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-semibold font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Teslim Yeri / Ambar
+                    </label>
+                    <input
+                      type="text"
+                      value={formTeslimYeri}
+                      onChange={(e) => setFormTeslimYeri(e.target.value)}
+                      placeholder="Kurum Ambarı / İhtiyaç Yeri"
+                      className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-semibold"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -1583,7 +2037,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                   className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
                 >
                   <Save size={14} />
-                  {isSaving ? 'Kaydediliyor...' : 'Faturayı Kaydet'}
+                  {isSaving ? 'Kaydediliyor...' : 'Muayene Kabul & Faturayı Kaydet'}
                 </button>
               </div>
             </form>
