@@ -40,7 +40,6 @@ import type { TeminDosyasi } from "../../dosyalar/dosyalar.hooks";
 
 export function TakipScreen(): React.JSX.Element {
   const navigate = useNavigate();
-  const { addTab } = useTabStore();
   const {
     activeDosyaId,
     setActiveDosyaId,
@@ -82,7 +81,7 @@ export function TakipScreen(): React.JSX.Element {
   const queryClient = useQueryClient();
 
   // Ana Görünüm Modu: Kullanıcının son seçtiği görünüm (localStorage ile korunur)
-  const [viewMode, setViewModeState] = useState<TakipViewMode>(() => {
+  const [viewMode, setViewModeSate] = useState<TakipViewMode>(() => {
     try {
       const saved = localStorage.getItem(
         "temin_takip_view_mode",
@@ -99,7 +98,7 @@ export function TakipScreen(): React.JSX.Element {
   });
 
   const setViewMode = (mode: TakipViewMode) => {
-    setViewModeState(mode);
+    setViewModeSate(mode);
     try {
       localStorage.setItem("temin_takip_view_mode", mode);
     } catch {
@@ -117,7 +116,9 @@ export function TakipScreen(): React.JSX.Element {
   // Dosya Künyesi veya üst bardan Dosya Detayı'na geçildiğinde doğrudan detay modunu aç
   React.useEffect(() => {
     const handleViewModeChanged = (e: Event) => {
-      const custom = e as CustomEvent<{ mode?: TakipViewMode; dosyaId?: number }>;
+      const custom = e as CustomEvent<
+        { mode?: TakipViewMode; dosyaId?: number }
+      >;
       if (custom.detail?.dosyaId) {
         setActiveDosyaId(custom.detail.dosyaId);
       }
@@ -127,7 +128,10 @@ export function TakipScreen(): React.JSX.Element {
     };
     window.addEventListener("takip:view-mode-changed", handleViewModeChanged);
     return () => {
-      window.removeEventListener("takip:view-mode-changed", handleViewModeChanged);
+      window.removeEventListener(
+        "takip:view-mode-changed",
+        handleViewModeChanged,
+      );
     };
   }, [setActiveDosyaId]);
 

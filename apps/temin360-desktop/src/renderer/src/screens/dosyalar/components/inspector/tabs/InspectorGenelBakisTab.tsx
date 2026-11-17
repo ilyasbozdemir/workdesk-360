@@ -1,28 +1,39 @@
-import React from 'react'
-import { Activity, Briefcase, CheckCircle2, FileSpreadsheet, Receipt } from 'lucide-react'
-import { formatDate, formatMoney } from '../types'
+import React from "react";
+import {
+  Activity,
+  Briefcase,
+  CheckCircle2,
+  FileSpreadsheet,
+  Receipt,
+} from "lucide-react";
+import { formatDate, formatMoney } from "../types";
 
 interface InspectorGenelBakisTabProps {
-  dosya: any
-  subData: any
-  toplamYaklasikMaliyet: number
-  onNavigateTab: (tab: 'kunye' | 'kalemler' | 'firmalar') => void
+  dosya: any;
+  subData: any;
+  toplamYaklasikMaliyet: number;
+  onNavigateTab: (tab: "kunye" | "kalemler" | "firmalar") => void;
 }
 
 export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
   dosya,
   subData,
   toplamYaklasikMaliyet,
-  onNavigateTab
+  onNavigateTab,
 }) => {
-  const d = dosya
-  const kabulTutanaklari = Array.isArray(subData.kabulTutanaklari) ? subData.kabulTutanaklari : []
-  const faturalar = Array.isArray(subData.faturalar) ? subData.faturalar : []
-  const aktiviteler = Array.isArray(subData.aktiviteler) ? subData.aktiviteler : []
-  const kazananFirma =
-    subData.kazananFirma ||
-    subData.firmalar.find((f: any) => f.kazandi_mi === 1 || f.kazanan_mi === 1) ||
-    null
+  const d = dosya;
+  const kabulTutanaklari = Array.isArray(subData.kabulTutanaklari)
+    ? subData.kabulTutanaklari
+    : [];
+  const faturalar = Array.isArray(subData.faturalar) ? subData.faturalar : [];
+  const aktiviteler = Array.isArray(subData.aktiviteler)
+    ? subData.aktiviteler
+    : [];
+  const kazananFirma = subData.kazananFirma ||
+    subData.firmalar.find((f: any) =>
+      f.kazandi_mi === 1 || f.kazanan_mi === 1
+    ) ||
+    null;
 
   return (
     <div className="space-y-5 text-xs">
@@ -35,7 +46,9 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
           <span className="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block">
             ₺{formatMoney(toplamYaklasikMaliyet)}
           </span>
-          <span className="text-[10px] text-slate-400 mt-1 block">KDV Hariç Toplam</span>
+          <span className="text-[10px] text-slate-400 mt-1 block">
+            KDV Hariç Toplam
+          </span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-transparent border border-blue-500/20">
@@ -45,7 +58,9 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
           <span className="text-base font-black text-blue-600 dark:text-blue-400 font-mono mt-0.5 block">
             {subData.kalemler.length} Kalem
           </span>
-          <span className="text-[10px] text-slate-400 mt-1 block">Malzeme / Hizmet</span>
+          <span className="text-[10px] text-slate-400 mt-1 block">
+            Malzeme / Hizmet
+          </span>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20">
@@ -67,7 +82,9 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
           <span className="text-base font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5 block">
             {subData.komisyon.length} Üye
           </span>
-          <span className="text-[10px] text-slate-400 mt-1 block">Piyasa / Muayene</span>
+          <span className="text-[10px] text-slate-400 mt-1 block">
+            Piyasa / Muayene
+          </span>
         </div>
       </div>
 
@@ -81,7 +98,7 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
               Temel Dosya Bilgileri
             </span>
             <button
-              onClick={() => onNavigateTab('kunye')}
+              onClick={() => onNavigateTab("kunye")}
               className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
             >
               Tümünü Gör →
@@ -91,31 +108,34 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
             <div className="flex justify-between items-center pt-1 first:pt-0">
               <span className="text-slate-500">Dosya No:</span>
               <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                {d.temin_no ? `DT-${d.butce_yili || '2026'}/${d.temin_no}` : `#${d.id}`}
+                {d.temin_no
+                  ? `DT-${d.butce_yili || "2026"}/${d.temin_no}`
+                  : `#${d.id}`}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2">
               <span className="text-slate-500">Harcama Birimi:</span>
               <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-xs">
-                {d.birim_adi || d.harcama_birimi || 'Belirtilmemiş'}
+                {d.birim_adi || d.harcama_birimi || "Belirtilmemiş"}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2">
               <span className="text-slate-500">KİK Maddesi / Usul:</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
-                {d.ihale_sekli || d.temin_usulu || '4734 Sayılı KİK Md. 22/d'}
+                {d.ihale_sekli || d.temin_usulu || "4734 Sayılı KİK Md. 22/d"}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2">
               <span className="text-slate-500">Bütçe Kodu / Yılı:</span>
               <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                {d.butce_yili || '2026'} / {d.butce_kodu || d.ekonomik_kod || '03.2'}
+                {d.butce_yili || "2026"} /{" "}
+                {d.butce_kodu || d.ekonomik_kod || "03.2"}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2">
               <span className="text-slate-500">Kazanan Yüklenici:</span>
               <span className="font-bold text-emerald-700 dark:text-emerald-300 truncate max-w-xs">
-                {kazananFirma?.unvan || 'Henüz Belirlenmedi'}
+                {kazananFirma?.unvan || "Henüz Belirlenmedi"}
               </span>
             </div>
           </div>
@@ -129,54 +149,59 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
               İhtiyaç Kalemleri ({subData.kalemler.length})
             </span>
             <button
-              onClick={() => onNavigateTab('kalemler')}
+              onClick={() => onNavigateTab("kalemler")}
               className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
             >
               Detaylı Tablo →
             </button>
           </div>
           <div className="p-3">
-            {subData.kalemler.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 text-xs italic">
-                Henüz kalem eklenmemiş.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {subData.kalemler.slice(0, 4).map((k: any, idx: number) => {
-                  const birimFiyat = Number(
-                    k.kazanan_birim_fiyat || k.yaklasik_maliyet_birim || k.birim_fiyat || 0
-                  )
-                  const kalemToplam = Number(
-                    k.kazanan_kalem_toplam ||
-                      k.yaklasik_maliyet_toplam ||
-                      birimFiyat * (Number(k.miktar) || 1)
-                  )
-                  return (
-                    <div
-                      key={k.id || idx}
-                      className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800"
-                    >
-                      <div className="min-w-0 pr-2">
-                        <span className="font-bold text-slate-800 dark:text-slate-200 block truncate text-xs">
-                          {k.kalem_adi}
-                        </span>
-                        <span className="text-[10px] text-slate-400">
-                          {k.miktar} {k.olcu_birimi || k.birim || 'Adet'} × ₺{formatMoney(birimFiyat)} (KDV %{k.kdv_orani || 20})
+            {subData.kalemler.length === 0
+              ? (
+                <div className="p-6 text-center text-slate-400 text-xs italic">
+                  Henüz kalem eklenmemiş.
+                </div>
+              )
+              : (
+                <div className="space-y-2">
+                  {subData.kalemler.slice(0, 4).map((k: any, idx: number) => {
+                    const birimFiyat = Number(
+                      k.kazanan_birim_fiyat || k.yaklasik_maliyet_birim ||
+                        k.birim_fiyat || 0,
+                    );
+                    const kalemToplam = Number(
+                      k.kazanan_kalem_toplam ||
+                        k.yaklasik_maliyet_toplam ||
+                        birimFiyat * (Number(k.miktar) || 1),
+                    );
+                    return (
+                      <div
+                        key={k.id || idx}
+                        className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 block truncate text-xs">
+                            {k.kalem_adi}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {k.miktar} {k.olcu_birimi || k.birim || "Adet"}{" "}
+                            × ₺{formatMoney(birimFiyat)}{" "}
+                            (KDV %{k.kdv_orani || 20})
+                          </span>
+                        </div>
+                        <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs whitespace-nowrap">
+                          ₺{formatMoney(kalemToplam)}
                         </span>
                       </div>
-                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs whitespace-nowrap">
-                        ₺{formatMoney(kalemToplam)}
-                      </span>
+                    );
+                  })}
+                  {subData.kalemler.length > 4 && (
+                    <div className="text-center pt-1 text-[11px] text-slate-400">
+                      +{subData.kalemler.length - 4} diğer kalem daha mevcut
                     </div>
-                  )
-                })}
-                {subData.kalemler.length > 4 && (
-                  <div className="text-center pt-1 text-[11px] text-slate-400">
-                    +{subData.kalemler.length - 4} diğer kalem daha mevcut
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
           </div>
         </div>
       </div>
@@ -195,53 +220,63 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
             </span>
           </div>
           <div className="p-4 space-y-2.5">
-            {kabulTutanaklari.length === 0 && faturalar.length === 0 ? (
-              <div className="py-4 text-center text-slate-400 italic">
-                Bu dosyaya ait henüz muayene kabul tutanağı veya fatura kaydı girilmemiş.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {kabulTutanaklari.map((t: any, idx: number) => (
-                  <div
-                    key={t.id || idx}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>Kabul Tutanağı: {t.tutanakNo || `#${idx + 1}`}</span>
+            {kabulTutanaklari.length === 0 && faturalar.length === 0
+              ? (
+                <div className="py-4 text-center text-slate-400 italic">
+                  Bu dosyaya ait henüz muayene kabul tutanağı veya fatura kaydı
+                  girilmemiş.
+                </div>
+              )
+              : (
+                <div className="space-y-2">
+                  {kabulTutanaklari.map((t: any, idx: number) => (
+                    <div
+                      key={t.id || idx}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
+                    >
+                      <div>
+                        <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>
+                            Kabul Tutanağı: {t.tutanakNo || `#${idx + 1}`}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          Fatura No: <strong>{t.faturaNo || "-"}</strong>{" "}
+                          • Tarih:{" "}
+                          {formatDate(t.tutanakTarihi || t.faturaTarihi)}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
-                        Fatura No: <strong>{t.faturaNo || '-'}</strong> • Tarih:{' '}
-                        {formatDate(t.tutanakTarihi || t.faturaTarihi)}
-                      </div>
+                      <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        ₺{formatMoney(t.tutar || toplamYaklasikMaliyet)}
+                      </span>
                     </div>
-                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      ₺{formatMoney(t.tutar || toplamYaklasikMaliyet)}
-                    </span>
-                  </div>
-                ))}
-                {faturalar.map((f: any, idx: number) => (
-                  <div
-                    key={f.id || idx}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800 dark:text-slate-200">
-                        Fatura: {f.faturaNo}
+                  ))}
+                  {faturalar.map((f: any, idx: number) => (
+                    <div
+                      key={f.id || idx}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40"
+                    >
+                      <div>
+                        <div className="font-bold text-slate-800 dark:text-slate-200">
+                          Fatura: {f.faturaNo}
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-0.5">
+                          Damga Vergisi (‰9,48): ₺{formatMoney(
+                            f.damgaVergisi || 0,
+                          )} • Durum:{" "}
+                          <strong>
+                            {f.durum === "odendi" ? "Ödendi" : "Ödeme Bekliyor"}
+                          </strong>
+                        </div>
                       </div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
-                        Damga Vergisi (‰9,48): ₺{formatMoney(f.damgaVergisi || 0)} • Durum:{' '}
-                        <strong>{f.durum === 'odendi' ? 'Ödendi' : 'Ödeme Bekliyor'}</strong>
-                      </div>
+                      <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                        ₺{formatMoney(f.firmaTutar || 0)}
+                      </span>
                     </div>
-                    <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
-                      ₺{formatMoney(f.firmaTutar || 0)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
           </div>
         </div>
 
@@ -257,33 +292,35 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
             </span>
           </div>
           <div className="p-3 max-h-[210px] overflow-y-auto space-y-2">
-            {aktiviteler.length === 0 ? (
-              <div className="py-4 text-center text-slate-400 italic">
-                Henüz işlem geçmişi bulunmuyor.
-              </div>
-            ) : (
-              aktiviteler.map((act: any) => (
-                <div
-                  key={act.id}
-                  className="flex items-start justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
-                >
-                  <div className="min-w-0">
-                    <div className="font-bold text-slate-800 dark:text-slate-200 truncate">
-                      {act.baslik}
-                    </div>
-                    <div className="text-[10.5px] text-slate-500 truncate mt-0.5">
-                      {act.detay}
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-400 shrink-0">
-                    {formatDate(act.tarih)}
-                  </span>
+            {aktiviteler.length === 0
+              ? (
+                <div className="py-4 text-center text-slate-400 italic">
+                  Henüz işlem geçmişi bulunmuyor.
                 </div>
-              ))
-            )}
+              )
+              : (
+                aktiviteler.map((act: any) => (
+                  <div
+                    key={act.id}
+                    className="flex items-start justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                        {act.baslik}
+                      </div>
+                      <div className="text-[10.5px] text-slate-500 truncate mt-0.5">
+                        {act.detay}
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                      {formatDate(act.tarih)}
+                    </span>
+                  </div>
+                ))
+              )}
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
