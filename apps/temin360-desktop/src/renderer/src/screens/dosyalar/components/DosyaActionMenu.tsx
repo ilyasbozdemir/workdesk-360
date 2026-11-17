@@ -108,29 +108,27 @@ export function DosyaActionMenu({
               </button>
             )}
 
-            {/* Dosya Veri Görüntüleyici (View) */}
+            {/* Dosya Detayları & Süreç Takip */}
             <button
               onClick={() => {
                 setOpenMenuId(null);
-                setShowInspector(true);
+                try {
+                  localStorage.setItem("temin_takip_view_mode", "detay");
+                  window.dispatchEvent(
+                    new CustomEvent("takip:view-mode-changed", {
+                      detail: { mode: "detay", dosyaId: dosya.id },
+                    }),
+                  );
+                } catch {
+                  // ignore
+                }
+                addTab(APP_ROUTES.DOSYA_DETAY);
+                navigate({ to: APP_ROUTES.DOSYA_DETAY });
               }}
               className="w-full text-left px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center gap-2 font-bold"
             >
               <Eye size={13} className="text-blue-500" />{" "}
-              Tüm Ayarları & Verileri İncele (View)
-            </button>
-
-            <button
-              onClick={() => {
-                setOpenMenuId(null);
-                const route = `/dosya/kunye?id=${dosya.id}`;
-                addTab(route);
-                navigate({ to: route });
-              }}
-              className="w-full text-left px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center gap-2"
-            >
-              <ExternalLink size={13} className="text-blue-500" />{" "}
-              Dosya Künyesi (Sekmede Aç)
+              Dosya Detayına Git
             </button>
 
             {dosya.is_deleted !== 1 && handleOpenMaliyetAyarlari && (

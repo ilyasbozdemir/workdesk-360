@@ -189,6 +189,7 @@ export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) 
     const events = [
       'items:changed',
       'bids:changed',
+      'commissions:changed',
       'dossier:updated',
       'documents:changed',
       'workspace:refreshed'

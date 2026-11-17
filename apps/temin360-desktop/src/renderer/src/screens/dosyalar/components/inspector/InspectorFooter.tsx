@@ -72,23 +72,8 @@ export const InspectorFooter: React.FC<InspectorFooterProps> = ({
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
         >
           <Layers className="w-3.5 h-3.5 text-blue-500" />
-          Süreç Takip Paneline Git
+          Dosya Detayına Git
         </button>
-        {mode === "modal" && (
-          <button
-            onClick={() => {
-              if (onClose) onClose();
-              const route = `${APP_ROUTES.DOSYA_KUNYE}?id=${dosya.id}`;
-              addTab(route);
-              navigate({ to: route });
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
-            title="Dosya Künyesini Yeni Sekmede Aç"
-          >
-            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
-            Sekmede Aç
-          </button>
-        )}
       </div>
 
       <button

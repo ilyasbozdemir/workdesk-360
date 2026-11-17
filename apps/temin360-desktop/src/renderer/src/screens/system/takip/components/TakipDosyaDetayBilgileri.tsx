@@ -1,5 +1,23 @@
 import React from 'react'
-import { Edit, Info } from 'lucide-react'
+import {
+  Briefcase,
+  Building2,
+  Calendar,
+  CheckCircle2,
+  ClipboardCheck,
+  CreditCard,
+  Edit,
+  FileSpreadsheet,
+  Lock,
+  Percent,
+  Receipt,
+  Scale,
+  ShieldCheck,
+  User,
+  UserCheck,
+  Users
+} from 'lucide-react'
+import { groupUniqueCommissioners } from '../../../../utils/commissionGrouping'
 
 interface TakipDosyaDetayBilgileriProps {
   activeDosya: any
@@ -12,214 +30,423 @@ export function TakipDosyaDetayBilgileri({
   komisyonlar,
   onEditClick
 }: TakipDosyaDetayBilgileriProps): React.JSX.Element {
+  const d = activeDosya || {}
+  const { uniqueCommissioners, uniqueCount, totalAssignmentCount } =
+    groupUniqueCommissioners(komisyonlar)
+
+  const isSozlesmeli = Boolean(d.sozlesme_yapilacak_mi)
+  const isKismiTeklif = Boolean(d.kismi_teklif_verilecek_mi)
+
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-        <div className="flex items-center gap-2">
-          <Info className="w-4 h-4 text-blue-600" />
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-            Dosya Şartname ve İdari Bilgileri (Görüntüleme Modu)
-          </h3>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold border border-slate-200 dark:border-slate-700">
-            Salt Okunur
-          </span>
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-6 animate-in fade-in duration-200">
+      {/* BAŞLIK & İDARİ BİLGİLENDİRME BARI */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <ClipboardCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base font-bold text-slate-850 dark:text-slate-100">
+                Dosya Şartname ve İdari Bilgileri
+              </h3>
+              <span className="inline-flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700">
+                <Lock size={10} className="text-slate-400" />
+                Resmî Kayıt Özeti (Canlı Veritabanı)
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              4734 Sayılı Kamu İhale Kanunu, 5018 Sayılı Bütçe Kanunu ve Doğrudan Temin Tebliği mevzuat parametreleri.
+            </p>
+          </div>
         </div>
-        <button
-          onClick={onEditClick}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 text-xs font-bold hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
-        >
-          <Edit size={13} />
-          Formu Düzenle
-        </button>
+
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span
+            className={`text-xs px-3 py-1 rounded-xl font-bold border ${
+              isSozlesmeli
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800/60'
+                : 'bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800/60'
+            }`}
+          >
+            {isSozlesmeli ? 'Sözleşmeli Alım (‰ 9,48 DV)' : 'Sipariş Usulü (Sözleşmesiz)'}
+          </span>
+
+          <button
+            onClick={onEditClick}
+            type="button"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs hover:shadow-sm transition-all cursor-pointer"
+            title="Dosya Formunu Düzenle"
+          >
+            <Edit size={13} />
+            <span>Formu Düzenle</span>
+          </button>
+        </div>
       </div>
 
-      {/* 1. İhale & Genel Parametreler */}
-      <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          1. Temel & İhale Parametreleri
-        </h4>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">İhale / Alım Türü</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase">
-              {activeDosya.tur || 'Mal'}
+      {/* 1. TEMEL ALIM VE İHALE PARAMETRELERİ */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <Scale size={14} className="text-blue-500" />
+            <span>1. Temel Alım ve Şartname Parametreleri</span>
+          </h4>
+          <span className="text-[11px] text-slate-400 font-medium">KİK & Usul Esasları</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Alım Türü
+            </span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase mt-0.5 block">
+              {d.tur ? `${d.tur} Alımı` : 'Mal Alımı'}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">İhale Şekli (Madde)</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.ihale_sekli || '22/d*'}
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              İhale / Temin Usulü
+            </span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 block">
+              {d.ihale_sekli || d.temin_usulu || '4734 Sayılı KİK Md. 22/d'}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
               Teklif / Sözleşme Türü
             </span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.teklif_sozlesme_turu || 'Birim Fiyat'}
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 block">
+              {d.teklif_sozlesme_turu || 'Birim Fiyat Teklifi'}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Bütçe Yılı</span>
-            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.butce_yili || '-'}
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Bütçe Yılı
+            </span>
+            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5 block">
+              {d.butce_yili || '2026'}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">KDV Oranı</span>
-            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
-              %{activeDosya.kdv || '20'}
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Genel KDV Oranı
+            </span>
+            <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+              %{d.kdv ?? '20'}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Sözleşme Durumu</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.sozlesme_yapilacak_mi ? 'Sözleşme Yapılacak' : 'Sözleşme Yapılmayacak'}
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Sözleşme Düzenleme
+            </span>
+            <span
+              className={`text-xs font-bold mt-0.5 block ${
+                isSozlesmeli
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              {isSozlesmeli ? 'Sözleşme Yapılacak' : 'Sözleşme Yok (Sipariş)'}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Fiyat Farkı</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-              {activeDosya.fiyat_farki_dayanagi || 'Ödenmeyecek'}
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Fiyat Farkı Kararnamesi
+            </span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate block">
+              {d.fiyat_farki_dayanagi || 'Fiyat Farkı Verilmeyecektir'}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Kısmi Teklif</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.kismi_teklif_verilecek_mi ? 'Verilebilir' : 'Verilemez'}
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Kısmi Teklif Kabulü
+            </span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 block">
+              {isKismiTeklif ? 'Kısmi Teklif Verilebilir' : 'Tüm Kalemler İçin Tek Teklif'}
             </span>
           </div>
         </div>
       </div>
 
-      {/* 2. İdari Birim & Personeller */}
-      <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          2. İdari Birim ve Görevli Personeller
-        </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Talep Eden Birim</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.birim_adi || 'Birim Yok'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">İhtiyaç Yeri</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.ihtiyac_yeri || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">İrtibat Yetkilisi</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.irtibat_ad || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">
-              Harcama Yetkilisi (Onaylayan)
-            </span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.onaylayan_ad || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">
-              Gerçekleştirme Görevlisi
-            </span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.sunan_ad || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">
-              Dosyayı Hazırlayan Personel
-            </span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.hazirlayan_ad || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Talep Eden Personel</span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.talep_eden_ad || '-'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Bütçe & Muhasebe Tertipleri */}
-      <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          3. Bütçe & Muhasebe Tertibi
-        </h4>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Harcama Birimi</span>
-            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 truncate">
-              {activeDosya.harcama_birimi || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Muhasebe Birimi</span>
-            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 truncate">
-              {activeDosya.muhasebe_birimi || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Bütçe Kodu</span>
-            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.butce_kodu || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Fonksiyonel Kod</span>
-            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.fonksiyonel_kod || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Finansman Kodu</span>
-            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.finansman_kodu || '-'}
-            </span>
-          </div>
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] text-slate-400 font-bold block">Ekonomik Kod</span>
-            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-200">
-              {activeDosya.ekonomik_kod || '-'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Komisyon Üyeleri (Varsa) */}
-      {komisyonlar.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            4. Görevli Komisyon Üyeleri ({komisyonlar.length} Üye)
+      {/* 2. İDARİ BİRİM VE GÖREVLİ PERSONELLER */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <Building2 size={14} className="text-indigo-500" />
+            <span>2. İdari Birim ve İmza Yetkilileri</span>
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {komisyonlar.map((c: any) => (
-              <div
-                key={c.id}
-                className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60 flex items-center justify-between"
-              >
-                <div>
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                    {c.ad_soyad}
-                  </span>
-                  <span className="text-[10px] text-slate-400">{c.unvan || 'Üye'}</span>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
-                  {c.gorevi || 'Üye'}
-                </span>
-              </div>
-            ))}
+          <span className="text-[11px] text-slate-400 font-medium">Hiyerarşik Görevliler</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+              <Building2 size={18} />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                Talep Eden Harcama Birimi
+              </span>
+              <span className="text-xs font-bold text-slate-850 dark:text-slate-100 truncate block">
+                {d.birim_adi || d.harcama_birimi || 'Birim Belirtilmedi'}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+              <UserCheck size={18} />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                Harcama Yetkilisi (Onaylayan)
+              </span>
+              <span className="text-xs font-bold text-slate-850 dark:text-slate-100 truncate block">
+                {d.onaylayan_ad || '-'}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={18} />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                Gerçekleştirme Görevlisi
+              </span>
+              <span className="text-xs font-bold text-slate-850 dark:text-slate-100 truncate block">
+                {d.sunan_ad || '-'}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+              <User size={18} />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                Dosyayı Hazırlayan Personel
+              </span>
+              <span className="text-xs font-bold text-slate-850 dark:text-slate-100 truncate block">
+                {d.hazirlayan_ad || '-'}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <Briefcase size={18} />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                İrtibat / İletişim Yetkilisi
+              </span>
+              <span className="text-xs font-bold text-slate-850 dark:text-slate-100 truncate block">
+                {d.irtibat_ad || '-'}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+              <Receipt size={18} />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">
+                İhtiyaç / Teslim Yeri
+              </span>
+              <span className="text-xs font-bold text-slate-850 dark:text-slate-100 truncate block">
+                {d.ihtiyac_yeri || d.teslim_yeri || 'Kurum Ambarı / Birim'}
+              </span>
+            </div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* 3. BÜTÇE VE MUHASEBE TERTİBİ */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <CreditCard size={14} className="text-emerald-500" />
+            <span>3. Bütçe ve Muhasebe Tertibi (5018 Analitik Kodlar)</span>
+          </h4>
+          <span className="text-[11px] text-slate-400 font-medium">Ödenek & Muhasebe</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Harcama Birimi
+            </span>
+            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate block">
+              {d.harcama_birimi || d.birim_kodu || '-'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Muhasebe Birimi
+            </span>
+            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate block">
+              {d.muhasebe_birimi || 'Mali Hizmetler'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Bütçe Kodu
+            </span>
+            <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 mt-0.5 truncate block">
+              {d.butce_kodu || '03.2.1.01'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Fonksiyonel Kod
+            </span>
+            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate block">
+              {d.fonksiyonel_kod || '-'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Finansman Kodu
+            </span>
+            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate block">
+              {d.finansman_kodu || '-'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Ekonomik Kod
+            </span>
+            <span className="text-xs font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5 truncate block">
+              {d.ekonomik_kod || '03.2'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. GÖREVLİ KOMİSYON PERSONELLERİ (TEKİL KİŞİ BAZLI GRUPLAMA) */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-amber-500" />
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              4. Görevli Komisyon Personelleri
+            </h4>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800/60">
+              {uniqueCount} Tekil Personel
+              {totalAssignmentCount !== uniqueCount ? ` · ${totalAssignmentCount} Görevlendirme` : ''}
+            </span>
+          </div>
+
+          <span className="text-[11px] text-slate-400">
+            Küçük kurumlarda aynı personelin birden fazla komisyonda aldığı görevler tekil olarak listelenir.
+          </span>
+        </div>
+
+        {uniqueCommissioners.length === 0 ? (
+          <div className="p-6 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
+            <Users className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
+            <div className="text-xs font-bold text-slate-600 dark:text-slate-400">
+              Bu dosyaya henüz komisyon üyesi atanmamış.
+            </div>
+            <div className="text-[11px] text-slate-400">
+              Piyasa Fiyat Araştırması veya Muayene Kabul aşamasında görevli personelleri belirleyebilirsiniz.
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {uniqueCommissioners.map((c) => {
+              const initials = c.adSoyad
+                .split(' ')
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase()
+
+              return (
+                <div
+                  key={c.key}
+                  className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-800 flex flex-col justify-between gap-3 hover:border-amber-300 dark:hover:border-amber-700/60 transition-all shadow-2xs"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                      {initials || 'U'}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-bold text-slate-850 dark:text-slate-100 truncate">
+                          {c.adSoyad}
+                        </span>
+                        {c.assignments.length > 1 && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 shrink-0">
+                            {c.assignments.length} Görev
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate block mt-0.5">
+                        {c.unvan || 'Personel'} {c.birim ? `• ${c.birim}` : ''}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Üstlendiği Komisyon Görevleri */}
+                  <div className="space-y-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
+                    {c.assignments.map((role) => {
+                      const isPiyasa =
+                        role.komisyonTuru.toLowerCase().includes('piyasa') ||
+                        role.komisyonTuru.toLowerCase().includes('fiyat') ||
+                        role.komisyonTuru.toLowerCase().includes('yaklaşık')
+                      const isMuayene =
+                        role.komisyonTuru.toLowerCase().includes('muayene') ||
+                        role.komisyonTuru.toLowerCase().includes('kabul')
+
+                      return (
+                        <div
+                          key={`role_${role.id}_${role.komisyonTuru}_${role.gorev}`}
+                          className="flex items-center justify-between gap-1 text-[10.5px]"
+                        >
+                          <span
+                            className={`font-semibold truncate max-w-[170px] ${
+                              isPiyasa
+                                ? 'text-blue-700 dark:text-blue-300'
+                                : isMuayene
+                                  ? 'text-emerald-700 dark:text-emerald-300'
+                                  : 'text-purple-700 dark:text-purple-300'
+                            }`}
+                            title={role.komisyonTuru}
+                          >
+                            {role.komisyonTuru}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
+                            {role.gorev} ({role.asliYedek})
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -24,10 +24,7 @@ export const InspectorHeader: React.FC<InspectorHeaderProps> = ({
   const navigate = useNavigate()
 
   const handleOpenAsTab = () => {
-    if (onClose) onClose()
-    const route = `/dosya/kunye?id=${dosya.id}`
-    addTab(route)
-    navigate({ to: route })
+    handleGoToTakip()
   }
 
   const handleEdit = () => {

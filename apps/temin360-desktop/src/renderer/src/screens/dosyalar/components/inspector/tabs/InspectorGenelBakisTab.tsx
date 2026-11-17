@@ -7,6 +7,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { formatDate, formatMoney } from "../types";
+import { groupUniqueCommissioners } from "../../../../../utils/commissionGrouping";
 
 interface InspectorGenelBakisTabProps {
   dosya: any;
@@ -34,6 +35,9 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
       f.kazandi_mi === 1 || f.kazanan_mi === 1
     ) ||
     null;
+
+  const { uniqueCount: uniqueKomisyonCount, totalAssignmentCount } =
+    groupUniqueCommissioners(subData.komisyon);
 
   return (
     <div className="space-y-5 text-xs">
@@ -80,10 +84,12 @@ export const InspectorGenelBakisTab: React.FC<InspectorGenelBakisTabProps> = ({
             Komisyon / Görevli
           </span>
           <span className="text-base font-black text-amber-600 dark:text-amber-400 font-mono mt-0.5 block">
-            {subData.komisyon.length} Üye
+            {uniqueKomisyonCount} Görevli
           </span>
           <span className="text-[10px] text-slate-400 mt-1 block">
-            Piyasa / Muayene
+            {totalAssignmentCount !== uniqueKomisyonCount
+              ? `${totalAssignmentCount} Görevlendirme`
+              : 'Piyasa / Muayene'}
           </span>
         </div>
       </div>

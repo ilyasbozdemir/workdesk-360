@@ -10,6 +10,7 @@ import { InspectorKalemlerTab } from './tabs/InspectorKalemlerTab'
 import { InspectorFirmalarTab } from './tabs/InspectorFirmalarTab'
 import { InspectorKomisyonTab } from './tabs/InspectorKomisyonTab'
 import { InspectorRawJsonTab } from './tabs/InspectorRawJsonTab'
+import { groupUniqueCommissioners } from '../../../../utils/commissionGrouping'
 
 export interface DosyaInspectorViewProps {
   dosya: any
@@ -57,7 +58,7 @@ export const DosyaInspectorView: React.FC<DosyaInspectorViewProps> = ({
         onTabChange={setActiveTab}
         kalemlerCount={subData.kalemler.length}
         firmalarCount={subData.firmalar.length}
-        komisyonCount={subData.komisyon.length}
+        komisyonCount={groupUniqueCommissioners(subData.komisyon).uniqueCount}
         fullPayload={fullPayload}
       />
 

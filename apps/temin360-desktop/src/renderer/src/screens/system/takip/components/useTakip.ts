@@ -45,6 +45,7 @@ export function useTakip(): UseTakipReturn {
     [
       'items:changed',
       'bids:changed',
+      'commissions:changed',
       'dossier:updated',
       'dossier:created',
       'dossier:deleted',

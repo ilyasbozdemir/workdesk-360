@@ -4,6 +4,7 @@ import { QueryClient } from '@tanstack/react-query'
 export type AppEventType =
   | 'items:changed'
   | 'bids:changed'
+  | 'commissions:changed'
   | 'dossier:updated'
   | 'dossier:created'
   | 'dossier:deleted'
@@ -112,6 +113,17 @@ function handleIncomingEvent(msg: AppEventMessage, isLocalOrigin: boolean): void
       globalQueryClient.invalidateQueries({ queryKey: ['temin_dosyalari'] })
       globalQueryClient.invalidateQueries({ queryKey: ['dosyalar'] })
       globalQueryClient.invalidateQueries({ queryKey: ['cikti_merkezi_data'] })
+    } else if (msg.type === 'commissions:changed') {
+      globalQueryClient.invalidateQueries({ queryKey: ['takip_komisyonlar'] })
+      globalQueryClient.invalidateQueries({ queryKey: ['komisyonlar'] })
+      globalQueryClient.invalidateQueries({ queryKey: ['tanim_komisyonlar'] })
+      globalQueryClient.invalidateQueries({ queryKey: ['dossier_inspector'] })
+      if (dosyaId) {
+        globalQueryClient.invalidateQueries({ queryKey: ['takip_komisyonlar', dosyaId] })
+        globalQueryClient.invalidateQueries({ queryKey: ['dossier_inspector', dosyaId] })
+      }
+      globalQueryClient.invalidateQueries({ queryKey: ['temin_dosyalari'] })
+      globalQueryClient.invalidateQueries({ queryKey: ['dosyalar'] })
     } else if (msg.type === 'documents:changed') {
       globalQueryClient.invalidateQueries({ queryKey: ['takip_belgeler'] })
       if (dosyaId) {

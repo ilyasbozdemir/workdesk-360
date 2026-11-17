@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { emitAppEvent } from '@renderer/utils/appEvents'
 import { DOC_GROUPS } from '@temin360/document-templates'
 import {
   DEFAULT_MUAYENE_ROLES,
@@ -476,6 +477,11 @@ export function useHizliKadro({
       })
       queryClient.invalidateQueries({ queryKey: ['dosya_komisyonlar'] })
       queryClient.invalidateQueries({ queryKey: ['document_preview'] })
+      if (activeDosyaId) {
+        emitAppEvent('commissions:changed', { dosyaId: activeDosyaId })
+      } else {
+        emitAppEvent('commissions:changed', {})
+      }
       setStatusMessage({
         type: 'success',
         text: 'Komisyon kadrosu başarıyla güncellendi.'

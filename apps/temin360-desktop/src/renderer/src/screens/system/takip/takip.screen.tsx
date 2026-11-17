@@ -37,6 +37,7 @@ import { DosyaNotlariWidget } from "../../notlar/components/DosyaNotlariWidget";
 import { DosyaInspectorView } from "../../dosyalar/components/inspector/DosyaInspectorView";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TeminDosyasi } from "../../dosyalar/dosyalar.hooks";
+import { groupUniqueCommissioners } from "../../../utils/commissionGrouping";
 
 export function TakipScreen(): React.JSX.Element {
   const navigate = useNavigate();
@@ -216,6 +217,10 @@ export function TakipScreen(): React.JSX.Element {
     "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat"
   >("ozet");
 
+  const uniqueCommissionCount = React.useMemo(() => {
+    return groupUniqueCommissioners(komisyonlar).uniqueCount;
+  }, [komisyonlar]);
+
   const tabs = [
     {
       id: "ozet",
@@ -239,7 +244,7 @@ export function TakipScreen(): React.JSX.Element {
       id: "komisyon",
       label: "Yetkili & Komisyon Detayları",
       icon: Users,
-      badge: komisyonlar.length > 0 ? komisyonlar.length : null,
+      badge: uniqueCommissionCount > 0 ? uniqueCommissionCount : null,
     },
     {
       id: "mevzuat",

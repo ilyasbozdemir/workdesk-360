@@ -104,11 +104,22 @@ export const TeminSelectorActive4734: React.FC<TeminSelectorActive4734Props> = (
         type="button"
         onClick={(e): void => {
           e.stopPropagation()
-          setShowInspector(true)
+          try {
+            localStorage.setItem('temin_takip_view_mode', 'detay')
+            window.dispatchEvent(
+              new CustomEvent('takip:view-mode-changed', {
+                detail: { mode: 'detay', dosyaId: selectedDosya.id }
+              })
+            )
+          } catch {
+            // ignore
+          }
+          addTab(APP_ROUTES.DOSYA_DETAY)
+          navigate({ to: APP_ROUTES.DOSYA_DETAY })
         }}
-        aria-label="Dosya Verilerini İncele"
+        aria-label="Dosya Detayına Git"
         className="p-1 sm:p-1.5 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all shrink-0 active:scale-90 cursor-pointer"
-        title="Dosya Verilerini İncele (Inspector)"
+        title="Dosya Detayına Git"
       >
         <Eye className="w-3.5 h-3.5" />
       </button>

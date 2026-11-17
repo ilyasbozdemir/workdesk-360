@@ -104,27 +104,24 @@ export function SubScreen({
             <button
               type="button"
               onClick={() => {
-                const route = `${APP_ROUTES.DOSYA_KUNYE}?id=${activeDosyaId}`
-                addTab(route)
-                navigate({ to: route })
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
-              title="Dosya Künyesini ve Tüm Verileri İncele"
-            >
-              <FileText className="w-3.5 h-3.5 text-blue-500" />
-              Dosya Künyesi
-            </button>
-            <button
-              type="button"
-              onClick={() => {
+                try {
+                  localStorage.setItem('temin_takip_view_mode', 'detay')
+                  window.dispatchEvent(
+                    new CustomEvent('takip:view-mode-changed', {
+                      detail: { mode: 'detay', dosyaId: activeDosyaId }
+                    })
+                  )
+                } catch {
+                  // ignore
+                }
                 addTab(APP_ROUTES.DOSYA_DETAY)
                 navigate({ to: APP_ROUTES.DOSYA_DETAY })
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
-              title="Süreç Takip Paneline Git"
+              title="Dosya Detaylarına ve Süreç Takip Paneline Git"
             >
               <Layers className="w-3.5 h-3.5 text-indigo-500" />
-              Süreç Takip
+              Dosya Detayı
             </button>
           </div>
         )}
