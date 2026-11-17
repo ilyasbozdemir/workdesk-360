@@ -34,6 +34,7 @@ import { TakipGridView } from "./components/TakipGridView";
 import { TakipListView } from "./components/TakipListView";
 import { TakipDosyaDetayDialog } from "./components/TakipDosyaDetayDialog";
 import { DosyaNotlariWidget } from "../../notlar/components/DosyaNotlariWidget";
+import { DosyaInspectorView } from "../../dosyalar/components/inspector/DosyaInspectorView";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TeminDosyasi } from "../../dosyalar/dosyalar.hooks";
 
@@ -113,6 +114,23 @@ export function TakipScreen(): React.JSX.Element {
     }
   }, [viewMode, activeDosyaId, dosyalar, setActiveDosyaId]);
 
+  // Dosya Künyesi veya üst bardan Dosya Detayı'na geçildiğinde doğrudan detay modunu aç
+  React.useEffect(() => {
+    const handleViewModeChanged = (e: Event) => {
+      const custom = e as CustomEvent<{ mode?: TakipViewMode; dosyaId?: number }>;
+      if (custom.detail?.dosyaId) {
+        setActiveDosyaId(custom.detail.dosyaId);
+      }
+      if (custom.detail?.mode) {
+        setViewModeState(custom.detail.mode);
+      }
+    };
+    window.addEventListener("takip:view-mode-changed", handleViewModeChanged);
+    return () => {
+      window.removeEventListener("takip:view-mode-changed", handleViewModeChanged);
+    };
+  }, [setActiveDosyaId]);
+
   // Trello Benzeri Kart Detay Dialog'u State'i
   const [selectedDetailDosya, setSelectedDetailDosya] = useState<
     TeminDosyasi | null
@@ -191,7 +209,7 @@ export function TakipScreen(): React.JSX.Element {
 
   // Tabbed Görünüm (Dosya Detayı alt sekmeleri)
   const [activeTab, setActiveTab] = useState<
-    "ozet" | "kalemler" | "komisyon" | "mevzuat"
+    "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat"
   >("ozet");
 
   const tabs = [
@@ -199,6 +217,12 @@ export function TakipScreen(): React.JSX.Element {
       id: "ozet",
       label: "Genel Bakış & Tarihler",
       icon: LayoutDashboard,
+      badge: null,
+    },
+    {
+      id: "kunye",
+      label: "Dosya Künyesi & Tüm Veriler",
+      icon: FileText,
       badge: null,
     },
     {
@@ -453,7 +477,14 @@ export function TakipScreen(): React.JSX.Element {
                   </div>
                 )}
 
-                {/* SEKME 2: MALZEME & FİRMALAR TABLOSU */}
+                {/* SEKME 2: DOSYA KÜNYESİ & TÜM VERİLER (BİRLEŞİK KÜNYE GÖRÜNÜMÜ) */}
+                {activeTab === "kunye" && (
+                  <div className="rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+                    <DosyaInspectorView dosya={activeDosya} mode="screen" />
+                  </div>
+                )}
+
+                {/* SEKME 3: MALZEME & FİRMALAR TABLOSU */}
                 {activeTab === "kalemler" && (
                   <div className="space-y-6">
                     <TakipKalemlerVeFirmalarGrid

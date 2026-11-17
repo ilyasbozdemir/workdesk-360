@@ -30,6 +30,9 @@ import { cn } from '../../../utils/cn'
 import { Modal } from '../../../components/ui/Modal'
 
 import { SubScreen } from '../SubScreens.screen'
+import { upsertKalemBidPrice } from '../../../services/dossier/dossierPriceSyncService'
+import { emitAppEvent, useAppEventListener } from '../../../utils/appEvents'
+import { documentPreloadService } from '../../../services/documentPreloadService'
 
 export function YaklasikMaliyetCetveli(): React.JSX.Element {
   const { activeDosyaId } = useWorkspaceStore()
@@ -39,7 +42,13 @@ export function YaklasikMaliyetCetveli(): React.JSX.Element {
   const [loading, setLoading] = useState(true)
 
   const loadMatrix = async (): Promise<void> => {
-    if (!activeDosyaId) return
+    if (!activeDosyaId) {
+      setItems([])
+      setFirms([])
+      setBids({})
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const resItems = await window.electron.ipcRenderer.invoke(
@@ -49,15 +58,18 @@ export function YaklasikMaliyetCetveli(): React.JSX.Element {
       )
       const resFirms = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT df.id as temin_firma_id, f.unvan, f.id as firma_id 
+        `SELECT df.id as temin_firma_id,
+                COALESCE(NULLIF(df.unvan, ''), NULLIF(f.unvan, ''), 'İstekli Firma') as unvan,
+                df.firma_id as firma_id 
          FROM DATA_TeminFirma df 
-         JOIN TANIM_Firma f ON df.firma_id = f.id 
-         WHERE df.temin_dosya_id = ?`,
+         LEFT JOIN TANIM_Firma f ON df.firma_id = f.id 
+         WHERE df.temin_dosya_id = ? AND COALESCE(df.aktif_mi, 1) != 0
+         ORDER BY df.id ASC`,
         [activeDosyaId]
       )
       const resBids = await window.electron.ipcRenderer.invoke(
         'db:query',
-        'SELECT * FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ?',
+        'SELECT * FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ? ORDER BY id ASC',
         [activeDosyaId]
       )
 
@@ -79,8 +91,15 @@ export function YaklasikMaliyetCetveli(): React.JSX.Element {
   }
 
   useEffect(() => {
+    setItems([])
+    setFirms([])
+    setBids({})
     loadMatrix()
   }, [activeDosyaId])
+
+  useAppEventListener(['items:changed', 'bids:changed', 'dossier:updated', 'workspace:refreshed'], () => {
+    loadMatrix()
+  })
 
   const handlePriceChange = (itemId: number, teminFirmaId: number, val: string): void => {
     const numVal = parseFloat(val) || 0
@@ -91,21 +110,18 @@ export function YaklasikMaliyetCetveli(): React.JSX.Element {
   }
 
   const handleSavePrice = async (itemId: number, teminFirmaId: number): Promise<void> => {
+    if (!activeDosyaId) return
     const price = bids[`${itemId}_${teminFirmaId}`] || 0
     try {
-      // Atomic DELETE and INSERT
-      await window.electron.ipcRenderer.invoke(
-        'db:run',
-        'DELETE FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ? AND temin_kalem_id = ? AND temin_firma_id = ?',
-        [activeDosyaId, itemId, teminFirmaId]
-      )
-      if (price > 0) {
-        await window.electron.ipcRenderer.invoke(
-          'db:run',
-          'INSERT INTO DATA_TeminKalemTeklif (temin_dosya_id, temin_kalem_id, temin_firma_id, birim_fiyat) VALUES (?, ?, ?, ?)',
-          [activeDosyaId, itemId, teminFirmaId, price]
-        )
-      }
+      await upsertKalemBidPrice({
+        dosyaId: activeDosyaId,
+        kalemId: itemId,
+        teminFirmaId,
+        birimFiyat: price
+      })
+      documentPreloadService.invalidateCache(activeDosyaId)
+      emitAppEvent('bids:changed', { dosyaId: activeDosyaId })
+      emitAppEvent('dossier:updated', { dosyaId: activeDosyaId })
     } catch (err) {
       console.error(err)
     }

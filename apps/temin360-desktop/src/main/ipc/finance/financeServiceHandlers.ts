@@ -50,12 +50,27 @@ export function registerFinanceServiceHandlers(): void {
           COALESCE(d.konu, 'Doğrudan Temin Dosyası') as konu,
           COALESCE(d.harcama_birimi, b.ad, 'Harcama Birimi') as harcamaBirimi,
           COALESCE(d.tur, 'mal') as aliciTur,
-          COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as kazananFirma,
-          COALESCE(f.vergi_no, '-') as kazananVergiNo,
+          COALESCE(
+            f.unvan,
+            (SELECT tf.unvan FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT tf2.unvan FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0 ORDER BY tf2.teklif_toplami ASC, tf2.id ASC LIMIT 1),
+            'Yüklenici Belirlenmedi'
+          ) as kazananFirma,
+          COALESCE(
+            f.vergi_no,
+            (SELECT tf.vergi_no FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT tf2.vergi_no FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0 ORDER BY tf2.teklif_toplami ASC, tf2.id ASC LIMIT 1),
+            '-'
+          ) as kazananVergiNo,
           COALESCE(f.hesap_no, '-') as kazananIban,
-          COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
+          COALESCE(
+            NULLIF(d.yaklasik_maliyet, 0),
+            (SELECT tf.teklif_toplami FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT MIN(tf2.teklif_toplami) FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0),
+            0
+          ) as brutTutar,
           COALESCE(d.kesinti_damga, 0) as damgaVergisi,
-          COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,
+          0 as kararPulu,
           COALESCE(d.kesinti_kdv_tevkifat, 0) as kdvTevkifati,
           COALESCE(d.net_odenen, 0) as netOdenecek,
           COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,
@@ -171,12 +186,27 @@ export function registerFinanceServiceHandlers(): void {
           d.id as dosyaId,
           COALESCE(d.temin_no, '#' || d.id) as dosyaNo,
           COALESCE(d.konu, 'Doğrudan Temin Hak Sahibi Ödemesi') as konu,
-          COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as alacakliUnvan,
-          COALESCE(f.vergi_no, '-') as alacakliVkn,
+          COALESCE(
+            f.unvan,
+            (SELECT tf.unvan FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT tf2.unvan FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0 ORDER BY tf2.teklif_toplami ASC, tf2.id ASC LIMIT 1),
+            'Yüklenici Belirlenmedi'
+          ) as alacakliUnvan,
+          COALESCE(
+            f.vergi_no,
+            (SELECT tf.vergi_no FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT tf2.vergi_no FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0 ORDER BY tf2.teklif_toplami ASC, tf2.id ASC LIMIT 1),
+            '-'
+          ) as alacakliVkn,
           COALESCE(f.hesap_no, '-') as alacakliIban,
-          COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
+          COALESCE(
+            NULLIF(d.yaklasik_maliyet, 0),
+            (SELECT tf.teklif_toplami FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT MIN(tf2.teklif_toplami) FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0),
+            0
+          ) as brutTutar,
           COALESCE(d.kesinti_damga, 0) as damgaVergisi,
-          COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,
+          0 as kararPulu,
           COALESCE(d.kesinti_kdv_tevkifat, 0) as kdvTevkifat,
           COALESCE(d.net_odenen, 0) as netOdenecekTutar,
           COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,
@@ -206,12 +236,27 @@ export function registerFinanceServiceHandlers(): void {
           d.id as dosyaId,
           COALESCE(d.temin_no, '#' || d.id) as dosyaNo,
           COALESCE(d.harcama_birimi, b.ad, 'Harcama Birimi') as harcamaBirimi,
-          COALESCE(f.unvan, 'Yüklenici Belirlenmedi') as hakSahibiAdi,
-          COALESCE(f.vergi_no, '-') as hakSahibiVkn,
+          COALESCE(
+            f.unvan,
+            (SELECT tf.unvan FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT tf2.unvan FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0 ORDER BY tf2.teklif_toplami ASC, tf2.id ASC LIMIT 1),
+            'Yüklenici Belirlenmedi'
+          ) as hakSahibiAdi,
+          COALESCE(
+            f.vergi_no,
+            (SELECT tf.vergi_no FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT tf2.vergi_no FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0 ORDER BY tf2.teklif_toplami ASC, tf2.id ASC LIMIT 1),
+            '-'
+          ) as hakSahibiVkn,
           COALESCE(f.hesap_no, '-') as hakSahibiIban,
-          COALESCE(d.yaklasik_maliyet, 0) as brutTutar,
+          COALESCE(
+            NULLIF(d.yaklasik_maliyet, 0),
+            (SELECT tf.teklif_toplami FROM DATA_TeminFirma tf WHERE tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1) LIMIT 1),
+            (SELECT MIN(tf2.teklif_toplami) FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0),
+            0
+          ) as brutTutar,
           COALESCE(d.kesinti_damga, 0) as damgaVergisi,
-          COALESCE(d.kesinti_karar_pulu, 0) as kararPulu,
+          0 as kararPulu,
           COALESCE(d.kesinti_kdv_tevkifat, 0) as kdvTevkifat,
           COALESCE(d.net_odenen, 0) as netOdenecekTutar,
           COALESCE(d.butce_kodu, '03.2.1.01') as butceTertibi,

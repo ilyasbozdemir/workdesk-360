@@ -382,13 +382,18 @@ export async function loadRealBkmybsData(): Promise<RealMaliDataset | null> {
         durum: d.status === 'tamamlandi' ? 'zimmetlendi' : 'ambarda'
       }))
 
-    // ── E) SÖZLEŞMELER ──
+    // ── E) SÖZLEŞMELER (Doğrudan Temin dosyalarında sözleşme ve kesin teminat bulunmaz; yalnızca İhale usulü sözleşmeli dosyalar) ──
     const sozlesmeListesi: SozlesmeTaahhutKayit[] = dosyalar
-      .filter(
-        (d) =>
-          (d.sozlesme_yapilacak_mi === 1 || d.tur === 'yapim' || d.tur === 'yapim_isi') &&
+      .filter((d) => {
+        const isIhaleUsulu =
+          typeof d.temin_usulu === 'string' &&
+          (d.temin_usulu.includes('19') || d.temin_usulu.includes('20') || d.temin_usulu.includes('21') || d.temin_usulu.includes('2886'))
+        return (
+          isIhaleUsulu &&
+          d.sozlesme_yapilacak_mi === 1 &&
           (Number(d.yaklasik_maliyet) > 0 || Number(d.net_odenen) > 0)
-      )
+        )
+      })
       .map((d, idx) => {
         const bedel = Number(d.net_odenen) || Number(d.yaklasik_maliyet) || 0
         const firma = firmaMap.get(d.id) || { unvan: `${d.konu} Yüklenicisi`, vergiNo: '1111111111' }

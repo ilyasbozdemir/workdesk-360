@@ -1,5 +1,8 @@
 import { FirmaStats, IslemlerData } from './types'
-import { resolveResenWinner } from '../../../../../../services/dossier/winnerSyncService'
+import {
+  fetchCanonicalDossierPricing,
+  isDogrudanTeminDosyasi
+} from '../../../../../../services/dossier/dossierPriceSyncService'
 
 export interface ResolvedSiparisData {
   kazananFirmaId: number | null
@@ -23,7 +26,8 @@ export async function fetchSiparisVeSozlesmeData(
   const dosyaRes = await window.electron.ipcRenderer.invoke(
     'db:query',
     `SELECT d.firma_id, d.yaklasik_maliyet, d.teslim_tarihi, d.teslim_gun,
-            d.teklif_sozlesme_turu, d.sozlesme_yapilacak_mi, d.sablon_tercihleri
+            d.teklif_sozlesme_turu, d.sozlesme_yapilacak_mi, d.sablon_tercihleri,
+            d.ihale_usulu, d.ihale_sekli, d.tedarik_sekli, d.tur
      FROM DATA_TeminDosyasi d
      WHERE d.id = ?`,
     [activeDosyaId]
@@ -34,6 +38,7 @@ export async function fetchSiparisVeSozlesmeData(
   }
 
   const dosyaRow = dosyaRes.data[0]
+  const isDt = isDogrudanTeminDosyasi(dosyaRow)
   let sonucOnayEkler = DEFAULT_EKLER
 
   if (dosyaRow.sablon_tercihleri) {
@@ -47,103 +52,17 @@ export async function fetchSiparisVeSozlesmeData(
     }
   }
 
-  const firmsRes = await window.electron.ipcRenderer.invoke(
-    'db:query',
-    `SELECT 
-       df.id as temin_firma_id,
-       df.firma_id as master_firma_id,
-       COALESCE(NULLIF(df.unvan, ''), NULLIF(f.unvan, ''), 'İstekli Firma') as unvan,
-       COALESCE(NULLIF(df.vergi_no, ''), NULLIF(f.vergi_no, '')) as vergi_no,
-       df.yasaklilik_durumu,
-       df.kazandi_mi,
-       df.teklif_toplami
-     FROM DATA_TeminFirma df
-     LEFT JOIN TANIM_Firma f ON df.firma_id = f.id
-     WHERE df.temin_dosya_id = ? 
-       AND (COALESCE(df.aktif_mi, 1) = 1 OR df.aktif_mi = '1' OR df.aktif_mi = 'true')
-     ORDER BY df.id ASC`,
-    [activeDosyaId]
-  )
-
-  const firmList = firmsRes.success && Array.isArray(firmsRes.data) ? firmsRes.data : []
-  if (firmList.length === 0) {
+  const canonical = await fetchCanonicalDossierPricing(activeDosyaId)
+  if (!canonical || !canonical.kazananFirma) {
     return null
   }
 
-  const bidsRes = await window.electron.ipcRenderer.invoke(
-    'db:query',
-    `SELECT kt.temin_firma_id, SUM(kt.birim_fiyat * COALESCE(k.miktar, 1)) as calculated_total
-     FROM DATA_TeminKalemTeklif kt
-     JOIN DATA_TeminKalem k ON kt.temin_kalem_id = k.id
-     WHERE kt.temin_dosya_id = ?
-     GROUP BY kt.temin_firma_id`,
-    [activeDosyaId]
-  )
-
-  const bidsMap = new Map<number, number>()
-  if (bidsRes.success && Array.isArray(bidsRes.data)) {
-    bidsRes.data.forEach((row: any) => {
-      bidsMap.set(Number(row.temin_firma_id), Number(row.calculated_total) || 0)
-    })
-  }
-
-  const enhancedFirms = firmList.map((f: any) => {
-    const rawTotal = Number(f.teklif_toplami) || 0
-    const calcTotal = bidsMap.get(Number(f.temin_firma_id)) || 0
-    const effectiveTotal = rawTotal > 0 ? rawTotal : calcTotal
-    return {
-      ...f,
-      calculated_teklif: effectiveTotal
-    }
-  })
-
-  let winner = enhancedFirms.find(
-    (f: any) =>
-      dosyaRow.firma_id &&
-      (Number(f.master_firma_id) === Number(dosyaRow.firma_id) ||
-        Number(f.temin_firma_id) === Number(dosyaRow.firma_id))
-  )
-
-  let isResenWinner = false
-  let resenReason = ''
-
-  if (!winner) {
-    winner = enhancedFirms.find(
-      (f: any) =>
-        Number(f.kazandi_mi) === 1 ||
-        f.kazandi_mi === '1' ||
-        Number(f.kazanan_mi) === 1 ||
-        f.kazanan_mi === '1'
-    )
-  }
-
-  // Kazanan firma bulunamadıysa re'sen (otomatik) çözümle
-  if (!winner) {
-    const resenResult = await resolveResenWinner(activeDosyaId)
-    if (resenResult.winner) {
-      winner = {
-        ...resenResult.winner,
-        temin_firma_id: resenResult.winner.temin_firma_id,
-        master_firma_id: resenResult.winner.master_firma_id,
-        unvan: resenResult.winner.unvan,
-        vergi_no: resenResult.winner.vergi_no,
-        calculated_teklif: resenResult.winner.calculated_teklif,
-        yasaklilik_durumu: resenResult.winner.yasaklilik_durumu
-      }
-      isResenWinner = resenResult.isResen
-      resenReason = resenResult.reason
-    }
-  }
-
-  if (!winner) return null
-
+  const winner = canonical.kazananFirma
   const effectiveFirmaId = Number(winner.master_firma_id) || Number(winner.temin_firma_id)
   const effectiveUnvan = winner.unvan || 'İstekli Firma'
   const effectiveVergiNo = winner.vergi_no || null
-  const teklifToplami = winner.calculated_teklif > 0 ? winner.calculated_teklif : null
+  const teklifToplami = canonical.kazananTeklifToplami
   const yasaklilikDurumu = winner.yasaklilik_durumu || null
-
-  
 
   let formattedDate = ''
   let teslimGunu =
@@ -167,21 +86,24 @@ export async function fetchSiparisVeSozlesmeData(
     }
   }
 
+  // Doğrudan Temin (4734 Md. 22) dosyalarında sözleşme adımı uygulanmaz
+  const effectiveSozlesme = isDt ? 0 : dosyaRow.sozlesme_yapilacak_mi ? 1 : 0
+
   const firmaStats: FirmaStats = {
     teklifToplami,
-    yaklasikMaliyet: dosyaRow.yaklasik_maliyet || null,
+    yaklasikMaliyet: canonical.toplamYaklasikMaliyet || dosyaRow.yaklasik_maliyet || null,
     teslimTarihi: formattedDate || null,
     yasaklilikDurumu,
     vergiNo: effectiveVergiNo,
     teklifSozlesmeTuru: dosyaRow.teklif_sozlesme_turu || 'Mal Alımı',
-    sozlesmeYapilacakMi: dosyaRow.sozlesme_yapilacak_mi ? 1 : 0,
-    istekliFirmaSayisi: enhancedFirms.length,
-    isResenWinner,
-    resenReason
+    sozlesmeYapilacakMi: effectiveSozlesme,
+    istekliFirmaSayisi: canonical.firmalar.length,
+    isResenWinner: canonical.isResenWinner,
+    resenReason: canonical.resenReason
   }
 
   const islemlerData: IslemlerData = {
-    sozlesmeYapilacakMi: Boolean(dosyaRow.sozlesme_yapilacak_mi),
+    sozlesmeYapilacakMi: Boolean(effectiveSozlesme),
     siparisFormuGerekli: true,
     teslimGunu,
     teslimTarihi: formattedDate || '',

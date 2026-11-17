@@ -17,6 +17,7 @@ import {
   UseTakipReturn
 } from './takip.types'
 import { APP_ROUTES } from '../../../../constants/routeConstants'
+import { fetchCanonicalDossierPricing } from '../../../../services/dossier/dossierPriceSyncService'
 
 export const STAGE_ROUTES: Record<number, string> = {
   1: '/dosya/hazirlik-ve-ihtiyac',
@@ -28,7 +29,7 @@ export const STAGE_ROUTES: Record<number, string> = {
 export const STAGE_SHORT_LABELS: Record<number, string> = {
   1: 'Hazırlık',
   2: 'Araştırma',
-  3: 'Sözleşme',
+  3: 'Yüklenici & Sipariş',
   4: 'Muayene & Kabul & Ödeme'
 }
 
@@ -215,35 +216,24 @@ export function useTakip(): UseTakipReturn {
     enabled: !activeDosyaId
   })
 
-  // Fetch Kalemler (Materials/Items) for this dossier
+  // Fetch Kalemler (Materials/Items) for this dossier using canonical pricing
   const { data: kalemler = [] } = useQuery<TeminKalemItem[]>({
     queryKey: ['takip_kalemler', activeDosyaId],
     queryFn: async () => {
       if (!activeDosyaId) return []
-      const res = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT * FROM DATA_TeminKalem WHERE temin_dosya_id = ${activeDosyaId} ORDER BY id ASC`
-      )
-      if (!res.success) return []
-      return res.data
+      const pricing = await fetchCanonicalDossierPricing(activeDosyaId)
+      return pricing.kalemler as unknown as TeminKalemItem[]
     },
     enabled: !!activeDosyaId
   })
 
-  // Fetch Firmalar (Bidders/Proposals) for this dossier
+  // Fetch Firmalar (Bidders/Proposals) for this dossier using canonical pricing
   const { data: firmalar = [] } = useQuery<TeminFirmaItem[]>({
     queryKey: ['takip_firmalar', activeDosyaId],
     queryFn: async () => {
       if (!activeDosyaId) return []
-      const res = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        `SELECT df.*, f.unvan 
-         FROM DATA_TeminFirma df 
-         LEFT JOIN TANIM_Firma f ON df.firma_id = f.id 
-         WHERE df.temin_dosya_id = ${activeDosyaId}`
-      )
-      if (!res.success) return []
-      return res.data
+      const pricing = await fetchCanonicalDossierPricing(activeDosyaId)
+      return pricing.firmalar as unknown as TeminFirmaItem[]
     },
     enabled: !!activeDosyaId
   })
@@ -280,8 +270,8 @@ export function useTakip(): UseTakipReturn {
           },
           {
             asama_sira: 3,
-            asama_adi: 'Sipariş & Sözleşme',
-            aciklama: 'Sözleşme/sipariş onayı ve kazanan firma atama aşaması.'
+            asama_adi: 'Yüklenici & Sipariş İşlemleri',
+            aciklama: 'Sonuç onayı, sipariş mektubu ve yüklenici firma atama aşaması.'
           },
           {
             asama_sira: 4,

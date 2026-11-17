@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSettingsStore } from '../../../../../../store/settingsStore'
 import { useWorkspaceStore } from '../../../../../../store/workspaceStore'
 import { useDosyaAsamasiSablons } from '../../useDosyaAsamasiSablons'
@@ -9,7 +9,8 @@ import {
   FaturaKayit,
   calculateInvoiceFinancials
 } from '@renderer/screens/bkmybs-mali-yonetim/components/tabs/DosyalarVeFaturalariTab'
-import { resolveResenWinner } from '../../../../../../services/dossier/winnerSyncService'
+import { fetchCanonicalDossierPricing } from '../../../../../../services/dossier/dossierPriceSyncService'
+import { useAppEventListener } from '../../../../../../utils/appEvents'
 
 interface KabulDataCacheEntry {
   kazananFirmaId: number | null
@@ -580,213 +581,208 @@ export function useKabulVeOdemeData() {
     }
   }
 
-  useEffect(() => {
-    if (!activeDosyaId) return
+  const loadKabulData = useCallback(async (isMountedRef?: { current: boolean }): Promise<void> => {
+    if (!activeDosyaId) {
+      setKazananFirmaId(null)
+      setKazananFirmaUnvan('')
+      setTutanaklar([])
+      setDosyaFaturalari([])
+      setFaturaNo('')
+      setFaturaTarihi('')
+      setDosyaKalemler([])
+      return
+    }
 
-    let isMounted = true
+    try {
+      const [dosyaRes, komRes, canonical] = await Promise.all([
+        window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT d.firma_id, f.unvan, f.vergi_no,
+                  d.yaklasik_maliyet, d.teslim_tarihi,
+                  d.fiyat_farki_dayanagi, COALESCE(NULLIF(d.tur, ''), 'mal') as alim_turu,
+                  d.dosya_acilis_tarihi, d.temin_tarihi, d.tarih,
+                  d.ihtiyac_yeri, d.sablon_tercihleri
+           FROM DATA_TeminDosyasi d
+           LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
+           WHERE d.id = ?`,
+          [activeDosyaId]
+        ),
+        window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT id, komisyon_id, ad_soyad, unvan, gorev, komisyon_turu, COALESCE(rol, 'Asil') as asli_yedek FROM DATA_TeminKomisyon
+           WHERE temin_dosya_id = ?
+           ORDER BY (CASE WHEN LOWER(COALESCE(gorev, '')) LIKE '%başkan%' OR LOWER(COALESCE(gorev, '')) LIKE '%baskan%' THEN 0 ELSE 1 END) ASC, id ASC`,
+          [activeDosyaId]
+        ),
+        fetchCanonicalDossierPricing(activeDosyaId)
+      ])
 
-    const checkKazananFirma = async (): Promise<void> => {
-      try {
-        const [dosyaRes, komRes] = await Promise.all([
-          window.electron.ipcRenderer.invoke(
-            'db:query',
-            `SELECT d.firma_id, f.unvan, f.vergi_no,
-                    d.yaklasik_maliyet, d.teslim_tarihi,
-                    d.fiyat_farki_dayanagi, COALESCE(NULLIF(d.tur, ''), 'mal') as alim_turu,
-                    d.dosya_acilis_tarihi, d.temin_tarihi, d.tarih,
-                    d.ihtiyac_yeri, d.sablon_tercihleri
-             FROM DATA_TeminDosyasi d
-             LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
-             WHERE d.id = ?`,
-            [activeDosyaId]
-          ),
-          window.electron.ipcRenderer.invoke(
-            'db:query',
-            `SELECT id, komisyon_id, ad_soyad, unvan, gorev, komisyon_turu, COALESCE(rol, 'Asil') as asli_yedek FROM DATA_TeminKomisyon
-             WHERE temin_dosya_id = ?
-             ORDER BY (CASE WHEN LOWER(COALESCE(gorev, '')) LIKE '%başkan%' OR LOWER(COALESCE(gorev, '')) LIKE '%baskan%' THEN 0 ELSE 1 END) ASC, id ASC`,
-            [activeDosyaId]
-          )
-        ])
+      if (isMountedRef && !isMountedRef.current) return
 
-        if (!isMounted) return
+      if (dosyaRes.success && dosyaRes.data && dosyaRes.data.length > 0) {
+        const row = dosyaRes.data[0]
+        const winner = canonical?.kazananFirma || null
+        const effectiveFirmaId = winner
+          ? Number(winner.master_firma_id || winner.temin_firma_id)
+          : row.firma_id || null
+        const effectiveUnvan = winner?.unvan || row.unvan || ''
+        const effectiveVergiNo = winner?.vergi_no || row.vergi_no || null
+        const teklifToplami = canonical?.kazananTeklifToplami ?? null
+        const yasaklilikDurumu = winner?.yasaklilik_durumu || null
+        const canonicalKalemler = canonical?.kalemler || []
 
-        if (dosyaRes.success && dosyaRes.data && dosyaRes.data.length > 0) {
-          const row = dosyaRes.data[0]
-          let effectiveFirmaId = row.firma_id || null
-          let effectiveUnvan = row.unvan || ''
-          let effectiveVergiNo = row.vergi_no || null
+        // Yeni dosyaya geçildiğinde önceki dosyanın tutanak/fatura verilerinin taşınmasını engelle
+        let nextTutanaklar: KabulTutanakItem[] = []
+        let nextFaturalar: FaturaKayit[] = []
+        let nextFaturaNo = ''
+        let nextFaturaTarihi = ''
 
-          // Eğer dosyada atanmış kazanan firma yoksa re'sen çözümle (En Düşük Teklif / Tek İstekli / Islak Belge)
-          if (!effectiveFirmaId) {
-            try {
-              const resen = await resolveResenWinner(activeDosyaId)
-              if (resen.winner) {
-                effectiveFirmaId = resen.winner.master_firma_id || resen.winner.temin_firma_id
-                effectiveUnvan = resen.winner.unvan
-                effectiveVergiNo = resen.winner.vergi_no
-              }
-            } catch (resenErr) {
-              console.warn('Re\'sen kazanan firma çözümleme hatası:', resenErr)
-            }
-          }
-
-          if (row.sablon_tercihleri) {
-            try {
-              const prefs =
-                typeof row.sablon_tercihleri === 'string'
-                  ? JSON.parse(row.sablon_tercihleri)
-                  : row.sablon_tercihleri
-              if (Array.isArray(prefs?.kabulTutanaklari)) {
-                setTutanaklar(prefs.kabulTutanaklari)
-              }
-              if (Array.isArray(prefs?.faturalar)) {
-                setDosyaFaturalari(prefs.faturalar)
-                if (prefs.faturalar.length > 0) {
-                  const firstFat = prefs.faturalar[0]
-                  if (firstFat.faturaNo) setFaturaNo(firstFat.faturaNo)
-                  if (firstFat.faturaTarihi) setFaturaTarihi(firstFat.faturaTarihi.slice(0, 10))
-                }
-              }
-              if (prefs?.faturaNo && !faturaNo) {
-                setFaturaNo(prefs.faturaNo)
-                if (prefs.faturaTarihi) setFaturaTarihi(prefs.faturaTarihi.slice(0, 10))
-              }
-            } catch (err) {
-              console.warn('Failed to parse kabulTutanaklari from prefs:', err)
-            }
-          }
-
-          if (effectiveFirmaId && !effectiveUnvan) {
-            try {
-              const tfCheck = await window.electron.ipcRenderer.invoke(
-                'db:query',
-                `SELECT COALESCE(NULLIF(tf.unvan, ''), NULLIF(f.unvan, ''), 'İstekli Firma') as unvan,
-                        COALESCE(NULLIF(tf.vergi_no, ''), NULLIF(f.vergi_no, '')) as vergi_no
-                 FROM DATA_TeminFirma tf
-                 LEFT JOIN TANIM_Firma f ON tf.firma_id = f.id
-                 WHERE tf.temin_dosya_id = ? AND (tf.firma_id = ? OR tf.id = ?)
-                 LIMIT 1`,
-                [activeDosyaId, effectiveFirmaId, effectiveFirmaId]
-              )
-              if (tfCheck.success && tfCheck.data?.length > 0) {
-                effectiveUnvan = tfCheck.data[0].unvan || ''
-                effectiveVergiNo = tfCheck.data[0].vergi_no || effectiveVergiNo
-              }
-            } catch (err) {
-              console.warn('Failed to check DATA_TeminFirma fallback unvan:', err)
-            }
-          }
-
-          
-
-          let teklifToplami: number | null = null
-          let yasaklilikDurumu: string | null = null
-          if (effectiveFirmaId) {
-            const teklifRes = await window.electron.ipcRenderer.invoke(
-              'db:query',
-              `SELECT tf.teklif_toplami, tf.yasaklilik_durumu,
-                      (SELECT SUM(kt.birim_fiyat * k.miktar)
-                       FROM DATA_TeminKalemTeklif kt
-                       JOIN DATA_TeminKalem k ON kt.temin_kalem_id = k.id
-                       WHERE kt.temin_firma_id = tf.id AND kt.temin_dosya_id = ?) as calculated_teklif
-                FROM DATA_TeminFirma tf
-                WHERE tf.temin_dosya_id = ? AND (tf.firma_id = ? OR tf.id = ?)`,
-              [activeDosyaId, activeDosyaId, effectiveFirmaId, effectiveFirmaId]
-            )
-            if (teklifRes.success && teklifRes.data?.length > 0) {
-              teklifToplami =
-                teklifRes.data[0].teklif_toplami || teklifRes.data[0].calculated_teklif || null
-              yasaklilikDurumu = teklifRes.data[0].yasaklilik_durumu
-            }
-          }
-
-          let fetchedKomUyeleri: KomisyonUye[] = []
-          let fetchedBaskan = ''
-
-          const isMuayeneMember = (k: any): boolean => resolveCommissionCategory(k) === 'muayene'
-
-          if (komRes.success && Array.isArray(komRes.data) && komRes.data.length > 0) {
-            const muayeneMembers = komRes.data.filter(isMuayeneMember)
-            if (muayeneMembers.length > 0) {
-              fetchedKomUyeleri = muayeneMembers
-            }
-          }
-
-          if (fetchedKomUyeleri.length > 0) {
-            const baskan = fetchedKomUyeleri.find(
-              (k) =>
-                k.gorev?.toLowerCase().includes('başkan') ||
-                k.gorev?.toLowerCase().includes('baskan')
-            )
-            fetchedBaskan = baskan ? baskan.ad_soyad : fetchedKomUyeleri[0]?.ad_soyad || ''
-          }
-
-          const nextStats: FirmaStats = {
-            teklifToplami,
-            yaklasikMaliyet: row.yaklasik_maliyet || null,
-            teslimTarihi: row.teslim_tarihi || null,
-            yasaklilikDurumu,
-            vergiNo: effectiveVergiNo || row.vergi_no || null,
-            fiyatFarkiDayanagi: row.fiyat_farki_dayanagi || null,
-            alimTuru: row.alim_turu || null,
-            dosyaTarihi: row.temin_tarihi || row.dosya_acilis_tarihi || row.tarih || null
-          }
-
-          setKazananFirmaId(effectiveFirmaId)
-          setKazananFirmaUnvan(effectiveUnvan)
-          setTeslimYeri(row.ihtiyac_yeri || '')
-          setKomisyonUyeleri(fetchedKomUyeleri)
-          setKomisyonBaskani(fetchedBaskan)
-          setFirmaStats(nextStats)
-
+        if (row.sablon_tercihleri) {
           try {
-            const kalemRes = await window.electron.ipcRenderer.invoke(
-              'db:query',
-              `SELECT k.id, k.id as sira_no, k.kalem_adi as malzeme_adi, k.kalem_adi,
-                      k.aciklama as ozelligi, k.aciklama,
-                      k.birim as birimi, k.birim, k.miktar, k.tasinir_kodu, k.kdv_orani,
-                      COALESCE(
-                        (SELECT kt.birim_fiyat FROM DATA_TeminKalemTeklif kt WHERE kt.temin_kalem_id = k.id AND (kt.temin_firma_id = ? OR kt.temin_firma_id = (SELECT id FROM DATA_TeminFirma WHERE temin_dosya_id = ? AND (firma_id = ? OR id = ?) LIMIT 1)) LIMIT 1),
-                        (SELECT MIN(kt2.birim_fiyat) FROM DATA_TeminKalemTeklif kt2 WHERE kt2.temin_kalem_id = k.id AND kt2.birim_fiyat > 0),
-                        0
-                      ) as birim_fiyat
-               FROM DATA_TeminKalem k
-               WHERE k.temin_dosya_id = ?
-               ORDER BY k.id ASC`,
-              [effectiveFirmaId, activeDosyaId, effectiveFirmaId, effectiveFirmaId, activeDosyaId]
-            )
-            if (kalemRes.success && Array.isArray(kalemRes.data)) {
-              setDosyaKalemler(kalemRes.data)
-            }
-          } catch (kalemErr) {
-            console.warn('Failed to load DATA_TeminKalem:', kalemErr)
-          }
+            const prefs =
+              typeof row.sablon_tercihleri === 'string'
+                ? JSON.parse(row.sablon_tercihleri)
+                : row.sablon_tercihleri
 
-          kabulDataCache.set(activeDosyaId, {
-            kazananFirmaId: effectiveFirmaId,
-            kazananFirmaUnvan: effectiveUnvan,
-            komisyonBaskani: fetchedBaskan,
-            komisyonUyeleri: fetchedKomUyeleri,
-            teslimYeri: row.ihtiyac_yeri || '',
-            firmaStats: nextStats,
-            faturaNo,
-            faturaTarihi
-          })
-        } else {
-          setKazananFirmaId(null)
+            if (Array.isArray(prefs?.kabulTutanaklari)) {
+              // Tutanak içindeki kalem birim fiyatları 0 kalmışsa güncel teklif fiyatlarıyla senkronize et
+              nextTutanaklar = prefs.kabulTutanaklari.map((tut: KabulTutanakItem) => {
+                if (!Array.isArray(tut.kalemler) || canonicalKalemler.length === 0) {
+                  if ((!tut.tutar || tut.tutar <= 0) && teklifToplami && teklifToplami > 0) {
+                    return { ...tut, tutar: teklifToplami }
+                  }
+                  return tut
+                }
+                let recomputedSum = 0
+                const syncedKalemler = tut.kalemler.map((tk, idx) => {
+                  const matchCanon =
+                    canonicalKalemler.find((ck) => ck.sira_no === tk.siraNo) ||
+                    canonicalKalemler[idx]
+                  const canonPrice = Number(matchCanon?.birim_fiyat || 0)
+                  const currentPrice = Number(tk.birimFiyati || 0)
+                  const finalPrice = canonPrice > 0 ? canonPrice : currentPrice
+                  const kabulMik = Number(tk.kabulMiktari ?? tk.miktari ?? 0)
+                  const lineTotal = Number((kabulMik * finalPrice).toFixed(2))
+                  recomputedSum += lineTotal
+                  return {
+                    ...tk,
+                    birimFiyati: finalPrice,
+                    toplamTutar: lineTotal
+                  }
+                })
+                return {
+                  ...tut,
+                  kalemler: syncedKalemler,
+                  tutar: recomputedSum > 0 ? Number(recomputedSum.toFixed(2)) : tut.tutar || teklifToplami || undefined
+                }
+              })
+            }
+
+            if (Array.isArray(prefs?.faturalar)) {
+              nextFaturalar = prefs.faturalar
+              if (prefs.faturalar.length > 0) {
+                const firstFat = prefs.faturalar[0]
+                if (firstFat.faturaNo) nextFaturaNo = firstFat.faturaNo
+                if (firstFat.faturaTarihi) nextFaturaTarihi = firstFat.faturaTarihi.slice(0, 10)
+              }
+            }
+            if (prefs?.faturaNo && !nextFaturaNo) {
+              nextFaturaNo = prefs.faturaNo
+              if (prefs.faturaTarihi) nextFaturaTarihi = prefs.faturaTarihi.slice(0, 10)
+            }
+          } catch (err) {
+            console.warn('Failed to parse kabulTutanaklari from prefs:', err)
+          }
         }
-      } catch {
-        if (isMounted) setKazananFirmaId(null)
+
+        setTutanaklar(nextTutanaklar)
+        setDosyaFaturalari(nextFaturalar)
+        setFaturaNo(nextFaturaNo)
+        setFaturaTarihi(nextFaturaTarihi)
+        setDosyaKalemler(canonicalKalemler)
+
+        let fetchedKomUyeleri: KomisyonUye[] = []
+        let fetchedBaskan = ''
+
+        const isMuayeneMember = (k: any): boolean => resolveCommissionCategory(k) === 'muayene'
+
+        if (komRes.success && Array.isArray(komRes.data) && komRes.data.length > 0) {
+          const muayeneMembers = komRes.data.filter(isMuayeneMember)
+          if (muayeneMembers.length > 0) {
+            fetchedKomUyeleri = muayeneMembers
+          }
+        }
+
+        if (fetchedKomUyeleri.length > 0) {
+          const baskan = fetchedKomUyeleri.find(
+            (k) =>
+              k.gorev?.toLowerCase().includes('başkan') ||
+              k.gorev?.toLowerCase().includes('baskan')
+          )
+          fetchedBaskan = baskan ? baskan.ad_soyad : fetchedKomUyeleri[0]?.ad_soyad || ''
+        }
+
+        const nextStats: FirmaStats = {
+          teklifToplami,
+          yaklasikMaliyet: canonical?.toplamYaklasikMaliyet || row.yaklasik_maliyet || null,
+          teslimTarihi: row.teslim_tarihi || null,
+          yasaklilikDurumu,
+          vergiNo: effectiveVergiNo || row.vergi_no || null,
+          fiyatFarkiDayanagi: row.fiyat_farki_dayanagi || null,
+          alimTuru: row.alim_turu || null,
+          dosyaTarihi: row.temin_tarihi || row.dosya_acilis_tarihi || row.tarih || null
+        }
+
+        setKazananFirmaId(effectiveFirmaId)
+        setKazananFirmaUnvan(effectiveUnvan)
+        setTeslimYeri(row.ihtiyac_yeri || '')
+        setKomisyonUyeleri(fetchedKomUyeleri)
+        setKomisyonBaskani(fetchedBaskan)
+        setFirmaStats(nextStats)
+
+        kabulDataCache.set(activeDosyaId, {
+          kazananFirmaId: effectiveFirmaId,
+          kazananFirmaUnvan: effectiveUnvan,
+          komisyonBaskani: fetchedBaskan,
+          komisyonUyeleri: fetchedKomUyeleri,
+          teslimYeri: row.ihtiyac_yeri || '',
+          firmaStats: nextStats,
+          faturaNo: nextFaturaNo,
+          faturaTarihi: nextFaturaTarihi,
+          tutanaklar: nextTutanaklar
+        })
+      } else {
+        setKazananFirmaId(null)
+        setTutanaklar([])
+        setDosyaFaturalari([])
+        setFaturaNo('')
+        setFaturaTarihi('')
+        setDosyaKalemler([])
+      }
+    } catch {
+      if (!isMountedRef || isMountedRef.current) {
+        setKazananFirmaId(null)
       }
     }
-
-    checkKazananFirma()
-
-    return () => {
-      isMounted = false
-    }
   }, [activeDosyaId])
+
+  useEffect(() => {
+    const isMountedRef = { current: true }
+    loadKabulData(isMountedRef)
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [activeDosyaId, loadKabulData])
+
+  useAppEventListener(
+    ['items:changed', 'bids:changed', 'dossier:updated', 'workspace:refreshed'],
+    () => {
+      if (activeDosyaId) {
+        kabulDataCache.delete(activeDosyaId)
+      }
+      loadKabulData()
+    }
+  )
 
   return {
     activeDosyaId,

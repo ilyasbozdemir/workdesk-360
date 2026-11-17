@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
-import Decimal from 'decimal.js'
 import { BiddingFirm, PoolFirm, BiddingKalem } from './types'
 import { emitAppEvent, useAppEventListener } from '../../../../../../utils/appEvents'
+import { upsertKalemBidPrice } from '../../../../../../services/dossier/dossierPriceSyncService'
+import { documentPreloadService } from '../../../../../../services/documentPreloadService'
 
 export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: string) {
   const [invitedFirms, setInvitedFirms] = useState<BiddingFirm[]>([])
@@ -66,7 +67,7 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
 
       const resBids = await window.electron.ipcRenderer.invoke(
         'db:query',
-        'SELECT temin_kalem_id, temin_firma_id, birim_fiyat FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ?',
+        'SELECT id, temin_kalem_id, temin_firma_id, birim_fiyat FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ? ORDER BY id ASC',
         [activeDosyaId]
       )
 
@@ -168,7 +169,15 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
   }, [activeDosyaId])
 
   useEffect(() => {
-    loadData()
+    setBids({})
+    setItems([])
+    setInvitedFirms([])
+    setManualWinnerFirmaId(null)
+    if (activeDosyaId) {
+      loadData()
+    } else {
+      setLoading(false)
+    }
   }, [activeDosyaId, activeTabPath, loadData])
 
   useAppEventListener(['items:changed', 'dossier:updated', 'workspace:refreshed'], () => {
@@ -385,6 +394,7 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     teminFirmaId: number,
     priceStr: string
   ): Promise<void> => {
+    if (!activeDosyaId) return
     const price = parseFloat(priceStr) || 0
     const key = `${kalemId}_${teminFirmaId}`
 
@@ -395,25 +405,12 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     setBids(nextBids)
 
     try {
-      await window.electron.ipcRenderer.invoke(
-        'db:run',
-        `INSERT OR REPLACE INTO DATA_TeminKalemTeklif (temin_dosya_id, temin_kalem_id, temin_firma_id, birim_fiyat, kdv_tutari, teklif_verildi_mi) VALUES (?, ?, ?, ?, 0, 1)`,
-        [activeDosyaId, kalemId, teminFirmaId, price]
-      )
-
-      let total = 0
-      items.forEach((kalem) => {
-        const kPrice = kalem.id === kalemId ? price : bids[`${kalem.id}_${teminFirmaId}`] || 0
-        total += kPrice * (kalem.miktar || 0)
+      await upsertKalemBidPrice({
+        dosyaId: activeDosyaId,
+        kalemId,
+        teminFirmaId,
+        birimFiyat: price
       })
-
-      await window.electron.ipcRenderer.invoke(
-        'db:run',
-        `UPDATE DATA_TeminFirma SET teklif_toplami = ?, teklif_verdi_mi = 1, teklif_durumu = 'Teklif Verildi' WHERE id = ?`,
-        [total, teminFirmaId]
-      )
-
-      emitAppEvent('bids:changed', { dosyaId: activeDosyaId })
 
       const resInvited = await window.electron.ipcRenderer.invoke(
         'db:query',
@@ -437,10 +434,8 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
          ORDER BY df.id ASC`,
         [activeDosyaId]
       )
-      const currentInvitedFirms: BiddingFirm[] = resInvited.success
-        ? resInvited.data || []
-        : invitedFirms
       if (resInvited.success) {
+        const currentInvitedFirms: BiddingFirm[] = resInvited.data || []
         const seenInvited = new Set<string>()
         setInvitedFirms(
           currentInvitedFirms.filter((f) => {
@@ -452,47 +447,8 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
         )
       }
 
-      const isLowestBasis =
-        hesaplamaEsasi?.toLowerCase().includes('en düşük') ||
-        hesaplamaEsasi?.toLowerCase().includes('en dusuk')
-
-      let totalDecimal = new Decimal(0)
-      items.forEach((item) => {
-        let p = 0
-        if (isLowestBasis) {
-          let minPrice = Infinity
-          currentInvitedFirms.forEach((firma) => {
-            const val = nextBids[`${item.id}_${firma.id}`]
-            if (val > 0 && val < minPrice) {
-              minPrice = val
-            }
-          })
-          p = minPrice === Infinity ? 0 : minPrice
-        } else {
-          let sumDecimal = new Decimal(0)
-          let count = 0
-          currentInvitedFirms.forEach((firma) => {
-            const val = nextBids[`${item.id}_${firma.id}`]
-            if (val > 0) {
-              sumDecimal = sumDecimal.plus(val)
-              count++
-            }
-          })
-          p = count > 0 ? sumDecimal.div(count).toDecimalPlaces(2).toNumber() : 0
-        }
-        const miktar = new Decimal(item.miktar || 0)
-        totalDecimal = totalDecimal.plus(miktar.times(p))
-      })
-      const newYaklasikMaliyet = totalDecimal.toDecimalPlaces(2).toNumber()
-
-      if (newYaklasikMaliyet > 0) {
-        await window.electron.ipcRenderer.invoke(
-          'db:run',
-          'UPDATE DATA_TeminDosyasi SET yaklasik_maliyet = ? WHERE id = ?',
-          [newYaklasikMaliyet, activeDosyaId]
-        )
-      }
-
+      documentPreloadService.invalidateCache(activeDosyaId)
+      emitAppEvent('bids:changed', { dosyaId: activeDosyaId })
       emitAppEvent('dossier:updated', { dosyaId: activeDosyaId })
     } catch (err) {
       console.error('Error saving bid:', err)

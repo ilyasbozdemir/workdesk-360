@@ -205,7 +205,7 @@ export function SiparisVeSozlesmeSteps({
           <div className="flex flex-col gap-0.5">
             <span className="font-bold">2. Aşama: İstekli Tebligat & Sipariş Formu Yönetimi:</span>
             <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-              Kazanan istekliye bildirilecek teslimat süresi ve sözleşme durumunu buradan
+              Kazanan istekliye bildirilecek teslimat süresini ve tahmini teslim tarihini buradan
               düzenleyebilir, hazırlanan Kabul Edilen Teklif Mektubu / Sipariş Formunu anında açıp
               yazdırabilirsiniz.
             </p>

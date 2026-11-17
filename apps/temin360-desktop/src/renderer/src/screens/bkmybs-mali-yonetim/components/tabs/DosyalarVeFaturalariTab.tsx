@@ -48,6 +48,7 @@ export interface FaturaKayit {
   tevkifatOrani?: string // 'Yok', '2/10', '3/10', '4/10', '5/10', '7/10', '9/10', 'Tam'
   tevkifatTutari?: number
   damgaVergisi?: number // Binde 9,48
+  damgaVergisiUygula?: boolean
   kararPulu?: number // Binde 5,69
   kararPuluUygula?: boolean
   netOdenecek?: number
@@ -96,7 +97,8 @@ export function calculateInvoiceFinancials(
   brutTutar: number,
   kdvOrani: number,
   tevkifatOrani: string = 'Yok',
-  kararPuluUygula: boolean = false
+  kararPuluUygula: boolean = false,
+  damgaVergisiUygula: boolean = true
 ) {
   const kdvMultiplier = (100 + kdvOrani) / 100
   const matrah = brutTutar > 0 ? Number((brutTutar / kdvMultiplier).toFixed(2)) : 0
@@ -113,12 +115,12 @@ export function calculateInvoiceFinancials(
   else if (tevkifatOrani === 'Tam') tevkifatKatsayisi = 1.0
 
   const tevkifatTutari = Number((kdvTutari * tevkifatKatsayisi).toFixed(2))
-  // Damga Vergisi (488 S.K. binde 9,48 - matrah üzerinden)
-  const damgaVergisi = Number((matrah * 0.00948).toFixed(2))
-  // Karar Pulu (binde 5,69 - matrah üzerinden)
+  // Ödeme Emri / Fatura Damga Vergisi (488 S.K. Tablo IV/1-a binde 9,48 - KDV hariç matrah üzerinden)
+  const damgaVergisi = damgaVergisiUygula ? Number((matrah * 0.00948).toFixed(2)) : 0
+  // Karar Pulu (binde 5,69 - matrah üzerinden; Doğrudan Teminde uygulanmaz)
   const kararPulu = kararPuluUygula ? Number((matrah * 0.00569).toFixed(2)) : 0
 
-  const toplamKesinti = damgaVergisi + kararPulu + tevkifatTutari
+  const toplamKesinti = Number((damgaVergisi + kararPulu + tevkifatTutari).toFixed(2))
   const netOdenecek = Number((brutTutar - toplamKesinti).toFixed(2))
 
   return {
@@ -225,6 +227,10 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
          f.hesap_no AS tanim_iban,
          tf.unvan  AS dosya_firma_unvan,
          tf.vergi_no AS dosya_firma_vkn,
+         tf.teklif_toplami AS kazanan_teklif_toplami,
+         (SELECT tf2.unvan FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0 ORDER BY tf2.teklif_toplami ASC, tf2.id ASC LIMIT 1) AS en_dusuk_firma_unvan,
+         (SELECT tf2.vergi_no FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0 ORDER BY tf2.teklif_toplami ASC, tf2.id ASC LIMIT 1) AS en_dusuk_firma_vkn,
+         (SELECT MIN(tf2.teklif_toplami) FROM DATA_TeminFirma tf2 WHERE tf2.temin_dosya_id = d.id AND COALESCE(tf2.teklif_toplami, 0) > 0) AS en_dusuk_teklif_toplami,
          b.ad      AS birim_adi
        FROM DATA_TeminDosyasi d
        LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
@@ -302,21 +308,20 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
           // Dosya sözleşmeli olsa dahi doğrudan teminde ihale karar pulu kesilmez.
           // Yalnızca kullanıcı açıkça faturada kararPuluUygula = true seçmişse uygulanır.
           const kdvDegeri = Number.isFinite(Number(f.kdvOrani)) ? Number(f.kdvOrani) : 20
-          const kpUygula = Boolean((f as any).kararPuluUygula === true)
+          const dvUygula = (f as any).damgaVergisiUygula !== false
 
           const fin = calculateInvoiceFinancials(
             f.firmaTutar,
             kdvDegeri,
             f.tevkifatOrani || 'Yok',
-            kpUygula
+            false,
+            dvUygula
           )
 
-          const kararPuluTutari = kpUygula
-            ? (f.kararPulu !== undefined && Number(f.kararPulu) > 0 ? Number(f.kararPulu) : fin.kararPulu)
-            : 0
+          const kararPuluTutari = 0
 
           const netOdenecekTutari = Number(
-            (f.firmaTutar - fin.damgaVergisi - kararPuluTutari - fin.tevkifatTutari).toFixed(2)
+            (f.firmaTutar - fin.damgaVergisi - fin.tevkifatTutari).toFixed(2)
           )
 
           faturalar.push({
@@ -326,9 +331,10 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
             kdvTutari: fin.kdvTutari,
             tevkifatTutari: fin.tevkifatTutari,
             damgaVergisi: fin.damgaVergisi,
+            damgaVergisiUygula: dvUygula,
             kararPulu: kararPuluTutari,
             netOdenecek: netOdenecekTutari,
-            kararPuluUygula: kpUygula
+            kararPuluUygula: false
           })
         }
       }
@@ -416,16 +422,27 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         })
       }
 
-      const kazananUnvan = d.tanim_unvan || d.dosya_firma_unvan || 'Yüklenici Belirlenmedi'
-      const kazananVkn = d.tanim_vkn || d.dosya_firma_vkn || '-'
+      const kazananUnvan =
+        d.tanim_unvan ||
+        d.dosya_firma_unvan ||
+        d.en_dusuk_firma_unvan ||
+        'Yüklenici Belirlenmedi'
+      const kazananVkn =
+        d.tanim_vkn || d.dosya_firma_vkn || d.en_dusuk_firma_vkn || '-'
       const kazananIban = d.tanim_iban || 'TR00 0000 0000 0000 0000 0000 00'
+      const resolvedBedel =
+        Number(d.kazanan_teklif_toplami) > 0
+          ? Number(d.kazanan_teklif_toplami)
+          : Number(d.yaklasik_maliyet) > 0
+            ? Number(d.yaklasik_maliyet)
+            : Number(d.en_dusuk_teklif_toplami || 0)
 
       return {
         id: Number(d.id),
         teminNo: d.temin_no || `DT-${d.id}`,
         konu: d.konu || 'Doğrudan Temin Dosyası',
         tur: d.tur || 'mal',
-        yaklasikMaliyet: Number(d.yaklasik_maliyet || 0),
+        yaklasikMaliyet: resolvedBedel,
         netOdenen: Number(d.net_odenen || 0),
         butceKodu: d.butce_kodu || '03.2.1.01',
         ekonomikKod: d.ekonomik_kod || '03.2.1.01',
@@ -437,9 +454,9 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         durumAsamaId: Number(d.durum_asama_id || 1),
         status: d.status,
         kesintiDamga: Number(d.kesinti_damga || 0),
-        kesintiKararPulu: Number(d.kesinti_karar_pulu || 0),
+        kesintiKararPulu: 0,
         kesintiKdvTevkifat: Number(d.kesinti_kdv_tevkifat || 0),
-        sozlesmeYapilacakMi: Boolean(d.sozlesme_yapilacak_mi),
+        sozlesmeYapilacakMi: false,
         faturalar
       }
     })
@@ -495,7 +512,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   const [formOdemeYontemi, setFormOdemeYontemi] = useState('Hazine / Muhasebat Ödeme Emri')
   const [formDurum, setFormDurum] = useState<'beklemede' | 'odendi' | 'iptal'>('beklemede')
   const [formAciklama, setFormAciklama] = useState('')
-  const [formKararPuluUygula, setFormKararPuluUygula] = useState<boolean>(false)
+  const [formDamgaVergisiUygula, setFormDamgaVergisiUygula] = useState<boolean>(true)
   const [isSaving, setIsSaving] = useState(false)
 
   const reloadData = () => {
@@ -506,7 +523,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         setLoading(false)
         // İlk 3 dosyayı varsayılan olarak açık tut
         if (data.length > 0) {
-          setExpanded(new Set(data.slice(0, 3).map((d) => d.id)))
+          setExpanded((prev) => (prev.size > 0 ? prev : new Set(data.slice(0, 3).map((d) => d.id))))
         }
       })
       .catch(() => setLoading(false))
@@ -516,11 +533,17 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     reloadData()
 
     const handleRefresh = () => reloadData()
-    window.addEventListener('app:db-changed', handleRefresh)
-    window.addEventListener('focus', handleRefresh)
+    const events = [
+      'app:db-changed',
+      'focus',
+      'bids:changed',
+      'items:changed',
+      'dossier:updated',
+      'workspace:refreshed'
+    ]
+    events.forEach((ev) => window.addEventListener(ev, handleRefresh))
     return () => {
-      window.removeEventListener('app:db-changed', handleRefresh)
-      window.removeEventListener('focus', handleRefresh)
+      events.forEach((ev) => window.removeEventListener(ev, handleRefresh))
     }
   }, [])
 
@@ -559,7 +582,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormOdemeYontemi('Hazine / Muhasebat Ödeme Emri')
     setFormDurum('beklemede')
     setFormAciklama(`${dosya.konu} alımı muayene kabul ve fatura hak ediş kaydı.`)
-    setFormKararPuluUygula(false)
+    setFormDamgaVergisiUygula(true)
     setModalOpen(true)
   }
 
@@ -579,7 +602,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormOdemeYontemi(fatura.odemeYontemi || 'Hazine / Muhasebat Ödeme Emri')
     setFormDurum(fatura.durum)
     setFormAciklama(fatura.aciklama || '')
-    setFormKararPuluUygula(Boolean(fatura.kararPuluUygula ?? (fatura.kararPulu && fatura.kararPulu > 0)))
+    setFormDamgaVergisiUygula(fatura.damgaVergisiUygula !== false)
     setModalOpen(true)
   }
 
@@ -617,7 +640,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         Number(formFaturaTutar) || 0,
         kdvVal,
         formTevkifatOrani,
-        formKararPuluUygula
+        false,
+        formDamgaVergisiUygula
       )
 
       const updatedInvoice: FaturaKayit = {
@@ -631,8 +655,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         tevkifatOrani: formTevkifatOrani,
         tevkifatTutari: fin.tevkifatTutari,
         damgaVergisi: fin.damgaVergisi,
-        kararPulu: fin.kararPulu,
-        kararPuluUygula: formKararPuluUygula,
+        damgaVergisiUygula: formDamgaVergisiUygula,
+        kararPulu: 0,
+        kararPuluUygula: false,
         netOdenecek: fin.netOdenecek,
         odemeYontemi: formOdemeYontemi,
         durum: formDurum,
@@ -743,38 +768,6 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         variant: 'danger'
       })
       setIsSaving(false)
-    }
-  }
-
-  // Sözleşme Durumunu Değiştir (Sözleşmeli / Sözleşmesiz Sipariş Usulü)
-  const handleToggleSozlesme = async (dosya: DosyaOzet) => {
-    if (!window.electron?.ipcRenderer) return
-    const yeniDurum = !dosya.sozlesmeYapilacakMi
-
-    try {
-      const updateRes = await window.electron.ipcRenderer.invoke(
-        'db:run',
-        'UPDATE DATA_TeminDosyasi SET sozlesme_yapilacak_mi = ?, updated_at = datetime("now") WHERE id = ?',
-        [yeniDurum ? 1 : 0, dosya.id]
-      )
-
-      if (!updateRes?.success) {
-        await dialogs.alert({
-          title: 'Hata',
-          message: 'Sözleşme durumu güncellenirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'),
-          variant: 'danger'
-        })
-        return
-      }
-
-      reloadData()
-    } catch (err: any) {
-      console.error('Sözleşme durumu değiştirilemedi:', err)
-      await dialogs.alert({
-        title: 'Hata',
-        message: 'Sözleşme durumu güncellenirken beklenmeyen hata: ' + (err?.message || String(err)),
-        variant: 'danger'
-      })
     }
   }
 
@@ -1041,9 +1034,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       formFaturaTutar || 0,
       Number.isFinite(Number(formKdvOrani)) ? Number(formKdvOrani) : 20,
       formTevkifatOrani,
-      formKararPuluUygula
+      false,
+      formDamgaVergisiUygula
     )
-  }, [formFaturaTutar, formKdvOrani, formTevkifatOrani, formKararPuluUygula])
+  }, [formFaturaTutar, formKdvOrani, formTevkifatOrani, formDamgaVergisiUygula])
 
   return (
     <div className="space-y-6">
@@ -1117,15 +1111,15 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Yasal Kesintiler (Damga & Karar)
+              Yasal Kesintiler (Damga & Tevkifat)
             </span>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-xl font-black text-rose-600 dark:text-rose-400">
-                {formatCurrency(stats.totalDamga + stats.totalKararPulu + stats.totalTevkifat)}
+                {formatCurrency(stats.totalDamga + stats.totalTevkifat)}
               </span>
             </div>
             <span className="text-[10px] text-slate-500 font-semibold mt-0.5 block">
-              Damga: {formatCurrency(stats.totalDamga)} | Karar: {formatCurrency(stats.totalKararPulu)}
+              Damga (‰9,48): {formatCurrency(stats.totalDamga)} | Tevkifat: {formatCurrency(stats.totalTevkifat)}
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
@@ -1351,8 +1345,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                       <th className="px-3.5 py-3 text-right">KDV Matrahı (₺)</th>
                       <th className="px-3.5 py-3 text-center">KDV (%)</th>
                       <th className="px-3.5 py-3 text-right font-black">Fatura Tutarı (Brüt)</th>
-                      <th className="px-3.5 py-3 text-right">Damga Vergisi (%0.948)</th>
-                      <th className="px-3.5 py-3 text-right">Karar Pulu (%0.569)</th>
+                      <th className="px-3.5 py-3 text-right">Damga Vergisi (‰9,48)</th>
+                      <th className="px-3.5 py-3 text-right">KDV Tevkifatı</th>
                       <th className="px-3.5 py-3 text-right font-black text-blue-600 dark:text-blue-400">
                         Net Ödenecek (₺)
                       </th>
@@ -1413,18 +1407,14 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                           <td
                             className={cn(
                               'px-3.5 py-2.5 text-right font-mono',
-                              fatura.kararPulu && fatura.kararPulu > 0
+                              fatura.tevkifatTutari && fatura.tevkifatTutari > 0
                                 ? 'text-rose-600 dark:text-rose-400 font-bold'
                                 : 'text-slate-400 dark:text-slate-500 font-normal'
                             )}
                           >
-                            {fatura.kararPulu && fatura.kararPulu > 0 ? (
-                              formatCurrency(fatura.kararPulu)
-                            ) : (
-                              <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                                0,00 ₺ <span className="text-[9.5px] text-emerald-600 dark:text-emerald-400 font-semibold">(Muaf)</span>
-                              </span>
-                            )}
+                            {fatura.tevkifatTutari && fatura.tevkifatTutari > 0
+                              ? formatCurrency(fatura.tevkifatTutari)
+                              : '0,00 ₺'}
                           </td>
                           <td className="px-3.5 py-2.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400">
                             {formatCurrency(fatura.netOdenecek || fatura.firmaTutar)}
@@ -1478,7 +1468,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                         {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.damgaVergisi || 0), 0))}
                       </td>
                       <td className="px-3.5 py-3 text-right font-mono text-slate-500">
-                        {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.kararPulu || 0), 0))}
+                        {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.tevkifatTutari || 0), 0))}
                       </td>
                       <td className="px-3.5 py-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
                         {formatCurrency(allFilteredInvoices.reduce((a, f) => a + (f.netOdenecek || f.firmaTutar), 0))}
@@ -1527,22 +1517,6 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                         </span>
                       )}
                       <AlimTuruBadge turu={dosya.tur} />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleToggleSozlesme(dosya)
-                        }}
-                        className={cn(
-                          'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border cursor-pointer transition-colors',
-                          dosya.sozlesmeYapilacakMi
-                            ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200/60 hover:bg-purple-100'
-                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700'
-                        )}
-                        title="Sözleşme durumunu değiştirmek için tıklayın (Sözleşmeli / Sözleşmesiz Sipariş Usulü)"
-                      >
-                        {dosya.sozlesmeYapilacakMi ? '📜 Sözleşmeli' : '📦 Sözleşmesiz (Sipariş Usulü)'}
-                      </button>
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -1656,8 +1630,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                               <th className="px-3.5 py-2.5 text-right">KDV Matrahı (₺)</th>
                               <th className="px-3.5 py-2.5 text-center">KDV (%)</th>
                               <th className="px-3.5 py-2.5 text-right">Fatura Tutarı (Brüt)</th>
-                              <th className="px-3.5 py-2.5 text-right">Damga Vergisi (%0.948)</th>
-                              <th className="px-3.5 py-2.5 text-right" title="4734 m. 22 Doğrudan teminde ihale karar pulu kesilmez (muaf)">Karar Pulu (%0.569)</th>
+                              <th className="px-3.5 py-2.5 text-right">Damga Vergisi (‰9,48)</th>
+                              <th className="px-3.5 py-2.5 text-right">KDV Tevkifatı</th>
                               <th className="px-3.5 py-2.5 text-right font-black text-blue-600 dark:text-blue-400">
                                 Net Ödenecek (₺)
                               </th>
@@ -1689,18 +1663,14 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                 <td
                                   className={cn(
                                     'px-3.5 py-2.5 text-right font-mono',
-                                    fatura.kararPulu && fatura.kararPulu > 0
+                                    fatura.tevkifatTutari && fatura.tevkifatTutari > 0
                                       ? 'text-rose-600 dark:text-rose-400 font-bold'
                                       : 'text-slate-400 dark:text-slate-500 font-normal'
                                   )}
                                 >
-                                  {fatura.kararPulu && fatura.kararPulu > 0 ? (
-                                    formatCurrency(fatura.kararPulu)
-                                  ) : (
-                                    <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                                      0,00 ₺ <span className="text-[9.5px] text-emerald-600 dark:text-emerald-400 font-semibold">(Muaf)</span>
-                                    </span>
-                                  )}
+                                  {fatura.tevkifatTutari && fatura.tevkifatTutari > 0
+                                    ? formatCurrency(fatura.tevkifatTutari)
+                                    : '0,00 ₺'}
                                 </td>
                                 <td className="px-3.5 py-2.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400">
                                   {formatCurrency(fatura.netOdenecek || fatura.firmaTutar)}
@@ -1927,21 +1897,26 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                 </div>
               </div>
 
-              {/* Karar Pulu Kesintisi Checkbox */}
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
-                <input
-                  type="checkbox"
-                  id="kararPuluCheck"
-                  checked={formKararPuluUygula}
-                  onChange={(e) => setFormKararPuluUygula(e.target.checked)}
-                  className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
-                />
-                <label htmlFor="kararPuluCheck" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
-                  İhale Karar Pulu Kesintisi Uygula (%0.569 - Binde 5,69)
-                  <span className="text-[11px] text-slate-400 font-normal block mt-0.5">
-                    Doğrudan temin (4734 m. 22) bir ihale usulü olmadığından ihale karar pulu mevzuat gereği <strong>kesilmez</strong>. Yalnızca özel bir ihale kararı alınmışsa işaretleyiniz.
-                  </span>
-                </label>
+              {/* Damga Vergisi Kesintisi Checkbox ve Doğrudan Temin Muafiyet Bilgisi */}
+              <div className="space-y-2">
+                <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                  <input
+                    type="checkbox"
+                    id="damgaVergisiCheck"
+                    checked={formDamgaVergisiUygula}
+                    onChange={(e) => setFormDamgaVergisiUygula(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-slate-300 dark:border-slate-700 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="damgaVergisiCheck" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+                    Ödeme Emri / Fatura Damga Vergisi Kesintisi Uygula (488 S.K. ‰ 9,48)
+                    <span className="text-[11px] text-slate-400 font-normal block mt-0.5">
+                      488 sayılı Damga Vergisi Kanunu Tablo IV/1-a uyarınca resmi dairelerce yapılan mal ve hizmet alımı ödemelerinde KDV hariç fatura matrahı üzerinden binde 9,48 damga vergisi kesilir.
+                    </span>
+                  </label>
+                </div>
+                <div className="px-3 py-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/40 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                  <strong>4734 Md. 22 Doğrudan Temin Kuralı:</strong> Sözleşme Damga Vergisi ve İhale Karar Pulu (‰ 5,69) Doğrudan Temin alımlarında uygulanmaz.
+                </div>
               </div>
 
               {/* Otomatik Yasal Kesinti Kartı */}
@@ -1962,12 +1937,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                   </span>
                 </div>
                 <div className="flex justify-between text-rose-600 dark:text-rose-400">
-                  <span>Damga Vergisi Kesintisi (488 S.K. binde 9,48):</span>
+                  <span>Ödeme Emri Damga Vergisi (488 S.K. ‰ 9,48):</span>
                   <span className="font-mono font-bold">-{formatCurrency(modalCalculations.damgaVergisi)}</span>
-                </div>
-                <div className="flex justify-between text-rose-600 dark:text-rose-400">
-                  <span>Karar Pulu Kesintisi (binde 5,69):</span>
-                  <span className="font-mono font-bold">-{formatCurrency(modalCalculations.kararPulu)}</span>
                 </div>
                 {modalCalculations.tevkifatTutari > 0 && (
                   <div className="flex justify-between text-rose-600 dark:text-rose-400">

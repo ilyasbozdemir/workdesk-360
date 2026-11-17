@@ -233,19 +233,22 @@ export function resolveFirmsAndItems(
                 .trim()
                 .toLowerCase()
 
-              // Teklif tablosundan eşleştir
-              const bid = bids.find(
-                (b: any) =>
-                  (b.temin_kalem_id === kalemId ||
-                    b.temin_kalem_id === kalem.siraNo ||
-                    b.temin_kalem_id === idx + 1 ||
-                    b.kalem_id === kalemId) &&
-                  (b.temin_firma_id === firmId ||
-                    b.temin_firma_id === firm.temin_firma_id ||
-                    b.temin_firma_id === firm.id ||
-                    b.firma_id === firm.firma_id ||
-                    b.firma_id === firm.id)
-              )
+              // Teklif tablosundan eşleştir (Mükerrer satır varsa en son kaydı esas al)
+              const matchingBids = Array.isArray(bids)
+                ? bids.filter(
+                    (b: any) =>
+                      (b.temin_kalem_id === kalemId ||
+                        b.temin_kalem_id === kalem.siraNo ||
+                        b.temin_kalem_id === idx + 1 ||
+                        b.kalem_id === kalemId) &&
+                      (b.temin_firma_id === firmId ||
+                        b.temin_firma_id === firm.temin_firma_id ||
+                        b.temin_firma_id === firm.id ||
+                        b.firma_id === firm.firma_id ||
+                        b.firma_id === firm.id)
+                  )
+                : []
+              const bid = matchingBids.length > 0 ? matchingBids[matchingBids.length - 1] : undefined
 
               let priceVal: any = bid ? (bid.birim_fiyat ?? bid.fiyat ?? bid.birimFiyat) : undefined
 

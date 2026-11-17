@@ -6,6 +6,10 @@ export interface DosyaInspectorSubData {
   teklifler: any[]
   komisyon: any[]
   sablonVeri: any[]
+  kabulTutanaklari?: any[]
+  faturalar?: any[]
+  aktiviteler?: any[]
+  kazananFirma?: any | null
 }
 
 export const turLabelMap: Record<string, string> = {

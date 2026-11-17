@@ -1,41 +1,140 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Calculator,
-  Percent,
   Receipt,
-  FileSpreadsheet,
   Info,
-  CheckCircle2,
-  HelpCircle,
-  Sparkles,
-  ArrowRight
+  ShieldCheck,
+  Lock,
+  Building2,
+  FolderOpen
 } from 'lucide-react'
 import { formatCurrency } from '@renderer/utils/formatters'
+import { useWorkspaceStore } from '@renderer/store/workspaceStore'
+import {
+  fetchCanonicalDossierPricing,
+  isDogrudanTeminDosyasi
+} from '@renderer/services/dossier/dossierPriceSyncService'
+import { useAppEventListener } from '@renderer/utils/appEvents'
 
 export const TaxDeductionsPage: React.FC = () => {
+  const { activeDosyaId } = useWorkspaceStore()
+
+  const [activeDosyaInfo, setActiveDosyaInfo] = useState<{
+    id: number
+    teminNo: string
+    konu: string
+    yuklenici: string
+    isDogrudanTemin: boolean
+    sozlesmeYapilacakMi: boolean
+  } | null>(null)
+
+  const [manualProcessType, setManualProcessType] = useState<'dogrudan_temin' | 'ihale'>(
+    'dogrudan_temin'
+  )
   const [brutTutar, setBrutTutar] = useState<number>(150000)
   const [kdvOrani, setKdvOrani] = useState<number>(20)
-  const [tevkifatOrani, setTevkifatOrani] = useState<number>(5) // 5/10
-  const [sozlesmeVarMi, setSozlesmeVarMi] = useState<boolean>(true)
-  // 4734 m. 22 doğrudan teminde karar pulu kesilmez (varsayılan false)
+  const [tevkifatOrani, setTevkifatOrani] = useState<number>(0) // 0 = Tevkifat Yok
+  // 488 S.K. Ekli (1) Sayılı Tablo IV/1-a: Hakediş / Fatura / Ödeme Emri Damga Vergisi (Binde 9,48)
+  const [odemeDamgaVergisiUygula, setOdemeDamgaVergisiUygula] = useState<boolean>(true)
+  // 488 S.K. Ekli (1) Sayılı Tablo I/A-1: Sözleşme Damga Vergisi (Yalnızca İhale/Sözleşmeli dosyalarda)
+  const [sozlesmeVarMi, setSozlesmeVarMi] = useState<boolean>(false)
+  // 488 S.K. Ekli (1) Sayılı Tablo II/2: İhale Karar Pulu (Yalnızca İhale Komisyonu Kararlarında)
   const [kararPuluHesaplansinMi, setKararPuluHesaplansinMi] = useState<boolean>(false)
 
-  // Hesaplamalar
-  const kdvTutari = (brutTutar * kdvOrani) / 100
-  const tevkifEdilenKdv = (kdvTutari * tevkifatOrani) / 10
-  const yukleniciyeOdenenKdv = kdvTutari - tevkifEdilenKdv
+  const loadActiveDossierFinancials = async () => {
+    if (!activeDosyaId || !window.electron?.ipcRenderer) {
+      setActiveDosyaInfo(null)
+      setSozlesmeVarMi(false)
+      setKararPuluHesaplansinMi(false)
+      return
+    }
 
-  // Damga Vergisi (Sözleşme Binde 9,48)
+    try {
+      const [dosyaRes, canonical] = await Promise.all([
+        window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT id, temin_no, konu, kdv, yaklasik_maliyet, net_odenen, ihale_usulu, ihale_sekli, tedarik_sekli, sozlesme_yapilacak_mi FROM DATA_TeminDosyasi WHERE id = ?',
+          [activeDosyaId]
+        ),
+        fetchCanonicalDossierPricing(activeDosyaId)
+      ])
+
+      if (dosyaRes?.success && dosyaRes.data?.length > 0) {
+        const d = dosyaRes.data[0]
+        const isDt = isDogrudanTeminDosyasi(d)
+        const hasContract = !isDt && Boolean(d.sozlesme_yapilacak_mi)
+        const matrah =
+          canonical?.kazananTeklifToplami ||
+          canonical?.toplamYaklasikMaliyet ||
+          Number(d.yaklasik_maliyet) ||
+          0
+        const kdv = canonical?.kdvOrani ?? (Number.isFinite(Number(d.kdv)) ? Number(d.kdv) : 20)
+
+        setActiveDosyaInfo({
+          id: Number(d.id),
+          teminNo: d.temin_no || `DT-${d.id}`,
+          konu: d.konu || 'Doğrudan Temin Dosyası',
+          yuklenici: canonical?.kazananFirma?.unvan || 'Belirlenmedi',
+          isDogrudanTemin: isDt,
+          sozlesmeYapilacakMi: hasContract
+        })
+
+        setBrutTutar(Number(matrah.toFixed(2)))
+        setKdvOrani(kdv)
+        setOdemeDamgaVergisiUygula(true)
+        // Doğrudan temin dosyalarında sözleşme ve ihale karar pulu uygulanmaz
+        setSozlesmeVarMi(hasContract)
+        setKararPuluHesaplansinMi(!isDt)
+      } else {
+        setActiveDosyaInfo(null)
+      }
+    } catch (err) {
+      console.warn('Aktif dosya mali bilgileri yüklenemedi:', err)
+      setActiveDosyaInfo(null)
+    }
+  }
+
+  useEffect(() => {
+    void loadActiveDossierFinancials()
+  }, [activeDosyaId])
+
+  useAppEventListener(['bids:changed', 'items:changed', 'dossier:updated'], () => {
+    void loadActiveDossierFinancials()
+  })
+
+  const isDogrudanTemin = activeDosyaInfo
+    ? activeDosyaInfo.isDogrudanTemin
+    : manualProcessType === 'dogrudan_temin'
+
+  // Hesaplamalar (KDV hariç matrah üzerinden)
+  const kdvTutari = Number(((brutTutar * kdvOrani) / 100).toFixed(2))
+  const tevkifEdilenKdv = Number(((kdvTutari * tevkifatOrani) / 10).toFixed(2))
+  const yukleniciyeOdenenKdv = Number((kdvTutari - tevkifEdilenKdv).toFixed(2))
+
+  // 1) Ödeme Emri / Fatura Damga Vergisi (488 S.K. IV/1-a - Binde 9,48)
   const damgaVergisiOrani = 0.00948
-  const damgaVergisi = sozlesmeVarMi ? brutTutar * damgaVergisiOrani : 0
+  const odemeDamgaVergisi = odemeDamgaVergisiUygula
+    ? Number((brutTutar * damgaVergisiOrani).toFixed(2))
+    : 0
 
-  // Karar Pulu (İhale / Komisyon Kararı Binde 5,69)
+  // 2) Sözleşme Damga Vergisi (488 S.K. I/A-1 - Binde 9,48) — Yalnızca sözleşmeli ihale dosyalarında
+  const effectiveSozlesmeVar = !isDogrudanTemin && sozlesmeVarMi
+  const sozlesmeDamgaVergisi = effectiveSozlesmeVar
+    ? Number((brutTutar * damgaVergisiOrani).toFixed(2))
+    : 0
+
+  // 3) İhale Karar Pulu (488 S.K. II/2 - Binde 5,69) — Doğrudan Teminde uygulanmaz
   const kararPuluOrani = 0.00569
-  const kararPulu = kararPuluHesaplansinMi ? brutTutar * kararPuluOrani : 0
+  const effectiveKararPuluVar = !isDogrudanTemin && kararPuluHesaplansinMi
+  const kararPulu = effectiveKararPuluVar
+    ? Number((brutTutar * kararPuluOrani).toFixed(2))
+    : 0
 
-  // Toplam Yasal Kesintiler
-  const toplamKesinti = damgaVergisi + kararPulu + tevkifEdilenKdv
-  const toplamAlacakliyaOdenecek = brutTutar + yukleniciyeOdenenKdv - damgaVergisi - kararPulu
+  const toplamDamgaVergisi = Number((odemeDamgaVergisi + sozlesmeDamgaVergisi).toFixed(2))
+  const toplamKesinti = Number((toplamDamgaVergisi + kararPulu + tevkifEdilenKdv).toFixed(2))
+  const toplamAlacakliyaOdenecek = Number(
+    (brutTutar + yukleniciyeOdenenKdv - toplamDamgaVergisi - kararPulu).toFixed(2)
+  )
 
   return (
     <div className="space-y-6">
@@ -47,23 +146,103 @@ export const TaxDeductionsPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              Vergi, Karar Pulu ve KDV Tevkifatı Hesaplama Motoru
+              {isDogrudanTemin
+                ? 'Doğrudan Temin Damga Vergisi ve KDV Tevkifatı Hesaplama Motoru'
+                : 'Vergi, Karar Pulu ve KDV Tevkifatı Hesaplama Motoru'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              488 Sayılı Damga Vergisi Kanunu ve KDV Genel Uygulama Tebliği uyarınca yasal tahakkuk kesintileri.
+              488 Sayılı Damga Vergisi Kanunu ve KDV Genel Uygulama Tebliği uyarınca dosya türüne duyarlı yasal tahakkuk kesintileri.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs flex-wrap">
           <span className="px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold border border-purple-200/50">
-            Sözleşme DV: ‰ 9,48
+            Ödeme Emri / Fatura DV: ‰ 9,48
           </span>
-          <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold border border-blue-200/50">
-            Karar Pulu: ‰ 5,69
-          </span>
+          {!isDogrudanTemin && (
+            <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold border border-blue-200/50">
+              İhale Karar Pulu: ‰ 5,69
+            </span>
+          )}
         </div>
       </div>
+
+      {/* Aktif Dosya Bağlamı Bilgilendirme Bandı */}
+      {activeDosyaInfo ? (
+        <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3 min-w-0">
+            <FolderOpen className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono font-bold px-2 py-0.5 rounded bg-blue-600 text-white text-[10px]">
+                  {activeDosyaInfo.teminNo}
+                </span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 truncate">
+                  {activeDosyaInfo.konu}
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                <span className="flex items-center gap-1">
+                  <Building2 className="w-3 h-3 text-slate-400" />
+                  Yüklenici: <strong>{activeDosyaInfo.yuklenici}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 font-bold text-blue-700 dark:text-blue-300 text-[11px]"
+              title="Dosya türü sistemden otomatik belirlenmiştir (Readonly)"
+            >
+              <Lock className="w-3 h-3" />
+              {activeDosyaInfo.isDogrudanTemin
+                ? 'Usul: 4734 Md. 22 Doğrudan Temin (Sözleşmesiz)'
+                : 'Usul: 4734 İhale Süreci'}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="p-3.5 rounded-2xl bg-slate-100/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <span className="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-2">
+            <Info className="w-4 h-4 text-blue-500" />
+            Serbest Hesaplama Modu (Aktif dosya seçildiğinde dosya türü sistem tarafından otomatik kilitlenir)
+          </span>
+          <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => {
+                setManualProcessType('dogrudan_temin')
+                setSozlesmeVarMi(false)
+                setKararPuluHesaplansinMi(false)
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                manualProcessType === 'dogrudan_temin'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              Doğrudan Temin (4734 Md. 22)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setManualProcessType('ihale')
+                setSozlesmeVarMi(true)
+                setKararPuluHesaplansinMi(true)
+              }}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                manualProcessType === 'ihale'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              İhale Süreci (Md. 19/20/21)
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Sol Kolon: Parametre Giriş Formu */}
@@ -75,7 +254,7 @@ export const TaxDeductionsPage: React.FC = () => {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Hakediş / Fatura Brüt Matrahı (KDV Hariç)
+              Fatura / Hakediş Tutarı (KDV Hariç Matrah)
             </label>
             <div className="relative">
               <input
@@ -119,6 +298,7 @@ export const TaxDeductionsPage: React.FC = () => {
                 <option value={0}>Tevkifat Yok (0/10)</option>
                 <option value={2}>2/10 (Temizlik, Bakım)</option>
                 <option value={3}>3/10 (Özel Güvenlik)</option>
+                <option value={4}>4/10 (Yapım İşleri)</option>
                 <option value={5}>5/10 (Danışmanlık, Denetim)</option>
                 <option value={7}>7/10 (Yemek, Organizasyon)</option>
                 <option value={9}>9/10 (Servis Taşımacılığı)</option>
@@ -127,29 +307,63 @@ export const TaxDeductionsPage: React.FC = () => {
           </div>
 
           <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <label className="flex items-center gap-2.5 cursor-pointer">
+            {/* 1. Ödeme Emri / Fatura Damga Vergisi (Hem Doğrudan Temin hem İhale için geçerli) */}
+            <label className="flex items-start gap-2.5 cursor-pointer p-2.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-800/40">
               <input
                 type="checkbox"
-                checked={sozlesmeVarMi}
-                onChange={(e) => setSozlesmeVarMi(e.target.checked)}
-                className="w-4 h-4 text-purple-600 rounded"
+                checked={odemeDamgaVergisiUygula}
+                onChange={(e) => setOdemeDamgaVergisiUygula(e.target.checked)}
+                className="w-4 h-4 text-purple-600 rounded mt-0.5"
               />
-              <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                Sözleşme Damga Vergisi Kesintisi Yap (Binde 9,48)
-              </span>
+              <div>
+                <span className="text-xs text-slate-800 dark:text-slate-200 font-bold block">
+                  Ödeme Emri / Fatura Damga Vergisi Kesintisi (Binde 9,48)
+                </span>
+                <span className="text-[10.5px] text-slate-500 dark:text-slate-400">
+                  488 S.K. Ekli (1) Sayılı Tablo IV/1-a uyarınca resmî daire ödemelerinden KDV hariç matrah üzerinden kesilir.
+                </span>
+              </div>
             </label>
 
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={kararPuluHesaplansinMi}
-                onChange={(e) => setKararPuluHesaplansinMi(e.target.checked)}
-                className="w-4 h-4 text-purple-600 rounded"
-              />
-              <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                İhale Karar Pulu Kesintisi Yap (Binde 5,69)
-              </span>
-            </label>
+            {/* 2. İhale dosyalarına özgü kesintiler (Doğrudan Temin dosyasında otomatik devre dışı & readonly bilgi) */}
+            {isDogrudanTemin ? (
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Doğrudan Temin (4734 Md. 22) Yasal Muafiyet Kuralları (Sistem Korumalı)</span>
+                </div>
+                <p className="leading-relaxed">
+                  • <strong>İhale Karar Pulu (‰ 5,69):</strong> Doğrudan temin bir ihale usulü olmadığından ve ihale komisyonu kararı alınmadığından uygulanmaz.
+                  <br />• <strong>Sözleşme Damga Vergisi:</strong> Doğrudan temin sipariş usulüyle yürütüldüğünden sözleşme kesintisi otomatik uygulanmaz.
+                </p>
+              </div>
+            ) : (
+              <>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sozlesmeVarMi}
+                    onChange={(e) => setSozlesmeVarMi(e.target.checked)}
+                    className="w-4 h-4 text-purple-600 rounded"
+                  />
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                    Sözleşme Damga Vergisi Kesintisi Yap (Binde 9,48)
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={kararPuluHesaplansinMi}
+                    onChange={(e) => setKararPuluHesaplansinMi(e.target.checked)}
+                    className="w-4 h-4 text-purple-600 rounded"
+                  />
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                    İhale Komisyonu Karar Pulu Kesintisi Yap (Binde 5,69)
+                  </span>
+                </label>
+              </>
+            )}
           </div>
         </div>
 
@@ -158,7 +372,9 @@ export const TaxDeductionsPage: React.FC = () => {
           <div className="space-y-4">
             <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center justify-between">
               <span>Resmî Tahakkuk & Kesinti Cetveli</span>
-              <span className="text-xs font-normal text-slate-400">5018 ÖEB Ek Cetveli</span>
+              <span className="text-xs font-normal text-slate-400">
+                {isDogrudanTemin ? 'Doğrudan Temin 5018 ÖEB Cetveli' : '5018 İhale ÖEB Ek Cetveli'}
+              </span>
             </h3>
 
             <div className="space-y-2.5 text-xs">
@@ -172,6 +388,13 @@ export const TaxDeductionsPage: React.FC = () => {
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(kdvTutari)}</span>
               </div>
 
+              <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-slate-600 dark:text-slate-400">Fatura Genel Toplamı (KDV Dahil Brüt):</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">
+                  {formatCurrency(brutTutar + kdvTutari)}
+                </span>
+              </div>
+
               {tevkifatOrani > 0 && (
                 <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800 bg-purple-50/50 dark:bg-purple-950/20 px-2 rounded-lg text-purple-900 dark:text-purple-300">
                   <span>Tevkif Edilen KDV ({tevkifatOrani}/10 - Vergi Dairesine):</span>
@@ -179,16 +402,23 @@ export const TaxDeductionsPage: React.FC = () => {
                 </div>
               )}
 
-              {sozlesmeVarMi && (
+              {odemeDamgaVergisiUygula && (
                 <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800 px-2 text-slate-700 dark:text-slate-300">
-                  <span>Sözleşme Damga Vergisi (‰ 9,48):</span>
-                  <span className="font-semibold text-rose-600 dark:text-rose-400">-{formatCurrency(damgaVergisi)}</span>
+                  <span>Ödeme Emri / Fatura Damga Vergisi (‰ 9,48):</span>
+                  <span className="font-semibold text-rose-600 dark:text-rose-400">-{formatCurrency(odemeDamgaVergisi)}</span>
                 </div>
               )}
 
-              {kararPuluHesaplansinMi && (
+              {effectiveSozlesmeVar && (
                 <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800 px-2 text-slate-700 dark:text-slate-300">
-                  <span>İhale Karar Pulu (‰ 5,69):</span>
+                  <span>Sözleşme Damga Vergisi (‰ 9,48):</span>
+                  <span className="font-semibold text-rose-600 dark:text-rose-400">-{formatCurrency(sozlesmeDamgaVergisi)}</span>
+                </div>
+              )}
+
+              {effectiveKararPuluVar && (
+                <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800 px-2 text-slate-700 dark:text-slate-300">
+                  <span>İhale Komisyonu Karar Pulu (‰ 5,69):</span>
                   <span className="font-semibold text-rose-600 dark:text-rose-400">-{formatCurrency(kararPulu)}</span>
                 </div>
               )}
@@ -219,4 +449,3 @@ export const TaxDeductionsPage: React.FC = () => {
     </div>
   )
 }
-

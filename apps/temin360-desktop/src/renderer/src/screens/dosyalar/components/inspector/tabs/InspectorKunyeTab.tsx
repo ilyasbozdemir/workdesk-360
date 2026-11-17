@@ -26,9 +26,9 @@ export const InspectorKunyeTab: React.FC<InspectorKunyeTabProps> = ({
           </span>
         </div>
         <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800">
-          <span className="text-[10px] font-bold text-slate-400 block uppercase">İhale Usulü</span>
+          <span className="text-[10px] font-bold text-slate-400 block uppercase">Temin Usulü</span>
           <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-            {d.ihale_sekli || '22/d* Doğrudan Temin'}
+            {d.ihale_sekli || d.temin_usulu || '4734 Md. 22/d Doğrudan Temin'}
           </span>
         </div>
         <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800">
@@ -36,7 +36,7 @@ export const InspectorKunyeTab: React.FC<InspectorKunyeTabProps> = ({
             Açılış / Talep Tarihi
           </span>
           <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-            {formatDate(d.acilis_tarihi || d.created_at)}
+            {formatDate(d.dosya_acilis_tarihi || d.acilis_tarihi || d.created_at)}
           </span>
         </div>
         <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800">
@@ -44,18 +44,18 @@ export const InspectorKunyeTab: React.FC<InspectorKunyeTabProps> = ({
             Son Teklif Tarihi
           </span>
           <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-            {formatDate(d.son_teklif_tarihi)}
+            {formatDate(d.son_teklif_verme_tarihi || d.son_teklif_tarihi)}
           </span>
         </div>
       </div>
 
       {/* 2 SÜTUNLU ANA DETAY TABLOSU */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* SOL: İhale & Süreç Parametreleri */}
+        {/* SOL: Doğrudan Temin & Süreç Parametreleri */}
         <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900">
           <div className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 font-extrabold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
             <Briefcase className="w-3.5 h-3.5 text-blue-600" />
-            İhale & Süreç Parametreleri
+            Doğrudan Temin & Süreç Parametreleri
           </div>
           <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
             <div className="flex justify-between items-center px-3.5 py-2">
@@ -67,19 +67,13 @@ export const InspectorKunyeTab: React.FC<InspectorKunyeTabProps> = ({
             <div className="flex justify-between items-center px-3.5 py-2">
               <span className="text-slate-500">KİK Dayanağı / Madde</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
-                {d.ihale_sekli || '22/d*'}
+                {d.ihale_sekli || d.temin_usulu || '4734 Md. 22/d'}
               </span>
             </div>
             <div className="flex justify-between items-center px-3.5 py-2">
-              <span className="text-slate-500">Teklif & Sözleşme Türü</span>
+              <span className="text-slate-500">Fiyatlandırma Esası</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
-                {d.teklif_sozlesme_turu || 'Birim Fiyat'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center px-3.5 py-2">
-              <span className="text-slate-500">Sözleşme Düzenleme</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {d.sozlesme_yapilacak_mi ? 'Sözleşme Yapılacak' : 'Sözleşme Yapılmayacak'}
+                Birim Fiyat (Sipariş Usulü)
               </span>
             </div>
             <div className="flex justify-between items-center px-3.5 py-2">
@@ -101,7 +95,7 @@ export const InspectorKunyeTab: React.FC<InspectorKunyeTabProps> = ({
               </span>
             </div>
             <div className="flex justify-between items-center px-3.5 py-2">
-              <span className="text-slate-500">Karar / Temin Tarihi</span>
+              <span className="text-slate-500">Onay / Temin Tarihi</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
                 {formatDate(d.temin_tarihi)}
               </span>

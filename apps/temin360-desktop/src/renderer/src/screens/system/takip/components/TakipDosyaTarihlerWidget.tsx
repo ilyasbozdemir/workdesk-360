@@ -95,10 +95,10 @@ export function TakipDosyaTarihlerWidget({
             />
           </div>
 
-          {/* Sözleşme/Karar Tarihi */}
+          {/* Onay / Temin Tarihi */}
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-              Sözleşme/Karar Tarihi
+              Onay / Temin Tarihi
             </label>
             <input
               type="date"

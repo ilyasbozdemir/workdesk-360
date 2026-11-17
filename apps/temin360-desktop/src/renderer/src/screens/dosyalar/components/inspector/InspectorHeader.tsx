@@ -42,6 +42,16 @@ export const InspectorHeader: React.FC<InspectorHeaderProps> = ({
     if (dosya?.id) {
       useWorkspaceStore.getState().setActiveDosyaId(dosya.id)
     }
+    try {
+      localStorage.setItem('temin_takip_view_mode', 'detay')
+      window.dispatchEvent(
+        new CustomEvent('takip:view-mode-changed', {
+          detail: { mode: 'detay', dosyaId: dosya?.id }
+        })
+      )
+    } catch {
+      // ignore
+    }
     addTab(APP_ROUTES.DOSYA_DETAY)
     navigate({ to: APP_ROUTES.DOSYA_DETAY })
   }

@@ -149,33 +149,21 @@ export function Step4KabulVeSiparis({
           </div>
         </div>
 
-        {/* Sağ: Sözleşme Durumu & Canlı Tebliğ Metni */}
+        {/* Sağ: Doğrudan Temin Sipariş Usulü & Canlı Tebliğ Metni */}
         <div className="flex flex-col gap-3.5 p-4.5 rounded-2xl bg-slate-50/80 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-800 shadow-2xs justify-between">
           <div className="flex flex-col gap-3">
-            {/* Sözleşme Toggle Kartı */}
-            <div
-              onClick={handleToggleSozlesme}
-              className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-2xs cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-all group select-none"
-            >
+            {/* Doğrudan Temin Sipariş Usulü Bilgi Kartı */}
+            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-2xs select-none">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Sözleşme Düzenlenecek mi?
+                  Alım & Tebliğ Usulü (4734 Md. 22)
                 </span>
-                <span
-                  className={cn(
-                    'text-xs font-extrabold flex items-center gap-1.5 mt-0.5',
-                    firmaStats.sozlesmeYapilacakMi
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-slate-700 dark:text-slate-300'
-                  )}
-                >
-                  {firmaStats.sozlesmeYapilacakMi
-                    ? '✓ Evet, Sözleşme İmzalanacak (Adım 3 Aktif)'
-                    : '✕ Hayır, Yalnızca Sipariş Formu'}
+                <span className="text-xs font-extrabold flex items-center gap-1.5 mt-0.5 text-emerald-700 dark:text-emerald-400">
+                  📦 Sipariş Formu & Kabul Edilen Teklif Mektubu
                 </span>
               </div>
-              <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-950/60 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                Değiştir ↺
+              <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                Doğrudan Temin
               </span>
             </div>
 

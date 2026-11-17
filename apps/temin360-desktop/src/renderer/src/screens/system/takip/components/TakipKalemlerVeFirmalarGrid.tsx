@@ -37,25 +37,43 @@ export function TakipKalemlerVeFirmalarGrid({
                 <th className="p-3">Malzeme Adı</th>
                 <th className="p-3 text-center">Miktar</th>
                 <th className="p-3 text-center">Birim</th>
+                <th className="p-3 text-right">Birim Fiyat</th>
+                <th className="p-3 text-right">Toplam (KDV Hariç)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-600 dark:text-slate-450">
-              {kalemler.map((item: any) => (
-                <tr key={item.id} className="hover:bg-slate-50/55 dark:hover:bg-slate-900/10">
-                  <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
-                    {item.kalem_adi}
-                  </td>
-                  <td className="p-3 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
-                    {item.miktar}
-                  </td>
-                  <td className="p-3 text-center text-slate-500 dark:text-slate-400">
-                    {item.olcu_birimi || item.birim || 'Adet'}
-                  </td>
-                </tr>
-              ))}
+              {kalemler.map((item: any) => {
+                const bf = Number(
+                  item.kazanan_birim_fiyat || item.yaklasik_maliyet_birim || item.birim_fiyat || 0
+                )
+                const top = Number(
+                  item.kazanan_kalem_toplam ||
+                    item.yaklasik_maliyet_toplam ||
+                    bf * (Number(item.miktar) || 1)
+                )
+                return (
+                  <tr key={item.id} className="hover:bg-slate-50/55 dark:hover:bg-slate-900/10">
+                    <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
+                      {item.kalem_adi}
+                    </td>
+                    <td className="p-3 text-center font-mono font-bold text-slate-700 dark:text-slate-300">
+                      {item.miktar}
+                    </td>
+                    <td className="p-3 text-center text-slate-500 dark:text-slate-400">
+                      {item.olcu_birimi || item.birim || 'Adet'}
+                    </td>
+                    <td className="p-3 text-right font-mono text-slate-700 dark:text-slate-300">
+                      ₺{bf.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="p-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
+                      ₺{top.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                )
+              })}
               {kalemler.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="p-6 text-center text-slate-400 italic">
+                  <td colSpan={5} className="p-6 text-center text-slate-400 italic">
                     Dosyada henüz kayıtlı malzeme bulunmuyor.{' '}
                     <Link
                       to="/dosya/hazirlik-ve-ihtiyac"
@@ -93,25 +111,39 @@ export function TakipKalemlerVeFirmalarGrid({
             <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 font-bold text-slate-655 dark:text-slate-400">
               <tr>
                 <th className="p-3">Firma Ünvanı</th>
-                <th className="p-3 text-center">Teklif Durumu</th>
+                <th className="p-3 text-right">Toplam Teklif (KDV Hariç)</th>
+                <th className="p-3 text-center">Durum</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-600 dark:text-slate-450">
-              {firmalar.map((f: any) => (
-                <tr key={f.id} className="hover:bg-slate-50/55 dark:hover:bg-slate-900/10">
-                  <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
-                    {f.unvan}
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 px-2.5 py-0.5 rounded-lg border border-emerald-100 dark:border-emerald-800 font-extrabold tracking-tight">
-                      Teklif Eklendi
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {firmalar.map((f: any) => {
+                const isWinner = Boolean(f.kazandi_mi || f.kazanan_mi)
+                const tutar = Number(f.toplam_teklif_tutari || f.teklif_toplami || 0)
+                return (
+                  <tr key={f.id} className="hover:bg-slate-50/55 dark:hover:bg-slate-900/10">
+                    <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
+                      {f.unvan}
+                    </td>
+                    <td className="p-3 text-right font-mono font-bold text-slate-800 dark:text-slate-100">
+                      ₺{tutar.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="p-3 text-center">
+                      {isWinner ? (
+                        <span className="bg-emerald-600 text-white px-2.5 py-0.5 rounded-lg font-extrabold tracking-tight text-[10px]">
+                          Kazanan Yüklenici
+                        </span>
+                      ) : (
+                        <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 px-2.5 py-0.5 rounded-lg border border-emerald-100 dark:border-emerald-800 font-extrabold tracking-tight text-[10px]">
+                          Teklif Alındı
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
               {firmalar.length === 0 && (
                 <tr>
-                  <td colSpan={2} className="p-6 text-center text-slate-400 italic">
+                  <td colSpan={3} className="p-6 text-center text-slate-400 italic">
                     Dosyada henüz kayıtlı firma teklifi bulunmuyor.{' '}
                     <Link
                       to="/dosya/piyasa-fiyat-arastirmasi"

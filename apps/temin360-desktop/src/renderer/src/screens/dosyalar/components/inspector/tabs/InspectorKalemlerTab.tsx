@@ -30,46 +30,59 @@ export const InspectorKalemlerTab: React.FC<InspectorKalemlerTabProps> = ({
               <th className="py-2 px-3 text-center">Birim</th>
               <th className="py-2 px-3 text-center">KDV</th>
               <th className="py-2 px-3 text-right">Yaklaşık Birim Fiyat</th>
-              <th className="py-2 px-3 text-right">Toplam Tutar</th>
+              <th className="py-2 px-3 text-right">Kazanan Birim Fiyat</th>
+              <th className="py-2 px-3 text-right">Toplam Tutar (KDV Hariç)</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {kalemler.map((item, idx) => (
-              <tr key={item.id || idx} className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
-                <td className="py-2 px-3 text-center text-slate-400 font-bold">
-                  {item.sira_no || idx + 1}
-                </td>
-                <td className="py-2 px-3">
-                  <span className="font-bold text-slate-800 dark:text-slate-200">
-                    {item.kalem_adi}
-                  </span>
-                  {item.aciklama && (
-                    <span className="text-[10px] text-slate-400 block">{item.aciklama}</span>
-                  )}
-                </td>
-                <td className="py-2 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
-                  {item.miktar}
-                </td>
-                <td className="py-2 px-3 text-center text-slate-500">
-                  {item.olcu_birimi || item.birim || 'Adet'}
-                </td>
-                <td className="py-2 px-3 text-center text-slate-500">%{item.kdv_orani || 20}</td>
-                <td className="py-2 px-3 text-right font-mono">
-                  {formatMoney(item.yaklasik_maliyet_birim)} ₺
-                </td>
-                <td className="py-2 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
-                  {formatMoney(item.yaklasik_maliyet_toplam)} ₺
-                </td>
-              </tr>
-            ))}
+            {kalemler.map((item, idx) => {
+              const ymBirim = Number(item.yaklasik_maliyet_birim || item.birim_fiyat || 0)
+              const kazananBirim = Number(item.kazanan_birim_fiyat || ymBirim)
+              const kalemToplam = Number(
+                item.kazanan_kalem_toplam ||
+                  item.yaklasik_maliyet_toplam ||
+                  kazananBirim * (Number(item.miktar) || 1)
+              )
+              return (
+                <tr key={item.id || idx} className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20">
+                  <td className="py-2 px-3 text-center text-slate-400 font-bold">
+                    {item.sira_no || idx + 1}
+                  </td>
+                  <td className="py-2 px-3">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {item.kalem_adi}
+                    </span>
+                    {item.aciklama && (
+                      <span className="text-[10px] text-slate-400 block">{item.aciklama}</span>
+                    )}
+                  </td>
+                  <td className="py-2 px-3 text-right font-mono font-bold text-slate-800 dark:text-slate-200">
+                    {item.miktar}
+                  </td>
+                  <td className="py-2 px-3 text-center text-slate-500">
+                    {item.olcu_birimi || item.birim || 'Adet'}
+                  </td>
+                  <td className="py-2 px-3 text-center text-slate-500">%{item.kdv_orani || 20}</td>
+                  <td className="py-2 px-3 text-right font-mono text-slate-600 dark:text-slate-400">
+                    {formatMoney(ymBirim)} ₺
+                  </td>
+                  <td className="py-2 px-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    {formatMoney(kazananBirim)} ₺
+                  </td>
+                  <td className="py-2 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
+                    {formatMoney(kalemToplam)} ₺
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
           <tfoot>
             <tr className="bg-slate-50 dark:bg-slate-950 font-bold border-t border-slate-200 dark:border-slate-800">
               <td
-                colSpan={6}
+                colSpan={7}
                 className="py-2.5 px-3 text-right text-slate-500 uppercase text-[11px]"
               >
-                Toplam Yaklaşık Maliyet:
+                Toplam Tutar (KDV Hariç):
               </td>
               <td className="py-2.5 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 text-xs font-black">
                 ₺{formatMoney(toplamYaklasikMaliyet)}

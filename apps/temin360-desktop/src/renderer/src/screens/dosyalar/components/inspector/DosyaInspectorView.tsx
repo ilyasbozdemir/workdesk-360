@@ -90,7 +90,13 @@ export const DosyaInspectorView: React.FC<DosyaInspectorViewProps> = ({
           />
         )}
 
-        {activeTab === 'firmalar' && <InspectorFirmalarTab firmalar={subData.firmalar} />}
+        {activeTab === 'firmalar' && (
+          <InspectorFirmalarTab
+            firmalar={subData.firmalar}
+            kalemler={subData.kalemler}
+            teklifler={subData.teklifler}
+          />
+        )}
 
         {activeTab === 'komisyon' && <InspectorKomisyonTab komisyon={subData.komisyon} />}
 

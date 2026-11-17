@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DosyaInspectorSubData } from './types'
+import { fetchCanonicalDossierPricing } from '../../../../services/dossier/dossierPriceSyncService'
+
+const EMPTY_SUB_DATA: DosyaInspectorSubData = {
+  kalemler: [],
+  firmalar: [],
+  teklifler: [],
+  komisyon: [],
+  sablonVeri: [],
+  kabulTutanaklari: [],
+  faturalar: [],
+  aktiviteler: [],
+  kazananFirma: null
+}
 
 export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) {
   const actualDosya =
@@ -9,13 +22,7 @@ export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) 
     typeof dosyaOrId === 'number' ? dosyaOrId : actualDosya?.id ? Number(actualDosya.id) : undefined
 
   const [fullDosya, setFullDosya] = useState<any>(actualDosya)
-  const [subData, setSubData] = useState<DosyaInspectorSubData>({
-    kalemler: [],
-    firmalar: [],
-    teklifler: [],
-    komisyon: [],
-    sablonVeri: []
-  })
+  const [subData, setSubData] = useState<DosyaInspectorSubData>(EMPTY_SUB_DATA)
   const [loading, setLoading] = useState(false)
 
   const actualDosyaRef = useRef(actualDosya)
@@ -30,11 +37,12 @@ export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) 
 
     setLoading(true)
     try {
-      const [dRes, kRes, fRes, tRes, komRes, sRes] = await Promise.all([
+      const [canonicalPricing, dRes, komRes, sRes, belgeRes] = await Promise.all([
+        fetchCanonicalDossierPricing(numId),
         window.electron.ipcRenderer.invoke(
           'db:query',
           `SELECT d.*, 
-                  b.birim_adi, 
+                  b.ad as birim_adi, 
                   p_irt.ad_soyad as irtibat_ad,
                   p_onay.ad_soyad as onaylayan_ad,
                   p_sunan.ad_soyad as sunan_ad,
@@ -52,43 +60,106 @@ export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) 
         ),
         window.electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT * FROM DATA_TeminKalem WHERE temin_dosya_id = ? ORDER BY id ASC',
-          [numId]
-        ),
-        window.electron.ipcRenderer.invoke(
-          'db:query',
-          "SELECT tf.*, f.unvan, f.vergi_no, f.telefon, COALESCE(NULLIF(tf.ilgili_kisi, ''), f.ilgili_adi) as yetkili FROM DATA_TeminFirma tf LEFT JOIN TANIM_Firma f ON tf.firma_id = f.id WHERE tf.temin_dosya_id = ?",
-          [numId]
-        ),
-        window.electron.ipcRenderer.invoke(
-          'db:query',
-          'SELECT * FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ?',
-          [numId]
-        ),
-        window.electron.ipcRenderer.invoke(
-          'db:query',
           'SELECT tk.*, p.ad_soyad, p.unvan as personel_unvan, tk.gorev as gorev_adi FROM DATA_TeminKomisyon tk LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id WHERE tk.temin_dosya_id = ? ORDER BY tk.id ASC',
           [numId]
         ),
         window.electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT * FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND is_deleted = 0',
+          'SELECT * FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND (is_deleted = 0 OR is_deleted IS NULL)',
+          [numId]
+        ),
+        window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT id, belge_adi, belge_turu, is_signed, created_at FROM DATA_TeminBelge WHERE temin_dosya_id = ? ORDER BY id DESC',
           [numId]
         )
       ])
 
-      if (dRes?.success && dRes.data.length > 0) {
-        setFullDosya(dRes.data[0])
-      } else if (actualDosyaRef.current) {
-        setFullDosya(actualDosyaRef.current)
+      const loadedDosya =
+        dRes?.success && dRes.data?.length > 0
+          ? dRes.data[0]
+          : canonicalPricing.dosya || actualDosyaRef.current || {}
+
+      setFullDosya(loadedDosya)
+
+      // sablon_tercihleri içinden kabul tutanakları ve faturaları ayrıştır
+      let prefs: any = {}
+      if (loadedDosya?.sablon_tercihleri) {
+        try {
+          prefs =
+            typeof loadedDosya.sablon_tercihleri === 'string'
+              ? JSON.parse(loadedDosya.sablon_tercihleri)
+              : loadedDosya.sablon_tercihleri || {}
+        } catch {
+          prefs = {}
+        }
+      }
+
+      const kabulTutanaklari = Array.isArray(prefs.kabulTutanaklari) ? prefs.kabulTutanaklari : []
+      const faturalar = Array.isArray(prefs.faturalar) ? prefs.faturalar : []
+
+      // Dosya bazlı aktivite geçmişi (üretilen belgeler, tutanaklar ve fatura işlemleri)
+      const aktiviteler: any[] = []
+      if (loadedDosya?.created_at || loadedDosya?.dosya_acilis_tarihi) {
+        aktiviteler.push({
+          id: `act-open-${numId}`,
+          baslik: 'Doğrudan Temin Dosyası Oluşturuldu',
+          detay: `${loadedDosya.temin_no || `#${numId}`} — ${loadedDosya.konu || ''}`,
+          tarih: loadedDosya.dosya_acilis_tarihi || loadedDosya.created_at,
+          tip: 'dosya'
+        })
+      }
+      if (canonicalPricing.firmalar.length > 0) {
+        aktiviteler.push({
+          id: `act-bids-${numId}`,
+          baslik: 'Piyasa Fiyat Araştırması & Teklifler Kaydedildi',
+          detay: `${canonicalPricing.firmalar.length} firma, ${canonicalPricing.teklifler.length} birim fiyat teklifi${
+            canonicalPricing.kazananFirma ? ` • Kazanan: ${canonicalPricing.kazananFirma.unvan}` : ''
+          }`,
+          tarih: loadedDosya?.son_teklif_verme_tarihi || loadedDosya?.temin_tarihi || loadedDosya?.updated_at,
+          tip: 'teklif'
+        })
+      }
+      kabulTutanaklari.forEach((t: any, idx: number) => {
+        aktiviteler.push({
+          id: `act-tut-${numId}-${idx}`,
+          baslik: `Muayene ve Kabul Tutanağı (${t.tutanakNo || `#${idx + 1}`})`,
+          detay: `Fatura: ${t.faturaNo || '-'} • Tutar: ₺${Number(t.tutar || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`,
+          tarih: t.tutanakTarihi || t.created_at,
+          tip: 'kabul'
+        })
+      })
+      faturalar.forEach((f: any, idx: number) => {
+        aktiviteler.push({
+          id: `act-fat-${numId}-${idx}`,
+          baslik: `Fatura & Tahakkuk Kaydı (${f.faturaNo || `#${idx + 1}`})`,
+          detay: `Brüt: ₺${Number(f.firmaTutar || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} • Durum: ${f.durum === 'odendi' ? 'Ödendi' : 'Beklemede'}`,
+          tarih: f.faturaTarihi,
+          tip: 'fatura'
+        })
+      })
+      if (belgeRes?.success && Array.isArray(belgeRes.data)) {
+        belgeRes.data.slice(0, 8).forEach((b: any) => {
+          aktiviteler.push({
+            id: `act-belge-${b.id}`,
+            baslik: `Resmî Belge: ${b.belge_adi || b.belge_turu || 'Evrak'}`,
+            detay: b.is_signed ? 'İmzalandı / Onaylandı' : 'Taslak Üretildi',
+            tarih: b.created_at,
+            tip: 'belge'
+          })
+        })
       }
 
       setSubData({
-        kalemler: kRes?.success ? kRes.data : [],
-        firmalar: fRes?.success ? fRes.data : [],
-        teklifler: tRes?.success ? tRes.data : [],
+        kalemler: canonicalPricing.kalemler,
+        firmalar: canonicalPricing.firmalar,
+        teklifler: canonicalPricing.teklifler,
         komisyon: komRes?.success ? komRes.data : [],
-        sablonVeri: sRes?.success ? sRes.data : []
+        sablonVeri: sRes?.success ? sRes.data : [],
+        kabulTutanaklari,
+        faturalar,
+        aktiviteler,
+        kazananFirma: canonicalPricing.kazananFirma
       })
     } catch (err) {
       console.error('Dosya detayları yüklenirken hata:', err)
@@ -100,17 +171,41 @@ export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) 
 
   useEffect(() => {
     if (actualId) {
+      // Dosya değiştiğinde eski dosyanın verilerini hemen temizle
+      setSubData(EMPTY_SUB_DATA)
       loadSubData(actualId)
     } else if (actualDosyaRef.current) {
       setFullDosya(actualDosyaRef.current)
+      setSubData(EMPTY_SUB_DATA)
+    }
+  }, [actualId, loadSubData])
+
+  // Canlı fiyat, kalem, fatura ve belge güncellemelerini anında yansıt
+  useEffect(() => {
+    if (!actualId) return
+    const handleSync = () => {
+      loadSubData(actualId)
+    }
+    const events = [
+      'items:changed',
+      'bids:changed',
+      'dossier:updated',
+      'documents:changed',
+      'workspace:refreshed'
+    ]
+    events.forEach((ev) => window.addEventListener(ev, handleSync))
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, handleSync))
     }
   }, [actualId, loadSubData])
 
   const d = fullDosya || actualDosya || {}
 
   const toplamYaklasikMaliyet =
-    subData.kalemler.reduce((acc, cur) => acc + Number(cur.yaklasik_maliyet_toplam || 0), 0) ||
-    Number(d.yaklasik_maliyet || 0)
+    subData.kalemler.reduce(
+      (acc, cur) => acc + Number(cur.yaklasik_maliyet_toplam || cur.kazanan_kalem_toplam || 0),
+      0
+    ) || Number(d.yaklasik_maliyet || 0)
 
   const fullPayload = {
     dosya: d,

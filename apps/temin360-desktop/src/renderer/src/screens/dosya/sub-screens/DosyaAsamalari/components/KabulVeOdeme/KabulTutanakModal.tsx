@@ -181,7 +181,7 @@ export function KabulTutanakModal({
         const buKabul =
           existingKalem !== undefined ? Number(existingKalem.kabulMiktari ?? 0) : kalanBakiye
         const bFiyat =
-          existingKalem?.birimFiyati !== undefined
+          existingKalem?.birimFiyati !== undefined && Number(existingKalem.birimFiyati) > 0
             ? Number(existingKalem.birimFiyati)
             : Number(k.birim_fiyat || 0)
         const lineTotal = buKabul * bFiyat
@@ -213,10 +213,10 @@ export function KabulTutanakModal({
       })
 
       setKalemler(mappedKalemler)
-      if (initialTutanak?.tutar) {
+      if (computedSum > 0) {
+        setTutar(String(Number(computedSum.toFixed(2))))
+      } else if (initialTutanak?.tutar && Number(initialTutanak.tutar) > 0) {
         setTutar(String(initialTutanak.tutar))
-      } else if (computedSum > 0) {
-        setTutar(String(computedSum))
       } else if (defaultTutar) {
         setTutar(String(defaultTutar))
       }

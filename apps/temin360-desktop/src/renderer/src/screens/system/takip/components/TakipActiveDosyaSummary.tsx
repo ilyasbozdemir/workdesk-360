@@ -330,22 +330,22 @@ export function TakipActiveDosyaSummary({
                 </div>
               </div>
               <span className="text-xs font-extrabold text-slate-800 dark:text-slate-100 block group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                Sipariş & Sözleşme
+                Yüklenici & Sipariş İşlemleri
               </span>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight mt-1">
-                Temin Onay Belgesi, Sipariş Mektubu & Sözleşme
+                Temin Sonuç Onayı, Tebligat & Sipariş Mektubu
               </span>
               <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
                 <span
                   className={`text-[9.5px] font-bold px-2 py-0.5 rounded-md border ${
-                    activeDosya.firma_id
+                    activeDosya.firma_id || firmalar.some((f: any) => f.kazandi_mi || f.kazanan_mi)
                       ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/50"
                       : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
                   }`}
                 >
-                  📝 {activeDosya.firma_id
+                  📝 {activeDosya.firma_id || firmalar.some((f: any) => f.kazandi_mi || f.kazanan_mi)
                     ? "Yüklenici Belirlendi"
-                    : "Karar / Sözleşme"}
+                    : "Sonuç Onayı & Sipariş"}
                 </span>
               </div>
             </div>

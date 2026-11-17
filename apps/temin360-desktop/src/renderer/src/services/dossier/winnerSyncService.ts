@@ -326,14 +326,20 @@ export async function resolveResenWinner(
     return { winner: null, reason: 'NONE', isResen: false }
   }
 
-  // 3. Teklif toplamlarını hesapla
+  // 3. Teklif toplamlarını hesapla (Mükerrer satırları MAX(id) ile tekilleştirerek en güncel birim fiyatı esas al)
   const bidsRes = await executor.query(
     `SELECT kt.temin_firma_id, SUM(kt.birim_fiyat * COALESCE(k.miktar, 1)) as calculated_total
      FROM DATA_TeminKalemTeklif kt
      JOIN DATA_TeminKalem k ON kt.temin_kalem_id = k.id
      WHERE kt.temin_dosya_id = ?
+       AND kt.id IN (
+         SELECT MAX(id)
+         FROM DATA_TeminKalemTeklif
+         WHERE temin_dosya_id = ?
+         GROUP BY temin_kalem_id, temin_firma_id
+       )
      GROUP BY kt.temin_firma_id`,
-    [activeDosyaId]
+    [activeDosyaId, activeDosyaId]
   )
   const bidsMap = new Map<number, number>()
   if (bidsRes?.success && Array.isArray(bidsRes.data)) {
@@ -345,7 +351,7 @@ export async function resolveResenWinner(
   const enhancedFirms = firms.map((f: any) => {
     const rawTotal = Number(f.teklif_toplami) || 0
     const calcTotal = bidsMap.get(Number(f.temin_firma_id)) || 0
-    const effectiveTotal = rawTotal > 0 ? rawTotal : calcTotal
+    const effectiveTotal = calcTotal > 0 ? calcTotal : rawTotal
     return {
       ...f,
       calculated_teklif: effectiveTotal

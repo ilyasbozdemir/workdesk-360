@@ -50,7 +50,7 @@ export function SiparisVeSozlesme(): React.JSX.Element {
     <SubScreen
       title="Yüklenici & Sipariş İşlemleri"
       icon={FileCheck}
-      description="Doğrudan temin sonuç onay belgesi, sipariş formu, kabul mektubu ve sözleşme süreçlerinizi bu panelden yönetebilirsiniz."
+      description="Doğrudan temin sonuç onay belgesi, kabul edilen teklif mektubu ve sipariş formu süreçlerinizi bu panelden yönetebilirsiniz."
       previewDocumentId={previewModalOpen && previewData?.dosyaAdi ? previewData.dosyaAdi : null}
       onClosePreview={() => setPreviewModalOpen(false)}
     >
