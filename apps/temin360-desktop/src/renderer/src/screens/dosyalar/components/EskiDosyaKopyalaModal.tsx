@@ -53,6 +53,12 @@ export function EskiDosyaKopyalaModal({
     onClose,
   });
 
+  useModalOverlay({
+    id: "eski-dosya-kopyala-modal",
+    isOpen,
+    onClose,
+  });
+
   // Alt veri sayaçları
   const [counts, setCounts] = useState<{
     itemCount: number;

@@ -22,6 +22,12 @@ export function YeniFirmaModali(
     onClose,
   });
 
+  useModalOverlay({
+    id: "yeni-firma-modali",
+    isOpen: true,
+    onClose,
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!unvan.trim()) {

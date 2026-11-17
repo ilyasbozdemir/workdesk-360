@@ -17,7 +17,8 @@ export const TaxDeductionsPage: React.FC = () => {
   const [kdvOrani, setKdvOrani] = useState<number>(20)
   const [tevkifatOrani, setTevkifatOrani] = useState<number>(5) // 5/10
   const [sozlesmeVarMi, setSozlesmeVarMi] = useState<boolean>(true)
-  const [kararPuluHesaplansinMi, setKararPuluHesaplansinMi] = useState<boolean>(true)
+  // 4734 m. 22 doğrudan teminde karar pulu kesilmez (varsayılan false)
+  const [kararPuluHesaplansinMi, setKararPuluHesaplansinMi] = useState<boolean>(false)
 
   // Hesaplamalar
   const kdvTutari = (brutTutar * kdvOrani) / 100

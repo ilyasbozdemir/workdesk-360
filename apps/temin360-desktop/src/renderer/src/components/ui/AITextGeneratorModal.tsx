@@ -77,6 +77,12 @@ export function AITextGeneratorModal({
     onClose
   })
 
+  useModalOverlay({
+    id: "ai-text-generator-modal",
+    isOpen,
+    onClose,
+  });
+
   // Set default prompt when modal opens
   useEffect(() => {
     if (isOpen) {
