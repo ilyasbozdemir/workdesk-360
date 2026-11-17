@@ -383,8 +383,8 @@ export default function BkmybsMaliYonetimScreen(): React.JSX.Element {
         )}
 
         {activeTab === 'mevzuat' && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-2 shadow-xs">
-            <MevzuatScreen />
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs">
+            <MevzuatScreen defaultTab="oranlar" initialCategory="mali" isBkmybsEmbed={true} />
           </div>
         )}
       </div>

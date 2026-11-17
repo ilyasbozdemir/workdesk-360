@@ -47,7 +47,21 @@ export function getTabLabel(fullPath: string): string {
   if (path.startsWith(APP_ROUTES.PROJELER)) return 'Proje Yönetimi'
   if (path.startsWith(APP_ROUTES.FIRMALAR)) return 'Firmalar'
   if (path.startsWith(APP_ROUTES.PERSONEL)) return 'Personel Yönetimi'
-  if (path.startsWith(APP_ROUTES.MEVZUAT)) return 'Mevzuat & Limitler'
+  if (path.startsWith(APP_ROUTES.MEVZUAT)) {
+    const query = fullPath.split('?')[1] || ''
+    const p = new URLSearchParams(query)
+    const tab = p.get('tab')
+    if (tab === 'limitler') return 'KİK 22/d Limitleri'
+    if (tab === 'oranlar') return 'Vergi & Kesinti Oranları'
+    if (tab === 'fiyatfarki') return 'Fiyat Farkı Katsayıları'
+    if (tab === 'yi-ufe') return 'TÜİK Yİ-ÜFE Endeksleri'
+    if (tab === 'mali') return 'Kurumsal Mali Kodlar'
+    if (tab === 'butcekodlari') return 'ABS Bütçe Kodları'
+    if (tab === 'bentler') return 'Madde 22 Bentleri'
+    if (tab === 'asamalar') return 'İşlem Aşamaları'
+    if (tab === 'kutuphane') return 'Mevzuat Kütüphanesi'
+    return 'Mevzuat & Sistem Parametreleri'
+  }
   if (path.startsWith(APP_ROUTES.AYARLAR)) return 'Ayarlar'
   if (path.startsWith(APP_ROUTES.BIRIMLER)) return 'Birim Yönetimi'
   if (path.startsWith(APP_ROUTES.AMBAR)) return 'Ambar Tanımları'
@@ -128,7 +142,6 @@ export function getTabLabel(fullPath: string): string {
     if (tab === 'mevzuat') return 'BKMYBS — Mevzuat & Parametreler'
     return 'BKMYBS & Mali Yönetim (5018)'
   }
-  if (path.startsWith(APP_ROUTES.MEVZUAT)) return 'Mevzuat & Sistem Parametreleri'
   if (path.startsWith(APP_ROUTES.DOSYA_DETAY)) return 'Dosya Detayları'
   if (path.startsWith(APP_ROUTES.TAKIP)) return 'Takip & Durum'
   if (path.startsWith(APP_ROUTES.RAPORLAR)) return 'Raporlar'
@@ -151,7 +164,7 @@ export function getTabLabel(fullPath: string): string {
   if (path.startsWith(APP_ROUTES.HIZLI_DOSYA_EKLE)) return 'Hızlı Dosya Ekle'
   if (path.startsWith(APP_ROUTES.HARICI_DOSYA_AKTAR)) return 'Harici Dosya Entegrasyonu'
   if (path.startsWith(APP_ROUTES.CIKTI_MERKEZI_DASHBOARD)) return 'Çıktı & Üretim Merkezi'
-  if (path.startsWith(APP_ROUTES.DT_SUREC_AKISI)) return 'Doğrudan Temin'
+  if (path.startsWith(APP_ROUTES.DT_SUREC_AKISI)) return 'Süreç Akış Haritası'
   if (path.startsWith(APP_ROUTES.EBYS)) return 'EBYS & Resmî Yazışma'
   if (path.startsWith(APP_ROUTES.MODUL_MAGAZASI)) return 'Modül Mağazası'
   if (path.startsWith(APP_ROUTES.FORM_BUILDER)) return 'Dinamik Form Üretici'

@@ -7,6 +7,7 @@ import { useWorkspaceStore } from '../../../store/workspaceStore'
 import { logActivity } from '../../../utils/logger'
 import { formatDosyaNo } from '../../../utils/formatDosyaNo'
 import { dialogs } from '../../../components/ui/AlertDialogProvider'
+import { APP_ROUTES } from '../../../constants/routeConstants'
 
 export function useDosyalarScreenLogic() {
   const {
@@ -60,9 +61,10 @@ export function useDosyalarScreenLogic() {
   useEffect(() => {
     if (isWindowMode) return
     const currentHref = routerState.location.href
-    if (currentHref === '/' || currentHref.includes('dashboard')) {
+    const cleanPath = currentHref.split('?')[0].replace(/^#/, '')
+    if (cleanPath === '/' || cleanPath.includes('dashboard')) {
       updateTabLabel(currentHref, 'Anasayfa')
-    } else {
+    } else if (cleanPath.startsWith(APP_ROUTES.DOSYALAR)) {
       updateTabLabel(currentHref, 'Doğrudan Temin')
     }
   }, [routerState.location.href, updateTabLabel, isWindowMode])

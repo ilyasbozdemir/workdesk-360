@@ -27,6 +27,11 @@ describe('tabStore - Sekme Yönetimi ve Başlık Çözümleme', () => {
     expect(getTabLabel(APP_ROUTES.PLAYGROUND)).toBe('Şablon Deneme Alanı (Playground)')
     expect(getTabLabel(APP_ROUTES.DOSYALAR)).toBe('Doğrudan Temin')
     expect(getTabLabel(APP_ROUTES.AYARLAR)).toBe('Ayarlar')
+    expect(getTabLabel(APP_ROUTES.MEVZUAT)).toBe('Mevzuat & Sistem Parametreleri')
+    expect(getTabLabel(`${APP_ROUTES.MEVZUAT}?tab=limitler`)).toBe('KİK 22/d Limitleri')
+    expect(getTabLabel(`${APP_ROUTES.MEVZUAT}?tab=oranlar`)).toBe('Vergi & Kesinti Oranları')
+    expect(getTabLabel(`${APP_ROUTES.MEVZUAT}?tab=butcekodlari`)).toBe('ABS Bütçe Kodları')
+    expect(getTabLabel(`${APP_ROUTES.MEVZUAT}?tab=yi-ufe`)).toBe('TÜİK Yİ-ÜFE Endeksleri')
   })
 
   it('Bilinmeyen bir yol verildiğinde "Yeni Sekme" döner', () => {
