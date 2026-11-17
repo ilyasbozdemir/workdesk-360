@@ -224,6 +224,7 @@ export function useKabulVeOdemeData() {
   }
 
   const handleDeleteTutanak = async (id: string): Promise<void> => {
+    const deletedItem = tutanaklar.find((t) => t.id === id)
     const updated = tutanaklar.filter((t) => t.id !== id)
     setTutanaklar(updated)
 
@@ -244,10 +245,26 @@ export function useKabulVeOdemeData() {
           } catch {}
         }
         existingObj.kabulTutanaklari = updated
+
+        // İlgili faturayı da mali masadaki fatura listesinden senkronize temizle
+        if (deletedItem?.faturaNo && Array.isArray(existingObj.faturalar)) {
+          const delNorm = deletedItem.faturaNo.trim().toLowerCase()
+          existingObj.faturalar = existingObj.faturalar.filter(
+            (f: any) => !f.faturaNo || f.faturaNo.trim().toLowerCase() !== delNorm
+          )
+          setDosyaFaturalari(existingObj.faturalar)
+        }
+
         await window.electron.ipcRenderer.invoke(
           'db:run',
           'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ? WHERE id = ?',
           [JSON.stringify(existingObj), activeDosyaId]
+        )
+
+        window.dispatchEvent(
+          new CustomEvent('dossier:updated', {
+            detail: { dosyaId: activeDosyaId }
+          })
         )
       } catch (e) {
         console.error('Failed to delete kabulTutanaklari:', e)
@@ -257,6 +274,11 @@ export function useKabulVeOdemeData() {
 
   const handleBulkDeleteTutanaklar = async (ids: string[]): Promise<void> => {
     const idSet = new Set(ids)
+    const deletedFatNos = new Set(
+      tutanaklar
+        .filter((t) => idSet.has(t.id) && t.faturaNo)
+        .map((t) => t.faturaNo!.trim().toLowerCase())
+    )
     const updated = tutanaklar.filter((t) => !idSet.has(t.id))
     setTutanaklar(updated)
 
@@ -277,13 +299,27 @@ export function useKabulVeOdemeData() {
           } catch {}
         }
         existingObj.kabulTutanaklari = updated
+
+        if (deletedFatNos.size > 0 && Array.isArray(existingObj.faturalar)) {
+          existingObj.faturalar = existingObj.faturalar.filter(
+            (f: any) => !f.faturaNo || !deletedFatNos.has(f.faturaNo.trim().toLowerCase())
+          )
+          setDosyaFaturalari(existingObj.faturalar)
+        }
+
         await window.electron.ipcRenderer.invoke(
           'db:run',
           'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ? WHERE id = ?',
           [JSON.stringify(existingObj), activeDosyaId]
         )
+
+        window.dispatchEvent(
+          new CustomEvent('dossier:updated', {
+            detail: { dosyaId: activeDosyaId }
+          })
+        )
       } catch (e) {
-        console.error('Failed to delete multiple kabulTutanaklari:', e)
+        console.error('Failed to bulk delete kabulTutanaklari:', e)
       }
     }
   }
