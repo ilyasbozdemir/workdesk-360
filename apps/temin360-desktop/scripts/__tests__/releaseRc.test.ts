@@ -142,10 +142,14 @@ describe('Release Script RC & Versioning (Release Candidate Support)', () => {
     }, 20000)
 
     it('Mevcut bir git tag için release çalıştırıldığında işlem durdurulur ve hata verilir', () => {
-      // Mevcut sürüm (v1.0.0-beta.256) tag'ini patch veya rc vermeden tetiklemeyi deneyelim
-      // Eğer mevcut tag zaten git tag listesinde varsa durmalıdır
+      const currentVersion = JSON.parse(
+        fs.readFileSync(path.join(GIT_ROOT, 'apps/temin360-desktop/package.json'), 'utf-8')
+      ).version
       const existingTags = execSync('git tag --list', { cwd: GIT_ROOT, encoding: 'utf-8' })
-      if (existingTags.includes('v1.0.0-beta.256')) {
+      if (
+        existingTags.includes(`v${currentVersion}`) ||
+        existingTags.includes(`temin360-v${currentVersion}`)
+      ) {
         expect(() => {
           execSync('node apps/temin360-desktop/scripts/release.js --dry-run --skip-versions', {
             cwd: GIT_ROOT,

@@ -716,7 +716,7 @@ export function checkTagExists(tag: string, cwd?: string): boolean {
   const cleanTag = tag.trim()
   const gitCwd = cwd || path.resolve(getCurrentDir(), '../../../../..')
   try {
-    const output = execSync(`git tag -l "${cleanTag}"`, {
+    const output = execSync(`git tag -l "${cleanTag}" "temin360-${cleanTag}"`, {
       cwd: gitCwd,
       encoding: 'utf-8',
       stdio: 'pipe'
@@ -725,7 +725,7 @@ export function checkTagExists(tag: string, cwd?: string): boolean {
       .split('\n')
       .map((t) => t.trim())
       .filter(Boolean)
-    return list.includes(cleanTag)
+    return list.includes(cleanTag) || list.includes(`temin360-${cleanTag}`)
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
     throw new Error(
