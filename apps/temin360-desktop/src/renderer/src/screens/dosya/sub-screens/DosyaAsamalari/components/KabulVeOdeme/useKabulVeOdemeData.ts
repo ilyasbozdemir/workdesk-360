@@ -9,6 +9,7 @@ import {
   FaturaKayit,
   calculateInvoiceFinancials
 } from '@renderer/screens/bkmybs-mali-yonetim/components/tabs/DosyalarVeFaturalariTab'
+import { resolveResenWinner } from '../../../../../../services/dossier/winnerSyncService'
 
 interface KabulDataCacheEntry {
   kazananFirmaId: number | null
@@ -223,6 +224,7 @@ export function useKabulVeOdemeData() {
   }
 
   const handleDeleteTutanak = async (id: string): Promise<void> => {
+    const deletedItem = tutanaklar.find((t) => t.id === id)
     const updated = tutanaklar.filter((t) => t.id !== id)
     setTutanaklar(updated)
 
@@ -243,10 +245,26 @@ export function useKabulVeOdemeData() {
           } catch {}
         }
         existingObj.kabulTutanaklari = updated
+
+        // İlgili faturayı da mali masadaki fatura listesinden senkronize temizle
+        if (deletedItem?.faturaNo && Array.isArray(existingObj.faturalar)) {
+          const delNorm = deletedItem.faturaNo.trim().toLowerCase()
+          existingObj.faturalar = existingObj.faturalar.filter(
+            (f: any) => !f.faturaNo || f.faturaNo.trim().toLowerCase() !== delNorm
+          )
+          setDosyaFaturalari(existingObj.faturalar)
+        }
+
         await window.electron.ipcRenderer.invoke(
           'db:run',
           'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ? WHERE id = ?',
           [JSON.stringify(existingObj), activeDosyaId]
+        )
+
+        window.dispatchEvent(
+          new CustomEvent('dossier:updated', {
+            detail: { dosyaId: activeDosyaId }
+          })
         )
       } catch (e) {
         console.error('Failed to delete kabulTutanaklari:', e)
@@ -256,6 +274,11 @@ export function useKabulVeOdemeData() {
 
   const handleBulkDeleteTutanaklar = async (ids: string[]): Promise<void> => {
     const idSet = new Set(ids)
+    const deletedFatNos = new Set(
+      tutanaklar
+        .filter((t) => idSet.has(t.id) && t.faturaNo)
+        .map((t) => t.faturaNo!.trim().toLowerCase())
+    )
     const updated = tutanaklar.filter((t) => !idSet.has(t.id))
     setTutanaklar(updated)
 
@@ -276,13 +299,27 @@ export function useKabulVeOdemeData() {
           } catch {}
         }
         existingObj.kabulTutanaklari = updated
+
+        if (deletedFatNos.size > 0 && Array.isArray(existingObj.faturalar)) {
+          existingObj.faturalar = existingObj.faturalar.filter(
+            (f: any) => !f.faturaNo || !deletedFatNos.has(f.faturaNo.trim().toLowerCase())
+          )
+          setDosyaFaturalari(existingObj.faturalar)
+        }
+
         await window.electron.ipcRenderer.invoke(
           'db:run',
           'UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ? WHERE id = ?',
           [JSON.stringify(existingObj), activeDosyaId]
         )
+
+        window.dispatchEvent(
+          new CustomEvent('dossier:updated', {
+            detail: { dosyaId: activeDosyaId }
+          })
+        )
       } catch (e) {
-        console.error('Failed to delete multiple kabulTutanaklari:', e)
+        console.error('Failed to bulk delete kabulTutanaklari:', e)
       }
     }
   }
@@ -579,6 +616,20 @@ export function useKabulVeOdemeData() {
           let effectiveFirmaId = row.firma_id || null
           let effectiveUnvan = row.unvan || ''
           let effectiveVergiNo = row.vergi_no || null
+
+          // Eğer dosyada atanmış kazanan firma yoksa re'sen çözümle (En Düşük Teklif / Tek İstekli / Islak Belge)
+          if (!effectiveFirmaId) {
+            try {
+              const resen = await resolveResenWinner(activeDosyaId)
+              if (resen.winner) {
+                effectiveFirmaId = resen.winner.master_firma_id || resen.winner.temin_firma_id
+                effectiveUnvan = resen.winner.unvan
+                effectiveVergiNo = resen.winner.vergi_no
+              }
+            } catch (resenErr) {
+              console.warn('Re\'sen kazanan firma çözümleme hatası:', resenErr)
+            }
+          }
 
           if (row.sablon_tercihleri) {
             try {

@@ -54,14 +54,14 @@ export const TeminSelectorList4734: React.FC<TeminSelectorList4734Props> = ({
 
   return (
     <>
-      {filteredDosyalar.map((dosya) => {
+      {filteredDosyalar.map((dosya, idx) => {
         const itemIsIhale = isIhaleOrYapim(dosya)
         const isActive = activeDosyaId === dosya.id
         const mevzuat = getMevzuatBadgeInfo(dosya)
 
         return (
           <div
-            key={dosya.id}
+            key={`dt4734_${dosya.id}_${idx}`}
             onClick={() => handleSelect(dosya.id)}
             className={`group w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all border cursor-pointer ${
               isActive

@@ -1,4 +1,5 @@
 import { FirmaStats, IslemlerData } from './types'
+import { resolveResenWinner } from '../../../../../../services/dossier/winnerSyncService'
 
 export interface ResolvedSiparisData {
   kazananFirmaId: number | null
@@ -103,6 +104,9 @@ export async function fetchSiparisVeSozlesmeData(
         Number(f.temin_firma_id) === Number(dosyaRow.firma_id))
   )
 
+  let isResenWinner = false
+  let resenReason = ''
+
   if (!winner) {
     winner = enhancedFirms.find(
       (f: any) =>
@@ -113,7 +117,23 @@ export async function fetchSiparisVeSozlesmeData(
     )
   }
 
-  
+  // Kazanan firma bulunamadıysa re'sen (otomatik) çözümle
+  if (!winner) {
+    const resenResult = await resolveResenWinner(activeDosyaId)
+    if (resenResult.winner) {
+      winner = {
+        ...resenResult.winner,
+        temin_firma_id: resenResult.winner.temin_firma_id,
+        master_firma_id: resenResult.winner.master_firma_id,
+        unvan: resenResult.winner.unvan,
+        vergi_no: resenResult.winner.vergi_no,
+        calculated_teklif: resenResult.winner.calculated_teklif,
+        yasaklilik_durumu: resenResult.winner.yasaklilik_durumu
+      }
+      isResenWinner = resenResult.isResen
+      resenReason = resenResult.reason
+    }
+  }
 
   if (!winner) return null
 
@@ -155,7 +175,9 @@ export async function fetchSiparisVeSozlesmeData(
     vergiNo: effectiveVergiNo,
     teklifSozlesmeTuru: dosyaRow.teklif_sozlesme_turu || 'Mal Alımı',
     sozlesmeYapilacakMi: dosyaRow.sozlesme_yapilacak_mi ? 1 : 0,
-    istekliFirmaSayisi: enhancedFirms.length
+    istekliFirmaSayisi: enhancedFirms.length,
+    isResenWinner,
+    resenReason
   }
 
   const islemlerData: IslemlerData = {

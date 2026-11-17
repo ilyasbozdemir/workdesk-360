@@ -74,6 +74,7 @@ export function SiparisVeSozlesme(): React.JSX.Element {
             firmaStats={firmaStats}
             islemlerData={islemlerData}
             formatCurrency={formatCurrency}
+            onToggleSozlesme={handleToggleSozlesme}
             onPrintResultApproval={docOpener.handleOpenSonucOnay}
             onPrintAcceptanceLetter={docOpener.handleOpenKabulMektubu}
             onPrintOrderForm={docOpener.handleOpenSiparisFormu}

@@ -1,5 +1,6 @@
 import React from 'react'
 import { APP_ROUTES } from '../../../../constants/routeConstants'
+import packageJson from '../../../../../../../package.json'
 
 export interface SimpleSidebarProps {
   isCollapsed: boolean
@@ -110,7 +111,7 @@ export const SimpleSidebar: React.FC<SimpleSidebarProps> = ({
       </div>
 
       <div className="simple-sidebar-bottom">
-        TEMİN 360 <span style={{ float: 'right' }}>v1.0.0-rc.18</span>
+        TEMİN 360 <span style={{ float: 'right' }}>v{packageJson?.version || '1.0.0'}</span>
         <br />
         <br />© 2026 · Kurumsal Yönetim Platformu
       </div>

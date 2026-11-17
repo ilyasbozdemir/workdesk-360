@@ -27,12 +27,20 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
     return 'Doğrudan Temin (4734)'
   }, [])
 
+  const isDosyaRoute = useMemo(() => {
+    const cleanPath = normalizePath(activeTabPath).split('?')[0]
+    return cleanPath.startsWith('/dosya') || cleanPath === APP_ROUTES.YENI_DOSYA
+  }, [activeTabPath])
+
   // Aktif sekmenin başlığı
   const currentTabLabel = useMemo(() => {
     const activeTab = tabs.find((t) => t.path === activeTabPath)
     const cleanPath = normalizePath(activeTabPath).split('?')[0]
 
-    if (activeTab?.label && !activeTab.label.startsWith('/')) {
+    if (cleanPath.startsWith('/mevzuat')) return 'Mevzuat ve Sistem Parametreleri'
+    if (cleanPath === APP_ROUTES.DOSYALAR) return 'Doğrudan Temin Dosyaları'
+
+    if (activeTab?.label && !activeTab.label.startsWith('/') && activeTab.label !== 'Doğrudan Temin') {
       return activeTab.label
     }
 
@@ -99,7 +107,7 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
             >
               {modeLabel}
             </button>
-            {activeDosyaId && (
+            {isDosyaRoute && activeDosyaId && (
               <>
                 <span className="text-slate-300 dark:text-slate-700">/</span>
                 <button
@@ -112,10 +120,14 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
                 </button>
               </>
             )}
-            <span className="text-slate-300 dark:text-slate-700">/</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-xs md:max-w-md">
-              {currentTabLabel}
-            </span>
+            {normalizePath(activeTabPath).split('?')[0] !== APP_ROUTES.DOSYALAR && (
+              <>
+                <span className="text-slate-300 dark:text-slate-700">/</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 truncate max-w-xs md:max-w-md">
+                  {currentTabLabel}
+                </span>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

@@ -9,6 +9,7 @@ interface Props {
   firmaStats: FirmaStats
   islemlerData: IslemlerData
   formatCurrency: (val: number | null) => string
+  onToggleSozlesme?: () => void
   onPrintResultApproval: () => void
   onPrintAcceptanceLetter: () => void
   onPrintOrderForm: () => void
@@ -23,6 +24,7 @@ export const SiparisKazananFirmaCard: React.FC<Props> = ({
   firmaStats,
   islemlerData,
   formatCurrency,
+  onToggleSozlesme,
   onPrintResultApproval,
   onPrintAcceptanceLetter,
   onPrintOrderForm,
@@ -49,6 +51,14 @@ export const SiparisKazananFirmaCard: React.FC<Props> = ({
               <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider">
                 Kazanan / Yüklenici Firma
               </span>
+              {firmaStats.isResenWinner && (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[8.5px] font-extrabold uppercase tracking-wider flex items-center gap-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                  title="Kazanan firma teklifler veya ıslak belge snapshot kayıtlarına göre re'sen (otomatik) belirlendi."
+                >
+                  ⚡ Re'sen Belirlendi {firmaStats.resenReason === 'LOWEST_BID' ? '(En Düşük Teklif)' : firmaStats.resenReason === 'SINGLE_FIRM' ? '(Tek İstekli)' : '(Belge Korumalı)'}
+                </span>
+              )}
               {firmaStats.yasaklilikDurumu && (
                 <span
                   className={cn(
@@ -115,8 +125,25 @@ export const SiparisKazananFirmaCard: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Sağ: Tek Yetkili Belge Menüsü */}
+        {/* Sağ: Sözleşme Durumu & Yetkili Belge Menüsü */}
         <div className="flex items-center gap-2 relative shrink-0">
+          {onToggleSozlesme && (
+            <button
+              type="button"
+              onClick={onToggleSozlesme}
+              className={cn(
+                'px-3 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer select-none',
+                firmaStats.sozlesmeYapilacakMi
+                  ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                  : 'bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:border-blue-500'
+              )}
+              title="Sözleşme durumunu değiştirmek için tıklayın (Doğrudan teminde sözleşme zorunlu değildir, sipariş formu da düzenlenebilir)"
+            >
+              <span>{firmaStats.sozlesmeYapilacakMi ? '📜 Sözleşmeli Alım' : '📦 Sipariş Formu (Sözleşmesiz)'}</span>
+              <span className="text-[10px] font-semibold opacity-80 underline ml-0.5">Değiştir</span>
+            </button>
+          )}
+
           <WinnerDocumentsMenu
             sozlesmeYapilacakMi={Boolean(firmaStats.sozlesmeYapilacakMi)}
             onPrintResultApproval={onPrintResultApproval}
