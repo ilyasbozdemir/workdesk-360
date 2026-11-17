@@ -114,17 +114,26 @@ export function TakipScreen(): React.JSX.Element {
     }
   }, [viewMode, activeDosyaId, dosyalar, setActiveDosyaId]);
 
-  // Dosya Künyesi veya üst bardan Dosya Detayı'na geçildiğinde doğrudan detay modunu aç
+  // Üst bardan veya dış bağlantıdan Dosya Detayı'na geçildiğinde detay modunu ve detay sekmesini aç
   React.useEffect(() => {
     const handleViewModeChanged = (e: Event) => {
       const custom = e as CustomEvent<
-        { mode?: TakipViewMode; dosyaId?: number }
+        {
+          mode?: TakipViewMode;
+          dosyaId?: number;
+          tab?: "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat";
+        }
       >;
       if (custom.detail?.dosyaId) {
         setActiveDosyaId(custom.detail.dosyaId);
       }
       if (custom.detail?.mode) {
-        setViewModeState(custom.detail.mode);
+        setViewMode(custom.detail.mode);
+      }
+      if (custom.detail?.tab) {
+        setActiveTab(custom.detail.tab);
+      } else if (custom.detail?.mode === "detay") {
+        setActiveTab("kunye");
       }
     };
     window.addEventListener("takip:view-mode-changed", handleViewModeChanged);
@@ -230,7 +239,7 @@ export function TakipScreen(): React.JSX.Element {
     },
     {
       id: "kunye",
-      label: "Dosya Künyesi & Tüm Veriler",
+      label: "Dosya Detayı & Parametreler",
       icon: FileText,
       badge: null,
     },
@@ -269,6 +278,7 @@ export function TakipScreen(): React.JSX.Element {
           onEditClick={handleEditDosya}
           activeView={viewMode}
           setActiveView={setViewMode}
+          onGoToDetayTab={() => setActiveTab("kunye")}
           onOpenWizard={() => {
             navigate({
               to: APP_ROUTES.YENI_DOSYA,

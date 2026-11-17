@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { useTabStore } from '../../store/tabStore'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { AlertCircle, ArrowLeft, FileText, Layers } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Layers } from 'lucide-react'
 import { ProcessStepper } from './components/ProcessStepper'
 import { APP_ROUTES } from '../../constants/routeConstants'
 

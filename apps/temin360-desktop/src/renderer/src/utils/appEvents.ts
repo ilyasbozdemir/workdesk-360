@@ -87,11 +87,17 @@ if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
 // Internal dispatcher when an event is received (locally or remotely)
 function handleIncomingEvent(msg: AppEventMessage, isLocalOrigin: boolean): void {
   // 1. Dispatch custom DOM event in current window for reactive hooks
-  window.dispatchEvent(
-    new CustomEvent(CUSTOM_EVENT_NAME, {
-      detail: msg
-    })
-  )
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    try {
+      const event =
+        typeof CustomEvent === 'function'
+          ? new CustomEvent(CUSTOM_EVENT_NAME, { detail: msg })
+          : ({ type: CUSTOM_EVENT_NAME, detail: msg } as any)
+      window.dispatchEvent(event)
+    } catch {
+      // ignore in test or non-dom environments
+    }
+  }
 
   // 2. Automatically invalidate TanStack Query caches
   if (globalQueryClient) {
@@ -156,9 +162,9 @@ function handleIncomingEvent(msg: AppEventMessage, isLocalOrigin: boolean): void
   }
 
   // 3. Forward to Electron IPC if present and local origin
-  if (isLocalOrigin && window.electron?.ipcRenderer) {
+  if (isLocalOrigin && typeof window !== 'undefined' && (window as any).electron?.ipcRenderer) {
     try {
-      window.electron.ipcRenderer.send('app:data-changed', msg)
+      ;(window as any).electron.ipcRenderer.send('app:data-changed', msg)
     } catch {
       // noop
     }

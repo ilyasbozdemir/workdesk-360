@@ -33,6 +33,10 @@ import {
 import { KamuRole } from "../../types";
 import { formatCurrency, formatDate } from "@renderer/utils/formatters";
 import { useWorkspaceStore } from "@renderer/store/workspaceStore";
+import { useWorkspaceContextStore } from "@renderer/store/workspaceContextStore";
+import { useTabStore } from "@renderer/store/tabStore";
+import { APP_ROUTES } from "@renderer/constants/routeConstants";
+import { useNavigate } from "@tanstack/react-router";
 import { dialogs } from "@renderer/components/ui/AlertDialogProvider";
 import { cn } from "@renderer/utils/cn";
 
@@ -539,6 +543,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     selectedDosyaId,
   },
 ) => {
+  const navigate = useNavigate();
+  const { addTab } = useTabStore();
+  const { setActiveWorkspace } = useWorkspaceContextStore();
   const { setActiveDosyaId } = useWorkspaceStore();
   const [dosyalar, setDosyalar] = useState<DosyaOzet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1045,7 +1052,22 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   // Doğrudan Temin Dosyasına Git
   const handleOpenDosya = (dosyaId: number) => {
     setActiveDosyaId(dosyaId);
-    window.location.hash = "#/dosya";
+    try {
+      setActiveWorkspace("procurement");
+    } catch {
+      // ignore
+    }
+    try {
+      window.dispatchEvent(
+        new CustomEvent("takip:view-mode-changed", {
+          detail: { mode: "detay", dosyaId, tab: "kunye" },
+        }),
+      );
+    } catch {
+      // ignore
+    }
+    addTab(APP_ROUTES.DOSYA_DETAY);
+    navigate({ to: APP_ROUTES.DOSYA_DETAY });
   };
 
   // Filtreleme
@@ -1191,97 +1213,108 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
 
   return (
     <div className="space-y-6">
-      {/* ── Üst İstatistik Kartları (BKMYBS / 5018 Kurumsal Görünüm) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── Üst İstatistik Kartları (5018 & BKMYBS Mali Özet) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Kart 1: Dosyalar */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              5018 Kapsamında Dosyalar
-            </span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                {stats.totalDosya}
+        <div className="relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-2xs hover:shadow-xs transition-all">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 rounded-t-2xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">
+                5018 Kapsamında Dosyalar
               </span>
-              <span className="text-xs font-semibold text-slate-500">
-                Doğrudan Temin
-              </span>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                  {stats.totalDosya}
+                </span>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Doğrudan Temin
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                <CheckCircle size={12} className="shrink-0" />
+                <span>{dosyalar.filter((d) => d.faturalar.length > 0).length} dosyanın faturası bağlı</span>
+              </div>
             </div>
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 block">
-              {dosyalar.filter((d) => d.faturalar.length > 0).length}{" "}
-              dosyanın faturası bağlı
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-            <FolderOpen size={24} />
+            <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-2xs">
+              <FolderOpen size={20} />
+            </div>
           </div>
         </div>
 
         {/* Kart 2: Fatura Durumu */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Toplam Fatura Kaydı
-            </span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-black text-slate-900 dark:text-slate-100">
-                {stats.totalFaturalar}
+        <div className="relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-2xs hover:shadow-xs transition-all">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500 rounded-t-2xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">
+                Toplam Fatura Kaydı
               </span>
-              <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                {dosyalar.flatMap((d) => d.faturalar).filter((f) =>
-                  f.durum === "beklemede"
-                ).length} Bekleyen
-              </span>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                  {stats.totalFaturalar}
+                </span>
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                  <Clock size={10} />
+                  {dosyalar.flatMap((d) => d.faturalar).filter((f) => f.durum === "beklemede").length} Bekleyen
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                <span>{dosyalar.flatMap((d) => d.faturalar).filter((f) => f.durum === "odendi").length} Ödenen Fatura</span>
+              </div>
             </div>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5 block">
-              {dosyalar.flatMap((d) => d.faturalar).filter((f) =>
-                f.durum === "odendi"
-              ).length} Ödenen Fatura
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <Receipt size={24} />
+            <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-2xs">
+              <Receipt size={20} />
+            </div>
           </div>
         </div>
 
         {/* Kart 3: Harcama ve Tahakkuk Bedeli */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Toplam Harcama / Fatura Tutarı
-            </span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-xl font-black text-blue-600 dark:text-blue-400">
-                {formatCurrency(stats.totalHarcama)}
+        <div className="relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-2xs hover:shadow-xs transition-all">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500 rounded-t-2xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">
+                Toplam Harcama / Fatura Tutarı
               </span>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight font-mono">
+                  {formatCurrency(stats.totalHarcama)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                <span>Ödenen: </span>
+                <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">{formatCurrency(stats.paidHarcama)}</span>
+              </div>
             </div>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5 block">
-              Ödenen: {formatCurrency(stats.paidHarcama)}
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-            <Banknote size={24} />
+            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 shadow-2xs">
+              <Banknote size={20} />
+            </div>
           </div>
         </div>
 
         {/* Kart 4: Kamu Yasal Kesintileri */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Yasal Kesintiler (Damga & Tevkifat)
-            </span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-xl font-black text-rose-600 dark:text-rose-400">
-                {formatCurrency(stats.totalDamga + stats.totalTevkifat)}
+        <div className="relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-2xs hover:shadow-xs transition-all">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 rounded-t-2xl" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block truncate">
+                Yasal Kesintiler (Damga & Tevkifat)
               </span>
+              <div className="flex items-baseline gap-2 mt-1.5">
+                <span className="text-xl font-black text-rose-600 dark:text-rose-400 tracking-tight font-mono">
+                  {formatCurrency(stats.totalDamga + stats.totalTevkifat)}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                <span>Damga (‰9,48): <strong className="font-mono text-slate-700 dark:text-slate-300">{formatCurrency(stats.totalDamga)}</strong></span>
+                <span>•</span>
+                <span>Tevkifat: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatCurrency(stats.totalTevkifat)}</strong></span>
+              </div>
             </div>
-            <span className="text-[10px] text-slate-500 font-semibold mt-0.5 block">
-              Damga (‰9,48): {formatCurrency(stats.totalDamga)} | Tevkifat:{" "}
-              {formatCurrency(stats.totalTevkifat)}
-            </span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
-            <Percent size={24} />
+            <div className="w-11 h-11 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20 shadow-2xs">
+              <Percent size={20} />
+            </div>
           </div>
         </div>
       </div>
@@ -1862,14 +1895,16 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                       </span>
 
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleOpenDosya(dosya.id);
                         }}
-                        title="Doğrudan Temin Dosyasını Aç"
-                        className="p-2 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-500 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-blue-950/50 dark:text-slate-400 dark:hover:text-blue-300 transition-colors cursor-pointer"
+                        title="Dosya Detayına Git (Süreç Takip & Şartname)"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer shadow-2xs"
                       >
-                        <ExternalLink size={14} />
+                        <ExternalLink size={13} />
+                        <span className="hidden sm:inline">Dosya Detayı</span>
                       </button>
                     </div>
                   </div>
@@ -1878,19 +1913,23 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                   {isExp && (
                     <div className="border-t border-slate-200 dark:border-slate-800 p-4 bg-white dark:bg-slate-900 space-y-3">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Receipt
-                            size={14}
-                            className="text-blue-600 dark:text-blue-400"
-                          />
-                          <h5 className="text-xs font-extrabold text-slate-800 dark:text-slate-200">
-                            Doğrudan Temin Fatura & Hak Ediş Çizelgesi (5018 /
-                            BKMYBS)
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                            <Receipt size={13} />
+                          </div>
+                          <h5 className="text-xs font-extrabold text-slate-850 dark:text-slate-100">
+                            Doğrudan Temin Fatura & Hak Ediş Çizelgesi (5018 / BKMYBS)
                           </h5>
-                          <span className="text-[10px] text-slate-400 font-semibold">
-                            Bütçe Kodu: {dosya.butceKodu} | İBAN:{" "}
-                            {dosya.kazananFirmaIban}
-                          </span>
+                          {dosya.butceKodu && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700">
+                              Bütçe Kodu: {dosya.butceKodu}
+                            </span>
+                          )}
+                          {dosya.kazananFirmaIban && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700">
+                              IBAN: {dosya.kazananFirmaIban}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2">

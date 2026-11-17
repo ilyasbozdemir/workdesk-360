@@ -118,7 +118,7 @@ export function getTabLabel(fullPath: string): string {
   if (path.startsWith(APP_ROUTES.HAKEDIS)) return 'Hakediş & Süreç Yönetimi'
   if (path.startsWith(APP_ROUTES.NOTLAR)) return 'Notlar & Yapılacaklar (To-Do)'
   if (path.startsWith(APP_ROUTES.HARCAMA_MERKEZI)) return 'Harcama Merkezi & İhale'
-  if (path.startsWith(APP_ROUTES.DOSYA_KUNYE)) return 'Dosya Künyesi & İnceleme'
+  if (path.startsWith(APP_ROUTES.DOSYA_KUNYE)) return 'Dosya Detayı'
   if (path.startsWith(APP_ROUTES.BELGE_ONIZLEME)) {
     const query = fullPath.split('?')[1] || ''
     const sp = new URLSearchParams(query)

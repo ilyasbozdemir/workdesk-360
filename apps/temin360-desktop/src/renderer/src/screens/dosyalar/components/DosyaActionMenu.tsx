@@ -15,7 +15,6 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "../../../utils/cn";
 import { useTabStore } from "../../../store/tabStore";
-import { DosyaDataInspectorModal } from "./DosyaDataInspectorModal";
 import { APP_ROUTES } from "../../../constants/routeConstants";
 
 export interface DosyaActionMenuProps {
@@ -51,18 +50,16 @@ export function DosyaActionMenu({
 }: DosyaActionMenuProps) {
   const navigate = useNavigate();
   const { addTab } = useTabStore();
-  const [showInspector, setShowInspector] = useState(false);
   const isOpen = openMenuId === dosya.id;
 
   return (
-    <>
-      <div
-        className={cn(
-          "relative",
-          menuClassName?.includes("inline-block") ? "inline-block" : "",
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div
+      className={cn(
+        "relative",
+        menuClassName?.includes("inline-block") ? "inline-block" : "",
+      )}
+      onClick={(e) => e.stopPropagation()}
+    >
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -245,12 +242,5 @@ export function DosyaActionMenu({
           </div>
         )}
       </div>
-
-      <DosyaDataInspectorModal
-        isOpen={showInspector}
-        onClose={() => setShowInspector(false)}
-        dosya={dosya}
-      />
-    </>
   );
 }

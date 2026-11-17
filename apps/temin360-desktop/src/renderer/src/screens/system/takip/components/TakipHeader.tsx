@@ -19,6 +19,7 @@ interface TakipHeaderProps {
   activeView: TakipViewMode;
   setActiveView: (view: TakipViewMode) => void;
   onOpenWizard: () => void;
+  onGoToDetayTab?: () => void;
 }
 
 const VIEW_OPTIONS: {
@@ -59,6 +60,7 @@ export function TakipHeader({
   activeView,
   setActiveView,
   onOpenWizard,
+  onGoToDetayTab,
 }: TakipHeaderProps): React.JSX.Element {
   return (
     <header className="flex items-center justify-between flex-wrap gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
@@ -127,7 +129,10 @@ export function TakipHeader({
           : (
             <button
               type="button"
-              onClick={() => setActiveView("detay")}
+              onClick={() => {
+                setActiveView("detay");
+                onGoToDetayTab?.();
+              }}
               className={`inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-2xs transition-all cursor-pointer ${
                 activeDosya
                   ? "border-blue-200 bg-blue-50/80 text-blue-700 hover:bg-blue-100 dark:border-blue-800/60 dark:bg-blue-950/40 dark:text-blue-300"
