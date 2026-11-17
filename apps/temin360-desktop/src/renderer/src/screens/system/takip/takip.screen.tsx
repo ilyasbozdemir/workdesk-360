@@ -2,21 +2,14 @@
 import React, { useState } from "react";
 import {
   BookOpen,
-  Coins,
   Columns3,
-  Edit,
-  ExternalLink,
   FileText,
-  Layers,
   LayoutDashboard,
   Package,
-  Trash2,
   Users,
-  Workflow,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { APP_ROUTES } from "../../../constants/routeConstants";
-import { useTabStore } from "../../../store/tabStore";
 
 import { useTakip } from "./components/useTakip";
 import { TakipHeader, TakipViewMode } from "./components/TakipHeader";

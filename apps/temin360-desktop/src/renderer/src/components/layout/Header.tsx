@@ -1,19 +1,21 @@
-import React, { lazy, Suspense, useMemo } from 'react'
-import { WindowControls } from './header/WindowControls'
-import { NativeMenuBar } from './header/NativeMenuBar'
-import { HeaderActions } from './header/HeaderActions'
-import { HeaderBottomRow } from './header/HeaderBottomRow'
-import { useHeader } from './header/useHeader'
-import { getHeaderMenus } from './header/headerNavigation'
-import { useWorkspaceContextStore } from '../../store/workspaceContextStore'
+import React, { lazy, Suspense, useMemo } from "react";
+import { WindowControls } from "./header/WindowControls";
+import { NativeMenuBar } from "./header/NativeMenuBar";
+import { HeaderActions } from "./header/HeaderActions";
+import { HeaderBottomRow } from "./header/HeaderBottomRow";
+import { useHeader } from "./header/useHeader";
+import { getHeaderMenus } from "./header/headerNavigation";
+import { useWorkspaceContextStore } from "../../store/workspaceContextStore";
 
 const UpdateModal = lazy(() =>
-  import('../ui/UpdateModal').then((m) => ({ default: m.UpdateModal }))
-)
-const AboutModal = lazy(() => import('../ui/AboutModal').then((m) => ({ default: m.AboutModal })))
+  import("../ui/UpdateModal").then((m) => ({ default: m.UpdateModal }))
+);
+const AboutModal = lazy(() =>
+  import("../ui/AboutModal").then((m) => ({ default: m.AboutModal }))
+);
 
 export function Header(): React.JSX.Element {
-  const { activeWorkspace } = useWorkspaceContextStore()
+  const { activeWorkspace } = useWorkspaceContextStore();
   const {
     navigate,
     theme,
@@ -32,8 +34,8 @@ export function Header(): React.JSX.Element {
     handleModeChange,
     handleSaveAndSync,
     handleCloseWorkspace,
-    handleClose
-  } = useHeader()
+    handleClose,
+  } = useHeader();
 
   const menus = useMemo(
     () =>
@@ -44,7 +46,7 @@ export function Header(): React.JSX.Element {
         handleSaveAndSync,
         handleCloseWorkspace,
         handleClose,
-        setShowAboutModal
+        setShowAboutModal,
       }),
     [
       navigate,
@@ -53,26 +55,32 @@ export function Header(): React.JSX.Element {
       handleSaveAndSync,
       handleCloseWorkspace,
       handleClose,
-      setShowAboutModal
-    ]
-  )
+      setShowAboutModal,
+    ],
+  );
 
-  const visibleMenus = useMemo(() => menus.slice(0, maxVisibleMenus), [menus, maxVisibleMenus])
-  const overflowMenus = useMemo(() => menus.slice(maxVisibleMenus), [menus, maxVisibleMenus])
+  const visibleMenus = useMemo(() => menus.slice(0, maxVisibleMenus), [
+    menus,
+    maxVisibleMenus,
+  ]);
+  const overflowMenus = useMemo(() => menus.slice(maxVisibleMenus), [
+    menus,
+    maxVisibleMenus,
+  ]);
 
   return (
     <header
       className="flex flex-col bg-slate-50/95 dark:bg-slate-900/95 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0 z-[100] shadow-xs relative select-none"
-      style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+      style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
       {/* Üst Vurgu Çizgisi */}
       <div
         className={`h-0.5 w-full bg-linear-to-r transition-all duration-300 ${
-          activeWorkspace === 'finance'
-            ? 'from-emerald-500 via-teal-400 to-cyan-500'
+          activeWorkspace === "finance"
+            ? "from-emerald-500 via-teal-400 to-cyan-500"
             : isDt
-            ? 'from-blue-500 via-sky-400 to-indigo-500'
-            : 'from-indigo-600 via-purple-500 to-pink-500'
+            ? "from-blue-500 via-sky-400 to-indigo-500"
+            : "from-indigo-600 via-purple-500 to-pink-500"
         }`}
       />
 
@@ -88,7 +96,8 @@ export function Header(): React.JSX.Element {
           />
         </div>
 
-        {/* Orta Alan: Çalışma Dosyası ve Kaydetme Durumu
+        {
+          /* Orta Alan: Çalışma Dosyası ve Kaydetme Durumu
 
 
           <div className="flex-1 flex items-center justify-center min-w-0 px-2">
@@ -100,7 +109,8 @@ export function Header(): React.JSX.Element {
           />
         </div>
 
-        */}
+        */
+        }
 
         {/* Sağ Alan: Hızlı Araçlar ve Pencere Kontrolleri */}
         <div className="flex items-center gap-2 shrink-0">
@@ -120,7 +130,6 @@ export function Header(): React.JSX.Element {
         isDt={isDt}
         procurementMode={procurementMode}
         handleModeChange={handleModeChange}
-        activeDosyaId={activeDosyaId}
       />
 
       {/* Tembel (Lazy) Yüklenen Modallar: Sadece açıkken render edilir */}
@@ -137,10 +146,13 @@ export function Header(): React.JSX.Element {
 
       {showAboutModal && (
         <Suspense fallback={null}>
-          <AboutModal isOpen={showAboutModal} onClose={(): void => setShowAboutModal(false)} />
+          <AboutModal
+            isOpen={showAboutModal}
+            onClose={(): void => setShowAboutModal(false)}
+          />
         </Suspense>
       )}
     </header>
-  )
+  );
 }
-export default Header
+export default Header;
