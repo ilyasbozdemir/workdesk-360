@@ -9,7 +9,6 @@ interface Props {
   firmaStats: FirmaStats
   islemlerData: IslemlerData
   formatCurrency: (val: number | null) => string
-  onToggleSozlesme?: () => void
   onPrintResultApproval: () => void
   onPrintAcceptanceLetter: () => void
   onPrintOrderForm: () => void
@@ -24,7 +23,6 @@ export const SiparisKazananFirmaCard: React.FC<Props> = ({
   firmaStats,
   islemlerData,
   formatCurrency,
-  onToggleSozlesme,
   onPrintResultApproval,
   onPrintAcceptanceLetter,
   onPrintOrderForm,
@@ -125,25 +123,8 @@ export const SiparisKazananFirmaCard: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Sağ: Sözleşme Durumu & Yetkili Belge Menüsü */}
+        {/* Sağ: Tek Yetkili Belge Menüsü */}
         <div className="flex items-center gap-2 relative shrink-0">
-          {onToggleSozlesme && (
-            <button
-              type="button"
-              onClick={onToggleSozlesme}
-              className={cn(
-                'px-3 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer select-none',
-                firmaStats.sozlesmeYapilacakMi
-                  ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
-                  : 'bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:border-blue-500'
-              )}
-              title="Sözleşme durumunu değiştirmek için tıklayın (Doğrudan teminde sözleşme zorunlu değildir, sipariş formu da düzenlenebilir)"
-            >
-              <span>{firmaStats.sozlesmeYapilacakMi ? '📜 Sözleşmeli Alım' : '📦 Sipariş Formu (Sözleşmesiz)'}</span>
-              <span className="text-[10px] font-semibold opacity-80 underline ml-0.5">Değiştir</span>
-            </button>
-          )}
-
           <WinnerDocumentsMenu
             sozlesmeYapilacakMi={Boolean(firmaStats.sozlesmeYapilacakMi)}
             onPrintResultApproval={onPrintResultApproval}

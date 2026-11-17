@@ -315,11 +315,11 @@ export const BkmybsHeader: React.FC<BkmybsHeaderProps> = ({
                     Aramaya uygun dosya bulunamadı.
                   </div>
                 ) : (
-                  filteredDropdownDosyalar.map((d, idx) => {
+                  filteredDropdownDosyalar.map((d) => {
                     const isSelected = selectedDosyaId === d.id
                     return (
                       <button
-                        key={`bkmybs_header_${d.id}_${idx}`}
+                        key={d.id}
                         type="button"
                         onClick={() => {
                           onDosyaChange(d.id)
