@@ -252,7 +252,7 @@ export const CalendarSchedulePopover: React.FC = () => {
         }`}
         title="İhale & Süreç Takvimi"
       >
-        <CalendarDays size={18} />
+        <CalendarDays className="w-3.5 h-3.5" />
       </button>
 
       {/* Açılır Panel (Dropdown Menu: ~380px) */}

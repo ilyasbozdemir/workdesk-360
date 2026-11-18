@@ -113,7 +113,7 @@ export const PrintHubPopover: React.FC = () => {
         }`}
         title="Yazdırma & Dışa Aktarma Merkezi"
       >
-        <Printer size={18} />
+        <Printer className="w-3.5 h-3.5" />
         {items.length > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-xs animate-in zoom-in-75">
             {items.length}

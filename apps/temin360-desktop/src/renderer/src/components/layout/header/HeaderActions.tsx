@@ -41,27 +41,28 @@ export const HeaderActions = React.memo(function HeaderActions({
       className="flex items-center gap-1 sm:gap-1.5 shrink-0"
       style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
-      {/* Basit Ekran / Klasik Arayüz Hızlı Geçiş Butonu */}
-      <button
-        onClick={(): void => setLayoutMode('simple')}
-        aria-label="Basit Ekran"
-        className="hidden lg:flex h-6 px-2 items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-emerald-50/90 dark:bg-emerald-950/40 hover:bg-emerald-100/90 dark:hover:bg-emerald-900/50 border border-emerald-200/80 dark:border-emerald-800/60 rounded-md transition-all cursor-pointer shadow-2xs shrink-0"
-        title="Basit / Sade Yönetim Ekranına Geç (Klasik Görünüm)"
-      >
-        <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-        <span>Basit Ekran</span>
-      </button>
-
-      {/* Hızlı Servis & Araç Kümesi (Mağaza & Hesaplama Araçları) */}
+      {/* 🛠️ Birleşik Hızlı Araçlar & Modüller Kapsülü (Basit Ekran + Mağaza + Hesaplayıcı) */}
       <div className="hidden md:flex items-center bg-slate-100/90 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-2xs shrink-0">
+        <button
+          onClick={(): void => setLayoutMode('simple')}
+          aria-label="Basit Ekran"
+          className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
+          title="Basit / Sade Yönetim Ekranına Geç (Klasik Görünüm)"
+        >
+          <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span className="hidden 2xl:inline">Basit Ekran</span>
+        </button>
+
+        <div className="w-px h-3 bg-slate-200/90 dark:bg-slate-700 shrink-0 mx-0.5" />
+
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.MODUL_MAGAZASI })}
           aria-label="Modül Mağazası"
-          className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-650 dark:text-slate-200 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
+          className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
           title="Modül & Eklenti Mağazası"
         >
           <Store className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400 shrink-0" />
-          <span className="hidden xl:inline">Mağaza</span>
+          <span className="hidden 2xl:inline">Mağaza</span>
         </button>
 
         <div className="w-px h-3 bg-slate-200/90 dark:bg-slate-700 shrink-0 mx-0.5" />
@@ -69,11 +70,11 @@ export const HeaderActions = React.memo(function HeaderActions({
         <button
           onClick={(): void => navigate({ to: APP_ROUTES.HESAPLAMA_ARACLARI })}
           aria-label="Mali Hesaplayıcı"
-          className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-650 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
+          className="h-6 px-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-slate-700/90 rounded-md transition-all cursor-pointer"
           title="Mali Hesaplama & Formül Araçları (KDV, Tevkifat, Damga, Fiyat Farkı)"
         >
           <Calculator className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-          <span className="hidden xl:inline">Hesaplayıcı</span>
+          <span className="hidden 2xl:inline">Hesaplayıcı</span>
         </button>
       </div>
 
