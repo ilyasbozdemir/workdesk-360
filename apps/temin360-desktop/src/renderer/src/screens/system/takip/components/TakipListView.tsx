@@ -3,6 +3,8 @@ import { ExternalLink, Edit, CheckCircle2, Layers, Eye } from 'lucide-react'
 import { formatDate } from '../../../../utils/formatters'
 import type { TeminDosyasi } from '../../../dosyalar/dosyalar.hooks'
 import { TakipFilterToolbar } from './TakipFilterToolbar'
+import { DosyaHizliIcerikPopover } from '../../../dosyalar/components/DosyaHizliIcerikPopover'
+import { DosyaActionMenu } from '../../../dosyalar/components/DosyaActionMenu'
 
 export interface TakipListViewProps {
   dosyalar: TeminDosyasi[]
@@ -21,6 +23,16 @@ export interface TakipListViewProps {
   uniqueYillar?: number[]
   totalCount?: number
   onOpenWizard?: (stageId?: number) => void
+  openMenuId?: number | null
+  setOpenMenuId?: (id: number | null) => void
+  handleOpenInNewWindow?: (dosya: any) => void
+  handleUpdateStatus?: (id: number, status: string) => Promise<void>
+  handleEkapGonder?: (id: number) => void
+  handleKilidiAc?: (id: number) => Promise<void>
+  handleOpenAI?: (dosya: any) => void
+  handleDelete?: (id: number) => Promise<void>
+  handleHardDelete?: (id: number) => Promise<void>
+  handleOpenMaliyetAyarlari?: (dosya: any) => void
 }
 
 const STAGE_LABELS: Record<number, string> = {
@@ -46,7 +58,17 @@ export function TakipListView({
   setSelectedTur,
   uniqueYillar = [],
   totalCount,
-  onOpenWizard
+  onOpenWizard,
+  openMenuId,
+  setOpenMenuId,
+  handleOpenInNewWindow,
+  handleUpdateStatus,
+  handleEkapGonder,
+  handleKilidiAc,
+  handleOpenAI,
+  handleDelete,
+  handleHardDelete,
+  handleOpenMaliyetAyarlari
 }: TakipListViewProps): React.JSX.Element {
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -185,7 +207,7 @@ export function TakipListView({
                       </td>
 
                       {/* İşlemler */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                      <td className={`py-3 px-4 text-right whitespace-nowrap ${openMenuId === dosya.id ? 'relative z-50' : 'relative z-auto'}`}>
                         <div
                           className="inline-flex items-center gap-1"
                           onClick={(e) => e.stopPropagation()}
@@ -225,6 +247,25 @@ export function TakipListView({
                           >
                             <Edit size={13} />
                           </button>
+
+                          <DosyaHizliIcerikPopover dosya={dosya} />
+
+                          {setOpenMenuId && (
+                            <DosyaActionMenu
+                              dosya={dosya}
+                              openMenuId={openMenuId ?? null}
+                              setOpenMenuId={setOpenMenuId}
+                              selectedDosyaIds={[]}
+                              handleOpenInNewWindow={handleOpenInNewWindow}
+                              handleUpdateStatus={handleUpdateStatus}
+                              handleEkapGonder={handleEkapGonder}
+                              handleKilidiAc={handleKilidiAc}
+                              handleOpenAI={handleOpenAI}
+                              handleDelete={handleDelete}
+                              handleHardDelete={handleHardDelete}
+                              handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
+                            />
+                          )}
 
                           <button
                             type="button"

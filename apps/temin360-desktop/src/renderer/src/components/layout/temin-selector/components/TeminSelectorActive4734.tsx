@@ -6,6 +6,7 @@ import { DosyaListItem } from '../teminSelector.types'
 import { TUR_COLOR, TUR_LABEL } from '../teminSelector.constants'
 import { formatMoney, getMevzuatBadgeInfo } from '../teminSelector.utils'
 import { APP_ROUTES } from '../../../../constants/routeConstants'
+import { useWorkspaceStore } from '../../../../store/workspaceStore'
 
 interface TeminSelectorActive4734Props {
   selectedDosya: DosyaListItem
@@ -105,10 +106,11 @@ export const TeminSelectorActive4734: React.FC<TeminSelectorActive4734Props> = (
         onClick={(e): void => {
           e.stopPropagation()
           try {
+            useWorkspaceStore.getState().setActiveDosyaId(selectedDosya.id)
             localStorage.setItem('temin_takip_view_mode', 'detay')
             window.dispatchEvent(
               new CustomEvent('takip:view-mode-changed', {
-                detail: { mode: 'detay', dosyaId: selectedDosya.id }
+                detail: { mode: 'detay', dosyaId: selectedDosya.id, tab: 'kunye' }
               })
             )
           } catch {

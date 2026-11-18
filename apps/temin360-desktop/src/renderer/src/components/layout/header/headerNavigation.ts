@@ -1,7 +1,7 @@
 import { NavigateFn } from '@tanstack/react-router'
 import { HeaderMenu } from './header.types'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
-import { getDogrudanTeminMenus } from './headerNavDogrudanTemin'
+import { getDogrudanTeminMenus, getFinanceMenus } from './headerNavDogrudanTemin'
 import { getDevletIhale2886Menus } from './headerNavDevletIhale'
 import { getIhaleMenus } from './headerNavIhale'
 import { getSistemTanimlariMenu } from './headerNavSistemTanimlari'
@@ -12,6 +12,7 @@ export interface HeaderNavigationOptions {
   navigate: NavigateFn
   procurementMode: 'dogrudan_temin' | 'ihale' | 'devlet_ihale_2886'
   activeDosyaId: number | null
+  activeWorkspace?: 'procurement' | 'finance'
   handleSaveAndSync: () => Promise<void>
   handleCloseWorkspace: () => Promise<void>
   handleClose: () => void
@@ -109,11 +110,13 @@ export function getHeaderMenus(opts: HeaderNavigationOptions): HeaderMenu[] {
         { label: 'Uygulamadan Çık (Alt+F4)', onClick: handleClose }
       ]
     },
-    ...(procurementMode === 'dogrudan_temin' || IS_DT_EDITION
-      ? getDogrudanTeminMenus(navigate, activeDosyaId)
-      : procurementMode === 'devlet_ihale_2886'
-        ? getDevletIhale2886Menus(navigate)
-        : getIhaleMenus(navigate, activeDosyaId)),
+    ...(opts.activeWorkspace === 'finance'
+      ? getFinanceMenus(navigate)
+      : procurementMode === 'dogrudan_temin' || IS_DT_EDITION
+        ? getDogrudanTeminMenus(navigate, activeDosyaId)
+        : procurementMode === 'devlet_ihale_2886'
+          ? getDevletIhale2886Menus(navigate)
+          : getIhaleMenus(navigate, activeDosyaId)),
     getSistemTanimlariMenu(navigate, procurementMode),
     getYonetimVeYardimMenu(navigate, setShowAboutModal)
   ]

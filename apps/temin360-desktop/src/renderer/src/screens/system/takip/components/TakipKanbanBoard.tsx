@@ -22,6 +22,16 @@ export interface TakipKanbanBoardProps {
   setSelectedYil?: (y: string) => void
   selectedTur?: string
   setSelectedTur?: (t: string) => void
+  openMenuId?: number | null
+  setOpenMenuId?: (id: number | null) => void
+  handleOpenInNewWindow?: (dosya: any) => void
+  handleUpdateStatus?: (id: number, status: string) => Promise<void>
+  handleEkapGonder?: (id: number) => void
+  handleKilidiAc?: (id: number) => Promise<void>
+  handleOpenAI?: (dosya: any) => void
+  handleDelete?: (id: number) => Promise<void>
+  handleHardDelete?: (id: number) => Promise<void>
+  handleOpenMaliyetAyarlari?: (dosya: any) => void
 }
 
 interface StageColumnDef {
@@ -87,7 +97,17 @@ export function TakipKanbanBoard({
   selectedYil: externalSelectedYil,
   setSelectedYil: externalSetSelectedYil,
   selectedTur: externalSelectedTur,
-  setSelectedTur: externalSetSelectedTur
+  setSelectedTur: externalSetSelectedTur,
+  openMenuId,
+  setOpenMenuId,
+  handleOpenInNewWindow,
+  handleUpdateStatus,
+  handleEkapGonder,
+  handleKilidiAc,
+  handleOpenAI,
+  handleDelete,
+  handleHardDelete,
+  handleOpenMaliyetAyarlari
 }: TakipKanbanBoardProps): React.JSX.Element {
   const queryClient = useQueryClient()
 
@@ -466,6 +486,16 @@ export function TakipKanbanBoard({
                             isActive={activeDosyaId === dosya.id}
                             onOpenDetail={onOpenDetail}
                             mode={cardMode}
+                            openMenuId={openMenuId}
+                            setOpenMenuId={setOpenMenuId}
+                            handleOpenInNewWindow={handleOpenInNewWindow}
+                            handleUpdateStatus={handleUpdateStatus}
+                            handleEkapGonder={handleEkapGonder}
+                            handleKilidiAc={handleKilidiAc}
+                            handleOpenAI={handleOpenAI}
+                            handleDelete={handleDelete}
+                            handleHardDelete={handleHardDelete}
+                            handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
                           />
                         ))}
 

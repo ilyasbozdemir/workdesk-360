@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   AlertCircle,
   CheckCircle2,
@@ -52,195 +52,230 @@ export function DosyaActionMenu({
   const { addTab } = useTabStore();
   const isOpen = openMenuId === dosya.id;
 
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [openUpward, setOpenUpward] = useState(false);
+
+  // Ekranda veya kolonda yer yoksa yukarı doğru aç (Stacking & Overflow koruması)
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      // Menü yüksekliği yaklaşık 280px
+      if (spaceBelow < 290 && rect.top > 290) {
+        setOpenUpward(true);
+      } else {
+        setOpenUpward(false);
+      }
+    }
+  }, [isOpen]);
+
+  // Dışarı tıklandığında menüyü kapat
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, setOpenMenuId]);
+
   return (
     <div
       className={cn(
         "relative",
         menuClassName?.includes("inline-block") ? "inline-block" : "",
+        isOpen ? "z-50" : "z-auto"
       )}
       onClick={(e) => e.stopPropagation()}
     >
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setOpenMenuId(isOpen ? null : dosya.id);
-          }}
-          className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpenMenuId(isOpen ? null : dosya.id);
+        }}
+        className={`p-1 rounded-lg transition-colors cursor-pointer ${
+          isOpen
+            ? "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-white"
+            : "text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+        }`}
+        title="Dosya İşlem Menüsü"
+      >
+        <MoreVertical
+          size={menuClassName?.includes("inline-block") ? 16 : 14}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          ref={menuRef}
+          className={cn(
+            "absolute bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl py-1 flex flex-col text-xs font-semibold z-[9999]",
+            menuClassName ||
+              (openUpward
+                ? "right-0 bottom-full mb-1 w-52"
+                : "right-0 top-full mt-1 w-52"),
+          )}
         >
-          <MoreVertical
-            size={menuClassName?.includes("inline-block") ? 16 : 14}
-          />
-        </button>
-
-        {isOpen && (
-          <div
-            className={cn(
-              "absolute bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-xl py-1 flex flex-col text-xs font-semibold",
-              menuClassName || "right-0 top-full mt-1 w-52 z-[999]",
-            )}
+          <button
+            onClick={() => {
+              setOpenMenuId(null);
+              handleOpenInNewWindow && handleOpenInNewWindow(dosya);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2 cursor-pointer"
           >
+            <ExternalLink size={13} className="text-slate-400" />{" "}
+            Yeni Pencerede Aç
+          </button>
+
+          {dosya.is_deleted !== 1 && dosya.is_ekap_sent !== 1 && (
             <button
+              disabled={selectedDosyaIds.length > 1}
               onClick={() => {
                 setOpenMenuId(null);
-                handleOpenInNewWindow && handleOpenInNewWindow(dosya);
+                navigate({
+                  to: `${APP_ROUTES.YENI_DOSYA}?id=${dosya.id}`,
+                });
               }}
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2"
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              <ExternalLink size={13} className="text-slate-400" />{" "}
-              Yeni Pencerede Aç
+              <Edit size={13} className="text-slate-400" /> Düzenle
             </button>
+          )}
 
-            {dosya.is_deleted !== 1 && dosya.is_ekap_sent !== 1 && (
-              <button
-                disabled={selectedDosyaIds.length > 1}
-                onClick={() => {
-                  setOpenMenuId(null);
-                  navigate({
-                    to: `${APP_ROUTES.YENI_DOSYA}?id=${dosya.id}`,
-                  });
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Edit size={13} className="text-slate-400" /> Düzenle
-              </button>
-            )}
+          {/* Dosya Detayları & Süreç Takip */}
+          <button
+            onClick={() => {
+              setOpenMenuId(null);
+              try {
+                localStorage.setItem("temin_takip_view_mode", "detay");
+                window.dispatchEvent(
+                  new CustomEvent("takip:view-mode-changed", {
+                    detail: { mode: "detay", dosyaId: dosya.id, tab: "kunye" },
+                  }),
+                );
+              } catch {
+                // ignore
+              }
+              addTab(APP_ROUTES.DOSYA_DETAY);
+              navigate({ to: APP_ROUTES.DOSYA_DETAY });
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center gap-2 font-bold cursor-pointer"
+          >
+            <Eye size={13} className="text-blue-500" />{" "}
+            Dosya Detayına Git
+          </button>
 
-            {/* Dosya Detayları & Süreç Takip */}
+          {dosya.is_deleted !== 1 && handleOpenMaliyetAyarlari && (
             <button
               onClick={() => {
                 setOpenMenuId(null);
-                try {
-                  localStorage.setItem("temin_takip_view_mode", "detay");
-                  window.dispatchEvent(
-                    new CustomEvent("takip:view-mode-changed", {
-                      detail: { mode: "detay", dosyaId: dosya.id },
-                    }),
+                handleOpenMaliyetAyarlari(dosya);
+              }}
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2 cursor-pointer"
+            >
+              <Sliders size={13} className="text-slate-400" />{" "}
+              Yaklaşık Maliyet Ayarları
+            </button>
+          )}
+
+          {dosya.is_deleted !== 1 && (
+            <button
+              onClick={() => {
+                setOpenMenuId(null);
+                handleUpdateStatus &&
+                  handleUpdateStatus(
+                    dosya.id,
+                    dosya.status === "tamamlandi"
+                      ? "devam_ediyor"
+                      : "tamamlandi",
                   );
-                } catch {
-                  // ignore
-                }
-                addTab(APP_ROUTES.DOSYA_DETAY);
-                navigate({ to: APP_ROUTES.DOSYA_DETAY });
               }}
-              className="w-full text-left px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center gap-2 font-bold"
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2 cursor-pointer"
             >
-              <Eye size={13} className="text-blue-500" />{" "}
-              Dosya Detayına Git
+              {dosya.status === "tamamlandi" ? (
+                <>
+                  <Clock size={13} className="text-amber-500" /> Aktife Al
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={13} className="text-emerald-500" />{" "}
+                  Tamamlandı İşaretle
+                </>
+              )}
             </button>
+          )}
 
-            {dosya.is_deleted !== 1 && handleOpenMaliyetAyarlari && (
-              <button
-                onClick={() => {
-                  setOpenMenuId(null);
-                  handleOpenMaliyetAyarlari(dosya);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2"
-              >
-                <Sliders size={13} className="text-slate-400" />{" "}
-                Yaklaşık Maliyet Ayarları
-              </button>
-            )}
+          {dosya.is_deleted !== 1 && (
+            <button
+              onClick={() => {
+                setOpenMenuId(null);
+                dosya.is_ekap_sent === 1
+                  ? handleKilidiAc && handleKilidiAc(dosya.id)
+                  : handleEkapGonder && handleEkapGonder(dosya.id);
+              }}
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2 cursor-pointer"
+            >
+              {dosya.is_ekap_sent === 1 ? (
+                <>
+                  <Unlock size={13} className="text-amber-500" /> Kilidi Aç / EKAP İptal
+                </>
+              ) : (
+                <>
+                  <Lock size={13} className="text-indigo-500" /> Dosyayı Kilitle (EKAP)
+                </>
+              )}
+            </button>
+          )}
 
-            {dosya.is_deleted !== 1 && (
-              <button
-                onClick={() => {
-                  setOpenMenuId(null);
-                  handleUpdateStatus &&
-                    handleUpdateStatus(
-                      dosya.id,
-                      dosya.status === "tamamlandi"
-                        ? "devam_ediyor"
-                        : "tamamlandi",
-                    );
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2"
-              >
-                {dosya.status === "tamamlandi"
-                  ? (
-                    <>
-                      <Clock size={13} className="text-amber-500" /> Aktife Al
-                    </>
-                  )
-                  : (
-                    <>
-                      <CheckCircle2 size={13} className="text-emerald-500" />
-                      {" "}
-                      Tamamlandı İşaretle
-                    </>
-                  )}
-              </button>
-            )}
+          {dosya.is_deleted !== 1 && (
+            <button
+              onClick={() => {
+                setOpenMenuId(null);
+                handleOpenAI && handleOpenAI(dosya);
+              }}
+              className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-purple-600 dark:text-purple-400 flex items-center gap-2 cursor-pointer"
+            >
+              <AlertCircle size={13} className="text-purple-500" /> Yapay Zeka Asistanı
+            </button>
+          )}
 
-            {dosya.is_deleted !== 1 && (
-              <button
-                onClick={() => {
-                  setOpenMenuId(null);
-                  dosya.is_ekap_sent === 1
-                    ? handleKilidiAc && handleKilidiAc(dosya.id)
-                    : handleEkapGonder && handleEkapGonder(dosya.id);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200 flex items-center gap-2"
-              >
-                {dosya.is_ekap_sent === 1
-                  ? (
-                    <>
-                      <Unlock size={13} className="text-amber-500" />{" "}
-                      Kilidi Aç / EKAP İptal
-                    </>
-                  )
-                  : (
-                    <>
-                      <Lock size={13} className="text-indigo-500" />{" "}
-                      Dosyayı Kilitle (EKAP)
-                    </>
-                  )}
-              </button>
-            )}
+          <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
 
-            {dosya.is_deleted !== 1 && (
-              <button
-                onClick={() => {
-                  setOpenMenuId(null);
-                  handleOpenAI && handleOpenAI(dosya);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 flex items-center gap-2"
-              >
-                <AlertCircle size={13} className="text-indigo-500" />{" "}
-                Yapay Zeka Asistanı
-              </button>
-            )}
+          {/* SİLME İŞLEMLERİ */}
+          <button
+            onClick={() => {
+              setOpenMenuId(null);
+              handleDelete && handleDelete(dosya.id);
+            }}
+            className="w-full text-left px-3 py-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center gap-2 cursor-pointer"
+          >
+            <Trash2 size={13} className="text-rose-500" />{" "}
+            {dosya.is_deleted === 1 ? "Geri Yükle" : "İptal Et / Sil"}
+          </button>
 
-            {dosya.is_deleted !== 1 && dosya.is_ekap_sent !== 1 && (
-              <>
-                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2" />
-                <button
-                  onClick={() => {
-                    setOpenMenuId(null);
-                    handleDelete && handleDelete(dosya.id);
-                  }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
-                >
-                  <Trash2 size={13} /> İptal Et / Sil
-                </button>
-              </>
-            )}
-
-            {handleHardDelete && (
-              <>
-                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1 mx-2" />
-                <button
-                  onClick={() => {
-                    setOpenMenuId(null);
-                    handleHardDelete(dosya.id);
-                  }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2 cursor-pointer"
-                >
-                  <AlertCircle size={13} /> Kalıcı Olarak Sil
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+          {handleHardDelete && (
+            <button
+              onClick={() => {
+                setOpenMenuId(null);
+                handleHardDelete(dosya.id);
+              }}
+              className="w-full text-left px-3 py-1.5 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-700 dark:text-red-400 flex items-center gap-2 font-bold cursor-pointer"
+            >
+              <AlertCircle size={13} className="text-red-600" /> Kalıcı Olarak Sil
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

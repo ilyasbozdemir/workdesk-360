@@ -10,15 +10,19 @@ import {
   ExternalLink,
   Briefcase,
   Layers,
-  Sparkles
+  Sparkles,
+  ShoppingCart,
+  Coins
 } from 'lucide-react'
 import {
   KAMU_USER_ROLES,
   KamuUserRole,
+  ActiveWorkspace,
   useWorkspaceContextStore
 } from '@renderer/store/workspaceContextStore'
 import { useSettingsStore } from '@renderer/store/settingsStore'
 import { useWorkspaceStore } from '@renderer/store/workspaceStore'
+import { useTabStore } from '@renderer/store/tabStore'
 import { getInitials } from '@renderer/utils/formatters'
 import { useNavigate } from '@tanstack/react-router'
 import { APP_ROUTES } from '@renderer/constants/routeConstants'
@@ -38,9 +42,17 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
   className = '',
   children
 }) => {
-  const { userRoles, setUserRoles } = useWorkspaceContextStore()
+  const {
+    userRoles,
+    setUserRoles,
+    activeWorkspace,
+    setActiveWorkspace,
+    setActiveFinanceSection
+  } = useWorkspaceContextStore()
+
   const { adminName, adminUsername, adminTitle, institutionName } = useSettingsStore()
   const { activeFilePath } = useWorkspaceStore()
+  const { addTab, setActiveTab, activeTabPath } = useTabStore()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -81,6 +93,24 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
     }
   }
 
+  // Çalışma Masası Değiştirme (Kökten Geçiş)
+  const handleSwitchWorkspace = (target: ActiveWorkspace) => {
+    setActiveWorkspace(target)
+    if (target === 'procurement') {
+      const isFinanceTab = activeTabPath?.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)
+      const targetPath = !isFinanceTab && activeTabPath ? activeTabPath : APP_ROUTES.DOSYALAR
+      addTab(targetPath)
+      setActiveTab(targetPath)
+      navigate({ to: targetPath })
+    } else {
+      addTab(APP_ROUTES.BKMYBS_MALI_YONETIM)
+      setActiveTab(APP_ROUTES.BKMYBS_MALI_YONETIM)
+      navigate({ to: APP_ROUTES.BKMYBS_MALI_YONETIM })
+    }
+    setIsOpen(false)
+  }
+
+  // Kamu Görevi & Rol Değiştirme (Masayı ve Ekranı Kökten Yönlendirir)
   const handleSelectRole = (roleKey: KamuUserRole) => {
     if (roleKey === 'admin') {
       setUserRoles([
@@ -90,6 +120,26 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
         'muhasebe',
         'harcama_yetkilisi'
       ])
+      // Admin her iki masaya da dilediği gibi geçebilir
+    } else if (roleKey === 'satin_alma') {
+      setUserRoles(['satin_alma'])
+      handleSwitchWorkspace('procurement')
+      return
+    } else if (roleKey === 'mali_hizmetler') {
+      setUserRoles(['mali_hizmetler'])
+      setActiveFinanceSection('financial-services')
+      handleSwitchWorkspace('finance')
+      return
+    } else if (roleKey === 'muhasebe') {
+      setUserRoles(['muhasebe'])
+      setActiveFinanceSection('accounting')
+      handleSwitchWorkspace('finance')
+      return
+    } else if (roleKey === 'harcama_yetkilisi') {
+      setUserRoles(['harcama_yetkilisi'])
+      setActiveFinanceSection('financial-services')
+      handleSwitchWorkspace('finance')
+      return
     } else {
       setUserRoles([roleKey])
     }
@@ -129,6 +179,9 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
             {initials}
           </div>
           <span className="truncate max-w-[100px]">{displayName}</span>
+          <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold ${activeWorkspace === 'finance' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300' : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'}`}>
+            {activeWorkspace === 'finance' ? '5018' : '4734'}
+          </span>
           <ChevronDown
             size={11}
             className={`opacity-60 group-hover:opacity-100 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
@@ -136,13 +189,13 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
         </button>
       )}
 
-      {/* Modern Kullanıcı Profil & Görev Menüsü */}
+      {/* Modern Kullanıcı Profil, Çalışma Masası & Rol Menüsü */}
       {isOpen && (
         <div
-          className={`absolute ${getPlacementClass()} w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-2.5 z-[100] backdrop-blur-md animate-in fade-in-0 zoom-in-95 duration-150 select-none text-left`}
+          className={`absolute ${getPlacementClass()} w-84 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-3 z-[100] backdrop-blur-md animate-in fade-in-0 zoom-in-95 duration-150 select-none text-left`}
         >
           {/* 1. Kullanıcı Bilgisi Başlık Kartı */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800/80 mb-2">
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800/80 mb-2.5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0 relative">
                 <span>{initials}</span>
@@ -171,18 +224,73 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
             </div>
           </div>
 
-          {/* 2. Görev / Yetki Alanı Seçimi */}
+          {/* 2. ÇALIŞMA MASASI GEÇİŞİ (KÖKTEN EKRAN VE MEVZUAT DEĞİŞİMİ) */}
+          <div className="mb-2.5">
+            <div className="px-1.5 py-1 flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                <Layers size={11} className="text-slate-400" />
+                <span>Çalışma Masası</span>
+              </div>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                {activeWorkspace === 'procurement' ? '4734 KİK' : '5018 BKMYBS'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80">
+              {/* Satın Alma Masası Butonu */}
+              <button
+                type="button"
+                onClick={() => handleSwitchWorkspace('procurement')}
+                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-center transition-all cursor-pointer border ${
+                  activeWorkspace === 'procurement'
+                    ? 'bg-blue-600 text-white font-bold shadow-xs border-blue-500'
+                    : 'bg-white/80 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-blue-300 dark:hover:border-blue-700'
+                }`}
+                title="4734 Sayılı KİK Satın Alma ve Doğrudan Temin Masasına Geç"
+              >
+                <div className="flex items-center gap-1.5">
+                  <ShoppingCart size={13} className={activeWorkspace === 'procurement' ? 'text-white' : 'text-blue-500'} />
+                  <span className="text-xs font-bold leading-none">Doğrudan Temin</span>
+                </div>
+                <span className={`text-[9.5px] leading-tight ${activeWorkspace === 'procurement' ? 'text-blue-100' : 'text-slate-400'}`}>
+                  4734 Sayılı KİK
+                </span>
+              </button>
+
+              {/* Mali Hizmetler Masası Butonu */}
+              <button
+                type="button"
+                onClick={() => handleSwitchWorkspace('finance')}
+                className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-center transition-all cursor-pointer border ${
+                  activeWorkspace === 'finance'
+                    ? 'bg-emerald-600 text-white font-bold shadow-xs border-emerald-500'
+                    : 'bg-white/80 dark:bg-slate-900/80 border-slate-200/60 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-emerald-300 dark:hover:border-emerald-700'
+                }`}
+                title="5018 Sayılı Kanun Mali Hizmetler ve Muhasebe Masasına Geç"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Coins size={13} className={activeWorkspace === 'finance' ? 'text-white' : 'text-emerald-500'} />
+                  <span className="text-xs font-bold leading-none">Mali Hizmetler</span>
+                </div>
+                <span className={`text-[9.5px] leading-tight ${activeWorkspace === 'finance' ? 'text-emerald-100' : 'text-slate-400'}`}>
+                  5018 / Muhasebe
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* 3. Görev / Yetki Alanı Seçimi (Tıklanınca İlgili Ekrana Kökten Geçer) */}
           <div className="px-1.5 py-1 flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
               <Briefcase size={11} className="text-slate-400" />
-              <span>Çalışma Görevi &amp; Yetki</span>
+              <span>Kamu Görevi &amp; Yetki Simülasyonu</span>
             </div>
-            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-              5018 / 4734
+            <span className="text-[9px] text-slate-400">
+              Ekrana Göre Yetki
             </span>
           </div>
 
-          <div className="space-y-0.5 max-h-[220px] overflow-y-auto custom-scrollbar pr-0.5">
+          <div className="space-y-0.5 max-h-[190px] overflow-y-auto custom-scrollbar pr-0.5">
             {Object.values(KAMU_USER_ROLES).map((role) => {
               const isSelected = userRoles.includes(role.key)
               return (
@@ -195,6 +303,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
                       ? 'bg-slate-100 dark:bg-slate-800 border-slate-300/80 dark:border-slate-700 font-bold text-slate-900 dark:text-slate-100 shadow-2xs'
                       : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
+                  title={`${role.name}: ${role.description}`}
                 >
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -216,7 +325,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
             })}
           </div>
 
-          {/* 3. Menü Aksiyonları (Profil, Ayarlar, Çıkış) */}
+          {/* 4. Menü Aksiyonları (Profil, Ayarlar, Çıkış) */}
           <div className="pt-2 mt-2 border-t border-slate-100 dark:border-slate-800 space-y-1">
             <button
               type="button"
@@ -252,4 +361,3 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
     </div>
   )
 }
-

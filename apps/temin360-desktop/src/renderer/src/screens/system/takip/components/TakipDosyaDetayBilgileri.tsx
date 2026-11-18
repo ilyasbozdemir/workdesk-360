@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Briefcase,
   Building2,
@@ -7,17 +7,24 @@ import {
   ClipboardCheck,
   CreditCard,
   Edit,
+  ExternalLink,
   FileSpreadsheet,
   Lock,
   Percent,
   Receipt,
+  RefreshCw,
   Scale,
   ShieldCheck,
+  Sparkles,
   User,
   UserCheck,
   Users
 } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { groupUniqueCommissioners } from '../../../../utils/commissionGrouping'
+import { applyInstitutionalTemplateToDossier } from '../../../../services/commission/commissionSeedService'
+import { APP_ROUTES } from '../../../../constants/routeConstants'
 
 interface TakipDosyaDetayBilgileriProps {
   activeDosya: any
@@ -30,12 +37,37 @@ export function TakipDosyaDetayBilgileri({
   komisyonlar,
   onEditClick
 }: TakipDosyaDetayBilgileriProps): React.JSX.Element {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const d = activeDosya || {}
   const { uniqueCommissioners, uniqueCount, totalAssignmentCount } =
     groupUniqueCommissioners(komisyonlar)
 
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null)
+
   const isSozlesmeli = Boolean(d.sozlesme_yapilacak_mi)
   const isKismiTeklif = Boolean(d.kismi_teklif_verilecek_mi)
+
+  const handleSyncCommissions = async () => {
+    if (!d.id) return
+    setIsSyncing(true)
+    setSyncFeedback(null)
+    try {
+      const res = await applyInstitutionalTemplateToDossier(d.id)
+      if (res.success) {
+        setSyncFeedback(`✅ Kurumsal kadro (${res.count || 0} üye) başarıyla eşitlendi.`)
+        await queryClient.invalidateQueries({ queryKey: ['takip_komisyonlar'] })
+        setTimeout(() => setSyncFeedback(null), 3500)
+      } else {
+        setSyncFeedback(`⚠️ Eşitleme: ${res.error || 'İşlem tamamlanamadı'}`)
+      }
+    } catch (err: any) {
+      setSyncFeedback(`❌ Hata: ${err.message}`)
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-6 animate-in fade-in duration-200">
@@ -50,9 +82,9 @@ export function TakipDosyaDetayBilgileri({
               <h3 className="text-base font-bold text-slate-850 dark:text-slate-100">
                 Dosya Şartname ve İdari Bilgileri
               </h3>
-              <span className="inline-flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold border border-slate-200 dark:border-slate-700">
-                <Lock size={10} className="text-slate-400" />
-                Resmî Kayıt Özeti (Canlı Veritabanı)
+              <span className="inline-flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800/60">
+                <CheckCircle2 size={10} className="text-emerald-500" />
+                Resmî Dosya Künyesi · Canlı Veri
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -341,8 +373,8 @@ export function TakipDosyaDetayBilgileri({
 
       {/* 4. GÖREVLİ KOMİSYON PERSONELLERİ (TEKİL KİŞİ BAZLI GRUPLAMA) */}
       <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 flex-wrap">
             <Users size={16} className="text-amber-500" />
             <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               4. Görevli Komisyon Personelleri
@@ -353,19 +385,57 @@ export function TakipDosyaDetayBilgileri({
             </span>
           </div>
 
-          <span className="text-[11px] text-slate-400">
-            Küçük kurumlarda aynı personelin birden fazla komisyonda aldığı görevler tekil olarak listelenir.
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleSyncCommissions}
+              disabled={isSyncing}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-2xs cursor-pointer border-0"
+              title="Kurumsal şablon komisyon kadrosunu bu dosyaya aktar ve eşitle"
+            >
+              <RefreshCw size={12} className={isSyncing ? "animate-spin" : ""} />
+              <span>{isSyncing ? "Eşitleniyor..." : "Şablondan Eşitle"}</span>
+            </button>
+
+            <button
+              onClick={() => navigate({ to: APP_ROUTES.KOMISYONLAR as any })}
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 cursor-pointer"
+              title="Komisyon Yönetimi Masasını Aç"
+            >
+              <ExternalLink size={12} />
+              <span>Komisyon Masası</span>
+            </button>
+          </div>
         </div>
 
+        {syncFeedback && (
+          <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-100 text-xs font-semibold animate-in fade-in">
+            {syncFeedback}
+          </div>
+        )}
+
         {uniqueCommissioners.length === 0 ? (
-          <div className="p-6 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
-            <Users className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
-            <div className="text-xs font-bold text-slate-600 dark:text-slate-400">
-              Bu dosyaya henüz komisyon üyesi atanmamış.
+          <div className="p-8 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
+            <Users className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+            <div className="space-y-1">
+              <div className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                Bu dosyaya henüz komisyon üyesi atanmamış
+              </div>
+              <div className="text-xs text-slate-400 max-w-md mx-auto">
+                Piyasa Fiyat Araştırması ve Muayene Kabul aşamalarında görevli personelleri tek tıkla kurumsal şablondan aktarabilir veya Komisyon Masasından özelleştirebilirsiniz.
+              </div>
             </div>
-            <div className="text-[11px] text-slate-400">
-              Piyasa Fiyat Araştırması veya Muayene Kabul aşamasında görevli personelleri belirleyebilirsiniz.
+            <div className="flex items-center justify-center gap-2 pt-1">
+              <button
+                onClick={handleSyncCommissions}
+                disabled={isSyncing}
+                type="button"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <Sparkles size={14} />
+                <span>Kurumsal Şablonu Şimdi Ata</span>
+              </button>
             </div>
           </div>
         ) : (
@@ -409,17 +479,18 @@ export function TakipDosyaDetayBilgileri({
                   {/* Üstlendiği Komisyon Görevleri */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
                     {c.assignments.map((role) => {
+                      const komTuru = (role.komisyonTuru || '').toLowerCase()
                       const isPiyasa =
-                        role.komisyonTuru.toLowerCase().includes('piyasa') ||
-                        role.komisyonTuru.toLowerCase().includes('fiyat') ||
-                        role.komisyonTuru.toLowerCase().includes('yaklaşık')
+                        komTuru.includes('piyasa') ||
+                        komTuru.includes('fiyat') ||
+                        komTuru.includes('yaklaşık')
                       const isMuayene =
-                        role.komisyonTuru.toLowerCase().includes('muayene') ||
-                        role.komisyonTuru.toLowerCase().includes('kabul')
+                        komTuru.includes('muayene') ||
+                        komTuru.includes('kabul')
 
                       return (
                         <div
-                          key={`role_${role.id}_${role.komisyonTuru}_${role.gorev}`}
+                          key={`role_${role.id}_${role.komisyonTuru || 'kom'}_${role.gorev}`}
                           className="flex items-center justify-between gap-1 text-[10.5px]"
                         >
                           <span

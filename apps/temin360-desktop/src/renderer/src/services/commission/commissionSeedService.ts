@@ -995,6 +995,8 @@ export async function applyCommissionToAllDossiers(
       throw new Error(txRes?.error || 'Toplu aktarım transaction hatası')
     }
 
+    emitAppEvent('commissions:changed', {})
+
     return {
       success: true,
       affectedDossiersCount: targetDosyalar.length,
