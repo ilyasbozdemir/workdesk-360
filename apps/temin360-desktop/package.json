@@ -13,6 +13,7 @@
     "test:electron": "node scripts/test-electron.js run",
     "test:watch": "vitest",
     "test:e2e": "node scripts/generate-e2e-test-file.js && playwright test",
+    "test:e2e:build": "pnpm --filter @dt/database build && electron-vite build && node scripts/generate-e2e-test-file.js && playwright test",
     "analyze": "node ../../scripts/analyze-codebase.mjs",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
