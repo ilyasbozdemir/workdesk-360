@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Printer,
   X,
@@ -103,7 +104,7 @@ export function ExcelStylePrintModal({
     }
   }, [isOpen, defaultOrientation])
 
-  if (!isOpen) return null
+  if (!isOpen || typeof document === 'undefined') return null
 
   const activePrinterObj = printers.find((p) => p.name === selectedPrinter)
 
@@ -123,17 +124,17 @@ export function ExcelStylePrintModal({
     })
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150 select-none">
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col"
+        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[min(640px,calc(100vh-32px))] animate-in zoom-in-95 duration-150"
         onClick={(e) => {
           // Dışarı tıklandığında yazıcı dropdown'ını kapat
           if (isDropdownOpen) setIsDropdownOpen(false)
         }}
       >
-        {/* Üst Başlık (Excel Style) */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50">
+        {/* Üst Başlık (Excel Style - Sabit) */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
               <Printer className="w-5 h-5" />
@@ -156,14 +157,14 @@ export function ExcelStylePrintModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Gövde / Ayarlar */}
-        <div className="p-5 space-y-4 text-xs">
+        {/* Gövde / Ayarlar (Kendi İçinde Düzgün Kayan Alan) */}
+        <div className="p-5 space-y-4 text-xs overflow-y-auto custom-scrollbar flex-1 min-h-0">
           {/* 1. YAZICI SEÇİMİ (Excel Style Printer Picker) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -424,8 +425,8 @@ export function ExcelStylePrintModal({
           </div>
         </div>
 
-        {/* Alt Aksiyon Butonları */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50">
+        {/* Alt Aksiyon Butonları (Sabit) */}
+        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 shrink-0">
           <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
             <CheckCircle2 size={13} className="text-emerald-500" />
             <span>A4 formatı hazır</span>
@@ -462,6 +463,7 @@ export function ExcelStylePrintModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
