@@ -1,3 +1,4 @@
+import rc25 from "./versions/rc/rc.25";
 import rc24 from "./versions/rc/rc.24";
 import rc23 from "./versions/rc/rc.23";
 import rc22 from "./versions/rc/rc.22";
@@ -28,6 +29,7 @@ import rc6 from "./versions/rc/rc.6";
 import rc7 from "./versions/rc/rc.7";
 
 export const rcManifests: any[] = [
+  rc25,
   rc24,
   rc23,
   rc22,
