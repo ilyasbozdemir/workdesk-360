@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ButceTertip, MifKayit } from '../../types'
 import { formatCurrency } from '@renderer/utils/formatters'
 import { Coins, X, ShieldCheck, ArrowRight, Calculator } from 'lucide-react'
@@ -80,16 +81,21 @@ export const MaliIslemlereAktarModal: React.FC<MaliIslemlereAktarModalProps> = (
     onClose()
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 pointer-events-auto"
+      style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden"
+        className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center">
               <Coins size={18} />
@@ -280,7 +286,8 @@ export const MaliIslemlereAktarModal: React.FC<MaliIslemlereAktarModalProps> = (
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

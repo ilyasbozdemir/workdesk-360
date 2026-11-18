@@ -4,6 +4,7 @@ import { QueryClient } from '@tanstack/react-query'
 export type AppEventType =
   | 'items:changed'
   | 'bids:changed'
+  | 'commissions:changed'
   | 'dossier:updated'
   | 'dossier:created'
   | 'dossier:deleted'
@@ -86,11 +87,17 @@ if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
 // Internal dispatcher when an event is received (locally or remotely)
 function handleIncomingEvent(msg: AppEventMessage, isLocalOrigin: boolean): void {
   // 1. Dispatch custom DOM event in current window for reactive hooks
-  window.dispatchEvent(
-    new CustomEvent(CUSTOM_EVENT_NAME, {
-      detail: msg
-    })
-  )
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    try {
+      const event =
+        typeof CustomEvent === 'function'
+          ? new CustomEvent(CUSTOM_EVENT_NAME, { detail: msg })
+          : ({ type: CUSTOM_EVENT_NAME, detail: msg } as any)
+      window.dispatchEvent(event)
+    } catch {
+      // ignore in test or non-dom environments
+    }
+  }
 
   // 2. Automatically invalidate TanStack Query caches
   if (globalQueryClient) {
@@ -112,6 +119,17 @@ function handleIncomingEvent(msg: AppEventMessage, isLocalOrigin: boolean): void
       globalQueryClient.invalidateQueries({ queryKey: ['temin_dosyalari'] })
       globalQueryClient.invalidateQueries({ queryKey: ['dosyalar'] })
       globalQueryClient.invalidateQueries({ queryKey: ['cikti_merkezi_data'] })
+    } else if (msg.type === 'commissions:changed') {
+      globalQueryClient.invalidateQueries({ queryKey: ['takip_komisyonlar'] })
+      globalQueryClient.invalidateQueries({ queryKey: ['komisyonlar'] })
+      globalQueryClient.invalidateQueries({ queryKey: ['tanim_komisyonlar'] })
+      globalQueryClient.invalidateQueries({ queryKey: ['dossier_inspector'] })
+      if (dosyaId) {
+        globalQueryClient.invalidateQueries({ queryKey: ['takip_komisyonlar', dosyaId] })
+        globalQueryClient.invalidateQueries({ queryKey: ['dossier_inspector', dosyaId] })
+      }
+      globalQueryClient.invalidateQueries({ queryKey: ['temin_dosyalari'] })
+      globalQueryClient.invalidateQueries({ queryKey: ['dosyalar'] })
     } else if (msg.type === 'documents:changed') {
       globalQueryClient.invalidateQueries({ queryKey: ['takip_belgeler'] })
       if (dosyaId) {
@@ -144,9 +162,9 @@ function handleIncomingEvent(msg: AppEventMessage, isLocalOrigin: boolean): void
   }
 
   // 3. Forward to Electron IPC if present and local origin
-  if (isLocalOrigin && window.electron?.ipcRenderer) {
+  if (isLocalOrigin && typeof window !== 'undefined' && (window as any).electron?.ipcRenderer) {
     try {
-      window.electron.ipcRenderer.send('app:data-changed', msg)
+      ;(window as any).electron.ipcRenderer.send('app:data-changed', msg)
     } catch {
       // noop
     }

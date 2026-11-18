@@ -14,6 +14,8 @@ import {
 import { formatDate } from '../../../../utils/formatters'
 import type { TeminDosyasi } from '../../../dosyalar/dosyalar.hooks'
 import { TakipFilterToolbar } from './TakipFilterToolbar'
+import { DosyaHizliIcerikPopover } from '../../../dosyalar/components/DosyaHizliIcerikPopover'
+import { DosyaActionMenu } from '../../../dosyalar/components/DosyaActionMenu'
 
 export interface TakipGridViewProps {
   dosyalar: TeminDosyasi[]
@@ -32,6 +34,16 @@ export interface TakipGridViewProps {
   uniqueYillar?: number[]
   totalCount?: number
   onOpenWizard?: (stageId?: number) => void
+  openMenuId?: number | null
+  setOpenMenuId?: (id: number | null) => void
+  handleOpenInNewWindow?: (dosya: any) => void
+  handleUpdateStatus?: (id: number, status: string) => Promise<void>
+  handleEkapGonder?: (id: number) => void
+  handleKilidiAc?: (id: number) => Promise<void>
+  handleOpenAI?: (dosya: any) => void
+  handleDelete?: (id: number) => Promise<void>
+  handleHardDelete?: (id: number) => Promise<void>
+  handleOpenMaliyetAyarlari?: (dosya: any) => void
 }
 
 const STAGE_LABELS: Record<number, string> = {
@@ -57,7 +69,17 @@ export function TakipGridView({
   setSelectedTur,
   uniqueYillar = [],
   totalCount,
-  onOpenWizard
+  onOpenWizard,
+  openMenuId,
+  setOpenMenuId,
+  handleOpenInNewWindow,
+  handleUpdateStatus,
+  handleEkapGonder,
+  handleKilidiAc,
+  handleOpenAI,
+  handleDelete,
+  handleHardDelete,
+  handleOpenMaliyetAyarlari
 }: TakipGridViewProps): React.JSX.Element {
   const getTurBadge = (
     tur?: string
@@ -142,6 +164,8 @@ export function TakipGridView({
                 }}
                 onDoubleClick={() => onOpenSurec(dosya)}
                 className={`group relative flex flex-col justify-between p-4.5 rounded-2xl border transition-all duration-200 cursor-pointer select-none bg-white dark:bg-slate-900 shadow-2xs hover:shadow-md hover:-translate-y-0.5 ${
+                  openMenuId === dosya.id ? 'z-50' : 'z-auto'
+                } ${
                   isActive
                     ? 'border-blue-500 ring-2 ring-blue-500/20 dark:ring-blue-500/30 shadow-blue-500/10'
                     : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-750'
@@ -264,6 +288,25 @@ export function TakipGridView({
                     >
                       <Edit size={13} />
                     </button>
+
+                    <DosyaHizliIcerikPopover dosya={dosya} />
+
+                    {setOpenMenuId && (
+                      <DosyaActionMenu
+                        dosya={dosya}
+                        openMenuId={openMenuId ?? null}
+                        setOpenMenuId={setOpenMenuId}
+                        selectedDosyaIds={[]}
+                        handleOpenInNewWindow={handleOpenInNewWindow}
+                        handleUpdateStatus={handleUpdateStatus}
+                        handleEkapGonder={handleEkapGonder}
+                        handleKilidiAc={handleKilidiAc}
+                        handleOpenAI={handleOpenAI}
+                        handleDelete={handleDelete}
+                        handleHardDelete={handleHardDelete}
+                        handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

@@ -62,7 +62,7 @@ export const TaxDeductionsPage: React.FC = () => {
       if (dosyaRes?.success && dosyaRes.data?.length > 0) {
         const d = dosyaRes.data[0]
         const isDt = isDogrudanTeminDosyasi(d)
-        const hasContract = !isDt && Boolean(d.sozlesme_yapilacak_mi)
+        const hasContract = Boolean(d.sozlesme_yapilacak_mi)
         const matrah =
           canonical?.kazananTeklifToplami ||
           canonical?.toplamYaklasikMaliyet ||
@@ -82,7 +82,7 @@ export const TaxDeductionsPage: React.FC = () => {
         setBrutTutar(Number(matrah.toFixed(2)))
         setKdvOrani(kdv)
         setOdemeDamgaVergisiUygula(true)
-        // Doğrudan temin dosyalarında sözleşme ve ihale karar pulu uygulanmaz
+        // Sözleşme damga vergisi doğrudan dosyanın sozlesme_yapilacak_mi durumuna bağlanır
         setSozlesmeVarMi(hasContract)
         setKararPuluHesaplansinMi(!isDt)
       } else {
@@ -117,8 +117,10 @@ export const TaxDeductionsPage: React.FC = () => {
     ? Number((brutTutar * damgaVergisiOrani).toFixed(2))
     : 0
 
-  // 2) Sözleşme Damga Vergisi (488 S.K. I/A-1 - Binde 9,48) — Yalnızca sözleşmeli ihale dosyalarında
-  const effectiveSozlesmeVar = !isDogrudanTemin && sozlesmeVarMi
+  // 2) Sözleşme Damga Vergisi (488 S.K. I/A-1 - Binde 9,48) — Dosyanın sözleşme durumuna (sozlesme_yapilacak_mi) doğrudan bağlıdır
+  const effectiveSozlesmeVar = activeDosyaInfo
+    ? activeDosyaInfo.sozlesmeYapilacakMi && sozlesmeVarMi
+    : sozlesmeVarMi
   const sozlesmeDamgaVergisi = effectiveSozlesmeVar
     ? Number((brutTutar * damgaVergisiOrani).toFixed(2))
     : 0
@@ -160,6 +162,11 @@ export const TaxDeductionsPage: React.FC = () => {
           <span className="px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 font-bold border border-purple-200/50">
             Ödeme Emri / Fatura DV: ‰ 9,48
           </span>
+          {(activeDosyaInfo ? activeDosyaInfo.sozlesmeYapilacakMi : sozlesmeVarMi) && (
+            <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-bold border border-amber-200/50">
+              Sözleşme DV: ‰ 9,48
+            </span>
+          )}
           {!isDogrudanTemin && (
             <span className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 font-bold border border-blue-200/50">
               İhale Karar Pulu: ‰ 5,69
@@ -191,14 +198,14 @@ export const TaxDeductionsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <span
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 font-bold text-blue-700 dark:text-blue-300 text-[11px]"
-              title="Dosya türü sistemden otomatik belirlenmiştir (Readonly)"
+              title="Dosya türü ve sözleşme durumu sistemden otomatik belirlenmiştir"
             >
               <Lock className="w-3 h-3" />
               {activeDosyaInfo.isDogrudanTemin
-                ? 'Usul: 4734 Md. 22 Doğrudan Temin (Sözleşmesiz)'
+                ? `Usul: 4734 Md. 22 Doğrudan Temin (${activeDosyaInfo.sozlesmeYapilacakMi ? 'Sözleşmeli' : 'Sözleşmesiz'})`
                 : 'Usul: 4734 İhale Süreci'}
             </span>
           </div>
@@ -325,44 +332,67 @@ export const TaxDeductionsPage: React.FC = () => {
               </div>
             </label>
 
-            {/* 2. İhale dosyalarına özgü kesintiler (Doğrudan Temin dosyasında otomatik devre dışı & readonly bilgi) */}
-            {isDogrudanTemin ? (
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 space-y-1.5">
-                <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Doğrudan Temin (4734 Md. 22) Yasal Muafiyet Kuralları (Sistem Korumalı)</span>
-                </div>
-                <p className="leading-relaxed">
-                  • <strong>İhale Karar Pulu (‰ 5,69):</strong> Doğrudan temin bir ihale usulü olmadığından ve ihale komisyonu kararı alınmadığından uygulanmaz.
-                  <br />• <strong>Sözleşme Damga Vergisi:</strong> Doğrudan temin sipariş usulüyle yürütüldüğünden sözleşme kesintisi otomatik uygulanmaz.
-                </p>
-              </div>
-            ) : (
-              <>
-                <label className="flex items-center gap-2.5 cursor-pointer">
+            {/* 2. Sözleşme Damga Vergisi — Dosyanın sözleşme durumuna (sozlesme_yapilacak_mi) doğrudan bağlıdır */}
+            {activeDosyaInfo ? (
+              activeDosyaInfo.sozlesmeYapilacakMi ? (
+                <label className="flex items-start gap-2.5 cursor-pointer p-2.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-800/40">
                   <input
                     type="checkbox"
                     checked={sozlesmeVarMi}
                     onChange={(e) => setSozlesmeVarMi(e.target.checked)}
-                    className="w-4 h-4 text-purple-600 rounded"
+                    className="w-4 h-4 text-amber-600 rounded mt-0.5"
                   />
-                  <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                    Sözleşme Damga Vergisi Kesintisi Yap (Binde 9,48)
-                  </span>
+                  <div>
+                    <span className="text-xs text-amber-900 dark:text-amber-200 font-bold block">
+                      Sözleşme Damga Vergisi Kesintisi (488 S.K. ‰ 9,48 — Sözleşmeli Dosya)
+                    </span>
+                    <span className="text-[10.5px] text-amber-800/80 dark:text-amber-300/80">
+                      Dosyada sözleşme düzenlendiği için (488 S.K. Tablo I/A-1) KDV hariç sözleşme bedeli üzerinden binde 9,48 sözleşme damga vergisi otomatik bağlıdır.
+                    </span>
+                  </div>
                 </label>
+              ) : (
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-between">
+                  <span>
+                    <strong>Sözleşme Damga Vergisi (‰ 9,48):</strong> Dosyada sözleşme bulunmadığı için (Sipariş Usulü) tahsil edilmez.
+                  </span>
+                  <span className="font-bold text-slate-500 shrink-0 ml-2">0,00 ₺ (Sözleşme Yok)</span>
+                </div>
+              )
+            ) : (
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sozlesmeVarMi}
+                  onChange={(e) => setSozlesmeVarMi(e.target.checked)}
+                  className="w-4 h-4 text-purple-600 rounded"
+                />
+                <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                  Sözleşme Damga Vergisi Kesintisi Yap (Binde 9,48 — Sözleşmeli Alım)
+                </span>
+              </label>
+            )}
 
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={kararPuluHesaplansinMi}
-                    onChange={(e) => setKararPuluHesaplansinMi(e.target.checked)}
-                    className="w-4 h-4 text-purple-600 rounded"
-                  />
-                  <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                    İhale Komisyonu Karar Pulu Kesintisi Yap (Binde 5,69)
-                  </span>
-                </label>
-              </>
+            {/* 3. İhale Karar Pulu — Yalnızca İhale dosyalarında geçerlidir */}
+            {isDogrudanTemin ? (
+              <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>
+                  <strong>İhale Karar Pulu (‰ 5,69):</strong> Doğrudan temin (4734 Md. 22) bir ihale usulü olmadığından karar pulu kesilmez.
+                </span>
+              </div>
+            ) : (
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={kararPuluHesaplansinMi}
+                  onChange={(e) => setKararPuluHesaplansinMi(e.target.checked)}
+                  className="w-4 h-4 text-purple-600 rounded"
+                />
+                <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                  İhale Komisyonu Karar Pulu Kesintisi Yap (Binde 5,69)
+                </span>
+              </label>
             )}
           </div>
         </div>

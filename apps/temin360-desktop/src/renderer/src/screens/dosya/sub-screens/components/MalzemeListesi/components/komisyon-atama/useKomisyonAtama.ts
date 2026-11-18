@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { emitAppEvent } from '@renderer/utils/appEvents'
 import { documentPreloadService } from '@renderer/services/documentPreloadService'
 import { DEFAULT_MALIYET_ROLES, DEFAULT_MUAYENE_ROLES, getRoleDefaults } from './constants'
 import type { KomisyonRow, KomisyonType, KurumInfo, PersonelItem } from './types'
@@ -620,6 +621,7 @@ export function useKomisyonAtama({
 
       if (activeDosyaId) {
         documentPreloadService.invalidateCache(activeDosyaId)
+        emitAppEvent('commissions:changed', { dosyaId: activeDosyaId })
       }
       queryClient.invalidateQueries({ queryKey: ['document_preview'] })
       // Komisyon yaşam döngüsü durumunu güncelle

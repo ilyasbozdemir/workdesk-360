@@ -6,11 +6,6 @@ import { TeminSelectorDropdown } from './temin-selector/components/TeminSelector
 const YeniDosyaSecimModal = lazy(() =>
   import('../modals/YeniDosyaSecimModal').then((m) => ({ default: m.YeniDosyaSecimModal }))
 )
-const DosyaDataInspectorModal = lazy(() =>
-  import('../../screens/dosyalar/components/DosyaDataInspectorModal').then((m) => ({
-    default: m.DosyaDataInspectorModal
-  }))
-)
 
 export function TeminSelector(): React.JSX.Element {
   const {
@@ -18,7 +13,6 @@ export function TeminSelector(): React.JSX.Element {
     setIsOpen,
     showYeniDosyaModal,
     setShowYeniDosyaModal,
-    showInspector,
     setShowInspector,
     procurementMode,
     setGlobalMode,
@@ -93,16 +87,6 @@ export function TeminSelector(): React.JSX.Element {
           <YeniDosyaSecimModal
             isOpen={showYeniDosyaModal}
             onClose={(): void => setShowYeniDosyaModal(false)}
-          />
-        </Suspense>
-      )}
-
-      {showInspector && selectedDosya && (
-        <Suspense fallback={null}>
-          <DosyaDataInspectorModal
-            isOpen={showInspector}
-            onClose={(): void => setShowInspector(false)}
-            dosya={selectedDosya}
           />
         </Suspense>
       )}

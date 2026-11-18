@@ -282,6 +282,7 @@ export function useKomisyonlarV2() {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
         queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
+        queryClient.invalidateQueries({ queryKey: ['takip_komisyonlar'] })
         refetchDosyaList()
       } else {
         alert('Kurumsal şablon aktarılırken hata: ' + (res.error || 'Bilinmeyen hata'))
@@ -304,6 +305,7 @@ export function useKomisyonlarV2() {
         )
         queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
         queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
+        queryClient.invalidateQueries({ queryKey: ['takip_komisyonlar'] })
         setTimeout(() => {
           setCopyTargetDosya(null)
           setSelectedSourceDosyaId(null)
@@ -336,6 +338,7 @@ export function useKomisyonlarV2() {
         )
         queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
         queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
+        queryClient.invalidateQueries({ queryKey: ['takip_komisyonlar'] })
         setTimeout(() => {
           setCopyTargetDosya(null)
           setSelectedSourceDosyaId(null)
@@ -366,6 +369,7 @@ export function useKomisyonlarV2() {
         setBulkFeedback(msg)
         queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
         queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
+        queryClient.invalidateQueries({ queryKey: ['takip_komisyonlar'] })
         refetchDosyaList()
         refetchGlobalHistory()
         setTimeout(() => setBulkFeedback(null), 5000)
@@ -395,6 +399,7 @@ export function useKomisyonlarV2() {
         setBulkFeedback(msg)
         queryClient.invalidateQueries({ queryKey: ['dosya-komisyonlari-v2-list'] })
         queryClient.invalidateQueries({ queryKey: ['global-komisyon-history-list'] })
+        queryClient.invalidateQueries({ queryKey: ['takip_komisyonlar'] })
         refetchDosyaList()
         refetchGlobalHistory()
         setTimeout(() => setBulkFeedback(null), 5000)

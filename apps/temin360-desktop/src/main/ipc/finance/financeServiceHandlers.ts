@@ -21,6 +21,7 @@ export interface IncomingProcurementItem {
   status: string
   tarih: string
   notlar: string
+  sozlesmeYapilacakMi: number
 }
 
 export interface DirectPaymentPayload {
@@ -77,7 +78,8 @@ export function registerFinanceServiceHandlers(): void {
           COALESCE(d.durum_asama_id, 1) as durumAsamaId,
           d.status,
           COALESCE(d.temin_tarihi, d.tarih, d.dosya_acilis_tarihi, DATE('now')) as tarih,
-          COALESCE(d.notlar, '') as notlar
+          COALESCE(d.notlar, '') as notlar,
+          COALESCE(d.sozlesme_yapilacak_mi, 0) as sozlesmeYapilacakMi
         FROM DATA_TeminDosyasi d
         LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id

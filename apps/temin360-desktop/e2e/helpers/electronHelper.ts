@@ -104,16 +104,28 @@ export async function launchTestApp(
   ]
 
   const cleanEnv = { ...process.env }
-  delete cleanEnv.ELECTRON_RUN_AS_NODE
+  // Case-insensitive ELECTRON_RUN_AS_NODE temizliği (CI ortamında debugger portunun açılmasını garanti eder)
+  delete process.env.ELECTRON_RUN_AS_NODE
+  delete process.env.electron_run_as_node
+  for (const key of Object.keys(cleanEnv)) {
+    if (key.toUpperCase() === 'ELECTRON_RUN_AS_NODE') {
+      delete cleanEnv[key]
+    }
+  }
+
+  // Electron executable path'i açıkça belirle (pnpm monorepo hoisting belirsizliklerini önler)
+  const electronBinaryPath: string = require('electron') as unknown as string
 
   const electronApp = await electron.launch({
+    executablePath: electronBinaryPath,
     args: launchArgs,
     cwd: appDir,
     env: {
       ...cleanEnv,
       NODE_ENV: 'test',
       ELECTRON_ENABLE_LOGGING: '1'
-    }
+    },
+    timeout: 60000
   })
 
   console.log('[launchTestApp] Waiting for firstWindow()...')

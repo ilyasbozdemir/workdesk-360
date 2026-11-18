@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   FolderInput,
   CheckCircle2,
@@ -44,6 +45,7 @@ export interface RealProcurementItem {
   status: string | null
   tarih: string
   notlar: string
+  sozlesmeYapilacakMi: boolean
 }
 
 export const IncomingProcurementsPage: React.FC = () => {
@@ -60,6 +62,7 @@ export const IncomingProcurementsPage: React.FC = () => {
   const [faturaTarihi, setFaturaTarihi] = useState(() => new Date().toISOString().split('T')[0])
   const [faturaTutar, setFaturaTutar] = useState<number>(0)
   const [damgaVergisi, setDamgaVergisi] = useState<number>(0)
+  const [sozlesmeDamgaVergisi, setSozlesmeDamgaVergisi] = useState<number>(0)
   const [kararPulu, setKararPulu] = useState<number>(0)
   const [kdvTevkifat, setKdvTevkifat] = useState<number>(0)
   const [maliYorum, setMaliYorum] = useState('')
@@ -78,10 +81,11 @@ export const IncomingProcurementsPage: React.FC = () => {
         const mapped: RealProcurementItem[] = res.map((r: any) => {
           const brut = Number(r.brutTutar) || 0
           const matrah = brut > 0 ? brut / 1.2 : 0
-          const dv =
-            Number(r.damgaVergisi) > 0
-              ? Number(r.damgaVergisi)
-              : Number((matrah * 0.00948).toFixed(2))
+          const hasContract = Boolean(r.sozlesmeYapilacakMi)
+          const defaultDv = Number(
+            (matrah * (hasContract ? 0.00948 * 2 : 0.00948)).toFixed(2)
+          )
+          const dv = Number(r.damgaVergisi) > 0 ? Number(r.damgaVergisi) : defaultDv
           // 4734 m. 22 doğrudan teminde ihale karar pulu kesilmez
           const kp = 0
           const kt = Number(r.kdvTevkifati) || 0
@@ -108,7 +112,8 @@ export const IncomingProcurementsPage: React.FC = () => {
             durumAsamaId: r.durumAsamaId,
             status: r.status,
             tarih: r.tarih,
-            notlar: r.notlar
+            notlar: r.notlar,
+            sozlesmeYapilacakMi: hasContract
           }
         })
         setItems(mapped)
@@ -138,10 +143,12 @@ export const IncomingProcurementsPage: React.FC = () => {
     setSelectedItem(item)
     const brut = item.brutTutar || 0
     const matrah = brut > 0 ? brut / 1.2 : 0
+    const singleDv = Number((matrah * 0.00948).toFixed(2))
     setFaturaNo(`FAT-${item.dosyaNo.replace(/[^0-9A-Z]/gi, '')}`)
     setFaturaTarihi(new Date().toISOString().split('T')[0])
     setFaturaTutar(brut)
-    setDamgaVergisi(item.damgaVergisi > 0 ? item.damgaVergisi : Number((matrah * 0.00948).toFixed(2)))
+    setDamgaVergisi(singleDv)
+    setSozlesmeDamgaVergisi(item.sozlesmeYapilacakMi ? singleDv : 0)
     setKararPulu(0)
     setKdvTevkifat(item.kdvTevkifati || 0)
     setMaliYorum(
@@ -149,15 +156,18 @@ export const IncomingProcurementsPage: React.FC = () => {
     )
   }
 
-  // Fatura tutarı değiştikçe yasal kesintileri otomatik güncelle (Doğrudan Teminde yalnızca ÖEB Damga Vergisi ‰ 9,48 uygulanır, Karar Pulu uygulanmaz)
+  // Fatura tutarı değiştikçe yasal kesintileri otomatik güncelle (Sözleşme Damga Vergisi dosyanın sozlesmeYapilacakMi durumuna doğrudan bağlıdır)
   const handleFaturaTutarChange = (val: number) => {
     setFaturaTutar(val)
     const matrah = val > 0 ? val / 1.2 : 0
-    setDamgaVergisi(Number((matrah * 0.00948).toFixed(2)))
+    const singleDv = Number((matrah * 0.00948).toFixed(2))
+    setDamgaVergisi(singleDv)
+    setSozlesmeDamgaVergisi(selectedItem?.sozlesmeYapilacakMi ? singleDv : 0)
     setKararPulu(0)
   }
 
-  const calculatedNet = Math.max(0, faturaTutar - damgaVergisi - kararPulu - kdvTevkifat)
+  const toplamDamgaVergisi = Number((damgaVergisi + sozlesmeDamgaVergisi).toFixed(2))
+  const calculatedNet = Math.max(0, faturaTutar - toplamDamgaVergisi - kararPulu - kdvTevkifat)
 
   // Resmî A4 ÖEB / Ödeme Yazısı Şablonunu Aç (Gerçek Document Engine)
   const handleOpenOfficialDocument = (docId: string = 'odeme-yazisi') => {
@@ -180,7 +190,7 @@ export const IncomingProcurementsPage: React.FC = () => {
         faturaNo,
         faturaTarihi,
         brutTutar: faturaTutar,
-        damgaVergisi,
+        damgaVergisi: toplamDamgaVergisi,
         kararPulu,
         kdvTevkifat,
         netTutar: calculatedNet,
@@ -437,9 +447,20 @@ export const IncomingProcurementsPage: React.FC = () => {
       </div>
 
       {/* 5018 MALİ İNCELEME, FATURA VE ÖDEME MASASI MODALI */}
-      {selectedItem && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-3xl max-h-[92vh] rounded-3xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      {selectedItem &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 pointer-events-auto"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+            onClick={() => setSelectedItem(null)}
+          >
+            <div
+              className="bg-white dark:bg-slate-900 w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
@@ -543,10 +564,10 @@ export const IncomingProcurementsPage: React.FC = () => {
                   <Calculator size={14} className="text-emerald-500" />
                   <span>2. Yasal Vergi ve Kesinti Dağılımı</span>
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/60">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                      Ödeme Emri Damga Vergisi (‰ 9,48):
+                      Ödeme Emri DV (‰ 9,48):
                     </label>
                     <input
                       type="number"
@@ -554,6 +575,20 @@ export const IncomingProcurementsPage: React.FC = () => {
                       value={damgaVergisi}
                       onChange={(e) => setDamgaVergisi(Number(e.target.value) || 0)}
                       className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-rose-600 dark:text-rose-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Sözleşme DV ({selectedItem.sozlesmeYapilacakMi ? '‰ 9,48 Sözleşmeli' : 'Sözleşmesiz'}):
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={sozlesmeDamgaVergisi}
+                      disabled={!selectedItem.sozlesmeYapilacakMi}
+                      onChange={(e) => setSozlesmeDamgaVergisi(Number(e.target.value) || 0)}
+                      className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-rose-600 dark:text-rose-400 disabled:opacity-50"
                     />
                   </div>
 
@@ -571,7 +606,11 @@ export const IncomingProcurementsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="px-3 py-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/40 text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
-                  <strong>4734 Md. 22 Doğrudan Temin Kuralı:</strong> İhale Karar Pulu (‰ 5,69) ve Sözleşme Damga Vergisi Doğrudan Temin dosyalarında uygulanmaz.
+                  <strong>Sözleşme & Karar Pulu Kuralı:</strong>{' '}
+                  {selectedItem.sozlesmeYapilacakMi
+                    ? 'Bu dosyada sözleşme düzenlendiği için Sözleşme Damga Vergisi (‰ 9,48) otomatik bağlıdır ve tahsil edilir.'
+                    : 'Bu dosyada sözleşme bulunmadığı için (Sipariş Usulü) Sözleşme Damga Vergisi uygulanmaz (0,00 ₺).'}{' '}
+                  İhale Karar Pulu (‰ 5,69) Doğrudan Temin dosyalarında uygulanmaz.
                 </div>
 
                 {/* Net Hesap Özeti */}
@@ -579,7 +618,7 @@ export const IncomingProcurementsPage: React.FC = () => {
                   <div>
                     <span className="font-semibold text-slate-600 dark:text-slate-400">Hak Sahibine Ödenecek Net Tutar:</span>
                     <div className="text-[10px] text-slate-400">
-                      Brüt ({formatCurrency(faturaTutar)}) - Kesintiler ({formatCurrency(damgaVergisi + kararPulu + kdvTevkifat)})
+                      Brüt ({formatCurrency(faturaTutar)}) - Kesintiler ({formatCurrency(toplamDamgaVergisi + kararPulu + kdvTevkifat)})
                     </div>
                   </div>
                   <div className="text-lg font-black text-emerald-600 dark:text-emerald-400">
@@ -656,7 +695,8 @@ export const IncomingProcurementsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

@@ -11,6 +11,8 @@ import {
   GripVertical
 } from 'lucide-react'
 import type { TeminDosyasi } from '../../../dosyalar/dosyalar.hooks'
+import { DosyaHizliIcerikPopover } from '../../../dosyalar/components/DosyaHizliIcerikPopover'
+import { DosyaActionMenu } from '../../../dosyalar/components/DosyaActionMenu'
 
 export interface TakipKanbanCardProps {
   dosya: TeminDosyasi
@@ -21,6 +23,16 @@ export interface TakipKanbanCardProps {
   isActive?: boolean
   onOpenDetail?: (dosya: TeminDosyasi) => void
   mode?: 'cards' | 'compact'
+  openMenuId?: number | null
+  setOpenMenuId?: (id: number | null) => void
+  handleOpenInNewWindow?: (dosya: any) => void
+  handleUpdateStatus?: (id: number, status: string) => Promise<void>
+  handleEkapGonder?: (id: number) => void
+  handleKilidiAc?: (id: number) => Promise<void>
+  handleOpenAI?: (dosya: any) => void
+  handleDelete?: (id: number) => Promise<void>
+  handleHardDelete?: (id: number) => Promise<void>
+  handleOpenMaliyetAyarlari?: (dosya: any) => void
 }
 
 export function TakipKanbanCard({
@@ -31,7 +43,17 @@ export function TakipKanbanCard({
   onEdit,
   isActive = false,
   onOpenDetail,
-  mode = 'cards'
+  mode = 'cards',
+  openMenuId,
+  setOpenMenuId,
+  handleOpenInNewWindow,
+  handleUpdateStatus,
+  handleEkapGonder,
+  handleKilidiAc,
+  handleOpenAI,
+  handleDelete,
+  handleHardDelete,
+  handleOpenMaliyetAyarlari
 }: TakipKanbanCardProps): React.JSX.Element {
   const getTurBadge = (
     tur: string
@@ -105,6 +127,8 @@ export function TakipKanbanCard({
         }}
         onDoubleClick={() => onOpenSurec(dosya)}
         className={`group relative flex flex-col gap-1.5 p-2.5 rounded-xl border transition-all duration-200 cursor-pointer select-none bg-white dark:bg-slate-900 shadow-2xs hover:shadow-sm hover:-translate-y-0.5 ${
+          openMenuId === dosya.id ? 'z-50' : 'z-auto'
+        } ${
           isActive
             ? 'border-blue-500 ring-2 ring-blue-500/20 dark:ring-blue-500/30 shadow-blue-500/10 bg-blue-50/15 dark:bg-blue-950/20'
             : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -161,6 +185,8 @@ export function TakipKanbanCard({
             className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
+            <DosyaHizliIcerikPopover dosya={dosya} />
+
             <button
               type="button"
               onClick={(e) => {
@@ -200,6 +226,23 @@ export function TakipKanbanCard({
             >
               <Edit size={11} />
             </button>
+
+            {setOpenMenuId && (
+              <DosyaActionMenu
+                dosya={dosya}
+                openMenuId={openMenuId ?? null}
+                setOpenMenuId={setOpenMenuId}
+                selectedDosyaIds={[]}
+                handleOpenInNewWindow={handleOpenInNewWindow}
+                handleUpdateStatus={handleUpdateStatus}
+                handleEkapGonder={handleEkapGonder}
+                handleKilidiAc={handleKilidiAc}
+                handleOpenAI={handleOpenAI}
+                handleDelete={handleDelete}
+                handleHardDelete={handleHardDelete}
+                handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -217,6 +260,8 @@ export function TakipKanbanCard({
       }}
       onDoubleClick={() => onOpenSurec(dosya)}
       className={`group relative flex flex-col gap-2.5 p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer select-none bg-white dark:bg-slate-900 shadow-2xs hover:shadow-md hover:-translate-y-0.5 ${
+        openMenuId === dosya.id ? 'z-50' : 'z-auto'
+      } ${
         isActive
           ? 'border-blue-500 ring-2 ring-blue-500/20 dark:ring-blue-500/30 shadow-blue-500/10'
           : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
@@ -290,6 +335,8 @@ export function TakipKanbanCard({
         </button>
 
         <div className="flex items-center gap-1">
+          <DosyaHizliIcerikPopover dosya={dosya} />
+
           <button
             type="button"
             onClick={(e) => {
@@ -313,6 +360,23 @@ export function TakipKanbanCard({
           >
             <Edit size={13} />
           </button>
+
+          {setOpenMenuId && (
+            <DosyaActionMenu
+              dosya={dosya}
+              openMenuId={openMenuId ?? null}
+              setOpenMenuId={setOpenMenuId}
+              selectedDosyaIds={[]}
+              handleOpenInNewWindow={handleOpenInNewWindow}
+              handleUpdateStatus={handleUpdateStatus}
+              handleEkapGonder={handleEkapGonder}
+              handleKilidiAc={handleKilidiAc}
+              handleOpenAI={handleOpenAI}
+              handleDelete={handleDelete}
+              handleHardDelete={handleHardDelete}
+              handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
+            />
+          )}
         </div>
       </div>
     </div>

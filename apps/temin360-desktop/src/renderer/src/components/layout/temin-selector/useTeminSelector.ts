@@ -135,10 +135,21 @@ export function useTeminSelector(): UseTeminSelectorReturn {
           search: { dosyaId: id } as any
         })
       } else {
-        navigate({ to: APP_ROUTES.TAKIP })
+        try {
+          localStorage.setItem('temin_takip_view_mode', 'detay')
+          window.dispatchEvent(
+            new CustomEvent('takip:view-mode-changed', {
+              detail: { mode: 'detay', dosyaId: id }
+            })
+          )
+        } catch {
+          // ignore
+        }
+        addTab(APP_ROUTES.DOSYA_DETAY)
+        navigate({ to: APP_ROUTES.DOSYA_DETAY })
       }
     },
-    [setActiveDosyaId, navigate]
+    [setActiveDosyaId, navigate, addTab]
   )
 
   const handleSelect2886 = useCallback(

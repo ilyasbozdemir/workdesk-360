@@ -118,7 +118,7 @@ export function getTabLabel(fullPath: string): string {
   if (path.startsWith(APP_ROUTES.HAKEDIS)) return 'Hakediş & Süreç Yönetimi'
   if (path.startsWith(APP_ROUTES.NOTLAR)) return 'Notlar & Yapılacaklar (To-Do)'
   if (path.startsWith(APP_ROUTES.HARCAMA_MERKEZI)) return 'Harcama Merkezi & İhale'
-  if (path.startsWith(APP_ROUTES.DOSYA_KUNYE)) return 'Dosya Künyesi & İnceleme'
+  if (path.startsWith(APP_ROUTES.DOSYA_KUNYE)) return 'Dosya Detayı'
   if (path.startsWith(APP_ROUTES.BELGE_ONIZLEME)) {
     const query = fullPath.split('?')[1] || ''
     const sp = new URLSearchParams(query)
@@ -164,7 +164,6 @@ export function getTabLabel(fullPath: string): string {
   if (path.startsWith(APP_ROUTES.HIZLI_DOSYA_EKLE)) return 'Hızlı Dosya Ekle'
   if (path.startsWith(APP_ROUTES.HARICI_DOSYA_AKTAR)) return 'Harici Dosya Entegrasyonu'
   if (path.startsWith(APP_ROUTES.CIKTI_MERKEZI_DASHBOARD)) return 'Çıktı & Üretim Merkezi'
-  if (path.startsWith(APP_ROUTES.DT_SUREC_AKISI)) return 'Süreç Akış Haritası'
   if (path.startsWith(APP_ROUTES.EBYS)) return 'EBYS & Resmî Yazışma'
   if (path.startsWith(APP_ROUTES.MODUL_MAGAZASI)) return 'Modül Mağazası'
   if (path.startsWith(APP_ROUTES.FORM_BUILDER)) return 'Dinamik Form Üretici'

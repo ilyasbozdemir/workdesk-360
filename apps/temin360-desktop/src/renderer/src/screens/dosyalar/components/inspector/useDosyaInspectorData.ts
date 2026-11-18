@@ -70,7 +70,7 @@ export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) 
         ),
         window.electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT id, belge_adi, belge_turu, is_signed, created_at FROM DATA_TeminBelge WHERE temin_dosya_id = ? ORDER BY id DESC',
+          'SELECT id, belge_adi, is_signed, created_at FROM DATA_TeminBelge WHERE temin_dosya_id = ? ORDER BY id DESC',
           [numId]
         )
       ])
@@ -189,6 +189,7 @@ export function useDosyaInspectorData(dosyaOrId?: any, initialDosyaParam?: any) 
     const events = [
       'items:changed',
       'bids:changed',
+      'commissions:changed',
       'dossier:updated',
       'documents:changed',
       'workspace:refreshed'

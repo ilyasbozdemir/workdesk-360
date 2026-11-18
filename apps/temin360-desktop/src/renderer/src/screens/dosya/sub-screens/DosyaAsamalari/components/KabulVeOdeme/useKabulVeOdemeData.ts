@@ -6,9 +6,9 @@ import { FirmaStats, KabulTutanakItem, KomisyonUye } from './types'
 import { formatCurrency, formatDate } from '@renderer/utils/formatters'
 import { resolveCommissionCategory } from '@temin360/document-templates'
 import {
-  FaturaKayit,
-  calculateInvoiceFinancials
+  FaturaKayit
 } from '@renderer/screens/bkmybs-mali-yonetim/components/tabs/DosyalarVeFaturalariTab'
+import { calculateInvoiceFinancials } from '@renderer/screens/bkmybs-mali-yonetim/utils/invoiceFinancials'
 import { fetchCanonicalDossierPricing } from '../../../../../../services/dossier/dossierPriceSyncService'
 import { useAppEventListener } from '../../../../../../utils/appEvents'
 

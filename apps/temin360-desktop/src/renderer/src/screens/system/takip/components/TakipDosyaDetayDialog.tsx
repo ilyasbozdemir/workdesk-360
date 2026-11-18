@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  AlertCircle,
   Building,
   Calendar,
   CheckCircle2,
@@ -7,11 +8,16 @@ import {
   Clock,
   Edit,
   ExternalLink,
+  Eye,
   FileText,
   Hammer,
   Layers,
+  Lock,
   Package,
+  Sliders,
   Sparkles,
+  Trash2,
+  Unlock,
   Wrench,
   X,
 } from "lucide-react";
@@ -32,6 +38,16 @@ export interface TakipDosyaDetayDialogProps {
   onDosyaUpdated?: (
     updatedDosya: Partial<TeminDosyasi> & { id: number },
   ) => void;
+  // Extended action props (from DosyaActionMenu)
+  onGoToDetailTab?: (dosya: TeminDosyasi) => void;
+  handleOpenInNewWindow?: (dosya: TeminDosyasi) => void;
+  handleOpenMaliyetAyarlari?: (dosya: TeminDosyasi) => void;
+  handleOpenAI?: (dosya?: Partial<TeminDosyasi>) => void;
+  handleUpdateStatus?: (id: number, status: string) => Promise<void>;
+  handleEkapGonder?: (id: number) => void;
+  handleKilidiAc?: (id: number) => Promise<void>;
+  handleDelete?: (id: number) => Promise<void>;
+  handleHardDelete?: (id: number) => Promise<void>;
 }
 
 const STAGES = [
@@ -49,6 +65,15 @@ export function TakipDosyaDetayDialog({
   onEdit,
   onOpenSurec,
   onDosyaUpdated,
+  onGoToDetailTab,
+  handleOpenInNewWindow,
+  handleOpenMaliyetAyarlari,
+  handleOpenAI,
+  handleUpdateStatus,
+  handleEkapGonder,
+  handleKilidiAc,
+  handleDelete,
+  handleHardDelete,
 }: TakipDosyaDetayDialogProps): React.JSX.Element | null {
   const [overrideStage, setOverrideStage] = useState<number | null>(null);
   const [overrideStatus, setOverrideStatus] = useState<string | null>(null);
@@ -450,48 +475,183 @@ export function TakipDosyaDetayDialog({
             )}
           </div>
 
-          {/* RIGHT ACTION SIDEBAR (TRELLO STYLE) */}
-          <div className="w-full md:w-64 p-5 bg-slate-50/60 dark:bg-slate-950/40 space-y-5">
-            {/* Quick Actions */}
-            <div className="space-y-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block px-1">
-                İşlemler & Hızlı Erişim
+          {/* RIGHT ACTION SIDEBAR (TRELLO STYLE / DOSYA İŞLEM PANELİ) */}
+          <div className="w-full md:w-64 p-5 bg-slate-50/60 dark:bg-slate-950/40 space-y-4 overflow-y-auto">
+            {/* Primary Action Button */}
+            <button
+              type="button"
+              onClick={() => {
+                onOpenSurec(dosya);
+                onClose();
+              }}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <ChevronRight size={14} />
+                <span>Süreç Adımlarına Git</span>
+              </div>
+              <ChevronRight size={13} />
+            </button>
+
+            {/* Dosya İşlemleri Listesi (Görseldeki Menü Yapısı) */}
+            <div className="space-y-1 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-1.5 shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block px-2.5 py-1">
+                Dosya İşlemleri
               </span>
 
-              <button
-                type="button"
-                onClick={() => {
-                  onOpenSurec(dosya);
-                  onClose();
-                }}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <ExternalLink size={14} />
-                  <span>Süreç Adımlarına Git</span>
-                </div>
-                <ChevronRight size={13} />
-              </button>
+              {/* 1. Yeni Pencerede Aç */}
+              {handleOpenInNewWindow && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleOpenInNewWindow(dosya);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer text-left"
+                >
+                  <ExternalLink size={14} className="text-slate-400 shrink-0" />
+                  <span>Yeni Pencerede Aç</span>
+                </button>
+              )}
 
+              {/* 2. Düzenle */}
               <button
                 type="button"
                 onClick={() => {
                   onEdit(dosya.id);
                   onClose();
                 }}
-                className="w-full flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-750 dark:text-slate-200 border border-slate-200 dark:border-slate-800 text-xs font-bold transition-all cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer text-left"
               >
-                <Edit size={14} className="text-slate-500" />
-                <span>Dosyayı Düzenle</span>
+                <Edit size={14} className="text-slate-400 shrink-0" />
+                <span>Düzenle</span>
               </button>
+
+              {/* 3. Dosya Detayına Git (Mavi Vurgulu) */}
+              {onGoToDetailTab && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onGoToDetailTab(dosya);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-bold transition-all cursor-pointer text-left"
+                >
+                  <Eye size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span>Dosya Detayına Git</span>
+                </button>
+              )}
+
+              {/* 4. Yaklaşık Maliyet Ayarları */}
+              {handleOpenMaliyetAyarlari && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleOpenMaliyetAyarlari(dosya);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer text-left"
+                >
+                  <Sliders size={14} className="text-slate-400 shrink-0" />
+                  <span>Yaklaşık Maliyet Ayarları</span>
+                </button>
+              )}
+
+              {/* 5. Tamamlandı İşaretle */}
+              {handleUpdateStatus && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const nextStatus = currentStatus === "tamamlandi" ? "devam_ediyor" : "tamamlandi";
+                    await handleUpdateStatus(dosya.id, nextStatus);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-emerald-600 dark:text-emerald-400 text-xs font-semibold transition-all cursor-pointer text-left"
+                >
+                  <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                  <span>{currentStatus === "tamamlandi" ? "Devam Ediyora Al" : "Tamamlandı İşaretle"}</span>
+                </button>
+              )}
+
+              {/* 6. Dosyayı Kilitle (EKAP) */}
+              {(handleEkapGonder || handleKilidiAc) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if ((dosya as any).ekap_ikn) {
+                      handleKilidiAc?.(dosya.id);
+                    } else {
+                      handleEkapGonder?.(dosya.id);
+                    }
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-xs font-semibold transition-all cursor-pointer text-left"
+                >
+                  {(dosya as any).ekap_ikn ? (
+                    <Unlock size={14} className="text-amber-500 shrink-0" />
+                  ) : (
+                    <Lock size={14} className="text-indigo-500 shrink-0" />
+                  )}
+                  <span>{(dosya as any).ekap_ikn ? "Kilidi Aç" : "Dosyayı Kilitle (EKAP)"}</span>
+                </button>
+              )}
+
+              {/* 7. Yapay Zeka Asistanı */}
+              {handleOpenAI && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleOpenAI(dosya);
+                    onClose();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-600 dark:text-purple-400 text-xs font-semibold transition-all cursor-pointer text-left"
+                >
+                  <Sparkles size={14} className="text-purple-500 shrink-0" />
+                  <span>Yapay Zeka Asistanı</span>
+                </button>
+              )}
+
+              {/* Ayraç & Tehlikeli Bölge */}
+              {(handleDelete || handleHardDelete) && (
+                <div className="pt-1.5 mt-1.5 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                  {/* 8. İptal Et / Sil */}
+                  {handleDelete && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleDelete(dosya.id);
+                        onClose();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer text-left"
+                    >
+                      <Trash2 size={14} className="text-rose-500 shrink-0" />
+                      <span>İptal Et / Sil</span>
+                    </button>
+                  )}
+
+                  {/* 9. Kalıcı Olarak Sil */}
+                  {handleHardDelete && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleHardDelete(dosya.id);
+                        onClose();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-950/70 text-rose-700 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer text-left"
+                    >
+                      <AlertCircle size={14} className="text-rose-600 shrink-0" />
+                      <span>Kalıcı Olarak Sil</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Status Change Dropdown */}
-            <div className="space-y-2 pt-2 border-t border-slate-200/80 dark:border-slate-800">
+            {/* Dosya Durumu Seçimi */}
+            <div className="space-y-1.5 pt-2 border-t border-slate-200/80 dark:border-slate-800">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block px-1">
                 Dosya Durumu
               </span>
-
               <div className="space-y-1">
                 {[
                   { id: "devam_ediyor", label: "Devam Ediyor" },

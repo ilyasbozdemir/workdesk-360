@@ -12,12 +12,12 @@ export function getDogrudanTeminMenus(
       onClick: (): Promise<void> => navigate({ to: APP_ROUTES.TAKIP }),
       items: [
         {
-          label: '📋 Doğrudan Temin Süreç Takip Masası (Kanban & Liste)',
+          label: '📋 Dosya Detayları & Süreç Takibi (Kanban & Liste)',
           route: APP_ROUTES.TAKIP,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.TAKIP })
         },
         {
-          label: 'Tüm Doğrudan Temin Dosyaları',
+          label: '📁 Tüm Doğrudan Temin Dosyaları',
           route: APP_ROUTES.DOSYALAR,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.DOSYALAR })
         },
@@ -25,6 +25,11 @@ export function getDogrudanTeminMenus(
           label: '⚖️ Piyasa Fiyat Araştırmaları Masası',
           route: APP_ROUTES.PIYASA_FIYAT_ARASTIRMALARI_MASASI,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.PIYASA_FIYAT_ARASTIRMALARI_MASASI })
+        },
+        {
+          label: '👥 Komisyon Yönetimi & Personel Kadroları',
+          route: APP_ROUTES.KOMISYONLAR,
+          onClick: (): Promise<void> => navigate({ to: APP_ROUTES.KOMISYONLAR })
         },
         {
           label: '📋 İhtiyaç Raporları Havuzu (Genel)',
@@ -37,12 +42,12 @@ export function getDogrudanTeminMenus(
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.PROJELER })
         },
         {
-          label: 'Yeni Doğrudan Temin Dosyası',
+          label: '➕ Yeni Doğrudan Temin Dosyası',
           route: APP_ROUTES.YENI_DOSYA,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.YENI_DOSYA })
         },
         {
-          label: 'Hızlı Dosya Ekle / Güncelle',
+          label: '⚡ Toplu Hızlı Dosya Ekle / Güncelle',
           route: APP_ROUTES.HIZLI_DOSYA_EKLE,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.HIZLI_DOSYA_EKLE })
         },
@@ -50,11 +55,6 @@ export function getDogrudanTeminMenus(
           label: '📥 Harici Dosya Aktar (JSON)',
           route: APP_ROUTES.HARICI_DOSYA_AKTAR,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.HARICI_DOSYA_AKTAR })
-        },
-        {
-          label: 'Süreç Akış Haritası (Beta)',
-          route: APP_ROUTES.SUREC_AKISI,
-          onClick: (): Promise<void> => navigate({ to: APP_ROUTES.SUREC_AKISI })
         },
         {
           label: '📊 Harcama & Sayıştay Raporları',
@@ -69,7 +69,7 @@ export function getDogrudanTeminMenus(
             name: 'Süreç Yönetimi',
             items: [
               {
-                label: 'Süreç Takip & Durum Paneli',
+                label: '📋 Dosya Detayları & Durum Paneli',
                 onClick: (): Promise<void> => navigate({ to: APP_ROUTES.TAKIP })
               },
               {
@@ -81,19 +81,15 @@ export function getDogrudanTeminMenus(
                   })
               },
               {
-                label: '🧭 Süreç Akış Haritası (Beta - Tablar)',
-                onClick: (): Promise<void> => navigate({ to: APP_ROUTES.SUREC_AKISI })
-              },
-              {
-                label: 'Belge Çıktı Merkezi',
+                label: '📄 Belge Çıktı Merkezi',
                 onClick: (): Promise<void> => navigate({ to: APP_ROUTES.CIKTI_MERKEZI_DASHBOARD })
               },
               {
-                label: 'Hızlı Dosya Ekle / Güncelle',
-                onClick: (): Promise<void> => navigate({ to: APP_ROUTES.HIZLI_DOSYA_EKLE })
+                label: '👥 Bu Dosyanın Komisyon Kadrosu',
+                onClick: (): Promise<void> => navigate({ to: APP_ROUTES.KOMISYONLAR })
               },
               {
-                label: 'Şablon & Taslak Yöneticisi',
+                label: '📑 Şablon & Taslak Yöneticisi',
                 onClick: (): Promise<void> => navigate({ to: APP_ROUTES.TASLAK_YONETIM })
               },
               {
@@ -163,6 +159,95 @@ export function getDogrudanTeminMenus(
               to: APP_ROUTES.MEVZUAT,
               search: { tab: 'yi-ufe' } as Record<string, string>
             })
+        }
+      ]
+    }
+  ]
+}
+
+export function getFinanceMenus(navigate: NavigateFn): HeaderMenu[] {
+  return [
+    {
+      name: 'Mali Hizmetler (5018 & BKMYBS)',
+      onClick: (): Promise<void> => navigate({ to: APP_ROUTES.BKMYBS_MALI_YONETIM }),
+      items: [
+        {
+          label: '🏛️ 5018 Mali Yönetim Masası (Genel Bakış)',
+          route: APP_ROUTES.BKMYBS_MALI_YONETIM,
+          onClick: (): Promise<void> => navigate({ to: APP_ROUTES.BKMYBS_MALI_YONETIM })
+        },
+        {
+          label: '📋 Dosyalar ve Faturalar (Fatura & Kabul Kayıtları)',
+          onClick: (): Promise<void> =>
+            navigate({
+              to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+              search: { tab: 'fatura-arama' } as Record<string, string>
+            })
+        },
+        {
+          label: '💰 Bütçe & Ödenek Kontrol Masası',
+          onClick: (): Promise<void> =>
+            navigate({
+              to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+              search: { tab: 'butce-odenek' } as Record<string, string>
+            })
+        },
+        {
+          label: '📊 %10 KİK Doğrudan Temin Limit Kontrolü',
+          onClick: (): Promise<void> =>
+            navigate({
+              to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+              search: { tab: 'limit-kota' } as Record<string, string>
+            })
+        },
+        {
+          label: '🧾 Vergi, Damga Vergisi & Tevkifat Hesaplamaları',
+          onClick: (): Promise<void> =>
+            navigate({
+              to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+              search: { tab: 'vergi-kesinti' } as Record<string, string>
+            })
+        },
+        {
+          label: '📑 Muhasebe İşlem Fişi (MİF & ÖEB) Düzenleme',
+          onClick: (): Promise<void> =>
+            navigate({
+              to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+              search: { tab: 'mif-oeb' } as Record<string, string>
+            })
+        },
+        {
+          label: '🏦 Hakediş Masası & Ödeme Takibi',
+          onClick: (): Promise<void> =>
+            navigate({
+              to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+              search: { tab: 'hakedis' } as Record<string, string>
+            })
+        }
+      ]
+    },
+    {
+      name: 'Mali Mevzuat & Bütçe',
+      items: [
+        {
+          label: '5018 Sayılı Kamu Malî Yönetimi ve Kontrol Kanunu',
+          onClick: (): Promise<void> =>
+            navigate({
+              to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+              search: { tab: 'mevzuat-parametreler' } as Record<string, string>
+            })
+        },
+        {
+          label: 'Merkezi Yönetim Muhasebe Yönetmeliği',
+          onClick: (): Promise<void> =>
+            navigate({
+              to: APP_ROUTES.BKMYBS_MALI_YONETIM,
+              search: { tab: 'mevzuat-parametreler' } as Record<string, string>
+            })
+        },
+        {
+          label: '🧮 İhale & Kamu Maliyesi Hesaplama Araçları',
+          onClick: (): Promise<void> => navigate({ to: APP_ROUTES.HESAPLAMA_ARACLARI })
         }
       ]
     }

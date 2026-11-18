@@ -3,6 +3,8 @@
  * Aşama 7.1.3.1 Mimari Standartları
  */
 
+import { emitAppEvent } from '@renderer/utils/appEvents'
+
 export interface SeedCommissionOptions {
   mode?: 'initial' | 'missing_only' | 'replace'
   force?: boolean
@@ -408,6 +410,8 @@ export async function seedDossierCommission(
       throw new Error(txRes?.error || 'Transaction başarısız oldu')
     }
 
+    emitAppEvent('commissions:changed', { dosyaId })
+
     return { success: true, seededCount: insertCount }
   } catch (err: any) {
     console.error('seedDossierCommission error:', err)
@@ -605,6 +609,8 @@ export async function copyCommissionBetweenDossiers(
       throw new Error(txRes?.error || 'Transaction başarısız oldu')
     }
 
+    emitAppEvent('commissions:changed', { dosyaId: targetDosyaId })
+
     return { success: true, count: membersToCopy.length, fisNo }
   } catch (err: any) {
     console.error('copyCommissionBetweenDossiers error:', err)
@@ -730,6 +736,8 @@ export async function applyInstitutionalTemplateToDossier(
     if (!txRes?.success) {
       throw new Error(txRes?.error || 'Transaction başarısız oldu')
     }
+
+    emitAppEvent('commissions:changed', { dosyaId: targetDosyaId })
 
     return { success: true, count: defRes.data.length, fisNo }
   } catch (err: any) {
@@ -987,6 +995,8 @@ export async function applyCommissionToAllDossiers(
       throw new Error(txRes?.error || 'Toplu aktarım transaction hatası')
     }
 
+    emitAppEvent('commissions:changed', {})
+
     return {
       success: true,
       affectedDossiersCount: targetDosyalar.length,
@@ -1180,6 +1190,8 @@ export async function restoreCommissionFromHistoryFis(
     if (!txRes?.success) {
       throw new Error(txRes?.error || 'Fiş geri yükleme transaction hatası')
     }
+
+    emitAppEvent('commissions:changed', { dosyaId: targetDosyaId })
 
     return {
       success: true,

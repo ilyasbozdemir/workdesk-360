@@ -58,7 +58,7 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
     }
   }
 
-  const { institutionName, institutionLogo } = useSettingsStore()
+  const { institutionLogo } = useSettingsStore()
 
   const navItems =
     activeFinanceSection === 'financial-services'
@@ -81,22 +81,22 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
       </button>
 
       <div className="flex-1 p-3 overflow-y-auto space-y-4 min-h-0 custom-scrollbar">
-        {/* Logo ve Kurum Başlığı */}
+        {/* Mali Hizmetler & Muhasebe Başlığı (Kurum Adı Gösterilmez) */}
         <div className="flex items-center gap-2.5 px-2 py-2 border-b border-slate-100 dark:border-slate-800">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
             {institutionLogo ? (
               <img src={institutionLogo} alt="Logo" className="w-6 h-6 object-contain" />
             ) : (
-              <Building2 size={18} />
+              <Coins size={18} />
             )}
           </div>
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
-              <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                {institutionName || 'Kamu Kurumu'}
-              </div>
-              <div className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+              <div className="font-extrabold text-xs text-slate-900 dark:text-slate-100 truncate tracking-tight">
                 Mali Hizmetler &amp; Muhasebe
+              </div>
+              <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                5018 Mali Yönetim Masası
               </div>
             </div>
           )}

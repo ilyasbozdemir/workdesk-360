@@ -2,21 +2,14 @@
 import React, { useState } from "react";
 import {
   BookOpen,
-  Coins,
   Columns3,
-  Edit,
-  ExternalLink,
   FileText,
-  Layers,
   LayoutDashboard,
   Package,
-  Trash2,
   Users,
-  Workflow,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { APP_ROUTES } from "../../../constants/routeConstants";
-import { useTabStore } from "../../../store/tabStore";
 
 import { useTakip } from "./components/useTakip";
 import { TakipHeader, TakipViewMode } from "./components/TakipHeader";
@@ -37,10 +30,17 @@ import { DosyaNotlariWidget } from "../../notlar/components/DosyaNotlariWidget";
 import { DosyaInspectorView } from "../../dosyalar/components/inspector/DosyaInspectorView";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TeminDosyasi } from "../../dosyalar/dosyalar.hooks";
+import { useDosyalarHooks } from "../../dosyalar/dosyalar.hooks";
+import { groupUniqueCommissioners } from "../../../utils/commissionGrouping";
+import { dialogs } from "../../../components/ui/AlertDialogProvider";
+import { logActivity } from "../../../utils/logger";
+import { AITextGeneratorModal } from "../../../components/ui/AITextGeneratorModal";
+import { EkapIknModal } from "../../dosyalar/components/EkapIknModal";
+import { MaliyetAyarlariPopover } from "../../dosyalar/components/MaliyetAyarlariPopover";
+import { useWorkspaceStore } from "../../../store/workspaceStore";
 
 export function TakipScreen(): React.JSX.Element {
   const navigate = useNavigate();
-  const { addTab } = useTabStore();
   const {
     activeDosyaId,
     setActiveDosyaId,
@@ -80,6 +80,164 @@ export function TakipScreen(): React.JSX.Element {
   } = useTakip();
 
   const queryClient = useQueryClient();
+  const { hardDeleteDosya, deleteDosya, updateDosya } = useDosyalarHooks();
+  const { activeFilePath, activeMeta } = useWorkspaceStore();
+
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+
+  // Dışarı tıklandığında açık menüyü kapat
+  React.useEffect(() => {
+    const closeMenu = () => setOpenMenuId(null);
+    document.addEventListener("click", closeMenu);
+    return () => document.removeEventListener("click", closeMenu);
+  }, []);
+
+  // Yapay Zeka Danışmanı Modalı
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [selectedFileForAI, setSelectedFileForAI] = useState<Partial<TeminDosyasi> | null>(null);
+
+  const handleOpenAI = (dosya?: Partial<TeminDosyasi>) => {
+    setSelectedFileForAI(
+      dosya || activeDosya || {
+        konu: "Genel Mevzuat Danışmanlığı",
+        yaklasik_maliyet: 0,
+        temin_no: "Belirtilmemiş",
+      }
+    );
+    setShowAIModal(true);
+  };
+
+  // Yaklaşık Maliyet Ayarları Modalı
+  const [selectedDosyaForMaliyet, setSelectedDosyaForMaliyet] = useState<any | null>(null);
+
+  const handleOpenMaliyetAyarlari = (dosya: any) => {
+    setSelectedDosyaForMaliyet({ ...dosya });
+  };
+
+  const handleSaveMaliyetAyarlari = async () => {
+    if (!selectedDosyaForMaliyet) return;
+    let finalMaliyet = Number(selectedDosyaForMaliyet.yaklasik_maliyet) || 0;
+    const kdvRate = Number(selectedDosyaForMaliyet.kdv) || 0;
+    const isKdvDahil = Number(selectedDosyaForMaliyet.yaklasik_maliyet_kdv_dahil_mi) === 1;
+
+    if (isKdvDahil && kdvRate > 0) {
+      finalMaliyet = Number((finalMaliyet / (1 + kdvRate / 100)).toFixed(2));
+    }
+
+    await updateDosya({
+      id: selectedDosyaForMaliyet.id,
+      yaklasik_maliyet: finalMaliyet,
+      kdv: selectedDosyaForMaliyet.kdv,
+      yaklasik_maliyet_hesaplamasi: selectedDosyaForMaliyet.yaklasik_maliyet_hesaplamasi,
+      yaklasik_maliyet_kdv_dahil_mi: 0,
+    });
+    queryClient.invalidateQueries({ queryKey: ["temin_dosyalari"] });
+    setSelectedDosyaForMaliyet(null);
+  };
+
+  // EKAP Gönder / İptal Modalı
+  const [ekapModalOpen, setEkapModalOpen] = useState(false);
+  const [ekapInputVal, setEkapInputVal] = useState("");
+  const [ekapTargetId, setEkapTargetId] = useState<number | null>(null);
+
+  const handleEkapGonder = (id: number) => {
+    setEkapTargetId(id);
+    setEkapInputVal("");
+    setEkapModalOpen(true);
+  };
+
+  const handleEkapGonderSubmit = async () => {
+    if (!ekapTargetId) return;
+    await updateDosya({
+      id: ekapTargetId,
+      ekap_no: ekapInputVal,
+      is_ekap_sent: 1,
+    });
+    await logActivity(
+      "EKAP İptal / Kilit",
+      `Dosya EKAP üzerinden kilitlendi (İKN: ${ekapInputVal})`,
+      "info"
+    );
+    queryClient.invalidateQueries({ queryKey: ["temin_dosyalari"] });
+    setEkapModalOpen(false);
+    setEkapTargetId(null);
+  };
+
+  const handleKilidiAc = async (id: number) => {
+    const ok = await dialogs.confirm({
+      title: "Dosya Kilidini Aç",
+      message: "Dosyanın EKAP kilidini açmak istediğinize emin misiniz?",
+      variant: "warning",
+      confirmText: "Evet, Kilidi Aç",
+    });
+    if (ok) {
+      await updateDosya({ id, is_ekap_sent: 0 });
+      queryClient.invalidateQueries({ queryKey: ["temin_dosyalari"] });
+    }
+  };
+
+  // Durum Güncelle
+  const handleUpdateStatus = async (id: number, newStatus: string) => {
+    await updateDosya({ id, status: newStatus });
+    queryClient.invalidateQueries({ queryKey: ["temin_dosyalari"] });
+  };
+
+  // Yeni Pencerede Aç
+  const handleOpenInNewWindowCustom = (dosya: TeminDosyasi) => {
+    if (!dosya) return;
+    const wpParam = activeFilePath ? `&wp=${encodeURIComponent(activeFilePath)}` : "";
+    window.electron?.ipcRenderer.send("window:open-secondary", {
+      path: "/dosyalar",
+      search: `?id=${dosya.id}&mode=window${wpParam}`,
+      title: `DT: ${dosya.konu}`,
+    });
+  };
+
+  // Kalıcı Sil (Hard Delete)
+  const handleHardDelete = async (id: number) => {
+    const ok = await dialogs.confirm({
+      title: "Kalıcı Olarak Sil",
+      message:
+        "DİKKAT: Bu dosyayı veritabanından KALICI OLARAK SİLMEK istediğinize emin misiniz? Bu işlem geri alınamaz!",
+      variant: "danger",
+      confirmText: "Evet, Kalıcı Olarak Sil",
+    });
+    if (ok) {
+      try {
+        await hardDeleteDosya(id);
+        if (activeDosyaId === id) setActiveDosyaId(null);
+        queryClient.invalidateQueries({ queryKey: ["temin_dosyalari"] });
+      } catch (error: any) {
+        let errorMsg = error?.message || "Bilinmeyen bir hata oluştu.";
+        if (errorMsg.includes("FOREIGN KEY") || errorMsg.includes("CONSTRAINT")) {
+          errorMsg =
+            "Bu dosyayı silemezsiniz çünkü bu dosyaya bağlı alt kayıtlar (fatura, komisyon üyeleri, yüklenen evraklar vb.) mevcut. Dosyayı kalıcı olarak silebilmek için önce o kayıtları silmeniz gerekmektedir.\n\nTeknik Hata: " +
+            errorMsg;
+        }
+        await dialogs.alert({
+          title: "Silme İşlemi Başarısız",
+          message: errorMsg,
+          variant: "danger",
+        });
+      }
+    }
+  };
+
+  // Kart / Liste üzerinden Sil (Soft Delete)
+  const handleDeleteDosyaItem = async (id: number) => {
+    const ok = await dialogs.confirm({
+      title: "Dosyayı İptal Et",
+      message:
+        'Bu dosyayı iptal etmek istediğinize emin misiniz? Dosya listelerde "İptal Edildi" olarak işaretlenecektir.',
+      variant: "warning",
+      confirmText: "Evet, İptal Et",
+    });
+    if (ok) {
+      await deleteDosya(id);
+      if (activeDosyaId === id) setActiveDosyaId(null);
+      queryClient.invalidateQueries({ queryKey: ["temin_dosyalari"] });
+    }
+  };
 
   // Ana Görünüm Modu: Kullanıcının son seçtiği görünüm (localStorage ile korunur)
   const [viewMode, setViewModeState] = useState<TakipViewMode>(() => {
@@ -114,24 +272,37 @@ export function TakipScreen(): React.JSX.Element {
     }
   }, [viewMode, activeDosyaId, dosyalar, setActiveDosyaId]);
 
-  // Dosya Künyesi veya üst bardan Dosya Detayı'na geçildiğinde doğrudan detay modunu aç
+  // Üst bardan veya dış bağlantıdan Dosya Detayı'na geçildiğinde detay modunu ve detay sekmesini aç
   React.useEffect(() => {
     const handleViewModeChanged = (e: Event) => {
-      const custom = e as CustomEvent<{ mode?: TakipViewMode; dosyaId?: number }>;
+      const custom = e as CustomEvent<
+        {
+          mode?: TakipViewMode;
+          dosyaId?: number;
+          tab?: "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat";
+        }
+      >;
       if (custom.detail?.dosyaId) {
         setActiveDosyaId(custom.detail.dosyaId);
       }
       if (custom.detail?.mode) {
-        setViewModeState(custom.detail.mode);
+        setViewMode(custom.detail.mode);
+      }
+      if (custom.detail?.tab) {
+        setActiveTab(custom.detail.tab);
+      } else if (custom.detail?.mode === "detay") {
+        setActiveTab("kunye");
       }
     };
     window.addEventListener("takip:view-mode-changed", handleViewModeChanged);
     return () => {
-      window.removeEventListener("takip:view-mode-changed", handleViewModeChanged);
+      window.removeEventListener(
+        "takip:view-mode-changed",
+        handleViewModeChanged,
+      );
     };
   }, [setActiveDosyaId]);
 
-  // Trello Benzeri Kart Detay Dialog'u State'i
   const [selectedDetailDosya, setSelectedDetailDosya] = useState<
     TeminDosyasi | null
   >(null);
@@ -212,6 +383,10 @@ export function TakipScreen(): React.JSX.Element {
     "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat"
   >("ozet");
 
+  const uniqueCommissionCount = React.useMemo(() => {
+    return groupUniqueCommissioners(komisyonlar).uniqueCount;
+  }, [komisyonlar]);
+
   const tabs = [
     {
       id: "ozet",
@@ -221,7 +396,7 @@ export function TakipScreen(): React.JSX.Element {
     },
     {
       id: "kunye",
-      label: "Dosya Künyesi & Tüm Veriler",
+      label: "Dosya Detayı & Parametreler",
       icon: FileText,
       badge: null,
     },
@@ -235,7 +410,7 @@ export function TakipScreen(): React.JSX.Element {
       id: "komisyon",
       label: "Yetkili & Komisyon Detayları",
       icon: Users,
-      badge: komisyonlar.length > 0 ? komisyonlar.length : null,
+      badge: uniqueCommissionCount > 0 ? uniqueCommissionCount : null,
     },
     {
       id: "mevzuat",
@@ -260,6 +435,8 @@ export function TakipScreen(): React.JSX.Element {
           onEditClick={handleEditDosya}
           activeView={viewMode}
           setActiveView={setViewMode}
+          onOpenAI={() => handleOpenAI()}
+          onGoToDetayTab={() => setActiveTab("kunye")}
           onOpenWizard={() => {
             navigate({
               to: APP_ROUTES.YENI_DOSYA,
@@ -301,6 +478,16 @@ export function TakipScreen(): React.JSX.Element {
             setSelectedYil={setSelectedYil}
             selectedTur={selectedTur}
             setSelectedTur={setSelectedTur}
+            openMenuId={openMenuId}
+            setOpenMenuId={setOpenMenuId}
+            handleOpenInNewWindow={handleOpenInNewWindowCustom}
+            handleUpdateStatus={handleUpdateStatus}
+            handleEkapGonder={handleEkapGonder}
+            handleKilidiAc={handleKilidiAc}
+            handleOpenAI={handleOpenAI}
+            handleDelete={handleDeleteDosyaItem}
+            handleHardDelete={handleHardDelete}
+            handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
           />
         </div>
       )}
@@ -338,6 +525,16 @@ export function TakipScreen(): React.JSX.Element {
               search: { initialStage: 1 },
             });
           }}
+          openMenuId={openMenuId}
+          setOpenMenuId={setOpenMenuId}
+          handleOpenInNewWindow={handleOpenInNewWindowCustom}
+          handleUpdateStatus={handleUpdateStatus}
+          handleEkapGonder={handleEkapGonder}
+          handleKilidiAc={handleKilidiAc}
+          handleOpenAI={handleOpenAI}
+          handleDelete={handleDeleteDosyaItem}
+          handleHardDelete={handleHardDelete}
+          handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
         />
       )}
 
@@ -374,6 +571,16 @@ export function TakipScreen(): React.JSX.Element {
               search: { initialStage: 1 },
             });
           }}
+          openMenuId={openMenuId}
+          setOpenMenuId={setOpenMenuId}
+          handleOpenInNewWindow={handleOpenInNewWindowCustom}
+          handleUpdateStatus={handleUpdateStatus}
+          handleEkapGonder={handleEkapGonder}
+          handleKilidiAc={handleKilidiAc}
+          handleOpenAI={handleOpenAI}
+          handleDelete={handleDeleteDosyaItem}
+          handleHardDelete={handleHardDelete}
+          handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
         />
       )}
 
@@ -566,7 +773,6 @@ export function TakipScreen(): React.JSX.Element {
         />
       )}
 
-      {/* TRELLO BENZERI KART DETAY DIALOG'U */}
       <TakipDosyaDetayDialog
         isOpen={isDetailModalOpen}
         onClose={handleCloseDetailModal}
@@ -584,6 +790,67 @@ export function TakipScreen(): React.JSX.Element {
           navigate({ to: route });
         }}
         onDosyaUpdated={handleDosyaUpdatedInModal}
+        onGoToDetailTab={(d) => {
+          handleCloseDetailModal();
+          setActiveDosyaId(d.id);
+          setViewMode("detay");
+          setActiveTab("kunye");
+        }}
+        handleOpenInNewWindow={handleOpenInNewWindowCustom}
+        handleOpenMaliyetAyarlari={handleOpenMaliyetAyarlari}
+        handleOpenAI={handleOpenAI}
+        handleUpdateStatus={handleUpdateStatus}
+        handleEkapGonder={handleEkapGonder}
+        handleKilidiAc={handleKilidiAc}
+        handleDelete={handleDeleteDosyaItem}
+        handleHardDelete={handleHardDelete}
+      />
+
+      {showAIModal && selectedFileForAI && (
+        <AITextGeneratorModal
+          isOpen={true}
+          isAdvisorMode={true}
+          fieldName="Mevzuat Analizi"
+          title="Yapay Zeka Asistanı"
+          initialPrompt=""
+          systemInstruction={
+            selectedFileForAI.konu === 'Genel Mevzuat Danışmanlığı'
+              ? 'Sen profesyonel bir kamu ihale ve doğrudan temin (4734 Sayılı Kanun) asistanısın. Kullanıcıya genel mevzuat veya idari işleyiş hakkında rehberlik edeceksin.\n\nÖNEMLİ GİZLİLİK KURALI: Gerçek kurum veya kişi isimlerini maskele.'
+              : `Sen profesyonel bir kamu ihale ve doğrudan temin (4734 Sayılı Kanun) asistanısın. Kullanıcı sana sistemdeki bir dosyası hakkında danışacak.\n\nŞu anki Aktif Dosya Bilgileri:\n- Dosya No: [DOSYA_NO]\n- Konu: [DOSYA_KONU]\n- Maliyet: [DOSYA_MALIYET]\n- İhale Şekli (Madde): [DOSYA_IHALE_SEKLI]\n\nÖNEMLİ GİZLİLİK KURALI: Gerçek kurum, şahıs isimleri veya adresleri [Kurum Adı], [İlgili Kişi] şeklinde maskele. Eğer dosyayla ilgili analiz veya rehberlik yaparken dosya numarası, konu, maliyet veya ihale şeklinden bahsedeceksen kesinlikle [DOSYA_NO], [DOSYA_KONU], [DOSYA_MALIYET], [DOSYA_IHALE_SEKLI] şeklinde olan bu yer tutucuları aynen koru, gerçek veriyi asla kullanma.`
+          }
+          placeholderMappings={{
+            '[DOSYA_NO]': selectedFileForAI.temin_no || 'Belirtilmemiş',
+            '[DOSYA_KONU]': selectedFileForAI.konu || 'Belirtilmemiş',
+            '[DOSYA_MALIYET]':
+              (selectedFileForAI.yaklasik_maliyet || 0).toLocaleString('tr-TR') + ' TL',
+            '[DOSYA_IHALE_SEKLI]': selectedFileForAI.ihale_sekli || 'Belirtilmemiş',
+            '[KURUM_ADI]': activeMeta?.institution || 'Belirtilmemiş',
+            '[BIRIM_ADI]': (selectedFileForAI as any).birim_adi || 'Belirtilmemiş'
+          }}
+          onClose={() => {
+            setShowAIModal(false)
+            setSelectedFileForAI(null)
+          }}
+          onApply={(text) => {
+            console.log('AI tavsiyesi:', text)
+            setShowAIModal(false)
+            setSelectedFileForAI(null)
+          }}
+        />
+      )}
+
+      <EkapIknModal
+        isOpen={ekapModalOpen}
+        inputVal={ekapInputVal}
+        setInputVal={setEkapInputVal}
+        onClose={() => setEkapModalOpen(false)}
+        onSubmit={handleEkapGonderSubmit}
+      />
+
+      <MaliyetAyarlariPopover
+        selectedDosya={selectedDosyaForMaliyet}
+        setSelectedDosya={setSelectedDosyaForMaliyet}
+        onSave={handleSaveMaliyetAyarlari}
       />
     </div>
   );

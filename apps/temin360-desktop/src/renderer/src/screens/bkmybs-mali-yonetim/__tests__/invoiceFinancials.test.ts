@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateInvoiceFinancials } from '../components/tabs/DosyalarVeFaturalariTab'
+import { calculateInvoiceFinancials } from '../utils/invoiceFinancials'
 
 describe('calculateInvoiceFinancials - Mali ve KDV Doğruluk Testleri', () => {
   it('%0 KDV durumunda matrah brüt tutara eşit olmalı ve KDV tutarı 0 çıkmalıdır', () => {

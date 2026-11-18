@@ -125,9 +125,6 @@ const DevletIhale2886Screen = lazyRoute(() =>
 const HesaplamaAraclariScreen = lazyRoute(() =>
   import("./screens/araclar/HesaplamaAraclariScreen")
 );
-const DTSurecAkisiScreen = lazyRoute(() =>
-  import("./screens/system/DTSurecAkisiScreen")
-);
 const TakipScreen = lazyRoute(
   () => import("./screens/system/TakipScreen"),
   "TakipScreen",
@@ -308,13 +305,6 @@ const komisyonGorevleriRoute = createRoute({
   component: KomisyonGorevleriScreen,
 });
 
-// Dynamic routes
-const surecAkisiRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: APP_ROUTES.SUREC_AKISI,
-  component: DTSurecAkisiScreen,
-});
-
 const takipRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.TAKIP,
@@ -479,7 +469,7 @@ const profilRoute = createRoute({
 
 const dosyaRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/dosya',
+  path: "/dosya",
   component: () => <Navigate to={APP_ROUTES.TAKIP} replace />,
 });
 
@@ -678,7 +668,6 @@ const routeTree = rootRoute.addChildren([
   hakedisRoute,
   notlarRoute,
   playgroundRoute,
-  surecAkisiRoute,
   yardimRoute,
   hesaplamaAraclariRoute,
   ebysRoute,
