@@ -27,7 +27,7 @@ export async function fetchSiparisVeSozlesmeData(
     'db:query',
     `SELECT d.firma_id, d.yaklasik_maliyet, d.teslim_tarihi, d.teslim_gun,
             d.teklif_sozlesme_turu, d.sozlesme_yapilacak_mi, d.sablon_tercihleri,
-            d.ihale_usulu, d.ihale_sekli, d.tedarik_sekli, d.tur
+            d.ihale_sekli, d.tur
      FROM DATA_TeminDosyasi d
      WHERE d.id = ?`,
     [activeDosyaId]
