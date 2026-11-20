@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, FileSpreadsheet } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, FileSpreadsheet, Files } from 'lucide-react'
 import { useCiktiMerkeziData } from '../../screens/dosya/CiktiMerkezi.hooks'
 import { useQuery } from '@tanstack/react-query'
 import { useWorkspaceStore } from '../../store/workspaceStore'
@@ -195,6 +195,36 @@ export function ActiveFileSidebar(): React.JSX.Element | null {
           title={isCollapsed ? 'Genişlet' : 'Daralt'}
         >
           {isCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </button>
+      </div>
+
+      {/* Quick Action: Dosya Evrak Akışı & İnceleme */}
+      <div className="p-2 pb-0 shrink-0">
+        <button
+          onClick={() =>
+            navigate({
+              to: APP_ROUTES.DOSYA_EVRAK_AKISI as never
+            })
+          }
+          className={cn(
+            'w-full flex items-center gap-2.5 p-2 rounded-xl text-left transition-all duration-200 border cursor-pointer group',
+            router.location.pathname === APP_ROUTES.DOSYA_EVRAK_AKISI
+              ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 text-blue-700 dark:text-blue-300 font-bold'
+              : 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200/60 dark:border-blue-900/40 text-blue-700 dark:text-blue-400 hover:bg-blue-100/60'
+          )}
+          title="Dosya İçeriği & Evrak İnceleme Ekranı"
+        >
+          <div className="w-6 h-6 rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <Files className="w-3.5 h-3.5" />
+          </div>
+          {!isCollapsed && (
+            <div className="flex-1 min-w-0 pr-1">
+              <div className="text-xs truncate font-bold">Evrak Akışı & İnceleme</div>
+              <div className="text-[10px] text-blue-600/70 dark:text-blue-400/70 truncate">
+                Tüm Dosya Belgeleri
+              </div>
+            </div>
+          )}
         </button>
       </div>
 

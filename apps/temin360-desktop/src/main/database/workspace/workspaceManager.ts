@@ -195,6 +195,51 @@ export const workspaceManager = {
       return true
     }
     return false
+  },
+  readAttachmentBase64: async (relativePath: string) => {
+    if (!activeWorkspace) throw new Error('Açık bir çalışma dosyası yok.')
+    if (typeof relativePath !== 'string' || !relativePath.trim()) {
+      throw new Error('Geçersiz ek dosya yolu.')
+    }
+    const tempDir = (activeWorkspace as any).tempDir
+    if (!tempDir) throw new Error('Geçici çalışma dizini bulunamadı.')
+
+    const resolvedTemp = path.resolve(tempDir)
+    const fullPath = path.resolve(tempDir, relativePath)
+    if (fullPath !== resolvedTemp && !fullPath.startsWith(resolvedTemp + path.sep)) {
+      throw new Error('Geçersiz dosya yolu (path traversal engellendi).')
+    }
+
+    if (fs.existsSync(fullPath) && fs.statSync(fullPath).isFile()) {
+      const buffer = fs.readFileSync(fullPath)
+      const base64 = buffer.toString('base64')
+      const ext = path.extname(fullPath).toLowerCase().replace('.', '')
+      const mimeType =
+        ext === 'pdf'
+          ? 'application/pdf'
+          : ext === 'png'
+            ? 'image/png'
+            : ext === 'jpg' || ext === 'jpeg'
+              ? 'image/jpeg'
+              : 'application/octet-stream'
+      return { base64, mimeType, size: buffer.length, fileName: path.basename(fullPath) }
+    }
+    // Destek: Eğer relativePath tam mutlak bir dosya yolu ise ve mevcutsa
+    if (path.isAbsolute(relativePath) && fs.existsSync(relativePath) && fs.statSync(relativePath).isFile()) {
+      const buffer = fs.readFileSync(relativePath)
+      const base64 = buffer.toString('base64')
+      const ext = path.extname(relativePath).toLowerCase().replace('.', '')
+      const mimeType =
+        ext === 'pdf'
+          ? 'application/pdf'
+          : ext === 'png'
+            ? 'image/png'
+            : ext === 'jpg' || ext === 'jpeg'
+              ? 'image/jpeg'
+              : 'application/octet-stream'
+      return { base64, mimeType, size: buffer.length, fileName: path.basename(relativePath) }
+    }
+    return null
   }
 }
 

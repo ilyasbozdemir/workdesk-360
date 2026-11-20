@@ -262,4 +262,14 @@ export function registerWorkspaceIpcHandlers(closeAllSecondaryWindows: () => voi
       return { success: false, error: error.message }
     }
   })
+
+  ipcMain.handle('workspace:read-attachment-base64', async (_, relativePath: string) => {
+    try {
+      const data = await workspaceManager.readAttachmentBase64(relativePath)
+      return { success: true, data }
+    } catch (error: any) {
+      console.error('Read attachment base64 error:', error)
+      return { success: false, error: error.message }
+    }
+  })
 }

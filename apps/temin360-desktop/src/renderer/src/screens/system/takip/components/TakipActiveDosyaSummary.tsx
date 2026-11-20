@@ -14,6 +14,7 @@ import {
   FileCheck,
   FileSpreadsheet,
   FileText,
+  Files,
   Layers,
   MoreVertical,
   Printer,
@@ -484,6 +485,24 @@ export function TakipActiveDosyaSummary({
                 </p>
               </div>
               <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-purple-500 dark:text-slate-600" />
+            </Link>
+
+            <Link
+              to="/dosya/evrak-akisi"
+              className="group flex min-w-0 items-start gap-3 rounded-xl border border-slate-200/80 bg-white p-3 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-50/60 dark:border-slate-700/70 dark:bg-slate-900/40 dark:hover:border-blue-800 dark:hover:bg-blue-950/20"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 transition-colors group-hover:bg-blue-100 dark:bg-blue-950/40 dark:group-hover:bg-blue-900/40">
+                <Files className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                  Evrak Akışı & İnceleme
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                  Dosyadaki tüm belgeleri ve imzalı evrakları tek ekranda inceleyin
+                </p>
+              </div>
+              <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-blue-500 dark:text-slate-600" />
             </Link>
 
             <Link
