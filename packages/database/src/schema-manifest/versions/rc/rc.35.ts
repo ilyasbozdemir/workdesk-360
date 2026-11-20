@@ -1,7 +1,7 @@
 /* eslint-disable */
 /**
  * RC SÜRÜM ŞEMA MANİFESTİ (1.0.0-rc.35)
- * Bu dosya 1.0.0-current.yaml dosyasından otomatik derlenir.
+ * Bu dosya yaml/rc/1.0.0-rc.35.yaml dosyasından otomatik derlenir.
  */
 export default {
   app: "1.0.0-current",
