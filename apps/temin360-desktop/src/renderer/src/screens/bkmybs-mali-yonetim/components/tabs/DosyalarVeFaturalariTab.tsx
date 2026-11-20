@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { KamuRole } from "../../types";
 import { formatCurrency, formatDate } from "@renderer/utils/formatters";
+import { CurrencyInput } from "@renderer/components/ui/CurrencyInput";
 import { useWorkspaceStore } from "@renderer/store/workspaceStore";
 import { useWorkspaceContextStore } from "@renderer/store/workspaceContextStore";
 import { useTabStore } from "@renderer/store/tabStore";
@@ -293,13 +294,11 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
             : 20;
 
           const isDosyaSozlesmeli = Boolean(
-            d.sozlesme_yapilacak_mi ||
-              d.sozlesme_turu ||
-              d.sozlesme_bedeli ||
-              (f as any).sozlesmeDamgaVergisiUygula,
+            Number(d.sozlesme_yapilacak_mi) === 1 ||
+              d.sozlesme_yapilacak_mi === true,
           );
 
-          // Sözleşmesiz dosyalarda varsayılan olarak damga vergisi uygulanmaz (0,00 ₺ Muaf)
+          // Sözleşmesiz dosyalarda 488 sayılı Kanun uyarınca damga vergisi uygulanmaz (0,00 ₺ Muaf)
           const dvUygula = (f as any).damgaVergisiUygula !== undefined
             ? Boolean((f as any).damgaVergisiUygula)
             : isDosyaSozlesmeli;
@@ -364,6 +363,8 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
             kaynak: "mali_giris",
             pdfPath: f.pdfPath || f.pdf_path,
             pdfAdi: f.pdfAdi || f.pdf_adi,
+            damgaVergisiUygula: f.damgaVergisiUygula,
+            sozlesmeDamgaVergisiUygula: f.sozlesmeDamgaVergisiUygula,
             tutanakNo: f.tutanakNo,
             tutanakTarihi: f.tutanakTarihi,
             irsaliyeNo: f.irsaliyeNo,
@@ -672,8 +673,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     );
     const isSozlesmeli = Boolean(
       dosya.sozlesmeYapilacakMi ||
-      (dosya as any).sozlesme_yapilacak_mi ||
-      (dosya as any).sozlesmeTuru
+      Number((dosya as any).sozlesme_yapilacak_mi) === 1
     );
     setFormDamgaVergisiUygula(isSozlesmeli);
     setFormSozlesmeDamgaUygula(isSozlesmeli);
@@ -706,8 +706,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormAciklama(fatura.aciklama || "");
     const isSozlesmeli = Boolean(
       dosya.sozlesmeYapilacakMi ||
-      (dosya as any).sozlesme_yapilacak_mi ||
-      (dosya as any).sozlesmeTuru
+      Number((dosya as any).sozlesme_yapilacak_mi) === 1
     );
     setFormDamgaVergisiUygula(
       fatura.damgaVergisiUygula !== undefined
@@ -2397,14 +2396,11 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                         Fatura Tutarı (Brüt ₺) *
                       </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        required
+                      <CurrencyInput
                         value={formFaturaTutar}
-                        onChange={(e) =>
-                          setFormFaturaTutar(Number(e.target.value))}
-                        className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                        onChange={(val) => setFormFaturaTutar(val)}
+                        placeholder="0,00"
+                        required
                       />
                     </div>
 

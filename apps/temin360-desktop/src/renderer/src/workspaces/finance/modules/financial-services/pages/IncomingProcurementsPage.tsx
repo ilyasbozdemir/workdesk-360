@@ -22,6 +22,7 @@ import {
   RotateCcw
 } from 'lucide-react'
 import { formatCurrency } from '@renderer/utils/formatters'
+import { CurrencyInput } from '@renderer/components/ui/CurrencyInput'
 import { useWorkspaceStore } from '@renderer/store/workspaceStore'
 import { useGlobalDocumentPreviewStore } from '@renderer/store/globalDocumentPreviewStore'
 import { useWorkspaceContextStore } from '@renderer/store/workspaceContextStore'
@@ -548,11 +549,10 @@ export const IncomingProcurementsPage: React.FC = () => {
                     <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       Fatura Brüt Tutarı (TL):
                     </label>
-                    <input
-                      type="number"
+                    <CurrencyInput
                       value={faturaTutar}
-                      onChange={(e) => handleFaturaTutarChange(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-2 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-100"
+                      onChange={(val) => handleFaturaTutarChange(val || 0)}
+                      placeholder="0,00"
                     />
                   </div>
                 </div>
@@ -569,12 +569,10 @@ export const IncomingProcurementsPage: React.FC = () => {
                     <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       Ödeme Emri DV (‰ 9,48):
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
+                    <CurrencyInput
                       value={damgaVergisi}
-                      onChange={(e) => setDamgaVergisi(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-rose-600 dark:text-rose-400"
+                      onChange={(val) => setDamgaVergisi(val || 0)}
+                      placeholder="0,00"
                     />
                   </div>
 
@@ -582,13 +580,11 @@ export const IncomingProcurementsPage: React.FC = () => {
                     <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       Sözleşme DV ({selectedItem.sozlesmeYapilacakMi ? '‰ 9,48 Sözleşmeli' : 'Sözleşmesiz'}):
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
+                    <CurrencyInput
                       value={sozlesmeDamgaVergisi}
                       disabled={!selectedItem.sozlesmeYapilacakMi}
-                      onChange={(e) => setSozlesmeDamgaVergisi(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-rose-600 dark:text-rose-400 disabled:opacity-50"
+                      onChange={(val) => setSozlesmeDamgaVergisi(val || 0)}
+                      placeholder="0,00"
                     />
                   </div>
 
@@ -596,12 +592,10 @@ export const IncomingProcurementsPage: React.FC = () => {
                     <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       KDV Tevkifatı (Varsa):
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
+                    <CurrencyInput
                       value={kdvTevkifat}
-                      onChange={(e) => setKdvTevkifat(Number(e.target.value) || 0)}
-                      className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-rose-600 dark:text-rose-400"
+                      onChange={(val) => setKdvTevkifat(val || 0)}
+                      placeholder="0,00"
                     />
                   </div>
                 </div>
