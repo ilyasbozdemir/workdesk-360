@@ -69,7 +69,10 @@ export function Step2FiyatlarVeKazanan({
           <span>1. Adıma Dön (İstekliler & Dağıtım)</span>
         </button>
 
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-xs font-bold text-slate-700 dark:text-slate-300">
+        <div
+          className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-help"
+          title="2. Adım: İhtiyaç kalemlerinin birim fiyatları girildikçe teklif tutarı 0,00 ₺'nin üzerine çıkan firmalar otomatik 'Teklif Veren Firma' statüsüne geçer."
+        >
           <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[11px] font-black">2</span>
           <span>Fiyatlar & Kazanan Tespiti</span>
           {lowestBidFirm && (

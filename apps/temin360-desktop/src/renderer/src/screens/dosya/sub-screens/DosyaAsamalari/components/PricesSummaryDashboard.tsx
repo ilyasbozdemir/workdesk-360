@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock,
+  Info,
   Plus,
   Settings,
   Trophy,
@@ -97,7 +98,10 @@ export function PricesSummaryDashboard({
       {/* İSTEKLİ & TEKLİF KATILIM ÖZETİ BARI */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs">
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs cursor-help transition-all hover:border-blue-300"
+            title="1. Adımda dosyaya eklenen istekli sayısı. Mektup ve boş teklif cetveli dağıtılan firmaları ifade eder."
+          >
             <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
               Davet Edilen:
@@ -107,7 +111,15 @@ export function PricesSummaryDashboard({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs">
+          <div
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-xl border shadow-2xs cursor-help transition-all",
+              submittedFirmsCount === totalInvitedCount && totalInvitedCount > 0
+                ? "bg-emerald-50/90 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200"
+                : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-300"
+            )}
+            title="Mektup dağıtılan firmalardan teklifi teslim alınıp birim fiyatları girilen (teklif tutarı 0,00 ₺'nin üzerinde olan) firma sayısı. 3 firmanın tamamı fiyat verdiğinde yeşil rozet ile kesinleşir."
+          >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
               Teklif Veren:
@@ -118,7 +130,10 @@ export function PricesSummaryDashboard({
           </div>
 
           {pendingFirmsCount > 0 && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 shadow-2xs">
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 shadow-2xs cursor-help transition-all hover:border-amber-400"
+              title="Davet edildiği halde henüz fiyat girişi yapılmamış firma sayısı. Örneğin 1 firma henüz fiyat vermemişse sarı uyarı rozeti olarak gösterilir."
+            >
               <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span className="text-[11px] font-bold text-amber-800 dark:text-amber-200">
                 Fiyat Beklenen:
@@ -144,6 +159,38 @@ export function PricesSummaryDashboard({
           )}
         </div>
       </div>
+
+      {/* TEKLİF STATÜSÜ & SÜREÇ REHBERİ (Açıklayıcı Başlık & Uyarı Kartı) */}
+      {pendingFirmsCount > 0 ? (
+        <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 text-xs text-amber-900 dark:text-amber-200 shadow-2xs">
+          <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-extrabold text-amber-900 dark:text-amber-200 text-xs">
+                Teklif Veren Statüsü (Nasıl Değişir?)
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 text-[10px] font-bold border border-amber-300/40">
+                Fiyat Bekleniyor: {pendingFirmsCount} Firma
+              </span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-amber-800/90 dark:text-amber-300/90 font-medium">
+              Firmalara dağıtılan mektuplara istinaden firmalar tekliflerini idareye sunduğunda; aşağıdaki tabloda ilgili firmanın birim fiyatlarını giriniz. Bir firmanın fiyatları girilip teklif tutarı <strong>0,00 ₺&apos;nin üzerine çıktığı anda</strong>, program o firmayı otomatik olarak <strong>&quot;Teklif Veren Firma&quot;</strong> statüsüne geçirir. Tüm firmalar fiyat girdiğinde yeşil rozet ile katılım tamamlanacak ve en uygun teklif sahibi kesinleşecektir.
+            </p>
+          </div>
+        </div>
+      ) : totalInvitedCount > 0 ? (
+        <div className="flex items-center justify-between gap-3 p-3 px-4 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-xs text-emerald-900 dark:text-emerald-200 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-200">
+              <strong>Tam Katılım Sağlandı:</strong> Davet edilen {totalInvitedCount} firmanın tamamının teklif tutarları 0,00 ₺&apos;nin üzerindedir ({submittedFirmsCount} Firma Teklif Veren - Yeşil Rozet).
+            </span>
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 shrink-0">
+            Piyasa Fiyatı Hazır
+          </span>
+        </div>
+      ) : null}
 
       {/* Firm totals summary card grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -192,6 +239,23 @@ export function PricesSummaryDashboard({
                 </div>
 
                 <div className="flex flex-wrap gap-1.5 mb-3">
+                  {total > 0 ? (
+                    <span
+                      className="inline-flex items-center gap-1 text-[9px] font-black bg-blue-100/80 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-2 py-0.5 rounded-md border border-blue-500/25"
+                      title="Firmaya ait birim fiyatlar girilmiş olup teklif tutarı 0,00 ₺'nin üzerindedir. Statü: Teklif Veren Firma."
+                    >
+                      <CheckCircle2 className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
+                      Teklif Veren
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-flex items-center gap-1 text-[9px] font-bold bg-amber-100/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/25"
+                      title="Teklif isteme mektubu dağıtıldı. İdarenize sunduğu teklif birim fiyatlarını aşağıdaki tablodan giriniz; tutar 0,00 ₺'nin üzerine çıktığı anda otomatik 'Teklif Veren' olacaktır."
+                    >
+                      <Clock className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+                      Fiyat Bekleniyor
+                    </span>
+                  )}
                   {isSelectedWinner && (
                     <span className="inline-flex items-center gap-1 text-[9px] font-black bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md border border-amber-500/25">
                       <Trophy className="w-2.5 h-2.5 text-amber-600" />
