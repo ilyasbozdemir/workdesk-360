@@ -684,10 +684,15 @@ export function TakipScreen(): React.JSX.Element {
                   </div>
                 )}
 
-                {/* SEKME 2: DOSYA KÜNYESİ & TÜM VERİLER (BİRLEŞİK KÜNYE GÖRÜNÜMÜ) */}
+                {/* SEKME 2: DOSYA KÜNYESİ & DETAY PARAMETRELERİ (BİRLEŞİK KÜNYE GÖRÜNÜMÜ) */}
                 {activeTab === "kunye" && (
-                  <div className="rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
-                    <DosyaInspectorView dosya={activeDosya} mode="screen" />
+                  <div className="space-y-6">
+                    <TakipDosyaDetayBilgileri
+                      activeDosya={activeDosya}
+                      komisyonlar={komisyonlar}
+                      onEditClick={handleEditDosya}
+                      mode="kunye"
+                    />
                   </div>
                 )}
 
@@ -701,13 +706,14 @@ export function TakipScreen(): React.JSX.Element {
                   </div>
                 )}
 
-                {/* SEKME 3: YETKİLİ & KOMİSYON BİLGİLERİ */}
+                {/* SEKME 4: YETKİLİ & KOMİSYON DETAYLARI */}
                 {activeTab === "komisyon" && (
                   <div className="space-y-6">
                     <TakipDosyaDetayBilgileri
                       activeDosya={activeDosya}
                       komisyonlar={komisyonlar}
                       onEditClick={handleEditDosya}
+                      mode="komisyon"
                     />
                   </div>
                 )}
