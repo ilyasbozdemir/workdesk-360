@@ -4,6 +4,7 @@ import {
   BarChart3,
   ClipboardList,
   Columns3,
+  Eye,
   FileDown,
   FilePlus2,
   LayoutGrid,
@@ -11,8 +12,9 @@ import {
   Pencil,
   Sparkles,
 } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 import { APP_ROUTES } from "../../../../constants/routeConstants";
+import { useTeminSelector } from "@renderer/components/layout/temin-selector/useTeminSelector";
+import { useWorkspaceStore } from "../../../../store/workspaceStore";
 
 export type TakipViewMode = "kanban" | "grid" | "list" | "metrik" | "detay";
 
@@ -65,8 +67,12 @@ export function TakipHeader({
   setActiveView,
   onOpenWizard,
   onOpenAI,
+  onGoToDetayTab,
 }: TakipHeaderProps): React.JSX.Element {
-  const navigate = useNavigate();
+  const {
+    navigate,
+    addTab,
+  } = useTeminSelector();
 
   return (
     <header className="flex items-center justify-between flex-wrap gap-2.5 pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
@@ -120,32 +126,67 @@ export function TakipHeader({
         <div className="hidden sm:block w-px h-5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
 
         {/* Aksiyon Butonları */}
+        {activeView === "detay" ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setActiveView("kanban")}
+              className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+              title="Kanban Panosuna Geri Dön"
+            >
+              <ArrowLeft size={13} />
+              <span>Panoya Dön</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveView("kanban")}
-          className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
-          title="Panoya Geri Dön"
-        >
-          <ArrowLeft size={13} />
-          <span>Panoya Dön</span>
-        </button>
-        {activeView === "detay"
-          ? (
-            <>
-              {activeDosya && (
-                <button
-                  type="button"
-                  onClick={onEditClick}
-                  className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
-                >
-                  <Pencil size={12} />
-                  Düzenle
-                </button>
-              )}
-            </>
-          )
-          : null}
+            {activeDosya && (
+              <button
+                type="button"
+                onClick={onEditClick}
+                className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+              >
+                <Pencil size={12} />
+                Düzenle
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            {activeDosya && (
+              <button
+                type="button"
+                onClick={(e): void => {
+                  e.stopPropagation();
+                  try {
+                    useWorkspaceStore.getState().setActiveDosyaId(activeDosya.id);
+                    localStorage.setItem("temin_takip_view_mode", "detay");
+                    window.dispatchEvent(
+                      new CustomEvent("takip:view-mode-changed", {
+                        detail: {
+                          mode: "detay",
+                          dosyaId: activeDosya.id,
+                          tab: "kunye",
+                        },
+                      }),
+                    );
+                  } catch {
+                    // ignore
+                  }
+                  if (onGoToDetayTab) {
+                    onGoToDetayTab();
+                  }
+                  setActiveView("detay");
+                  addTab(APP_ROUTES.DOSYA_DETAY);
+                  navigate({ to: APP_ROUTES.DOSYA_DETAY });
+                }}
+                className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 px-2.5 text-xs font-semibold text-blue-700 dark:text-blue-300 shadow-2xs transition-colors cursor-pointer"
+                title="Seçili Dosyanın Detay ve Künye Ekranına Git"
+              >
+                <Eye size={13} />
+                <span>Dosya Detayı</span>
+              </button>
+            )}
+          </>
+        )}
 
         {/* YAPAY ZEKA ASİSTANI */}
         {onOpenAI && (
