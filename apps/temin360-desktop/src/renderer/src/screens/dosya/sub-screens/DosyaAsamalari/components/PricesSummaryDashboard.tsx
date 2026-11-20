@@ -374,6 +374,75 @@ export function PricesSummaryDashboard({
                 );
               })}
             </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/60 font-extrabold text-xs">
+                <td className="py-3.5 px-3 text-slate-850 dark:text-slate-100 font-black">
+                  TOPLAM TEKLİF TUTARI (KDV Hariç)
+                </td>
+                <td className="py-3.5 px-3 text-center text-slate-400 font-mono text-[11px]">
+                  {items.length} Kalem
+                </td>
+                {invitedFirms.map((firm: any, fIdx: number) => {
+                  const firmTotObj = firmTotals.find(
+                    (ft) =>
+                      (ft.firm.id && ft.firm.id === firm.id) ||
+                      (ft.firm.firma_id &&
+                        ft.firm.firma_id === (firm.firma_id || firm.id)),
+                  );
+                  const total = firmTotObj ? firmTotObj.total : 0;
+                  const isLowest = total > 0 && total === lowestTotal;
+                  const isSelectedWinner = manualWinnerFirmaId
+                    ? manualWinnerFirmaId === firm.firma_id ||
+                      manualWinnerFirmaId === firm.id
+                    : isLowest;
+
+                  return (
+                    <td
+                      key={`firm_foot_${
+                        firm.id ?? firm.firma_id ?? fIdx
+                      }_${fIdx}`}
+                      className="py-3.5 px-3 text-right font-mono"
+                    >
+                      {total > 0
+                        ? (
+                          <div className="flex flex-col items-end">
+                            <span
+                              className={cn(
+                                "text-xs font-black",
+                                isSelectedWinner
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : isLowest
+                                  ? "text-emerald-600 dark:text-emerald-400"
+                                  : "text-slate-800 dark:text-slate-100",
+                              )}
+                            >
+                              {total.toLocaleString("tr-TR", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })} TL
+                            </span>
+                            {isSelectedWinner && (
+                              <span className="text-[9px] text-amber-600 dark:text-amber-400 font-extrabold mt-0.5">
+                                ★ Kazanan
+                              </span>
+                            )}
+                            {!isSelectedWinner && isLowest && (
+                              <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-extrabold mt-0.5">
+                                ✓ En Düşük
+                              </span>
+                            )}
+                          </div>
+                        )
+                        : (
+                          <span className="text-slate-400 italic text-[11px] font-normal">
+                            Fiyat Eksik
+                          </span>
+                        )}
+                    </td>
+                  );
+                })}
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
