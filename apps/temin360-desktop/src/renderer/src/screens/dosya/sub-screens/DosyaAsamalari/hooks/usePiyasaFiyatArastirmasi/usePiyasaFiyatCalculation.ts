@@ -14,7 +14,8 @@ export function calculateEstimatedCost(
   let totalDecimal = new Decimal(0)
   items.forEach((item) => {
     const price = isLowestBasis ? getLowestBidInfo(item.id).price : getAverageBid(item.id)
-    const miktar = new Decimal(item.miktar || 0)
+    const m = Number(item.miktar) > 0 ? Number(item.miktar) : 1
+    const miktar = new Decimal(m)
     totalDecimal = totalDecimal.plus(miktar.times(price))
   })
   return totalDecimal.toDecimalPlaces(2).toNumber()
@@ -36,7 +37,10 @@ export function usePiyasaFiyatCalculation(
       let minFirmaId: number | null = null
 
       invitedFirms.forEach((firma) => {
-        const price = bids[`${kalemId}_${firma.id}`]
+        const price =
+          bids[`${kalemId}_${firma.id}`] ??
+          (firma.firma_id ? bids[`${kalemId}_${firma.firma_id}`] : undefined) ??
+          0
         if (price > 0 && price < minPrice) {
           minPrice = price
           minFirmaId = firma.id
@@ -56,7 +60,10 @@ export function usePiyasaFiyatCalculation(
       let sumDecimal = new Decimal(0)
       let count = 0
       invitedFirms.forEach((firma) => {
-        const price = bids[`${kalemId}_${firma.id}`]
+        const price =
+          bids[`${kalemId}_${firma.id}`] ??
+          (firma.firma_id ? bids[`${kalemId}_${firma.firma_id}`] : undefined) ??
+          0
         if (price > 0) {
           sumDecimal = sumDecimal.plus(price)
           count++

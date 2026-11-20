@@ -53,7 +53,7 @@ export const TaxDeductionsPage: React.FC = () => {
       const [dosyaRes, canonical] = await Promise.all([
         window.electron.ipcRenderer.invoke(
           'db:query',
-          'SELECT id, temin_no, konu, kdv, yaklasik_maliyet, net_odenen, ihale_sekli, sozlesme_yapilacak_mi FROM DATA_TeminDosyasi WHERE id = ?',
+          'SELECT id, temin_no, konu, kdv, yaklasik_maliyet, net_odenen, ihale_usulu, ihale_sekli, tedarik_sekli, sozlesme_yapilacak_mi FROM DATA_TeminDosyasi WHERE id = ?',
           [activeDosyaId]
         ),
         fetchCanonicalDossierPricing(activeDosyaId)
