@@ -220,7 +220,9 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
                 title="Taranarak yüklenmiş ıslak imzalı PDF kopyası"
               >
                 <CheckCircle2 size={12} className="text-emerald-500" />
-                <span>İmzalı Nüsha (PDF)</span>
+                <span>
+                  İmzalı Nüsha {selectedEvrak.matchedSignedDoc.sayfaAraligi ? `(${selectedEvrak.matchedSignedDoc.sayfaAraligi})` : '(PDF)'}
+                </span>
               </button>
             </div>
           ) : isTemplate ? (

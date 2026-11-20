@@ -320,7 +320,7 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
           title="Dosyaya yeni bir taranmış ıslak imzalı PDF veya ek doküman bağla"
         >
           <Plus size={14} />
-          <span>+ İmzalı Belge / PDF Yükle</span>
+          <span>İmzalı Belge / PDF Yükle</span>
         </button>
       </div>
     </aside>

@@ -80,27 +80,49 @@ export function useDosyaEvrakAkisi() {
     try {
       setLoading(true)
 
-      // 2.1 Dosya Bilgisini Oku (Hatasız ve Tam Eşleşmeli)
+      // 2.1 Dosya Bilgisini Oku (Hatasız ve Doğrudan)
+      let d: any = null
       const fileRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT d.*, 
-                f.unvan   AS tanim_unvan, 
-                f.vergi_no AS tanim_vkn,
-                tf.unvan  AS dosya_firma_unvan, 
-                tf.vergi_no AS dosya_firma_vkn
-         FROM DATA_TeminDosyasi d
-         LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
-         LEFT JOIN DATA_TeminFirma tf ON tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1)
-         WHERE d.id = ?`,
+        'SELECT * FROM DATA_TeminDosyasi WHERE id = ?',
         [activeDosyaId]
       )
 
-      const d = fileRes?.data?.[0] || (Array.isArray(fileRes) ? fileRes[0] : null)
+      d = fileRes?.data?.[0] || (Array.isArray(fileRes) ? fileRes[0] : null)
       if (!d) {
         setDosyaInfo(null)
         setEvraklar([])
         setLoading(false)
         return
+      }
+
+      // Kazanan veya İlgili İstekli Firma Bilgisini Çek
+      let kazananFirmaUnvan = ''
+      let kazananFirmaVkn = ''
+      try {
+        const firmRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          `SELECT unvan, vergi_no FROM DATA_TeminFirma 
+           WHERE temin_dosya_id = ? AND (kazanan_mi = 1 OR kazandi_mi = 1) 
+           ORDER BY id DESC LIMIT 1`,
+          [activeDosyaId]
+        )
+        if (firmRes?.success && firmRes.data?.[0]) {
+          kazananFirmaUnvan = firmRes.data[0].unvan || ''
+          kazananFirmaVkn = firmRes.data[0].vergi_no || ''
+        } else {
+          const fallbackFirm = await window.electron.ipcRenderer.invoke(
+            'db:query',
+            'SELECT unvan, vergi_no FROM DATA_TeminFirma WHERE temin_dosya_id = ? ORDER BY id ASC LIMIT 1',
+            [activeDosyaId]
+          )
+          if (fallbackFirm?.success && fallbackFirm.data?.[0]) {
+            kazananFirmaUnvan = fallbackFirm.data[0].unvan || ''
+            kazananFirmaVkn = fallbackFirm.data[0].vergi_no || ''
+          }
+        }
+      } catch (firmErr) {
+        console.warn('[DosyaEvrakAkisi] Firma sorgusu atlandı:', firmErr)
       }
 
       const sozlesmeliMi = Number(d.sozlesme_yapilacak_mi) === 1 || d.sozlesme_yapilacak_mi === true
@@ -119,8 +141,8 @@ export function useDosyaEvrakAkisi() {
         evrakSayisi: d.evrak_sayisi || '1',
         tarih: d.temin_tarihi || d.tarih || d.dosya_acilis_tarihi || new Date().toISOString().slice(0, 10),
         butceKodu: d.butce_kodu,
-        kazananFirma: d.dosya_firma_unvan || d.tanim_unvan || d.kazanan_firma,
-        kazananVkn: d.dosya_firma_vkn || d.tanim_vkn || d.kazanan_vkn
+        kazananFirma: kazananFirmaUnvan,
+        kazananVkn: kazananFirmaVkn
       }
       setDosyaInfo(summary)
 
@@ -461,15 +483,25 @@ export function useDosyaEvrakAkisi() {
         if (item.type === 'template' && matchedSignedMap.has(item.code)) {
           const matched = matchedSignedMap.get(item.code)
           const filePath = matched.imzali_dosya_yolu || matched.dosya_yolu || ''
+          let sayfaAraligi: string | undefined = undefined
+          if (matched.veri_json) {
+            try {
+              const p = typeof matched.veri_json === 'string' ? JSON.parse(matched.veri_json) : matched.veri_json
+              sayfaAraligi = p?.sayfaAraligi || undefined
+            } catch {
+              // ignore
+            }
+          }
           item.matchedSignedDoc = {
             id: matched.id,
             filePath,
             fileName: filePath.split(/[/\\]/).pop() || matched.belge_adi,
-            date: matched.belge_tarihi || (matched.created_at ? String(matched.created_at).slice(0, 10) : undefined)
+            date: matched.belge_tarihi || (matched.created_at ? String(matched.created_at).slice(0, 10) : undefined),
+            sayfaAraligi
           }
           item.status = 'imzali'
           item.badge = {
-            label: 'İmzalı Nüsha Var',
+            label: sayfaAraligi ? `İmzalı (${sayfaAraligi})` : 'İmzalı Nüsha Var',
             color: 'bg-emerald-50 dark:bg-emerald-950/40',
             textColor: 'text-emerald-700 dark:text-emerald-300',
             borderColor: 'border-emerald-200 dark:border-emerald-800'
@@ -869,6 +901,7 @@ export function useDosyaEvrakAkisi() {
           const currentDate = new Date().toISOString().slice(0, 10)
           const veriJson = JSON.stringify({
             targetTemplateCode: item.targetTemplateCode,
+            sayfaAraligi: item.sayfaAraligi || '',
             order: item.order
           })
 

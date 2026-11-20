@@ -7,6 +7,7 @@ export interface MatchedSignedDoc {
   filePath: string
   fileName: string
   date?: string
+  sayfaAraligi?: string
 }
 
 export interface EvrakItem {
@@ -42,6 +43,7 @@ export interface UploadBatchItem {
   filePath: string
   fileName: string
   targetTemplateCode: string
+  sayfaAraligi?: string
   order: number
 }
 
