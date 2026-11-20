@@ -1,5 +1,8 @@
 # Doğrudan Temin Yöntemiyle Yapılacak Alımlara İlişkin Tebliğ (Mevzuat No: 40666)
-**Resmî Gazete:** 11 Temmuz 2023 / Sayı: 32245 | **Mevzuat Türü / No:** Tebliğ / 40666
+**Resmî Gazete:** 11 Temmuz 2023 / Sayı: 32245 | **Mevzuat Türü / No:** Tebliğ / 40666  
+**Resmî Metin Bağlantıları:**
+- [Lexpera Resmî Gazete Metni](https://www.lexpera.com.tr/resmi-gazete/metin/dogrudan-temin-yontemiyle-yapilacak-alimlara-iliskin-teblig-32245)
+- [Mevzuat.gov.tr Resmî Metin](https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=40666&MevzuatTur=9&MevzuatTertip=5)
 
 Bu belge, WorkDesk 360 / Temin 360 modülünün ve tüm belge şablonlarının, rota çözücülerinin ve veri akışlarının uymakla yükümlü olduğu **temel mevzuat kurallarını** içerir.
 

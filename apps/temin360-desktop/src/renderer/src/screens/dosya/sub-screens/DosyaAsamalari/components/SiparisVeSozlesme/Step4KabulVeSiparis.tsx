@@ -1,5 +1,5 @@
 import React from 'react'
-import { FileCheck2, Clock, Calendar, Sparkles, Check, Printer } from 'lucide-react'
+import { FileCheck2, Clock, Calendar, Sparkles, Check, Printer, ExternalLink } from 'lucide-react'
 import { cn } from '@renderer/utils/cn'
 import { FirmaStats, IslemlerData } from './types'
 
@@ -153,18 +153,25 @@ export function Step4KabulVeSiparis({
         <div className="flex flex-col gap-3.5 p-4.5 rounded-2xl bg-slate-50/80 dark:bg-slate-850/60 border border-slate-200/80 dark:border-slate-800 shadow-2xs justify-between">
           <div className="flex flex-col gap-3">
             {/* Doğrudan Temin Sipariş Usulü Bilgi Kartı */}
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-2xs select-none">
+            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-2xs select-none flex-wrap gap-2">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Alım & Tebliğ Usulü (4734 Md. 22)
+                  Alım & Tebliğ Usulü (4734 Md. 22 / RG: 32245)
                 </span>
                 <span className="text-xs font-extrabold flex items-center gap-1.5 mt-0.5 text-emerald-700 dark:text-emerald-400">
                   📦 Sipariş Formu & Kabul Edilen Teklif Mektubu
                 </span>
               </div>
-              <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                Doğrudan Temin
-              </span>
+              <a
+                href="https://www.lexpera.com.tr/resmi-gazete/metin/dogrudan-temin-yontemiyle-yapilacak-alimlara-iliskin-teblig-32245"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors inline-flex items-center gap-1 shadow-2xs cursor-pointer"
+                title="Lexpera 32245 Sayılı Resmî Gazete Tebliğ Metnini Aç"
+              >
+                <span>Tebliğ (RG: 32245)</span>
+                <ExternalLink size={10} />
+              </a>
             </div>
 
             {/* Canlı Önizleme Tebligat Hükmü */}
