@@ -73,6 +73,10 @@ export function getDogrudanTeminMenus(
                 onClick: (): Promise<void> => navigate({ to: APP_ROUTES.TAKIP })
               },
               {
+                label: '📂 Evrak Akışı & Belge İnceleme Ekranı',
+                onClick: (): Promise<void> => navigate({ to: APP_ROUTES.DOSYA_EVRAK_AKISI })
+              },
+              {
                 label: '📋 Bu Dosyaya Bağlı İhtiyaç Raporları',
                 onClick: (): Promise<void> =>
                   navigate({
