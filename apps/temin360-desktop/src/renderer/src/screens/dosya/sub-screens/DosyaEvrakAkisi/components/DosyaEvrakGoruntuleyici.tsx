@@ -304,10 +304,10 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
               <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
               <div className="text-center">
                 <h4 className="text-xs font-black text-slate-800 dark:text-slate-200">
-                  {pdfGenerating ? 'Gerçek PDF Çıktısı Derleniyor...' : 'Belge Çözümleniyor...'}
+                  {pdfGenerating ? 'Gerçek PDF Çıktısı Derleniyor...' : 'Belge PDF Olarak Hazırlanıyor...'}
                 </h4>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Mevzuat ve kurum değişkenleri şablona aktarılıyor
+                  Resmî mevzuat şablonu ve kurum değişkenleri A4 formatında derleniyor
                 </p>
               </div>
             </div>

@@ -19,7 +19,7 @@ export function useDosyaEvrakAkisi() {
   // Görüntüleme Ayarları
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [stageFilter, setStageFilter] = useState<number | 'all'>('all')
-  const [viewMode, setViewMode] = useState<'canvas' | 'pdf'>('canvas') // Canlı A4 tuvali vs Gerçek PDF
+  const [viewMode, setViewMode] = useState<'canvas' | 'pdf'>('pdf') // Varsayılan olarak doğrudan gerçek PDF önizlemesi
   const [previewScale, setPreviewScale] = useState<number>(1.0)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [totalPages, setTotalPages] = useState<number>(1)
@@ -545,6 +545,37 @@ export function useDosyaEvrakAkisi() {
           })
           if (isMounted) {
             setActiveTemplateData(dataResult.finalData)
+          }
+
+          // Hazır şablon belgelerini doğrudan PDF olarak derle ve önizle
+          if (window.electron?.ipcRenderer) {
+            try {
+              const targetKey = resolveTemplateKey(selectedEvrak.code) || selectedEvrak.code
+              const html = DocumentEngine.compileHtml({
+                templateKey: targetKey,
+                data: dataResult.finalData,
+                orientation: dataResult.finalData.orientation || 'portrait'
+              })
+              const pdfRes = await window.electron.ipcRenderer.invoke('belge:preview-pdf', html)
+              if (isMounted && pdfRes?.success && pdfRes.data) {
+                const byteCharacters = atob(pdfRes.data)
+                const byteNumbers = new Array(byteCharacters.length)
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i)
+                }
+                const byteArray = new Uint8Array(byteNumbers)
+                const blob = new Blob([byteArray], { type: 'application/pdf' })
+                const url = URL.createObjectURL(blob)
+                setActivePdfBlobUrl(url)
+                setViewMode('pdf')
+              } else if (isMounted) {
+                setViewMode('canvas')
+              }
+            } catch (pdfErr) {
+              console.warn('[DosyaEvrakAkisi] PDF derlenemedi, tuval moduna geçiliyor:', pdfErr)
+              if (isMounted) setViewMode('canvas')
+            }
+          } else if (isMounted) {
             setViewMode('canvas')
           }
         } else if (selectedEvrak.type === 'signed_pdf' || selectedEvrak.type === 'uploaded_pdf') {
