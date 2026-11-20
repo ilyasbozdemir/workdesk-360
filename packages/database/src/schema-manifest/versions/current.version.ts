@@ -12,8 +12,8 @@ export default {
     "devlet-ihale-2886-desktop": "1.0.0-beta.1"
   },
   schema_min: 1,
-  schema_max: 47,
-  release_date: "2026-11-09",
+  schema_max: 48,
+  release_date: "2026-11-20",
   changes: [
     {
       schema: 46,
@@ -103,6 +103,22 @@ export default {
         }
       ],
       raw_sql: ["ALTER TABLE TANIM_Kurum ADD COLUMN sunulacak_makam_secimi TEXT DEFAULT 'makam';", "ALTER TABLE TANIM_Kurum ADD COLUMN sunulacak_kurum_adi TEXT DEFAULT '';", "ALTER TABLE TANIM_Kurum ADD COLUMN makam_adi_custom TEXT DEFAULT '';"]
+    },
+    {
+      schema: 48,
+      type: "update",
+      description: "DATA_TeminDosyasi tablosuna ihale_usulu ve tedarik_sekli kolonları eklendi.",
+      columns_added: [
+        {
+          table: "DATA_TeminDosyasi",
+          column: "ihale_usulu"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "tedarik_sekli"
+        }
+      ],
+      raw_sql: ["ALTER TABLE DATA_TeminDosyasi ADD COLUMN ihale_usulu TEXT DEFAULT NULL;", "ALTER TABLE DATA_TeminDosyasi ADD COLUMN tedarik_sekli TEXT DEFAULT NULL;"]
     }
   ]
 };

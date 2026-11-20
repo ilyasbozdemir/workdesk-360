@@ -125,9 +125,9 @@ export function ExcelStylePrintModal({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150 select-none">
+    <div className="fixed inset-0 z-[99999] overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex justify-center items-start sm:items-center p-3 sm:p-4 animate-in fade-in duration-150 select-none">
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[min(640px,calc(100vh-32px))] animate-in zoom-in-95 duration-150"
+        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[calc(100vh-2rem)] my-auto animate-in zoom-in-95 duration-150"
         onClick={(e) => {
           // Dışarı tıklandığında yazıcı dropdown'ını kapat
           if (isDropdownOpen) setIsDropdownOpen(false)

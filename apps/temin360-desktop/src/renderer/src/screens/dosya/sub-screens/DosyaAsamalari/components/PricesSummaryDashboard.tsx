@@ -55,13 +55,16 @@ export function PricesSummaryDashboard({
   const firmTotals = invitedFirms.map((firm: any) => {
     let total = 0
     items.forEach((item: any) => {
-      const key = `${item.id}_${firm.id}`
-      const bidVal = bids[key]
+      const bidVal =
+        bids[`${item.id}_${firm.id}`] ??
+        (firm.firma_id ? bids[`${item.id}_${firm.firma_id}`] : undefined) ??
+        0
       if (bidVal && bidVal > 0) {
-        total += bidVal * (item.miktar || 0)
+        total += bidVal * (Number(item.miktar) > 0 ? Number(item.miktar) : 1)
       }
     })
-    return { firm, total }
+    const effectiveTotal = total > 0 ? total : Number(firm.teklif_toplami) || 0
+    return { firm, total: effectiveTotal }
   })
 
   const nonZeroTotals = firmTotals.filter((t) => t.total > 0)
