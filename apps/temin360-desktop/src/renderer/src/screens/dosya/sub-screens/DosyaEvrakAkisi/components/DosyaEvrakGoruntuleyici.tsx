@@ -17,7 +17,9 @@ import {
   Eye,
   FileCode2,
   Copy,
-  FileEdit
+  FileEdit,
+  Upload,
+  CheckCircle2
 } from 'lucide-react'
 import { EvrakItem } from '../types'
 import { DocumentRenderer } from '@worksuite-360/document-engine'
@@ -56,6 +58,9 @@ interface DosyaEvrakGoruntuleyiciProps {
   onToggleFullscreen: () => void
   copyCount?: number
   onCopyCountChange?: (count: number) => void
+  activeViewVariant?: 'template' | 'signed'
+  onVariantChange?: (variant: 'template' | 'signed') => void
+  onUploadSignedDocForSelected?: (targetCode?: string) => void
 }
 
 export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = ({
@@ -89,7 +94,10 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
   isFullscreen,
   onToggleFullscreen,
   copyCount = 1,
-  onCopyCountChange
+  onCopyCountChange,
+  activeViewVariant = 'template',
+  onVariantChange,
+  onUploadSignedDocForSelected
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -182,8 +190,53 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
 
         {/* Sağ: Görünüm Modu, Zoom ve Aksiyonlar */}
         <div className="flex items-center gap-2">
+          {/* İmzalı Nüsha vs Taslak Şablon Seçici */}
+          {selectedEvrak.matchedSignedDoc ? (
+            <div className="inline-flex items-center p-0.5 bg-emerald-50/80 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => onVariantChange?.('template')}
+                className={cn(
+                  'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
+                  activeViewVariant === 'template'
+                    ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                )}
+                title="Sistem tarafından otomatik üretilen şablon önizlemesi"
+              >
+                <FileCode2 size={12} />
+                <span>Sistem Şablonu</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onVariantChange?.('signed')}
+                className={cn(
+                  'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
+                  activeViewVariant === 'signed'
+                    ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-300 shadow-2xs font-extrabold'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                )}
+                title="Taranarak yüklenmiş ıslak imzalı PDF kopyası"
+              >
+                <CheckCircle2 size={12} className="text-emerald-500" />
+                <span>İmzalı Nüsha (PDF)</span>
+              </button>
+            </div>
+          ) : isTemplate ? (
+            <button
+              type="button"
+              onClick={() => onUploadSignedDocForSelected?.(selectedEvrak.code)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/60 dark:text-slate-300 dark:hover:text-emerald-300 border border-slate-200 hover:border-emerald-300 dark:border-slate-700 dark:hover:border-emerald-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+              title="Bu belge için ıslak imzalı taranmış PDF nüshası yükleyin ve eşleştirin"
+            >
+              <Upload size={12} />
+              <span className="hidden xl:inline">+ İmzalı Nüsha Eşle</span>
+            </button>
+          ) : null}
+
           {/* Şablon Belgesi İçin Canlı Tuval vs PDF Seçici */}
-          {isTemplate && (
+          {isTemplate && activeViewVariant !== 'signed' && (
             <div className="hidden sm:inline-flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
               <button
                 type="button"

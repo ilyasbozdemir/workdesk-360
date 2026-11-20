@@ -3,6 +3,7 @@ import { useDosyaEvrakAkisi } from './useDosyaEvrakAkisi'
 import { DosyaEvrakAkisiHeader } from './components/DosyaEvrakAkisiHeader'
 import { DosyaEvrakListesiSidebar } from './components/DosyaEvrakListesiSidebar'
 import { DosyaEvrakGoruntuleyici } from './components/DosyaEvrakGoruntuleyici'
+import { ImzaliBelgeYukleModal } from './components/ImzaliBelgeYukleModal'
 import { DocumentPreviewModalV3 } from '../../components/DocumentPreviewModalV3'
 import { Loader2 } from 'lucide-react'
 
@@ -56,6 +57,14 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
     handleExportPdf,
     copyCount,
     setCopyCount,
+    activeViewVariant,
+    setActiveViewVariant,
+    isUploadModalOpen,
+    setIsUploadModalOpen,
+    selectedUploadFiles,
+    specificTargetCode,
+    targetTemplateOptions,
+    handleSaveBatchUpload,
     refreshAll
   } = useDosyaEvrakAkisi()
 
@@ -97,7 +106,8 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
           onSearchChange={setSearchQuery}
           stageFilter={stageFilter}
           onStageFilterChange={setStageFilter}
-          onUploadSignedPdf={handleUploadSignedPdf}
+          onUploadSignedPdf={() => handleUploadSignedPdf()}
+          onUploadSignedDocForSelected={(targetCode) => handleUploadSignedPdf(targetCode)}
           onDeleteSignedDoc={handleDeleteSignedDoc}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed((c) => !c)}
@@ -136,10 +146,23 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
           onToggleFullscreen={() => setIsFullscreen((f) => !f)}
           copyCount={copyCount}
           onCopyCountChange={setCopyCount}
+          activeViewVariant={activeViewVariant}
+          onVariantChange={setActiveViewVariant}
+          onUploadSignedDocForSelected={(targetCode) => handleUploadSignedPdf(targetCode)}
         />
       </div>
 
-      {/* 3. ŞABLON DÜZENLEME & DETAYLI ÖNİZLEME MODALI (DocumentPreviewModalV3) */}
+      {/* 3. İMZALI BELGE ÇOKLU YÜKLEME & EŞLEŞTİRME MODALI */}
+      <ImzaliBelgeYukleModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        files={selectedUploadFiles}
+        templateOptions={targetTemplateOptions}
+        initialTargetCode={specificTargetCode}
+        onSave={handleSaveBatchUpload}
+      />
+
+      {/* 4. ŞABLON DÜZENLEME & DETAYLI ÖNİZLEME MODALI (DocumentPreviewModalV3) */}
       {isModalOpen && selectedEvrak && selectedEvrak.type === 'template' && (
         <DocumentPreviewModalV3
           isOpen={isModalOpen}

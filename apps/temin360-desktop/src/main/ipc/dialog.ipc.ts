@@ -14,14 +14,25 @@ export function registerDialogIpcHandlers(): void {
 
   ipcMain.handle(
     'dialog:showOpenDialog',
-    async (_event, options?: { title?: string; filters?: { name: string; extensions: string[] }[] }) => {
+    async (
+      _event,
+      options?: {
+        title?: string
+        filters?: { name: string; extensions: string[] }[]
+        properties?: ('openFile' | 'openDirectory' | 'multiSelections' | 'showHiddenFiles')[]
+      }
+    ) => {
       const mainWindow = BrowserWindow.getAllWindows()[0]
       const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
         title: options?.title || 'Proje Dosyası Seç',
         filters: options?.filters || openDialogFilters,
-        properties: ['openFile']
+        properties: options?.properties || ['openFile']
       })
-      return { canceled, filePath: filePaths && filePaths.length > 0 ? filePaths[0] : null }
+      return {
+        canceled,
+        filePath: filePaths && filePaths.length > 0 ? filePaths[0] : null,
+        filePaths: filePaths || []
+      }
     }
   )
 

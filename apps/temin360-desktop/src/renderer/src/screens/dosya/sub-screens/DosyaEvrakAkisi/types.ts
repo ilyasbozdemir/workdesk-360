@@ -2,6 +2,13 @@ export type EvrakType = 'template' | 'signed_pdf' | 'uploaded_pdf' | 'attachment
 
 export type EvrakDurum = 'hazir' | 'imzali' | 'taslak' | 'bekliyor'
 
+export interface MatchedSignedDoc {
+  id: number
+  filePath: string
+  fileName: string
+  date?: string
+}
+
 export interface EvrakItem {
   id: string
   title: string
@@ -26,6 +33,16 @@ export interface EvrakItem {
   dbRecordId?: number
   description?: string
   canDelete?: boolean
+  matchedSignedDoc?: MatchedSignedDoc
+  targetTemplateCode?: string
+}
+
+export interface UploadBatchItem {
+  id: string
+  filePath: string
+  fileName: string
+  targetTemplateCode: string
+  order: number
 }
 
 export interface DosyaSummaryInfo {

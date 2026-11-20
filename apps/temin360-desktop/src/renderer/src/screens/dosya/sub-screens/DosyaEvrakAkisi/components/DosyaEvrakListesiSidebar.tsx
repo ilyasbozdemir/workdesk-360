@@ -28,6 +28,7 @@ interface DosyaEvrakListesiSidebarProps {
   stageFilter: number | 'all'
   onStageFilterChange: (stage: number | 'all') => void
   onUploadSignedPdf: () => void
+  onUploadSignedDocForSelected?: (targetCode: string) => void
   onDeleteSignedDoc: (id: number) => void
   isCollapsed: boolean
   onToggleCollapse: () => void
@@ -42,6 +43,7 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
   stageFilter,
   onStageFilterChange,
   onUploadSignedPdf,
+  onUploadSignedDocForSelected,
   onDeleteSignedDoc,
   isCollapsed,
   onToggleCollapse
@@ -255,13 +257,17 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
 
                 {/* Alt Satır: Tarih / İmzalı Açıklaması ve Silme */}
                 <div className="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">
-                  <div className="flex items-center gap-1 truncate">
-                    {doc.date && (
+                  <div className="flex items-center gap-1.5 truncate">
+                    {doc.matchedSignedDoc ? (
+                      <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">
+                        <span>✍️ İmzalı Nüsha</span>
+                      </span>
+                    ) : doc.date ? (
                       <span className="inline-flex items-center gap-0.5 font-mono">
                         <Calendar size={10} />
                         <span>{doc.date.slice(0, 10)}</span>
                       </span>
-                    )}
+                    ) : null}
                     {doc.fileName && (
                       <span className="truncate max-w-[120px] font-mono text-slate-500">
                         • {doc.fileName}
@@ -269,19 +275,35 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
                     )}
                   </div>
 
-                  {doc.canDelete && doc.dbRecordId && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDeleteSignedDoc(doc.dbRecordId!)
-                      }}
-                      title="İmzalı Belge Kaydını Sil"
-                      className="opacity-0 group-hover:opacity-100 p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-all cursor-pointer"
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {doc.type === 'template' && !doc.matchedSignedDoc && onUploadSignedDocForSelected && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onUploadSignedDocForSelected(doc.code)
+                        }}
+                        title="Bu şablon için ıslak imzalı PDF yükle"
+                        className="opacity-0 group-hover:opacity-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded border border-blue-200 dark:border-blue-800 transition-all cursor-pointer"
+                      >
+                        + İmzalı
+                      </button>
+                    )}
+
+                    {doc.canDelete && doc.dbRecordId && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteSignedDoc(doc.dbRecordId!)
+                        }}
+                        title="İmzalı Belge Kaydını Sil"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded transition-all cursor-pointer"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )

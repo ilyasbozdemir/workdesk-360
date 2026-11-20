@@ -2029,9 +2029,16 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                             useWorkspaceStore.getState().setActiveDosyaId(
                               dosya.id,
                             );
-                            useTabStore.getState().addTab(
-                              APP_ROUTES.DOSYA_EVRAK_AKISI,
+                            window.dispatchEvent(
+                              new CustomEvent('takip:view-mode-changed', {
+                                detail: {
+                                  mode: 'detay',
+                                  dosyaId: dosya.id,
+                                  tab: 'evraklar',
+                                },
+                              }),
                             );
+                            navigate({ to: APP_ROUTES.TAKIP });
                           }}
                           title="Dosya Evrak Akışı & Belge İnceleme Ekranını Aç"
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer shadow-2xs whitespace-nowrap"

@@ -33,6 +33,10 @@ export function useDosyaEvrakAkisi() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false)
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
   const [copyCount, setCopyCount] = useState<number>(1)
+  const [activeViewVariant, setActiveViewVariant] = useState<'template' | 'signed'>('template')
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
+  const [selectedUploadFiles, setSelectedUploadFiles] = useState<string[]>([])
+  const [specificTargetCode, setSpecificTargetCode] = useState<string | undefined>(undefined)
 
   // Aktif Belge İçerik Verileri
   const [activeTemplateData, setActiveTemplateData] = useState<any>(null)
@@ -76,18 +80,22 @@ export function useDosyaEvrakAkisi() {
     try {
       setLoading(true)
 
-      // 2.1 Dosya Bilgisini Oku
+      // 2.1 Dosya Bilgisini Oku (Hatasız ve Tam Eşleşmeli)
       const fileRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT id, temin_no, konu, harcama_birimi, birim, alim_turu, tur, 
-                sozlesme_yapilacak_mi, yaklasik_maliyet, net_odenen, durum, 
-                evrak_sayisi, temin_tarihi, tarih, sablon_tercihleri, 
-                kazanan_firma, kazanan_vkn, butce_kodu
-         FROM DATA_TeminDosyasi WHERE id = ?`,
+        `SELECT d.*, 
+                f.unvan   AS tanim_unvan, 
+                f.vergi_no AS tanim_vkn,
+                tf.unvan  AS dosya_firma_unvan, 
+                tf.vergi_no AS dosya_firma_vkn
+         FROM DATA_TeminDosyasi d
+         LEFT JOIN TANIM_Firma f ON d.firma_id = f.id
+         LEFT JOIN DATA_TeminFirma tf ON tf.temin_dosya_id = d.id AND (tf.kazanan_mi = 1 OR tf.kazandi_mi = 1)
+         WHERE d.id = ?`,
         [activeDosyaId]
       )
 
-      const d = fileRes?.data?.[0]
+      const d = fileRes?.data?.[0] || (Array.isArray(fileRes) ? fileRes[0] : null)
       if (!d) {
         setDosyaInfo(null)
         setEvraklar([])
@@ -95,7 +103,7 @@ export function useDosyaEvrakAkisi() {
         return
       }
 
-      const sozlesmeliMi = Number(d.sozlesme_yapilacak_mi) === 1
+      const sozlesmeliMi = Number(d.sozlesme_yapilacak_mi) === 1 || d.sozlesme_yapilacak_mi === true
       const alimTuru = (d.alim_turu || d.tur || 'mal').toLowerCase()
 
       const summary: DosyaSummaryInfo = {
@@ -109,10 +117,10 @@ export function useDosyaEvrakAkisi() {
         netOdenen: Number(d.net_odenen) || 0,
         durum: d.durum || 'Devam Ediyor',
         evrakSayisi: d.evrak_sayisi || '1',
-        tarih: d.temin_tarihi || d.tarih || new Date().toISOString().slice(0, 10),
+        tarih: d.temin_tarihi || d.tarih || d.dosya_acilis_tarihi || new Date().toISOString().slice(0, 10),
         butceKodu: d.butce_kodu,
-        kazananFirma: d.kazanan_firma,
-        kazananVkn: d.kazanan_vkn
+        kazananFirma: d.dosya_firma_unvan || d.tanim_unvan || d.kazanan_firma,
+        kazananVkn: d.dosya_firma_vkn || d.tanim_vkn || d.kazanan_vkn
       }
       setDosyaInfo(summary)
 
@@ -141,10 +149,11 @@ export function useDosyaEvrakAkisi() {
       try {
         const signedRes = await window.electron.ipcRenderer.invoke(
           'db:query',
-          `SELECT id, belge_adi, is_signed, imzali_dosya_yolu, dosya_yolu, belge_tarihi, durum, created_at 
+          `SELECT id, dosya_id, temin_dosya_id, belge_adi, is_signed, imzali_dosya_yolu, dosya_yolu, belge_tarihi, durum, veri_json, created_at 
            FROM DATA_TeminBelge 
-           WHERE temin_dosya_id = ? ORDER BY id ASC`,
-          [activeDosyaId]
+           WHERE (temin_dosya_id = ? OR dosya_id = ?) 
+           ORDER BY id ASC`,
+          [activeDosyaId, activeDosyaId]
         )
         if (signedRes?.success && Array.isArray(signedRes.data)) {
           signedDocsList.push(...signedRes.data)
@@ -404,8 +413,72 @@ export function useDosyaEvrakAkisi() {
         }
       )
 
-      // ── 5. AŞAMA: İMZALI VE YÜKLENEN GERÇEK BELGELER (DATA_TeminBelge & Ekler) ──
+      // ── 5. AŞAMA: İMZALI VE YÜKLENEN GERÇEK BELGELERİ EŞLEŞTİRME & DİĞERLERİ ──
+      // İmzalı belgelerin süreç şablonlarıyla akıllı eşleştirilmesi
+      const matchedSignedMap = new Map<string, any>()
+      const unmatchedSignedDocs: any[] = []
+
       for (const signed of signedDocsList) {
+        let targetCode = ''
+        if (signed.veri_json) {
+          try {
+            const parsed = typeof signed.veri_json === 'string' ? JSON.parse(signed.veri_json) : signed.veri_json
+            if (parsed?.targetTemplateCode) {
+              targetCode = parsed.targetTemplateCode
+            }
+          } catch {
+            // ignore
+          }
+        }
+        if (!targetCode) {
+          const bName = (signed.belge_adi || '').toLowerCase()
+          if (bName.includes('ihtiyaç') || bName.includes('ihtiyac') || bName.includes('lüzum')) targetCode = 'ihtiyac_listesi'
+          else if (bName.includes('onay')) targetCode = 'dogrudan_temin_onay_belgesi'
+          else if (bName.includes('harcama') && bName.includes('talimat')) targetCode = 'harcama_talimati'
+          else if (bName.includes('görev') || bName.includes('gorev') || bName.includes('atama')) targetCode = 'piyasa_fiyat_arastirma_gorevlendirmesi'
+          else if (bName.includes('isteme') || (bName.includes('fiyat') && bName.includes('mektup'))) targetCode = 'fiyat_arastirma_mektubu'
+          else if (bName.includes('birim') && bName.includes('fiyat')) targetCode = 'birim_fiyat_teklif_mektubu'
+          else if (bName.includes('piyasa') || bName.includes('tutanak') || bName.includes('arastirma')) targetCode = 'piyasa_fiyat_arastirma_tutanagi'
+          else if (bName.includes('maliyet')) targetCode = 'yaklasik_maliyet_cetveli'
+          else if (bName.includes('karar') || bName.includes('sonuç') || bName.includes('sonuc')) targetCode = 'dogrudan_temin_sonuc_onay_belgesi'
+          else if (bName.includes('sözleşme') || bName.includes('sozlesme')) targetCode = 'sozlesme_taslagi'
+          else if (bName.includes('sipariş') || bName.includes('siparis')) targetCode = 'siparis_mektubu'
+          else if (bName.includes('kabul') || bName.includes('muayene')) targetCode = 'muayene_kabul_tutanagi'
+          else if (bName.includes('teslim') || bName.includes('tesellüm') || bName.includes('tesellum')) targetCode = 'teslim_tesellum_tutanagi'
+          else if (bName.includes('hakediş') || bName.includes('hakedis')) targetCode = 'hakedis_raporu'
+          else if (bName.includes('ödeme') || bName.includes('odeme') || bName.includes('mif')) targetCode = 'odeme_emri_belgesi'
+        }
+
+        if (targetCode) {
+          matchedSignedMap.set(targetCode, signed)
+        } else {
+          unmatchedSignedDocs.push(signed)
+        }
+      }
+
+      // Süreç şablonlarına eşleşen imzalı belgeleri ata
+      items.forEach((item) => {
+        if (item.type === 'template' && matchedSignedMap.has(item.code)) {
+          const matched = matchedSignedMap.get(item.code)
+          const filePath = matched.imzali_dosya_yolu || matched.dosya_yolu || ''
+          item.matchedSignedDoc = {
+            id: matched.id,
+            filePath,
+            fileName: filePath.split(/[/\\]/).pop() || matched.belge_adi,
+            date: matched.belge_tarihi || (matched.created_at ? String(matched.created_at).slice(0, 10) : undefined)
+          }
+          item.status = 'imzali'
+          item.badge = {
+            label: 'İmzalı Nüsha Var',
+            color: 'bg-emerald-50 dark:bg-emerald-950/40',
+            textColor: 'text-emerald-700 dark:text-emerald-300',
+            borderColor: 'border-emerald-200 dark:border-emerald-800'
+          }
+        }
+      })
+
+      // Herhangi bir şablonla eşleşmeyen bağımsız imzalı ve taranmış belgeler
+      for (const signed of unmatchedSignedDocs) {
         const filePath = signed.imzali_dosya_yolu || signed.dosya_yolu || ''
         items.push({
           id: `signed-${signed.id}`,
@@ -550,6 +623,29 @@ export function useDosyaEvrakAkisi() {
     const loadContent = async () => {
       try {
         if (selectedEvrak.type === 'template') {
+          // Eğer kullanıcı 'signed' varyantını seçtiyse ve bu şablonun imzalı nüshası varsa, imzalı PDF dosyasını yükle
+          if (activeViewVariant === 'signed' && selectedEvrak.matchedSignedDoc?.filePath) {
+            if (window.electron?.ipcRenderer) {
+              const res = await window.electron.ipcRenderer.invoke(
+                'workspace:read-attachment-base64',
+                selectedEvrak.matchedSignedDoc.filePath
+              )
+              if (isMounted && res?.success && res.data?.base64) {
+                const byteCharacters = atob(res.data.base64)
+                const byteNumbers = new Array(byteCharacters.length)
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i)
+                }
+                const byteArray = new Uint8Array(byteNumbers)
+                const blob = new Blob([byteArray], { type: res.data.mimeType || 'application/pdf' })
+                const url = URL.createObjectURL(blob)
+                setActivePdfBlobUrl(url)
+                setViewMode('pdf')
+                return
+              }
+            }
+          }
+
           const storeSettings = useSettingsStore.getState()
           // DocumentEngine üzerinden canlı şablon verisini yükle
           const dataResult = await loadDocumentPreviewData({
@@ -680,7 +776,18 @@ export function useDosyaEvrakAkisi() {
     return () => {
       isMounted = false
     }
-  }, [selectedEvrak?.id, activeDosyaId, refreshTrigger])
+  }, [selectedEvrak?.id, activeDosyaId, refreshTrigger, activeViewVariant])
+
+  // Şablon Seçenekleri (Eşleştirme Modalı İçin)
+  const targetTemplateOptions = useMemo(() => {
+    return evraklar
+      .filter((e) => e.type === 'template')
+      .map((e) => ({
+        code: e.code,
+        title: e.title,
+        stageName: e.stageName
+      }))
+  }, [evraklar])
 
   // 4. Şablon İçin Canlı PDF Üretme
   const generatePdfPreviewForTemplate = useCallback(async () => {
@@ -726,13 +833,15 @@ export function useDosyaEvrakAkisi() {
     }
   }, [selectedEvrak, activeTemplateData, personelListesi, firmaListesi, activePdfBlobUrl])
 
-  // 5. Yeni İmzalı Belge / PDF Yükle
-  const handleUploadSignedPdf = useCallback(async () => {
+  // 5. Yeni İmzalı Belge / PDF Seç ve Eşleştirme Modalını Aç
+  const handleUploadSignedPdf = useCallback(async (targetCode?: string) => {
     if (!activeDosyaId || !window.electron?.ipcRenderer) return
 
     try {
+      setSpecificTargetCode(targetCode)
       const openRes = await window.electron.ipcRenderer.invoke('dialog:showOpenDialog', {
-        title: 'İmzalı Belge / Ek PDF Dosyası Seç',
+        title: targetCode ? 'İmzalı Belge PDF Dosyasını Seçin' : 'İmzalı Belge / Ek PDF Dosyaları Seç',
+        properties: ['openFile', 'multiSelections'],
         filters: [{ name: 'PDF ve Dokümanlar', extensions: ['pdf', 'png', 'jpg', 'jpeg'] }]
       })
 
@@ -740,26 +849,40 @@ export function useDosyaEvrakAkisi() {
         return
       }
 
-      const sourcePath = openRes.filePaths[0]
-      const uploadRes = await window.electron.ipcRenderer.invoke('workspace:upload-file', sourcePath)
+      setSelectedUploadFiles(openRes.filePaths)
+      setIsUploadModalOpen(true)
+    } catch (e) {
+      console.error('[DosyaEvrakAkisi] İmzalı belge seçim hatası:', e)
+    }
+  }, [activeDosyaId])
 
-      if (uploadRes?.success) {
-        const baseName = sourcePath.split(/[/\\]/).pop()?.replace(/\.[^/.]+$/, '') || 'İmzalı Evrak'
-        const currentDate = new Date().toISOString().slice(0, 10)
+  // 5.1 Çoklu Seçilen Belgeleri Yükle ve Belgeyle Eşleştirerek Kaydet
+  const handleSaveBatchUpload = useCallback(async (batchItems: any[]) => {
+    if (!activeDosyaId || !window.electron?.ipcRenderer) return
 
-        const insertRes = await window.electron.ipcRenderer.invoke(
-          'db:run',
-          `INSERT INTO DATA_TeminBelge (temin_dosya_id, belge_adi, is_signed, imzali_dosya_yolu, belge_tarihi)
-           VALUES (?, ?, 1, ?, ?)`,
-          [activeDosyaId, `${baseName} (İmzalı)`, uploadRes.relativePath, currentDate]
-        )
+    try {
+      for (const item of batchItems) {
+        const uploadRes = await window.electron.ipcRenderer.invoke('workspace:upload-file', item.filePath)
+        if (uploadRes?.success) {
+          const relativePath = uploadRes.relativePath || uploadRes.data?.relativePath || item.filePath
+          const baseName = item.fileName?.replace(/\.[^/.]+$/, '') || 'İmzalı Evrak'
+          const currentDate = new Date().toISOString().slice(0, 10)
+          const veriJson = JSON.stringify({
+            targetTemplateCode: item.targetTemplateCode,
+            order: item.order
+          })
 
-        if (insertRes?.success) {
-          await fetchDosyaEvraklari()
+          await window.electron.ipcRenderer.invoke(
+            'db:run',
+            `INSERT INTO DATA_TeminBelge (temin_dosya_id, dosya_id, belge_adi, is_signed, imzali_dosya_yolu, belge_tarihi, veri_json)
+             VALUES (?, ?, ?, 1, ?, ?, ?)`,
+            [activeDosyaId, activeDosyaId, `${baseName} (İmzalı)`, relativePath, currentDate, veriJson]
+          )
         }
       }
-    } catch (e) {
-      console.error('[DosyaEvrakAkisi] İmzalı belge yükleme hatası:', e)
+      await fetchDosyaEvraklari()
+    } catch (err) {
+      console.error('[DosyaEvrakAkisi] Toplu yükleme hatası:', err)
     }
   }, [activeDosyaId, fetchDosyaEvraklari])
 
@@ -950,6 +1073,14 @@ export function useDosyaEvrakAkisi() {
     handleExportPdf,
     copyCount,
     setCopyCount,
+    activeViewVariant,
+    setActiveViewVariant,
+    isUploadModalOpen,
+    setIsUploadModalOpen,
+    selectedUploadFiles,
+    specificTargetCode,
+    targetTemplateOptions,
+    handleSaveBatchUpload,
     refreshAll: fetchDosyaEvraklari
   }
 }

@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 import { DosyaEvrakAkisiHeader } from '../components/DosyaEvrakAkisiHeader'
 import { DosyaEvrakListesiSidebar } from '../components/DosyaEvrakListesiSidebar'
+import { ImzaliBelgeYukleModal } from '../components/ImzaliBelgeYukleModal'
 import { EvrakItem, DosyaSummaryInfo } from '../types'
 
 describe('DosyaEvrakAkisi Sub-Screen Components', () => {
@@ -137,6 +138,30 @@ describe('DosyaEvrakAkisi Sub-Screen Components', () => {
       const uploadButton = screen.getByText(/İmzalı Belge \/ PDF Yükle/i)
       fireEvent.click(uploadButton)
       expect(handleUpload).toHaveBeenCalled()
+    })
+  })
+
+  describe('ImzaliBelgeYukleModal', () => {
+    it('renders selected files and guesses document target', () => {
+      const handleSave = vi.fn().mockResolvedValue(undefined)
+      const handleClose = vi.fn()
+
+      render(
+        <ImzaliBelgeYukleModal
+          isOpen={true}
+          onClose={handleClose}
+          files={['C:/belgeler/dogrudan_temin_onay_belgesi_imzali.pdf', 'C:/belgeler/ek_fatura.pdf']}
+          templateOptions={[
+            { code: 'dogrudan_temin_onay_belgesi', title: 'Doğrudan Temin Onay Belgesi', stageName: '1. Hazırlık' },
+            { code: 'piyasa_fiyat_arastirma_tutanagi', title: 'Piyasa Fiyat Araştırması Tutanağı', stageName: '2. Fiyat' }
+          ]}
+          onSave={handleSave}
+        />
+      )
+
+      expect(screen.getByText('İmzalı Belgeleri Dosyaya Eşleştir & Yükle')).toBeDefined()
+      expect(screen.getByText('dogrudan_temin_onay_belgesi_imzali.pdf')).toBeDefined()
+      expect(screen.getByText('ek_fatura.pdf')).toBeDefined()
     })
   })
 })
