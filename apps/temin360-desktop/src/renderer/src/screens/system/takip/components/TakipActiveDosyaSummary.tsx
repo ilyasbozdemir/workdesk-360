@@ -89,9 +89,17 @@ export function TakipActiveDosyaSummary({
 
         <div className="flex items-center gap-2.5 select-none">
           <div className="text-right mr-1">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-              Yaklaşık Maliyet
-            </span>
+            <div className="flex items-center justify-end gap-1.5">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                Yaklaşık Maliyet
+              </span>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100/80 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300/40">
+                {activeDosya.hesaplama_esasi?.toLowerCase().includes('düşük') ||
+                activeDosya.hesaplama_esasi?.toLowerCase().includes('dusuk')
+                  ? 'En Düşük Esası'
+                  : 'Ortalama Esası'}
+              </span>
+            </div>
             <span className="text-xl font-mono font-extrabold text-slate-855 dark:text-slate-100">
               {formatCurrency(activeDosya.yaklasik_maliyet || 0)}
             </span>
