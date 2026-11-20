@@ -39,7 +39,7 @@ export function Step1IsteklilerVeDagitim({
   handleRemoveFirm
 }: Step1IsteklilerVeDagitimProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+    <div className="flex flex-col gap-6 animate-in fade-in duration-200 pb-28">
       {/* 1.1 İstekli Firmalar Tablosu */}
       <FiyatIstenenFirmalarınSecilmesi
         title="Fiyat İstenen İstekli Firmaların Belirlenmesi"
@@ -92,8 +92,8 @@ export function Step1IsteklilerVeDagitim({
         handleOpenEkapSorgu={handleOpenEkapSorgu}
       />
 
-      {/* 1. Adım Alt İlerleme Çubuğu - Sabit / Sticky Dock */}
-      <div className="sticky bottom-3 z-30 flex items-center justify-between p-3.5 px-5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-900/10 dark:shadow-black/40 ring-1 ring-slate-900/5 dark:ring-white/5">
+      {/* 1. Adım Alt İlerleme Çubuğu - Ekranın Altında Sabit / Fixed Floating Dock */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-3rem)] max-w-5xl flex items-center justify-between p-3.5 px-6 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-slate-900/20 dark:shadow-black/60 ring-1 ring-slate-900/5 dark:ring-white/5">
         <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
           <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0 animate-pulse" />
           <span>
@@ -104,7 +104,7 @@ export function Step1IsteklilerVeDagitim({
         <button
           type="button"
           onClick={() => setCurrentStep(2)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-md cursor-pointer border-0 active:scale-95 shrink-0"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-md cursor-pointer border-0 active:scale-95 shrink-0"
         >
           <span>2. Adım: Fiyatları Girmeye Geç</span>
           <ArrowRight className="w-4 h-4" />

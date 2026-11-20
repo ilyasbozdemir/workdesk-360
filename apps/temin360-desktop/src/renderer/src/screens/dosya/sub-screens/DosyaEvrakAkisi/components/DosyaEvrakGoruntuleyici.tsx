@@ -16,7 +16,8 @@ import {
   Loader2,
   Eye,
   FileCode2,
-  Copy
+  Copy,
+  FileEdit
 } from 'lucide-react'
 import { EvrakItem } from '../types'
 import { DocumentRenderer } from '@worksuite-360/document-engine'
@@ -42,11 +43,15 @@ interface DosyaEvrakGoruntuleyiciProps {
   docLoading: boolean
   pdfGenerating: boolean
   activeTemplateData: any
+  personelListesi?: any[]
+  firmaListesi?: any[]
+  birimListesi?: any[]
   activePdfBlobUrl: string | null
   onGeneratePdf: () => void
   onPrint: () => void
   onExportPdf: () => void
   onOpenExternal: () => void
+  onOpenModalPreview?: () => void
   isFullscreen: boolean
   onToggleFullscreen: () => void
   copyCount?: number
@@ -72,11 +77,15 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
   docLoading,
   pdfGenerating,
   activeTemplateData,
+  personelListesi = [],
+  firmaListesi = [],
+  birimListesi = [],
   activePdfBlobUrl,
   onGeneratePdf,
   onPrint,
   onExportPdf,
   onOpenExternal,
+  onOpenModalPreview,
   isFullscreen,
   onToggleFullscreen,
   copyCount = 1,
@@ -292,6 +301,18 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
 
           {/* Dışa Aktar & Yazdır Aksiyonları */}
           <div className="flex items-center gap-1">
+            {isTemplate && onOpenModalPreview && (
+              <button
+                type="button"
+                onClick={onOpenModalPreview}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 transition-all cursor-pointer shadow-2xs text-xs font-bold"
+                title="Belgeyi Şablon Düzenleme Modalında Aç (Makam, Ekler, Rota düzenle)"
+              >
+                <FileEdit size={13} />
+                <span className="hidden lg:inline">Şablonda Düzenle</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onPrint}
@@ -392,9 +413,9 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
                 chrome="paper"
                 scale={previewScale}
                 isEditing={false}
-                personelListesi={activeTemplateData.personelListesi || []}
-                firmaListesi={activeTemplateData.firmaListesi || []}
-                birimListesi={activeTemplateData.birimListesi || []}
+                personelListesi={personelListesi.length ? personelListesi : activeTemplateData.personelListesi || []}
+                firmaListesi={firmaListesi.length ? firmaListesi : activeTemplateData.firmaListesi || []}
+                birimListesi={birimListesi.length ? birimListesi : activeTemplateData.birimListesi || []}
                 firstPageLimit={activeTemplateData.firstPageLimit}
               />
             </div>

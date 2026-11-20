@@ -3,6 +3,7 @@ import { useDosyaEvrakAkisi } from './useDosyaEvrakAkisi'
 import { DosyaEvrakAkisiHeader } from './components/DosyaEvrakAkisiHeader'
 import { DosyaEvrakListesiSidebar } from './components/DosyaEvrakListesiSidebar'
 import { DosyaEvrakGoruntuleyici } from './components/DosyaEvrakGoruntuleyici'
+import { DocumentPreviewModalV3 } from '../../components/DocumentPreviewModalV3'
 import { Loader2 } from 'lucide-react'
 
 export function DosyaEvrakAkisiScreen(): React.JSX.Element {
@@ -35,7 +36,13 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
     isFullscreen,
     setIsFullscreen,
     activeTemplateData,
+    personelListesi,
+    firmaListesi,
+    birimListesi,
     activePdfBlobUrl,
+    isModalOpen,
+    setIsModalOpen,
+    refreshSelectedDocument,
     currentIndex,
     hasPrev,
     hasNext,
@@ -116,17 +123,35 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
           docLoading={docLoading}
           pdfGenerating={pdfGenerating}
           activeTemplateData={activeTemplateData}
+          personelListesi={personelListesi}
+          firmaListesi={firmaListesi}
+          birimListesi={birimListesi}
           activePdfBlobUrl={activePdfBlobUrl}
           onGeneratePdf={generatePdfPreviewForTemplate}
           onPrint={handlePrint}
           onExportPdf={handleExportPdf}
           onOpenExternal={handleOpenExternal}
+          onOpenModalPreview={() => setIsModalOpen(true)}
           isFullscreen={isFullscreen}
           onToggleFullscreen={() => setIsFullscreen((f) => !f)}
           copyCount={copyCount}
           onCopyCountChange={setCopyCount}
         />
       </div>
+
+      {/* 3. ŞABLON DÜZENLEME & DETAYLI ÖNİZLEME MODALI (DocumentPreviewModalV3) */}
+      {isModalOpen && selectedEvrak && selectedEvrak.type === 'template' && (
+        <DocumentPreviewModalV3
+          isOpen={isModalOpen}
+          dosyaId={activeDosyaId || undefined}
+          initialTemplateId={selectedEvrak.code}
+          onClose={() => {
+            setIsModalOpen(false)
+            refreshSelectedDocument()
+          }}
+          isModal={true}
+        />
+      )}
     </div>
   )
 }

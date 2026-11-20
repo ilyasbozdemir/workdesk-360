@@ -1,9 +1,16 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useWorkspaceStore } from '@renderer/store/workspaceStore'
+import { useSettingsStore } from '@renderer/store/settingsStore'
 import { EvrakItem, DosyaSummaryInfo } from './types'
 import { loadDocumentPreviewData } from '../../components/DocumentPreviewModalV3/hooks/helpers/previewDataLoader'
-import { DocumentEngine } from '@worksuite-360/document-engine'
-import { resolveTemplateKey } from '@temin360/document-templates'
+import { compileDocumentHtml } from '../../components/DocumentPreviewModalV3/hooks/helpers/previewExportUtils'
+import { resolveTemplateConfig } from '../../components/DocumentPreviewModalV3/templateResolver'
+import {
+  resolveTemplateRouteForDocument,
+  getRotaConfigForTemplate
+} from '@renderer/services/rotaDefaultsService'
+import { formatDateString } from '../../contextBuilder/dateHelpers'
+import { resolveTemplateKey, toTrDate } from '@temin360/document-templates'
 
 export function useDosyaEvrakAkisi() {
   const { activeDosyaId, setActiveDosyaId } = useWorkspaceStore()
@@ -29,8 +36,13 @@ export function useDosyaEvrakAkisi() {
 
   // Aktif Belge İçerik Verileri
   const [activeTemplateData, setActiveTemplateData] = useState<any>(null)
+  const [personelListesi, setPersonelListesi] = useState<any[]>([])
+  const [firmaListesi, setFirmaListesi] = useState<any[]>([])
+  const [birimListesi, setBirimListesi] = useState<any[]>([])
   const [activePdfBlobUrl, setActivePdfBlobUrl] = useState<string | null>(null)
   const [pdfGenerating, setPdfGenerating] = useState<boolean>(false)
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
 
   // 1. Tüm Dosyaları Çek (Dosya Değiştirici İçin)
   const fetchAllDosyalar = useCallback(async () => {
@@ -538,25 +550,81 @@ export function useDosyaEvrakAkisi() {
     const loadContent = async () => {
       try {
         if (selectedEvrak.type === 'template') {
+          const storeSettings = useSettingsStore.getState()
           // DocumentEngine üzerinden canlı şablon verisini yükle
           const dataResult = await loadDocumentPreviewData({
             activeDosyaId: activeDosyaId || 0,
             resolvedId: selectedEvrak.code,
-            selectedDocId: selectedEvrak.code
+            selectedDocId: selectedEvrak.code,
+            showLogoLeft: storeSettings.showLogoLeft,
+            showLogoRight: storeSettings.showLogoRight,
+            logoLeft: storeSettings.logoLeft,
+            logoRight: storeSettings.logoRight,
+            institutionLogo: storeSettings.institutionLogo
           })
+
+          const pList = dataResult.personelListesi || []
+          const fList = dataResult.firmaListesi || []
+          const bList = dataResult.birimListesi || []
+
           if (isMounted) {
-            setActiveTemplateData(dataResult.finalData)
+            setPersonelListesi(pList)
+            setFirmaListesi(fList)
+            setBirimListesi(bList)
           }
 
-          // Hazır şablon belgelerini doğrudan PDF olarak derle ve önizle
+          // DocumentPreviewModalV3 ile 100% uyumlu Rota ve Antet zenginleştirmesi
+          const targetKey = selectedEvrak.code
+          const { enrichedData } = resolveTemplateRouteForDocument(targetKey, dataResult.finalData, activeDosyaId)
+          const defaultRotaConf = getRotaConfigForTemplate(targetKey, activeDosyaId)
+          if (defaultRotaConf && enrichedData.olurYazisi === undefined && defaultRotaConf.olurYazisi !== undefined) {
+            enrichedData.olurYazisi = defaultRotaConf.olurYazisi
+          }
+
+          const activeSolLogo =
+            enrichedData.solLogo ||
+            storeSettings.logoLeft ||
+            storeSettings.institutionLogo ||
+            null
+          const activeSagLogo =
+            enrichedData.sagLogo || storeSettings.logoRight || null
+
+          const mergedData = {
+            ...enrichedData,
+            personelListesi: pList,
+            firmaListesi: fList,
+            birimListesi: bList,
+            tarih: formatDateString(enrichedData.tarih) || formatDateString(enrichedData.onayaSunulanTarih) || toTrDate(new Date()),
+            onayaSunulanTarih: formatDateString(enrichedData.onayaSunulanTarih) || formatDateString(enrichedData.tarih) || toTrDate(new Date()),
+            onayTarihi: formatDateString(enrichedData.onayTarihi) || formatDateString(enrichedData.olurTarihi) || formatDateString(enrichedData.dosyaTarihi) || toTrDate(new Date()),
+            dosyaTarihi: formatDateString(enrichedData.dosyaTarihi) || '',
+            solLogo: storeSettings.showLogoLeft ? activeSolLogo : null,
+            sagLogo: storeSettings.showLogoRight ? activeSagLogo : null,
+            olurYazisi: enrichedData.olurYazisi !== false,
+            orientation: dataResult.activeOrientation || enrichedData.orientation || 'portrait'
+          }
+
+          if (isMounted) {
+            setActiveTemplateData(mergedData)
+          }
+
+          // DocumentPreviewModalV3 A4 derleyicisi ile tam stilli ve hatasız gerçek PDF üret
           if (window.electron?.ipcRenderer) {
             try {
-              const targetKey = resolveTemplateKey(selectedEvrak.code) || selectedEvrak.code
-              const html = DocumentEngine.compileHtml({
-                templateKey: targetKey,
-                data: dataResult.finalData,
-                orientation: dataResult.finalData.orientation || 'portrait'
+              const { config: activeTemplateConf } = resolveTemplateConfig(selectedEvrak.code)
+              const html = compileDocumentHtml({
+                activeTemplateConf,
+                formData: mergedData,
+                personelListesi: pList,
+                firmaListesi: fList,
+                localShowLogoLeft: storeSettings.showLogoLeft,
+                localShowLogoRight: storeSettings.showLogoRight,
+                logoLeft: storeSettings.logoLeft,
+                logoRight: storeSettings.logoRight,
+                institutionLogo: storeSettings.institutionLogo,
+                orientation: mergedData.orientation || 'portrait'
               })
+
               const pdfRes = await window.electron.ipcRenderer.invoke('belge:preview-pdf', html)
               if (isMounted && pdfRes?.success && pdfRes.data) {
                 const byteCharacters = atob(pdfRes.data)
@@ -612,7 +680,7 @@ export function useDosyaEvrakAkisi() {
     return () => {
       isMounted = false
     }
-  }, [selectedEvrak?.id, activeDosyaId])
+  }, [selectedEvrak?.id, activeDosyaId, refreshTrigger])
 
   // 4. Şablon İçin Canlı PDF Üretme
   const generatePdfPreviewForTemplate = useCallback(async () => {
@@ -622,10 +690,18 @@ export function useDosyaEvrakAkisi() {
 
     try {
       setPdfGenerating(true)
-      const targetKey = resolveTemplateKey(selectedEvrak.code) || selectedEvrak.code
-      const html = DocumentEngine.compileHtml({
-        templateKey: targetKey,
-        data: activeTemplateData,
+      const storeSettings = useSettingsStore.getState()
+      const { config: activeTemplateConf } = resolveTemplateConfig(selectedEvrak.code)
+      const html = compileDocumentHtml({
+        activeTemplateConf,
+        formData: activeTemplateData,
+        personelListesi,
+        firmaListesi,
+        localShowLogoLeft: storeSettings.showLogoLeft,
+        localShowLogoRight: storeSettings.showLogoRight,
+        logoLeft: storeSettings.logoLeft,
+        logoRight: storeSettings.logoRight,
+        institutionLogo: storeSettings.institutionLogo,
         orientation: activeTemplateData.orientation || 'portrait'
       })
 
@@ -648,7 +724,7 @@ export function useDosyaEvrakAkisi() {
     } finally {
       setPdfGenerating(false)
     }
-  }, [selectedEvrak, activeTemplateData, activePdfBlobUrl])
+  }, [selectedEvrak, activeTemplateData, personelListesi, firmaListesi, activePdfBlobUrl])
 
   // 5. Yeni İmzalı Belge / PDF Yükle
   const handleUploadSignedPdf = useCallback(async () => {
@@ -709,10 +785,18 @@ export function useDosyaEvrakAkisi() {
       if (selectedEvrak.filePath) {
         await window.electron.ipcRenderer.invoke('workspace:open-file', selectedEvrak.filePath)
       } else if (activeTemplateData) {
-        const targetKey = resolveTemplateKey(selectedEvrak.code) || selectedEvrak.code
-        const html = DocumentEngine.compileHtml({
-          templateKey: targetKey,
-          data: activeTemplateData,
+        const storeSettings = useSettingsStore.getState()
+        const { config: activeTemplateConf } = resolveTemplateConfig(selectedEvrak.code)
+        const html = compileDocumentHtml({
+          activeTemplateConf,
+          formData: activeTemplateData,
+          personelListesi,
+          firmaListesi,
+          localShowLogoLeft: storeSettings.showLogoLeft,
+          localShowLogoRight: storeSettings.showLogoRight,
+          logoLeft: storeSettings.logoLeft,
+          logoRight: storeSettings.logoRight,
+          institutionLogo: storeSettings.institutionLogo,
           orientation: activeTemplateData.orientation || 'portrait'
         })
         await window.electron.ipcRenderer.invoke('belge:open-pdf-external', { html })
@@ -720,17 +804,25 @@ export function useDosyaEvrakAkisi() {
     } catch (e) {
       console.error('[DosyaEvrakAkisi] Harici açma hatası:', e)
     }
-  }, [selectedEvrak, activeTemplateData])
+  }, [selectedEvrak, activeTemplateData, personelListesi, firmaListesi])
 
   // 8. Yazdır (Kopya Sayısı Destekli)
   const handlePrint = useCallback(async () => {
     if (!window.electron?.ipcRenderer) return
     try {
       if (selectedEvrak?.type === 'template' && activeTemplateData) {
-        const targetKey = resolveTemplateKey(selectedEvrak.code) || selectedEvrak.code
-        const html = DocumentEngine.compileHtml({
-          templateKey: targetKey,
-          data: activeTemplateData,
+        const storeSettings = useSettingsStore.getState()
+        const { config: activeTemplateConf } = resolveTemplateConfig(selectedEvrak.code)
+        const html = compileDocumentHtml({
+          activeTemplateConf,
+          formData: activeTemplateData,
+          personelListesi,
+          firmaListesi,
+          localShowLogoLeft: storeSettings.showLogoLeft,
+          localShowLogoRight: storeSettings.showLogoRight,
+          logoLeft: storeSettings.logoLeft,
+          logoRight: storeSettings.logoRight,
+          institutionLogo: storeSettings.institutionLogo,
           orientation: activeTemplateData.orientation || 'portrait'
         })
         const count = Math.max(1, copyCount || 1)
@@ -743,17 +835,25 @@ export function useDosyaEvrakAkisi() {
     } catch (e) {
       console.error('[DosyaEvrakAkisi] Yazdırma hatası:', e)
     }
-  }, [selectedEvrak, activeTemplateData, copyCount])
+  }, [selectedEvrak, activeTemplateData, personelListesi, firmaListesi, copyCount])
 
   // 9. PDF Olarak Kaydet / Dışa Aktar
   const handleExportPdf = useCallback(async () => {
     if (!selectedEvrak || !window.electron?.ipcRenderer) return
     try {
       if (selectedEvrak.type === 'template' && activeTemplateData) {
-        const targetKey = resolveTemplateKey(selectedEvrak.code) || selectedEvrak.code
-        const html = DocumentEngine.compileHtml({
-          templateKey: targetKey,
-          data: activeTemplateData,
+        const storeSettings = useSettingsStore.getState()
+        const { config: activeTemplateConf } = resolveTemplateConfig(selectedEvrak.code)
+        const html = compileDocumentHtml({
+          activeTemplateConf,
+          formData: activeTemplateData,
+          personelListesi,
+          firmaListesi,
+          localShowLogoLeft: storeSettings.showLogoLeft,
+          localShowLogoRight: storeSettings.showLogoRight,
+          logoLeft: storeSettings.logoLeft,
+          logoRight: storeSettings.logoRight,
+          institutionLogo: storeSettings.institutionLogo,
           orientation: activeTemplateData.orientation || 'portrait'
         })
         await window.electron.ipcRenderer.invoke('app:save-pdf-as', {
@@ -766,7 +866,7 @@ export function useDosyaEvrakAkisi() {
     } catch (e) {
       console.error('[DosyaEvrakAkisi] PDF dışa aktarma hatası:', e)
     }
-  }, [selectedEvrak, activeTemplateData, dosyaInfo])
+  }, [selectedEvrak, activeTemplateData, personelListesi, firmaListesi, dosyaInfo])
 
   // 10. Klavye Kısayolları (Yukarı / Aşağı ok ile belge değiştirme)
   useEffect(() => {
@@ -830,7 +930,13 @@ export function useDosyaEvrakAkisi() {
     isFullscreen,
     setIsFullscreen,
     activeTemplateData,
+    personelListesi,
+    firmaListesi,
+    birimListesi,
     activePdfBlobUrl,
+    isModalOpen,
+    setIsModalOpen,
+    refreshSelectedDocument: () => setRefreshTrigger((t) => t + 1),
     currentIndex,
     hasPrev,
     hasNext,

@@ -33,7 +33,7 @@ export function Step2FiyatlarVeKazanan({
   setHesaplamaEsasi
 }: Step2FiyatlarVeKazananProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-200">
+    <div className="flex flex-col gap-6 animate-in fade-in duration-200 pb-28">
       {/* Kazanan İstekli / Karar Paneli */}
       <KazananKararPaneli
         activeWinnerFirma={activeWinnerFirma}
@@ -58,12 +58,12 @@ export function Step2FiyatlarVeKazanan({
         }}
       />
 
-      {/* 2. Adım Alt İlerleme Çubuğu - Sabit / Sticky Dock */}
-      <div className="sticky bottom-3 z-30 flex items-center justify-between p-3.5 px-5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-900/10 dark:shadow-black/40 ring-1 ring-slate-900/5 dark:ring-white/5">
+      {/* 2. Adım Alt İlerleme Çubuğu - Ekranın Altında Sabit / Fixed Floating Dock */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-3rem)] max-w-5xl flex items-center justify-between p-3.5 px-6 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-slate-900/20 dark:shadow-black/60 ring-1 ring-slate-900/5 dark:ring-white/5">
         <button
           type="button"
           onClick={() => setCurrentStep(1)}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all shadow-xs cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all shadow-xs cursor-pointer border border-slate-200 dark:border-slate-700 active:scale-95"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>1. Adıma Dön (İstekliler & Dağıtım)</span>
@@ -85,7 +85,7 @@ export function Step2FiyatlarVeKazanan({
         <button
           type="button"
           onClick={() => setCurrentStep(3)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-md cursor-pointer border-0 active:scale-95"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow-md cursor-pointer border-0 active:scale-95"
         >
           <span>3. Adım: Tutanak & Maliyeti Üret</span>
           <ArrowRight className="w-4 h-4" />
