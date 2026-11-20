@@ -71,6 +71,8 @@ export interface FaturaKayit {
   tutanakTarihi?: string;
   irsaliyeNo?: string;
   teslimYeri?: string;
+  pdfPath?: string;
+  pdfAdi?: string;
 }
 
 export interface DosyaOzet {
@@ -360,6 +362,12 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
               : "beklemede",
             aciklama: f.aciklama || "Mali Hizmetler Fatura Kaydı",
             kaynak: "mali_giris",
+            pdfPath: f.pdfPath || f.pdf_path,
+            pdfAdi: f.pdfAdi || f.pdf_adi,
+            tutanakNo: f.tutanakNo,
+            tutanakTarihi: f.tutanakTarihi,
+            irsaliyeNo: f.irsaliyeNo,
+            teslimYeri: f.teslimYeri,
           });
         });
       }
@@ -559,7 +567,34 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   const [formSozlesmeDamgaUygula, setFormSozlesmeDamgaUygula] = useState<boolean>(
     false,
   );
+  const [formPdfPath, setFormPdfPath] = useState("");
+  const [formPdfAdi, setFormPdfAdi] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleSelectPdf = async () => {
+    try {
+      const res = await window.electron?.ipcRenderer.invoke("dialog:showOpenDialog", {
+        title: "Fatura PDF Belgesi Seç (e-Fatura / e-Arşiv PDF)",
+        filters: [{ name: "PDF Belgeleri (*.pdf)", extensions: ["pdf"] }],
+      });
+      if (!res?.canceled && res?.filePath) {
+        setFormPdfPath(res.filePath);
+        const name = res.filePath.split(/[/\\]/).pop() || "Fatura.pdf";
+        setFormPdfAdi(name);
+      }
+    } catch (e) {
+      console.warn("PDF seçimi yapılamadı:", e);
+    }
+  };
+
+  const handleOpenPdf = async (pdfPath?: string) => {
+    if (!pdfPath) return;
+    try {
+      await window.electron?.ipcRenderer.invoke("shell:openPath", pdfPath);
+    } catch (e) {
+      console.error("PDF açılamadı:", e);
+    }
+  };
 
   const reloadData = () => {
     setLoading(true);
@@ -642,6 +677,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     );
     setFormDamgaVergisiUygula(isSozlesmeli);
     setFormSozlesmeDamgaUygula(isSozlesmeli);
+    setFormPdfPath("");
+    setFormPdfAdi("");
     setModalOpen(true);
   };
 
@@ -653,10 +690,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormFaturaTarihi(
       fatura.faturaTarihi ? fatura.faturaTarihi.slice(0, 10) : "",
     );
-    setFormTutanakNo(fatura.tutanakNo || `KT-${new Date().getFullYear()}-001`);
+    setFormTutanakNo(fatura.tutanakNo || "");
     setFormTutanakTarihi(
-      fatura.tutanakTarihi ||
-        (fatura.faturaTarihi ? fatura.faturaTarihi.slice(0, 10) : ""),
+      fatura.tutanakTarihi || "",
     );
     setFormIrsaliyeNo(fatura.irsaliyeNo || "");
     setFormTeslimYeri(fatura.teslimYeri || "Kurum Ambarı / İhtiyaç Yeri");
@@ -682,6 +718,11 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       fatura.sozlesmeDamgaVergisiUygula !== undefined
         ? Boolean(fatura.sozlesmeDamgaVergisiUygula)
         : isSozlesmeli,
+    );
+    setFormPdfPath(fatura.pdfPath || "");
+    setFormPdfAdi(
+      fatura.pdfAdi ||
+        (fatura.pdfPath ? fatura.pdfPath.split(/[/\\]/).pop() || "" : ""),
     );
     setModalOpen(true);
   };
@@ -752,6 +793,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         tutanakTarihi: formTutanakTarihi,
         irsaliyeNo: formIrsaliyeNo.trim(),
         teslimYeri: formTeslimYeri.trim(),
+        pdfPath: formPdfPath.trim() || undefined,
+        pdfAdi: formPdfAdi.trim() || undefined,
       };
 
       // Aynı fatura numarasının mükerrer eklenmesini önle
@@ -1605,7 +1648,23 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                 </button>
                               </td>
                               <td className="px-3.5 py-2.5 font-mono font-bold text-slate-900 dark:text-slate-100">
-                                {fatura.faturaNo}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span>{fatura.faturaNo}</span>
+                                  {fatura.pdfPath && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenPdf(fatura.pdfPath);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
+                                      title={`Fatura PDF Belgesini Aç: ${fatura.pdfAdi || fatura.pdfPath}`}
+                                    >
+                                      <FileText size={10} className="text-rose-600 dark:text-rose-400" />
+                                      <span>PDF</span>
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-3.5 py-2.5 text-slate-500 text-[11px]">
                                 {formatDate(fatura.faturaTarihi)}
@@ -1935,9 +1994,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                           <button
                             onClick={() => handleOpenAddInvoice(dosya)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs shadow-blue-500/20 transition-all cursor-pointer"
+                            title="Bu dosyaya yeni bir fatura kaydı veya tahakkuk ekle"
                           >
                             <Plus size={13} />
-                            Kabul Tutanağı & Fatura Ekle
+                            Fatura Ekle
                           </button>
                         </div>
                       </div>
@@ -1951,9 +2011,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                               kaydı bağlanmadı.
                             </p>
                             <p className="text-[11px] text-slate-400 mt-0.5">
-                              Doğrudan Temin ekranında Muayene ve Kabul Tutanağı
-                              düzenlendiğinde veya buradan Kabul Tutanağı &
-                              Fatura Ekle butonuna tıklandığında senkronize
+                              Doğrudan Temin ekranında Muayene Kabul Tutanağı
+                              düzenlendiğinde veya Mali Hizmetler masasında Fatura
+                              Ekle butonuna tıklandığında senkronize
                               listelenecektir.
                             </p>
                           </div>
@@ -2006,7 +2066,23 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                     className="hover:bg-slate-50/50 dark:hover:bg-slate-950/30 transition-colors"
                                   >
                                     <td className="px-3.5 py-2.5 font-mono font-bold text-slate-900 dark:text-slate-100">
-                                      {fatura.faturaNo}
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span>{fatura.faturaNo}</span>
+                                        {fatura.pdfPath && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleOpenPdf(fatura.pdfPath);
+                                            }}
+                                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
+                                            title={`Fatura PDF Belgesini Aç: ${fatura.pdfAdi || fatura.pdfPath}`}
+                                          >
+                                            <FileText size={10} className="text-rose-600 dark:text-rose-400" />
+                                            <span>PDF</span>
+                                          </button>
+                                        )}
+                                      </div>
                                     </td>
                                     <td className="px-3.5 py-2.5 text-slate-500">
                                       {formatDate(fatura.faturaTarihi)}
@@ -2141,13 +2217,13 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                   <div className="min-w-0">
                     <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 truncate">
                       {duzenlenenFatura
-                        ? "Muayene Kabul & Fatura Düzenle"
-                        : "Yeni Muayene Kabul Tutanağı & Fatura Kaydet"}
+                        ? "Faturayı Düzenle"
+                        : "Yeni Fatura Kaydı & Tahakkuk Girişi"}
                     </h3>
                     <p className="text-[11px] text-slate-500 truncate">
                       {seciliDosya?.teminNo} — {seciliDosya?.konu}{" "}
                       <span className="text-blue-600 dark:text-blue-400 font-semibold">
-                        (5018 & Kabul Aşaması ile Entegre)
+                        (5018 Mali Yönetim Masası)
                       </span>
                     </p>
                   </div>
@@ -2167,46 +2243,97 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                 className="flex-1 flex flex-col min-h-0 overflow-hidden"
               >
                 <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                  {/* Muayene ve Kabul Tutanağı Entegrasyon Kartı */}
-                  <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 space-y-2.5">
+                  {/* Fatura PDF Belgesi İliştirme Kartı */}
+                  <div className="p-3.5 rounded-2xl bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 space-y-2">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Fatura PDF Dosyası (e-Fatura / e-Arşiv PDF — Opsiyonel)
+                    </label>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={handleSelectPdf}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs"
+                      >
+                        <FileText size={13} className="text-rose-500" />
+                        <span>{formPdfPath ? "PDF Değiştir" : "Fatura PDF'i Seç"}</span>
+                      </button>
+
+                      {formPdfPath && (
+                        <div className="flex items-center gap-2 bg-rose-100/70 dark:bg-rose-950/60 border border-rose-300/70 dark:border-rose-800 px-2.5 py-1 rounded-xl text-xs">
+                          <span
+                            className="font-mono text-rose-800 dark:text-rose-200 font-bold truncate max-w-xs"
+                            title={formPdfPath}
+                          >
+                            {formPdfAdi || formPdfPath.split(/[/\\]/).pop()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenPdf(formPdfPath)}
+                            className="text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer"
+                            title="PDF Belgesini Aç"
+                          >
+                            Aç
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormPdfPath("");
+                              setFormPdfAdi("");
+                            }}
+                            className="text-slate-400 hover:text-rose-600 cursor-pointer ml-1"
+                            title="İlişkiyi Kaldır"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">
+                      Tedarikçiden gelen faturanın PDF belgesini kaydedebilir ve tek tıkla sistem varsayılan okuyucusunda açabilirsiniz.
+                    </span>
+                  </div>
+
+                  {/* İlgili Muayene ve Kabul Tutanağı Referansı (Opsiyonel Referans Bilgisi) */}
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 space-y-2.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                         <CheckCircle
                           size={14}
-                          className="text-blue-600 dark:text-blue-400"
+                          className="text-slate-500 dark:text-slate-400"
                         />
                         <span>
-                          Muayene ve Kabul Tutanağı Entegrasyonu (5018 / MYHBY)
+                          İlgili Muayene ve Kabul Tutanağı Referansı (Opsiyonel)
                         </span>
                       </span>
-                      <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold bg-blue-100 dark:bg-blue-900/60 px-2 py-0.5 rounded-md">
-                        Otomatik Senkronize
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold bg-slate-200/80 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                        4734 Yetkisi
                       </span>
                     </div>
+                    <p className="text-[10px] text-slate-400">
+                      * Kabul tutanağı tanzimi 4734 Satın Alma ve Muayene Kabul Komisyonu görev alanındadır. Mali Hizmetler masasında faturaya yalnızca referans olarak iliştirilebilir.
+                    </p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Kabul Tutanağı No *
+                          Kabul Tutanağı No (Varsa)
                         </label>
                         <input
                           type="text"
-                          required
                           value={formTutanakNo}
                           onChange={(e) => setFormTutanakNo(e.target.value)}
                           placeholder="Örn: KT-2026-001"
-                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-semibold font-mono"
+                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold font-mono"
                         />
                       </div>
                       <div>
                         <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                          Kabul / Muayene Tarihi *
+                          Kabul / Muayene Tarihi (Varsa)
                         </label>
                         <input
                           type="date"
-                          required
                           value={formTutanakTarihi}
                           onChange={(e) => setFormTutanakTarihi(e.target.value)}
-                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-semibold"
+                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold"
                         />
                       </div>
                       <div>
@@ -2218,7 +2345,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                           value={formIrsaliyeNo}
                           onChange={(e) => setFormIrsaliyeNo(e.target.value)}
                           placeholder="Örn: İRS-2026-104"
-                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-semibold font-mono"
+                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold font-mono"
                         />
                       </div>
                       <div>
@@ -2230,7 +2357,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                           value={formTeslimYeri}
                           onChange={(e) => setFormTeslimYeri(e.target.value)}
                           placeholder="Kurum Ambarı / İhtiyaç Yeri"
-                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 rounded-lg text-xs font-semibold"
+                          className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-semibold"
                         />
                       </div>
                     </div>

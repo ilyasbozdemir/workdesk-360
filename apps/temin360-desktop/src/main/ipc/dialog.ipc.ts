@@ -12,15 +12,18 @@ export function registerDialogIpcHandlers(): void {
     return { canceled, filePath }
   })
 
-  ipcMain.handle('dialog:showOpenDialog', async () => {
-    const mainWindow = BrowserWindow.getAllWindows()[0]
-    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-      title: 'Proje Dosyası Seç',
-      filters: openDialogFilters,
-      properties: ['openFile']
-    })
-    return { canceled, filePath: filePaths && filePaths.length > 0 ? filePaths[0] : null }
-  })
+  ipcMain.handle(
+    'dialog:showOpenDialog',
+    async (_event, options?: { title?: string; filters?: { name: string; extensions: string[] }[] }) => {
+      const mainWindow = BrowserWindow.getAllWindows()[0]
+      const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+        title: options?.title || 'Proje Dosyası Seç',
+        filters: options?.filters || openDialogFilters,
+        properties: ['openFile']
+      })
+      return { canceled, filePath: filePaths && filePaths.length > 0 ? filePaths[0] : null }
+    }
+  )
 
   // Electron Issue #20400 & #41603 Focus Bug Çözümü:
   // Native window.alert() ve window.confirm() yerine showMessageBoxSync çalıştırıp odağı BrowserWindow'a geri kazandırır
