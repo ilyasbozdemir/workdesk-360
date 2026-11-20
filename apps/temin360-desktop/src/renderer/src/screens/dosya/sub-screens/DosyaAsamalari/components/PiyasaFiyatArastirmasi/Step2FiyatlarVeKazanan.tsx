@@ -54,8 +54,7 @@ export function Step2FiyatlarVeKazanan({
         handleSetWinnerFirma={handleSetWinnerFirma}
         hesaplamaEsasi={hesaplamaEsasi}
         onManageFirmsClick={() => {
-          setIsFormOpen(true)
-          setActiveFormTab('firms')
+          setCurrentStep(1)
         }}
       />
 

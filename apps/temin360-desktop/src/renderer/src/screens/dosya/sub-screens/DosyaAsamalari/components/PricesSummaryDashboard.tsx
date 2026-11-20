@@ -131,34 +131,14 @@ export function PricesSummaryDashboard({
         </div>
 
         <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border",
-              isMevzuatUygun
-                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60"
-                : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60",
-            )}
-          >
-            {isMevzuatUygun ? (
-              <>
-                <Check size={11} className="text-emerald-500" />
-                <span>4734 Md. 22 Eşiği Karşılandı (En az 3 İstekli)</span>
-              </>
-            ) : (
-              <>
-                <AlertTriangle size={11} className="text-amber-500" />
-                <span>Mevzuat Önerisi: En az 3 İstekli ({totalInvitedCount}/3)</span>
-              </>
-            )}
-          </span>
-
           {onManageFirmsClick && (
             <button
               type="button"
               onClick={onManageFirmsClick}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+              title="1. Adıma Dönerek İstekli Firmaları Seç ve Yönet"
             >
-              <Settings size={12} />
+              <Users size={13} />
               <span>Firmaları Yönet</span>
             </button>
           )}
@@ -180,7 +160,7 @@ export function PricesSummaryDashboard({
               className={cn(
                 "p-5 rounded-2xl border transition-all flex flex-col justify-between relative overflow-hidden",
                 isSelectedWinner
-                  ? "bg-amber-50/40 dark:bg-amber-955/10 border-amber-300 dark:border-amber-700 shadow-sm ring-1 ring-amber-400/40"
+                  ? "bg-amber-50/40 dark:bg-amber-955/10Firmaları Yönet border-amber-300 dark:border-amber-700 shadow-sm ring-1 ring-amber-400/40"
                   : isLowest
                   ? "bg-emerald-50/30 dark:bg-emerald-955/10 border-emerald-300 dark:border-emerald-800"
                   : "bg-slate-50/50 dark:bg-slate-900/10 border-slate-200/60 dark:border-slate-800/80",
