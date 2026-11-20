@@ -2,23 +2,23 @@ import React from 'react'
 import {
   FileText,
   FolderOpen,
+  FolderCheck,
   RefreshCw,
   Building2,
   Tag,
   Coins,
   ShieldCheck,
   CheckCircle2,
-  FileCheck,
-  ChevronDown
+  FileCheck
 } from 'lucide-react'
 import { DosyaSummaryInfo, EvrakItem } from '../types'
 import { formatCurrency } from '@renderer/utils/formatters'
 
 interface DosyaEvrakAkisiHeaderProps {
   dosyaInfo: DosyaSummaryInfo | null
-  dosyalarList: Array<{ id: number; teminNo: string; konu: string }>
-  activeDosyaId: number | null
-  onSelectDosya: (id: number) => void
+  dosyalarList?: Array<{ id: number; teminNo: string; konu: string }>
+  activeDosyaId?: number | null
+  onSelectDosya?: (id: number) => void
   onRefresh: () => void
   loading: boolean
   evraklar: EvrakItem[]
@@ -26,9 +26,7 @@ interface DosyaEvrakAkisiHeaderProps {
 
 export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
   dosyaInfo,
-  dosyalarList,
   activeDosyaId,
-  onSelectDosya,
   onRefresh,
   loading,
   evraklar
@@ -55,7 +53,7 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-5 py-3 shadow-2xs">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* Sol Taraf: Dosya Başlık ve Seçici */}
+        {/* Sol Taraf: Aktif Dosya Başlık ve Kimlik Bilgileri (Global Temin Selector ile Senkron) */}
         <div className="flex items-start sm:items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-2xl bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800/60 shadow-2xs">
             <FolderOpen size={20} />
@@ -63,39 +61,24 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-black font-mono px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                {dosyaInfo?.teminNo || `#${activeDosyaId || '---'}`}
+              <span className="text-xs font-black font-mono px-2.5 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
+                {dosyaInfo?.teminNo || (activeDosyaId ? `Dosya #${activeDosyaId}` : 'Aktif Dosya Yok')}
               </span>
 
-              {/* Hızlı Dosya Seçici Dropdown */}
-              <div className="relative inline-block">
-                <select
-                  value={activeDosyaId || ''}
-                  onChange={(e) => onSelectDosya(Number(e.target.value))}
-                  className="text-xs font-bold bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 pl-2.5 pr-7 py-1 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none transition-colors"
-                  title="Başka bir doğrudan temin dosyasını seç"
-                >
-                  {dosyalarList.map((d) => (
-                    <option key={`opt-dosya-${d.id}`} value={d.id}>
-                      {d.teminNo} — {d.konu.length > 40 ? `${d.konu.slice(0, 40)}...` : d.konu}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={12}
-                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 shadow-xs shrink-0">
+                <FolderCheck size={11} className="text-emerald-600 dark:text-emerald-400" />
+                Aktif Temin Dosyası
+              </span>
 
               {dosyaInfo && (
                 <>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
                     <Tag size={11} className="text-slate-400" />
                     <span>{formatAlimTuru(dosyaInfo.alimTuru)}</span>
                   </span>
 
                   <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border ${
+                    className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
                       dosyaInfo.sozlesmeliMi
                         ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
                         : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
@@ -108,7 +91,7 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
             </div>
 
             <h1 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 truncate mt-1">
-              {dosyaInfo?.konu || 'Doğrudan Temin Evrak Akışı & Dosya Görüntüleme'}
+              {dosyaInfo?.konu || (activeDosyaId ? 'Doğrudan Temin Evrak Akışı & Belge İnceleme' : 'Lütfen üst bardaki Temin Seçici üzerinden aktif bir dosya belirleyiniz.')}
             </h1>
           </div>
         </div>

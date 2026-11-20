@@ -25,6 +25,7 @@ export function useDosyaEvrakAkisi() {
   const [totalPages, setTotalPages] = useState<number>(1)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false)
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false)
+  const [copyCount, setCopyCount] = useState<number>(1)
 
   // Aktif Belge İçerik Verileri
   const [activeTemplateData, setActiveTemplateData] = useState<any>(null)
@@ -721,7 +722,7 @@ export function useDosyaEvrakAkisi() {
     }
   }, [selectedEvrak, activeTemplateData])
 
-  // 8. Yazdır
+  // 8. Yazdır (Kopya Sayısı Destekli)
   const handlePrint = useCallback(async () => {
     if (!window.electron?.ipcRenderer) return
     try {
@@ -732,14 +733,17 @@ export function useDosyaEvrakAkisi() {
           data: activeTemplateData,
           orientation: activeTemplateData.orientation || 'portrait'
         })
-        await window.electron.ipcRenderer.invoke('belge:print-html', html)
+        const count = Math.max(1, copyCount || 1)
+        for (let i = 0; i < count; i++) {
+          await window.electron.ipcRenderer.invoke('belge:print-html', html)
+        }
       } else if (selectedEvrak?.filePath) {
         await window.electron.ipcRenderer.invoke('workspace:open-file', selectedEvrak.filePath)
       }
     } catch (e) {
       console.error('[DosyaEvrakAkisi] Yazdırma hatası:', e)
     }
-  }, [selectedEvrak, activeTemplateData])
+  }, [selectedEvrak, activeTemplateData, copyCount])
 
   // 9. PDF Olarak Kaydet / Dışa Aktar
   const handleExportPdf = useCallback(async () => {
@@ -838,6 +842,8 @@ export function useDosyaEvrakAkisi() {
     handleOpenExternal,
     handlePrint,
     handleExportPdf,
+    copyCount,
+    setCopyCount,
     refreshAll: fetchDosyaEvraklari
   }
 }

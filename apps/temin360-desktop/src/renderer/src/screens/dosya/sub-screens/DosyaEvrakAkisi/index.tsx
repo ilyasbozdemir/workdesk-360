@@ -47,6 +47,8 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
     handleOpenExternal,
     handlePrint,
     handleExportPdf,
+    copyCount,
+    setCopyCount,
     refreshAll
   } = useDosyaEvrakAkisi()
 
@@ -121,6 +123,8 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
           onOpenExternal={handleOpenExternal}
           isFullscreen={isFullscreen}
           onToggleFullscreen={() => setIsFullscreen((f) => !f)}
+          copyCount={copyCount}
+          onCopyCountChange={setCopyCount}
         />
       </div>
     </div>

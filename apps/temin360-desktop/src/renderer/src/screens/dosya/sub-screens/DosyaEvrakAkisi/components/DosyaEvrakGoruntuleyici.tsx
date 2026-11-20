@@ -15,7 +15,8 @@ import {
   RefreshCw,
   Loader2,
   Eye,
-  FileCode2
+  FileCode2,
+  Copy
 } from 'lucide-react'
 import { EvrakItem } from '../types'
 import { DocumentRenderer } from '@worksuite-360/document-engine'
@@ -48,6 +49,8 @@ interface DosyaEvrakGoruntuleyiciProps {
   onOpenExternal: () => void
   isFullscreen: boolean
   onToggleFullscreen: () => void
+  copyCount?: number
+  onCopyCountChange?: (count: number) => void
 }
 
 export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = ({
@@ -75,7 +78,9 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
   onExportPdf,
   onOpenExternal,
   isFullscreen,
-  onToggleFullscreen
+  onToggleFullscreen,
+  copyCount = 1,
+  onCopyCountChange
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -252,15 +257,49 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
             </button>
           </div>
 
+          {/* Kopya Sayısı Ayarı */}
+          <div
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300"
+            title="Yazdırma & Evrak Kopya Sayısı (Asıl + Nüsha Adedi)"
+          >
+            <Copy size={12} className="text-slate-400" />
+            <span className="text-[11px] font-semibold text-slate-500">Kopya:</span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={copyCount <= 1}
+                onClick={() => onCopyCountChange && onCopyCountChange(Math.max(1, copyCount - 1))}
+                className="w-4 h-4 flex items-center justify-center rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer text-xs font-bold transition-colors"
+                title="Kopya sayısını azalt"
+              >
+                -
+              </button>
+              <span className="w-4 text-center font-mono font-black text-blue-600 dark:text-blue-400 text-xs">
+                {copyCount}
+              </span>
+              <button
+                type="button"
+                disabled={copyCount >= 10}
+                onClick={() => onCopyCountChange && onCopyCountChange(Math.min(10, copyCount + 1))}
+                className="w-4 h-4 flex items-center justify-center rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer text-xs font-bold transition-colors"
+                title="Kopya sayısını artır"
+              >
+                +
+              </button>
+            </div>
+            <span className="text-[10px] text-slate-400 font-normal">Nüsha</span>
+          </div>
+
           {/* Dışa Aktar & Yazdır Aksiyonları */}
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={onPrint}
-              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-2xs"
-              title="Belgeyi Doğrudan Yazdır (Ctrl+P)"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 dark:text-blue-300 transition-all cursor-pointer shadow-2xs text-xs font-bold"
+              title={`Belgeyi ${copyCount} Kopya Olarak Yazdır (Ctrl+P)`}
             >
-              <Printer size={14} />
+              <Printer size={13} />
+              <span>Yazdır {copyCount > 1 ? `(${copyCount} Kopya)` : ''}</span>
             </button>
 
             <button
