@@ -1883,99 +1883,121 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                   {/* Dosya Başlık Şeridi */}
                   <div
                     onClick={() => toggleExpand(dosya.id)}
-                    className="p-4 cursor-pointer flex items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-950/20 hover:bg-slate-50 dark:hover:bg-slate-950/50 transition-colors"
+                    className="p-3.5 sm:p-4 cursor-pointer flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-950/20 hover:bg-slate-50 dark:hover:bg-slate-950/50 transition-colors select-none"
                   >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {/* Sol Kısım: Rozetler, Başlık ve Meta Bilgiler */}
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
                       <button
                         type="button"
-                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                        className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors shrink-0 mt-0.5"
                       >
                         {isExp
                           ? <ChevronDown size={18} />
                           : <ChevronRight size={18} />}
                       </button>
 
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-black px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
-                          {dosya.teminNo}
-                        </span>
-                        {selectedDosyaId === dosya.id && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 shadow-xs">
-                            <FolderCheck
-                              size={11}
-                              className="text-emerald-600 dark:text-emerald-400"
-                            />
-                            Aktif Dosya
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        {/* 1. Satır: Rozetler ve Dosya No */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-xs font-black px-2.5 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 shrink-0">
+                            {dosya.teminNo}
                           </span>
-                        )}
-                        <AlimTuruBadge turu={dosya.tur} />
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border",
-                            dosya.sozlesmeYapilacakMi
-                              ? "bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200/60"
-                              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200",
+                          {selectedDosyaId === dosya.id && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 shadow-xs shrink-0">
+                              <FolderCheck
+                                size={11}
+                                className="text-emerald-600 dark:text-emerald-400"
+                              />
+                              Aktif Dosya
+                            </span>
                           )}
-                          title={dosya.sozlesmeYapilacakMi
-                            ? "Dosya sözleşmelidir — Sözleşme Damga Vergisi (‰ 9,48) otomatik tahsil edilir"
-                            : "Dosyada sözleşme yoktur — Sözleşme Damga Vergisi tahsil edilmez"}
-                        >
-                          {dosya.sozlesmeYapilacakMi
-                            ? "📜 Sözleşmeli (Sözleşme DV ‰9,48)"
-                            : "📦 Sözleşmesiz"}
-                        </span>
-                      </div>
+                          <AlimTuruBadge turu={dosya.tur} />
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0",
+                              dosya.sozlesmeYapilacakMi
+                                ? "bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200/60"
+                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200",
+                            )}
+                            title={dosya.sozlesmeYapilacakMi
+                              ? "Dosya sözleşmelidir — Sözleşme Damga Vergisi (‰ 9,48) otomatik tahsil edilir"
+                              : "Dosyada sözleşme yoktur — Sözleşme Damga Vergisi tahsil edilmez"}
+                          >
+                            {dosya.sozlesmeYapilacakMi
+                              ? "📜 Sözleşmeli"
+                              : "📦 Sözleşmesiz"}
+                          </span>
+                        </div>
 
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100 truncate">
+                        {/* 2. Satır: Dosya Konusu (Geniş ve Belirgin) */}
+                        <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100 leading-snug line-clamp-1">
                           {dosya.konu}
                         </h4>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Building2 size={11} className="text-slate-400" />
-                            {dosya.kazananFirmaUnvani} (VKN:{" "}
-                            {dosya.kazananFirmaVkn})
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Layers size={11} className="text-slate-400" />
-                            {dosya.harcamaBirimi}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Calendar size={11} className="text-slate-400" />
-                            {formatDate(dosya.olusturmaTarihi)}
-                          </span>
+
+                        {/* 3. Satır: Alt Meta Bilgileri (Firma, Birim, Tarih) */}
+                        <div className="flex items-center gap-2.5 text-[11px] text-slate-500 font-medium flex-wrap">
+                          {dosya.kazananFirmaUnvani && (
+                            <span
+                              className="flex items-center gap-1 max-w-[280px] sm:max-w-[360px] truncate"
+                              title={`${dosya.kazananFirmaUnvani} (VKN: ${dosya.kazananFirmaVkn || "-"})`}
+                            >
+                              <Building2 size={12} className="text-slate-400 shrink-0" />
+                              <span className="truncate">{dosya.kazananFirmaUnvani}</span>
+                              {dosya.kazananFirmaVkn && (
+                                <span className="text-[10px] text-slate-400 shrink-0 font-mono">
+                                  ({dosya.kazananFirmaVkn})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {dosya.harcamaBirimi && (
+                            <>
+                              <span className="text-slate-300 dark:text-slate-700">•</span>
+                              <span className="flex items-center gap-1 shrink-0">
+                                <Layers size={12} className="text-slate-400 shrink-0" />
+                                <span>{dosya.harcamaBirimi}</span>
+                              </span>
+                            </>
+                          )}
+                          {dosya.olusturmaTarihi && (
+                            <>
+                              <span className="text-slate-300 dark:text-slate-700">•</span>
+                              <span className="flex items-center gap-1 shrink-0">
+                                <Calendar size={12} className="text-slate-400 shrink-0" />
+                                <span>{formatDate(dosya.olusturmaTarihi)}</span>
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Sağ Taraf: Bedel ve Fatura Rozeti */}
-                    <div className="flex items-center gap-4 shrink-0">
-                      <div className="text-right">
+                    {/* Sağ Taraf: Bedel, Fatura Toplamı ve Butonlar */}
+                    <div className="flex items-center gap-3.5 shrink-0 justify-end pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800/80">
+                      <div className="text-right px-2">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                           Yaklaşık Maliyet / Bedel
                         </span>
-                        <span className="text-xs font-black text-slate-900 dark:text-slate-100">
+                        <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-mono">
                           {formatCurrency(
                             dosya.yaklasikMaliyet || dosya.netOdenen,
                           )}
                         </span>
                       </div>
 
-                      <div className="text-right">
+                      <div className="text-right px-2">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                           Fatura Toplamı
                         </span>
-                        <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                        <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">
                           {faturaSayisi > 0
                             ? formatCurrency(dosyaFaturaToplam)
-                            : "Fatura Yok"}
+                            : "0,00 ₺"}
                         </span>
                       </div>
 
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold border whitespace-nowrap shrink-0 ${
                           faturaSayisi > 0
                             ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                             : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800"
@@ -1986,36 +2008,38 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                           : "Fatura Bekleniyor"}
                       </span>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenDosya(dosya.id);
-                        }}
-                        title="Dosya Detayına Git (Süreç Takip & Şartname)"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer shadow-2xs"
-                      >
-                        <ExternalLink size={13} />
-                        <span className="hidden sm:inline">Dosya Detayı</span>
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenDosya(dosya.id);
+                          }}
+                          title="Dosya Detayına Git (Süreç Takip & Şartname)"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer shadow-2xs whitespace-nowrap"
+                        >
+                          <ExternalLink size={13} />
+                          <span>Dosya Detayı</span>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          useWorkspaceStore.getState().setActiveDosyaId(
-                            dosya.id,
-                          );
-                          useTabStore.getState().addTab(
-                            APP_ROUTES.DOSYA_EVRAK_AKISI,
-                          );
-                        }}
-                        title="Dosya Evrak Akışı & Belge İnceleme Ekranını Aç"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer shadow-2xs"
-                      >
-                        <Files size={13} />
-                        <span className="hidden sm:inline">Evrak Akışı</span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            useWorkspaceStore.getState().setActiveDosyaId(
+                              dosya.id,
+                            );
+                            useTabStore.getState().addTab(
+                              APP_ROUTES.DOSYA_EVRAK_AKISI,
+                            );
+                          }}
+                          title="Dosya Evrak Akışı & Belge İnceleme Ekranını Aç"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer shadow-2xs whitespace-nowrap"
+                        >
+                          <Files size={13} />
+                          <span>Evrak Akışı</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -2076,20 +2100,20 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                             <table className="w-full text-left text-xs">
                               <thead className="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
                                 <tr>
-                                  <th className="px-3.5 py-2.5">Fatura No</th>
-                                  <th className="px-3.5 py-2.5">
+                                  <th className="px-3.5 py-2.5 whitespace-nowrap">Fatura No</th>
+                                  <th className="px-3.5 py-2.5 whitespace-nowrap">
                                     Fatura Tarihi
                                   </th>
-                                  <th className="px-3.5 py-2.5 text-right">
+                                  <th className="px-3.5 py-2.5 text-right whitespace-nowrap">
                                     KDV Matrahı (₺)
                                   </th>
-                                  <th className="px-3.5 py-2.5 text-center">
+                                  <th className="px-3.5 py-2.5 text-center whitespace-nowrap">
                                     KDV (%)
                                   </th>
-                                  <th className="px-3.5 py-2.5 text-right">
+                                  <th className="px-3.5 py-2.5 text-right whitespace-nowrap">
                                     Fatura Tutarı (Brüt)
                                   </th>
-                                  <th className="px-3.5 py-2.5 text-right">
+                                  <th className="px-3.5 py-2.5 text-right whitespace-nowrap">
                                     {dosya.sozlesmeYapilacakMi
                                       ? <span>Damga Vergisi (‰9,48)</span>
                                       : (
@@ -2101,16 +2125,16 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                         </span>
                                       )}
                                   </th>
-                                  <th className="px-3.5 py-2.5 text-right">
+                                  <th className="px-3.5 py-2.5 text-right whitespace-nowrap">
                                     KDV Tevkifatı
                                   </th>
-                                  <th className="px-3.5 py-2.5 text-right font-black text-blue-600 dark:text-blue-400">
+                                  <th className="px-3.5 py-2.5 text-right font-black text-blue-600 dark:text-blue-400 whitespace-nowrap">
                                     Net Ödenecek (₺)
                                   </th>
-                                  <th className="px-3.5 py-2.5 text-center">
+                                  <th className="px-3.5 py-2.5 text-center whitespace-nowrap">
                                     Durum
                                   </th>
-                                  <th className="px-3.5 py-2.5 text-right">
+                                  <th className="px-3.5 py-2.5 text-right whitespace-nowrap">
                                     İşlemler
                                   </th>
                                 </tr>
