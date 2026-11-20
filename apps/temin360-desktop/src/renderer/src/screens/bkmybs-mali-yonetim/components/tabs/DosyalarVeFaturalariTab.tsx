@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowRight,
   Banknote,
   Building2,
@@ -23,6 +24,7 @@ import {
   Plus,
   Printer,
   Receipt,
+  RefreshCw,
   Save,
   Search,
   ShieldCheck,
@@ -279,19 +281,29 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         if (key && !faturaNoSet.has(key)) {
           faturaNoSet.add(key);
           // Finansal tutarları hesapla:
-          // 4734 sayılı Kanun md. 22 doğrudan temin bir ihale usulü olmadığından ve ihale komisyonu
-          // kararı bulunmadığından 488 sayılı Damga Vergisi Kanunu uyarınca ihale karar damga vergisi
-          // (karar pulu %0.569) KANUNEN KESİLMEZ (Maliye Bakanlığı Tebliği ve Sayıştay Kararları).
-          // Dosya sözleşmeli olsa dahi doğrudan teminde ihale karar pulu kesilmez.
-          // Yalnızca kullanıcı açıkça faturada kararPuluUygula = true seçmişse uygulanır.
+          // 4734 sayılı Kanun md. 22 doğrudan temin bir ihale usulü olmadığından ihale karar damga vergisi kesilmez.
+          // 488 sayılı Damga Vergisi Kanunu uyarınca:
+          // Sözleşmesiz doğrudan temin alımlarında yazılı bir akit/sözleşme düzenlenmediği için
+          // SÖZLEŞME DAMGA VERGİSİ (binde 9,48) DOĞMAZ VE KESİLMEZ (Maliye Bakanlığı ve Sayıştay içtihatları).
+          // Damga vergisi yalnızca dosya sözleşmeli ise veya kullanıcı faturada açıkça uygulanmasını seçmişse kesilir.
           const kdvDegeri = Number.isFinite(Number(f.kdvOrani))
             ? Number(f.kdvOrani)
             : 20;
-          const dvUygula = (f as any).damgaVergisiUygula !== false;
-          const sozlesmeDvUygula =
-            (f as any).sozlesmeDamgaVergisiUygula !== undefined
-              ? Boolean((f as any).sozlesmeDamgaVergisiUygula)
-              : Boolean(d.sozlesme_yapilacak_mi);
+
+          const isDosyaSozlesmeli = Boolean(
+            d.sozlesme_yapilacak_mi ||
+              d.sozlesme_turu ||
+              d.sozlesme_bedeli ||
+              (f as any).sozlesmeDamgaVergisiUygula,
+          );
+
+          // Sözleşmesiz dosyalarda varsayılan olarak damga vergisi uygulanmaz (0,00 ₺ Muaf)
+          const dvUygula = (f as any).damgaVergisiUygula !== undefined
+            ? Boolean((f as any).damgaVergisiUygula)
+            : isDosyaSozlesmeli;
+          const sozlesmeDvUygula = (f as any).sozlesmeDamgaVergisiUygula !== undefined
+            ? Boolean((f as any).sozlesmeDamgaVergisiUygula)
+            : isDosyaSozlesmeli;
 
           const fin = calculateInvoiceFinancials(
             f.firmaTutar,
@@ -623,8 +635,13 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormAciklama(
       `${dosya.konu} alımı muayene kabul ve fatura hak ediş kaydı.`,
     );
-    setFormDamgaVergisiUygula(true);
-    setFormSozlesmeDamgaUygula(Boolean(dosya.sozlesmeYapilacakMi));
+    const isSozlesmeli = Boolean(
+      dosya.sozlesmeYapilacakMi ||
+      (dosya as any).sozlesme_yapilacak_mi ||
+      (dosya as any).sozlesmeTuru
+    );
+    setFormDamgaVergisiUygula(isSozlesmeli);
+    setFormSozlesmeDamgaUygula(isSozlesmeli);
     setModalOpen(true);
   };
 
@@ -651,11 +668,20 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormOdemeYontemi(fatura.odemeYontemi || "Hazine / Muhasebat Ödeme Emri");
     setFormDurum(fatura.durum);
     setFormAciklama(fatura.aciklama || "");
-    setFormDamgaVergisiUygula(fatura.damgaVergisiUygula !== false);
+    const isSozlesmeli = Boolean(
+      dosya.sozlesmeYapilacakMi ||
+      (dosya as any).sozlesme_yapilacak_mi ||
+      (dosya as any).sozlesmeTuru
+    );
+    setFormDamgaVergisiUygula(
+      fatura.damgaVergisiUygula !== undefined
+        ? Boolean(fatura.damgaVergisiUygula)
+        : isSozlesmeli,
+    );
     setFormSozlesmeDamgaUygula(
       fatura.sozlesmeDamgaVergisiUygula !== undefined
         ? Boolean(fatura.sozlesmeDamgaVergisiUygula)
-        : Boolean(dosya.sozlesmeYapilacakMi),
+        : isSozlesmeli,
     );
     setModalOpen(true);
   };
@@ -1352,21 +1378,38 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode("table")}
+                onClick={() => {
+                  setViewMode("table");
+                  setScopeFilter("all");
+                }}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer",
                   viewMode === "table"
                     ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-black"
                     : "text-slate-600 dark:text-slate-300 hover:text-slate-900",
                 )}
-                title="Tüm faturaların tek çizelgede denetlendiği Fatura Kontrol Listesi"
+                title="Tüm dosyalardaki faturaların tek ekranda anlık denetlendiği konsolide kontrol masası"
               >
                 <Table size={13} />
                 <span>
-                  Fatura Kontrol Çizelgesi ({allFilteredInvoices.length})
+                  ⚡ Fatura Dashboard ({allFilteredInvoices.length})
                 </span>
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={reloadData}
+              disabled={loading}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs"
+              title="Tüm dosya ve fatura kayıtlarını veritabanından anlık çek"
+            >
+              <RefreshCw
+                size={12}
+                className={loading ? "animate-spin text-blue-500" : "text-slate-400"}
+              />
+              <span className="hidden sm:inline">Anlık Çek</span>
+            </button>
           </div>
         </div>
 
@@ -1521,7 +1564,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                             Fatura Tutarı (Brüt)
                           </th>
                           <th className="px-3.5 py-3 text-right">
-                            Damga Vergisi (‰9,48)
+                            Damga Vergisi (‰9,48 / Muaf)
                           </th>
                           <th className="px-3.5 py-3 text-right">
                             KDV Tevkifatı
@@ -1587,8 +1630,20 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                               <td className="px-3.5 py-2.5 text-right font-mono font-black text-slate-900 dark:text-slate-100">
                                 {formatCurrency(fatura.firmaTutar || 0)}
                               </td>
-                              <td className="px-3.5 py-2.5 text-right font-mono text-rose-600 dark:text-rose-400">
-                                {formatCurrency(fatura.damgaVergisi || 0)}
+                              <td className="px-3.5 py-2.5 text-right font-mono">
+                                {fatura.damgaVergisi &&
+                                fatura.damgaVergisi > 0 ? (
+                                  <span className="text-rose-600 dark:text-rose-400 font-bold">
+                                    {formatCurrency(fatura.damgaVergisi)}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-slate-400 font-normal">
+                                    0,00 ₺
+                                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">
+                                      Muaf
+                                    </span>
+                                  </span>
+                                )}
                               </td>
                               <td
                                 className={cn(
@@ -1922,7 +1977,13 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                     Fatura Tutarı (Brüt)
                                   </th>
                                   <th className="px-3.5 py-2.5 text-right">
-                                    Damga Vergisi (‰9,48)
+                                    {dosya.sozlesmeYapilacakMi ? (
+                                      <span>Damga Vergisi (‰9,48)</span>
+                                    ) : (
+                                      <span title="488 sayılı Kanun uyarınca sözleşmesiz doğrudan temin alımlarında sözleşme damga vergisi muaftır">
+                                        Damga Vergisi <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">(Sözleşmesiz - Muaf)</span>
+                                      </span>
+                                    )}
                                   </th>
                                   <th className="px-3.5 py-2.5 text-right">
                                     KDV Tevkifatı
@@ -1961,8 +2022,20 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                     <td className="px-3.5 py-2.5 text-right font-mono font-black text-slate-900 dark:text-slate-100">
                                       {formatCurrency(fatura.firmaTutar || 0)}
                                     </td>
-                                    <td className="px-3.5 py-2.5 text-right font-mono text-rose-600 dark:text-rose-400">
-                                      {formatCurrency(fatura.damgaVergisi || 0)}
+                                    <td className="px-3.5 py-2.5 text-right font-mono">
+                                      {fatura.damgaVergisi &&
+                                      fatura.damgaVergisi > 0 ? (
+                                        <span className="text-rose-600 dark:text-rose-400 font-bold">
+                                          {formatCurrency(fatura.damgaVergisi)}
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 text-slate-400 font-normal">
+                                          0,00 ₺
+                                          <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">
+                                            Muaf
+                                          </span>
+                                        </span>
+                                      )}
                                     </td>
                                     <td
                                       className={cn(
@@ -2248,6 +2321,14 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
 
                   {/* Damga Vergisi ve Sözleşme Damga Vergisi Kesintileri */}
                   <div className="space-y-2">
+                    {!seciliDosya?.sozlesmeYapilacakMi && (
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 font-semibold">
+                        <AlertTriangle size={14} className="shrink-0 text-amber-600" />
+                        <span>
+                          <strong>Sözleşmesiz Doğrudan Temin:</strong> 488 sayılı Damga Vergisi Kanunu uyarınca yazılı sözleşme düzenlenmeyen alımlarda damga vergisi muaftır (0,00 ₺). Özel bir protokol bulunmadıkça kesinti yapılmaz.
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
                       <input
                         type="checkbox"

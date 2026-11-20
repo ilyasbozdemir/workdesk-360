@@ -140,7 +140,7 @@ export function getTabLabel(fullPath: string): string {
     if (tab === 'sozlesme') return 'BKMYBS — Harcama Sözleşmeleri'
     if (tab === 'dosyalar') return 'BKMYBS — Dosyalar & Faturaları'
     if (tab === 'mevzuat') return 'BKMYBS — Mevzuat & Parametreler'
-    return 'BKMYBS & Mali Yönetim (5018)'
+    return 'BKMYBS & Mali Yönetim (Beta)'
   }
   if (path.startsWith(APP_ROUTES.DOSYA_DETAY)) return 'Dosya Detayları'
   if (path.startsWith(APP_ROUTES.TAKIP)) return 'Takip & Durum'

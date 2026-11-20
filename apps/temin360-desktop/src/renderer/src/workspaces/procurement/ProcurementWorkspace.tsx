@@ -76,7 +76,7 @@ export const ProcurementWorkspace: React.FC<ProcurementWorkspaceProps> = ({ expi
     if (cleanPath.startsWith('/ebys')) return 'EBYS Resmî Yazışma'
     if (cleanPath.startsWith('/degiskenler')) return 'Özel Belge & Yer Tutucular'
     if (cleanPath.startsWith('/mevzuat')) return 'Mevzuat ve Sistem Parametreleri'
-    if (cleanPath.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)) return '5018 BKMYBS & Mali Yönetim'
+    if (cleanPath.startsWith(APP_ROUTES.BKMYBS_MALI_YONETIM)) return '5018 BKMYBS & Mali Yönetim (Beta)'
     return 'Satın Alma İşlemleri'
   }, [tabs, activeTabPath])
 

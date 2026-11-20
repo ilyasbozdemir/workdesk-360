@@ -141,10 +141,13 @@ export const BkmybsHeader: React.FC<BkmybsHeaderProps> = ({
           <button
             disabled
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-blue-600 text-white shadow-xs cursor-default"
-            title="5018 Sayılı Kanun Kapsamındaki BKMYBS ve Bütçe / Muhasebe Masası"
+            title="5018 Sayılı Kanun Kapsamındaki BKMYBS ve Bütçe / Muhasebe Masası (Beta Sürümü)"
           >
             <Coins size={14} className="text-amber-300" />
-            <span>💰 5018 BKMYBS Mali Masası (Aktif)</span>
+            <span>💰 5018 BKMYBS Mali Masası</span>
+            <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-400 text-amber-950 uppercase tracking-wider ml-1 shadow-2xs">
+              BETA
+            </span>
           </button>
         </div>
 
