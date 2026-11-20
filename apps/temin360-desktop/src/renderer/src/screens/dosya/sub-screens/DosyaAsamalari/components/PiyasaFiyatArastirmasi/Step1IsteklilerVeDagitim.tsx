@@ -92,10 +92,10 @@ export function Step1IsteklilerVeDagitim({
         handleOpenEkapSorgu={handleOpenEkapSorgu}
       />
 
-      {/* 1. Adım Alt İlerleme Çubuğu */}
-      <div className="flex items-center justify-between p-3.5 px-5 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+      {/* 1. Adım Alt İlerleme Çubuğu - Sabit / Sticky Dock */}
+      <div className="sticky bottom-3 z-30 flex items-center justify-between p-3.5 px-5 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-xl shadow-slate-900/10 dark:shadow-black/40 ring-1 ring-slate-900/5 dark:ring-white/5">
+        <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 font-medium">
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0 animate-pulse" />
           <span>
             Firmaları ekleyip mektupları dağıttıktan sonra toplanan fiyatları girmek için sonraki
             adıma geçin.
