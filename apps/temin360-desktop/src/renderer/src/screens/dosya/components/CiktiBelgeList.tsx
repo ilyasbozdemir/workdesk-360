@@ -21,6 +21,8 @@ interface CiktiBelgeListProps {
     dosyaId: number,
     docKey: string
   ) => { isLocked: boolean; lockedAtVersion?: string; lockedAt?: string } | null
+  hasDocumentData?: (sablon: Sablon) => boolean
+  activeStarredDocs?: string[]
   toggleCategory: (kategori: string) => void
   toggleGroup: (kategori: string) => void
   toggleSelect: (id: number) => void
@@ -32,6 +34,7 @@ interface CiktiBelgeListProps {
     specificIds?: number[]
   ) => void
   handleOpenExternal: (sablon: Sablon) => void
+  toggleStarDocument?: (docName: string) => void
 }
 
 export function CiktiBelgeList({
@@ -47,6 +50,8 @@ export function CiktiBelgeList({
   getDocumentStatus,
   isDocumentLocked,
   getDocumentLockInfo,
+  hasDocumentData,
+  activeStarredDocs = [],
   toggleCategory,
   toggleGroup,
   toggleSelect,
@@ -54,7 +59,8 @@ export function CiktiBelgeList({
   toggleReadyToPrint,
   openDocument,
   handleAction,
-  handleOpenExternal
+  handleOpenExternal,
+  toggleStarDocument
 }: CiktiBelgeListProps): React.JSX.Element {
   if (loading) {
     return (
@@ -73,6 +79,8 @@ export function CiktiBelgeList({
           {statusFilter === 'ready' && 'Yazdırmaya hazır olarak işaretlenmiş belge bulunamadı.'}
           {statusFilter === 'starred' && 'Hızlı erişim için yıldızlanmış belge bulunamadı.'}
           {statusFilter === 'printed' && 'Bu dosyada henüz yazdırılan belge bulunamadı.'}
+          {statusFilter === 'has_data' && 'Veri girilmiş belge bulunamadı.'}
+          {statusFilter === 'no_data' && 'Tüm belgeler için veri girilmiş, boş şablon yok.'}
           {statusFilter === 'all' && 'Kayıtlı belge şablonu bulunamadı.'}
         </div>
       )}
@@ -124,6 +132,10 @@ export function CiktiBelgeList({
                     : 'draft'
                   const isLocked = activeDosyaId ? isDocumentLocked(activeDosyaId, docKey) : false
                   const lockInfo = activeDosyaId ? getDocumentLockInfo(activeDosyaId, docKey) : null
+                  const hasData = hasDocumentData ? hasDocumentData(sablon) : false
+                  const isStarred = activeStarredDocs.some(
+                    (d) => d.toLowerCase().replace(/\s+/g, '') === sablon.ad.toLowerCase().replace(/\s+/g, '')
+                  )
 
                   return (
                     <CiktiBelgeCard
@@ -137,7 +149,10 @@ export function CiktiBelgeList({
                       activeDosyaId={activeDosyaId}
                       dosyaContext={dosyaContext}
                       contextsByPath={contextsByPath}
+                      hasData={hasData}
+                      isStarred={isStarred}
                       onToggleSelect={toggleSelect}
+                      onToggleStar={toggleStarDocument}
                       onUnlock={(dKey, dName) => {
                         if (
                           confirm(
