@@ -32,6 +32,11 @@ export function CiktiMerkeziScreen(): React.JSX.Element {
     setStatusFilter,
     readyCount,
     printedCount,
+    hasDataCount,
+    noDataCount,
+    hasDocumentData,
+    toggleStarDocument,
+    snapshotDataKeys,
     toast,
     presets,
     activePresetId,
@@ -75,6 +80,13 @@ export function CiktiMerkeziScreen(): React.JSX.Element {
     } catch {}
   }
 
+  // Aktif Preset Belgeleri
+  const activePresetDocs = React.useMemo(() => {
+    if (!activePresetId) return []
+    const preset = presets.find((p) => p.id === activePresetId)
+    return preset ? preset.docs : []
+  }, [activePresetId, presets])
+
   // Belge Kanban Veri Katmanı
   const {
     columnsData,
@@ -85,7 +97,11 @@ export function CiktiMerkeziScreen(): React.JSX.Element {
   } = useBelgeKanbanData({
     activeDosyaId,
     sablons,
-    getMissingRequirement
+    getMissingRequirement,
+    statusFilter,
+    activeStarredDocs,
+    activePresetDocs,
+    snapshotDataKeys
   })
 
   // Ortak Yenileme
@@ -111,70 +127,74 @@ export function CiktiMerkeziScreen(): React.JSX.Element {
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col md:flex-row flex-1 min-h-[580px] md:h-[calc(100vh-240px)] mt-2 overflow-hidden">
         {/* SOL ALAN: BELGE LİSTESİ VEYA BELGE KANBAN PANOSU */}
         <div className="flex-1 p-5 md:p-6 border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 flex flex-col min-w-0 min-h-0 overflow-hidden">
-          {/* ÜST BAŞLIK, GÖRÜNÜM SEÇİCİ & REFRESH (Sabit) */}
-          <div className="shrink-0 mb-3">
-            <CiktiMerkeziHeader
-              selectedCount={selectedIds.size}
-              refreshing={refreshing || kanbanLoading}
-              allExpanded={isAllExpanded}
-              viewMode={viewMode}
-              onViewModeChange={handleViewModeChange}
-              onRefresh={handleFullRefresh}
-              onToggleAllCategories={toggleAllCategories}
+          {/* SABİT BAŞLIK ALANI (Scroll ederken sabit kalır) */}
+          <div className="shrink-0 sticky top-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pb-2">
+            {/* ÜST BAŞLIK, GÖRÜNÜM SEÇİCİ & REFRESH */}
+            <div className="mb-3">
+              <CiktiMerkeziHeader
+                selectedCount={selectedIds.size}
+                refreshing={refreshing || kanbanLoading}
+                allExpanded={isAllExpanded}
+                viewMode={viewMode}
+                onViewModeChange={handleViewModeChange}
+                onRefresh={handleFullRefresh}
+                onToggleAllCategories={toggleAllCategories}
+              />
+            </div>
+
+            {/* DURUM FİLTRELEME SEKMELERİ (Her iki görünümde de görünür) */}
+            <div className="mb-2">
+              <CiktiStatusFilterTabs
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                totalCount={sablons.length}
+                readyCount={readyCount}
+                starredCount={activeStarredDocs.length}
+                printedCount={printedCount}
+                hasDataCount={hasDataCount}
+                noDataCount={noDataCount}
+              />
+            </div>
+
+            {/* BELGE PAKETLERİ VE TASLAKLAR (Her iki görünümde de görünür) */}
+            <CiktiPresetManager
+              presets={presets}
+              activePresetId={activePresetId}
+              selectedIdsSize={selectedIds.size}
+              onSelectPreset={handleSelectPreset}
+              onSavePreset={handleSavePreset}
+              onDeletePreset={handleDeletePreset}
             />
           </div>
 
           {viewMode === 'list' ? (
-            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              {/* DURUM FİLTRELEME SEKMELERİ (Sabit Tab Alanı) */}
-              <div className="shrink-0">
-                <CiktiStatusFilterTabs
-                  statusFilter={statusFilter}
-                  setStatusFilter={setStatusFilter}
-                  totalCount={sablons.length}
-                  readyCount={readyCount}
-                  starredCount={activeStarredDocs.length}
-                  printedCount={printedCount}
-                />
-              </div>
-
-              {/* BELGE PAKETLERİ VE TASLAKLAR (Sabit Preset Alanı) */}
-              <div className="shrink-0">
-                <CiktiPresetManager
-                  presets={presets}
-                  activePresetId={activePresetId}
-                  selectedIdsSize={selectedIds.size}
-                  onSelectPreset={handleSelectPreset}
-                  onSavePreset={handleSavePreset}
-                  onDeletePreset={handleDeletePreset}
-                />
-              </div>
-
-              {/* BELGE KARTLARI VE GRUPLAR (Kendi İçinde Düzgün Kayan Liste Alanı) */}
-              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
-                <CiktiBelgeList
-                  loading={loading}
-                  groupedSablons={groupedSablons}
-                  expandedCategories={expandedCategories}
-                  selectedIds={selectedIds}
-                  statusFilter={statusFilter}
-                  activeDosyaId={activeDosyaId}
-                  dosyaContext={dosyaContext}
-                  contextsByPath={contextsByPath}
-                  getMissingRequirement={getMissingRequirement}
-                  getDocumentStatus={getDocumentStatus}
-                  isDocumentLocked={isDocumentLocked}
-                  getDocumentLockInfo={getDocumentLockInfo}
-                  toggleCategory={toggleCategory}
-                  toggleGroup={toggleGroup}
-                  toggleSelect={toggleSelect}
-                  unlockDocument={unlockDocument}
-                  toggleReadyToPrint={toggleReadyToPrint}
-                  openDocument={openDocument}
-                  handleAction={handleAction}
-                  handleOpenExternal={handleOpenExternal}
-                />
-              </div>
+            /* BELGE KARTLARI VE GRUPLAR (Kendi İçinde Düzgün Kayan Liste Alanı) */
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
+              <CiktiBelgeList
+                loading={loading}
+                groupedSablons={groupedSablons}
+                expandedCategories={expandedCategories}
+                selectedIds={selectedIds}
+                statusFilter={statusFilter}
+                activeDosyaId={activeDosyaId}
+                dosyaContext={dosyaContext}
+                contextsByPath={contextsByPath}
+                getMissingRequirement={getMissingRequirement}
+                getDocumentStatus={getDocumentStatus}
+                isDocumentLocked={isDocumentLocked}
+                getDocumentLockInfo={getDocumentLockInfo}
+                hasDocumentData={hasDocumentData}
+                activeStarredDocs={activeStarredDocs}
+                toggleCategory={toggleCategory}
+                toggleGroup={toggleGroup}
+                toggleSelect={toggleSelect}
+                unlockDocument={unlockDocument}
+                toggleReadyToPrint={toggleReadyToPrint}
+                openDocument={openDocument}
+                handleAction={handleAction}
+                handleOpenExternal={handleOpenExternal}
+                toggleStarDocument={toggleStarDocument}
+              />
             </div>
           ) : (
             /* BELGE KANBAN PANOSU (Kendi İçinde Düzgün Kayan Alan) */
@@ -185,6 +205,7 @@ export function CiktiMerkeziScreen(): React.JSX.Element {
                 errorMessage={kanbanErrorMessage}
                 onMoveItem={moveItem}
                 onOpenPreview={handleKanbanPreview}
+                onToggleStar={toggleStarDocument}
               />
             </div>
           )}

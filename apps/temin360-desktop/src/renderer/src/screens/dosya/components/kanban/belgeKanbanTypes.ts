@@ -63,6 +63,9 @@ export interface BelgeKanbanItem {
   isProduced: boolean
   isSigned: boolean
   isLocked: boolean
+  hasData?: boolean
+  isPrinted?: boolean
+  isStarred?: boolean
   missingMsg: string | null
   updatedAt: string | null
   sablon: Sablon | null

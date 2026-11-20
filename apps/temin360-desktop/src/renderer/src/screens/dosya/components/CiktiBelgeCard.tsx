@@ -1,5 +1,15 @@
 import React from 'react'
-import { AlertCircle, CheckCircle2, CheckSquare, Lock, Printer, Square, Unlock } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  CheckSquare,
+  FileEdit,
+  Lock,
+  Printer,
+  Square,
+  Star,
+  Unlock
+} from 'lucide-react'
 import { Sablon } from '../../sablonlar/sablonlar.hooks'
 import { BelgeAksiyonlari } from '../../../components/ui/BelgeAksiyonlari'
 import { CURRENT_APP_VERSION } from '../../../store/printQueueStore'
@@ -14,6 +24,8 @@ interface CiktiBelgeCardProps {
   activeDosyaId: number | null
   dosyaContext: any
   contextsByPath: any
+  hasData?: boolean
+  isStarred?: boolean
   onToggleSelect: (id: number) => void
   onUnlock: (docKey: string, docName: string) => void
   onToggleReady: (docKey: string, docName: string) => void
@@ -21,6 +33,7 @@ interface CiktiBelgeCardProps {
   onQuickPrint: (sablonId: number) => void
   onExport: (format: 'pdf' | 'udf' | 'docx', sablonId: number) => void
   onOpenExternal: (sablon: Sablon) => void
+  onToggleStar?: (docName: string) => void
 }
 
 export function CiktiBelgeCard({
@@ -30,13 +43,16 @@ export function CiktiBelgeCard({
   docStatus,
   isLocked,
   lockInfo,
+  hasData,
+  isStarred,
   onToggleSelect,
   onUnlock,
   onToggleReady,
   onPreview,
   onQuickPrint,
   onExport,
-  onOpenExternal
+  onOpenExternal,
+  onToggleStar
 }: CiktiBelgeCardProps): React.JSX.Element {
   const docKey = (sablon.dosya_adi || '').replace(/\.html$/, '')
 
@@ -52,7 +68,26 @@ export function CiktiBelgeCard({
             : 'bg-white border-slate-200 text-slate-700 cursor-pointer hover:border-blue-300 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-300 dark:hover:border-slate-700'
       }`}
     >
-      <div className="shrink-0">
+      <div className="shrink-0 flex items-center gap-1">
+        {onToggleStar && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleStar(sablon.ad)
+            }}
+            className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            title={isStarred ? 'Hızlı erişimden çıkar' : 'Hızlı erişime ekle'}
+          >
+            <Star
+              className={`w-3.5 h-3.5 transition-colors ${
+                isStarred
+                  ? 'fill-amber-400 text-amber-500'
+                  : 'text-slate-300 dark:text-slate-600 hover:text-amber-400'
+              }`}
+            />
+          </button>
+        )}
         {missingMsg ? (
           <span title={missingMsg ?? undefined}>
             <AlertCircle className="w-4 h-4 text-rose-500" />
@@ -73,6 +108,17 @@ export function CiktiBelgeCard({
           >
             {sablon.ad}
           </p>
+
+          {/* VERİ GİRİLDİ / VERİ GİRİLMEDİ ROZETİ */}
+          {hasData ? (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300/50">
+              <CheckCircle2 className="w-2.5 h-2.5" /> Veri Girildi
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+              <FileEdit className="w-2.5 h-2.5 text-slate-400" /> Veri Girilmedi
+            </span>
+          )}
 
           {isLocked && (
             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300/50">
