@@ -264,33 +264,56 @@ export async function upsertKalemBidPrice(params: {
       hesaplamaEsasi.toLowerCase().includes('en düşük') ||
       hesaplamaEsasi.toLowerCase().includes('en dusuk')
 
-    let ymTotalDec = new Decimal(0)
-    for (const item of items) {
-      let unitCost = 0
-      if (isLowestBasis) {
-        let minP = Infinity
-        for (const f of firms) {
-          const val = latestBids.get(`${item.id}_${f.id}`) || 0
-          if (val > 0 && val < minP) minP = val
-        }
-        unitCost = minP === Infinity ? 0 : minP
-      } else {
-        let sumDec = new Decimal(0)
-        let cnt = 0
-        for (const f of firms) {
-          const val = latestBids.get(`${item.id}_${f.id}`) || 0
-          if (val > 0) {
-            sumDec = sumDec.plus(val)
-            cnt++
-          }
-        }
-        unitCost = cnt > 0 ? sumDec.div(cnt).toDecimalPlaces(2).toNumber() : 0
+    // Tüm firmaların güncel teklif toplamlarını hesapla ve en düşük firma toplamını belirle
+    let lowestFirmaTotal: number | null = null
+    for (const f of firms) {
+      let fTotalDec = new Decimal(0)
+      let hasPositiveBid = false
+      for (const item of items) {
+        const p = latestBids.get(`${item.id}_${f.id}`) || 0
+        if (p > 0) hasPositiveBid = true
+        const m = new Decimal(Number(item.miktar) || 0)
+        fTotalDec = fTotalDec.plus(m.times(p))
       }
-      const m = new Decimal(Number(item.miktar) || 0)
-      ymTotalDec = ymTotalDec.plus(m.times(unitCost))
+      const fTot = fTotalDec.toDecimalPlaces(2).toNumber()
+      if (hasPositiveBid && fTot > 0) {
+        if (lowestFirmaTotal === null || fTot < lowestFirmaTotal) {
+          lowestFirmaTotal = fTot
+        }
+      }
     }
 
-    const yaklasikMaliyet = ymTotalDec.toDecimalPlaces(2).toNumber()
+    let yaklasikMaliyet = 0
+    if (isLowestBasis && lowestFirmaTotal !== null && lowestFirmaTotal > 0) {
+      yaklasikMaliyet = lowestFirmaTotal
+    } else {
+      let ymTotalDec = new Decimal(0)
+      for (const item of items) {
+        let unitCost = 0
+        if (isLowestBasis) {
+          let minP = Infinity
+          for (const f of firms) {
+            const val = latestBids.get(`${item.id}_${f.id}`) || 0
+            if (val > 0 && val < minP) minP = val
+          }
+          unitCost = minP === Infinity ? 0 : minP
+        } else {
+          let sumDec = new Decimal(0)
+          let cnt = 0
+          for (const f of firms) {
+            const val = latestBids.get(`${item.id}_${f.id}`) || 0
+            if (val > 0) {
+              sumDec = sumDec.plus(val)
+              cnt++
+            }
+          }
+          unitCost = cnt > 0 ? sumDec.div(cnt).toDecimalPlaces(2).toNumber() : 0
+        }
+        const m = new Decimal(Number(item.miktar) || 0)
+        ymTotalDec = ymTotalDec.plus(m.times(unitCost))
+      }
+      yaklasikMaliyet = ymTotalDec.toDecimalPlaces(2).toNumber()
+    }
     if (yaklasikMaliyet > 0) {
       await executor.run(
         'UPDATE DATA_TeminDosyasi SET yaklasik_maliyet = ? WHERE id = ?',
@@ -665,9 +688,6 @@ export async function fetchCanonicalDossierPricing(
     })
   }
 
-  const computedYmTotal = computedYmSumDec.toDecimalPlaces(2).toNumber()
-  const toplamYaklasikMaliyet = computedYmTotal > 0 ? computedYmTotal : storedDosyaYm
-
   const computedWinnerTotal = computedWinnerSumDec.toDecimalPlaces(2).toNumber()
   const kazananTeklifToplami =
     kazananFirma && kazananFirma.teklif_toplami > 0
@@ -677,6 +697,30 @@ export async function fetchCanonicalDossierPricing(
         : storedDosyaYm > 0 && kazananFirma
           ? storedDosyaYm
           : null
+
+  const computedYmTotal = computedYmSumDec.toDecimalPlaces(2).toNumber()
+  const toplamYaklasikMaliyet =
+    isLowestBasis && kazananTeklifToplami !== null && kazananTeklifToplami > 0
+      ? kazananTeklifToplami
+      : computedYmTotal > 0
+        ? computedYmTotal
+        : storedDosyaYm
+
+  if (
+    isLowestBasis &&
+    kazananTeklifToplami !== null &&
+    kazananTeklifToplami > 0 &&
+    storedDosyaYm !== kazananTeklifToplami
+  ) {
+    try {
+      await executor.run(
+        'UPDATE DATA_TeminDosyasi SET yaklasik_maliyet = ? WHERE id = ?',
+        [kazananTeklifToplami, dosyaId]
+      )
+    } catch (_e) {
+      /* noop */
+    }
+  }
 
   const kazananKdvTutari =
     kazananTeklifToplami !== null

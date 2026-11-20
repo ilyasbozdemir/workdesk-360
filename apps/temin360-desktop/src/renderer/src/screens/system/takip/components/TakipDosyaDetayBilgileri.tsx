@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import {
   Briefcase,
   Building2,
+  Calculator,
   Calendar,
   CheckCircle2,
   ClipboardCheck,
@@ -16,6 +17,7 @@ import {
   Scale,
   ShieldCheck,
   Sparkles,
+  TrendingUp,
   User,
   UserCheck,
   Users
@@ -24,6 +26,9 @@ import { useNavigate } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { groupUniqueCommissioners } from '../../../../utils/commissionGrouping'
 import { applyInstitutionalTemplateToDossier } from '../../../../services/commission/commissionSeedService'
+import { fetchCanonicalDossierPricing } from '../../../../services/dossier/dossierPriceSyncService'
+import { emitAppEvent } from '../../../../utils/appEvents'
+import { formatMoney } from '../../../../components/layout/temin-selector/teminSelector.utils'
 import { APP_ROUTES } from '../../../../constants/routeConstants'
 
 interface TakipDosyaDetayBilgileriProps {
@@ -66,6 +71,23 @@ export function TakipDosyaDetayBilgileri({
       setSyncFeedback(`❌ Hata: ${err.message}`)
     } finally {
       setIsSyncing(false)
+    }
+  }
+
+  const handleChangeHesaplamaEsasi = async (newEsas: string) => {
+    if (!d.id || !(window as any).electron?.ipcRenderer) return
+    try {
+      await (window as any).electron.ipcRenderer.invoke(
+        'db:run',
+        'UPDATE DATA_TeminDosyasi SET hesaplama_esasi = ? WHERE id = ?',
+        [newEsas, d.id]
+      )
+      await fetchCanonicalDossierPricing(d.id)
+      await queryClient.invalidateQueries({ queryKey: ['takip_dosya'] })
+      await queryClient.invalidateQueries({ queryKey: ['dosyalar'] })
+      emitAppEvent('dossier:updated', { dosyaId: d.id })
+    } catch (err) {
+      console.error('Hesaplama esası güncellenemedi:', err)
     }
   }
 
@@ -203,6 +225,37 @@ export function TakipDosyaDetayBilgileri({
             <span className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 block">
               {isKismiTeklif ? 'Kısmi Teklif Verilebilir' : 'Tüm Kalemler İçin Tek Teklif'}
             </span>
+          </div>
+
+          {/* YAKLAŞIK MALİYET & HESAPLAMA ESASI */}
+          <div className="p-3 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/50">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold uppercase tracking-wider block">
+                Yaklaşık Maliyet
+              </span>
+              <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span className="text-xs font-mono font-extrabold text-emerald-700 dark:text-emerald-300 mt-0.5 block">
+              {d.yaklasik_maliyet ? `₺${formatMoney(d.yaklasik_maliyet)}` : 'Belirlenmedi'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] text-amber-700 dark:text-amber-300 font-bold uppercase tracking-wider block">
+                Hesaplama Esası
+              </span>
+              <Calculator className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+            </div>
+            <select
+              value={d.hesaplama_esasi || 'Ortalama fiyat esasına göre'}
+              onChange={(e) => handleChangeHesaplamaEsasi(e.target.value)}
+              className="w-full text-[11px] font-bold px-2 py-1 rounded-lg bg-white dark:bg-slate-900 border border-amber-300/80 dark:border-amber-700 text-slate-800 dark:text-slate-100 cursor-pointer focus:outline-none focus:ring-1 focus:ring-amber-500"
+              title="Yaklaşık Maliyet ve Teklif Hesaplama Esasını Değiştir"
+            >
+              <option value="En Düşük fiyat esasına göre">⚙️ En Düşük Fiyat Esası</option>
+              <option value="Ortalama fiyat esasına göre">⚙️ Ortalama Fiyat Esası</option>
+            </select>
           </div>
         </div>
       </div>
