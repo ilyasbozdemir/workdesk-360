@@ -120,30 +120,32 @@ export function TakipHeader({
         <div className="hidden sm:block w-px h-5 bg-slate-200 dark:bg-slate-800 mx-0.5" />
 
         {/* Aksiyon Butonları */}
-        {activeView === "detay" ? (
-          <>
-            <button
-              type="button"
-              onClick={() => setActiveView("kanban")}
-              className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
-              title="Panoya Geri Dön"
-            >
-              <ArrowLeft size={13} />
-              <span>Panoya Dön</span>
-            </button>
 
-            {activeDosya && (
-              <button
-                type="button"
-                onClick={onEditClick}
-                className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
-              >
-                <Pencil size={12} />
-                Düzenle
-              </button>
-            )}
-          </>
-        ) : null}
+        <button
+          type="button"
+          onClick={() => setActiveView("kanban")}
+          className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+          title="Panoya Geri Dön"
+        >
+          <ArrowLeft size={13} />
+          <span>Panoya Dön</span>
+        </button>
+        {activeView === "detay"
+          ? (
+            <>
+              {activeDosya && (
+                <button
+                  type="button"
+                  onClick={onEditClick}
+                  className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+                >
+                  <Pencil size={12} />
+                  Düzenle
+                </button>
+              )}
+            </>
+          )
+          : null}
 
         {/* YAPAY ZEKA ASİSTANI */}
         {onOpenAI && (
@@ -177,7 +179,10 @@ export function TakipHeader({
           className="inline-flex h-7 items-center justify-center gap-1.5 px-2.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-lg text-xs font-semibold transition-all border border-emerald-200 dark:border-emerald-800 cursor-pointer"
           title="Harici doğrudan temin JSON dosyasını içeri aktar"
         >
-          <FileDown size={13} className="text-emerald-600 dark:text-emerald-400" />
+          <FileDown
+            size={13}
+            className="text-emerald-600 dark:text-emerald-400"
+          />
           <span className="hidden sm:inline">JSON İçe Aktar</span>
         </button>
 
