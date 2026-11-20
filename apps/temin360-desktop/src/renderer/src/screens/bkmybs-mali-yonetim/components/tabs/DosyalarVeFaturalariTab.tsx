@@ -15,8 +15,8 @@ import {
   Coins,
   Edit2,
   ExternalLink,
-  FileText,
   Files,
+  FileText,
   FolderCheck,
   FolderOpen,
   Layers,
@@ -303,9 +303,10 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
           const dvUygula = (f as any).damgaVergisiUygula !== undefined
             ? Boolean((f as any).damgaVergisiUygula)
             : isDosyaSozlesmeli;
-          const sozlesmeDvUygula = (f as any).sozlesmeDamgaVergisiUygula !== undefined
-            ? Boolean((f as any).sozlesmeDamgaVergisiUygula)
-            : isDosyaSozlesmeli;
+          const sozlesmeDvUygula =
+            (f as any).sozlesmeDamgaVergisiUygula !== undefined
+              ? Boolean((f as any).sozlesmeDamgaVergisiUygula)
+              : isDosyaSozlesmeli;
 
           const fin = calculateInvoiceFinancials(
             f.firmaTutar,
@@ -566,7 +567,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
   const [formDamgaVergisiUygula, setFormDamgaVergisiUygula] = useState<boolean>(
     true,
   );
-  const [formSozlesmeDamgaUygula, setFormSozlesmeDamgaUygula] = useState<boolean>(
+  const [formSozlesmeDamgaUygula, setFormSozlesmeDamgaUygula] = useState<
+    boolean
+  >(
     false,
   );
   const [formPdfPath, setFormPdfPath] = useState("");
@@ -575,10 +578,13 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
 
   const handleSelectPdf = async () => {
     try {
-      const res = await window.electron?.ipcRenderer.invoke("dialog:showOpenDialog", {
-        title: "Fatura PDF Belgesi Seç (e-Fatura / e-Arşiv PDF)",
-        filters: [{ name: "PDF Belgeleri (*.pdf)", extensions: ["pdf"] }],
-      });
+      const res = await window.electron?.ipcRenderer.invoke(
+        "dialog:showOpenDialog",
+        {
+          title: "Fatura PDF Belgesi Seç (e-Fatura / e-Arşiv PDF)",
+          filters: [{ name: "PDF Belgeleri (*.pdf)", extensions: ["pdf"] }],
+        },
+      );
       if (!res?.canceled && res?.filePath) {
         setFormPdfPath(res.filePath);
         const name = res.filePath.split(/[/\\]/).pop() || "Fatura.pdf";
@@ -674,7 +680,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     );
     const isSozlesmeli = Boolean(
       dosya.sozlesmeYapilacakMi ||
-      Number((dosya as any).sozlesme_yapilacak_mi) === 1
+        Number((dosya as any).sozlesme_yapilacak_mi) === 1,
     );
     setFormDamgaVergisiUygula(isSozlesmeli);
     setFormSozlesmeDamgaUygula(isSozlesmeli);
@@ -707,7 +713,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
     setFormAciklama(fatura.aciklama || "");
     const isSozlesmeli = Boolean(
       dosya.sozlesmeYapilacakMi ||
-      Number((dosya as any).sozlesme_yapilacak_mi) === 1
+        Number((dosya as any).sozlesme_yapilacak_mi) === 1,
     );
     setFormDamgaVergisiUygula(
       fatura.damgaVergisiUygula !== undefined
@@ -1246,7 +1252,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
               </div>
               <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                 <CheckCircle size={12} className="shrink-0" />
-                <span>{dosyalar.filter((d) => d.faturalar.length > 0).length} dosyanın faturası bağlı</span>
+                <span>
+                  {dosyalar.filter((d) => d.faturalar.length > 0).length}{" "}
+                  dosyanın faturası bağlı
+                </span>
               </div>
             </div>
             <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/20 shadow-2xs">
@@ -1269,11 +1278,17 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                 </span>
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">
                   <Clock size={10} />
-                  {dosyalar.flatMap((d) => d.faturalar).filter((f) => f.durum === "beklemede").length} Bekleyen
+                  {dosyalar.flatMap((d) => d.faturalar).filter((f) =>
+                    f.durum === "beklemede"
+                  ).length} Bekleyen
                 </span>
               </div>
               <div className="flex items-center gap-1.5 mt-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                <span>{dosyalar.flatMap((d) => d.faturalar).filter((f) => f.durum === "odendi").length} Ödenen Fatura</span>
+                <span>
+                  {dosyalar.flatMap((d) => d.faturalar).filter((f) =>
+                    f.durum === "odendi"
+                  ).length} Ödenen Fatura
+                </span>
               </div>
             </div>
             <div className="w-11 h-11 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-2xs">
@@ -1296,8 +1311,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                 </span>
               </div>
               <div className="flex items-center gap-1.5 mt-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                <span>Ödenen: </span>
-                <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">{formatCurrency(stats.paidHarcama)}</span>
+                <span>Ödenen:</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">
+                  {formatCurrency(stats.paidHarcama)}
+                </span>
               </div>
             </div>
             <div className="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 shadow-2xs">
@@ -1320,9 +1337,19 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                 </span>
               </div>
               <div className="flex items-center gap-1.5 mt-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
-                <span>Damga (‰9,48): <strong className="font-mono text-slate-700 dark:text-slate-300">{formatCurrency(stats.totalDamga)}</strong></span>
+                <span>
+                  Damga (‰9,48):{" "}
+                  <strong className="font-mono text-slate-700 dark:text-slate-300">
+                    {formatCurrency(stats.totalDamga)}
+                  </strong>
+                </span>
                 <span>•</span>
-                <span>Tevkifat: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatCurrency(stats.totalTevkifat)}</strong></span>
+                <span>
+                  Tevkifat:{" "}
+                  <strong className="font-mono text-slate-700 dark:text-slate-300">
+                    {formatCurrency(stats.totalTevkifat)}
+                  </strong>
+                </span>
               </div>
             </div>
             <div className="w-11 h-11 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/20 shadow-2xs">
@@ -1449,7 +1476,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
             >
               <RefreshCw
                 size={12}
-                className={loading ? "animate-spin text-blue-500" : "text-slate-400"}
+                className={loading
+                  ? "animate-spin text-blue-500"
+                  : "text-slate-400"}
               />
               <span className="hidden sm:inline">Anlık Çek</span>
             </button>
@@ -1658,9 +1687,14 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                         handleOpenPdf(fatura.pdfPath);
                                       }}
                                       className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
-                                      title={`Fatura PDF Belgesini Aç: ${fatura.pdfAdi || fatura.pdfPath}`}
+                                      title={`Fatura PDF Belgesini Aç: ${
+                                        fatura.pdfAdi || fatura.pdfPath
+                                      }`}
                                     >
-                                      <FileText size={10} className="text-rose-600 dark:text-rose-400" />
+                                      <FileText
+                                        size={10}
+                                        className="text-rose-600 dark:text-rose-400"
+                                      />
                                       <span>PDF</span>
                                     </button>
                                   )}
@@ -1691,18 +1725,20 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                               </td>
                               <td className="px-3.5 py-2.5 text-right font-mono">
                                 {fatura.damgaVergisi &&
-                                fatura.damgaVergisi > 0 ? (
-                                  <span className="text-rose-600 dark:text-rose-400 font-bold">
-                                    {formatCurrency(fatura.damgaVergisi)}
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 text-slate-400 font-normal">
-                                    0,00 ₺
-                                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">
-                                      Muaf
+                                    fatura.damgaVergisi > 0
+                                  ? (
+                                    <span className="text-rose-600 dark:text-rose-400 font-bold">
+                                      {formatCurrency(fatura.damgaVergisi)}
                                     </span>
-                                  </span>
-                                )}
+                                  )
+                                  : (
+                                    <span className="inline-flex items-center gap-1 text-slate-400 font-normal">
+                                      0,00 ₺
+                                      <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">
+                                        Muaf
+                                      </span>
+                                    </span>
+                                  )}
                               </td>
                               <td
                                 className={cn(
@@ -1880,11 +1916,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                               ? "bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200/60"
                               : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200",
                           )}
-                          title={
-                            dosya.sozlesmeYapilacakMi
-                              ? "Dosya sözleşmelidir — Sözleşme Damga Vergisi (‰ 9,48) otomatik tahsil edilir"
-                              : "Dosyada sözleşme yoktur — Sözleşme Damga Vergisi tahsil edilmez"
-                          }
+                          title={dosya.sozlesmeYapilacakMi
+                            ? "Dosya sözleşmelidir — Sözleşme Damga Vergisi (‰ 9,48) otomatik tahsil edilir"
+                            : "Dosyada sözleşme yoktur — Sözleşme Damga Vergisi tahsil edilmez"}
                         >
                           {dosya.sozlesmeYapilacakMi
                             ? "📜 Sözleşmeli (Sözleşme DV ‰9,48)"
@@ -1969,8 +2003,12 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          useWorkspaceStore.getState().setActiveDosyaId(dosya.id);
-                          useTabStore.getState().addTab(APP_ROUTES.DOSYA_EVRAK_AKISI);
+                          useWorkspaceStore.getState().setActiveDosyaId(
+                            dosya.id,
+                          );
+                          useTabStore.getState().addTab(
+                            APP_ROUTES.DOSYA_EVRAK_AKISI,
+                          );
                         }}
                         title="Dosya Evrak Akışı & Belge İnceleme Ekranını Aç"
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-bold transition-all hover:scale-[1.02] cursor-pointer shadow-2xs"
@@ -1990,7 +2028,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                             <Receipt size={13} />
                           </div>
                           <h5 className="text-xs font-extrabold text-slate-850 dark:text-slate-100">
-                            Doğrudan Temin Fatura & Hak Ediş Çizelgesi (5018 / BKMYBS)
+                            Doğrudan Temin Fatura & Hak Ediş Çizelgesi (5018 /
+                            BKMYBS)
                           </h5>
                           {dosya.butceKodu && (
                             <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border border-slate-200 dark:border-slate-700">
@@ -2026,8 +2065,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                             </p>
                             <p className="text-[11px] text-slate-400 mt-0.5">
                               Doğrudan Temin ekranında Muayene Kabul Tutanağı
-                              düzenlendiğinde veya Mali Hizmetler masasında Fatura
-                              Ekle butonuna tıklandığında senkronize
+                              düzenlendiğinde veya Mali Hizmetler masasında
+                              Fatura Ekle butonuna tıklandığında senkronize
                               listelenecektir.
                             </p>
                           </div>
@@ -2051,13 +2090,16 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                     Fatura Tutarı (Brüt)
                                   </th>
                                   <th className="px-3.5 py-2.5 text-right">
-                                    {dosya.sozlesmeYapilacakMi ? (
-                                      <span>Damga Vergisi (‰9,48)</span>
-                                    ) : (
-                                      <span title="488 sayılı Kanun uyarınca sözleşmesiz doğrudan temin alımlarında sözleşme damga vergisi muaftır">
-                                        Damga Vergisi <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">(Sözleşmesiz - Muaf)</span>
-                                      </span>
-                                    )}
+                                    {dosya.sozlesmeYapilacakMi
+                                      ? <span>Damga Vergisi (‰9,48)</span>
+                                      : (
+                                        <span title="488 sayılı Kanun uyarınca sözleşmesiz doğrudan temin alımlarında sözleşme damga vergisi muaftır">
+                                          Damga Vergisi{" "}
+                                          <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold">
+                                            (Sözleşmesiz - Muaf)
+                                          </span>
+                                        </span>
+                                      )}
                                   </th>
                                   <th className="px-3.5 py-2.5 text-right">
                                     KDV Tevkifatı
@@ -2090,9 +2132,14 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                               handleOpenPdf(fatura.pdfPath);
                                             }}
                                             className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
-                                            title={`Fatura PDF Belgesini Aç: ${fatura.pdfAdi || fatura.pdfPath}`}
+                                            title={`Fatura PDF Belgesini Aç: ${
+                                              fatura.pdfAdi || fatura.pdfPath
+                                            }`}
                                           >
-                                            <FileText size={10} className="text-rose-600 dark:text-rose-400" />
+                                            <FileText
+                                              size={10}
+                                              className="text-rose-600 dark:text-rose-400"
+                                            />
                                             <span>PDF</span>
                                           </button>
                                         )}
@@ -2114,18 +2161,22 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                                     </td>
                                     <td className="px-3.5 py-2.5 text-right font-mono">
                                       {fatura.damgaVergisi &&
-                                      fatura.damgaVergisi > 0 ? (
-                                        <span className="text-rose-600 dark:text-rose-400 font-bold">
-                                          {formatCurrency(fatura.damgaVergisi)}
-                                        </span>
-                                      ) : (
-                                        <span className="inline-flex items-center gap-1 text-slate-400 font-normal">
-                                          0,00 ₺
-                                          <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">
-                                            Muaf
+                                          fatura.damgaVergisi > 0
+                                        ? (
+                                          <span className="text-rose-600 dark:text-rose-400 font-bold">
+                                            {formatCurrency(
+                                              fatura.damgaVergisi,
+                                            )}
                                           </span>
-                                        </span>
-                                      )}
+                                        )
+                                        : (
+                                          <span className="inline-flex items-center gap-1 text-slate-400 font-normal">
+                                            0,00 ₺
+                                            <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1 py-0.2 rounded border border-emerald-200 dark:border-emerald-800">
+                                              Muaf
+                                            </span>
+                                          </span>
+                                        )}
                                     </td>
                                     <td
                                       className={cn(
@@ -2269,7 +2320,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition-all cursor-pointer shadow-2xs"
                       >
                         <FileText size={13} className="text-rose-500" />
-                        <span>{formPdfPath ? "PDF Değiştir" : "Fatura PDF'i Seç"}</span>
+                        <span>
+                          {formPdfPath ? "PDF Değiştir" : "Fatura PDF'i Seç"}
+                        </span>
                       </button>
 
                       {formPdfPath && (
@@ -2303,7 +2356,8 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                       )}
                     </div>
                     <span className="text-[10px] text-slate-400 block">
-                      Tedarikçiden gelen faturanın PDF belgesini kaydedebilir ve tek tıkla sistem varsayılan okuyucusunda açabilirsiniz.
+                      Tedarikçiden gelen faturanın PDF belgesini kaydedebilir ve
+                      tek tıkla sistem varsayılan okuyucusunda açabilirsiniz.
                     </span>
                   </div>
 
@@ -2324,7 +2378,9 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                       </span>
                     </div>
                     <p className="text-[10px] text-slate-400">
-                      * Kabul tutanağı tanzimi 4734 Satın Alma ve Muayene Kabul Komisyonu görev alanındadır. Mali Hizmetler masasında faturaya yalnızca referans olarak iliştirilebilir.
+                      * Kabul tutanağı tanzimi 4734 Satın Alma ve Muayene Kabul
+                      Komisyonu görev alanındadır. Mali Hizmetler masasında
+                      faturaya yalnızca referans olarak iliştirilebilir.
                     </p>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -2461,9 +2517,16 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                   <div className="space-y-2">
                     {!seciliDosya?.sozlesmeYapilacakMi && (
                       <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300 font-semibold">
-                        <AlertTriangle size={14} className="shrink-0 text-amber-600" />
+                        <AlertTriangle
+                          size={14}
+                          className="shrink-0 text-amber-600"
+                        />
                         <span>
-                          <strong>Sözleşmesiz Doğrudan Temin:</strong> 488 sayılı Damga Vergisi Kanunu uyarınca yazılı sözleşme düzenlenmeyen alımlarda damga vergisi muaftır (0,00 ₺). Özel bir protokol bulunmadıkça kesinti yapılmaz.
+                          <strong>Sözleşmesiz Doğrudan Temin:</strong>{" "}
+                          488 sayılı Damga Vergisi Kanunu uyarınca yazılı
+                          sözleşme düzenlenmeyen alımlarda damga vergisi muaftır
+                          (0,00 ₺). Özel bir protokol bulunmadıkça kesinti
+                          yapılmaz.
                         </span>
                       </div>
                     )}
@@ -2560,7 +2623,11 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                       </span>
                       <span className="font-mono font-bold">
                         {modalCalculations.sozlesmeDamgaVergisi > 0
-                          ? `-${formatCurrency(modalCalculations.sozlesmeDamgaVergisi)}`
+                          ? `-${
+                            formatCurrency(
+                              modalCalculations.sozlesmeDamgaVergisi,
+                            )
+                          }`
                           : "0,00 ₺ (Sözleşme Yok)"}
                       </span>
                     </div>
