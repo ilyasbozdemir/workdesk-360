@@ -1,10 +1,13 @@
 import React from 'react'
-import { useDosyaEvrakAkisi } from './useDosyaEvrakAkisi'
+import { useNavigate } from '@tanstack/react-router'
+import { useTabStore } from '@renderer/store/tabStore'
+import { useDosyaEvrakAkisi, getStageRoute } from './useDosyaEvrakAkisi'
 import { DosyaEvrakAkisiHeader } from './components/DosyaEvrakAkisiHeader'
 import { DosyaEvrakListesiSidebar } from './components/DosyaEvrakListesiSidebar'
 import { DosyaEvrakGoruntuleyici } from './components/DosyaEvrakGoruntuleyici'
 import { ImzaliBelgeYukleModal } from './components/ImzaliBelgeYukleModal'
 import { DocumentPreviewModalV3 } from '../../components/DocumentPreviewModalV3'
+import { ExcelStylePrintModal } from '@renderer/components/ui/ExcelStylePrintModal'
 import { Loader2 } from 'lucide-react'
 
 export function DosyaEvrakAkisiScreen(): React.JSX.Element {
@@ -43,6 +46,10 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
     activePdfBlobUrl,
     isModalOpen,
     setIsModalOpen,
+    isPrintModalOpen,
+    setIsPrintModalOpen,
+    isPrinting,
+    handlePrintWithSettings,
     refreshSelectedDocument,
     currentIndex,
     hasPrev,
@@ -67,6 +74,16 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
     handleSaveBatchUpload,
     refreshAll
   } = useDosyaEvrakAkisi()
+
+  const navigate = useNavigate()
+  const addTab = useTabStore((s) => s.addTab)
+
+  const handleNavigateToStage = (doc: any) => {
+    if (!doc?.stage) return
+    const route = getStageRoute(doc.stage)
+    addTab(route)
+    navigate({ to: route as any })
+  }
 
   if (loading && !dosyaInfo) {
     return (
@@ -109,6 +126,7 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
           onUploadSignedPdf={() => handleUploadSignedPdf()}
           onUploadSignedDocForSelected={(targetCode) => handleUploadSignedPdf(targetCode)}
           onDeleteSignedDoc={handleDeleteSignedDoc}
+          onNavigateToStage={handleNavigateToStage}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed((c) => !c)}
         />
@@ -149,6 +167,7 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
           activeViewVariant={activeViewVariant}
           onVariantChange={setActiveViewVariant}
           onUploadSignedDocForSelected={(targetCode) => handleUploadSignedPdf(targetCode)}
+          onNavigateToStage={handleNavigateToStage}
         />
       </div>
 
@@ -175,6 +194,17 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
           isModal={true}
         />
       )}
+
+      {/* 5. SİSTEMSEL BASKI VE YAZICI TERCİHLERİ MASASI (ExcelStylePrintModal) */}
+      <ExcelStylePrintModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        onPrint={handlePrintWithSettings}
+        documentTitle={selectedEvrak?.title}
+        dosyaNo={dosyaInfo?.teminNo}
+        defaultOrientation={activeTemplateData?.orientation || 'portrait'}
+        isPrinting={isPrinting}
+      />
     </div>
   )
 }

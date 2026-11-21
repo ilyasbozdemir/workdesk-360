@@ -11,6 +11,25 @@ import {
 } from '@renderer/services/rotaDefaultsService'
 import { formatDateString } from '../../contextBuilder/dateHelpers'
 import { resolveTemplateKey, toTrDate } from '@temin360/document-templates'
+import { PrintSettings } from '@renderer/components/ui/ExcelStylePrintModal'
+import { APP_ROUTES } from '@renderer/constants/routeConstants'
+
+export function getStageRoute(stage: number): string {
+  switch (stage) {
+    case 1:
+      return APP_ROUTES.HAZIRLIK_VE_IHTIYAC
+    case 2:
+      return APP_ROUTES.PIYASA_FIYAT_ARASTIRMASI
+    case 3:
+      return APP_ROUTES.SIPARIS_VE_SOZLESME
+    case 4:
+      return APP_ROUTES.KABUL_VE_ODEME
+    case 5:
+      return APP_ROUTES.IMZALI_BELGELER
+    default:
+      return APP_ROUTES.DOSYALAR
+  }
+}
 
 export function useDosyaEvrakAkisi() {
   const { activeDosyaId, setActiveDosyaId } = useWorkspaceStore()
@@ -46,6 +65,8 @@ export function useDosyaEvrakAkisi() {
   const [activePdfBlobUrl, setActivePdfBlobUrl] = useState<string | null>(null)
   const [pdfGenerating, setPdfGenerating] = useState<boolean>(false)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState<boolean>(false)
+  const [isPrinting, setIsPrinting] = useState<boolean>(false)
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
 
   // 1. Tüm Dosyaları Çek (Dosya Değiştirici İçin)
@@ -1015,36 +1036,56 @@ export function useDosyaEvrakAkisi() {
     }
   }, [selectedEvrak, activeTemplateData, personelListesi, firmaListesi])
 
-  // 8. Yazdır (Kopya Sayısı Destekli)
-  const handlePrint = useCallback(async () => {
-    if (!window.electron?.ipcRenderer) return
-    try {
-      if (selectedEvrak?.type === 'template' && activeTemplateData) {
-        const storeSettings = useSettingsStore.getState()
-        const { config: activeTemplateConf } = resolveTemplateConfig(selectedEvrak.code)
-        const html = compileDocumentHtml({
-          activeTemplateConf,
-          formData: activeTemplateData,
-          personelListesi,
-          firmaListesi,
-          localShowLogoLeft: storeSettings.showLogoLeft,
-          localShowLogoRight: storeSettings.showLogoRight,
-          logoLeft: storeSettings.logoLeft,
-          logoRight: storeSettings.logoRight,
-          institutionLogo: storeSettings.institutionLogo,
-          orientation: activeTemplateData.orientation || 'portrait'
-        })
-        const count = Math.max(1, copyCount || 1)
-        for (let i = 0; i < count; i++) {
-          await window.electron.ipcRenderer.invoke('belge:print-html', html)
+  // 8. Yazdır Diyaloğunu Aç (Excel Style Print Modal)
+  const handlePrint = useCallback(() => {
+    setIsPrintModalOpen(true)
+  }, [])
+
+  // 8.1 Belirlenen Ayarlarla Yazdır
+  const handlePrintWithSettings = useCallback(
+    async (settings: PrintSettings) => {
+      if (!window.electron?.ipcRenderer) return
+      try {
+        setIsPrinting(true)
+        if (selectedEvrak?.type === 'template' && activeTemplateData) {
+          const storeSettings = useSettingsStore.getState()
+          const { config: activeTemplateConf } = resolveTemplateConfig(selectedEvrak.code)
+          const orientation = settings.orientation || activeTemplateData.orientation || 'portrait'
+          const html = compileDocumentHtml({
+            activeTemplateConf,
+            formData: activeTemplateData,
+            personelListesi,
+            firmaListesi,
+            localShowLogoLeft: storeSettings.showLogoLeft,
+            localShowLogoRight: storeSettings.showLogoRight,
+            logoLeft: storeSettings.logoLeft,
+            logoRight: storeSettings.logoRight,
+            institutionLogo: storeSettings.institutionLogo,
+            orientation
+          })
+
+          const count = Math.max(1, settings.copies || 1)
+          for (let i = 0; i < count; i++) {
+            await window.electron.ipcRenderer.invoke('belge:print-html', {
+              html,
+              deviceName: settings.printerName,
+              silent: settings.silent,
+              color: settings.color,
+              orientation
+            })
+          }
+        } else if (selectedEvrak?.filePath) {
+          await window.electron.ipcRenderer.invoke('workspace:open-file', selectedEvrak.filePath)
         }
-      } else if (selectedEvrak?.filePath) {
-        await window.electron.ipcRenderer.invoke('workspace:open-file', selectedEvrak.filePath)
+        setIsPrintModalOpen(false)
+      } catch (e) {
+        console.error('[DosyaEvrakAkisi] Yazdırma hatası:', e)
+      } finally {
+        setIsPrinting(false)
       }
-    } catch (e) {
-      console.error('[DosyaEvrakAkisi] Yazdırma hatası:', e)
-    }
-  }, [selectedEvrak, activeTemplateData, personelListesi, firmaListesi, copyCount])
+    },
+    [selectedEvrak, activeTemplateData, personelListesi, firmaListesi]
+  )
 
   // 9. PDF Olarak Kaydet / Dışa Aktar
   const handleExportPdf = useCallback(async () => {
@@ -1145,6 +1186,10 @@ export function useDosyaEvrakAkisi() {
     activePdfBlobUrl,
     isModalOpen,
     setIsModalOpen,
+    isPrintModalOpen,
+    setIsPrintModalOpen,
+    isPrinting,
+    handlePrintWithSettings,
     refreshSelectedDocument: () => setRefreshTrigger((t) => t + 1),
     currentIndex,
     hasPrev,

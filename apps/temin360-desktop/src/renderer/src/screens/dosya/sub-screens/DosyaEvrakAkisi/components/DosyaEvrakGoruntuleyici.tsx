@@ -1,7 +1,9 @@
 import React, { useRef } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   CheckCircle2,
   Copy,
   Download,
@@ -17,6 +19,7 @@ import {
   Printer,
   RefreshCw,
   RotateCcw,
+  Sparkles,
   Upload,
   ZoomIn,
   ZoomOut,
@@ -61,6 +64,7 @@ interface DosyaEvrakGoruntuleyiciProps {
   activeViewVariant?: "template" | "signed";
   onVariantChange?: (variant: "template" | "signed") => void;
   onUploadSignedDocForSelected?: (targetCode?: string) => void;
+  onNavigateToStage?: (evrak: EvrakItem) => void;
 }
 
 export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
@@ -99,6 +103,7 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
     activeViewVariant = "template",
     onVariantChange,
     onUploadSignedDocForSelected,
+    onNavigateToStage,
   },
 ) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -432,6 +437,42 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
           </div>
         </div>
       </header>
+
+      {/* ── TASLAK & EKSİK VERİ BİLGİLENDİRME & YÖNLENDİRME ÇUBUĞU ── */}
+      {selectedEvrak.status === "taslak" && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-b border-amber-200/80 dark:border-amber-900/60 px-4 py-2 flex items-center justify-between gap-3 shrink-0 z-10 animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <AlertCircle size={15} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                  Otomatik Taslak Belge
+                </span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                  Veri Girişi Bekliyor
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-700/90 dark:text-amber-400/80 truncate">
+                Bu belgenin içerik verileri henüz tamamlanmamış. İlgili adıma geçip veri girebilir veya belgeyi kesinleştirebilirsiniz.
+              </p>
+            </div>
+          </div>
+
+          {onNavigateToStage && (
+            <button
+              type="button"
+              onClick={() => onNavigateToStage(selectedEvrak)}
+              className="shrink-0 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-98 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm shadow-amber-600/20 transition-all cursor-pointer"
+              title={`${selectedEvrak.stageName} ekranına geç ve veri girişini tamamla`}
+            >
+              <span>{selectedEvrak.stageName} Adımına Git & Veri Gir</span>
+              <ArrowUpRight size={14} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── BELGE GÖRÜNTÜLEME ALANI (CANVAS / PDF IFRAME) ── */}
       <div

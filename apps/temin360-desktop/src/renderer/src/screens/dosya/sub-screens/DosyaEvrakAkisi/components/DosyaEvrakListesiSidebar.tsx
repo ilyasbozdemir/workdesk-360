@@ -30,6 +30,7 @@ interface DosyaEvrakListesiSidebarProps {
   onUploadSignedPdf: () => void;
   onUploadSignedDocForSelected?: (targetCode: string) => void;
   onDeleteSignedDoc: (id: number) => void;
+  onNavigateToStage?: (evrak: EvrakItem) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -46,6 +47,7 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
     onUploadSignedPdf,
     onUploadSignedDocForSelected,
     onDeleteSignedDoc,
+    onNavigateToStage,
     isCollapsed,
     onToggleCollapse,
   }) => {
@@ -304,6 +306,21 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
                       </div>
 
                       <div className="flex items-center gap-1">
+                        {doc.status === "taslak" && onNavigateToStage && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onNavigateToStage(doc);
+                            }}
+                            title={`${doc.stageName} ekranına geç ve veri girişini tamamla`}
+                            className="px-2 py-0.5 text-[9px] font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/60 dark:hover:bg-amber-900/60 dark:text-amber-300 rounded border border-amber-300 dark:border-amber-700/60 transition-all cursor-pointer shadow-2xs flex items-center gap-0.5"
+                          >
+                            <span>Veri Gir</span>
+                            <span>➔</span>
+                          </button>
+                        )}
+
                         {doc.type === "template" && !doc.matchedSignedDoc &&
                           onUploadSignedDocForSelected && (
                           <button

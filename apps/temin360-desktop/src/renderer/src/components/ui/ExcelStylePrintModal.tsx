@@ -25,6 +25,48 @@ export interface PrinterItem {
   options?: Record<string, string>
 }
 
+export const PRINTER_PREFERENCES_KEY = 'temin_printer_preferences'
+
+export interface PersistedPrinterPreferences {
+  printerName?: string
+  copies?: number
+  orientation?: 'portrait' | 'landscape'
+  color?: boolean
+  silent?: boolean
+}
+
+export function loadPrinterPreferences(): PersistedPrinterPreferences {
+  try {
+    const raw = localStorage.getItem(PRINTER_PREFERENCES_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch (e) {
+    console.warn('[PrinterPreferences] Tercihler okunamadı:', e)
+  }
+  return {}
+}
+
+export function savePrinterPreferences(prefs: Partial<PersistedPrinterPreferences>): void {
+  try {
+    const existing = loadPrinterPreferences()
+    const merged: PersistedPrinterPreferences = { ...existing, ...prefs }
+    localStorage.setItem(PRINTER_PREFERENCES_KEY, JSON.stringify(merged))
+
+    // Veritabanına asenkron olarak yedekle (varsa)
+    if (window.electron?.ipcRenderer) {
+      window.electron.ipcRenderer.invoke(
+        'db:run',
+        `INSERT OR REPLACE INTO DATA_KullaniciAyar (ayar_key, ayar_val, updated_at)
+         VALUES ('printer_preferences', ?, datetime('now', 'localtime'))`,
+        [JSON.stringify(merged)]
+      ).catch(() => {
+        // Tablo mevcut değilse sessizce geç
+      })
+    }
+  } catch (e) {
+    console.warn('[PrinterPreferences] Tercihler kaydedilemedi:', e)
+  }
+}
+
 export interface PrintSettings {
   printerName: string
   copies: number
@@ -59,17 +101,19 @@ export function ExcelStylePrintModal({
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false)
   const [searchTerm, setSearchTerm] = useState<string>('')
 
-  // Baskı Ayarları
+  // Baskı Ayarları (Kalıcı Tercihlerden Başlatılır)
   const [copies, setCopies] = useState<number>(1)
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>(defaultOrientation)
   const [color, setColor] = useState<boolean>(true)
   const [silent, setSilent] = useState<boolean>(true)
 
-  // Yazıcıları İşletim Sisteminden Yükle
+  // Yazıcıları İşletim Sisteminden Yükle ve Kullanıcı Tercihini Uygula
   const loadPrinters = async (): Promise<void> => {
     setLoadingPrinters(true)
     setPrinterError(null)
     try {
+      const savedPrefs = loadPrinterPreferences()
+
       let res: any
       if (window.api?.getPrinters) {
         res = await window.api.getPrinters()
@@ -79,8 +123,21 @@ export function ExcelStylePrintModal({
 
       if (res?.success && Array.isArray(res.printers) && res.printers.length > 0) {
         setPrinters(res.printers)
-        // Eğer henüz seçili yazıcı yoksa varsayılanı veya ilkini seç
-        if (!selectedPrinter) {
+
+        // 1. Kullanıcının daha önce tercih ettiği yazıcı sistemde mevcutsa onu seç
+        let matched = false
+        if (savedPrefs.printerName) {
+          const found = res.printers.find(
+            (p: PrinterItem) => p.name === savedPrefs.printerName || p.displayName === savedPrefs.printerName
+          )
+          if (found) {
+            setSelectedPrinter(found.name)
+            matched = true
+          }
+        }
+
+        // 2. Eğer kayıtlı tercih yoksa veya sistemde bulunamadıysa varsayılanı veya ilkini seç
+        if (!matched && !selectedPrinter) {
           const defaultPr = res.printers.find((p: PrinterItem) => p.isDefault) || res.printers[0]
           setSelectedPrinter(defaultPr.name)
         }
@@ -99,8 +156,17 @@ export function ExcelStylePrintModal({
 
   useEffect(() => {
     if (isOpen) {
+      const savedPrefs = loadPrinterPreferences()
+      if (savedPrefs.copies && savedPrefs.copies > 0) setCopies(savedPrefs.copies)
+      if (savedPrefs.orientation) {
+        setOrientation(savedPrefs.orientation)
+      } else {
+        setOrientation(defaultOrientation)
+      }
+      if (savedPrefs.color !== undefined) setColor(savedPrefs.color)
+      if (savedPrefs.silent !== undefined) setSilent(savedPrefs.silent)
+
       loadPrinters()
-      setOrientation(defaultOrientation)
     }
   }, [isOpen, defaultOrientation])
 
@@ -115,6 +181,15 @@ export function ExcelStylePrintModal({
   )
 
   const handlePrintSubmit = async (): Promise<void> => {
+    // Kullanıcının yazdırma tercihlerini kalıcı olarak sakla
+    savePrinterPreferences({
+      printerName: selectedPrinter,
+      copies: Math.max(1, copies),
+      orientation,
+      color,
+      silent
+    })
+
     await onPrint({
       printerName: selectedPrinter,
       copies: Math.max(1, copies),
@@ -262,6 +337,7 @@ export function ExcelStylePrintModal({
                             onClick={() => {
                               setSelectedPrinter(pr.name)
                               setIsDropdownOpen(false)
+                              savePrinterPreferences({ printerName: pr.name })
                             }}
                             className={`w-full p-2 rounded-lg flex items-center justify-between text-left transition-colors cursor-pointer ${
                               isSelected
@@ -427,9 +503,15 @@ export function ExcelStylePrintModal({
 
         {/* Alt Aksiyon Butonları (Sabit) */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/50 shrink-0">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <CheckCircle2 size={13} className="text-emerald-500" />
-            <span>A4 formatı hazır</span>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+              <CheckCircle2 size={13} />
+              A4 Hazır
+            </span>
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 hidden sm:inline">
+              Tercihleriniz otomatik hatırlanır
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
