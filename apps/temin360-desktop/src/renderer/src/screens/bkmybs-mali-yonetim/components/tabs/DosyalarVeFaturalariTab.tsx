@@ -881,6 +881,24 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
 
       prefs.kabulTutanaklari = currentTutanaklar;
 
+      // Muayene ve Kabul Tutanakları ile senkronize et
+      if (Array.isArray(prefs.kabulTutanaklari)) {
+        prefs.kabulTutanaklari = prefs.kabulTutanaklari.map((t: any) => {
+          if (
+            (t.faturaNo && t.faturaNo.trim().toLowerCase() === normalizedNo) ||
+            (!t.faturaNo && prefs.kabulTutanaklari.length === 1)
+          ) {
+            return {
+              ...t,
+              faturaNo: updatedInvoice.faturaNo,
+              faturaTarihi: updatedInvoice.faturaTarihi || t.faturaTarihi,
+              tutar: updatedInvoice.firmaTutar || t.tutar
+            }
+          }
+          return t
+        })
+      }
+
       const updateRes = await window.electron.ipcRenderer.invoke(
         "db:run",
         "UPDATE DATA_TeminDosyasi SET sablon_tercihleri = ?, updated_at = datetime('now') WHERE id = ?",
@@ -918,6 +936,38 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
       setIsSaving(false);
     }
   };
+
+  // Sözleşme Durumunu Değiştir (Sözleşmeli / Sözleşmesiz Sipariş Usulü)
+  const handleToggleSozlesme = async (dosya: DosyaOzet) => {
+    if (!window.electron?.ipcRenderer) return
+    const yeniDurum = !dosya.sozlesmeYapilacakMi
+
+    try {
+      const updateRes = await window.electron.ipcRenderer.invoke(
+        'db:run',
+        'UPDATE DATA_TeminDosyasi SET sozlesme_yapilacak_mi = ?, updated_at = datetime("now") WHERE id = ?',
+        [yeniDurum ? 1 : 0, dosya.id]
+      )
+
+      if (!updateRes?.success) {
+        await dialogs.alert({
+          title: 'Hata',
+          message: 'Sözleşme durumu güncellenirken hata oluştu: ' + (updateRes?.error || 'Bilinmeyen hata'),
+          variant: 'danger'
+        })
+        return
+      }
+
+      reloadData()
+    } catch (err: any) {
+      console.error('Sözleşme durumu değiştirilemedi:', err)
+      await dialogs.alert({
+        title: 'Hata',
+        message: 'Sözleşme durumu güncellenirken beklenmeyen hata: ' + (err?.message || String(err)),
+        variant: 'danger'
+      })
+    }
+  }
 
   // Fatura Durumunu Hızlıca Değiştir (Ödendi / Beklemede)
   const handleToggleDurum = async (dosya: DosyaOzet, fatura: FaturaKayit) => {
