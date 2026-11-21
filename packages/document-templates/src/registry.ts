@@ -33,6 +33,7 @@ import { Kik048YapimGeciciKabulTeklif } from "./templates/kik048-yapim-gecici-ka
 import { Kik049YapimGeciciKabulTutanagi } from "./templates/kik049-yapim-gecici-kabul-tutanagi";
 import { Kik050YapimKesinKabulTeklif } from "./templates/kik050-yapim-kesin-kabul-teklif";
 import { Kik051YapimKesinKabulTutanagi } from "./templates/kik051-yapim-kesin-kabul-tutanagi";
+import { DogrudanTeminDosyasi } from "./templates/dogrudan-temin-dosyasi";
 
 import type {
   AlimTuru,
@@ -74,6 +75,7 @@ import { dataMapping as kik048Mapping } from "./templates/kik048-yapim-gecici-ka
 import { dataMapping as kik049Mapping } from "./templates/kik049-yapim-gecici-kabul-tutanagi/data.mapping";
 import { dataMapping as kik050Mapping } from "./templates/kik050-yapim-kesin-kabul-teklif/data.mapping";
 import { dataMapping as kik051Mapping } from "./templates/kik051-yapim-kesin-kabul-tutanagi/data.mapping";
+import { dataMapping as dogrudanTeminDosyasiMapping } from "./templates/dogrudan-temin-dosyasi/data.mapping";
 
 export interface TemplateDefinition<
   TComponent extends React.ComponentType<any> = React.ComponentType<any>,
@@ -903,6 +905,29 @@ export const templateRegistry = {
     },
     standartFormAdi: "Muhasebe / Malmüdürlüğü Ödeme Gönderme Müzekkeresi",
   },
+  // 5. Klasör & Kapaklar
+  dogrudan_temin_dosyasi: {
+    id: "dogrudan-temin-dosyasi",
+    name: "DogrudanTeminDosyasi",
+    title: "Doğrudan Temin Dosyası (Dosya Kapağı)",
+    category: "5-klasor-ve-kapaklar",
+    categoryLabel: "Klasör & Kapaklar",
+    description: "Tüm alım türleri için doğrudan temin dosya kapağı",
+    component: DogrudanTeminDosyasi,
+    orientation: "portrait",
+    group: "olur_onay",
+    workflowProfile: "ek_belge",
+    dataMapping: dogrudanTeminDosyasiMapping,
+    mapping: dogrudanTeminDosyasiMapping,
+    version: 1,
+    alimTurleri: ["mal", "hizmet", "yapim", "danismanlik"],
+    capabilities: {
+      ...DEFAULT_CAPS,
+      supportsLogos: true,
+      supportsFirmaListesi: true,
+    },
+    standartFormAdi: "Doğrudan Temin Dosyası (Dosya Kapağı)",
+  },
 } as const satisfies Record<string, TemplateDefinition<any>>;
 
 export type TemplateKey = keyof typeof templateRegistry;
@@ -949,6 +974,7 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
   kik051_yapim_kesin_kabul_tutanagi: "kik051_yapim_kesin_kabul_tutanagi",
   harcama_pusulasi: "harcama_pusulasi",
   odeme_yazisi: "odeme_yazisi",
+  dogrudan_temin_dosyasi: "dogrudan_temin_dosyasi",
 
   // Kebab-case eşleştirmeleri
   "ihtiyac-listesi": "ihtiyac_listesi",
@@ -990,6 +1016,13 @@ const REGISTRY_LOOKUP: Record<string, TemplateKey> = {
   "kik051-yapim-kesin-kabul-tutanagi": "kik051_yapim_kesin_kabul_tutanagi",
   "harcama-pusulasi": "harcama_pusulasi",
   "odeme-yazisi": "odeme_yazisi",
+  "dogrudan-temin-dosyasi": "dogrudan_temin_dosyasi",
+  "dosya-kapagi": "dogrudan_temin_dosyasi",
+  dosya_kapagi: "dogrudan_temin_dosyasi",
+  "ihale-kapagi": "dogrudan_temin_dosyasi",
+  ihale_kapagi: "dogrudan_temin_dosyasi",
+  "dogrudan-temin-kapagi": "dogrudan_temin_dosyasi",
+  kapak: "dogrudan_temin_dosyasi",
 
   // Sık kullanılan alias'lar
   "ihale-komisyon-karari": "muayene_kabul_komisyonu",

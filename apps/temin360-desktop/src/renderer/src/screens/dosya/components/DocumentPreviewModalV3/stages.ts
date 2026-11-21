@@ -160,7 +160,14 @@ export const DOCUMENT_STAGES: DocumentStageInfo[] = [
     badgeBg: 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800',
     badgeText: 'text-amber-700 dark:text-amber-300',
     categories: ['5-klasor-ve-kapaklar', 'Klasör & Kapaklar', 'Kapak & Arşiv'],
-    recommendedTemplates: ['dosya_kapagi', 'dosya-kapagi', 'arsiv_etiketi', 'arsiv-etiketi']
+    recommendedTemplates: [
+      'dogrudan_temin_dosyasi',
+      'dogrudan-temin-dosyasi',
+      'dosya_kapagi',
+      'dosya-kapagi',
+      'arsiv_etiketi',
+      'arsiv-etiketi'
+    ]
   }
 ]
 

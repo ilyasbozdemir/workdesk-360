@@ -153,24 +153,48 @@ export function DocumentPreviewSidebar({
     >
       {/* Sidebar Header & Tab Switcher */}
       <div className="flex flex-col border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shrink-0 select-none">
-        {/* Üst Başlık Satırı: Panel Başlığı + Canlı Düzenleme Butonu + Kapatma Oku */}
-        <div className="flex items-center justify-between p-2.5 sm:p-3 border-b border-slate-100 dark:border-slate-800/60 gap-2 min-w-0">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+        {/* Üst Başlık Satırı: Panel Başlığı + Genişlik Seçici + Canlı Düzenleme Butonu + Kapatma Oku */}
+        <div className="flex items-center justify-between p-2 sm:p-2.5 border-b border-slate-100 dark:border-slate-800/60 gap-1.5 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
             <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
             <span
               className="text-xs font-bold text-slate-850 dark:text-slate-100 uppercase tracking-wide truncate"
               title="Belge & Süreç Paneli"
             >
-              Belge &amp; Süreç Paneli
+              {sidebarPercent <= 25 ? 'Belge & Süreç' : 'Belge & Süreç Paneli'}
             </span>
+
+            {/* Yüzdelik Genişlik Seçici (%25, %33, %40, %50) */}
+            {setSidebarPercent && (
+              <div
+                className="flex items-center bg-blue-50/80 dark:bg-slate-850 rounded-lg p-0.5 border border-blue-100/80 dark:border-slate-700/80 gap-0.5 shrink-0"
+                title="Panel Genişliği"
+              >
+                {[25, 33, 40, 50].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setSidebarPercent(pct)}
+                    className={`px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                      sidebarPercent === pct
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                    title={`Paneli %${pct} genişliğe ayarla`}
+                  >
+                    %{pct}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {/* Canlı Düzenleme Butonu */}
             <button
               type="button"
               onClick={() => setIsEditingMode(!isEditingMode)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border shrink-0 ${
+              className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer border shrink-0 ${
                 isEditingMode
                   ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600 shadow-2xs ring-1 ring-amber-400/40'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -178,49 +202,22 @@ export function DocumentPreviewSidebar({
               title={isEditingMode ? 'Canlı düzenleme modu açık (Tıklayarak kapatın)' : 'Canlı düzenleme modunu açın'}
             >
               <Edit3 className={`w-3.5 h-3.5 ${isEditingMode ? 'text-white' : 'text-amber-600 dark:text-amber-400'}`} />
-              <span className="text-[11px]">{isEditingMode ? 'Düzenleme Açık' : 'Düzenle'}</span>
+              <span className="text-[11px]">
+                {isEditingMode ? (sidebarPercent <= 25 ? 'Açık' : 'Düzenleme Açık') : 'Düzenle'}
+              </span>
             </button>
 
             {/* Paneli Gizle / Kapat Butonu */}
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer shrink-0"
+              className="p-1 sm:p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg transition-colors cursor-pointer shrink-0"
               title="Paneli Gizle / Daralt"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
           </div>
         </div>
-
-        {/* Panel Genişlik Çubuğu (%25, %33, %40, %50) */}
-        {setSidebarPercent && (
-          <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50/90 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800/60">
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Panel Boyutu
-            </span>
-            <div
-              className="flex items-center bg-slate-200/70 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700 gap-0.5"
-              title="Panel Genişliği"
-            >
-              {[25, 33, 40, 50].map((pct) => (
-                <button
-                  key={pct}
-                  type="button"
-                  onClick={() => setSidebarPercent(pct)}
-                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
-                    sidebarPercent === pct
-                      ? 'bg-blue-600 text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
-                  }`}
-                  title={`Paneli %${pct} genişliğe ayarla`}
-                >
-                  %{pct}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* 4 Ana Sekme: Belgeler | Alanlar | Rota & İmza | Sayfa & Düzen */}
         <div className="grid grid-cols-4 p-1 gap-1 bg-slate-100/80 dark:bg-slate-900 border-b border-slate-200/60 dark:border-slate-800">

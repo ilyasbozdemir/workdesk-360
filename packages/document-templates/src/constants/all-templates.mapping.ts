@@ -22,6 +22,7 @@ export const DogrudanTeminSonucOnayBelgesiMapping: ProcessMapping = getTemplateM
 export const DogrudanTeminSozlesmesiMapping: ProcessMapping = getTemplateMapping('dogrudan-temin-sozlesmesi')
 export const DogrudanTeminSozlesmesiAlternatifMapping: ProcessMapping = getTemplateMapping('dogrudan-temin-sozlesmesi')
 export const DogrudanTeminSozlesmesiUzunMapping: ProcessMapping = getTemplateMapping('dogrudan-temin-sozlesmesi')
+export const DogrudanTeminDosyasiMapping: ProcessMapping = getTemplateMapping('dogrudan-temin-dosyasi')
 export const IdareOnayBelgesiMapping: ProcessMapping = getTemplateMapping('idare-onay-belgesi')
 export const IhaleKomisyonKarariMapping: ProcessMapping = getTemplateMapping('ihale-komisyon-karari')
 export const KabulEdilenTeklifMapping: ProcessMapping = getTemplateMapping('kabul-edilen-teklif')
@@ -80,6 +81,7 @@ export const ALL_TEMPLATE_MAPPINGS: Record<string, ProcessMapping> = {
   'dogrudan-temin-onay-belgesi': DogrudanTeminOnayBelgesiMapping,
   'dogrudan-temin-sonuc-onay-belgesi': DogrudanTeminSonucOnayBelgesiMapping,
   'dogrudan-temin-sozlesmesi': DogrudanTeminSozlesmesiMapping,
+  'dogrudan-temin-dosyasi': DogrudanTeminDosyasiMapping,
   'idare-onay-belgesi': IdareOnayBelgesiMapping,
   'ihale-komisyon-karari': IhaleKomisyonKarariMapping,
   'kabul-edilen-teklif': KabulEdilenTeklifMapping,
