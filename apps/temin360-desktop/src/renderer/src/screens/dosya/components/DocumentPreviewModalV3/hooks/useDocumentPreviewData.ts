@@ -132,6 +132,23 @@ export function useDocumentPreviewData({
     if (defaultRotaConf && enrichedData.olurYazisi === undefined && defaultRotaConf.olurYazisi !== undefined) {
       enrichedData.olurYazisi = defaultRotaConf.olurYazisi
     }
+
+    // Canlı Komisyon Senkronizasyonu:
+    // Eğer Rota Yönetimi'nde henüz özel komisyon üyeleri tanımlanmamışsa,
+    // dosyanın DATA_TeminKomisyon masasındaki güncel personellerini kullan (bayat/silinmiş snapshot üyelerini temizle)
+    if (
+      (!Array.isArray(defaultRotaConf?.komisyonUyeleri) || defaultRotaConf.komisyonUyeleri.length === 0) &&
+      Array.isArray((baseData as any)?._liveCommissionOfficers) &&
+      (baseData as any)._liveCommissionOfficers.length > 0
+    ) {
+      const liveList = (baseData as any)._liveCommissionOfficers
+      ;(enrichedData as any).komisyonUyeleri = liveList
+      ;(enrichedData as any).fiyatKomisyonu = liveList
+      ;(enrichedData as any).gorevlendirilenler = liveList
+      ;(enrichedData as any).gorevliler = liveList
+      ;(enrichedData as any).dagitimListesi = liveList
+    }
+
     return enrichedData
   }
 

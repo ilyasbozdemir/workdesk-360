@@ -43,7 +43,7 @@ async function queryRows(sql: string, params: unknown[] = []): Promise<any[]> {
 }
 
 async function loadDosyaLists(dosyaId: number) {
-  const [personel, birim, firma] = await Promise.all([
+  const [personel, birim, firma, komisyonRows] = await Promise.all([
     queryRows(
       "SELECT id, ad_soyad, unvan, telefon, eposta, birim, birim_id, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' ORDER BY ad_soyad ASC"
     ),
@@ -53,6 +53,17 @@ async function loadDosyaLists(dosyaId: number) {
     queryRows(
       'SELECT f.id, f.unvan, f.vergi_no, f.adres, f.telefon, f.email FROM DATA_TeminFirma tf JOIN TANIM_Firma f ON tf.firma_id = f.id WHERE tf.temin_dosya_id = ? ORDER BY tf.id ASC',
       [dosyaId]
+    ),
+    queryRows(
+      `SELECT tk.*, 
+              COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as resolved_ad_soyad,
+              COALESCE(NULLIF(tk.unvan, ''), NULLIF(p.unvan, ''), '') as resolved_unvan,
+              COALESCE(NULLIF(tk.birim, ''), NULLIF(p.birim, ''), '') as resolved_birim
+       FROM DATA_TeminKomisyon tk
+       LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id
+       WHERE tk.temin_dosya_id = ? AND (tk.belgede_goster = 1 OR tk.belgede_goster IS NULL)
+       ORDER BY tk.id ASC`,
+      [dosyaId]
     )
   ])
   const firmaFinal = firma.length
@@ -60,7 +71,7 @@ async function loadDosyaLists(dosyaId: number) {
     : await queryRows(
         'SELECT id, unvan, vergi_no, adres, telefon, email FROM TANIM_Firma ORDER BY unvan ASC LIMIT 200'
       )
-  return { personel, birim, firma: firmaFinal }
+  return { personel, birim, firma: firmaFinal, komisyon: komisyonRows }
 }
 
 export const dosyaResolver: DocumentResolver = {
@@ -105,6 +116,38 @@ export const dosyaResolver: DocumentResolver = {
     }
     const lists = await loadDosyaLists(source.dosyaId)
     const pick = (a: unknown[] | undefined, b: unknown[]) => (a && a.length > 0 ? a : b)
+
+    // Canlı Komisyon Senkronizasyonu:
+    // DATA_TeminKomisyon tablosundaki güncel personelleri canlı veri olarak hazırla
+    if (Array.isArray(lists.komisyon) && lists.komisyon.length > 0) {
+      const isMuayene =
+        templateId.toLowerCase().includes('muayene') || templateId.toLowerCase().includes('kabul')
+      const targetOfficers = lists.komisyon
+        .filter((k: any) => {
+          const gorev = String(k.gorev || '').toLowerCase()
+          const tur = String(k.komisyon_turu || '').toLowerCase()
+          if (isMuayene) return tur.includes('muayene') || tur.includes('kabul')
+          return (
+            !gorev.includes('harcama yetkili') &&
+            !gorev.includes('gerçekleştirme') &&
+            !gorev.includes('gerceklestirme') &&
+            !gorev.includes('muhasebe')
+          )
+        })
+        .map((k: any) => ({
+          adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
+          unvan: k.resolved_unvan || k.unvan || '',
+          gorevi: k.gorev || 'Fiyat Araştırma Görevlisi',
+          imzaTuru: k.imza_turu || 'İmza',
+          asilMi: k.asli_yedek === 'Yedek' ? 0 : 1,
+          birimId: k.birim_id,
+          birim: k.resolved_birim || k.birim
+        }))
+
+      if (targetOfficers.length > 0) {
+        ;(dataObj as any)._liveCommissionOfficers = targetOfficers
+      }
+    }
 
     return {
       resolvedData: dataObj,

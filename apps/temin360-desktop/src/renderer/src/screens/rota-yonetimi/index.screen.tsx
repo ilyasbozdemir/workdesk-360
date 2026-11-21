@@ -69,6 +69,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
   const [birimListesi, setBirimListesi] = useState<any[]>([])
   const [kurumInfo, setKurumInfo] = useState<any>(null)
   const [dosyaInfo, setDosyaInfo] = useState<any>(null)
+  const [dosyaKomisyonListesi, setDosyaKomisyonListesi] = useState<any[]>([])
   const [savedConfigs, setSavedConfigs] = useState<Record<string, any>>(() =>
     getAllSavedRotaConfigs()
   )
@@ -124,6 +125,27 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
           if (mounted && dRes?.success && dRes.data?.[0]) {
             const dRow = dRes.data[0]
             setDosyaInfo(dRow)
+
+            // Aktif dosyanın komisyon atamalarını çek (TANIM_Personel ile zenginleştirilmiş)
+            try {
+              const komRes = await ipc.invoke(
+                'db:query',
+                `SELECT tk.*, 
+                        COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as resolved_ad_soyad,
+                        COALESCE(NULLIF(tk.unvan, ''), NULLIF(p.unvan, ''), '') as resolved_unvan,
+                        COALESCE(NULLIF(tk.birim, ''), NULLIF(p.birim, ''), '') as resolved_birim
+                 FROM DATA_TeminKomisyon tk
+                 LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id
+                 WHERE tk.temin_dosya_id = ? AND (tk.belgede_goster = 1 OR tk.belgede_goster IS NULL)
+                 ORDER BY tk.id ASC`,
+                [activeDosyaId]
+              )
+              if (mounted && komRes?.success && Array.isArray(komRes.data)) {
+                setDosyaKomisyonListesi(komRes.data)
+              }
+            } catch (komErr) {
+              console.warn('Dosya komisyon üyeleri yüklenemedi:', komErr)
+            }
 
             // Dosyanın "İhalesi Yapılacak Birim / Müdürlük" alanı TANIM_Birim'de yoksa otomatik ekle ve bağla
             const rawDosyaBirim = String(
@@ -300,7 +322,42 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
         dosyaInfo?.sunulacak_makam ||
         birimRes.sunulacakMakamAdi ||
         '',
-      komisyonUyeleri: conf?.komisyonUyeleri || [],
+      komisyonUyeleri: (() => {
+        if (Array.isArray(conf?.komisyonUyeleri) && conf.komisyonUyeleri.length > 0) {
+          return conf.komisyonUyeleri
+        }
+        // Eğer Rota Yönetimi'nde henüz özel bir şablon ayarı kaydedilmemişse,
+        // dosyanın DATA_TeminKomisyon masasındaki güncel personellerini kullan:
+        if (Array.isArray(dosyaKomisyonListesi) && dosyaKomisyonListesi.length > 0) {
+          const isMuayeneTemplate =
+            selectedTemplateId.includes('muayene') || selectedTemplateId.includes('kabul')
+          const filtered = dosyaKomisyonListesi.filter((tk) => {
+            const gorev = String(tk.gorev || '').toLowerCase()
+            const tur = String(tk.komisyon_turu || '').toLowerCase()
+            if (isMuayeneTemplate) {
+              return tur.includes('muayene') || tur.includes('kabul')
+            }
+            // Maliyet & Piyasa Fiyat Araştırması için Harcama Yetkilisi ve Gerçekleştirme Hariç
+            return (
+              !gorev.includes('harcama yetkili') &&
+              !gorev.includes('gerçekleştirme') &&
+              !gorev.includes('gerceklestirme') &&
+              !gorev.includes('muhasebe')
+            )
+          })
+          return filtered.map((tk) => ({
+            id: tk.personel_id || tk.id,
+            adSoyad: tk.resolved_ad_soyad || tk.ad_soyad || '',
+            unvan: tk.resolved_unvan || tk.unvan || '',
+            gorevi: tk.gorev || 'Fiyat Araştırma Görevlisi',
+            imzaTuru: tk.imza_turu || 'İmza',
+            asilMi: tk.asli_yedek === 'Yedek' ? 0 : 1,
+            birimId: tk.birim_id,
+            birim: tk.resolved_birim || tk.birim
+          }))
+        }
+        return []
+      })(),
       olurYazisi: conf?.olurYazisi ?? true,
       routeOverrides: []
     }
@@ -323,6 +380,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     kurumInfo,
     birimListesi,
     personelListesi,
+    dosyaKomisyonListesi,
     institutionName,
     activeDefinition
   ])
