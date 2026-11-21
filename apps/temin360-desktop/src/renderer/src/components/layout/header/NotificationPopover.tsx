@@ -34,8 +34,10 @@ export const NotificationPopover = React.memo(function NotificationPopover(): Re
         setNotifications(notifs || [])
         setTasks(tsks || [])
       }
-    } catch (err) {
-      console.warn('[NotificationPopover] load error:', err)
+    } catch {
+      // Açık çalışma alanı yokken veya servis hazır değilken sessizce boş dizi ata
+      setNotifications([])
+      setTasks([])
     }
   }
 
