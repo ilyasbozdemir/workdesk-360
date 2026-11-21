@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useTabStore } from '@renderer/store/tabStore'
 import { useDosyaEvrakAkisi, getStageRoute } from './useDosyaEvrakAkisi'
@@ -6,11 +6,13 @@ import { DosyaEvrakAkisiHeader } from './components/DosyaEvrakAkisiHeader'
 import { DosyaEvrakListesiSidebar } from './components/DosyaEvrakListesiSidebar'
 import { DosyaEvrakGoruntuleyici } from './components/DosyaEvrakGoruntuleyici'
 import { ImzaliBelgeYukleModal } from './components/ImzaliBelgeYukleModal'
+import { ImzaliBelgelerYonetimModal } from './components/ImzaliBelgelerYonetimModal'
 import { DocumentPreviewModalV3 } from '../../components/DocumentPreviewModalV3'
 import { ExcelStylePrintModal } from '@renderer/components/ui/ExcelStylePrintModal'
 import { Loader2 } from 'lucide-react'
 
 export function DosyaEvrakAkisiScreen(): React.JSX.Element {
+  const [isSignedDocsModalOpen, setIsSignedDocsModalOpen] = useState(false)
   const {
     loading,
     docLoading,
@@ -110,6 +112,7 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
         onRefresh={refreshAll}
         loading={loading}
         evraklar={evraklar}
+        onOpenSignedDocsManagement={() => setIsSignedDocsModalOpen(true)}
       />
 
       {/* 2. ANA ÇALIŞMA ALANI (SOL LİSTE + SAĞ/ORTA GÖRÜNTÜLEYİCİ) */}
@@ -127,6 +130,7 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
           onUploadSignedDocForSelected={(targetCode) => handleUploadSignedPdf(targetCode)}
           onDeleteSignedDoc={handleDeleteSignedDoc}
           onNavigateToStage={handleNavigateToStage}
+          onOpenSignedDocsManagement={() => setIsSignedDocsModalOpen(true)}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed((c) => !c)}
         />
@@ -179,6 +183,17 @@ export function DosyaEvrakAkisiScreen(): React.JSX.Element {
         templateOptions={targetTemplateOptions}
         initialTargetCode={specificTargetCode}
         onSave={handleSaveBatchUpload}
+      />
+
+      {/* 3.1 İMZALI BELGELER YÖNETİM & ARŞİV MASASI */}
+      <ImzaliBelgelerYonetimModal
+        isOpen={isSignedDocsModalOpen}
+        onClose={() => setIsSignedDocsModalOpen(false)}
+        activeDosyaId={activeDosyaId}
+        teminNo={dosyaInfo?.teminNo}
+        templateOptions={targetTemplateOptions}
+        onUploadNew={() => handleUploadSignedPdf()}
+        onRefreshParent={refreshAll}
       />
 
       {/* 4. ŞABLON DÜZENLEME & DETAYLI ÖNİZLEME MODALI (DocumentPreviewModalV3) */}

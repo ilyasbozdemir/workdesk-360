@@ -31,6 +31,7 @@ interface DosyaEvrakListesiSidebarProps {
   onUploadSignedDocForSelected?: (targetCode: string) => void;
   onDeleteSignedDoc: (id: number) => void;
   onNavigateToStage?: (evrak: EvrakItem) => void;
+  onOpenSignedDocsManagement?: () => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -48,6 +49,7 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
     onUploadSignedDocForSelected,
     onDeleteSignedDoc,
     onNavigateToStage,
+    onOpenSignedDocsManagement,
     isCollapsed,
     onToggleCollapse,
   }) => {
@@ -357,17 +359,29 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
             )}
         </div>
 
-        {/* Alt Aksiyon Çubuğu: + İmzalı Belge Yükle */}
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+        {/* Alt Aksiyon Çubuğu: İmzalı Belgeleri Yönet & Yeni Belge Yükle */}
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center gap-2">
           <button
             type="button"
             onClick={onUploadSignedPdf}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs shadow-blue-500/20 active:scale-[0.98] cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs shadow-blue-500/20 active:scale-[0.98] cursor-pointer"
             title="Dosyaya yeni bir taranmış ıslak imzalı PDF veya ek doküman bağla"
           >
             <Plus size={14} />
-            <span>İmzalı Belge / PDF Yükle</span>
+            <span>PDF Yükle</span>
           </button>
+
+          {onOpenSignedDocsManagement && (
+            <button
+              type="button"
+              onClick={onOpenSignedDocsManagement}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+              title="Tüm imzalı belgeleri, eşleşmeleri ve yükleme geçmişini yönet"
+            >
+              <FileCheck size={14} className="text-emerald-500" />
+              <span>Yönet</span>
+            </button>
+          )}
         </div>
       </aside>
     );

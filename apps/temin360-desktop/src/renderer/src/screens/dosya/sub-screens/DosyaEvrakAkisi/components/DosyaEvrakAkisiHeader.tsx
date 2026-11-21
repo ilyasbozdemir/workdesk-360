@@ -22,6 +22,7 @@ interface DosyaEvrakAkisiHeaderProps {
   onRefresh: () => void
   loading: boolean
   evraklar: EvrakItem[]
+  onOpenSignedDocsManagement?: () => void
 }
 
 export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
@@ -29,7 +30,8 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
   activeDosyaId,
   onRefresh,
   loading,
-  evraklar
+  evraklar,
+  onOpenSignedDocsManagement
 }) => {
   const signedCount = (evraklar || []).filter((e) => e.status === 'imzali').length
   const readyCount = (evraklar || []).filter((e) => e.status === 'hazir').length
@@ -141,15 +143,15 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
               </span>
             )}
 
-            {signedCount > 0 && (
-              <span
-                className="h-8 inline-flex items-center gap-1.5 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs"
-                title="Taranmış veya ıslak imzalı yüklenen belgeler"
-              >
-                <FileCheck size={13} className="text-emerald-500" />
-                <span>{signedCount} İmzalı</span>
-              </span>
-            )}
+            <button
+              type="button"
+              onClick={onOpenSignedDocsManagement}
+              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-800 shadow-2xs transition-all cursor-pointer group"
+              title="İmzalı nüshaları ve taranmış belgeleri yönet (Listele, Eşleştir, Aç, Sil)"
+            >
+              <FileCheck size={13} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+              <span>{signedCount} İmzalı Nüsha</span>
+            </button>
 
             <button
               type="button"
