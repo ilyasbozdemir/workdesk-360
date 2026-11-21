@@ -13,22 +13,33 @@ const toMoney = (tl: number): Money => Money.fromKurus(Math.round(tl * 100))
 const toTL = (m: Money): number => m.toKurusNumber() / 100
 
 /**
- * Mevcut Temin 360 tablolarını aggregate'e çevirir.
+ * Temin 360 veritabanındaki tabloları (`DATA_TeminDosyasi`, `DATA_TeminKalem`, `DATA_TeminFirma`,
+ * `DATA_TeminKalemTeklif`) `DirectProcurementFile` aggregate root nesnesine dönüştüren ve kaydeden repo adaptörü.
  *
- * Sahiplik (kim neyi yazar):
- *  - Kalem ve firma satırlarını mevcut ekranlar yönetir: burada SADECE OKUNUR.
- *  - Teklif fiyatları, kazanan firma, sonuç onayı, kabul tutanakları: burada yazılır.
- *    Kabul tutanakları ve sonuç onayı, mevcut depoda olduğu gibi `sablon_tercihleri` JSON'unda tutulur.
- *  - `is_locked = 1` dosyalar (imzalı aktarım, EKAP) aggregate'e salt okunur olarak yansır.
- *  - Kazanan yazımı winnerSyncService ile aynı alanları ve aynı sözleşmeyi kullanır
- *    (DATA_TeminDosyasi.firma_id = master firma, DATA_TeminFirma.kazandi_mi/kazanan_mi).
+ * @remarks
+ * **Sahiplik ve Yetki Kuralları (Separation of Concerns):**
+ * - **Kalem ve İstekli Satırları:** Mevcut ekranlar tarafından yönetilir; bu repository tarafından **yalnızca okunur**.
+ * - **Teklif Fiyatları, Kazanan İstekli, Sonuç Onayı ve Kabul Tutanakları:** Bu repository tarafından atomik olarak yazılır.
+ * - **Kilitli Dosyalar:** `is_locked = 1` olan dosyalar (dışa aktarılmış veya EKAP'a gönderilmiş) salt okunur yüklenir.
+ * - **Kazanan İstekli Yazımı:** Uygulamanın `winnerSyncService` sözleşmesiyle tam uyumlu çalışır
+ *   (`DATA_TeminDosyasi.firma_id`, `DATA_TeminFirma.kazandi_mi / kazanan_mi`).
  */
 export class SqliteFileRepository implements FileRepository {
+  /**
+   * @param db - SQL sorgu yürütücü adaptörü.
+   * @param prefs - Şablon tercihleri ve kabul tutanakları deposu.
+   */
   constructor(
     private readonly db: SqlExecutor,
     private readonly prefs = new TeminPreferencesStore(db),
   ) {}
 
+  /**
+   * Dosyayı SQLite tablolarından okuyarak etki alanı aggregate nesnesini yeniden kurar (restore).
+   * @param id - Dosya ID numarası.
+   * @returns Dosya aggregate örneği veya bulunamazsa `undefined`.
+   * @throws {DomainError} Dosya ihale türü "Doğrudan Temin" değilse `PROFILE_UNSUPPORTED` koduyla fırlatılır.
+   */
   async findById(id: number): Promise<DirectProcurementFile | undefined> {
     const [head] = await this.db.query<{
       id: number; konu: string | null; dosya_acilis_tarihi: string | null; ihale_tipi: string | null
@@ -64,6 +75,11 @@ export class SqliteFileRepository implements FileRepository {
     })
   }
 
+  /**
+   * Doğrudan temin dosyasının değişen teklif, kazanan ve kabul durumlarını atomik bir transaction ile kaydeder.
+   * @param file - Kaydedilecek dosya aggregate'i.
+   * @throws {DomainError} Dosya veritabanında henüz oluşturulmamışsa `FILE_NOT_PERSISTABLE` koduyla fırlatılır.
+   */
   async save(file: DirectProcurementFile): Promise<void> {
     const s = file.toSnapshot()
     const [exists] = await this.db.query('SELECT 1 AS x FROM DATA_TeminDosyasi WHERE id = ?', [s.id])

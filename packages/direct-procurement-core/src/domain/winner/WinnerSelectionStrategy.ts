@@ -5,14 +5,33 @@ import { Money } from "../money";
 import { DomainError } from "../shared/DomainError";
 import { lineTotal } from "../shared/numeric";
 
+/**
+ * Kazanan seçimi sonucu.
+ */
 export interface WinnerResult {
+  /** En avantajlı teklifi vererek seçilen yüklenici firmanın ID'si */
   bidderId: number;
-  total: Money; // KDV hariç
-  /** Aynı toplamı veren diğer firmalar (beraberlik uyarısı için) */
+  /** Kazanan firmanın KDV hariç toplam teklif tutarı */
+  total: Money;
+  /** Aynı en düşük toplamı vererek berabere kalan diğer firma ID'leri (beraberlik uyarısı için) */
   tiedWith: number[];
 }
 
+/**
+ * Kazanan İstekli Belirleme Stratejisi Arayüzü (Strategy Pattern).
+ * 
+ * Verilen ihtiyaç kalemleri ve toplanan fiyat teklifleri üzerinden
+ * alımın hangi istekli üzerinde kalacağını belirler.
+ */
 export interface WinnerSelectionStrategy {
+  /**
+   * Teklifleri değerlendirerek kazanan firmayı belirler.
+   * 
+   * @param items - İhtiyaç kalemleri listesi
+   * @param bidders - Teklif veren firmalar
+   * @param quotes - Birim fiyat matrisi
+   * @returns Kazanan firma kimliği ve toplam teklif tutarı
+   */
   select(
     items: readonly NeedItem[],
     bidders: readonly Bidder[],
@@ -20,8 +39,19 @@ export interface WinnerSelectionStrategy {
   ): WinnerResult;
 }
 
-/** KDV hariç toplamı en düşük olan, TÜM kalemlere fiyat vermiş firma. */
+/**
+ * En Düşük Toplam Teklif Stratejisi (Lowest Total Strategy).
+ * 
+ * Doğrudan temin uygulamasında en yaygın kullanılan kuraldır:
+ * Tüm kalemlere geçerli fiyat vermiş firmalar arasından KDV hariç genel toplamı
+ * en düşük olan istekliyi kazanan olarak seçer.
+ */
 export class LowestTotalStrategy implements WinnerSelectionStrategy {
+  /**
+   * En düşük toplam teklif veren firmayı seçer.
+   * 
+   * @throws {DomainError} `NO_COMPLETE_BID` tüm kalemlere eksiksiz fiyat vermiş hiçbir firma yoksa
+   */
   select(
     items: readonly NeedItem[],
     bidders: readonly Bidder[],
@@ -58,6 +88,6 @@ export class LowestTotalStrategy implements WinnerSelectionStrategy {
   ): Money {
     return items
       .map((i) => lineTotal(quotes.get(i.id, bidderId)!, i.quantity))
-      .reduce((a, b) => a.plus(b));
+      .reduce((a, b) => a.plus(b), Money.ZERO);
   }
 }

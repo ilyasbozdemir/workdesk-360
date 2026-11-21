@@ -1,11 +1,28 @@
 import { Money } from '@temin360/domain'
 
-/** Yaklaşık maliyette bir kalemin birim fiyatını tekliflerden türeten esas (strateji). */
+/**
+ * Yaklaşık maliyet birim fiyat belirleme esası arayüzü (Strategy Pattern).
+ * 
+ * Toplanan piyasa tekliflerinden tek bir kalemin yaklaşık maliyet birim fiyatının
+ * nasıl türetileceğini belirler.
+ */
 export interface PricingBasis {
+  /** Esas tanımlayıcısı */
   readonly id: 'ortalama' | 'en-dusuk' | 'medyan'
+  /**
+   * Verilen fiyat tekliflerinden geçerli birim fiyatı türetir.
+   * 
+   * @param prices - Kalem için toplanan fiyat teklifleri
+   * @returns Hesaplanan birim fiyat veya teklif yoksa `undefined`
+   */
   unitPrice(prices: readonly Money[]): Money | undefined
 }
 
+/**
+ * Aritmetik Ortalama Esası (Average Pricing).
+ * 
+ * Kaleme verilen geçerli tüm piyasa tekliflerinin aritmetik ortalamasını yaklaşık maliyet birim fiyatı olarak kabul eder.
+ */
 export class AveragePricing implements PricingBasis {
   readonly id = 'ortalama' as const
   unitPrice(prices: readonly Money[]): Money | undefined {
@@ -15,6 +32,11 @@ export class AveragePricing implements PricingBasis {
   }
 }
 
+/**
+ * En Düşük Teklif Esası (Lowest Pricing).
+ * 
+ * Piyasadan alınan teklifler arasındaki en düşük birim fiyatı yaklaşık maliyet olarak kabul eder.
+ */
 export class LowestPricing implements PricingBasis {
   readonly id = 'en-dusuk' as const
   unitPrice(prices: readonly Money[]): Money | undefined {
@@ -22,6 +44,12 @@ export class LowestPricing implements PricingBasis {
   }
 }
 
+/**
+ * Medyan (Ortanca) Esası (Median Pricing).
+ * 
+ * Uç değerlerin (aşırı yüksek veya aşırı düşük tekliflerin) ortalamayı saptırmasını önlemek için
+ * teklifleri sıralayıp ortanca değeri yaklaşık maliyet birim fiyatı olarak seçer.
+ */
 export class MedianPricing implements PricingBasis {
   readonly id = 'medyan' as const
   unitPrice(prices: readonly Money[]): Money | undefined {

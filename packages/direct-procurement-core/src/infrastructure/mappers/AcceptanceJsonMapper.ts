@@ -1,44 +1,76 @@
 import { AcceptanceRecord } from "../../domain/file/AcceptanceRecord";
 
 /**
- * Uygulamanın KabulTutanakItem biçimi (DATA_TeminDosyasi.sablon_tercihleri.kabulTutanaklari).
- * Yalnızca burada kullandığımız alanlar tiplendi; diğer alanlar (fatura, irsaliye, islenmisMi ...)
- * olduğu gibi KORUNUR, çünkü onları mevcut ekranlar yönetir.
+ * Uygulamanın KabulTutanakItem biçimindeki mal kalemi JSON yapısı.
+ * `DATA_TeminDosyasi.sablon_tercihleri.kabulTutanaklari[].kalemler` dizisinde saklanır.
  */
 export interface MalKalemiJson {
+  /** Mal kalemi sıra no (1-tabanlı) */
   siraNo: number;
+  /** Malzemenin adı */
   malzemeAdi: string;
+  /** Varsa teknik özelliği */
   ozelligi: string;
+  /** Ölçü birimi (Adet, Kg, Metre vb.) */
   birimi: string;
+  /** İhtiyaç duyulan toplam miktar */
   miktari: number;
+  /** Önceki tutanaklarda teslim alınmış toplam miktar */
   oncekiTeslimAlinan?: number;
+  /** Bu tutanak dahil kümülatif teslim alınan miktar */
   toplamTeslimAlinan: number;
+  /** Bu tutanak ile muayene ve kabulü yapılan miktar */
   kabulMiktari: number;
   [k: string]: unknown;
 }
+
+/**
+ * `DATA_TeminDosyasi.sablon_tercihleri.kabulTutanaklari` içinde saklanan kabul tutanağı JSON nesnesi.
+ */
 export interface KabulTutanakJson {
+  /** Benzersiz tutanak kimlik metni (Örn: "kt-275-1") */
   id: string;
+  /** Resmi evrak tutanak no (Örn: "KT-2025-001") */
   tutanakNo: string;
+  /** Tutanak tarihi (YYYY-AA-GG) */
   tutanakTarihi: string;
+  /** Kabul değerlendirme durumu */
   durum: "kabul" | "kismi" | "sartli" | "red";
+  /** Tutanak onaylandı mı? */
   onaylandi?: boolean;
+  /** Onay tarihi */
   onayTarihi?: string;
+  /** Muayenesi yapılan mal kalemleri */
   kalemler?: MalKalemiJson[];
   [k: string]: unknown;
 }
 
+/**
+ * Kabul tutanakları ile ihtiyaç kalemlerini eşlemek için kullanılan referans arayüzü.
+ */
 export interface ItemRef {
+  /** Kalem ID */
   id: number;
+  /** Kalem sıra no */
   siraNo: number;
+  /** Kalem adı */
   name: string;
+  /** Ölçü birimi */
   unit: string;
+  /** Toplam ihtiyaç miktarı */
   quantity: number;
 }
 
 /**
- * Kimlik kuralı: JSON dizisindeki SIRA (index+1) = aggregate'teki seqNo.
- * (UI da numarayı `uzunluk + 1` ile üretiyor.) Onaylı sayılma: onaylandi=true ve durum 'red' değil.
- * Kalem eşlemesi: MalKalemiItem.siraNo ↔ DATA_TeminKalem.sira_no.
+ * JSON formatındaki kabul tutanaklarını etki alanı `AcceptanceRecord` nesnelerine dönüştürür.
+ *
+ * @remarks
+ * Kimlik kuralı: JSON dizisindeki sıra indeksi (`index + 1`) aggregate'teki `seqNo` değeridir.
+ * Bir tutanak onaylı sayılması için `onaylandi === true` olmalı ve `durum !== 'red'` şartını sağlamalıdır.
+ *
+ * @param json - Veritabanından okunan JSON kabul tutanakları dizisi.
+ * @param items - Dosyaya ait ihtiyaç kalemleri referansları.
+ * @returns Yeniden oluşturulmuş `AcceptanceRecord` nesneleri listesi.
  */
 export function acceptancesFromJson(
   json: readonly KabulTutanakJson[],
@@ -64,9 +96,19 @@ export function acceptancesFromJson(
 }
 
 /**
- * Aggregate'in güncel tutanaklarını mevcut JSON'a birleştirir:
- *  - var olan kayıtta yalnızca onay durumu/tarihi güncellenir, diğer tüm alanlar korunur;
- *  - yeni kayıt (aggregate'te açılmış) UI'nin biçimiyle eklenir (KT-yyyy-nnn).
+ * Etki alanında güncellenen `AcceptanceRecord` tutanaklarını mevcut JSON yapısıyla birleştirir.
+ *
+ * @remarks
+ * Akıllı birleştirme kuralları:
+ * - Var olan kayıtta yalnızca onay durumu ve onay tarihi güncellenir; UI'a ait diğer alanlar (fatura, irsaliye vb.) korunur.
+ * - Aggregate üzerinde yeni eklenen tutanaklar UI biçimine uygun kimlik ve numara şablonuyla (`KT-yyyy-nnn`) eklenir.
+ * - Kümülatif teslim alınan miktarlar ve önceki teslimat geçmişi otomatik hesaplanır.
+ *
+ * @param existing - Mevcut JSON kabul tutanakları dizisi.
+ * @param records - Etki alanındaki güncel `AcceptanceRecord` listesi.
+ * @param items - İhtiyaç kalemleri listesi.
+ * @param dosyaId - Temin dosya ID.
+ * @returns Veritabanına yazılacak nihai JSON kabul tutanakları listesi.
  */
 export function acceptancesToJson(
   existing: readonly KabulTutanakJson[],

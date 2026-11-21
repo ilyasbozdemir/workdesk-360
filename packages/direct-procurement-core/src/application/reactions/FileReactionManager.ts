@@ -8,22 +8,31 @@ import {
 import type { InProcessEventBus } from "../events/InProcessEventBus";
 import { AuditLogPort, DocumentStatusPort, StageProgressPort } from "../ports";
 
-/** Teklif değişince bayatlayan belgeler (şablon kodları). Profile göre değiştirilebilir. */
+/**
+ * Teklif fiyatları değiştiğinde bayatlatılması gereken varsayılan araştırma belgesi şablon kodları.
+ */
 export const DEFAULT_RESEARCH_DOCUMENTS = [
   "piyasa-fiyat-arastirma-tutanagi",
   "yaklasik-maliyet-cetveli",
 ] as const;
 
 /**
- * "Dosyada şu olunca neler olur?" sorusunun TEK cevabı.
- * Tüm yan etkiler burada toplanır; aggregate ve use-case'ler bunları bilmez.
+ * Doğrudan temin etki alanı olaylarına karşı tetiklenen sistem yan etkilerinin tek merkezi yöneticisi.
  *
- *  QuoteChanged       -> araştırma belgeleri "yeniden üretilmeli" olur
- *  WinnerSelected     -> denetim kaydı
- *  ResultApproved     -> aşama 3'e ilerler + denetim kaydı
- *  AcceptanceApproved -> aşama 4'e ilerler + denetim kaydı (stok düşümü mevcut akışta, burada YOK)
+ * "Dosyada bir değişiklik olduğunda dış sistemlerde ne yapılmalı?" kuralının yanıtıdır.
+ * Aggregate ve use-case'ler bu yan etkileri doğrudan bilmez; olaylar üzerinden iletişim sağlanır:
+ * - `QuoteChanged`: İlgili araştırma belgelerini "yeniden üretilmeli / beklemede" statüsüne alır.
+ * - `WinnerSelected`: Kazanan firma belirlendiğinde denetim günlüğü (audit log) yazar.
+ * - `ResultApproved`: Dosya aşamasını `yuklenici` (aşama 3) yapar ve denetim kaydı düşer.
+ * - `AcceptanceApproved`: Dosya aşamasını `kabul` (aşama 4) yapar ve denetim kaydı düşer.
  */
 export class FileReactionManager {
+  /**
+   * @param documents - Belge bayatlatma ve durum güncelleme portu.
+   * @param stages - Dosya aşama ilerletme portu.
+   * @param audit - Sistem denetim günlüğü kayıt portu.
+   * @param researchDocs - Teklif değiştiğinde bayatlatılacak şablon kodları listesi.
+   */
   constructor(
     private readonly documents: DocumentStatusPort,
     private readonly stages: StageProgressPort,
@@ -32,6 +41,10 @@ export class FileReactionManager {
       DEFAULT_RESEARCH_DOCUMENTS,
   ) {}
 
+  /**
+   * Olay dinleyicilerini (handlers) süreç içi olay veriyoluna (event bus) kaydeder.
+   * @param bus - Dinleyicilerin bağlanacağı InProcessEventBus örneği.
+   */
   register(bus: InProcessEventBus): void {
     bus
       .on(

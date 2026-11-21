@@ -11,8 +11,22 @@ import { SqliteFileRepository } from './SqliteFileRepository'
 import { SqliteMevzuatRateProvider } from './SqliteMevzuatRateProvider'
 
 /**
- * Kompozisyon kökü: bağımlılıkların TEK birleştiği yer (onion'un en dışı).
- * main süreçte BetterSqliteExecutor, renderer'da IpcSqlExecutor verilerek aynı kod çalışır.
+ * Doğrudan temin çekirdek motorunun kompozisyon kökü (Composition Root).
+ *
+ * Temiz mimarinin (Clean / Onion Architecture) en dış katmanıdır.
+ * Verilen `SqlExecutor` adaptörüne göre (Electron Main için `BetterSqliteExecutor` / `MainSqlExecutor`,
+ * Renderer süreci için `IpcSqlExecutor`) tüm depo, olay yolu, reaksiyon yöneticisi ve
+ * use-case bileşenlerini birbirine bağlar ve kullanıma hazır bir nesne olarak döner.
+ *
+ * @param db - SQL sorgularını yürütecek veritabanı yürütücüsü.
+ * @returns Depo, olay veriyolu ve tüm kullanım senaryolarını (use-cases) içeren çekirdek motor paketi.
+ *
+ * @example
+ * ```ts
+ * // Electron Main sürecinde:
+ * const core = composeDirectProcurement(mainSqlExecutor);
+ * await core.enterQuote.execute({ fileId: 275, itemId: 1, bidderId: 10, unitPriceTL: "2500.00", at: "2025-10-21" });
+ * ```
  */
 export function composeDirectProcurement(db: SqlExecutor) {
   const audit = new SqliteAuditLog(db)
