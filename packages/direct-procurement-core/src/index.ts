@@ -49,6 +49,7 @@ export * from "./domain/file/NeedItem";
 export * from "./domain/file/Bidder";
 export * from "./domain/file/QuoteMatrix";
 export * from "./domain/file/AcceptanceRecord";
+export * from "./domain/file/ProcurementStages";
 export * from "./domain/file/events";
 export * from "./domain/profile/DeductionRule";
 export * from "./domain/profile/ProcurementProfile";
