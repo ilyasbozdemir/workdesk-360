@@ -122,6 +122,21 @@ export function registerRemoteSyncIpcHandlers(): void {
     }
   })
 
+  // Get active session / configured user email
+  ipcMain.handle('app:get-user-email', () => {
+    try {
+      const email =
+        getSmtpSetting('smtpUser', 'smtp_user') ||
+        getSmtpSetting('kurum_eposta', 'kurumEposta') ||
+        getSmtpSetting('smtpReceiver', 'smtp_receiver') ||
+        getSmtpSetting('adminEmail', 'admin_email') ||
+        ''
+      return { success: true, email: email.trim() }
+    } catch {
+      return { success: false, email: '' }
+    }
+  })
+
   // Bug & Support Report Handler
   ipcMain.handle(
     'app:send-bug-report',
@@ -213,10 +228,11 @@ export function registerRemoteSyncIpcHandlers(): void {
           })
 
           await transporter.sendMail({
-            from: `"TEMİN 360 Destek Bildirimi" <${user}>`,
+            from: `"TEMİN 360 Kullanıcı Bildirimi" <${user}>`,
+            replyTo: report.contactEmail || user,
             to: recipients.join(', '),
-            subject: `[TEMİN 360 ${report.category || 'Hata'}] ${report.title}`,
-            text: `TEMİN 360 Destek Bildirimi\n\nBaşlık: ${report.title}\n\nAçıklama:\n${report.description}\n\nİletişim: ${report.contactEmail || 'Belirtilmedi'}`,
+            subject: `[TEMİN 360 ${report.category || 'Öneri / Bildirim'}] ${report.title}`,
+            text: `TEMİN 360 Kullanıcı Bildirimi\n\nGönderen Hesap: ${report.contactEmail || user}\nKategori: ${report.category}\nBaşlık: ${report.title}\n\nMesaj / Öneri:\n${report.description}`,
             html: formattedHtml
           })
 

@@ -163,6 +163,7 @@ const allowedChannels = new Set([
   'app:get-changelog',
   'get-changelog',
   'app:send-bug-report',
+  'app:get-user-email',
   // Dialog
   'dialog:showSaveDialog',
   'dialog:showOpenDialog',

@@ -226,9 +226,9 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps): React.ReactNod
               <Bug className="w-4 h-4 text-rose-500 group-hover:scale-110 transition-transform shrink-0" />
               <div className="text-left">
                 <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                  Hata &amp; Destek Bildir
+                  Öneri &amp; Hata Bildir
                 </div>
-                <div className="text-[10px] text-slate-500">Doğrudan E-Posta / Bildirim</div>
+                <div className="text-[10px] text-slate-500">Geliştiriciye Mail Gönder</div>
               </div>
               <ExternalLink className="w-3.5 h-3.5 text-slate-400 ml-auto" />
             </button>

@@ -8,10 +8,9 @@ import {
   AlertCircle,
   X,
   Loader2,
-  HelpCircle,
   Lightbulb,
-  FileText,
-  ExternalLink
+  MessageSquare,
+  ShieldCheck
 } from 'lucide-react'
 import packageJson from '../../../../../package.json'
 
@@ -21,13 +20,11 @@ interface BugReportModalProps {
 }
 
 export function BugReportModal({ isOpen, onClose }: BugReportModalProps): React.JSX.Element | null {
-  const [category, setCategory] = useState<'Hata Bildirimi' | 'Özellik Talebi' | 'Teknik Destek'>('Hata Bildirimi')
+  const [category, setCategory] = useState<'Öneri & İstek' | 'Hata Bildirimi' | 'Görüş & Destek'>('Öneri & İstek')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [contactEmail, setContactEmail] = useState('')
-  const [includeSystemInfo, setIncludeSystemInfo] = useState(true)
-  const [includeLogs, setIncludeLogs] = useState(true)
-  const [recentLogs, setRecentLogs] = useState('')
+  const [sessionEmail, setSessionEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null)
   const [copied, setCopied] = useState(false)
@@ -39,42 +36,33 @@ export function BugReportModal({ isOpen, onClose }: BugReportModalProps): React.
       setStatusMessage(null)
       setCopied(false)
 
-      // Son logları getir
+      // Sistemdeki oturum / kayıtlı mail adresini otomatik çek
       if (window?.electron?.ipcRenderer) {
         window.electron.ipcRenderer
-          .invoke('logs:read-recent', 80)
-          .then((logs: string) => {
-            setRecentLogs(logs || '')
+          .invoke('app:get-user-email')
+          .then((res: any) => {
+            if (res?.email) {
+              setContactEmail(res.email)
+              setSessionEmail(res.email)
+            }
           })
-          .catch(() => {
-            setRecentLogs('')
-          })
+          .catch(() => {})
       }
     }
   }, [isOpen])
 
   if (!isOpen) return null
 
-  const systemInfo = {
-    'Uygulama Versiyonu': `v${packageJson.version}`,
-    'İşletim Sistemi': typeof navigator !== 'undefined' ? navigator.userAgent : 'Bilinmiyor',
-    'Platform': typeof process !== 'undefined' ? process.platform : 'win32',
-    'Ekran Çözünürlüğü': typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : 'Bilinmiyor',
-    'Tarih': new Date().toLocaleString('tr-TR')
-  }
-
   const handleCopyReport = () => {
-    const reportText = `=== TEMİN 360 DESTEK & HATA BİLDİRİMİ ===
-Kategori: ${category}
-Başlık: ${title || 'Belirtilmedi'}
-İletişim: ${contactEmail || 'Belirtilmedi'}
+    const reportText = `=== TEMİN 360 KULLANICI BİLDİRİMİ ===
+Tür: ${category}
+Başlık: ${title || 'Genel Bildirim'}
+Gönderen: ${contactEmail || 'Belirtilmedi'} (Oturum: ${sessionEmail || 'Tanımsız'})
 Tarih: ${new Date().toLocaleString('tr-TR')}
+Versiyon: v${packageJson.version}
 
-AÇIKLAMA:
-${description || '(Açıklama girilmedi)'}
-
-${includeSystemInfo ? `SİSTEM BİLGİLERİ:\n${Object.entries(systemInfo).map(([k, v]) => `- ${k}: ${v}`).join('\n')}\n` : ''}
-${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500)}` : ''}
+MESAJ / ÖNERİ:
+${description || '(Mesaj girilmedi)'}
 `
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(reportText).then(() => {
@@ -85,8 +73,10 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
   }
 
   const handleOpenMailto = () => {
-    const subject = encodeURIComponent(`[TEMİN 360 ${category}] ${title || 'Destek Talebi'}`)
-    const body = encodeURIComponent(`Açıklama:\n${description}\n\nİletişim: ${contactEmail || 'Belirtilmedi'}\n\nUygulama: v${packageJson.version}\nPlatform: ${systemInfo['Platform']}`)
+    const subject = encodeURIComponent(`[TEMİN 360 ${category}] ${title || 'Kullanıcı Bildirimi'}`)
+    const body = encodeURIComponent(
+      `Gönderen: ${contactEmail || 'Belirtilmedi'}\n\nMesaj:\n${description}\n\nUygulama: v${packageJson.version}`
+    )
     const mailtoUrl = `mailto:bozdemir.ib70@gmail.com?subject=${subject}&body=${body}`
 
     try {
@@ -103,7 +93,7 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!description.trim()) {
-      setStatusMessage({ type: 'error', text: 'Lütfen karşılaştığınız sorunu veya talebinizi açıklayınız.' })
+      setStatusMessage({ type: 'error', text: 'Lütfen iletmek istediğiniz öneri veya hata açıklamasını yazınız.' })
       return
     }
 
@@ -119,25 +109,31 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
         category,
         title: title.trim() || `${category} - ${new Date().toLocaleDateString('tr-TR')}`,
         description: description.trim(),
-        contactEmail: contactEmail.trim() || undefined,
-        systemInfo: includeSystemInfo ? systemInfo : undefined,
-        logs: includeLogs && recentLogs ? recentLogs.slice(-2000) : undefined
+        contactEmail: contactEmail.trim() || sessionEmail || undefined,
+        systemInfo: {
+          'Versiyon': `v${packageJson.version}`,
+          'Gönderen Hesap': contactEmail || sessionEmail || 'Anonim',
+          'Tarih': new Date().toLocaleString('tr-TR')
+        }
       })
 
       if (res.success) {
         setStatusMessage({
           type: 'success',
-          text: 'Bildiriminiz geliştirici ekibine e-posta ile başarıyla gönderildi. Teşekkür ederiz!'
+          text: 'Mesajınız geliştirici ekibine e-posta ile başarıyla iletildi. Teşekkür ederiz!'
         })
+        setTimeout(() => {
+          onClose()
+        }, 2200)
       } else if (res.reason === 'no_smtp') {
         setStatusMessage({
           type: 'info',
-          text: 'Yerel SMTP sunucusu yapılandırılmamış. Aşağıdaki butonla varsayılan e-posta istemcinizi (Outlook vb.) kullanarak gönderebilirsiniz.'
+          text: 'Sistemde henüz otomatik SMTP kurulu değil. "Mail İstemcisi" butonuyla e-posta programınızdan (Outlook / Thunderbird vb.) anında gönderebilirsiniz.'
         })
       } else {
         setStatusMessage({
           type: 'error',
-          text: `E-posta gönderilemedi: ${res.error || res.message || 'Bilinmeyen hata'}`
+          text: `E-posta gönderimi tamamlanamadı: ${res.error || res.message || 'Bilinmeyen hata'}`
         })
       }
     } catch (err: any) {
@@ -152,28 +148,28 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200 select-none"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="relative p-5 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 text-white flex items-center justify-between shrink-0">
+        {/* Başlık Alanı */}
+        <div className="relative p-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-600 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-              <Bug className="w-5 h-5 text-white" />
+              <Mail className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="text-base font-black tracking-tight flex items-center gap-2">
-                <span>Hata & Destek Bildirimi</span>
+                <span>Öneri &amp; Destek Bildirimi</span>
                 <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-white/20 border border-white/25">
                   v{packageJson.version}
                 </span>
               </h3>
-              <p className="text-xs text-rose-100/90 mt-0.5">
-                Sorunları, eksikleri veya taleplerinizi doğrudan geliştiriciye iletin
+              <p className="text-xs text-blue-100/90 mt-0.5">
+                Önerilerinizi, taleplerinizi veya karşılaştığınız sorunları doğrudan bize iletin
               </p>
             </div>
           </div>
@@ -188,9 +184,9 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 text-xs">
-          {/* Bildirim Türü */}
+        {/* Form İçeriği */}
+        <form onSubmit={handleSubmit} className="p-5 space-y-3.5 text-xs">
+          {/* Kategori Seçici */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Bildirim Türü
@@ -198,116 +194,97 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
+                onClick={() => setCategory('Öneri & İstek')}
+                className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  category === 'Öneri & İstek'
+                    ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20'
+                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                }`}
+              >
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                <span>Öneri &amp; İstek</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setCategory('Hata Bildirimi')}
                 className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   category === 'Hata Bildirimi'
-                    ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-400 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/20'
+                    ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/20'
                     : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <Bug className="w-3.5 h-3.5" />
-                <span>Hata (Bug)</span>
+                <Bug className="w-3.5 h-3.5 text-rose-500" />
+                <span>Hata Bildir</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => setCategory('Özellik Talebi')}
+                onClick={() => setCategory('Görüş & Destek')}
                 className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  category === 'Özellik Talebi'
-                    ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-400 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/20'
+                  category === 'Görüş & Destek'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/20'
                     : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                <Lightbulb className="w-3.5 h-3.5" />
-                <span>Özellik Talebi</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCategory('Teknik Destek')}
-                className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  category === 'Teknik Destek'
-                    ? 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-400 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500/20'
-                    : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>Destek</span>
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Görüş &amp; Mesaj</span>
               </button>
             </div>
+          </div>
+
+          {/* Oturum Açılı Gönderen Hesap */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Gönderen E-Posta
+              </label>
+              {sessionEmail && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Oturum Açık Hesap</span>
+                </span>
+              )}
+            </div>
+            <input
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="E-posta adresiniz (geri dönüş için)"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+            />
           </div>
 
           {/* Konu / Başlık */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Konu / Başlık
+              Konu / Başlık (İsteğe Bağlı)
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Örn: Dosya Evrak Akışında yazdırma butonu çalışmadı"
+              placeholder="Örn: Dosya Evrak Akışında yeni bir öneri"
               className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
             />
           </div>
 
-          {/* Açıklama */}
+          {/* Mesaj / Açıklama */}
           <div>
             <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              Hata / Talep Açıklaması <span className="text-rose-500">*</span>
+              Mesajınız / Öneriniz <span className="text-rose-500">*</span>
             </label>
             <textarea
-              rows={4}
+              rows={5}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ne yaparken karşılaştınız? Beklenen davranış neydi? Adım adım açıklayınız..."
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all leading-relaxed"
+              placeholder="Önerinizi, aklınıza gelen fikri veya yaşadığınız bir sıkıntıyı kısaca buraya yazınız..."
+              className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all leading-relaxed"
               required
             />
           </div>
 
-          {/* İletişim E-Postası */}
-          <div>
-            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-              İletişim E-Postası (İsteğe Bağlı)
-            </label>
-            <input
-              type="email"
-              value={contactEmail}
-              onChange={(e) => setContactEmail(e.target.value)}
-              placeholder="Geri dönüş yapabilmemiz için e-posta adresiniz"
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-            />
-          </div>
-
-          {/* Ekler (Sistem Bilgileri & Loglar) */}
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={includeSystemInfo}
-                onChange={(e) => setIncludeSystemInfo(e.target.checked)}
-                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-              />
-              <span className="font-semibold text-slate-700 dark:text-slate-300">
-                Sistem ve Donanım Bilgilerini Ekle (OS, Ekran, Versiyon)
-              </span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={includeLogs}
-                onChange={(e) => setIncludeLogs(e.target.checked)}
-                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
-              />
-              <span className="font-semibold text-slate-700 dark:text-slate-300">
-                Uygulama Hata Günlüklerini (Son Loglar) Ekle
-              </span>
-            </label>
-          </div>
-
-          {/* Durum Mesajı */}
+          {/* Durum Bildirimi */}
           {statusMessage && (
             <div
               className={`p-3 rounded-2xl flex items-start gap-2.5 animate-in fade-in duration-200 ${
@@ -327,14 +304,14 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
             </div>
           )}
 
-          {/* Action Buttons */}
+          {/* Alt Butonlar */}
           <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={handleCopyReport}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all font-bold flex items-center gap-1.5 cursor-pointer text-xs"
-                title="Tüm raporu panoya kopyala"
+                className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all font-bold flex items-center gap-1.5 cursor-pointer text-[11px]"
+                title="Yazdığınız metni panoya kopyala"
               >
                 {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? 'Kopyalandı' : 'Kopyala'}</span>
@@ -343,8 +320,8 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
               <button
                 type="button"
                 onClick={handleOpenMailto}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all font-bold flex items-center gap-1.5 cursor-pointer text-xs"
-                title="Varsayılan e-posta istemcisiyle aç"
+                className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all font-bold flex items-center gap-1.5 cursor-pointer text-[11px]"
+                title="Varsayılan posta istemcisiyle (Outlook vb.) aç"
               >
                 <Mail className="w-3.5 h-3.5 text-indigo-500" />
                 <span>Mail İstemcisi</span>
@@ -357,20 +334,20 @@ ${includeLogs && recentLogs ? `SON HATA GÜNLÜKLERİ:\n${recentLogs.slice(-1500
                 onClick={onClose}
                 className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold transition-all cursor-pointer text-xs"
               >
-                Kapat
+                Vazgeç
               </button>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50 text-xs"
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50 text-xs"
               >
                 {loading ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Send className="w-3.5 h-3.5" />
                 )}
-                <span>{loading ? 'Gönderiliyor...' : 'E-Posta Gönder'}</span>
+                <span>{loading ? 'İletiliyor...' : 'Mail Gönder'}</span>
               </button>
             </div>
           </div>
