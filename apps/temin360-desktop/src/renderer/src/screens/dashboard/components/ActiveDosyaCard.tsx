@@ -338,15 +338,7 @@ export const ActiveDosyaCard: React.FC<ActiveDosyaCardProps> = ({
             <span>Dosya Süreç Takibini Aç</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-          <button
-            type="button"
-            onClick={() => navigate({ to: APP_ROUTES.TEST_EKRANLARI })}
-            className="flex-1 lg:flex-none bg-blue-600 hover:bg-blue-500 text-white font-black text-xs py-3 px-5 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-          >
-            <FolderOpen className="w-4 h-4" />
-            <span>Test Ekranını Aç</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+
           <button
             type="button"
             onClick={() => onOpenAi(activeDosya)}
