@@ -57,7 +57,20 @@ async function loadDosyaLists(dosyaId: number) {
     queryRows(
       `SELECT tk.*, 
               COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as resolved_ad_soyad,
-              COALESCE(NULLIF(tk.unvan, ''), NULLIF(p.unvan, ''), '') as resolved_unvan,
+              CASE 
+                WHEN tk.unvan IS NOT NULL 
+                 AND LOWER(TRIM(tk.unvan)) NOT IN (
+                   'komisyon başkanı', 'komisyon baskani', 'başkan', 'baskan', 
+                   'üye', 'uye', 'yedek üye', 'yedek uye', 'komisyon üyesi', 'komisyon uyesi',
+                   'fiyat araştırma görevlisi', 'fiyat arastirma gorevlisi',
+                   'muayene kabul başkanı', 'muayene kabul baskani',
+                   'muayene ve kabul komisyon başkanı', 'muayene ve kabul komisyon baskani',
+                   'muayene komisyon başkanı', 'muayene komisyon baskani',
+                   'asil üye', 'asil uye'
+                 )
+                THEN tk.unvan
+                ELSE COALESCE(NULLIF(p.unvan, ''), NULLIF(tk.unvan, ''), '')
+              END as resolved_unvan,
               COALESCE(NULLIF(tk.birim, ''), NULLIF(p.birim, ''), '') as resolved_birim
        FROM DATA_TeminKomisyon tk
        LEFT JOIN TANIM_Personel p ON (
@@ -161,7 +174,10 @@ export const dosyaResolver: DocumentResolver = {
           imzaTuru: k.imza_turu || 'İmza',
           asilMi: k.asli_yedek === 'Yedek' ? 0 : 1,
           birimId: k.birim_id,
-          birim: k.resolved_birim || k.birim
+          birim: k.resolved_birim || k.birim,
+          personel_id: k.personel_id,
+          personelId: k.personel_id,
+          id: k.personel_id || k.id
         }))
 
       if (targetOfficers.length > 0) {

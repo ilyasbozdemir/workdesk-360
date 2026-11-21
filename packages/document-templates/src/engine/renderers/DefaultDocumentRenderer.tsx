@@ -40,6 +40,10 @@ export function DefaultDocumentRenderer(props: DefaultDocumentRendererProps): Re
     (personelListesi && personelListesi.length > 0
       ? personelListesi
       : (data as any)?.personelListesi || (typeof window !== 'undefined' ? (window as any)?.__activePersonelListesi : [])) || []
+
+  if (typeof window !== 'undefined' && resolvedPersonelListesi.length > 0) {
+    (window as any).__activePersonelListesi = resolvedPersonelListesi;
+  }
   const resolvedFirmaListesi =
     (firmaListesi && firmaListesi.length > 0
       ? firmaListesi

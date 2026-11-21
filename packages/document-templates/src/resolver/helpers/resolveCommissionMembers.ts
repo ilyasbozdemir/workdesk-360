@@ -12,7 +12,20 @@ export async function resolveCommissionMembers(
     let members: any[] = [];
     const fileKomQuery = `SELECT tk.*, 
                                  COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as resolved_ad_soyad,
-                                 COALESCE(NULLIF(tk.unvan, ''), NULLIF(p.unvan, ''), '') as resolved_unvan,
+                                 CASE 
+                                   WHEN tk.unvan IS NOT NULL 
+                                    AND LOWER(TRIM(tk.unvan)) NOT IN (
+                                      'komisyon başkanı', 'komisyon baskani', 'başkan', 'baskan', 
+                                      'üye', 'uye', 'yedek üye', 'yedek uye', 'komisyon üyesi', 'komisyon uyesi',
+                                      'fiyat araştırma görevlisi', 'fiyat arastirma gorevlisi',
+                                      'muayene kabul başkanı', 'muayene kabul baskani',
+                                      'muayene ve kabul komisyon başkanı', 'muayene ve kabul komisyon baskani',
+                                      'muayene komisyon başkanı', 'muayene komisyon baskani',
+                                      'asil üye', 'asil uye'
+                                    )
+                                   THEN tk.unvan
+                                   ELSE COALESCE(NULLIF(p.unvan, ''), NULLIF(tk.unvan, ''), '')
+                                 END as resolved_unvan,
                                  COALESCE(k.ad, '') as komisyon_turu_adi,
                                  COALESCE(k.tur, '') as komisyon_tur_kodu
                           FROM DATA_TeminKomisyon tk 
@@ -62,7 +75,10 @@ export async function resolveCommissionMembers(
       unvan: m.resolved_unvan || m.unvan || '',
       gorev: m.gorev || m.gorev_adi || (m.asil_mi === 0 ? 'Yedek Üye' : 'Üye'),
       gorevi: m.gorev || m.gorev_adi || (m.asil_mi === 0 ? 'Yedek Üye' : 'Üye'),
-      pozisyonu: m.resolved_unvan || m.unvan || ''
+      pozisyonu: m.resolved_unvan || m.unvan || '',
+      personel_id: m.personel_id,
+      personelId: m.personel_id,
+      id: m.personel_id || m.id
     }));
 
     if (sablonDegiskeni === 'fiyatKomisyonu' || sablonDegiskeni === 'gorevlendirilenler') {
