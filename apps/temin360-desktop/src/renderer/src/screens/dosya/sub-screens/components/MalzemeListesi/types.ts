@@ -41,6 +41,26 @@ export interface MalzemeTabloPopoverProps {
   onYasaklilikSorgulama?: () => void
   // Onay İşlemleri
   onOnayBelgesi?: () => void
+  // Step 3 - Sipariş & Sözleşme Belgeleri
+  onKabulEdilenTeklif?: () => void
+  onSiparisFormu?: () => void
+  onKabulMektubu?: () => void
+  onSonucOnayBelgesi?: () => void
+  onSozlesmeyeDavet?: () => void
+  onStandartSozlesme?: () => void
+  onAlternatifSozlesme?: () => void
+  onUzunFormSozlesme?: () => void
+  onButceSorgusu?: () => void
+  // Step 4 - Muayene & Kabul & Ödeme Belgeleri
+  onMuayeneKabulTutanagi?: () => void
+  onHizmetKabulTutanagi?: () => void
+  onKik048?: () => void
+  onKik049?: () => void
+  onKik050?: () => void
+  onKik051?: () => void
+  onOdemeEmriBelgesi?: () => void
+  onOdemeYazisi?: () => void
+  onTasinirIslemFisi?: () => void
   disableDocumentGuidance?: boolean
   buttonLabel?: string
 }

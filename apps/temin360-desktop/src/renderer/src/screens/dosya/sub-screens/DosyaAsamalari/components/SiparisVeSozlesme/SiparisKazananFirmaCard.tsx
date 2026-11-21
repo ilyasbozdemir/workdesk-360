@@ -13,6 +13,7 @@ interface Props {
   onPrintResultApproval: () => void
   onPrintAcceptanceLetter: () => void
   onPrintOrderForm: () => void
+  onPrintButceSorgusu?: () => void
   onPrintContractInvitation: () => void
   onPrintContract: () => void
   onPrintContractAlternative: () => void
@@ -28,6 +29,7 @@ export const SiparisKazananFirmaCard: React.FC<Props> = ({
   onPrintResultApproval,
   onPrintAcceptanceLetter,
   onPrintOrderForm,
+  onPrintButceSorgusu,
   onPrintContractInvitation,
   onPrintContract,
   onPrintContractAlternative,
@@ -128,10 +130,13 @@ export const SiparisKazananFirmaCard: React.FC<Props> = ({
         {/* Sağ: Yetkili Belge Menüsü */}
         <div className="flex items-center gap-2 relative shrink-0">
           <WinnerDocumentsMenu
-            sozlesmeYapilacakMi={false}
+            sozlesmeYapilacakMi={Boolean(
+              islemlerData.sozlesmeYapilacakMi || firmaStats.sozlesmeYapilacakMi
+            )}
             onPrintResultApproval={onPrintResultApproval}
             onPrintAcceptanceLetter={onPrintAcceptanceLetter}
             onPrintOrderForm={onPrintOrderForm}
+            onPrintButceSorgusu={onPrintButceSorgusu}
             onPrintContractInvitation={onPrintContractInvitation}
             onPrintContract={onPrintContract}
             onPrintContractAlternative={onPrintContractAlternative}
