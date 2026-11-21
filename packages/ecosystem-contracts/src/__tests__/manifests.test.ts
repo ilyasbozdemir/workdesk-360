@@ -60,13 +60,13 @@ describe('WorkSuite 360 Contracts & Manifests', () => {
   })
 
   it('filterCatalog arama ve filtreleme seçeneklerini doğru uygulamalıdır', () => {
-    // 1. Kategori filtresi (Artık yalnızca temin-360 ve ihale-360)
+    // 1. Kategori filtresi (temin-360, ihale-360 ve hakedis-360)
     const procurementApps = filterCatalog(DEFAULT_ECOSYSTEM_MANIFESTS, {
       category: 'procurement'
     })
-    expect(procurementApps).toHaveLength(2)
+    expect(procurementApps).toHaveLength(3)
     expect(procurementApps.map((a) => a.id)).toEqual(
-      expect.arrayContaining(['temin-360', 'ihale-360'])
+      expect.arrayContaining(['temin-360', 'ihale-360', 'hakedis-360'])
     )
 
     // 2. Kurulum durumu filtresi
