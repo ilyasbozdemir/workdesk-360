@@ -210,6 +210,7 @@ export function useWorkspaceLifecycle(
 
     const removeNavListener = window.electron?.ipcRenderer.on('app:navigate', (_, route) => {
       if (route) {
+        addTab(route)
         navigate({ to: route })
       }
     })

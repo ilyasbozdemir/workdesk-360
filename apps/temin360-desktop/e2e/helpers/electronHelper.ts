@@ -83,6 +83,15 @@ export async function launchTestApp(
 
   const appDir = path.resolve(__dirname, '../..')
   const mainScript = path.join(appDir, 'out/main/index.js')
+
+  // Build edilmiş out/main/index.js yoksa CI'da anlamlı hata ver
+  if (!fs.existsSync(mainScript)) {
+    throw new Error(
+      `[E2E] out/main/index.js bulunamadı: ${mainScript}\n` +
+        `Lütfen önce "electron-vite build" çalıştırın: pnpm --filter temin360-desktop build`
+    )
+  }
+
   const userDataDir =
     customUserDataDir || fs.mkdtempSync(path.join(os.tmpdir(), 'temin360-e2e-session-'))
 
@@ -92,7 +101,11 @@ export async function launchTestApp(
   const defaultHeadlessFlags = [
     '--disable-gpu',
     '--disable-dev-shm-usage',
-    '--no-sandbox'
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    // CI/headless ortamlarda Chromium GPU process crash'ini önle
+    '--disable-accelerated-2d-canvas',
+    '--disable-background-networking'
   ]
 
   const launchArgs = [
@@ -103,18 +116,23 @@ export async function launchTestApp(
     ...extraArgs
   ]
 
-  const cleanEnv = { ...process.env }
-  // Case-insensitive ELECTRON_RUN_AS_NODE temizliği (CI ortamında debugger portunun açılmasını garanti eder)
-  delete process.env.ELECTRON_RUN_AS_NODE
-  delete process.env.electron_run_as_node
-  for (const key of Object.keys(cleanEnv)) {
-    if (key.toUpperCase() === 'ELECTRON_RUN_AS_NODE') {
-      delete cleanEnv[key]
-    }
+  // Case-insensitive ELECTRON_RUN_AS_NODE temizliği:
+  // generate-e2e-test-file.js ELECTRON_RUN_AS_NODE=1 ile çalışıyor olabilir.
+  // Bu var kalmışsa Electron normal uygulama modunda başlamak yerine
+  // Node.js modunda başlar ve BrowserWindow oluşturmaz → firstWindow() asla çözümlenmez.
+  const cleanEnv: Record<string, string> = {}
+  for (const [key, val] of Object.entries(process.env)) {
+    if (key.toUpperCase() === 'ELECTRON_RUN_AS_NODE') continue
+    if (val !== undefined) cleanEnv[key] = val
   }
 
   // Electron executable path'i açıkça belirle (pnpm monorepo hoisting belirsizliklerini önler)
   const electronBinaryPath: string = require('electron') as unknown as string
+
+  console.log('[launchTestApp] Launching Electron:', electronBinaryPath)
+  console.log('[launchTestApp] mainScript:', mainScript)
+  console.log('[launchTestApp] userDataDir:', userDataDir)
+  console.log('[launchTestApp] ELECTRON_RUN_AS_NODE in cleanEnv:', 'ELECTRON_RUN_AS_NODE' in cleanEnv)
 
   const electronApp = await electron.launch({
     executablePath: electronBinaryPath,
@@ -123,16 +141,32 @@ export async function launchTestApp(
     env: {
       ...cleanEnv,
       NODE_ENV: 'test',
-      ELECTRON_ENABLE_LOGGING: '1'
+      ELECTRON_ENABLE_LOGGING: '1',
+      // CI'da renderer konsol loglarını main process'e yönlendir
+      ELECTRON_ENABLE_STACK_DUMPING: '1'
     },
-    timeout: 60000
+    // launch timeout: Electron binary start + main process init için.
+    // Ayrı firstWindow timeout'u aşağıda kullanılır.
+    timeout: 90000
   })
 
-  console.log('[launchTestApp] Waiting for firstWindow()...')
-  const page = await electronApp.firstWindow()
+  console.log('[launchTestApp] electron.launch() resolved, waiting for firstWindow()...')
+
+  // firstWindow için ek timeout: DB init + migration + BrowserWindow show
+  const page = await Promise.race([
+    electronApp.firstWindow(),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('[E2E] firstWindow() 90s içinde çözümlenmedi. Electron main süreci pencere açmıyor olabilir. ELECTRON_RUN_AS_NODE veya DB init hatasını kontrol edin.')),
+        90000
+      )
+    )
+  ])
+
   console.log('[launchTestApp] firstWindow() resolved!')
 
-  // Track console logs and errors
+  // Track console logs and errors — firstWindow'dan ÖNCE kayıt başlamadı ama
+  // kritik hataların büyük çoğunluğu uygulama yüklendikten sonra gerçekleşir.
   page.on('console', (msg) => {
     const text = msg.text()
     const type = msg.type()

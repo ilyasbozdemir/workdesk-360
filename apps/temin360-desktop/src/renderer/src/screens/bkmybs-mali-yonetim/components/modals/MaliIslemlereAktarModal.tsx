@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ButceTertip, MifKayit } from '../../types'
 import { formatCurrency } from '@renderer/utils/formatters'
+import { CurrencyInput } from '@renderer/components/ui/CurrencyInput'
 import { Coins, X, ShieldCheck, ArrowRight, Calculator } from 'lucide-react'
 
 interface MaliIslemlereAktarModalProps {
@@ -207,13 +208,10 @@ export const MaliIslemlereAktarModal: React.FC<MaliIslemlereAktarModalProps> = (
             <div className="grid grid-cols-3 gap-3 text-xs">
               <div>
                 <label className="font-semibold text-slate-500 block mb-1">Brüt Tutar (₺)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                <CurrencyInput
                   value={brutTutar}
-                  onChange={(e) => setBrutTutar(Number(e.target.value))}
-                  className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl font-mono font-bold"
+                  onChange={setBrutTutar}
+                  placeholder="0,00"
                 />
               </div>
 

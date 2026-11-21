@@ -4,12 +4,14 @@ import {
   BookOpen,
   Columns3,
   FileText,
+  Files,
   LayoutDashboard,
   Package,
   Users,
 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { APP_ROUTES } from "../../../constants/routeConstants";
+import { DosyaEvrakAkisiScreen } from "../../dosya/sub-screens/DosyaEvrakAkisi";
 
 import { useTakip } from "./components/useTakip";
 import { TakipHeader, TakipViewMode } from "./components/TakipHeader";
@@ -279,7 +281,7 @@ export function TakipScreen(): React.JSX.Element {
         {
           mode?: TakipViewMode;
           dosyaId?: number;
-          tab?: "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat";
+          tab?: "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat" | "evraklar";
         }
       >;
       if (custom.detail?.dosyaId) {
@@ -380,7 +382,7 @@ export function TakipScreen(): React.JSX.Element {
 
   // Tabbed Görünüm (Dosya Detayı alt sekmeleri)
   const [activeTab, setActiveTab] = useState<
-    "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat"
+    "ozet" | "kunye" | "kalemler" | "komisyon" | "mevzuat" | "evraklar"
   >("ozet");
 
   const uniqueCommissionCount = React.useMemo(() => {
@@ -399,6 +401,12 @@ export function TakipScreen(): React.JSX.Element {
       label: "Dosya Detayı & Parametreler",
       icon: FileText,
       badge: null,
+    },
+    {
+      id: "evraklar",
+      label: "Evrak Akışı & Belgeler",
+      icon: Files,
+      badge: allBelgeler && allBelgeler.length > 0 ? allBelgeler.length : null,
     },
     {
       id: "kalemler",
@@ -684,10 +692,22 @@ export function TakipScreen(): React.JSX.Element {
                   </div>
                 )}
 
-                {/* SEKME 2: DOSYA KÜNYESİ & TÜM VERİLER (BİRLEŞİK KÜNYE GÖRÜNÜMÜ) */}
+                {/* SEKME 2: DOSYA KÜNYESİ & DETAY PARAMETRELERİ (BİRLEŞİK KÜNYE GÖRÜNÜMÜ) */}
                 {activeTab === "kunye" && (
-                  <div className="rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
-                    <DosyaInspectorView dosya={activeDosya} mode="screen" />
+                  <div className="space-y-6">
+                    <TakipDosyaDetayBilgileri
+                      activeDosya={activeDosya}
+                      komisyonlar={komisyonlar}
+                      onEditClick={handleEditDosya}
+                      mode="kunye"
+                    />
+                  </div>
+                )}
+
+                {/* SEKME: EVRAK AKIŞI & BELGELER (DİJİTAL BELGE İNCELEME KOKPİTİ) */}
+                {activeTab === "evraklar" && (
+                  <div className="h-[calc(100vh-14rem)] min-h-[660px] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+                    <DosyaEvrakAkisiScreen />
                   </div>
                 )}
 
@@ -701,13 +721,14 @@ export function TakipScreen(): React.JSX.Element {
                   </div>
                 )}
 
-                {/* SEKME 3: YETKİLİ & KOMİSYON BİLGİLERİ */}
+                {/* SEKME 4: YETKİLİ & KOMİSYON DETAYLARI */}
                 {activeTab === "komisyon" && (
                   <div className="space-y-6">
                     <TakipDosyaDetayBilgileri
                       activeDosya={activeDosya}
                       komisyonlar={komisyonlar}
                       onEditClick={handleEditDosya}
+                      mode="komisyon"
                     />
                   </div>
                 )}

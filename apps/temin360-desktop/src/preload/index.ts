@@ -68,6 +68,8 @@ const allowedChannels = new Set([
   'workspace:get-session-status',
   'get-active-session-status',
   'workspace:upload-file',
+  'workspace:export-attachments-zip',
+  'workspace:open-attachments-folder',
   'workspace:open-file',
   'workspace:verify-detsis',
   'workspace:get-detsis-cache',
@@ -160,6 +162,8 @@ const allowedChannels = new Set([
   'get-initial-file',
   'app:get-changelog',
   'get-changelog',
+  'app:send-bug-report',
+  'app:get-user-email',
   // Dialog
   'dialog:showSaveDialog',
   'dialog:showOpenDialog',

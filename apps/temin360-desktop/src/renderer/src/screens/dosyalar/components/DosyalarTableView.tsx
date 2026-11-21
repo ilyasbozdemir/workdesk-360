@@ -1,7 +1,7 @@
 import React from 'react'
 import { CheckCircle2, ChevronRight, FolderOpen } from 'lucide-react'
 import { cn } from '../../../utils/cn'
-import { ProjectBadge, TagBadge, TurBadge } from './Badges'
+import { ProjectBadge, TagBadge, TurBadge, AktarimDurumBadge } from './Badges'
 import { DosyaActionMenu } from './DosyaActionMenu'
 import { DosyaHizliIcerikPopover } from './DosyaHizliIcerikPopover'
 import { useNavigate } from '@tanstack/react-router'
@@ -137,16 +137,14 @@ export function DosyalarTableView({
                                 )}
                               />
                             </button>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col gap-1">
                               <span>{getDosyaNoLabel(dosya)}</span>
-                              {dosya.kaynak_kayit_id && (
-                                <span
-                                  className="text-[10px] text-indigo-600 dark:text-indigo-400 font-sans font-medium"
-                                  title={`Eski Sistem Dosya No: ${dosya.kaynak_kayit_id}`}
-                                >
-                                  Eski No: #{dosya.kaynak_kayit_id}
-                                </span>
-                              )}
+                              <AktarimDurumBadge
+                                kayitKaynagi={dosya.kayit_kaynagi}
+                                kaynakKayitId={dosya.kaynak_kayit_id}
+                                isLocked={dosya.is_locked}
+                                lockReason={dosya.lock_reason}
+                              />
                             </div>
                           </div>
                         </td>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Sablon } from '../../../sablonlar/sablonlar.hooks'
 import { BelgeKanbanItem, BelgeKanbanStatus } from './belgeKanbanTypes'
+import { StatusFilterType } from '../CiktiStatusFilterTabs'
 import { normalizeForMatch } from '@renderer/utils/formatters'
 import { usePrintQueueStore } from '../../../../store/printQueueStore'
 import { emitAppEvent } from '../../../../utils/appEvents'
@@ -24,14 +25,23 @@ interface UseBelgeKanbanDataProps {
   activeDosyaId: number | null
   sablons: Sablon[]
   getMissingRequirement: (sablon: Sablon) => string | null
+  statusFilter?: StatusFilterType
+  activeStarredDocs?: string[]
+  activePresetDocs?: string[]
+  snapshotDataKeys?: Set<string>
 }
 
 export function useBelgeKanbanData({
   activeDosyaId,
   sablons,
-  getMissingRequirement
+  getMissingRequirement,
+  statusFilter = 'all',
+  activeStarredDocs = [],
+  activePresetDocs = [],
+  snapshotDataKeys
 }: UseBelgeKanbanDataProps) {
   const [dbBelgeler, setDbBelgeler] = useState<DbBelgeRow[]>([])
+  const [internalSnapshotKeys, setInternalSnapshotKeys] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [optimisticOverrides, setOptimisticOverrides] = useState<
@@ -40,15 +50,17 @@ export function useBelgeKanbanData({
 
   const { isDocumentLocked, getDocumentStatus } = usePrintQueueStore()
 
-  // Veritabanından belgeleri çek
+  // Veritabanından belgeleri ve snapshotları çek
   const fetchDbBelgeler = useCallback(async () => {
     if (!activeDosyaId) {
       setDbBelgeler([])
+      setInternalSnapshotKeys(new Set())
       return
     }
     setLoading(true)
     try {
       if (window.electron?.ipcRenderer) {
+        // 1. DATA_TeminBelge
         const res = await window.electron.ipcRenderer.invoke(
           'db:query',
           'SELECT id, temin_dosya_id, dosya_id, belge_adi, sablon_id, dosya_yolu, is_signed, imzali_dosya_yolu, belge_tarihi, durum, bekleme_nedeni, created_at FROM DATA_TeminBelge WHERE temin_dosya_id = ? ORDER BY id ASC',
@@ -59,10 +71,28 @@ export function useBelgeKanbanData({
         } else {
           setDbBelgeler([])
         }
+
+        // 2. DATA_TeminBelgeSnapshot
+        const snapRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT sablon_kodu, sablon_id, veri_json FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND (is_deleted = 0 OR is_deleted IS NULL)',
+          [activeDosyaId]
+        )
+        const keys = new Set<string>()
+        if (snapRes?.success && Array.isArray(snapRes.data)) {
+          snapRes.data.forEach((row: any) => {
+            if (row.veri_json && String(row.veri_json).trim().length > 2) {
+              if (row.sablon_kodu) keys.add(normalizeForMatch(row.sablon_kodu))
+              if (row.sablon_id) keys.add(String(row.sablon_id))
+            }
+          })
+        }
+        setInternalSnapshotKeys(keys)
       }
     } catch (err) {
-      console.error('DATA_TeminBelge sorgulama hatası:', err)
+      console.error('DATA_TeminBelge ve Snapshot sorgulama hatası:', err)
       setDbBelgeler([])
+      setInternalSnapshotKeys(new Set())
     } finally {
       setLoading(false)
     }
@@ -71,6 +101,12 @@ export function useBelgeKanbanData({
   useEffect(() => {
     fetchDbBelgeler()
   }, [fetchDbBelgeler])
+
+  const effectiveSnapshotKeys = useMemo(() => {
+    const combined = new Set<string>(snapshotDataKeys || [])
+    internalSnapshotKeys.forEach((k) => combined.add(k))
+    return combined
+  }, [snapshotDataKeys, internalSnapshotKeys])
 
   // Şablonlar ve Veritabanı Belgelerini Birleştir
   const allItems = useMemo((): BelgeKanbanItem[] => {
@@ -131,6 +167,16 @@ export function useBelgeKanbanData({
       const itemKey = `sablon_${s.id}`
       const override = optimisticOverrides[itemKey]
 
+      const hasData =
+        effectiveSnapshotKeys.has(normalizeForMatch(docKey)) ||
+        effectiveSnapshotKeys.has(normalizeForMatch(s.ad)) ||
+        effectiveSnapshotKeys.has(String(s.id)) ||
+        isProduced
+      const isPrinted = printSt === 'printed' || dbMatch?.durum === 'yazdirildi'
+      const isStarred = (activeStarredDocs || []).some(
+        (d) => normalizeForMatch(d) === normalizeForMatch(s.ad)
+      )
+
       items.push({
         id: itemKey,
         dbId,
@@ -144,6 +190,9 @@ export function useBelgeKanbanData({
         isProduced,
         isSigned,
         isLocked: locked,
+        hasData,
+        isPrinted,
+        isStarred,
         missingMsg: missing,
         updatedAt,
         sablon: s
@@ -165,6 +214,9 @@ export function useBelgeKanbanData({
 
         const itemKey = `doc_${b.id}`
         const override = optimisticOverrides[itemKey]
+        const isStarred = (activeStarredDocs || []).some(
+          (d) => normalizeForMatch(d) === normalizeForMatch(b.belge_adi)
+        )
 
         items.push({
           id: itemKey,
@@ -181,6 +233,9 @@ export function useBelgeKanbanData({
           isProduced: true,
           isSigned: b.is_signed === 1,
           isLocked: false,
+          hasData: true,
+          isPrinted: b.durum === 'yazdirildi',
+          isStarred,
           missingMsg: null,
           updatedAt: b.belge_tarihi || b.created_at || null,
           sablon: null
@@ -196,10 +251,12 @@ export function useBelgeKanbanData({
     activeDosyaId,
     isDocumentLocked,
     getDocumentStatus,
-    optimisticOverrides
+    optimisticOverrides,
+    effectiveSnapshotKeys,
+    activeStarredDocs
   ])
 
-  // Sütunlara göre ayrıştırma
+  // Sütunlara göre ayrıştırma ve Filtreleme
   const columnsData = useMemo((): Record<BelgeKanbanStatus, BelgeKanbanItem[]> => {
     const res: Record<BelgeKanbanStatus, BelgeKanbanItem[]> = {
       hazirlanacak: [],
@@ -207,7 +264,38 @@ export function useBelgeKanbanData({
       beklemede: [],
       tamamlandi: []
     }
-    allItems.forEach((item) => {
+
+    const filtered = allItems.filter((item) => {
+      // 1. Preset (Paket) Filtresi (varsa)
+      if (activePresetDocs && activePresetDocs.length > 0) {
+        const inPreset = activePresetDocs.some(
+          (docAd) => normalizeForMatch(docAd) === normalizeForMatch(item.belgeAdi)
+        )
+        if (!inPreset) return false
+      }
+
+      // 2. Durum Sekmesi Filtresi
+      if (statusFilter === 'starred') {
+        return !!item.isStarred
+      }
+      if (statusFilter === 'has_data') {
+        return !!item.hasData
+      }
+      if (statusFilter === 'no_data') {
+        return !item.hasData
+      }
+      if (statusFilter === 'printed') {
+        return !!item.isPrinted
+      }
+      if (statusFilter === 'ready') {
+        const docKey = (item.dosyaAdi || '').replace(/\.html$/, '')
+        const printSt = activeDosyaId ? getDocumentStatus(activeDosyaId, docKey) : 'draft'
+        return printSt === 'ready_to_print'
+      }
+      return true
+    })
+
+    filtered.forEach((item) => {
       if (res[item.durum]) {
         res[item.durum].push(item)
       } else {
@@ -215,7 +303,7 @@ export function useBelgeKanbanData({
       }
     })
     return res
-  }, [allItems])
+  }, [allItems, statusFilter, activePresetDocs, activeDosyaId, getDocumentStatus])
 
   // Durum taşıma (Drag & Drop veya Detay Dialogundan)
   const moveItem = useCallback(

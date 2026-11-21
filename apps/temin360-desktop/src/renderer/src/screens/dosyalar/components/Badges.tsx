@@ -1,5 +1,5 @@
 import React from 'react'
-import { CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock, XCircle, ArchiveRestore } from 'lucide-react'
 import { cn } from '../../../utils/cn'
 
 export function TurBadge({ tur }: { tur: string }): React.ReactElement {
@@ -190,6 +190,62 @@ export function ProjectBadge({
       )}
       {projeKodu && projeAdi && <span className="text-slate-300 dark:text-slate-600">•</span>}
       {projeAdi && <span className="truncate max-w-[140px]">{projeAdi}</span>}
+    </span>
+  )
+}
+
+export function AktarimDurumBadge({
+  kayitKaynagi,
+  kaynakKayitId,
+  isLocked,
+  lockReason,
+  className,
+  onEditKaynak
+}: {
+  kayitKaynagi?: string | null
+  kaynakKayitId?: number | string | null
+  isLocked?: number | boolean | null
+  lockReason?: string | null
+  className?: string
+  onEditKaynak?: () => void
+}): React.ReactElement | null {
+  const isAktarim = Boolean(
+    (kayitKaynagi && kayitKaynagi !== 'yeni') ||
+      kaynakKayitId ||
+      (Number(isLocked) === 1 && lockReason?.includes('aktarim')) ||
+      lockReason === 'eski_aktarim_imzali'
+  )
+
+  // Yeni açılan dosyalarda kullanıcı kuralı gereği hiçbir rozet gösterilmez!
+  if (!isAktarim) return null
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-800/80 shadow-2xs select-none',
+        className
+      )}
+      title="Bu dosya önceki sistemden/arşivden olduğu gibi aktarılmıştır."
+    >
+      <ArchiveRestore size={11} className="text-amber-600 dark:text-amber-400 shrink-0" />
+      <span>Olduğu Gibi Aktarıldı</span>
+      {kaynakKayitId ? (
+        <span className="font-mono text-[9px] text-amber-700 dark:text-amber-300 ml-0.5">
+          (Eski No: #{kaynakKayitId})
+        </span>
+      ) : onEditKaynak ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onEditKaynak()
+          }}
+          className="ml-1 text-[9px] underline hover:text-amber-900 dark:hover:text-amber-100 cursor-pointer"
+          title="Eski Sistem Kaynak Numarası Ekle"
+        >
+          Kaynak Ekle
+        </button>
+      ) : null}
     </span>
   )
 }

@@ -138,6 +138,10 @@ export const routeComponents: Record<string, () => React.ReactElement> = {
     () => import("../../screens/dosya/SubScreens.screen"),
     "ImzaliBelgeler",
   ),
+  "/dosya/evrak-akisi": lazyRoute(
+    () => import("../../screens/dosya/SubScreens.screen"),
+    "DosyaEvrakAkisiScreen",
+  ),
   "/test-ekranlari": lazyRoute(
     () => import("../../screens/test-ekranlari/index.screen"),
     "Test_Ekranlari",

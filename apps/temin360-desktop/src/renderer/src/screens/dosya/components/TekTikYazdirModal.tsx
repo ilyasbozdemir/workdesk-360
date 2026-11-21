@@ -234,7 +234,7 @@ export function TekTikYazdirModal({
 
   return (
     <div className="fixed inset-0 z-150 flex items-center justify-center p-2 md:p-6 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl w-full max-w-387.5 h-[92vh] flex flex-col overflow-hidden text-slate-100 animate-in zoom-in-95 duration-200">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-3xl shadow-2xl w-full max-w-[1550px] h-[92vh] max-h-[calc(100vh-32px)] flex flex-col min-h-0 overflow-hidden text-slate-100 animate-in zoom-in-95 duration-200">
         {/* TOP HEADER */}
         <TekTikYazdirHeader
           activeDosya={activeDosya}

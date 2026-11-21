@@ -371,13 +371,22 @@ export function TakipDosyaDetayDialog({
             </div>
 
             {/* KEY METRICS & TIMELINE */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="p-3.5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Yaklaşık Maliyet
                 </span>
                 <span className="text-sm font-black font-mono text-slate-900 dark:text-white mt-0.5 block">
                   {formatCurrency(dosya.yaklasik_maliyet || 0)}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50">
+                <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider block">
+                  Hesaplama Esası
+                </span>
+                <span className="text-xs font-bold text-amber-900 dark:text-amber-200 mt-0.5 block truncate">
+                  {dosya.hesaplama_esasi || "Ortalama fiyat esasına göre"}
                 </span>
               </div>
 

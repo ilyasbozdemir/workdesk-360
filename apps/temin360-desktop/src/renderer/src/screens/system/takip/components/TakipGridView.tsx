@@ -16,6 +16,7 @@ import type { TeminDosyasi } from '../../../dosyalar/dosyalar.hooks'
 import { TakipFilterToolbar } from './TakipFilterToolbar'
 import { DosyaHizliIcerikPopover } from '../../../dosyalar/components/DosyaHizliIcerikPopover'
 import { DosyaActionMenu } from '../../../dosyalar/components/DosyaActionMenu'
+import { AktarimDurumBadge } from '../../../dosyalar/components/Badges'
 
 export interface TakipGridViewProps {
   dosyalar: TeminDosyasi[]
@@ -175,9 +176,17 @@ export function TakipGridView({
                 {/* Top Header */}
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2.5">
-                    <span className="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
-                      {dosya.temin_no || `#${dosya.id}`}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span className="font-mono text-xs font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">
+                        {dosya.temin_no || `#${dosya.id}`}
+                      </span>
+                      <AktarimDurumBadge
+                        kayitKaynagi={dosya.kayit_kaynagi}
+                        kaynakKayitId={dosya.kaynak_kayit_id}
+                        isLocked={dosya.is_locked}
+                        lockReason={dosya.lock_reason}
+                      />
+                    </div>
 
                     <div className="flex items-center gap-1.5">
                       <span

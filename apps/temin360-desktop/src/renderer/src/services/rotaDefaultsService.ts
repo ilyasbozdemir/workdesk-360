@@ -272,9 +272,27 @@ export function resolveTemplateRouteForDocument<T extends Record<string, any>>(
   const definition = getTemplateRouteDefinition(templateId)
   const documentValues = extractDocumentRouteValues(documentData, definition)
   const settingsValues = buildSettingsRouteValues(templateId, dosyaId)
-  const activeOverrides: readonly RouteOverride[] =
-    overrides ||
-    (Array.isArray(documentData?.routeOverrides) ? documentData.routeOverrides : [])
+  const effectiveConf = getRotaConfigForTemplate(templateId, dosyaId)
+
+  // Eğer kullanıcı bu şablon veya aktif dosya için rota ayarı kaydetmişse,
+  // slot defaultSource="document" olsa bile kullanıcının Rota Yönetimi ayarını öncelikli kılmak üzere override olarak ekle
+  const syntheticOverrides: RouteOverride[] = []
+  if (effectiveConf) {
+    for (const slot of definition.slots) {
+      if (settingsValues[slot.id] !== undefined && settingsValues[slot.id] !== null) {
+        syntheticOverrides.push({
+          slotId: slot.id,
+          value: settingsValues[slot.id]!
+        })
+      }
+    }
+  }
+
+  const activeOverrides: readonly RouteOverride[] = [
+    ...syntheticOverrides,
+    ...(overrides || []),
+    ...(Array.isArray(documentData?.routeOverrides) ? documentData.routeOverrides : [])
+  ]
 
   // Şablonda tanımlı olmayan eski override slotlarını filtrele
   const allowedSlots = new Set(definition.slots.map((s) => s.id))
@@ -289,81 +307,85 @@ export function resolveTemplateRouteForDocument<T extends Record<string, any>>(
   })
 
   const enrichedData = applyResolvedRouteToDocumentData(documentData, resolvedRoute)
-  const effectiveConf = getRotaConfigForTemplate(templateId, dosyaId)
-  const directScopedConf =
-    (dosyaId !== undefined && dosyaId !== null && String(dosyaId).trim() !== ''
-      ? getDirectRotaConfig(templateId, dosyaId) || getDirectRotaConfig(GLOBAL_ROTA_KEY, dosyaId)
-      : null) || getDirectRotaConfig(templateId, null)
-
-  const isBaseDefaultAntet = Boolean((documentData as any)?._isBaseDefaultAntet)
 
   if (effectiveConf) {
-    const shouldOverrideBirimFromConfig =
-      isBaseDefaultAntet &&
-      directScopedConf &&
-      ((directScopedConf.birimId !== undefined &&
-        directScopedConf.birimId !== null &&
-        String(directScopedConf.birimId).trim() !== '') ||
-        Boolean(directScopedConf.birimAdi?.trim()))
-
+    // 1. Antet ve Birim Senkronizasyonu (Rota yapılandırması varsa her zaman geçerli kılınır)
+    if (effectiveConf.birimAdi?.trim()) {
+      const bAdi = effectiveConf.birimAdi.trim()
+      ;(enrichedData as any).birimAdi = bAdi
+      ;(enrichedData as any).birim_adi = bAdi
+      ;(enrichedData as any).birim = bAdi
+      ;(enrichedData as any).harcamaBirimi = bAdi
+      ;(enrichedData as any).harcama_birimi = bAdi
+      ;(enrichedData as any).ihalesiYapilacakBirim = bAdi
+      ;(enrichedData as any).mudurluk = bAdi
+    }
     if (
-      shouldOverrideBirimFromConfig ||
-      ((enrichedData.birimId === undefined ||
-        enrichedData.birimId === null ||
-        enrichedData.birimId === '') &&
-        (enrichedData.birim_id === undefined ||
-          enrichedData.birim_id === null ||
-          enrichedData.birim_id === ''))
+      effectiveConf.birimId !== undefined &&
+      effectiveConf.birimId !== null &&
+      String(effectiveConf.birimId).trim() !== ''
     ) {
-      if (
-        effectiveConf.birimId !== undefined &&
-        effectiveConf.birimId !== null &&
-        String(effectiveConf.birimId).trim() !== ''
-      ) {
-        ;(enrichedData as any).birimId = effectiveConf.birimId
-        ;(enrichedData as any).birim_id = effectiveConf.birimId
-      }
-      if (effectiveConf.birimAdi?.trim()) {
-        const bAdi = effectiveConf.birimAdi.trim()
-        ;(enrichedData as any).birimAdi = bAdi
-        ;(enrichedData as any).birim_adi = bAdi
-        ;(enrichedData as any).birim = bAdi
-        ;(enrichedData as any).harcamaBirimi = bAdi
-        ;(enrichedData as any).harcama_birimi = bAdi
-        ;(enrichedData as any).ihalesiYapilacakBirim = bAdi
-        ;(enrichedData as any).mudurluk = bAdi
-      }
-    } else if (!enrichedData.birimAdi && effectiveConf.birimAdi) {
-      ;(enrichedData as any).birimAdi = effectiveConf.birimAdi
-      ;(enrichedData as any).birim = enrichedData.birim || effectiveConf.birimAdi
-      ;(enrichedData as any).mudurluk = enrichedData.mudurluk || effectiveConf.birimAdi
+      ;(enrichedData as any).birimId = effectiveConf.birimId
+      ;(enrichedData as any).birim_id = effectiveConf.birimId
     }
-
-    if (effectiveConf.antetBirimGosterilsin !== undefined) {
-      ;(enrichedData as any).antetBirimGosterilsin = effectiveConf.antetBirimGosterilsin
-    }
-
-    if (effectiveConf.antetEkSatir && (isBaseDefaultAntet || !enrichedData.antetEkSatir)) {
+    if (effectiveConf.antetEkSatir) {
       ;(enrichedData as any).antetEkSatir = effectiveConf.antetEkSatir
       ;(enrichedData as any).antet_ek_satir = effectiveConf.antetEkSatir
     }
-
-    const shouldOverrideAntetFromConfig =
-      isBaseDefaultAntet &&
-      directScopedConf &&
-      Array.isArray(directScopedConf.antetSatirlari) &&
-      directScopedConf.antetSatirlari.length > 0
-
+    if (effectiveConf.antetBirimGosterilsin !== undefined) {
+      ;(enrichedData as any).antetBirimGosterilsin = effectiveConf.antetBirimGosterilsin
+    }
     if (
-      shouldOverrideAntetFromConfig ||
-      !Array.isArray(enrichedData.antetSatirlari) ||
-      enrichedData.antetSatirlari.length === 0
+      Array.isArray(effectiveConf.antetSatirlari) &&
+      effectiveConf.antetSatirlari.length > 0
     ) {
-      if (
-        Array.isArray(effectiveConf.antetSatirlari) &&
-        effectiveConf.antetSatirlari.length > 0
-      ) {
-        ;(enrichedData as any).antetSatirlari = [...effectiveConf.antetSatirlari]
+      ;(enrichedData as any).antetSatirlari = [...effectiveConf.antetSatirlari]
+    }
+
+    // 2. Hazırlayan, Onaylayan ve Olur Yazısı Senkronizasyonu
+    if (effectiveConf.hazirlayanPersonelAdi?.trim()) {
+      const hAd = effectiveConf.hazirlayanPersonelAdi.trim()
+      const hUnvan = effectiveConf.hazirlayanPersonelUnvan?.trim() || ''
+      ;(enrichedData as any).hazirlayanPersonelAdi = hAd
+      ;(enrichedData as any).hazirlayanPersonelUnvan = hUnvan
+      ;(enrichedData as any).hazirlayan = hAd
+      ;(enrichedData as any).hazirlayanPersonel = hAd
+    }
+    if (effectiveConf.gerceklestirmeGorevlisiAdi?.trim()) {
+      const gAd = effectiveConf.gerceklestirmeGorevlisiAdi.trim()
+      const gUnvan = effectiveConf.gerceklestirmeGorevlisiUnvani?.trim() || ''
+      ;(enrichedData as any).gerceklestirmeGorevlisiAdi = gAd
+      ;(enrichedData as any).gerceklestirmeGorevlisiUnvan = gUnvan
+    }
+    if (effectiveConf.onaylayanPersonelAdi?.trim()) {
+      const oAd = effectiveConf.onaylayanPersonelAdi.trim()
+      const oUnvan = effectiveConf.onaylayanPersonelUnvan?.trim() || ''
+      ;(enrichedData as any).onaylayanPersonelAdi = oAd
+      ;(enrichedData as any).onaylayanPersonelUnvan = oUnvan
+      ;(enrichedData as any).harcamaYetkilisiAdi = oAd
+      ;(enrichedData as any).harcamaYetkilisiUnvan = oUnvan
+      ;(enrichedData as any).baskanAdi = oAd
+      ;(enrichedData as any).onaylayan = oAd
+    }
+    if (effectiveConf.sunulacakMakamAdi?.trim()) {
+      ;(enrichedData as any).sunulacakMakamAdi = effectiveConf.sunulacakMakamAdi.trim()
+      ;(enrichedData as any).sunulacakMakam = effectiveConf.sunulacakMakamAdi.trim()
+    }
+    if (effectiveConf.olurYazisi !== undefined) {
+      ;(enrichedData as any).olurYazisi = effectiveConf.olurYazisi
+    }
+
+    // 3. Komisyon Üyeleri & Görevlendirilenler Senkronizasyonu
+    if (Array.isArray(effectiveConf.komisyonUyeleri) && effectiveConf.komisyonUyeleri.length > 0) {
+      const validMembers = effectiveConf.komisyonUyeleri.filter(
+        (u) => u && u.adSoyad && u.adSoyad.trim() !== ''
+      )
+      if (validMembers.length > 0) {
+        ;(enrichedData as any).komisyonUyeleri = validMembers
+        ;(enrichedData as any).fiyatKomisyonu = validMembers
+        ;(enrichedData as any).gorevlendirilenler = validMembers
+        ;(enrichedData as any).gorevliler = validMembers
+        ;(enrichedData as any).dagitimListesi = validMembers
       }
     }
   }

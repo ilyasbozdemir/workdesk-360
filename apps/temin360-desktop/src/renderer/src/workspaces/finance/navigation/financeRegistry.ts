@@ -195,8 +195,8 @@ export const FINANCE_PAGE_DEFINITIONS: FinancePageDefinition[] = [
   {
     id: 'bkmybs-yonetim',
     section: 'all',
-    title: '5018 BKMYBS Bütçe & Mali Yönetim Masası',
-    shortLabel: 'BKMYBS Masası',
+    title: '5018 BKMYBS Bütçe & Mali Yönetim Masası (Beta)',
+    shortLabel: 'BKMYBS Masası (Beta)',
     breadcrumbLabel: 'BKMYBS Bütçe & Harcama Masası',
     icon: Coins,
     badge: '5018',

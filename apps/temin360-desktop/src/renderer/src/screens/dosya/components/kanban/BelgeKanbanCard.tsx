@@ -5,9 +5,10 @@ import {
   Clock,
   Eye,
   FileCheck,
-  FileText,
+  FileEdit,
   Lock,
-  Sparkles
+  Printer,
+  Star
 } from 'lucide-react'
 import { BelgeKanbanItem } from './belgeKanbanTypes'
 
@@ -15,12 +16,14 @@ interface BelgeKanbanCardProps {
   item: BelgeKanbanItem
   onOpenDetail: (item: BelgeKanbanItem) => void
   onPreview: (item: BelgeKanbanItem) => void
+  onToggleStar?: (docName: string) => void
 }
 
 export function BelgeKanbanCard({
   item,
   onOpenDetail,
-  onPreview
+  onPreview,
+  onToggleStar
 }: BelgeKanbanCardProps): React.JSX.Element {
   const isDraggable = !item.isLocked && !item.missingMsg
 
@@ -42,13 +45,61 @@ export function BelgeKanbanCard({
             : 'bg-white dark:bg-slate-900/90 border-slate-200/90 dark:border-slate-800 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700'
       }`}
     >
-      {/* ÜST ETİKETLER */}
+      {/* ÜST ETİKETLER & HIZLI ERİŞİM YILDIZI */}
       <div className="flex items-center justify-between gap-1.5 mb-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
-          {item.kategori}
-        </span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          {onToggleStar && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleStar(item.belgeAdi)
+              }}
+              className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              title={item.isStarred ? 'Hızlı erişimden çıkar' : 'Hızlı erişime (yıldızlı) ekle'}
+            >
+              <Star
+                className={`w-3.5 h-3.5 transition-colors ${
+                  item.isStarred
+                    ? 'fill-amber-400 text-amber-500'
+                    : 'text-slate-300 dark:text-slate-600 hover:text-amber-400'
+                }`}
+              />
+            </button>
+          )}
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate max-w-[130px]">
+            {item.kategori}
+          </span>
+        </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+          {/* VERİ GİRİLDİ / VERİ GİRİLMEDİ ROZETİ */}
+          {item.hasData ? (
+            <span
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40"
+              title="Bu belge için veri/içerik girilmiş veya üretilmiş"
+            >
+              <CheckCircle2 className="w-2.5 h-2.5" /> Veri Girildi
+            </span>
+          ) : (
+            <span
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
+              title="Bu belge henüz boş şablon formatında, veri girilmemiş"
+            >
+              <FileEdit className="w-2.5 h-2.5 text-slate-400" /> Veri Girilmedi
+            </span>
+          )}
+
+          {/* YAZDIRILDI ROZETİ */}
+          {item.isPrinted && (
+            <span
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-300/50"
+              title="Bu belgenin çıktısı / yazdırması yapılmış"
+            >
+              <Printer className="w-2.5 h-2.5" /> Yazdırıldı
+            </span>
+          )}
+
           {item.isSigned && (
             <span
               className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40"
@@ -64,22 +115,6 @@ export function BelgeKanbanCard({
               title="Yazdırma kilidi aktif"
             >
               <Lock className="w-2.5 h-2.5" /> Kilitli
-            </span>
-          )}
-
-          {item.isProduced ? (
-            <span
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-900/50"
-              title="Veritabanında kayıtlı oluşturulmuş belge"
-            >
-              Kayıtlı
-            </span>
-          ) : (
-            <span
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
-              title="Henüz üretilmemiş taslak şablon"
-            >
-              Şablon
             </span>
           )}
         </div>

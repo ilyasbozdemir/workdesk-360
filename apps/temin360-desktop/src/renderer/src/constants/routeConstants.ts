@@ -74,6 +74,7 @@ export const APP_ROUTES = {
   IMZALI_BELGELER: "/dosya/imzali-belgeler",
   HIZLI_DOSYA_EKLE: "/hizli-dosya-ekle",
   DOSYA_KUNYE: "/dosya/kunye",
+  DOSYA_EVRAK_AKISI: "/dosya/evrak-akisi",
   BELGE_ONIZLEME: "/dosya/belge-onizleme",
   MODUL_MAGAZASI: "/modul-magazasi",
   SUREC_STUDYOSU: "/surec-studyosu",

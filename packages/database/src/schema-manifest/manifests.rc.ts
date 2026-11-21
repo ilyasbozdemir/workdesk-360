@@ -1,3 +1,17 @@
+import rc37 from "./versions/rc/rc.37";
+import rc36 from "./versions/rc/rc.36";
+import rc35 from "./versions/rc/rc.35";
+import rc34 from "./versions/rc/rc.34";
+import rc33 from "./versions/rc/rc.33";
+import rc32 from "./versions/rc/rc.32";
+import rc31 from "./versions/rc/rc.31";
+import rc30 from "./versions/rc/rc.30";
+import rc29 from "./versions/rc/rc.29";
+import rc28 from "./versions/rc/rc.28";
+import rc27 from "./versions/rc/rc.27";
+import rc26 from "./versions/rc/rc.26";
+import rc25 from "./versions/rc/rc.25";
+import rc24 from "./versions/rc/rc.24";
 import rc23 from "./versions/rc/rc.23";
 import rc22 from "./versions/rc/rc.22";
 import rc20 from "./versions/rc/rc.20";
@@ -27,6 +41,20 @@ import rc6 from "./versions/rc/rc.6";
 import rc7 from "./versions/rc/rc.7";
 
 export const rcManifests: any[] = [
+  rc37,
+  rc36,
+  rc35,
+  rc34,
+  rc33,
+  rc32,
+  rc31,
+  rc30,
+  rc29,
+  rc28,
+  rc27,
+  rc26,
+  rc25,
+  rc24,
   rc23,
   rc22,
   rc20,

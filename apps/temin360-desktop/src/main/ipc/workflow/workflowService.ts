@@ -16,7 +16,8 @@ export class WorkflowService {
   /**
    * Aktif dosya için workflow instance kaydını getirir veya ilk kez açılıyorsa başlatır.
    */
-  public static getOrCreateInstance(dosyaId: number): WorkflowInstance {
+  public static getOrCreateInstance(dosyaId: number): WorkflowInstance | null {
+    if (!workspaceManager.isOpen()) return null
     const db = workspaceManager.getDb()
 
     const existing = db
@@ -146,9 +147,11 @@ export class WorkflowService {
     dosyaId: number,
     actorRole: string = 'satin_alma',
     actorId: string = 'CURRENT_USER'
-  ): WorkflowContext {
+  ): WorkflowContext | null {
+    if (!workspaceManager.isOpen()) return null
     const db = workspaceManager.getDb()
     const instance = this.getOrCreateInstance(dosyaId)
+    if (!instance) return null
 
     const dosya = db.prepare('SELECT * FROM DATA_TeminDosyasi WHERE id = ?').get(dosyaId) as any
 
@@ -224,7 +227,9 @@ export class WorkflowService {
    * Mevcut duruma göre yapılabilecek geçişler ve kuralları döner.
    */
   public static async getAvailableActions(dosyaId: number, actorRole: string, actorId?: string) {
+    if (!workspaceManager.isOpen()) return []
     const context = this.buildWorkflowContext(dosyaId, actorRole, actorId)
+    if (!context) return []
     return await resolveNextActions(DIRECT_PROCUREMENT_WORKFLOW_DEFINITION, context)
   }
 
@@ -238,8 +243,14 @@ export class WorkflowService {
     actorId: string = 'CURRENT_USER',
     payload?: { reason?: string; faturaNo?: string; faturaTarihi?: string }
   ) {
+    if (!workspaceManager.isOpen()) {
+      throw new Error('İşlem yapmak için açık bir veri dosyası gereklidir.')
+    }
     const db = workspaceManager.getDb()
     const context = this.buildWorkflowContext(dosyaId, actorRole, actorId)
+    if (!context) {
+      throw new Error('Dosya bağlamı oluşturulamadı.')
+    }
 
     // 1. Kural & Geçiş Değerlendirmesi
     const evaluation = await evaluateTransition(
@@ -258,6 +269,9 @@ export class WorkflowService {
     const fromState = context.currentState
     const toState = transition.toState
     const instance = this.getOrCreateInstance(dosyaId)
+    if (!instance) {
+      throw new Error('Süreç örneği bulunamadı veya başlatılamadı.')
+    }
     const now = new Date().toISOString()
     const targetStatus = toState === 'COMPLETED' ? 'COMPLETED' : toState === 'RETURNED' ? 'RETURNED' : 'IN_PROGRESS'
 
@@ -451,6 +465,7 @@ export class WorkflowService {
    * Dosya süreç geçmişi (Transition history).
    */
   public static getWorkflowHistory(dosyaId: number): WorkflowEvent[] {
+    if (!workspaceManager.isOpen()) return []
     const db = workspaceManager.getDb()
     return db
       .prepare(
@@ -477,12 +492,14 @@ export class WorkflowService {
    * Görevleri listele.
    */
   public static getTasks(filter?: { dosyaId?: number; role?: string; status?: string }): WorkflowTask[] {
-    const db = workspaceManager.getDb()
+    if (!workspaceManager.isOpen()) return []
     try {
+      const db = workspaceManager.getDb()
       return this.executeGetTasks(db, filter)
     } catch (err: any) {
       if (err?.message?.includes('no such table')) {
         try {
+          const db = workspaceManager.getDb()
           ensureSchemaIntegrity(db)
           return this.executeGetTasks(db, filter)
         } catch {
@@ -537,12 +554,14 @@ export class WorkflowService {
    * Bildirimleri listele.
    */
   public static getNotifications(unreadOnly: boolean = false): WorkflowNotification[] {
-    const db = workspaceManager.getDb()
+    if (!workspaceManager.isOpen()) return []
     try {
+      const db = workspaceManager.getDb()
       return this.executeGetNotifications(db, unreadOnly)
     } catch (err: any) {
       if (err?.message?.includes('no such table')) {
         try {
+          const db = workspaceManager.getDb()
           ensureSchemaIntegrity(db)
           return this.executeGetNotifications(db, unreadOnly)
         } catch {
@@ -580,6 +599,7 @@ export class WorkflowService {
    * Bildirimi okundu olarak işaretle.
    */
   public static markNotificationRead(notificationId: string): void {
+    if (!workspaceManager.isOpen()) return
     try {
       const db = workspaceManager.getDb()
       db.prepare("UPDATE WORKFLOW_Notification SET read_at = CURRENT_TIMESTAMP WHERE id = ?").run(
@@ -594,6 +614,7 @@ export class WorkflowService {
    * Tüm bildirimleri okundu olarak işaretle.
    */
   public static markAllNotificationsRead(): void {
+    if (!workspaceManager.isOpen()) return
     try {
       const db = workspaceManager.getDb()
       db.prepare("UPDATE WORKFLOW_Notification SET read_at = CURRENT_TIMESTAMP WHERE read_at IS NULL").run()

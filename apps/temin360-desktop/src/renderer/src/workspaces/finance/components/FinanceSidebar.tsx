@@ -95,8 +95,9 @@ export const FinanceSidebar: React.FC<FinanceSidebarProps> = ({
               <div className="font-extrabold text-xs text-slate-900 dark:text-slate-100 truncate tracking-tight">
                 Mali Hizmetler &amp; Muhasebe
               </div>
-              <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                5018 Mali Yönetim Masası
+              <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                <span>5018 Mali Yönetim Masası</span>
+                <span className="px-1 py-0.2 rounded text-[8px] font-black bg-amber-400 text-amber-950 uppercase">BETA</span>
               </div>
             </div>
           )}

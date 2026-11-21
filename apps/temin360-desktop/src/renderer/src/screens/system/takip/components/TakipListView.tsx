@@ -5,6 +5,7 @@ import type { TeminDosyasi } from '../../../dosyalar/dosyalar.hooks'
 import { TakipFilterToolbar } from './TakipFilterToolbar'
 import { DosyaHizliIcerikPopover } from '../../../dosyalar/components/DosyaHizliIcerikPopover'
 import { DosyaActionMenu } from '../../../dosyalar/components/DosyaActionMenu'
+import { AktarimDurumBadge } from '../../../dosyalar/components/Badges'
 
 export interface TakipListViewProps {
   dosyalar: TeminDosyasi[]
@@ -137,9 +138,17 @@ export function TakipListView({
                     >
                       {/* Dosya No */}
                       <td className="py-3 px-4 font-mono font-black text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
-                          {dosya.temin_no || `#${dosya.id}`}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60">
+                            {dosya.temin_no || `#${dosya.id}`}
+                          </span>
+                          <AktarimDurumBadge
+                            kayitKaynagi={dosya.kayit_kaynagi}
+                            kaynakKayitId={dosya.kaynak_kayit_id}
+                            isLocked={dosya.is_locked}
+                            lockReason={dosya.lock_reason}
+                          />
+                        </div>
                       </td>
 
                       {/* Konu */}

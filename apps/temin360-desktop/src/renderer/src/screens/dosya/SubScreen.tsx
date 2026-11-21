@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { useTabStore } from '../../store/tabStore'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { AlertCircle, ArrowLeft, Layers } from 'lucide-react'
+import { AlertCircle, Layers } from 'lucide-react'
 import { ProcessStepper } from './components/ProcessStepper'
 import { APP_ROUTES } from '../../constants/routeConstants'
 
@@ -37,11 +37,6 @@ export function SubScreen({
   const navigate = useNavigate()
   const addTab = useTabStore((s) => s.addTab)
   const activeTabPath = useTabStore((s) => s.activeTabPath)
-  const canGoBack = useTabStore((s) => {
-    const currentTab = s.tabs.find((t) => t.path === s.activeTabPath)
-    return currentTab ? currentTab.currentIndex > 0 : false
-  })
-  const goBack = useTabStore((s) => s.goBack)
   const activeDosyaId = useWorkspaceStore((s) => s.activeDosyaId)
   const setActiveStarredDocs = useWorkspaceStore((s) => s.setActiveStarredDocs)
 
@@ -76,31 +71,23 @@ export function SubScreen({
   const showStepper = !hideStepper && STEPPER_ROUTES.some((r) => currentPath.includes(r))
 
   return (
-    <div className="p-6 md:p-8 w-full flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-3 sm:p-4 md:p-5 w-full flex flex-col gap-3.5 animate-in fade-in duration-200">
       {/* HEADER */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 print:hidden">
-        <div className="flex items-center gap-3">
-          {canGoBack && (
-            <button
-              onClick={() => goBack()}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 transition-all shadow-sm"
-              title="Geri Dön"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          )}
-
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-855 dark:text-slate-100 flex items-center gap-2">
-              <Icon className="w-7 h-7 text-blue-600" />
+      <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 pb-2.5 print:hidden">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+            <Icon className="w-4.5 h-4.5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-855 dark:text-slate-100 truncate">
               {title}
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs">{description}</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-2xl mt-0.5">{description}</p>
           </div>
         </div>
 
         {activeDosyaId && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => {

@@ -290,7 +290,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
             </span>
           </div>
 
-          <div className="space-y-0.5 max-h-[190px] overflow-y-auto custom-scrollbar pr-0.5">
+          <div className="space-y-1 max-h-[210px] overflow-y-auto custom-scrollbar pr-0.5">
             {Object.values(KAMU_USER_ROLES).map((role) => {
               const isSelected = userRoles.includes(role.key)
               return (
@@ -303,7 +303,7 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
                       ? 'bg-slate-100 dark:bg-slate-800 border-slate-300/80 dark:border-slate-700 font-bold text-slate-900 dark:text-slate-100 shadow-2xs'
                       : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
-                  title={`${role.name}: ${role.description}`}
+                  title={`${role.name}: ${role.description} (Tıklayarak bu role ve ekranına kökten geçin)`}
                 >
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -316,6 +316,17 @@ export const UserProfilePopover: React.FC<UserProfilePopoverProps> = ({
                         {role.code}
                       </span>
                     </div>
+                    <span className="text-[10px] text-slate-400 truncate block mt-0.5 font-normal">
+                      {role.key === 'satin_alma'
+                        ? '👉 4734 Satın Alma & Temin Masası'
+                        : role.key === 'mali_hizmetler'
+                          ? '👉 5018 Bütçe & Mali Yönetim Masası'
+                          : role.key === 'muhasebe'
+                            ? '👉 BKMYBS Muhasebe & Ödeme Masası'
+                            : role.key === 'harcama_yetkilisi'
+                              ? '👉 Onay & Harcama Yönetim Masası'
+                              : '👉 Tüm Sistem ve Masalara Tam Yetki'}
+                    </span>
                   </div>
                   {isSelected && (
                     <Check size={14} className="text-emerald-500 shrink-0" />

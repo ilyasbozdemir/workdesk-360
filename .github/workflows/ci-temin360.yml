@@ -74,3 +74,103 @@ jobs:
 
       - name: Build Temin 360
         run: pnpm --filter temin360-desktop build
+
+  e2e-temin360:
+    name: Temin 360 E2E Tests (Electron / Playwright)
+    runs-on: windows-2022
+    # E2E testleri build gerektirdiğinden önce temel CI adımlarının bitmesi beklenir
+    needs: test-temin360
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Install dependencies
+        run: |
+          $maxAttempts = 3
+          $attempt = 0
+          $success = $false
+          while (-not $success -and $attempt -lt $maxAttempts) {
+            $attempt++
+            Write-Host "==> pnpm install (E2E job) attempt $attempt of $maxAttempts..."
+            pnpm install --frozen-lockfile
+            if ($LASTEXITCODE -eq 0) {
+              $success = $true
+            } else {
+              if ($attempt -lt $maxAttempts) {
+                Start-Sleep -Seconds 15
+              } else {
+                Write-Error "pnpm install failed after $maxAttempts attempts."
+                exit 1
+              }
+            }
+          }
+        env:
+          npm_config_msvs_version: "2022"
+          ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
+
+      - name: Build Database Package
+        run: pnpm --filter @dt/database build
+
+      - name: Build Temin 360 (E2E için out/main/index.js gerekli)
+        run: pnpm --filter temin360-desktop build
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter temin360-desktop exec playwright install chromium --with-deps
+
+      - name: Prepare E2E test fixture directory
+        run: |
+          $e2eDir = Join-Path $env:RUNNER_TEMP "Temin360-E2E-Test"
+          New-Item -ItemType Directory -Force -Path $e2eDir | Out-Null
+          Write-Host "E2E_DESKTOP_DIR set to: $e2eDir"
+          echo "E2E_DESKTOP_DIR=$e2eDir" >> $env:GITHUB_ENV
+
+      - name: Generate E2E test fixture files
+        run: pnpm --filter temin360-desktop exec node scripts/generate-e2e-test-file.js
+        working-directory: apps/temin360-desktop
+        env:
+          E2E_DESKTOP_DIR: ${{ env.E2E_DESKTOP_DIR }}
+
+      - name: Run E2E Tests
+        run: pnpm --filter temin360-desktop exec playwright test
+        working-directory: apps/temin360-desktop
+        env:
+          CI: "true"
+          E2E_DESKTOP_DIR: ${{ env.E2E_DESKTOP_DIR }}
+          # Electron GPU hata ayıklama logları için
+          ELECTRON_ENABLE_LOGGING: "1"
+
+      - name: Upload E2E Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report-temin360
+          path: apps/temin360-desktop/e2e-report/
+          retention-days: 7
+
+      - name: Upload E2E Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots-temin360
+          path: apps/temin360-desktop/e2e-screenshots/
+          retention-days: 7
+
+      - name: Upload Playwright Traces (failure only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-traces-temin360
+          path: apps/temin360-desktop/test-results/
+          retention-days: 7
+

@@ -10,6 +10,8 @@ import {
   FolderOpen,
   GitFork,
   Globe,
+  PanelLeftClose,
+  PanelLeftOpen,
   RotateCcw,
   Save,
   Search,
@@ -62,6 +64,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(GLOBAL_ROTA_KEY)
   const [selectedStageId, setSelectedStageId] = useState<number | 'all'>('all')
   const [templateSearch, setTemplateSearch] = useState<string>('')
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false)
   const [personelListesi, setPersonelListesi] = useState<any[]>([])
   const [birimListesi, setBirimListesi] = useState<any[]>([])
   const [kurumInfo, setKurumInfo] = useState<any>(null)
@@ -536,8 +539,63 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
     }
   }
 
-  const handleSaveCurrent = () => {
-    saveRotaConfigForTemplate(selectedTemplateId, buildCurrentConfigToSave(), effectiveDosyaId)
+  const handleSaveCurrent = async () => {
+    const configToSave = buildCurrentConfigToSave()
+    saveRotaConfigForTemplate(selectedTemplateId, configToSave, effectiveDosyaId)
+
+    // Eğer aktif dosya seçiliyse, veritabanındaki kayıtlı snapshot'ı da hemen rota ile senkronize et
+    if (effectiveDosyaId && selectedTemplateId !== GLOBAL_ROTA_KEY) {
+      try {
+        const ipc = (window as any)?.electron?.ipcRenderer
+        if (ipc) {
+          const snapshotPatch = {
+            antetSatirlari: configToSave.antetSatirlari,
+            birimAdi: configToSave.birimAdi,
+            birimId: configToSave.birimId,
+            antetEkSatir: configToSave.antetEkSatir,
+            antetBirimGosterilsin: (configToSave as any).antetBirimGosterilsin !== false,
+            hazirlayanPersonelAdi: configToSave.hazirlayanPersonelAdi,
+            hazirlayanPersonelUnvan: configToSave.hazirlayanPersonelUnvan,
+            onaylayanPersonelAdi: configToSave.onaylayanPersonelAdi,
+            onaylayanPersonelUnvan: configToSave.onaylayanPersonelUnvan,
+            gerceklestirmeGorevlisiAdi: configToSave.gerceklestirmeGorevlisiAdi,
+            gerceklestirmeGorevlisiUnvan: configToSave.gerceklestirmeGorevlisiUnvani,
+            olurYazisi: configToSave.olurYazisi,
+            komisyonUyeleri: configToSave.komisyonUyeleri,
+            gorevlendirilenler: configToSave.komisyonUyeleri,
+            fiyatKomisyonu: configToSave.komisyonUyeleri,
+            dagitimListesi: configToSave.komisyonUyeleri
+          }
+          await ipc.invoke(
+            'db:run',
+            `UPDATE DATA_TeminBelgeSnapshot 
+             SET veri_json = json_patch(COALESCE(veri_json, '{}'), ?),
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE dosya_id = ? AND (
+               sablon_kodu = ? 
+               OR sablon_kodu = ? 
+               OR sablon_kodu = ? 
+               OR sablon_kodu = ?
+               OR sablon_kodu = ?
+               OR sablon_kodu = ?
+             )`,
+            [
+              JSON.stringify(snapshotPatch),
+              effectiveDosyaId,
+              selectedTemplateId,
+              selectedTemplateId.replace(/-/g, '_'),
+              selectedTemplateId.replace(/_/g, '-'),
+              `${selectedTemplateId}.html`,
+              `${selectedTemplateId.replace(/-/g, '_')}.html`,
+              `${selectedTemplateId.replace(/_/g, '-')}.html`
+            ]
+          )
+        }
+      } catch (err) {
+        console.warn('Snapshot senkronizasyon hatası:', err)
+      }
+    }
+
     showToast(
       selectedTemplateId === GLOBAL_ROTA_KEY
         ? 'Genel varsayılan rota kaydedildi'
@@ -639,130 +697,164 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
 
       {/* Ana İçerik: Sol Şablon Listesi + Orta Dinamik Slot Yapılandırma + Sağ Canlı A4 Önizleme */}
       <div className="flex-1 min-h-0 flex gap-4 p-4 lg:p-5 overflow-hidden">
-        {/* SOL PANEL: Şablon Seçici (Kompakt ve Arama Destekli) */}
-        <div className="w-64 lg:w-72 xl:w-80 shrink-0 flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
-          {/* Genel Varsayılan Kartı */}
-          <div className="p-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
+        {/* SOL PANEL: Şablon Seçici (Daraltılabilir / Expandable) */}
+        {isSidebarCollapsed ? (
+          <div className="w-12 shrink-0 flex flex-col items-center py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs gap-3">
             <button
               type="button"
-              onClick={() => setSelectedTemplateId(GLOBAL_ROTA_KEY)}
-              className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
-                selectedTemplateId === GLOBAL_ROTA_KEY
-                  ? 'bg-purple-50/90 dark:bg-purple-950/60 border-purple-300 dark:border-purple-700 text-purple-950 dark:text-purple-100 shadow-xs'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-purple-300'
-              }`}
+              onClick={() => setIsSidebarCollapsed(false)}
+              title="Şablon Listesini Aç (Genişlet)"
+              className="p-2 rounded-xl text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/50 transition-colors cursor-pointer"
             >
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0">
-                  <Sparkles className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xs font-extrabold truncate">
-                    🌐 Genel Varsayılan Rota
-                  </div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                    Tüm belgelerin ortak slot atamaları
-                  </div>
-                </div>
-              </div>
-              {selectedTemplateId === GLOBAL_ROTA_KEY && (
-                <Check className="w-4 h-4 text-purple-600 shrink-0" />
-              )}
+              <PanelLeftOpen className="w-5 h-5" />
             </button>
-          </div>
-
-          {/* Arama ve Aşama Filtreleri */}
-          <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-2">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                value={templateSearch}
-                onChange={(e) => setTemplateSearch(e.target.value)}
-                placeholder="Şablon ara..."
-                className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500 transition-colors"
-              />
+            <div className="w-6 h-px bg-slate-200 dark:bg-slate-800" />
+            <div
+              className="text-[10px] font-bold text-slate-400 [writing-mode:vertical-lr] rotate-180 tracking-wider uppercase select-none"
+            >
+              Şablon Listesi ({TEMPLATE_OPTIONS.length})
             </div>
-
-            <div className="flex flex-wrap gap-1">
+          </div>
+        ) : (
+          <div className="w-64 lg:w-72 xl:w-80 shrink-0 flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+            {/* Header: Başlık ve Daraltma Butonu */}
+            <div className="p-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-between gap-2 shrink-0">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                Belge Şablonları ({TEMPLATE_OPTIONS.length})
+              </span>
               <button
                 type="button"
-                onClick={() => setSelectedStageId('all')}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
-                  selectedStageId === 'all'
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                onClick={() => setIsSidebarCollapsed(true)}
+                title="Şablon Listesini Gizle (Alanı Genişlet)"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Genel Varsayılan Kartı */}
+            <div className="p-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedTemplateId(GLOBAL_ROTA_KEY)}
+                className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
+                  selectedTemplateId === GLOBAL_ROTA_KEY
+                    ? 'bg-purple-50/90 dark:bg-purple-950/60 border-purple-300 dark:border-purple-700 text-purple-950 dark:text-purple-100 shadow-xs'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-purple-300'
                 }`}
               >
-                Tümü ({TEMPLATE_OPTIONS.length})
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0">
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-extrabold truncate">
+                      🌐 Genel Varsayılan Rota
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                      Tüm belgelerin ortak slot atamaları
+                    </div>
+                  </div>
+                </div>
+                {selectedTemplateId === GLOBAL_ROTA_KEY && (
+                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
+                )}
               </button>
-              {DOCUMENT_STAGES.map((stg) => (
+            </div>
+
+            {/* Arama ve Aşama Filtreleri */}
+            <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 shrink-0 space-y-2">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={templateSearch}
+                  onChange={(e) => setTemplateSearch(e.target.value)}
+                  placeholder="Şablon ara..."
+                  className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-purple-500 transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-1">
                 <button
-                  key={stg.id}
                   type="button"
-                  onClick={() => setSelectedStageId(stg.id)}
+                  onClick={() => setSelectedStageId('all')}
                   className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
-                    selectedStageId === stg.id
-                      ? `${stg.badgeBg} ${stg.badgeText} ring-1 ring-blue-500/30`
+                    selectedStageId === 'all'
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                   }`}
                 >
-                  {stg.shortName}
+                  Tümü ({TEMPLATE_OPTIONS.length})
                 </button>
-              ))}
+                {DOCUMENT_STAGES.map((stg) => (
+                  <button
+                    key={stg.id}
+                    type="button"
+                    onClick={() => setSelectedStageId(stg.id)}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-colors ${
+                      selectedStageId === stg.id
+                        ? `${stg.badgeBg} ${stg.badgeText} ring-1 ring-blue-500/30`
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {stg.shortName}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Şablon Listesi */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar min-h-0">
-            {filteredTemplates.map((tpl) => {
-              const isSelected = tpl.id === selectedTemplateId
-              const directConf = getDirectRotaConfig(tpl.id, effectiveDosyaId)
-              const tplDef = getTemplateRouteDefinition(tpl.id)
-              const hasListSlot = tplDef.slots.some((s) => s.kind === 'person-list')
+            {/* Şablon Listesi */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar min-h-0">
+              {filteredTemplates.map((tpl) => {
+                const isSelected = tpl.id === selectedTemplateId
+                const directConf = getDirectRotaConfig(tpl.id, effectiveDosyaId)
+                const tplDef = getTemplateRouteDefinition(tpl.id)
+                const hasListSlot = tplDef.slots.some((s) => s.kind === 'person-list')
 
-              return (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  onClick={() => setSelectedTemplateId(tpl.id)}
-                  className={`w-full p-2 rounded-xl border text-left transition-all flex items-center justify-between gap-1.5 cursor-pointer ${
-                    isSelected
-                      ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-300 dark:border-blue-800 text-blue-950 dark:text-blue-100 shadow-2xs'
-                      : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <FileText
-                      className={`w-3.5 h-3.5 shrink-0 ${
-                        isSelected ? 'text-blue-600' : 'text-slate-400'
-                      }`}
-                    />
-                    <div className="min-w-0">
-                      <div className="text-xs font-bold truncate">{tpl.title}</div>
-                      <div className="text-[9.5px] text-slate-400 truncate">
-                        {tpl.categoryLabel} &bull; {tplDef.slots.length} Slot
-                        {hasListSlot ? ' (Komisyon)' : ''}
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => setSelectedTemplateId(tpl.id)}
+                    className={`w-full p-2 rounded-xl border text-left transition-all flex items-center justify-between gap-1.5 cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-50/90 dark:bg-blue-950/60 border-blue-300 dark:border-blue-800 text-blue-950 dark:text-blue-100 shadow-2xs'
+                        : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <FileText
+                        className={`w-3.5 h-3.5 shrink-0 ${
+                          isSelected ? 'text-blue-600' : 'text-slate-400'
+                        }`}
+                      />
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold truncate">{tpl.title}</div>
+                        <div className="text-[9.5px] text-slate-400 truncate">
+                          {tpl.categoryLabel} &bull; {tplDef.slots.length} Slot
+                          {hasListSlot ? ' (Komisyon)' : ''}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {directConf ? (
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">
-                        Özel
-                      </span>
-                    ) : (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
-                        Genel
-                      </span>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {directConf ? (
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300">
+                          Özel
+                        </span>
+                      ) : (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                          Genel
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ORTA PANEL: Seçili Şablon İçin Dinamik Slot & Görevli Düzenleyici */}
         <div
@@ -770,6 +862,37 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
             showPreview ? 'w-[420px] lg:w-[460px] xl:w-[490px] shrink-0' : 'flex-1 min-w-0'
           } flex flex-col min-h-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs transition-all`}
         >
+          {/* Sol Panel Daraltıldığında Üstte Görünen Hızlı Seçim Barı */}
+          {isSidebarCollapsed && (
+            <div className="px-3 py-2 border-b border-purple-100 dark:border-purple-900/40 bg-purple-50/50 dark:bg-purple-950/30 flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed(false)}
+                title="Şablon listesini aç (Genişlet)"
+                className="p-1.5 rounded-lg text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 cursor-pointer transition-colors"
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+              </button>
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 shrink-0">
+                Şablon Seçimi:
+              </span>
+              <select
+                value={selectedTemplateId}
+                onChange={(e) => setSelectedTemplateId(e.target.value)}
+                className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-hidden focus:border-purple-500 cursor-pointer"
+              >
+                <option value={GLOBAL_ROTA_KEY}>🌐 Genel Varsayılan Rota (Tüm Belgeler)</option>
+                <optgroup label="Tüm Belge Şablonları">
+                  {TEMPLATE_OPTIONS.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.title}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+          )}
+
           {/* Üst Başlık ve Kaydet Aksiyonları */}
           <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 bg-slate-50/50 dark:bg-slate-950/40 shrink-0">
             <div className="min-w-0">

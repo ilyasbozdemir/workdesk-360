@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { AlertCircle, Coins } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Coins } from 'lucide-react'
 import { TeklifMatrisiProps, FirmBasedEntryView, TableView } from './TeklifMatrisi/index'
 
 export type { TeklifMatrisiProps }
@@ -77,22 +77,36 @@ export const TeklifMatrisi: React.FC<TeklifMatrisiProps> = ({
         </div>
       </div>
 
-      {invitedFirms.some((f) => !f.teklif_toplami || f.teklif_toplami === 0) && (
-        <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl p-3 px-4 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-300 font-medium">
+      {invitedFirms.some((f) => !f.teklif_toplami || f.teklif_toplami === 0) ? (
+        <div
+          className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl p-3 px-4 flex items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-300 font-medium"
+          title="Fiyat Girişi: İhtiyaç kalemlerinin karşısına firmaların birim fiyatları girildikçe teklif tutarı 0,00 ₺'nin üzerine çıkan firmalar otomatik 'Teklif Veren Firma' statüsüne geçer."
+        >
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
             <span>
-              <strong>Fiyat Girişi Devam Ediyor:</strong> Davet edilen bazı firmaların (Örn:{' '}
+              <strong>Fiyat Girişi &amp; Teklif Veren Statüsü:</strong> Davet edilen bazı firmaların (Örn:{' '}
               {invitedFirms
                 .filter((f) => !f.teklif_toplami)
                 .map((f) => f.unvan)
                 .join(', ')}
-              ) henüz teklif fiyatları girilmedi. Tüm fiyatlar girildikten sonra kazanan firma
-              netleşecektir.
+              ) henüz teklif fiyatları girilmedi. İlgili firmanın satırına birim fiyatlar girilip teklif tutarı 0,00 ₺&apos;nin üzerine çıktığı anda program o firmayı otomatik olarak <strong>&quot;Teklif Veren Firma&quot;</strong> statüsüne geçirecektir.
             </span>
           </div>
         </div>
-      )}
+      ) : invitedFirms.length > 0 ? (
+        <div
+          className="bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-xl p-2.5 px-4 flex items-center justify-between gap-3 text-xs text-emerald-900 dark:text-emerald-300 font-medium"
+          title="Tüm firmaların teklif tutarları 0,00 ₺'nin üzerinde olup Teklif Veren Firma statüsü tamamlanmıştır."
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>
+              <strong>Tam Katılım:</strong> Davet edilen {invitedFirms.length} firmanın tamamı için fiyat girişi yapılmış olup tümü <strong>Teklif Veren Firma</strong> statüsündedir.
+            </span>
+          </div>
+        </div>
+      ) : null}
 
       {activeView === 'firm' && invitedFirms.length > 0 && selectedFirmId !== null ? (
         <FirmBasedEntryView

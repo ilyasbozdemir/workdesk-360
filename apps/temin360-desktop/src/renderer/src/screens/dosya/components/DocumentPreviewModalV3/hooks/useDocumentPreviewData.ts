@@ -389,6 +389,16 @@ export function useDocumentPreviewData({
                 sunulacakMakamAdi: conf.sunulacakMakamAdi,
                 sunulacakMakam: conf.sunulacakMakamAdi
               }
+            : {}),
+          ...(conf.olurYazisi !== undefined ? { olurYazisi: conf.olurYazisi } : {}),
+          ...(Array.isArray(conf.komisyonUyeleri) && conf.komisyonUyeleri.length > 0
+            ? {
+                komisyonUyeleri: conf.komisyonUyeleri,
+                fiyatKomisyonu: conf.komisyonUyeleri,
+                gorevlendirilenler: conf.komisyonUyeleri,
+                gorevliler: conf.komisyonUyeleri,
+                dagitimListesi: conf.komisyonUyeleri
+              }
             : {})
         }
         return applyDefaultRotaToFormData(nextBase, targetTpl, activeDosyaId)

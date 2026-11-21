@@ -1,6 +1,6 @@
 {
   "name": "temin360-desktop",
-  "version": "1.0.0-rc.23",
+  "version": "1.0.0-rc.37",
   "engines": {
     "node": ">=22.5.0"
   },
@@ -13,6 +13,7 @@
     "test:electron": "node scripts/test-electron.js run",
     "test:watch": "vitest",
     "test:e2e": "node scripts/generate-e2e-test-file.js && playwright test",
+    "test:e2e:build": "pnpm --filter @dt/database build && electron-vite build && node scripts/generate-e2e-test-file.js && playwright test",
     "analyze": "node ../../scripts/analyze-codebase.mjs",
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -63,6 +64,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@temin360/contracts": "workspace:*",
     "@temin360/document-templates": "workspace:*",
+    "@temin360/temin-direct": "workspace:*",
     "@tiptap/extension-table": "^3.26.0",
     "@tiptap/extension-table-cell": "^3.26.0",
     "@tiptap/extension-table-header": "^3.26.0",

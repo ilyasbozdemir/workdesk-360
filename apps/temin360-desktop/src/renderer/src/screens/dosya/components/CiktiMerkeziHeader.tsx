@@ -1,5 +1,7 @@
 import React from 'react'
-import { Columns3, LayoutList, Layers, RefreshCw } from 'lucide-react'
+import { Columns3, LayoutList, Layers, RefreshCw, Files } from 'lucide-react'
+import { Link } from '@tanstack/react-router'
+import { APP_ROUTES } from '@renderer/constants/routeConstants'
 
 export type BelgeViewMode = 'list' | 'kanban'
 
@@ -64,6 +66,15 @@ export function CiktiMerkeziHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        <Link
+          to={APP_ROUTES.DOSYA_EVRAK_AKISI as never}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          title="Dosya Evrak Akışı & Belge İnceleme Ekranına Git"
+        >
+          <Files size={13} />
+          <span>Evrak İnceleme Ekranı</span>
+        </Link>
+
         <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg text-slate-600 dark:text-slate-400 font-semibold">
           {selectedCount} Seçili
         </span>

@@ -105,6 +105,33 @@ function loadWorkspacePackages(root) {
   return packages
 }
 
+function isPackageRelatedToApp(depName, appName) {
+  if (depName === appName) return true
+
+  // Ortak monorepo platform motorları genel altyapıdır, tekil app kapsamına dahil edilmez
+  const SHARED_PLATFORM_PACKAGES = new Set([
+    '@worksuite-360/document-engine',
+    '@workdesk-360/workflow-engine',
+    '@worksuite-360/contracts'
+  ])
+  if (SHARED_PLATFORM_PACKAGES.has(depName)) return false
+
+  // App temel adını çıkar (örn: "temin360-desktop" -> "temin360", "personel360-desktop" -> "personel360")
+  const cleanApp = appName.replace(/-(desktop|tauri|web|electron|app)$/, '')
+
+  // Temin 360 için doğrudan temin (@dt/*) ve @temin360/* paketleri ilgilidir
+  if (cleanApp.includes('temin') || cleanApp === 'app') {
+    if (depName.startsWith('@temin360/') || depName.startsWith('temin360')) return true
+    if (depName.startsWith('@dt/') || depName.startsWith('dt-')) return true
+    return false
+  }
+
+  // Diğer uygulamalar için ilgili domain/namespace kontrolü
+  if (depName.startsWith(`@${cleanApp}/`) || depName.startsWith(cleanApp)) return true
+
+  return false
+}
+
 function resolvePackages(scope, root, currentAppDir = appDir) {
   if (!root) {
     if (scope !== 'app')
@@ -126,6 +153,7 @@ function resolvePackages(scope, root, currentAppDir = appDir) {
   while (queue.length) {
     const current = queue.shift()
     for (const depName of current.workspaceDeps) {
+      if (!isPackageRelatedToApp(depName, app.name)) continue
       const dep = byName.get(depName)
       if (dep && !seen.has(dep.name)) {
         seen.add(dep.name)
@@ -552,6 +580,7 @@ module.exports = {
   expandPattern,
   loadWorkspacePackages,
   resolvePackages,
+  isPackageRelatedToApp,
   sourceDirOf,
   getFileLines,
   isTestFile,

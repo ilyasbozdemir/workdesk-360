@@ -73,6 +73,21 @@ export function getDogrudanTeminMenus(
                 onClick: (): Promise<void> => navigate({ to: APP_ROUTES.TAKIP })
               },
               {
+                label: '📂 Evrak Akışı & Belge İnceleme',
+                onClick: async (): Promise<void> => {
+                  window.dispatchEvent(
+                    new CustomEvent('takip:view-mode-changed', {
+                      detail: {
+                        mode: 'detay',
+                        dosyaId: activeDosyaId,
+                        tab: 'evraklar'
+                      }
+                    })
+                  )
+                  await navigate({ to: APP_ROUTES.TAKIP })
+                }
+              },
+              {
                 label: '📋 Bu Dosyaya Bağlı İhtiyaç Raporları',
                 onClick: (): Promise<void> =>
                   navigate({
@@ -172,7 +187,7 @@ export function getFinanceMenus(navigate: NavigateFn): HeaderMenu[] {
       onClick: (): Promise<void> => navigate({ to: APP_ROUTES.BKMYBS_MALI_YONETIM }),
       items: [
         {
-          label: '🏛️ 5018 Mali Yönetim Masası (Genel Bakış)',
+          label: '🏛️ 5018 Mali Yönetim Masası (Beta)',
           route: APP_ROUTES.BKMYBS_MALI_YONETIM,
           onClick: (): Promise<void> => navigate({ to: APP_ROUTES.BKMYBS_MALI_YONETIM })
         },
