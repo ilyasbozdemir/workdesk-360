@@ -142,9 +142,9 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
       )}
     >
       {/* ── ÜST ARAÇ ÇUBUĞU (TOOLBAR) ── */}
-      <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-2.5 flex items-center justify-between gap-3 shadow-2xs z-20 shrink-0">
+      <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-2 flex items-center justify-between gap-3 shadow-2xs z-20 shrink-0 min-h-[52px]">
         {/* Sol: Belge Başlığı & Rozet */}
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1 max-w-sm sm:max-w-md lg:max-w-xl">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">
@@ -163,59 +163,59 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
               </span>
             </div>
 
-            <h2 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 truncate">
+            <h2 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 truncate mt-0.5" title={selectedEvrak.title}>
               {selectedEvrak.title}
             </h2>
           </div>
         </div>
 
-        {/* Orta: Belge Navigasyonu (Önceki / Sonraki Belge) */}
-        <div className="hidden md:flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs font-bold">
-          <button
-            type="button"
-            disabled={!hasPrev}
-            onClick={onPrevDoc}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
-            title="Önceki Belgeye Geç (Klavye: Sol Ok / Yukarı Ok)"
-          >
-            <ArrowLeft size={13} />
-            <span className="hidden lg:inline">Önceki</span>
-          </button>
+        {/* Sağ: Gruplanmış Araçlar ve Aksiyonlar */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* 1. Belge Navigasyonu (Önceki / Sonraki) */}
+          <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/90 dark:bg-slate-850 p-0.5 text-xs font-bold shrink-0 shadow-2xs">
+            <button
+              type="button"
+              disabled={!hasPrev}
+              onClick={onPrevDoc}
+              className="h-7 px-2 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-750 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+              title="Önceki Belge (Sol Ok)"
+            >
+              <ArrowLeft size={13} />
+              <span className="hidden xl:inline text-[11px]">Önceki</span>
+            </button>
 
-          <span className="px-2 text-[11px] font-mono font-bold text-slate-500">
-            {currentIndex + 1} / {totalCount}
-          </span>
+            <span className="px-2 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 select-none">
+              {currentIndex + 1} <span className="text-slate-400">/</span> {totalCount}
+            </span>
 
-          <button
-            type="button"
-            disabled={!hasNext}
-            onClick={onNextDoc}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all"
-            title="Sonraki Belgeye Geç (Klavye: Sağ Ok / Aşağı Ok)"
-          >
-            <span className="hidden lg:inline">Sonraki</span>
-            <ArrowRight size={13} />
-          </button>
-        </div>
+            <button
+              type="button"
+              disabled={!hasNext}
+              onClick={onNextDoc}
+              className="h-7 px-2 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-750 disabled:opacity-30 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+              title="Sonraki Belge (Sağ Ok)"
+            >
+              <span className="hidden xl:inline text-[11px]">Sonraki</span>
+              <ArrowRight size={13} />
+            </button>
+          </div>
 
-        {/* Sağ: Görünüm Modu, Zoom ve Aksiyonlar */}
-        <div className="flex items-center gap-2">
-          {/* İmzalı Nüsha vs Taslak Şablon Seçici */}
+          {/* 2. İmzalı Nüsha vs Sistem Şablonu Seçici */}
           {selectedEvrak.matchedSignedDoc
             ? (
-              <div className="inline-flex items-center p-0.5 bg-emerald-50/80 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 text-xs font-bold">
+              <div className="inline-flex items-center rounded-xl border border-emerald-300/80 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 p-0.5 text-xs font-bold shrink-0 shadow-2xs">
                 <button
                   type="button"
                   onClick={() => onVariantChange?.("template")}
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer",
+                    "h-7 px-2.5 rounded-lg transition-all flex items-center gap-1 text-[11px] cursor-pointer",
                     activeViewVariant === "template"
                       ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200",
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400",
                   )}
-                  title="Sistem tarafından otomatik üretilen şablon önizlemesi"
+                  title="Sistem tarafından otomatik üretilen şablon"
                 >
-                  <FileCode2 size={12} />
+                  <FileCode2 size={13} />
                   <span>Sistem Şablonu</span>
                 </button>
 
@@ -223,19 +223,15 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
                   type="button"
                   onClick={() => onVariantChange?.("signed")}
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer",
+                    "h-7 px-2.5 rounded-lg transition-all flex items-center gap-1 text-[11px] cursor-pointer",
                     activeViewVariant === "signed"
                       ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-300 shadow-2xs font-extrabold"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200",
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400",
                   )}
-                  title="Taranarak yüklenmiş ıslak imzalı PDF kopyası"
+                  title="Islak imzalı taranmış PDF nüshası"
                 >
-                  <CheckCircle2 size={12} className="text-emerald-500" />
-                  <span>
-                    İmzalı Nüsha {selectedEvrak.matchedSignedDoc.sayfaAraligi
-                      ? `(${selectedEvrak.matchedSignedDoc.sayfaAraligi})`
-                      : '(PDF)'}
-                  </span>
+                  <CheckCircle2 size={13} className="text-emerald-500" />
+                  <span>İmzalı Nüsha</span>
                 </button>
               </div>
             )
@@ -243,32 +239,31 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
             ? (
               <button
                 type="button"
-                onClick={() =>
-                  onUploadSignedDocForSelected?.(selectedEvrak.code)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/60 dark:text-slate-300 dark:hover:text-emerald-300 border border-slate-200 hover:border-emerald-300 dark:border-slate-700 dark:hover:border-emerald-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-                title="Bu belge için ıslak imzalı taranmış PDF nüshası yükleyin ve eşleştirin"
+                onClick={() => onUploadSignedDocForSelected?.(selectedEvrak.code)}
+                className="h-8 inline-flex items-center gap-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/60 dark:text-slate-300 dark:hover:text-emerald-300 border border-slate-200 hover:border-emerald-300 dark:border-slate-700 dark:hover:border-emerald-700 text-xs font-bold transition-all shadow-2xs cursor-pointer shrink-0"
+                title="Bu belge için ıslak imzalı taranmış PDF nüshası yükleyin"
               >
-                <Upload size={12} />
-                <span className="hidden xl:inline">+ İmzalı Nüsha Eşle</span>
+                <Upload size={13} />
+                <span className="hidden xl:inline">+ İmzalı Nüsha</span>
               </button>
             )
             : null}
 
-          {/* Şablon Belgesi İçin Canlı Tuval vs PDF Seçici */}
+          {/* 3. Canlı A4 vs Gerçek PDF Seçici */}
           {isTemplate && activeViewVariant !== "signed" && (
-            <div className="hidden sm:inline-flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
+            <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/90 dark:bg-slate-850 p-0.5 text-xs font-bold shrink-0 shadow-2xs">
               <button
                 type="button"
                 onClick={() => onViewModeChange("canvas")}
                 className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer",
+                  "h-7 px-2.5 rounded-lg transition-all flex items-center gap-1 text-[11px] cursor-pointer",
                   viewMode === "canvas"
-                    ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200",
+                    ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400",
                 )}
-                title="A4 Canlı Şablon Önizleme Modu"
+                title="A4 Canlı Tuval Modu"
               >
-                <FileCode2 size={12} />
+                <FileCode2 size={13} />
                 <span>Canlı A4</span>
               </button>
 
@@ -283,30 +278,27 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
                 }}
                 disabled={pdfGenerating}
                 className={cn(
-                  "flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer",
+                  "h-7 px-2.5 rounded-lg transition-all flex items-center gap-1 text-[11px] cursor-pointer",
                   viewMode === "pdf"
-                    ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200",
+                    ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400",
                 )}
                 title="Baskı Uyumlu Gerçek PDF Önizleme Modu"
               >
                 {pdfGenerating
-                  ? <Loader2 size={12} className="animate-spin text-blue-500" />
-                  : <Eye size={12} />}
+                  ? <Loader2 size={13} className="animate-spin text-blue-500" />
+                  : <Eye size={13} />}
                 <span>Gerçek PDF</span>
               </button>
             </div>
           )}
 
-          {/* Zoom Kontrolleri */}
-          <div className="hidden sm:inline-flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
+          {/* 4. Zoom Kontrolleri */}
+          <div className="hidden lg:inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/90 dark:bg-slate-850 p-0.5 text-xs font-bold shrink-0 shadow-2xs">
             <button
               type="button"
-              onClick={() =>
-                onScaleChange(
-                  Math.max(0.5, Number((previewScale - 0.1).toFixed(2))),
-                )}
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              onClick={() => onScaleChange(Math.max(0.5, Number((previewScale - 0.1).toFixed(2))))}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Küçült (-)"
             >
               <ZoomOut size={13} />
@@ -322,94 +314,44 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
 
             <button
               type="button"
-              onClick={() =>
-                onScaleChange(
-                  Math.min(1.75, Number((previewScale + 0.1).toFixed(2))),
-                )}
-              className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              onClick={() => onScaleChange(Math.min(1.75, Number((previewScale + 0.1).toFixed(2))))}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Büyüt (+)"
             >
               <ZoomIn size={13} />
             </button>
-
-            <button
-              type="button"
-              onClick={() => onScaleChange(1.0)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
-              title="Sıfırla"
-            >
-              <RotateCcw size={11} />
-            </button>
           </div>
 
-          {/* Kopya Sayısı Ayarı */}
-          <div
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300"
-            title="Yazdırma & Evrak Kopya Sayısı (Asıl + Nüsha Adedi)"
+          {/* 5. Şablonda Düzenle Butonu */}
+          {isTemplate && onOpenModalPreview && (
+            <button
+              type="button"
+              onClick={onOpenModalPreview}
+              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 transition-all cursor-pointer shadow-2xs text-xs font-bold shrink-0"
+              title="Belgeyi Şablon Düzenleme Modalında Aç (Makam, Ekler, Rota düzenle)"
+            >
+              <FileEdit size={13} />
+              <span className="hidden xl:inline">Şablonda Düzenle</span>
+            </button>
+          )}
+
+          {/* 6. Birincil Aksiyon: Yazdır Butonu */}
+          <button
+            type="button"
+            onClick={onPrint}
+            className="h-8 inline-flex items-center gap-1.5 px-3.5 rounded-xl border border-blue-500 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white transition-all cursor-pointer shadow-xs text-xs font-bold shrink-0"
+            title="Yazdır (Baskı Masası & Yazıcı Seçimi)"
           >
-            <Copy size={12} className="text-slate-400" />
-            <span className="text-[11px] font-semibold text-slate-500">
-              Kopya:
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={copyCount <= 1}
-                onClick={() => onCopyCountChange &&
-                  onCopyCountChange(Math.max(1, copyCount - 1))}
-                className="w-4 h-4 flex items-center justify-center rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer text-xs font-bold transition-colors"
-                title="Kopya sayısını azalt"
-              >
-                -
-              </button>
-              <span className="w-4 text-center font-mono font-black text-blue-600 dark:text-blue-400 text-xs">
-                {copyCount}
-              </span>
-              <button
-                type="button"
-                disabled={copyCount >= 10}
-                onClick={() =>
-                  onCopyCountChange &&
-                  onCopyCountChange(Math.min(10, copyCount + 1))}
-                className="w-4 h-4 flex items-center justify-center rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer text-xs font-bold transition-colors"
-                title="Kopya sayısını artır"
-              >
-                +
-              </button>
-            </div>
-            <span className="text-[10px] text-slate-400 font-normal">
-              Nüsha
-            </span>
-          </div>
+            <Printer size={13} />
+            <span>Yazdır</span>
+          </button>
 
-          {/* Dışa Aktar & Yazdır Aksiyonları */}
-          <div className="flex items-center gap-1">
-            {isTemplate && onOpenModalPreview && (
-              <button
-                type="button"
-                onClick={onOpenModalPreview}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/60 dark:text-indigo-300 transition-all cursor-pointer shadow-2xs text-xs font-bold"
-                title="Belgeyi Şablon Düzenleme Modalında Aç (Makam, Ekler, Rota düzenle)"
-              >
-                <FileEdit size={13} />
-                <span className="hidden lg:inline">Şablonda Düzenle</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={onPrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 dark:text-blue-300 transition-all cursor-pointer shadow-2xs text-xs font-bold"
-              title={`Belgeyi ${copyCount} Kopya Olarak Yazdır (Ctrl+P)`}
-            >
-              <Printer size={13} />
-              <span>Yazdır {copyCount > 1 ? `(${copyCount} Kopya)` : ""}</span>
-            </button>
-
+          {/* 7. Yardımcı İkon Grubu: İndir / Harici Aç / Tam Ekran */}
+          <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs divide-x divide-slate-100 dark:divide-slate-800 h-8 shrink-0">
             <button
               type="button"
               onClick={onExportPdf}
-              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-2xs"
+              className="w-8 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="PDF Olarak Bilgisayara İndir / Kaydet"
             >
               <Download size={14} />
@@ -418,7 +360,7 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
             <button
               type="button"
               onClick={onOpenExternal}
-              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-2xs"
+              className="w-8 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               title="Harici Sistem PDF Okuyucusunda Aç (Acrobat vb.)"
             >
               <ExternalLink size={14} />
@@ -427,10 +369,8 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
             <button
               type="button"
               onClick={onToggleFullscreen}
-              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-2xs"
-              title={isFullscreen
-                ? "Tam Ekrandan Çık (Esc)"
-                : "Tam Ekran Belge İnceleme"}
+              className="w-8 h-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              title={isFullscreen ? "Tam Ekrandan Çık (Esc)" : "Tam Ekran Belge İnceleme"}
             >
               {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>

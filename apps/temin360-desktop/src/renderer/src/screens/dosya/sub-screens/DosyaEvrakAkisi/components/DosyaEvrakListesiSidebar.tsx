@@ -190,7 +190,7 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
           </div>
 
           {/* Aşama Filtre Hapları */}
-          <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-1 text-[11px] font-bold">
+          <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar pb-0.5 text-[10px] font-bold">
             {STAGE_FILTERS.map((f) => {
               const isActive = stageFilter === f.key;
               return (
@@ -199,7 +199,7 @@ export const DosyaEvrakListesiSidebar: React.FC<DosyaEvrakListesiSidebarProps> =
                   type="button"
                   onClick={() => onStageFilterChange(f.key)}
                   className={cn(
-                    "px-2.5 py-1 rounded-lg whitespace-nowrap transition-all cursor-pointer",
+                    "px-2 py-1 rounded-lg whitespace-nowrap transition-all cursor-pointer",
                     isActive
                       ? "bg-blue-600 text-white shadow-2xs font-extrabold"
                       : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-750",

@@ -97,17 +97,21 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
         </div>
 
         {/* Sağ Taraf: Birim, Maliyet & İstatistik Rozetleri */}
-        <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap justify-between lg:justify-end">
+        <div className="flex items-center gap-2.5 flex-wrap lg:flex-nowrap justify-between lg:justify-end shrink-0">
           {dosyaInfo && (
-            <div className="hidden sm:flex items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400 divide-x divide-slate-200 dark:divide-slate-800">
-              <div className="flex items-center gap-1.5">
-                <Building2 size={13} className="text-slate-400" />
-                <span className="font-semibold text-slate-700 dark:text-slate-300">
-                  {dosyaInfo.harcamaBirimi}
-                </span>
-              </div>
+            <div className="hidden sm:flex items-center gap-3 text-xs font-medium text-slate-500 dark:text-slate-400 divide-x divide-slate-200 dark:divide-slate-800">
+              {dosyaInfo.harcamaBirimi && (
+                <div className="flex items-center gap-1.5" title="Harcama Birimi">
+                  <Building2 size={13} className="text-slate-400" />
+                  <span className="font-bold text-slate-700 dark:text-slate-300">
+                    {/^\d+$/.test(String(dosyaInfo.harcamaBirimi).trim())
+                      ? `Birim #${dosyaInfo.harcamaBirimi}`
+                      : dosyaInfo.harcamaBirimi}
+                  </span>
+                </div>
+              )}
 
-              <div className="pl-4 flex items-center gap-1.5">
+              <div className="pl-3 flex items-center gap-1.5">
                 <Coins size={13} className="text-emerald-500" />
                 <span className="text-slate-400 text-[11px]">Bedel:</span>
                 <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
@@ -117,32 +121,32 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
             </div>
           )}
 
-          {/* Sayaç Rozetleri */}
+          {/* Sayaç Rozetleri & Yenile Butonu (Standart h-8) */}
           <div className="flex items-center gap-1.5 text-[11px] font-bold">
             <span
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700"
+              className="h-8 inline-flex items-center gap-1.5 px-3 rounded-xl bg-slate-100/90 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 shadow-2xs"
               title="Dosyadaki toplam evrak sayısı"
             >
-              <FileText size={12} className="text-slate-400" />
+              <FileText size={13} className="text-slate-400" />
               <span>{evraklar.length} Belge</span>
             </span>
 
             {readyCount > 0 && (
               <span
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                className="h-8 inline-flex items-center gap-1.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs"
                 title="Verileri hazırlanmış ve onaylanmış belgeler"
               >
-                <CheckCircle2 size={12} className="text-blue-500" />
+                <CheckCircle2 size={13} className="text-blue-500" />
                 <span>{readyCount} Hazır</span>
               </span>
             )}
 
             {signedCount > 0 && (
               <span
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                className="h-8 inline-flex items-center gap-1.5 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shadow-2xs"
                 title="Taranmış veya ıslak imzalı yüklenen belgeler"
               >
-                <FileCheck size={12} className="text-emerald-500" />
+                <FileCheck size={13} className="text-emerald-500" />
                 <span>{signedCount} İmzalı</span>
               </span>
             )}
@@ -151,7 +155,7 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
               type="button"
               onClick={onRefresh}
               disabled={loading}
-              className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-2xs disabled:opacity-50"
+              className="w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all cursor-pointer shadow-2xs disabled:opacity-50 shrink-0"
               title="Dosya evraklarını ve veritabanı snapshotlarını yenile"
             >
               <RefreshCw size={13} className={loading ? 'animate-spin text-blue-500' : ''} />
