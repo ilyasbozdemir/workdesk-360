@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRequire } from 'node:module'
-import { composeDirectProcurement } from '@temin360/temin-direct'
+import { composeDirectProcurement } from '@temin360/direct-procurement-core'
 import { MainSqlExecutor, type MainDb, type WorkspaceLike } from '../MainSqlExecutor'
 
 // node:sqlite (Node 22+) bazı vitest sürümlerinde doğrudan import edilemez; require ile yüklenir.
@@ -96,7 +96,7 @@ describe('MainSqlExecutor', () => {
   })
 })
 
-describe('temin-direct ile uçtan uca (MainSqlExecutor üzerinden)', () => {
+describe('direct-procurement-core ile uçtan uca (MainSqlExecutor üzerinden)', () => {
   it('teklif girişi: yazılır, tablo bazında bildirilir, çalışma dosyası kaydedilir', async () => {
     db.exec(`
       INSERT INTO DATA_TeminDosyasi (id, konu, dosya_acilis_tarihi, ihale_tipi) VALUES (348, 'Yedek parça', '2026-11-17', 'Doğrudan Temin');

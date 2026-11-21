@@ -1,4 +1,4 @@
-import type { SqlExecutor, SqlStatement } from '@temin360/temin-direct'
+import type { SqlExecutor, SqlStatement } from '@temin360/direct-procurement-core'
 import { handleDbTransaction, type SqliteDatabaseLike } from '../ipc/db/dbTransaction'
 import { assertReadOnlyQuery, validateSqlQuery } from '../ipc/utils/sqlGuard'
 
@@ -21,7 +21,7 @@ export interface WorkspaceLike {
 }
 
 /**
- * Main süreçte `temin-direct` için SqlExecutor.
+ * Main süreçte `direct-procurement-core` için SqlExecutor.
  *
  * `db:query` ve `db:transaction` IPC işleyicileriyle AYNI yolu izler:
  *  - her SQL `sqlGuard`'dan geçer (DDL/PRAGMA engeli, okuma sorgusunda yalnızca SELECT),

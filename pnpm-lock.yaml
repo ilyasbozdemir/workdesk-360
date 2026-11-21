@@ -636,9 +636,6 @@ importers:
       '@temin360/document-templates':
         specifier: workspace:*
         version: link:../../packages/document-templates
-      '@temin360/temin-direct':
-        specifier: workspace:*
-        version: link:../../packages/temin-direct
       '@tiptap/extension-table':
         specifier: ^3.26.0
         version: 3.26.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/pm@3.26.0)
@@ -1115,19 +1112,6 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.19.43
-
-  packages/temin-direct:
-    dependencies:
-      '@temin360/direct-procurement-core':
-        specifier: workspace:*
-        version: link:../direct-procurement-core
-      '@temin360/domain':
-        specifier: workspace:*
-        version: link:../domain
-    devDependencies:
-      typescript:
-        specifier: ^5.6.0
-        version: 5.9.3
 
   packages/workflow-engine:
     devDependencies:

@@ -42,7 +42,7 @@ Aynı tutar farklı yerlerde farklı matrahla damga/karar pulu üretir. Karar pu
 4. **Hakediş şablonu**: `digerKesinti1Adi` varsayılanını boş yap veya hesaplanan alandan türet; sabit "İhale Kararı Damga Vergisi" etiketi DT çıktısına sızmasın.
 5. **KDV matrahı tek fonksiyonda**: `kdvHaricMatrah(tutar, tutarKdvDahilMi, kdvOrani)`. 1,2 sabiti ve `brut * 0.2` yerine bunu çağır; "tutar KDV dahil mi" bilgisi parametre olsun (varsayım gizli kalmasın).
 6. **`bkmybsDataService:329`**: kolonu "bayrak" gibi kullanıp yeniden hesaplamak yerine, kayıtlı değeri olduğu gibi kullan.
-7. Son aşamada (isteğe bağlı): bu hesapları `temin-direct`'in `DeductionCalculator`'ına taşı.
+7. Son aşamada (isteğe bağlı): bu hesapları `direct-procurement-core`'un `DeductionCalculator`'ına taşı.
 
 ## 4. Önce yazılacak testler
 - Genel ihale, 180.958 ₺ KDV **dahil**: karar pulu = 858,04 ₺.

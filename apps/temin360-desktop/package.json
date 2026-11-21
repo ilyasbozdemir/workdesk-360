@@ -65,7 +65,6 @@
     "@temin360/contracts": "workspace:*",
     "@temin360/direct-procurement-core": "workspace:*",
     "@temin360/document-templates": "workspace:*",
-    "@temin360/temin-direct": "workspace:*",
     "@tiptap/extension-table": "^3.26.0",
     "@tiptap/extension-table-cell": "^3.26.0",
     "@tiptap/extension-table-header": "^3.26.0",
