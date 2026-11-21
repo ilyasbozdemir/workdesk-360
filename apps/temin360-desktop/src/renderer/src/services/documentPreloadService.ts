@@ -28,6 +28,7 @@ class DocumentPreloadService {
       window.addEventListener('documents:changed', invalidate)
       window.addEventListener('status:changed', invalidate)
       window.addEventListener('workspace:refreshed', invalidate)
+      window.addEventListener('temin360:rota-defaults-updated', invalidate)
 
       if (window.electron?.ipcRenderer) {
         window.electron.ipcRenderer.on('db:invalidated', () => {
@@ -241,6 +242,9 @@ class DocumentPreloadService {
    * Clear all or dossier-specific cache
    */
   public invalidateCache(dosyaId?: number): void {
+    try {
+      InstitutionalHeaderProvider.clearCache()
+    } catch {}
     if (dosyaId) {
       for (const key of Array.from(this.cache.keys())) {
         if (key.startsWith(`${dosyaId}_`)) {

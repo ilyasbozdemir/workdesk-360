@@ -129,7 +129,7 @@ export function useDocumentPreviewData({
     const targetTemplate = tplId || resolvedId || selectedDocId
     const { enrichedData } = resolveTemplateRouteForDocument(targetTemplate, baseData, dId)
     const defaultRotaConf = getRotaConfigForTemplate(targetTemplate, dId)
-    if (defaultRotaConf && enrichedData.olurYazisi === undefined && defaultRotaConf.olurYazisi !== undefined) {
+    if (defaultRotaConf && defaultRotaConf.olurYazisi !== undefined) {
       enrichedData.olurYazisi = defaultRotaConf.olurYazisi
     }
 

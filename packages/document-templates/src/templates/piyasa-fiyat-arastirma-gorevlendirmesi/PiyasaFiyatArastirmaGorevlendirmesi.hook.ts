@@ -29,6 +29,7 @@ export interface UsePiyasaFiyatArastirmaGorevlendirmesiResult {
 export function isExcludedGorevlendirmeOfficer(
   item: any,
   onaylayanAdi?: string,
+  hazirlayanAdi?: string,
 ): boolean {
   if (!item) return true;
   const adSoyad = (
@@ -70,6 +71,12 @@ export function isExcludedGorevlendirmeOfficer(
 
   if (
     onaylayanAdi && adSoyad.toLowerCase() === onaylayanAdi.trim().toLowerCase()
+  ) {
+    return true;
+  }
+
+  if (
+    hazirlayanAdi && adSoyad.toLowerCase() === hazirlayanAdi.trim().toLowerCase()
   ) {
     return true;
   }
@@ -119,9 +126,16 @@ export function usePiyasaFiyatArastirmaGorevlendirmesi(
         "",
     ).trim();
 
+    const hazirlayanAdi = String(
+      data.hazirlayanPersonelAdi || data.hazirlayan || data.gerceklestirmeGorevlisiAdi ||
+        "",
+    ).trim();
+
+    const effectiveHazirlayanForFilter = data.olurYazisi === true ? hazirlayanAdi : undefined;
+
     const gorevlendirilenler: PiyasaOfficerInfo[] = (() => {
       const list = rawList
-        .filter((g) => !isExcludedGorevlendirmeOfficer(g, onaylayanAdi))
+        .filter((g) => !isExcludedGorevlendirmeOfficer(g, onaylayanAdi, effectiveHazirlayanForFilter))
         .map((g: any) => {
           if (typeof g === "string") return { adSoyad: g.trim(), unvan: "" };
           return {
@@ -153,7 +167,7 @@ export function usePiyasaFiyatArastirmaGorevlendirmesi(
             };
           })
           .filter((d: any) =>
-            !isExcludedGorevlendirmeOfficer(d, onaylayanAdi) &&
+            !isExcludedGorevlendirmeOfficer(d, onaylayanAdi, effectiveHazirlayanForFilter) &&
             d.adSoyad.length > 0
           );
 

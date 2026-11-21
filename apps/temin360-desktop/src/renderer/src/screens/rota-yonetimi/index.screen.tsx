@@ -624,7 +624,7 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
             fiyatKomisyonu: configToSave.komisyonUyeleri,
             dagitimListesi: configToSave.komisyonUyeleri
           }
-          await ipc.invoke(
+          const updRes = await ipc.invoke(
             'db:run',
             `UPDATE DATA_TeminBelgeSnapshot 
              SET veri_json = json_patch(COALESCE(veri_json, '{}'), ?),
@@ -647,6 +647,17 @@ export default function RotaYonetimiScreen(): React.JSX.Element {
               `${selectedTemplateId.replace(/-/g, '_')}.html`,
               `${selectedTemplateId.replace(/_/g, '-')}.html`
             ]
+          )
+          if (!updRes?.changes || updRes.changes === 0) {
+            await ipc.invoke(
+              'db:run',
+              `INSERT INTO DATA_TeminBelgeSnapshot (dosya_id, sablon_kodu, veri_json, sablon_versiyon, created_at, updated_at)
+               VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+              [effectiveDosyaId, selectedTemplateId, JSON.stringify(snapshotPatch)]
+            )
+          }
+          window.dispatchEvent(
+            new CustomEvent('documents:changed', { detail: { dosyaId: effectiveDosyaId } })
           )
         }
       } catch (err) {

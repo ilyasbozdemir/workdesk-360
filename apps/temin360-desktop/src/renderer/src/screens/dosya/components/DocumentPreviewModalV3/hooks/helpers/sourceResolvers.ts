@@ -127,12 +127,22 @@ export const dosyaResolver: DocumentResolver = {
           const gorev = String(k.gorev || '').toLowerCase()
           const tur = String(k.komisyon_turu || '').toLowerCase()
           if (isMuayene) return tur.includes('muayene') || tur.includes('kabul')
-          return (
-            !gorev.includes('harcama yetkili') &&
-            !gorev.includes('gerçekleştirme') &&
-            !gorev.includes('gerceklestirme') &&
-            !gorev.includes('muhasebe')
-          )
+          
+          const isHarcamaYetkilisiOrGerceklestirme =
+            gorev.includes('harcama yetkili') ||
+            gorev.includes('gerçekleştirme') ||
+            gorev.includes('gerceklestirme') ||
+            gorev.includes('muhasebe')
+          if (isHarcamaYetkilisiOrGerceklestirme) return false
+
+          // Onaylayan veya Hazırlayan personel listeye dahil edilmez (Rol İzolasyonu)
+          const adSoyad = String(k.resolved_ad_soyad || k.ad_soyad || '').trim().toLowerCase()
+          const onaylayan = String(dataObj.onaylayanPersonelAdi || dataObj.harcamaYetkilisiAdi || '').trim().toLowerCase()
+          const hazirlayan = String(dataObj.hazirlayanPersonelAdi || '').trim().toLowerCase()
+          if (onaylayan && adSoyad === onaylayan) return false
+          if (hazirlayan && adSoyad === hazirlayan) return false
+
+          return true
         })
         .map((k: any) => ({
           adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
