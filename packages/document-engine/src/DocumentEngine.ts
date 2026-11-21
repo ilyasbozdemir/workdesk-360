@@ -315,7 +315,39 @@ export class DocumentEngine {
       forceDefault = false,
       persistIfMissing = false,
     } = params;
-    const canonicalKey = this.resolveKey(templateKey);
+    let canonicalKey: string;
+    try {
+      canonicalKey = this.resolveKey(templateKey);
+    } catch (keyErr) {
+      // Şablon defterde bulunamadı; eğer veritabanında bu şablona ait kayıtlı snapshot varsa onu kurtar
+      const adapter = this.getEffectiveStorageAdapter();
+      if (adapter && !forceDefault) {
+        const fallbackKey = TemplateRegistry.normalizeKey(templateKey);
+        try {
+          const storageRes = await adapter.getDocument({
+            dosyaId,
+            templateKey: fallbackKey,
+          });
+          if (storageRes?.success && storageRes.exists && storageRes.record) {
+            console.warn(
+              `[DocumentEngine] "${templateKey}" için kayıtlı bir şablon bulunamadı, mevcut veritabanı snapshot'ı kullanılıyor.`,
+            );
+            return {
+              id: storageRes.record.id,
+              dosyaId,
+              templateKey: fallbackKey,
+              data: storageRes.record.data as T,
+              sablonVersiyon: storageRes.record.sablonVersiyon || 1,
+              createdAt: storageRes.record.createdAt,
+              updatedAt: storageRes.record.updatedAt,
+              isExisting: true,
+              headerData: {} as THeader,
+            };
+          }
+        } catch {}
+      }
+      throw keyErr;
+    }
     const headerContext: DocumentHeaderContext = {
       dosyaId,
       documentId: documentId ?? dosyaId,

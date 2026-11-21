@@ -1,17 +1,17 @@
-import { DocumentDefinition, InstitutionalHeaderData } from './types/contracts'
+import { DocumentDefinition, InstitutionalHeaderData } from "./types/contracts";
 
 /**
  * Mükerrer Şablon Kayıt Hatası
  */
 export class DuplicateTemplateRegistrationError extends Error {
-  readonly templateKey: string
+  readonly templateKey: string;
 
   constructor(templateKey: string) {
     super(
-      `Şablon zaten kayıtlı: "${templateKey}". Aynı anahtarla mükerrer kayıt yapılamaz. Yeniden yazmak için { allowOverride: true } seçeneğini kullanınız.`
-    )
-    this.name = 'DuplicateTemplateRegistrationError'
-    this.templateKey = templateKey
+      `Şablon zaten kayıtlı: "${templateKey}". Aynı anahtarla mükerrer kayıt yapılamaz. Yeniden yazmak için { allowOverride: true } seçeneğini kullanınız.`,
+    );
+    this.name = "DuplicateTemplateRegistrationError";
+    this.templateKey = templateKey;
   }
 }
 
@@ -19,12 +19,14 @@ export class DuplicateTemplateRegistrationError extends Error {
  * Geçersiz veya Bilinmeyen Şablon Hatası
  */
 export class InvalidTemplateKeyError extends Error {
-  readonly templateKey: string
+  readonly templateKey: string;
 
   constructor(templateKey: string) {
-    super(`Bilinmeyen veya geçersiz şablon kimliği: "${templateKey}". Kayıtlı bir şablon bulunamadı.`)
-    this.name = 'InvalidTemplateKeyError'
-    this.templateKey = templateKey
+    super(
+      `Bilinmeyen veya geçersiz şablon kimliği: "${templateKey}". Kayıtlı bir şablon bulunamadı.`,
+    );
+    this.name = "InvalidTemplateKeyError";
+    this.templateKey = templateKey;
   }
 }
 
@@ -36,7 +38,7 @@ export interface RegisterOptions {
    * Zaten kayıtlı bir şablon anahtarı varsa üzerine yazmaya izin verir.
    * Varsayılan: false (DuplicateTemplateRegistrationError fırlatılır).
    */
-  allowOverride?: boolean
+  allowOverride?: boolean;
 }
 
 /**
@@ -47,18 +49,33 @@ export interface RegisterOptions {
  * - Aynı anahtarla mükerrer kayıt yapılmasını varsayılan olarak engeller.
  */
 export class TemplateRegistry {
-  private definitions = new Map<string, DocumentDefinition<any>>()
+  private definitions = new Map<string, DocumentDefinition<any>>();
+
+  /**
+   * Eski sürümlerden kalan veya yeniden adlandırılmış şablonlar için otomatik geriye dönük uyumluluk tablosu
+   */
+  private static readonly LEGACY_ALIASES: Record<string, string> = {
+    hakedis_raporu: "muayene-kabul-tutanagi",
+    "hakedis-raporu": "muayene-kabul-tutanagi",
+    hakedis: "muayene-kabul-tutanagi",
+    hakedis_ozeti: "muayene-kabul-tutanagi",
+    "hakedis-ozeti": "muayene-kabul-tutanagi",
+    hakedis_kapak: "muayene-kabul-tutanagi",
+    "hakedis-kapak": "muayene-kabul-tutanagi",
+    hakedis_icmal: "muayene-kabul-tutanagi",
+    "hakedis-icmal": "muayene-kabul-tutanagi",
+  };
 
   /**
    * Şablon anahtarlarını kanonik formata normalize eder (.html silinir, kırpılır, küçük harfe dönüştürülür).
    */
   static normalizeKey(key: string): string {
-    if (!key || typeof key !== 'string') return ''
+    if (!key || typeof key !== "string") return "";
     return key
       .trim()
       .toLowerCase()
-      .replace(/\.html$/i, '')
-      .replace(/\.mustache$/i, '')
+      .replace(/\.html$/i, "")
+      .replace(/\.mustache$/i, "");
   }
 
   /**
@@ -70,28 +87,31 @@ export class TemplateRegistry {
    *
    * Tekil kayıt sistemidir; mükerrer veya paralel ikinci kayıt defteri oluşturulmamalıdır.
    */
-  register<TData = any>(def: DocumentDefinition<TData>, options: RegisterOptions = {}): void {
+  register<TData = any>(
+    def: DocumentDefinition<TData>,
+    options: RegisterOptions = {},
+  ): void {
     if (!def || !def.templateKey) {
-      throw new Error('Geçersiz şablon tanımı: templateKey zorunludur.')
+      throw new Error("Geçersiz şablon tanımı: templateKey zorunludur.");
     }
 
-    const canonical = TemplateRegistry.normalizeKey(def.templateKey)
+    const canonical = TemplateRegistry.normalizeKey(def.templateKey);
     if (!canonical) {
-      throw new Error(`Geçersiz şablon anahtarı: "${def.templateKey}"`)
+      throw new Error(`Geçersiz şablon anahtarı: "${def.templateKey}"`);
     }
 
     if (this.has(canonical) && !options.allowOverride) {
-      throw new DuplicateTemplateRegistrationError(def.templateKey)
+      throw new DuplicateTemplateRegistrationError(def.templateKey);
     }
 
     // Ana tanımı sakla
-    this.definitions.set(canonical, def)
+    this.definitions.set(canonical, def);
 
     // snake_case ve kebab-case alternatiflerini bağla
-    const snake = canonical.replace(/-/g, '_')
-    const kebab = canonical.replace(/_/g, '-')
-    this.definitions.set(snake, def)
-    this.definitions.set(kebab, def)
+    const snake = canonical.replace(/-/g, "_");
+    const kebab = canonical.replace(/_/g, "-");
+    this.definitions.set(snake, def);
+    this.definitions.set(kebab, def);
   }
 
   /**
@@ -100,20 +120,23 @@ export class TemplateRegistry {
    * Hedef şablon kayıtlı değilse sessizce yok sayılmaz; hata fırlatılır.
    */
   registerAlias(alias: string, targetKey: string): void {
-    const canonicalAlias = TemplateRegistry.normalizeKey(alias)
-    if (!canonicalAlias) return
-    const def = this.get(targetKey)
-    this.definitions.set(canonicalAlias, def)
-    this.definitions.set(canonicalAlias.replace(/-/g, '_'), def)
-    this.definitions.set(canonicalAlias.replace(/_/g, '-'), def)
+    const canonicalAlias = TemplateRegistry.normalizeKey(alias);
+    if (!canonicalAlias) return;
+    const def = this.get(targetKey);
+    this.definitions.set(canonicalAlias, def);
+    this.definitions.set(canonicalAlias.replace(/-/g, "_"), def);
+    this.definitions.set(canonicalAlias.replace(/_/g, "-"), def);
   }
 
   /**
    * Birden fazla belge tanımını topluca kaydeder.
    */
-  registerMany(defs: DocumentDefinition<any>[], options: RegisterOptions = {}): void {
+  registerMany(
+    defs: DocumentDefinition<any>[],
+    options: RegisterOptions = {},
+  ): void {
     for (const def of defs) {
-      this.register(def, options)
+      this.register(def, options);
     }
   }
 
@@ -125,137 +148,170 @@ export class TemplateRegistry {
    * @see packages/document-engine/src/DocumentEngine.ts
    */
   get<TData = any, THeader = InstitutionalHeaderData>(
-    templateKey: string
+    templateKey: string,
   ): DocumentDefinition<TData, THeader> {
-    if (!templateKey || typeof templateKey !== 'string' || templateKey.trim() === '') {
-      throw new InvalidTemplateKeyError(String(templateKey))
+    if (
+      !templateKey || typeof templateKey !== "string" ||
+      templateKey.trim() === ""
+    ) {
+      throw new InvalidTemplateKeyError(String(templateKey));
     }
 
-    const canonical = TemplateRegistry.normalizeKey(templateKey)
-    const found =
-      this.definitions.get(canonical) ||
-      this.definitions.get(canonical.replace(/-/g, '_')) ||
-      this.definitions.get(canonical.replace(/_/g, '-'))
+    const canonical = TemplateRegistry.normalizeKey(templateKey);
+    let found = this.definitions.get(canonical) ||
+      this.definitions.get(canonical.replace(/-/g, "_")) ||
+      this.definitions.get(canonical.replace(/_/g, "-"));
 
     if (!found) {
-      throw new InvalidTemplateKeyError(templateKey)
+      const aliasTarget = TemplateRegistry.LEGACY_ALIASES[canonical];
+      if (aliasTarget) {
+        found = this.definitions.get(aliasTarget) ||
+          this.definitions.get(aliasTarget.replace(/-/g, "_")) ||
+          this.definitions.get(aliasTarget.replace(/_/g, "-"));
+      }
     }
 
-    return found as DocumentDefinition<TData, THeader>
+    if (!found) {
+      throw new InvalidTemplateKeyError(templateKey);
+    }
+
+    return found as DocumentDefinition<TData, THeader>;
   }
 
   /**
    * Belirtilen şablonun kayıtlı olup olmadığını kontrol eder.
    */
   has(templateKey: string): boolean {
-    if (!templateKey || typeof templateKey !== 'string' || templateKey.trim() === '') {
-      return false
+    if (
+      !templateKey || typeof templateKey !== "string" ||
+      templateKey.trim() === ""
+    ) {
+      return false;
     }
 
-    const canonical = TemplateRegistry.normalizeKey(templateKey)
-    return (
+    const canonical = TemplateRegistry.normalizeKey(templateKey);
+    if (
       this.definitions.has(canonical) ||
-      this.definitions.has(canonical.replace(/-/g, '_')) ||
-      this.definitions.has(canonical.replace(/_/g, '-'))
-    )
+      this.definitions.has(canonical.replace(/-/g, "_")) ||
+      this.definitions.has(canonical.replace(/_/g, "-"))
+    ) {
+      return true;
+    }
+
+    const aliasTarget = TemplateRegistry.LEGACY_ALIASES[canonical];
+    if (aliasTarget) {
+      return (
+        this.definitions.has(aliasTarget) ||
+        this.definitions.has(aliasTarget.replace(/-/g, "_")) ||
+        this.definitions.has(aliasTarget.replace(/_/g, "-"))
+      );
+    }
+
+    return false;
   }
 
   /**
    * Kayıtlı tüm tekil belge tanımlarını döner.
    */
   getAll(): DocumentDefinition[] {
-    const unique = new Map<string, DocumentDefinition>()
+    const unique = new Map<string, DocumentDefinition>();
     for (const def of this.definitions.values()) {
-      unique.set(TemplateRegistry.normalizeKey(def.templateKey), def)
+      unique.set(TemplateRegistry.normalizeKey(def.templateKey), def);
     }
-    return Array.from(unique.values())
+    return Array.from(unique.values());
   }
 
   /**
    * Belirtilen şablonu kayıt defterinden kaldırır.
    */
   unregister(templateKey: string): boolean {
-    const canonical = TemplateRegistry.normalizeKey(templateKey)
-    if (!canonical) return false
+    const canonical = TemplateRegistry.normalizeKey(templateKey);
+    if (!canonical) return false;
 
-    const snake = canonical.replace(/-/g, '_')
-    const kebab = canonical.replace(/_/g, '-')
+    const snake = canonical.replace(/-/g, "_");
+    const kebab = canonical.replace(/_/g, "-");
 
-    const had = this.definitions.has(canonical)
-    this.definitions.delete(canonical)
-    this.definitions.delete(snake)
-    this.definitions.delete(kebab)
-    return had
+    const had = this.definitions.has(canonical);
+    this.definitions.delete(canonical);
+    this.definitions.delete(snake);
+    this.definitions.delete(kebab);
+    return had;
   }
 
   /**
    * Kayıt defterini tamamen temizler.
    */
   clear(): void {
-    this.definitions.clear()
+    this.definitions.clear();
   }
 
   // =========================================================================
   // KÜRESEL VARSAYILAN TEKİL ERİŞİM VE GERİYE DÖNÜK UYUMLULUK KÖPRÜSÜ
   // =========================================================================
 
-  private static defaultInstance: TemplateRegistry = new TemplateRegistry()
+  private static defaultInstance: TemplateRegistry = new TemplateRegistry();
 
   /**
    * Küresel varsayılan kayıt defteri örneğini döner.
    */
   static get default(): TemplateRegistry {
-    return this.defaultInstance
+    return this.defaultInstance;
   }
 
   /**
    * Varsayılan kayıt defterine şablon ekler.
    */
-  static register<TData = any>(def: DocumentDefinition<TData>, options?: RegisterOptions): void {
-    this.defaultInstance.register(def, options)
+  static register<TData = any>(
+    def: DocumentDefinition<TData>,
+    options?: RegisterOptions,
+  ): void {
+    this.defaultInstance.register(def, options);
   }
 
   /**
    * Varsayılan kayıt defterine topluca şablon ekler.
    */
-  static registerMany(defs: DocumentDefinition<any>[], options?: RegisterOptions): void {
-    this.defaultInstance.registerMany(defs, options)
+  static registerMany(
+    defs: DocumentDefinition<any>[],
+    options?: RegisterOptions,
+  ): void {
+    this.defaultInstance.registerMany(defs, options);
   }
 
   /**
    * Varsayılan kayıt defterinden şablon çeker.
    */
   static get<TData = any, THeader = InstitutionalHeaderData>(
-    templateKey: string
+    templateKey: string,
   ): DocumentDefinition<TData, THeader> {
-    return this.defaultInstance.get<TData, THeader>(templateKey)
+    return this.defaultInstance.get<TData, THeader>(templateKey);
   }
 
   /**
    * Varsayılan kayıt defterinde şablonun varlığını kontrol eder.
    */
   static has(templateKey: string): boolean {
-    return this.defaultInstance.has(templateKey)
+    return this.defaultInstance.has(templateKey);
   }
 
   /**
    * Varsayılan kayıt defterindeki tüm şablonları döner.
    */
   static getAll(): DocumentDefinition[] {
-    return this.defaultInstance.getAll()
+    return this.defaultInstance.getAll();
   }
 
   /**
    * Varsayılan kayıt defterinden şablon siler.
    */
   static unregister(templateKey: string): boolean {
-    return this.defaultInstance.unregister(templateKey)
+    return this.defaultInstance.unregister(templateKey);
   }
 
   /**
    * Varsayılan kayıt defterini sıfırlar.
    */
   static clear(): void {
-    this.defaultInstance.clear()
+    this.defaultInstance.clear();
   }
 }
