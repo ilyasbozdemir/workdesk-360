@@ -1938,14 +1938,17 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                         <div className="flex items-center gap-2.5 text-[11px] text-slate-500 font-medium flex-wrap">
                           {dosya.kazananFirmaUnvani && (
                             <span
+                              className="flex items-center gap-1 max-w-[280px] sm:max-w-[360px] truncate"
                               className="inline-flex items-center gap-1 max-w-[280px] sm:max-w-[360px] truncate shrink-0"
                               title={`${dosya.kazananFirmaUnvani} (VKN: ${dosya.kazananFirmaVkn || "-"})`}
                             >
                               <Building2 size={12} className="text-slate-400 shrink-0" />
+                              <span className="truncate">{dosya.kazananFirmaUnvani}</span>
                               <span className="truncate max-w-[180px] sm:max-w-[250px] whitespace-nowrap overflow-hidden text-ellipsis">
                                 {dosya.kazananFirmaUnvani}
                               </span>
                               {dosya.kazananFirmaVkn && (
+                                <span className="text-[10px] text-slate-400 shrink-0 font-mono">
                                 <span className="text-[10px] text-slate-400 shrink-0 font-mono whitespace-nowrap">
                                   ({dosya.kazananFirmaVkn})
                                 </span>
@@ -1955,8 +1958,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                           {dosya.harcamaBirimi && (
                             <>
                               <span className="text-slate-300 dark:text-slate-700">•</span>
+                              <span className="flex items-center gap-1 shrink-0">
                               <span className="inline-flex items-center gap-1 shrink-0 whitespace-nowrap">
                                 <Layers size={12} className="text-slate-400 shrink-0" />
+                                <span>{dosya.harcamaBirimi}</span>
                                 <span className="whitespace-nowrap">{dosya.harcamaBirimi}</span>
                               </span>
                             </>
@@ -1964,8 +1969,10 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                           {dosya.olusturmaTarihi && (
                             <>
                               <span className="text-slate-300 dark:text-slate-700">•</span>
+                              <span className="flex items-center gap-1 shrink-0">
                               <span className="inline-flex items-center gap-1 shrink-0 whitespace-nowrap">
                                 <Calendar size={12} className="text-slate-400 shrink-0" />
+                                <span>{formatDate(dosya.olusturmaTarihi)}</span>
                                 <span className="whitespace-nowrap">{formatDate(dosya.olusturmaTarihi)}</span>
                               </span>
                             </>
@@ -1975,11 +1982,15 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                     </div>
 
                     {/* Sağ Taraf: Bedel, Fatura Toplamı ve Butonlar */}
+                    <div className="flex items-center gap-3.5 shrink-0 justify-end pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800/80">
+                      <div className="text-right px-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                     <div className="flex items-center gap-3 shrink-0 justify-end pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800/80 whitespace-nowrap">
                       <div className="text-right px-2 shrink-0">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block whitespace-nowrap">
                           Yaklaşık Maliyet / Bedel
                         </span>
+                        <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-mono">
                         <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 font-mono whitespace-nowrap block">
                           {formatCurrency(
                             dosya.yaklasikMaliyet || dosya.netOdenen,
@@ -1987,10 +1998,13 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                         </span>
                       </div>
 
+                      <div className="text-right px-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                       <div className="text-right px-2 shrink-0">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block whitespace-nowrap">
                           Fatura Toplamı
                         </span>
+                        <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono">
                         <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono whitespace-nowrap block">
                           {faturaSayisi > 0
                             ? formatCurrency(dosyaFaturaToplam)

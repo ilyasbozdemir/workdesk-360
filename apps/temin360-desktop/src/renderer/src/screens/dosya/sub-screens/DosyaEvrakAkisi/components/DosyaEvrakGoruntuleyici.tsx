@@ -1,105 +1,107 @@
-import React, { useRef } from 'react'
+import React, { useRef } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-  Printer,
+  CheckCircle2,
+  Copy,
   Download,
   ExternalLink,
+  Eye,
+  FileCheck,
+  FileCode2,
+  FileEdit,
+  FileText,
+  Loader2,
   Maximize2,
   Minimize2,
-  FileText,
-  FileCheck,
+  Printer,
   RefreshCw,
-  Loader2,
-  Eye,
-  FileCode2,
-  Copy,
-  FileEdit,
+  RotateCcw,
   Upload,
-  CheckCircle2
-} from 'lucide-react'
-import { EvrakItem } from '../types'
-import { DocumentRenderer } from '@worksuite-360/document-engine'
-import { resolveTemplateKey, TemplateKey } from '@temin360/document-templates'
-import { cn } from '@renderer/utils/cn'
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+import { EvrakItem } from "../types";
+import { DocumentRenderer } from "@worksuite-360/document-engine";
+import { resolveTemplateKey, TemplateKey } from "@temin360/document-templates";
+import { cn } from "@renderer/utils/cn";
 
 interface DosyaEvrakGoruntuleyiciProps {
-  selectedEvrak: EvrakItem | null
-  currentIndex: number
-  totalCount: number
-  hasPrev: boolean
-  hasNext: boolean
-  onPrevDoc: () => void
-  onNextDoc: () => void
-  viewMode: 'canvas' | 'pdf'
-  onViewModeChange: (mode: 'canvas' | 'pdf') => void
-  previewScale: number
-  onScaleChange: (scale: number) => void
-  currentPage: number
-  totalPages: number
-  onPrevPage: () => void
-  onNextPage: () => void
-  docLoading: boolean
-  pdfGenerating: boolean
-  activeTemplateData: any
-  personelListesi?: any[]
-  firmaListesi?: any[]
-  birimListesi?: any[]
-  activePdfBlobUrl: string | null
-  onGeneratePdf: () => void
-  onPrint: () => void
-  onExportPdf: () => void
-  onOpenExternal: () => void
-  onOpenModalPreview?: () => void
-  isFullscreen: boolean
-  onToggleFullscreen: () => void
-  copyCount?: number
-  onCopyCountChange?: (count: number) => void
-  activeViewVariant?: 'template' | 'signed'
-  onVariantChange?: (variant: 'template' | 'signed') => void
-  onUploadSignedDocForSelected?: (targetCode?: string) => void
+  selectedEvrak: EvrakItem | null;
+  currentIndex: number;
+  totalCount: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+  onPrevDoc: () => void;
+  onNextDoc: () => void;
+  viewMode: "canvas" | "pdf";
+  onViewModeChange: (mode: "canvas" | "pdf") => void;
+  previewScale: number;
+  onScaleChange: (scale: number) => void;
+  currentPage: number;
+  totalPages: number;
+  onPrevPage: () => void;
+  onNextPage: () => void;
+  docLoading: boolean;
+  pdfGenerating: boolean;
+  activeTemplateData: any;
+  personelListesi?: any[];
+  firmaListesi?: any[];
+  birimListesi?: any[];
+  activePdfBlobUrl: string | null;
+  onGeneratePdf: () => void;
+  onPrint: () => void;
+  onExportPdf: () => void;
+  onOpenExternal: () => void;
+  onOpenModalPreview?: () => void;
+  isFullscreen: boolean;
+  onToggleFullscreen: () => void;
+  copyCount?: number;
+  onCopyCountChange?: (count: number) => void;
+  activeViewVariant?: "template" | "signed";
+  onVariantChange?: (variant: "template" | "signed") => void;
+  onUploadSignedDocForSelected?: (targetCode?: string) => void;
 }
 
-export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = ({
-  selectedEvrak,
-  currentIndex,
-  totalCount,
-  hasPrev,
-  hasNext,
-  onPrevDoc,
-  onNextDoc,
-  viewMode,
-  onViewModeChange,
-  previewScale,
-  onScaleChange,
-  currentPage,
-  totalPages,
-  onPrevPage,
-  onNextPage,
-  docLoading,
-  pdfGenerating,
-  activeTemplateData,
-  personelListesi = [],
-  firmaListesi = [],
-  birimListesi = [],
-  activePdfBlobUrl,
-  onGeneratePdf,
-  onPrint,
-  onExportPdf,
-  onOpenExternal,
-  onOpenModalPreview,
-  isFullscreen,
-  onToggleFullscreen,
-  copyCount = 1,
-  onCopyCountChange,
-  activeViewVariant = 'template',
-  onVariantChange,
-  onUploadSignedDocForSelected
-}) => {
-  const containerRef = useRef<HTMLDivElement>(null)
+export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
+  {
+    selectedEvrak,
+    currentIndex,
+    totalCount,
+    hasPrev,
+    hasNext,
+    onPrevDoc,
+    onNextDoc,
+    viewMode,
+    onViewModeChange,
+    previewScale,
+    onScaleChange,
+    currentPage,
+    totalPages,
+    onPrevPage,
+    onNextPage,
+    docLoading,
+    pdfGenerating,
+    activeTemplateData,
+    personelListesi = [],
+    firmaListesi = [],
+    birimListesi = [],
+    activePdfBlobUrl,
+    onGeneratePdf,
+    onPrint,
+    onExportPdf,
+    onOpenExternal,
+    onOpenModalPreview,
+    isFullscreen,
+    onToggleFullscreen,
+    copyCount = 1,
+    onCopyCountChange,
+    activeViewVariant = "template",
+    onVariantChange,
+    onUploadSignedDocForSelected,
+  },
+) => {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   if (!selectedEvrak) {
     return (
@@ -112,23 +114,26 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
             Görüntülenecek Belge Seçilmedi
           </h3>
           <p className="text-xs text-slate-500">
-            Lütfen sol menüdeki dosya evrak akışından incelemek istediğiniz belgeyi seçin.
+            Lütfen sol menüdeki dosya evrak akışından incelemek istediğiniz
+            belgeyi seçin.
           </p>
         </div>
       </main>
-    )
+    );
   }
 
-  const isTemplate = selectedEvrak.type === 'template'
-  const isSignedPdf = selectedEvrak.type === 'signed_pdf' || selectedEvrak.type === 'uploaded_pdf'
-  const canonicalKey: TemplateKey = (resolveTemplateKey(selectedEvrak.code) || 'ihtiyac_listesi') as TemplateKey
-  const orientation = activeTemplateData?.orientation || 'portrait'
+  const isTemplate = selectedEvrak.type === "template";
+  const isSignedPdf = selectedEvrak.type === "signed_pdf" ||
+    selectedEvrak.type === "uploaded_pdf";
+  const canonicalKey: TemplateKey = (resolveTemplateKey(selectedEvrak.code) ||
+    "ihtiyac_listesi") as TemplateKey;
+  const orientation = activeTemplateData?.orientation || "portrait";
 
   return (
     <main
       className={cn(
-        'flex-1 flex flex-col bg-slate-100/90 dark:bg-slate-950 min-w-0 h-full relative transition-all',
-        isFullscreen ? 'fixed inset-0 z-50 bg-white dark:bg-slate-950' : ''
+        "flex-1 flex flex-col bg-slate-100/90 dark:bg-slate-950 min-w-0 h-full relative transition-all",
+        isFullscreen ? "fixed inset-0 z-50 bg-white dark:bg-slate-950" : "",
       )}
     >
       {/* ── ÜST ARAÇ ÇUBUĞU (TOOLBAR) ── */}
@@ -143,10 +148,10 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
               <span className="text-slate-300 dark:text-slate-700">•</span>
               <span
                 className={cn(
-                  'text-[9px] font-extrabold px-1.5 py-0.2 rounded border',
+                  "text-[9px] font-extrabold px-1.5 py-0.2 rounded border",
                   selectedEvrak.badge.color,
                   selectedEvrak.badge.textColor,
-                  selectedEvrak.badge.borderColor
+                  selectedEvrak.badge.borderColor,
                 )}
               >
                 {selectedEvrak.badge.label}
@@ -191,63 +196,71 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
         {/* Sağ: Görünüm Modu, Zoom ve Aksiyonlar */}
         <div className="flex items-center gap-2">
           {/* İmzalı Nüsha vs Taslak Şablon Seçici */}
-          {selectedEvrak.matchedSignedDoc ? (
-            <div className="inline-flex items-center p-0.5 bg-emerald-50/80 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => onVariantChange?.('template')}
-                className={cn(
-                  'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                  activeViewVariant === 'template'
-                    ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                )}
-                title="Sistem tarafından otomatik üretilen şablon önizlemesi"
-              >
-                <FileCode2 size={12} />
-                <span>Sistem Şablonu</span>
-              </button>
+          {selectedEvrak.matchedSignedDoc
+            ? (
+              <div className="inline-flex items-center p-0.5 bg-emerald-50/80 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/80 dark:border-emerald-800/80 text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => onVariantChange?.("template")}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer",
+                    activeViewVariant === "template"
+                      ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200",
+                  )}
+                  title="Sistem tarafından otomatik üretilen şablon önizlemesi"
+                >
+                  <FileCode2 size={12} />
+                  <span>Sistem Şablonu</span>
+                </button>
 
+                <button
+                  type="button"
+                  onClick={() => onVariantChange?.("signed")}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer",
+                    activeViewVariant === "signed"
+                      ? "bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-300 shadow-2xs font-extrabold"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200",
+                  )}
+                  title="Taranarak yüklenmiş ıslak imzalı PDF kopyası"
+                >
+                  <CheckCircle2 size={12} className="text-emerald-500" />
+                  <span>İmzalı Nüsha (PDF)</span>
+                  <span>
+                    İmzalı Nüsha {selectedEvrak.matchedSignedDoc.sayfaAraligi
+                      ? `(${selectedEvrak.matchedSignedDoc.sayfaAraligi})`
+                      : "(PDF)"}
+                  </span>
+                </button>
+              </div>
+            )
+            : isTemplate
+            ? (
               <button
                 type="button"
-                onClick={() => onVariantChange?.('signed')}
-                className={cn(
-                  'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                  activeViewVariant === 'signed'
-                    ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-300 shadow-2xs font-extrabold'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                )}
-                title="Taranarak yüklenmiş ıslak imzalı PDF kopyası"
+                onClick={() =>
+                  onUploadSignedDocForSelected?.(selectedEvrak.code)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/60 dark:text-slate-300 dark:hover:text-emerald-300 border border-slate-200 hover:border-emerald-300 dark:border-slate-700 dark:hover:border-emerald-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                title="Bu belge için ıslak imzalı taranmış PDF nüshası yükleyin ve eşleştirin"
               >
-                <CheckCircle2 size={12} className="text-emerald-500" />
-                <span>
-                  İmzalı Nüsha {selectedEvrak.matchedSignedDoc.sayfaAraligi ? `(${selectedEvrak.matchedSignedDoc.sayfaAraligi})` : '(PDF)'}
-                </span>
+                <Upload size={12} />
+                <span className="hidden xl:inline">+ İmzalı Nüsha Eşle</span>
               </button>
-            </div>
-          ) : isTemplate ? (
-            <button
-              type="button"
-              onClick={() => onUploadSignedDocForSelected?.(selectedEvrak.code)}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/60 dark:text-slate-300 dark:hover:text-emerald-300 border border-slate-200 hover:border-emerald-300 dark:border-slate-700 dark:hover:border-emerald-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-              title="Bu belge için ıslak imzalı taranmış PDF nüshası yükleyin ve eşleştirin"
-            >
-              <Upload size={12} />
-              <span className="hidden xl:inline">+ İmzalı Nüsha Eşle</span>
-            </button>
-          ) : null}
+            )
+            : null}
 
           {/* Şablon Belgesi İçin Canlı Tuval vs PDF Seçici */}
-          {isTemplate && activeViewVariant !== 'signed' && (
+          {isTemplate && activeViewVariant !== "signed" && (
             <div className="hidden sm:inline-flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
               <button
                 type="button"
-                onClick={() => onViewModeChange('canvas')}
+                onClick={() => onViewModeChange("canvas")}
                 className={cn(
-                  'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                  viewMode === 'canvas'
-                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  "flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer",
+                  viewMode === "canvas"
+                    ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200",
                 )}
                 title="A4 Canlı Şablon Önizleme Modu"
               >
@@ -259,25 +272,23 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
                 type="button"
                 onClick={() => {
                   if (!activePdfBlobUrl) {
-                    onGeneratePdf()
+                    onGeneratePdf();
                   } else {
-                    onViewModeChange('pdf')
+                    onViewModeChange("pdf");
                   }
                 }}
                 disabled={pdfGenerating}
                 className={cn(
-                  'flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer',
-                  viewMode === 'pdf'
-                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold'
-                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                  "flex items-center gap-1 px-2.5 py-1 rounded-lg transition-all cursor-pointer",
+                  viewMode === "pdf"
+                    ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-2xs font-extrabold"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200",
                 )}
                 title="Baskı Uyumlu Gerçek PDF Önizleme Modu"
               >
-                {pdfGenerating ? (
-                  <Loader2 size={12} className="animate-spin text-blue-500" />
-                ) : (
-                  <Eye size={12} />
-                )}
+                {pdfGenerating
+                  ? <Loader2 size={12} className="animate-spin text-blue-500" />
+                  : <Eye size={12} />}
                 <span>Gerçek PDF</span>
               </button>
             </div>
@@ -287,7 +298,10 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
           <div className="hidden sm:inline-flex items-center p-0.5 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold">
             <button
               type="button"
-              onClick={() => onScaleChange(Math.max(0.5, Number((previewScale - 0.1).toFixed(2))))}
+              onClick={() =>
+                onScaleChange(
+                  Math.max(0.5, Number((previewScale - 0.1).toFixed(2))),
+                )}
               className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
               title="Küçült (-)"
             >
@@ -304,7 +318,10 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
 
             <button
               type="button"
-              onClick={() => onScaleChange(Math.min(1.75, Number((previewScale + 0.1).toFixed(2))))}
+              onClick={() =>
+                onScaleChange(
+                  Math.min(1.75, Number((previewScale + 0.1).toFixed(2))),
+                )}
               className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
               title="Büyüt (+)"
             >
@@ -327,12 +344,15 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
             title="Yazdırma & Evrak Kopya Sayısı (Asıl + Nüsha Adedi)"
           >
             <Copy size={12} className="text-slate-400" />
-            <span className="text-[11px] font-semibold text-slate-500">Kopya:</span>
+            <span className="text-[11px] font-semibold text-slate-500">
+              Kopya:
+            </span>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 disabled={copyCount <= 1}
-                onClick={() => onCopyCountChange && onCopyCountChange(Math.max(1, copyCount - 1))}
+                onClick={() => onCopyCountChange &&
+                  onCopyCountChange(Math.max(1, copyCount - 1))}
                 className="w-4 h-4 flex items-center justify-center rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer text-xs font-bold transition-colors"
                 title="Kopya sayısını azalt"
               >
@@ -344,14 +364,18 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
               <button
                 type="button"
                 disabled={copyCount >= 10}
-                onClick={() => onCopyCountChange && onCopyCountChange(Math.min(10, copyCount + 1))}
+                onClick={() =>
+                  onCopyCountChange &&
+                  onCopyCountChange(Math.min(10, copyCount + 1))}
                 className="w-4 h-4 flex items-center justify-center rounded text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-30 cursor-pointer text-xs font-bold transition-colors"
                 title="Kopya sayısını artır"
               >
                 +
               </button>
             </div>
-            <span className="text-[10px] text-slate-400 font-normal">Nüsha</span>
+            <span className="text-[10px] text-slate-400 font-normal">
+              Nüsha
+            </span>
           </div>
 
           {/* Dışa Aktar & Yazdır Aksiyonları */}
@@ -375,7 +399,7 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
               title={`Belgeyi ${copyCount} Kopya Olarak Yazdır (Ctrl+P)`}
             >
               <Printer size={13} />
-              <span>Yazdır {copyCount > 1 ? `(${copyCount} Kopya)` : ''}</span>
+              <span>Yazdır {copyCount > 1 ? `(${copyCount} Kopya)` : ""}</span>
             </button>
 
             <button
@@ -400,7 +424,9 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
               type="button"
               onClick={onToggleFullscreen}
               className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-2xs"
-              title={isFullscreen ? 'Tam Ekrandan Çık (Esc)' : 'Tam Ekran Belge İnceleme'}
+              title={isFullscreen
+                ? "Tam Ekrandan Çık (Esc)"
+                : "Tam Ekran Belge İnceleme"}
             >
               {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
@@ -413,74 +439,99 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
         ref={containerRef}
         className="flex-1 overflow-auto custom-scrollbar flex justify-center items-start p-4 sm:p-8 relative [background-image:radial-gradient(#cbd5e1_1px,transparent_1px)] dark:[background-image:radial-gradient(#1e293b_1.5px,transparent_1.5px)] [background-size:24px_24px] select-text"
       >
-        {docLoading || pdfGenerating ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-slate-950/70 backdrop-blur-xs z-30">
-            <div className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
-              <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
-              <div className="text-center">
-                <h4 className="text-xs font-black text-slate-800 dark:text-slate-200">
-                  {pdfGenerating ? 'Gerçek PDF Çıktısı Derleniyor...' : 'Belge PDF Olarak Hazırlanıyor...'}
-                </h4>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Resmî mevzuat şablonu ve kurum değişkenleri A4 formatında derleniyor
-                </p>
+        {docLoading || pdfGenerating
+          ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-slate-950/70 backdrop-blur-xs z-30">
+              <div className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
+                <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                <div className="text-center">
+                  <h4 className="text-xs font-black text-slate-800 dark:text-slate-200">
+                    {pdfGenerating
+                      ? "Gerçek PDF Çıktısı Derleniyor..."
+                      : "Belge PDF Olarak Hazırlanıyor..."}
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Resmî mevzuat şablonu ve kurum değişkenleri A4 formatında
+                    derleniyor
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ) : null}
+          )
+          : null}
 
         {/* DURUM 1: PDF Görüntüleme (Yüklenmiş İmzalı PDF veya Derlenmiş PDF) */}
-        {viewMode === 'pdf' || isSignedPdf ? (
-          activePdfBlobUrl ? (
-            <div className="w-full h-full max-w-5xl rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl bg-white">
-              <iframe
-                src={activePdfBlobUrl}
-                title={`PDF Belgesi: ${selectedEvrak.title}`}
-                className="w-full h-full border-0 bg-white"
-              />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center text-slate-500 py-32 text-center max-w-sm mx-auto">
-              <FileCheck size={40} className="text-slate-300 dark:text-slate-700 mb-2" />
-              <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                PDF Dokümanı Yüklenemedi
-              </h4>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Dosya yolu: {selectedEvrak.filePath || 'Belirtilmedi'}
-              </p>
-              <button
-                type="button"
-                onClick={onOpenExternal}
-                className="mt-3 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold cursor-pointer hover:bg-blue-700 transition-all"
-              >
-                Harici Dosyayı Aç
-              </button>
-            </div>
+        {viewMode === "pdf" || isSignedPdf
+          ? (
+            activePdfBlobUrl
+              ? (
+                <div className="w-full h-full max-w-5xl rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl bg-white">
+                  <iframe
+                    src={activePdfBlobUrl}
+                    title={`PDF Belgesi: ${selectedEvrak.title}`}
+                    className="w-full h-full border-0 bg-white"
+                  />
+                </div>
+              )
+              : (
+                <div className="flex flex-col items-center justify-center text-slate-500 py-32 text-center max-w-sm mx-auto">
+                  <FileCheck
+                    size={40}
+                    className="text-slate-300 dark:text-slate-700 mb-2"
+                  />
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    PDF Dokümanı Yüklenemedi
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Dosya yolu: {selectedEvrak.filePath || "Belirtilmedi"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onOpenExternal}
+                    className="mt-3 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold cursor-pointer hover:bg-blue-700 transition-all"
+                  >
+                    Harici Dosyayı Aç
+                  </button>
+                </div>
+              )
           )
-        ) : (
-          /* DURUM 2: Canlı A4 Şablon Tuvali (DocumentRenderer) */
-          activeTemplateData ? (
-            <div className="transition-transform duration-150 origin-top flex justify-center pb-12">
-              <DocumentRenderer
-                templateKey={canonicalKey}
-                data={activeTemplateData}
-                orientation={orientation}
-                chrome="paper"
-                scale={previewScale}
-                isEditing={false}
-                personelListesi={personelListesi.length ? personelListesi : activeTemplateData.personelListesi || []}
-                firmaListesi={firmaListesi.length ? firmaListesi : activeTemplateData.firmaListesi || []}
-                birimListesi={birimListesi.length ? birimListesi : activeTemplateData.birimListesi || []}
-                firstPageLimit={activeTemplateData.firstPageLimit}
-              />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center text-slate-500 py-32 text-center">
-              <FileText size={36} className="text-slate-300 dark:text-slate-700 mb-2" />
-              <p className="text-xs font-bold">Belge verisi hazırlanamadı.</p>
-            </div>
-          )
-        )}
+          : (
+            /* DURUM 2: Canlı A4 Şablon Tuvali (DocumentRenderer) */
+            activeTemplateData
+              ? (
+                <div className="transition-transform duration-150 origin-top flex justify-center pb-12">
+                  <DocumentRenderer
+                    templateKey={canonicalKey}
+                    data={activeTemplateData}
+                    orientation={orientation}
+                    chrome="paper"
+                    scale={previewScale}
+                    isEditing={false}
+                    personelListesi={personelListesi.length
+                      ? personelListesi
+                      : activeTemplateData.personelListesi || []}
+                    firmaListesi={firmaListesi.length
+                      ? firmaListesi
+                      : activeTemplateData.firmaListesi || []}
+                    birimListesi={birimListesi.length
+                      ? birimListesi
+                      : activeTemplateData.birimListesi || []}
+                    firstPageLimit={activeTemplateData.firstPageLimit}
+                  />
+                </div>
+              )
+              : (
+                <div className="flex flex-col items-center justify-center text-slate-500 py-32 text-center">
+                  <FileText
+                    size={36}
+                    className="text-slate-300 dark:text-slate-700 mb-2"
+                  />
+                  <p className="text-xs font-bold">
+                    Belge verisi hazırlanamadı.
+                  </p>
+                </div>
+              )
+          )}
       </div>
 
       {/* ── ALT DURUM & HIZLI NAVİGASYON BARI ── */}
@@ -489,20 +540,30 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
           <span className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
             <span
               className={cn(
-                'w-2 h-2 rounded-full',
-                selectedEvrak.status === 'imzali'
-                  ? 'bg-emerald-500'
-                  : selectedEvrak.status === 'hazir'
-                    ? 'bg-blue-500'
-                    : 'bg-amber-500'
+                "w-2 h-2 rounded-full",
+                selectedEvrak.status === "imzali"
+                  ? "bg-emerald-500"
+                  : selectedEvrak.status === "hazir"
+                  ? "bg-blue-500"
+                  : "bg-amber-500",
               )}
             />
             <span>{selectedEvrak.badge.label}</span>
           </span>
 
-          <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+          <span className="hidden sm:inline text-slate-300 dark:text-slate-700">
+            •
+          </span>
           <span className="hidden sm:inline text-[11px] text-slate-400">
-            Klavye Kısayolları: <kbd className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono">↑ / ↓</kbd> Belge Değiştir, <kbd className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono">+ / -</kbd> Yakınlaştır
+            Klavye Kısayolları:{" "}
+            <kbd className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono">
+              ↑ / ↓
+            </kbd>{" "}
+            Belge Değiştir,{" "}
+            <kbd className="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-mono">
+              + / -
+            </kbd>{" "}
+            Yakınlaştır
           </span>
         </div>
 
@@ -531,5 +592,5 @@ export const DosyaEvrakGoruntuleyici: React.FC<DosyaEvrakGoruntuleyiciProps> = (
         </div>
       </footer>
     </main>
-  )
-}
+  );
+};
