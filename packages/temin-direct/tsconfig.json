@@ -1,8 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler",
-    "strict": true, "esModuleInterop": true, "skipLibCheck": true, "noEmit": true, "types": ["node"],
-    "paths": { "@temin360/domain": ["../domain/src/index.ts"] }
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "paths": {
+      "@temin360/direct-procurement-core": ["../direct-procurement-core/src/index.ts"],
+      "@temin360/domain": ["../domain/src/index.ts"]
+    }
   },
-  "include": ["src", "test"]
+  "include": ["src/**/*"]
 }

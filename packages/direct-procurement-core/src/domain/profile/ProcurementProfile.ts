@@ -103,4 +103,12 @@ export class ProcurementProfile {
   get deductions(): readonly DeductionRule[] { return this.s.deductions }
   /** Bu alımda resmî bir ihale kararı pulu alınıp alınmayacağı */
   get hasTenderDecision(): boolean { return this.s.hasTenderDecision }
+
+  /**
+   * Belirtilen kesinti kuralının bu profilde tanımlı olup olmadığını denetler.
+   * @param id - Kesinti kuralı kimliği (Örn: 'karar-pulu', 'damga-vergisi').
+   */
+  hasDeduction(id: string): boolean {
+    return this.s.deductions.some((d) => d.id === id)
+  }
 }

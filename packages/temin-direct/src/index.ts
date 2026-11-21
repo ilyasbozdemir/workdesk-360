@@ -1,39 +1,5 @@
-// domain
-export * from './domain/shared/DomainError'
-export * from './domain/shared/DomainEvent'
-export * from './domain/file/DirectProcurementFile'
-export * from './domain/file/NeedItem'
-export * from './domain/file/Bidder'
-export * from './domain/file/QuoteMatrix'
-export * from './domain/file/AcceptanceRecord'
-export * from './domain/file/events'
-export * from './domain/profile/DeductionRule'
-export * from './domain/profile/ProcurementProfile'
-export * from './domain/profile/profiles'
-export * from './domain/pricing/PricingBasis'
-export * from './domain/pricing/ApproximateCostCalculator'
-export * from './domain/winner/WinnerSelectionStrategy'
-export * from './domain/services/DeductionCalculator'
-export * from './domain/services/Md22dLimitPolicy'
-// application
-export * from './application/ports'
-export * from './application/usecases/FileUseCase'
-export * from './application/usecases/OpenFile'
-export * from './application/usecases/EnterQuote'
-export * from './application/usecases/SelectWinner'
-export * from './application/usecases/ApproveResult'
-export * from './application/usecases/Acceptance'
-export * from './application/usecases/CalculateDeductions'
-export * from './application/events/InProcessEventBus'
-export * from './application/reactions/FileReactionManager'
-// infrastructure
-export * from './infrastructure/InMemoryFileRepository'
-export * from './infrastructure/CollectingEventPublisher'
-export * from './infrastructure/SqliteMevzuatRateProvider'
-export * from './infrastructure/BetterSqliteExecutor'
-export * from './infrastructure/IpcSqlExecutor'
-export * from './infrastructure/TeminPreferencesStore'
-export * from './infrastructure/mappers/AcceptanceJsonMapper'
-export * from './infrastructure/SqliteFileRepository'
-export * from './infrastructure/SqliteReactionAdapters'
-export * from './infrastructure/composeDirectProcurement'
+/**
+ * @deprecated Bu paket `@temin360/direct-procurement-core` paketine aktarılmıştır.
+ * Lütfen doğrudan `@temin360/direct-procurement-core` paketini kullanınız.
+ */
+export * from '@temin360/direct-procurement-core';

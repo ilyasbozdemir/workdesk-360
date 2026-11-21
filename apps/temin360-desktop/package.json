@@ -63,6 +63,7 @@
     "@tanstack/react-router": "^1.170.8",
     "@tanstack/react-table": "^8.21.3",
     "@temin360/contracts": "workspace:*",
+    "@temin360/direct-procurement-core": "workspace:*",
     "@temin360/document-templates": "workspace:*",
     "@temin360/temin-direct": "workspace:*",
     "@tiptap/extension-table": "^3.26.0",
