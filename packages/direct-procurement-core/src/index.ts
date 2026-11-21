@@ -82,4 +82,3 @@ export * from "./infrastructure/mappers/AcceptanceJsonMapper";
 export * from "./infrastructure/SqliteFileRepository";
 export * from "./infrastructure/SqliteReactionAdapters";
 export * from "./infrastructure/composeDirectProcurement";
-
