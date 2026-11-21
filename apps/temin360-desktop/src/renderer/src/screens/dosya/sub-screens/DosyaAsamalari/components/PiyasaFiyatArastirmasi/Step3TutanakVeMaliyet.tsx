@@ -19,7 +19,7 @@ export function Step3TutanakVeMaliyet({
   setActiveFormTab
 }: Step3TutanakVeMaliyetProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-200 pb-28">
+    <div className="flex flex-col gap-4 animate-in fade-in duration-200 pb-16">
       {/* Hızlı Sonuç Belgesi Üretim Kartları */}
       <SonucBelgesiKartlari
         handleOpenSablonByDosyaAdi={handleOpenSablonByDosyaAdi}

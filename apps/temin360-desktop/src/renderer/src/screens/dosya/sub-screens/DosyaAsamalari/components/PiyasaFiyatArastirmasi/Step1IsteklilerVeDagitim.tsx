@@ -39,7 +39,7 @@ export function Step1IsteklilerVeDagitim({
   handleRemoveFirm
 }: Step1IsteklilerVeDagitimProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-200 pb-28">
+    <div className="flex flex-col gap-4 animate-in fade-in duration-200 pb-16">
       {/* 1.1 İstekli Firmalar Tablosu */}
       <FiyatIstenenFirmalarınSecilmesi
         title="Fiyat İstenen İstekli Firmaların Belirlenmesi"

@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React, { useState } from 'react'
 import {
   ShieldCheck,
   Server,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import packageJson from '../../../../../package.json'
 import locData from '../../generated-loc.json'
+import { BugReportModal } from './BugReportModal'
 
 interface AboutModalProps {
   isOpen: boolean
@@ -21,6 +22,7 @@ interface AboutModalProps {
 }
 
 export function AboutModal({ isOpen, onClose }: AboutModalProps): React.ReactNode {
+  const [isBugModalOpen, setIsBugModalOpen] = useState(false)
   if (!isOpen) return null
 
   const openExternal = (url: string): void => {
@@ -218,20 +220,23 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps): React.ReactNod
 
             <button
               type="button"
-              onClick={() => openExternal('https://github.com/ilyasbozdemir/workdesk-360/issues')}
+              onClick={() => setIsBugModalOpen(true)}
               className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-700 transition-all cursor-pointer group"
             >
               <Bug className="w-4 h-4 text-rose-500 group-hover:scale-110 transition-transform shrink-0" />
               <div className="text-left">
                 <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                  Hata Bildir
+                  Hata &amp; Destek Bildir
                 </div>
-                <div className="text-[10px] text-slate-500">Destek &amp; Geri Bildirim</div>
+                <div className="text-[10px] text-slate-500">Doğrudan E-Posta / Bildirim</div>
               </div>
               <ExternalLink className="w-3.5 h-3.5 text-slate-400 ml-auto" />
             </button>
           </div>
         </div>
+
+        {/* Bug / Destek Bildirimi Modalı */}
+        <BugReportModal isOpen={isBugModalOpen} onClose={() => setIsBugModalOpen(false)} />
 
         {/* Footer */}
         <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">

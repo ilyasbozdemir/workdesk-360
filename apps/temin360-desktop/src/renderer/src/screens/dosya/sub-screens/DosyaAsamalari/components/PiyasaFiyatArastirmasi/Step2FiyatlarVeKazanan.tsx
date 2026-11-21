@@ -33,7 +33,7 @@ export function Step2FiyatlarVeKazanan({
   setHesaplamaEsasi
 }: Step2FiyatlarVeKazananProps): React.JSX.Element {
   return (
-    <div className="flex flex-col gap-6 animate-in fade-in duration-200 pb-28">
+    <div className="flex flex-col gap-4 animate-in fade-in duration-200 pb-16">
       {/* Kazanan İstekli / Karar Paneli */}
       <KazananKararPaneli
         activeWinnerFirma={activeWinnerFirma}

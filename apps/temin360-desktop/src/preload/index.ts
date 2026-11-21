@@ -162,6 +162,7 @@ const allowedChannels = new Set([
   'get-initial-file',
   'app:get-changelog',
   'get-changelog',
+  'app:send-bug-report',
   // Dialog
   'dialog:showSaveDialog',
   'dialog:showOpenDialog',
