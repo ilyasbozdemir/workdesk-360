@@ -590,6 +590,20 @@ export const IncomingProcurementsPage: React.FC = () => {
 
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Sözleşme DV ({selectedItem.sozlesmeYapilacakMi ? '‰ 9,48 Sözleşmeli' : 'Sözleşmesiz'}):
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={sozlesmeDamgaVergisi}
+                      disabled={!selectedItem.sozlesmeYapilacakMi}
+                      onChange={(e) => setSozlesmeDamgaVergisi(Number(e.target.value) || 0)}
+                      className="w-full px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-rose-600 dark:text-rose-400 disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">
                       KDV Tevkifatı (Varsa):
                     </label>
                     <CurrencyInput

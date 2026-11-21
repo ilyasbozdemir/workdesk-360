@@ -967,7 +967,7 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
         variant: 'danger'
       })
     }
-  }
+  };
 
   // Fatura Durumunu Hızlıca Değiştir (Ödendi / Beklemede)
   const handleToggleDurum = async (dosya: DosyaOzet, fatura: FaturaKayit) => {
