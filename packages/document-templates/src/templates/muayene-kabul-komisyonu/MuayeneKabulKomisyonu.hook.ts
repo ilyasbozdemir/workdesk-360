@@ -38,30 +38,53 @@ export interface UseMuayeneKabulKomisyonuResult {
 
 export function isRoleTitleString(title?: string): boolean {
   if (!title) return true;
-  const t = title.trim().toLowerCase();
+  const t = title
+    .replace(/İ/g, "i")
+    .replace(/I/g, "ı")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
   return (
     t === "" ||
-    t === "üye" ||
     t === "uye" ||
-    t === "başkan" ||
     t === "baskan" ||
-    t === "komisyon başkanı" ||
     t === "komisyon baskani" ||
-    t === "yedek üye" ||
     t === "yedek uye" ||
-    t === "komisyon üyesi" ||
     t === "komisyon uyesi" ||
-    t === "asil üye" ||
     t === "asil uye" ||
-    t === "fiyat araştırma görevlisi" ||
     t === "fiyat arastirma gorevlisi" ||
-    t === "muayene kabul başkanı" ||
     t === "muayene kabul baskani" ||
-    t === "muayene ve kabul komisyon başkanı" ||
     t === "muayene ve kabul komisyon baskani" ||
-    t === "muayene komisyon başkanı" ||
-    t === "muayene komisyon baskani"
+    t === "muayene komisyon baskani" ||
+    t === "muayene kabul uyesi" ||
+    t === "komisyon baskan" ||
+    t === "muayene kabul gorevlisi"
   );
+}
+
+export function normalizeTurkishName(name?: string | null): string {
+  if (!name || typeof name !== "string") return "";
+  return cleanPersonelName(name)
+    .replace(/İ/g, "i")
+    .replace(/I/g, "ı")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function isExcludedMuayeneOfficer(
@@ -172,9 +195,9 @@ export function useMuayeneKabulKomisyonu(
     const findTitleFromPersonelList = (name: string, pid?: any): string => {
       if (!name && !pid) return "";
 
-      const cleanName = cleanPersonelName(name).trim().toLowerCase();
+      const normName = normalizeTurkishName(name);
 
-      // 1. ID eşleşmesi
+      // 1. ID eşleşmesi (merged list)
       if (pid) {
         const byId = mergedPersonelList.find(
           (p: any) =>
@@ -186,22 +209,24 @@ export function useMuayeneKabulKomisyonu(
       }
 
       // 2. İsim eşleşmesi (merged list)
-      if (cleanName) {
+      if (normName) {
         const byName = mergedPersonelList.find((p: any) => {
-          const pName = cleanPersonelName(
+          const pName = normalizeTurkishName(
             p.adSoyad || p.ad_soyad || p.adiSoyadi || p.label || "",
-          )
-            .trim()
-            .toLowerCase();
-          return pName === cleanName;
+          );
+          return pName === normName;
         });
         if (byName?.unvan && !isRoleTitleString(byName.unvan)) {
           return String(byName.unvan).trim();
         }
       }
 
-      // 3. Fallback: data.personelListesi, data.personeller veya window.__activePersonelListesi
+      // 3. Fallback: pools (fiyatKomisyonu, komisyon, gorevliler, gorevlendirilenler, dagitimListesi, personelListesi, personeller)
       const pools: any[] = [
+        ...(Array.isArray((data as any).fiyatKomisyonu) ? (data as any).fiyatKomisyonu : []),
+        ...(Array.isArray((data as any).komisyon) ? (data as any).komisyon : []),
+        ...(Array.isArray((data as any).fiyatArastirmaGorevlileri) ? (data as any).fiyatArastirmaGorevlileri : []),
+        ...(Array.isArray((data as any).gorevlendirilenler) ? (data as any).gorevlendirilenler : []),
         ...(Array.isArray((data as any).personelListesi) ? (data as any).personelListesi : []),
         ...(Array.isArray((data as any).personeller) ? (data as any).personeller : []),
         ...(Array.isArray((data as any).personel) ? (data as any).personel : []),
@@ -213,14 +238,28 @@ export function useMuayeneKabulKomisyonu(
       for (const p of pools) {
         if (!p) continue;
         const pId = p.id || p.personel_id || p.personelId;
-        if (pid && String(pId) === String(pid) && p.unvan && !isRoleTitleString(p.unvan)) {
-          return String(p.unvan).trim();
-        }
-        const pName = cleanPersonelName(p.adSoyad || p.ad_soyad || p.adiSoyadi || "")
-          .trim()
-          .toLowerCase();
-        if (cleanName && pName === cleanName && p.unvan && !isRoleTitleString(p.unvan)) {
-          return String(p.unvan).trim();
+        const pUnvan = String(
+          p.kadro_unvani ||
+          p.kadroUnvani ||
+          p.personel_unvan ||
+          p.personelUnvan ||
+          p.vekalet_unvani ||
+          p.vekaletUnvani ||
+          p.unvan ||
+          p.unvani ||
+          ""
+        ).trim();
+
+        if (pUnvan && !isRoleTitleString(pUnvan)) {
+          if (pid && String(pId) === String(pid)) {
+            return pUnvan;
+          }
+          const pName = normalizeTurkishName(
+            p.adSoyad || p.ad_soyad || p.adiSoyadi || p.label || ""
+          );
+          if (normName && pName === normName) {
+            return pUnvan;
+          }
         }
       }
 

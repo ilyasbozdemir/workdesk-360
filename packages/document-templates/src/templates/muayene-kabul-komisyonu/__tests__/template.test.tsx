@@ -178,4 +178,33 @@ describe("MuayeneKabulKomisyonu — Şablon Bileşen ve Data Mapping Testleri", 
     expect(html).toContain("Fen İşleri Md. Yrd.");
     expect(html).not.toContain("(Üye)");
   });
+
+  it("8. Çift boşluk, Türkçe I/ı karakter farklılıkları ve Piyasa Fiyat Komisyonundan (fiyatKomisyonu/komisyon) kadro unvanı çözümlenir", () => {
+    const mockData = {
+      isinAdi: "Bilgisayar Donanımı Alımı",
+      muayeneKomisyonu: [
+        { adSoyad: "Mustafa  ÇALIŞKAN", unvan: "Komisyon Başkanı" },
+        { adSoyad: "Muhammet GÜNEŞ", unvan: "Memur" },
+        { adSoyad: "Mehmet MUTLU", unvan: "Üye" },
+      ],
+      // personelListesi boş olsa bile Piyasa Fiyat Komisyonundaki gerçek kadro unvanları bulunmalı
+      fiyatKomisyonu: [
+        { adSoyad: "Mustafa Çalışkan", unvan: "Tekniker", gorev: "Üye" },
+        { adSoyad: "Mehmet Mutlu", unvan: "Fen İşleri Md. Yrd.", gorev: "Başkan" },
+      ],
+    };
+
+    const html = renderToStaticMarkup(<MuayeneKabulKomisyonu data={mockData} />);
+
+    expect(html).toContain("Mustafa  ÇALIŞKAN");
+    expect(html).toContain("Tekniker");
+    expect(html).not.toContain("(Komisyon Başkanı)");
+
+    expect(html).toContain("Muhammet GÜNEŞ");
+    expect(html).toContain("Memur");
+
+    expect(html).toContain("Mehmet MUTLU");
+    expect(html).toContain("Fen İşleri Md. Yrd.");
+    expect(html).not.toContain("(Üye)");
+  });
 });

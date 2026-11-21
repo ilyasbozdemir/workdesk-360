@@ -13,6 +13,7 @@ interface Props {
   orientation?: "portrait" | "landscape";
   hideHeader?: boolean;
   hideFooter?: boolean;
+  personelListesi?: any[];
 }
 
 export const MuayeneKabulKomisyonu: React.FC<Props> = ({
@@ -21,6 +22,7 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
   orientation = "portrait",
   hideHeader = false,
   hideFooter = false,
+  personelListesi: propPersonelListesi,
 }) => {
   const { personelListesi: contextPersonelListesi } = useTemplateEdit();
   const {
@@ -39,7 +41,10 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
     data,
     pageSize,
     orientation,
-    personelListesi: (data as any)?.personelListesi || contextPersonelListesi,
+    personelListesi:
+      propPersonelListesi ||
+      (data as any)?.personelListesi ||
+      contextPersonelListesi,
   });
 
   const dagitimVar = dagitimListesi.length > 0;

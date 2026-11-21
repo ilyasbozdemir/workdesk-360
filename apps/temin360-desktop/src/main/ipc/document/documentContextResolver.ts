@@ -146,7 +146,11 @@ export function resolveDocumentPayload(
                 'muayene kabul başkanı', 'muayene kabul baskani',
                 'muayene ve kabul komisyon başkanı', 'muayene ve kabul komisyon baskani',
                 'muayene komisyon başkanı', 'muayene komisyon baskani',
-                'asil üye', 'asil uye'
+                'asil üye', 'asil uye',
+                'Üye', 'Uye', 'ÜYE', 'Başkan', 'Baskan', 'BAŞKAN',
+                'Komisyon Başkanı', 'Komisyon Baskani', 'KOMİSYON BAŞKANI',
+                'Yedek Üye', 'Yedek Uye', 'Komisyon Üyesi', 'Komisyon Uyesi',
+                'Asil Üye', 'Asil Uye', 'Fiyat Araştırma Görevlisi', 'Muayene Kabul Başkanı'
               )
              THEN tk.unvan
              ELSE COALESCE(NULLIF(p.unvan, ''), NULLIF(tk.unvan, ''), '')
