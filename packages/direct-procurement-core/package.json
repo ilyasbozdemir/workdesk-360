@@ -21,7 +21,7 @@
     "@types/better-sqlite3": "^7.6.12",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.1",
-    "better-sqlite3": "^11.7.0",
+    "better-sqlite3": "^12.10.0",
     "js-yaml": "^4.1.0",
     "typescript": "^5.6.3",
     "vitest": "^2.1.8"
