@@ -1,3 +1,4 @@
+import rc38 from "./versions/rc/rc.38";
 import rc37 from "./versions/rc/rc.37";
 import rc36 from "./versions/rc/rc.36";
 import rc35 from "./versions/rc/rc.35";
@@ -41,6 +42,7 @@ import rc6 from "./versions/rc/rc.6";
 import rc7 from "./versions/rc/rc.7";
 
 export const rcManifests: any[] = [
+  rc38,
   rc37,
   rc36,
   rc35,
