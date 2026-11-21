@@ -751,7 +751,13 @@ export class DtmWorkspace {
 
     const targetDir = path.dirname(targetPath)
     if (!fs.existsSync(targetDir)) {
-      throw new Error(`Hedef dizin bulunamadı: ${targetDir}`)
+      try {
+        fs.mkdirSync(targetDir, { recursive: true })
+      } catch (dirErr: any) {
+        throw new Error(
+          `Hedef dizin bulunamadı ve oluşturulamadı: ${targetDir} (${dirErr?.message || String(dirErr)})`
+        )
+      }
     }
 
     const zip = new AdmZip()
