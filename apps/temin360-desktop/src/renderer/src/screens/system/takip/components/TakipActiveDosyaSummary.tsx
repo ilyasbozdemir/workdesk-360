@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTabStore } from "../../../../store/tabStore";
 import { APP_ROUTES } from "../../../../constants/routeConstants";
+import { AktarimDurumBadge } from "@renderer/screens/dosyalar/components/Badges";
 import {
   BookOpen,
   Calculator,
@@ -72,6 +73,12 @@ export function TakipActiveDosyaSummary({
                 ? "İptal Edildi"
                 : "Devam Ediyor"}
             </span>
+            <AktarimDurumBadge
+              kayitKaynagi={activeDosya.kayit_kaynagi}
+              kaynakKayitId={activeDosya.kaynak_kayit_id}
+              isLocked={activeDosya.is_locked}
+              lockReason={activeDosya.lock_reason}
+            />
           </div>
           <h2 className="text-lg font-bold text-slate-850 dark:text-slate-100">
             {activeDosya.konu}

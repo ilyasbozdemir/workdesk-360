@@ -72,7 +72,7 @@ export function useDosyaEvrakAkisi() {
 
   // 2. Aktif Dosyanın Detaylarını ve Belge Akışını Derle
   const fetchDosyaEvraklari = useCallback(async () => {
-    if (!activeDosyaId || !window.electron?.ipcRenderer) {
+    if (!window.electron?.ipcRenderer) {
       setLoading(false)
       return
     }
@@ -80,21 +80,54 @@ export function useDosyaEvrakAkisi() {
     try {
       setLoading(true)
 
-      // 2.1 Dosya Bilgisini Oku (Hatasız ve Doğrudan)
+      // 2.1 Dosya Bilgisini Oku (Hatasız ve Çok Katmanlı Güvenli Arama)
       let d: any = null
-      const fileRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT * FROM DATA_TeminDosyasi WHERE id = ?',
-        [activeDosyaId]
-      )
+      const numId = Number(activeDosyaId)
+      const strId = String(activeDosyaId || '').trim()
 
-      d = fileRes?.data?.[0] || (Array.isArray(fileRes) ? fileRes[0] : null)
+      if (activeDosyaId) {
+        // 1. Doğrudan ID ile sorgula (sayısal veya metin olarak)
+        const fileRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT * FROM DATA_TeminDosyasi WHERE id = ? OR id = ? LIMIT 1',
+          [!isNaN(numId) ? numId : 0, strId]
+        )
+        d = fileRes?.data?.[0] || (Array.isArray(fileRes) ? fileRes[0] : null)
+
+        // 2. Eğer id ile bulunamadıysa, temin_no veya kaynak_kayit_id ile sorgula
+        if (!d && strId) {
+          const altRes = await window.electron.ipcRenderer.invoke(
+            'db:query',
+            'SELECT * FROM DATA_TeminDosyasi WHERE temin_no = ? OR kaynak_kayit_id = ? OR temin_no LIKE ? LIMIT 1',
+            [strId, !isNaN(numId) ? numId : 0, `%${strId}%`]
+          )
+          d = altRes?.data?.[0] || (Array.isArray(altRes) ? altRes[0] : null)
+          if (d && d.id) {
+            setActiveDosyaId(d.id)
+          }
+        }
+      }
+
+      // 3. Eğer hala dosya bulunamadıysa (örneğin oturumdan kalan geçersiz dosya ID'si), veritabanındaki en son aktif dosyayı seç
+      if (!d) {
+        const fallbackRes = await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'SELECT * FROM DATA_TeminDosyasi ORDER BY id DESC LIMIT 1'
+        )
+        d = fallbackRes?.data?.[0] || (Array.isArray(fallbackRes) ? fallbackRes[0] : null)
+        if (d && d.id) {
+          setActiveDosyaId(d.id)
+        }
+      }
+
       if (!d) {
         setDosyaInfo(null)
         setEvraklar([])
         setLoading(false)
         return
       }
+
+      const actualDosyaId = d.id
 
       // Kazanan veya İlgili İstekli Firma Bilgisini Çek
       let kazananFirmaUnvan = ''
@@ -105,7 +138,7 @@ export function useDosyaEvrakAkisi() {
           `SELECT unvan, vergi_no FROM DATA_TeminFirma 
            WHERE temin_dosya_id = ? AND (kazanan_mi = 1 OR kazandi_mi = 1) 
            ORDER BY id DESC LIMIT 1`,
-          [activeDosyaId]
+          [actualDosyaId]
         )
         if (firmRes?.success && firmRes.data?.[0]) {
           kazananFirmaUnvan = firmRes.data[0].unvan || ''
@@ -114,7 +147,7 @@ export function useDosyaEvrakAkisi() {
           const fallbackFirm = await window.electron.ipcRenderer.invoke(
             'db:query',
             'SELECT unvan, vergi_no FROM DATA_TeminFirma WHERE temin_dosya_id = ? ORDER BY id ASC LIMIT 1',
-            [activeDosyaId]
+            [actualDosyaId]
           )
           if (fallbackFirm?.success && fallbackFirm.data?.[0]) {
             kazananFirmaUnvan = fallbackFirm.data[0].unvan || ''
@@ -129,8 +162,8 @@ export function useDosyaEvrakAkisi() {
       const alimTuru = (d.alim_turu || d.tur || 'mal').toLowerCase()
 
       const summary: DosyaSummaryInfo = {
-        id: d.id,
-        teminNo: d.temin_no || `2026/DT-${d.id}`,
+        id: actualDosyaId,
+        teminNo: d.temin_no || `2026/DT-${actualDosyaId}`,
         konu: d.konu || 'Doğrudan Temin Alımı',
         harcamaBirimi: d.harcama_birimi || d.birim || 'Fen İşleri Müdürlüğü',
         alimTuru: alimTuru === 'hizmet' ? 'Hizmet Alımı' : alimTuru === 'yapim' ? 'Yapım İşi' : 'Mal Alımı',
@@ -154,7 +187,7 @@ export function useDosyaEvrakAkisi() {
           `SELECT id, sablon_kodu, updated_at, created_at 
            FROM DATA_TeminBelgeSnapshot 
            WHERE dosya_id = ? AND (is_deleted = 0 OR is_deleted IS NULL)`,
-          [activeDosyaId]
+          [actualDosyaId]
         )
         if (snapRes?.success && Array.isArray(snapRes.data)) {
           for (const s of snapRes.data) {
@@ -175,7 +208,7 @@ export function useDosyaEvrakAkisi() {
            FROM DATA_TeminBelge 
            WHERE (temin_dosya_id = ? OR dosya_id = ?) 
            ORDER BY id ASC`,
-          [activeDosyaId, activeDosyaId]
+          [actualDosyaId, actualDosyaId]
         )
         if (signedRes?.success && Array.isArray(signedRes.data)) {
           signedDocsList.push(...signedRes.data)
@@ -204,7 +237,7 @@ export function useDosyaEvrakAkisi() {
           `SELECT id, unvan, yasaklilik_belgesi 
            FROM DATA_TeminFirma 
            WHERE temin_dosya_id = ? AND yasaklilik_belgesi IS NOT NULL AND yasaklilik_belgesi != ''`,
-          [activeDosyaId]
+          [actualDosyaId]
         )
         if (firmaRes?.success && Array.isArray(firmaRes.data)) {
           yasaklilikDocsList.push(...firmaRes.data)
@@ -219,31 +252,31 @@ export function useDosyaEvrakAkisi() {
       // ── 1. AŞAMA: HAZIRLIK & İHTİYAÇ ──
       const stage1Docs = [
         {
-          code: 'ihtiyac_listesi',
+          code: 'ihtiyac-listesi',
           title: 'İhtiyaç Listesi & Malzeme İcmal Cetveli',
           iconType: 'file-text' as const,
           description: 'Talep edilen mal/hizmet kalemleri, birimleri ve miktarları'
         },
         {
-          code: 'ihtiyac_talep_formu',
+          code: 'ihtiyac-talep-formu',
           title: 'İhtiyaç Talep Formu & Lüzum Müzekkeresi',
           iconType: 'file-text' as const,
           description: 'Harcama birimi resmi ihtiyaç gerekçesi ve olur yazısı'
         },
         {
-          code: 'dogrudan_temin_onay_belgesi',
+          code: 'dogrudan-temin-onay-belgesi',
           title: 'Doğrudan Temin Onay Belgesi',
           iconType: 'shield' as const,
           description: 'Harcama Yetkilisi 4734 md. 22 onay ve yetki belgesi'
         },
         {
-          code: 'harcama_talimati',
+          code: 'harcama-talimati',
           title: 'Harcama Talimatı & Süreç Başlatma',
           iconType: 'file-text' as const,
           description: 'Mali harcama ve tahsisat talimatı'
         },
         {
-          code: 'piyasa_fiyat_arastirma_gorevlendirmesi',
+          code: 'piyasa-fiyat-arastirma-gorevlendirmesi',
           title: 'Piyasa Fiyat Araştırma Görevlendirmesi',
           iconType: 'scale' as const,
           description: 'Piyasa araştırması yapacak görevli personelin atama kararı'
@@ -251,7 +284,7 @@ export function useDosyaEvrakAkisi() {
       ]
 
       for (const doc of stage1Docs) {
-        const snap = snapshotsMap.get(doc.code) || snapshotsMap.get(doc.code.replace(/_/g, '-'))
+        const snap = snapshotsMap.get(doc.code) || snapshotsMap.get(doc.code.replace(/-/g, '_'))
         const isHazir = Boolean(snap)
         items.push({
           id: `doc-${doc.code}`,
@@ -274,25 +307,25 @@ export function useDosyaEvrakAkisi() {
       // ── 2. AŞAMA: TEKLİFLER & PİYASA FİYAT ARAŞTIRMASI ──
       const stage2Docs = [
         {
-          code: 'fiyat_arastirma_mektubu',
+          code: 'fiyat-arastirma-mektubu',
           title: 'Tedarikçi Teklif İsteme Mektubu',
           iconType: 'file-text' as const,
           description: 'Firmalara dağıtılan resmi teklif davet mektubu'
         },
         {
-          code: 'birim_fiyat_teklif_mektubu',
+          code: 'birim-fiyat-teklif-mektubu',
           title: 'Birim Fiyat Teklif Cetveli',
           iconType: 'coins' as const,
           description: 'İsteklilerin doldurarak teslim ettiği fiyat teklif cetveli'
         },
         {
-          code: 'piyasa_fiyat_arastirma_tutanagi',
+          code: 'piyasa-fiyat-arastirma-tutanagi',
           title: 'Piyasa Fiyat Araştırması Tutanağı',
           iconType: 'scale' as const,
           description: 'Tekliflerin karşılaştırıldığı ve en uygun teklifin tespit edildiği tutanak'
         },
         {
-          code: 'yaklasik_maliyet_cetveli',
+          code: 'yaklasik-maliyet-cetveli',
           title: 'Yaklaşık Maliyet Hesap Cetveli',
           iconType: 'coins' as const,
           description: 'Teklif aritmetik ortalaması veya en düşük fiyata göre hesaplanan maliyet'
@@ -300,7 +333,7 @@ export function useDosyaEvrakAkisi() {
       ]
 
       for (const doc of stage2Docs) {
-        const snap = snapshotsMap.get(doc.code) || snapshotsMap.get(doc.code.replace(/_/g, '-'))
+        const snap = snapshotsMap.get(doc.code) || snapshotsMap.get(doc.code.replace(/-/g, '_'))
         const isHazir = Boolean(snap)
         items.push({
           id: `doc-${doc.code}`,
@@ -322,63 +355,76 @@ export function useDosyaEvrakAkisi() {
 
       // ── 3. AŞAMA: KARAR & SİPARİŞ / SÖZLEŞME ──
       items.push({
-        id: 'doc-dogrudan_temin_sonuc_onay_belgesi',
-        code: 'dogrudan_temin_sonuc_onay_belgesi',
-        title: 'Doğrudan Temin Karar & Sonuç Tutanağı',
+        id: 'doc-kabul-edilen-teklif',
+        code: 'kabul-edilen-teklif',
+        title: 'Kabul Edilen Teklif / Teklif Değerlendirme Bildirimi',
         stage: 3,
         stageName: '3. Karar & Sözleşme',
         type: 'template',
-        status: snapshotsMap.has('dogrudan_temin_sonuc_onay_belgesi') ? 'hazir' : 'taslak',
-        badge: snapshotsMap.has('dogrudan_temin_sonuc_onay_belgesi')
+        status: snapshotsMap.has('kabul_edilen_teklif') || snapshotsMap.has('kabul-edilen-teklif') ? 'hazir' : 'taslak',
+        badge: snapshotsMap.has('kabul_edilen_teklif') || snapshotsMap.has('kabul-edilen-teklif')
           ? { label: 'Hazır (Kayıtlı)', color: 'bg-emerald-50 dark:bg-emerald-950/40', textColor: 'text-emerald-700 dark:text-emerald-300', borderColor: 'border-emerald-200 dark:border-emerald-800' }
           : { label: 'Otomatik Taslak', color: 'bg-slate-50 dark:bg-slate-800/60', textColor: 'text-slate-600 dark:text-slate-300', borderColor: 'border-slate-200 dark:border-slate-700' },
         iconType: 'scale',
         date: summary.tarih,
-        description: 'Alımın en uygun teklifi veren yükleniciye verilme kararı'
+        description: 'Teklifin uygun bulunduğunu ve alımın firmadan yapılacağını bildiren resmi yazı'
       })
 
       if (sozlesmeliMi) {
         items.push({
-          id: 'doc-sozlesme_taslagi',
-          code: 'sozlesme_taslagi',
-          title: 'Doğrudan Temin Sözleşme Taslağı (4734)',
+          id: 'doc-dogrudan-temin-sozlesmesi',
+          code: 'dogrudan-temin-sozlesmesi',
+          title: 'Doğrudan Temin Sözleşmesi (4734)',
           stage: 3,
           stageName: '3. Karar & Sözleşme',
           type: 'template',
-          status: snapshotsMap.has('sozlesme_taslagi') ? 'hazir' : 'taslak',
-          badge: snapshotsMap.has('sozlesme_taslagi')
+          status: snapshotsMap.has('dogrudan_temin_sozlesmesi') || snapshotsMap.has('dogrudan-temin-sozlesmesi') ? 'hazir' : 'taslak',
+          badge: snapshotsMap.has('dogrudan_temin_sozlesmesi') || snapshotsMap.has('dogrudan-temin-sozlesmesi')
             ? { label: 'Hazır (Kayıtlı)', color: 'bg-purple-50 dark:bg-purple-950/40', textColor: 'text-purple-700 dark:text-purple-300', borderColor: 'border-purple-200 dark:border-purple-800' }
             : { label: 'Sözleşmeli Alım', color: 'bg-purple-50 dark:bg-purple-950/40', textColor: 'text-purple-700 dark:text-purple-300', borderColor: 'border-purple-200 dark:border-purple-800' },
           iconType: 'signature',
           date: summary.tarih,
           description: 'İdare ile yüklenici arasında imzalanacak resmi sözleşme metni'
         })
-      } else {
         items.push({
-          id: 'doc-siparis_mektubu',
-          code: 'siparis_mektubu',
-          title: 'Tedarikçi Sipariş & Temin Mektubu',
+          id: 'doc-sozlesmeye-davet',
+          code: 'sozlesmeye-davet',
+          title: 'Sözleşmeye Davet Mektubu',
           stage: 3,
           stageName: '3. Karar & Sözleşme',
           type: 'template',
-          status: snapshotsMap.has('siparis_mektubu') ? 'hazir' : 'taslak',
+          status: snapshotsMap.has('sozlesmeye_davet') || snapshotsMap.has('sozlesmeye-davet') ? 'hazir' : 'taslak',
+          badge: { label: 'Sözleşme Daveti', color: 'bg-purple-50 dark:bg-purple-950/40', textColor: 'text-purple-700 dark:text-purple-300', borderColor: 'border-purple-200 dark:border-purple-800' },
+          iconType: 'file-text',
+          date: summary.tarih,
+          description: 'Yüklenici firmaya sözleşme imzalaması için tebliğ edilen davet yazısı'
+        })
+      } else {
+        items.push({
+          id: 'doc-siparis-mektubu',
+          code: 'fiyat-arastirma-mektubu',
+          title: 'Sipariş Yazısı & Mal/Hizmet Teslim Talebi',
+          stage: 3,
+          stageName: '3. Karar & Sözleşme',
+          type: 'template',
+          status: snapshotsMap.has('siparis_mektubu') || snapshotsMap.has('siparis-mektubu') ? 'hazir' : 'taslak',
           badge: { label: 'Sözleşmesiz Alım', color: 'bg-amber-50 dark:bg-amber-950/40', textColor: 'text-amber-700 dark:text-amber-300', borderColor: 'border-amber-200 dark:border-amber-800' },
           iconType: 'truck',
           date: summary.tarih,
-          description: 'Sözleşme düzenlenmeyen doğrudan temin alımlarında resmi sipariş belgesi'
+          description: 'Sözleşme düzenlenmeyen doğrudan temin alımlarında teslim süresi ve adresini bildiren resmi sipariş yazısı'
         })
       }
 
       // ── 4. AŞAMA: KABUL, FATURA & ÖDEME ──
       items.push({
-        id: 'doc-muayene_kabul_tutanagi',
-        code: 'muayene_kabul_tutanagi',
+        id: 'doc-muayene-kabul-tutanagi',
+        code: 'muayene-kabul-tutanagi',
         title: 'Muayene ve Kabul Komisyonu Tutanağı',
         stage: 4,
         stageName: '4. Kabul & Ödeme',
         type: 'template',
-        status: snapshotsMap.has('muayene_kabul_tutanagi') ? 'hazir' : 'taslak',
-        badge: snapshotsMap.has('muayene_kabul_tutanagi')
+        status: snapshotsMap.has('muayene_kabul_tutanagi') || snapshotsMap.has('muayene-kabul-tutanagi') ? 'hazir' : 'taslak',
+        badge: snapshotsMap.has('muayene_kabul_tutanagi') || snapshotsMap.has('muayene-kabul-tutanagi')
           ? { label: 'Hazır (Kayıtlı)', color: 'bg-emerald-50 dark:bg-emerald-950/40', textColor: 'text-emerald-700 dark:text-emerald-300', borderColor: 'border-emerald-200 dark:border-emerald-800' }
           : { label: 'Otomatik Taslak', color: 'bg-slate-50 dark:bg-slate-800/60', textColor: 'text-slate-600 dark:text-slate-300', borderColor: 'border-slate-200 dark:border-slate-700' },
         iconType: 'file-check',
@@ -388,13 +434,13 @@ export function useDosyaEvrakAkisi() {
 
       if (alimTuru === 'mal') {
         items.push({
-          id: 'doc-teslim_tesellum_tutanagi',
-          code: 'teslim_tesellum_tutanagi',
+          id: 'doc-teslim-tesellum-tutanagi',
+          code: 'luzum-muzekkeresi-teslim-tesellum',
           title: 'Taşınır Teslim Tesellüm Belgesi (Ambar)',
           stage: 4,
           stageName: '4. Kabul & Ödeme',
           type: 'template',
-          status: snapshotsMap.has('teslim_tesellum_tutanagi') ? 'hazir' : 'taslak',
+          status: snapshotsMap.has('luzum_muzekkeresi_teslim_tesellum') || snapshotsMap.has('luzum-muzekkeresi-teslim-tesellum') ? 'hazir' : 'taslak',
           badge: { label: 'Mal Alımı Zorunlu', color: 'bg-blue-50 dark:bg-blue-950/40', textColor: 'text-blue-700 dark:text-blue-300', borderColor: 'border-blue-200 dark:border-blue-800' },
           iconType: 'truck',
           date: summary.tarih,
@@ -404,34 +450,34 @@ export function useDosyaEvrakAkisi() {
 
       items.push(
         {
-          id: 'doc-hakedis_raporu',
-          code: 'hakedis_raporu',
-          title: 'Hakediş Raporu & Fatura İcmali (5018)',
+          id: 'doc-odeme-yazisi',
+          code: 'odeme-yazisi',
+          title: 'Ödeme Emri Belgesi & Tahakkuk Müzekkeresi',
           stage: 4,
           stageName: '4. Kabul & Ödeme',
           type: 'template',
-          status: snapshotsMap.has('hakedis_raporu') ? 'hazir' : 'taslak',
-          badge: snapshotsMap.has('hakedis_raporu')
+          status: snapshotsMap.has('odeme_yazisi') || snapshotsMap.has('odeme-yazisi') ? 'hazir' : 'taslak',
+          badge: snapshotsMap.has('odeme_yazisi') || snapshotsMap.has('odeme-yazisi')
             ? { label: 'Hazır (Kayıtlı)', color: 'bg-emerald-50 dark:bg-emerald-950/40', textColor: 'text-emerald-700 dark:text-emerald-300', borderColor: 'border-emerald-200 dark:border-emerald-800' }
             : { label: 'Otomatik Taslak', color: 'bg-slate-50 dark:bg-slate-800/60', textColor: 'text-slate-600 dark:text-slate-300', borderColor: 'border-slate-200 dark:border-slate-700' },
           iconType: 'receipt',
           date: summary.tarih,
-          description: 'Fatura tahakkuku ve yasal kesintiler icmal belgesi'
+          description: 'Harcama Yetkilisi ve Gerçekleştirme Görevlisi onaylı MİF ödeme ve tahakkuk belgesi'
         },
         {
-          id: 'doc-odeme_emri_belgesi',
-          code: 'odeme_emri_belgesi',
-          title: 'Muhasebe Ödeme Emri Belgesi (MİF)',
+          id: 'doc-harcama-pusulasi',
+          code: 'harcama-pusulasi',
+          title: 'Harcama Pusulası & Gider Makbuzu',
           stage: 4,
           stageName: '4. Kabul & Ödeme',
           type: 'template',
-          status: snapshotsMap.has('odeme_emri_belgesi') ? 'hazir' : 'taslak',
-          badge: snapshotsMap.has('odeme_emri_belgesi')
+          status: snapshotsMap.has('harcama_pusulasi') || snapshotsMap.has('harcama-pusulasi') ? 'hazir' : 'taslak',
+          badge: snapshotsMap.has('harcama_pusulasi') || snapshotsMap.has('harcama-pusulasi')
             ? { label: 'Hazır (Kayıtlı)', color: 'bg-emerald-50 dark:bg-emerald-950/40', textColor: 'text-emerald-700 dark:text-emerald-300', borderColor: 'border-emerald-200 dark:border-emerald-800' }
-            : { label: 'Otomatik Taslak', color: 'bg-slate-50 dark:bg-slate-800/60', textColor: 'text-slate-600 dark:text-slate-300', borderColor: 'border-slate-200 dark:border-slate-700' },
+            : { label: 'Gider Makbuzu', color: 'bg-slate-50 dark:bg-slate-800/60', textColor: 'text-slate-600 dark:text-slate-300', borderColor: 'border-slate-200 dark:border-slate-700' },
           iconType: 'receipt',
           date: summary.tarih,
-          description: 'Harcama Yetkilisi ve Gerçekleştirme Görevlisi onaylı MİF ödeme emri'
+          description: 'Vergi Usul Kanunu ve 5018 sayılı kanun kapsamında düzenlenen harcama pusulası'
         }
       )
 
@@ -454,25 +500,29 @@ export function useDosyaEvrakAkisi() {
         }
         if (!targetCode) {
           const bName = (signed.belge_adi || '').toLowerCase()
-          if (bName.includes('ihtiyaç') || bName.includes('ihtiyac') || bName.includes('lüzum')) targetCode = 'ihtiyac_listesi'
-          else if (bName.includes('onay')) targetCode = 'dogrudan_temin_onay_belgesi'
-          else if (bName.includes('harcama') && bName.includes('talimat')) targetCode = 'harcama_talimati'
-          else if (bName.includes('görev') || bName.includes('gorev') || bName.includes('atama')) targetCode = 'piyasa_fiyat_arastirma_gorevlendirmesi'
-          else if (bName.includes('isteme') || (bName.includes('fiyat') && bName.includes('mektup'))) targetCode = 'fiyat_arastirma_mektubu'
-          else if (bName.includes('birim') && bName.includes('fiyat')) targetCode = 'birim_fiyat_teklif_mektubu'
-          else if (bName.includes('piyasa') || bName.includes('tutanak') || bName.includes('arastirma')) targetCode = 'piyasa_fiyat_arastirma_tutanagi'
-          else if (bName.includes('maliyet')) targetCode = 'yaklasik_maliyet_cetveli'
-          else if (bName.includes('karar') || bName.includes('sonuç') || bName.includes('sonuc')) targetCode = 'dogrudan_temin_sonuc_onay_belgesi'
-          else if (bName.includes('sözleşme') || bName.includes('sozlesme')) targetCode = 'sozlesme_taslagi'
-          else if (bName.includes('sipariş') || bName.includes('siparis')) targetCode = 'siparis_mektubu'
-          else if (bName.includes('kabul') || bName.includes('muayene')) targetCode = 'muayene_kabul_tutanagi'
-          else if (bName.includes('teslim') || bName.includes('tesellüm') || bName.includes('tesellum')) targetCode = 'teslim_tesellum_tutanagi'
-          else if (bName.includes('hakediş') || bName.includes('hakedis')) targetCode = 'hakedis_raporu'
-          else if (bName.includes('ödeme') || bName.includes('odeme') || bName.includes('mif')) targetCode = 'odeme_emri_belgesi'
+          if (bName.includes('ihtiyaç') || bName.includes('ihtiyac') || bName.includes('lüzum') || bName.includes('talep')) targetCode = 'ihtiyac-listesi'
+          else if (bName.includes('onay')) targetCode = 'dogrudan-temin-onay-belgesi'
+          else if (bName.includes('harcama') && bName.includes('talimat')) targetCode = 'harcama-talimati'
+          else if (bName.includes('görev') || bName.includes('gorev') || bName.includes('atama')) targetCode = 'piyasa-fiyat-arastirma-gorevlendirmesi'
+          else if (bName.includes('isteme') || (bName.includes('fiyat') && bName.includes('mektup'))) targetCode = 'fiyat-arastirma-mektubu'
+          else if (bName.includes('birim') && bName.includes('fiyat')) targetCode = 'birim-fiyat-teklif-mektubu'
+          else if (bName.includes('piyasa') || bName.includes('tutanak') || bName.includes('arastirma')) targetCode = 'piyasa-fiyat-arastirma-tutanagi'
+          else if (bName.includes('maliyet')) targetCode = 'yaklasik-maliyet-cetveli'
+          else if (bName.includes('kabul') && bName.includes('teklif')) targetCode = 'kabul-edilen-teklif'
+          else if (bName.includes('karar') || bName.includes('sonuç') || bName.includes('sonuc')) targetCode = 'dogrudan-temin-onay-belgesi'
+          else if (bName.includes('sözleşme') || bName.includes('sozlesme')) targetCode = 'dogrudan-temin-sozlesmesi'
+          else if (bName.includes('sipariş') || bName.includes('siparis')) targetCode = 'fiyat-arastirma-mektubu'
+          else if (bName.includes('muayene') || bName.includes('kabul')) targetCode = 'muayene-kabul-tutanagi'
+          else if (bName.includes('teslim') || bName.includes('tesellüm') || bName.includes('tesellum')) targetCode = 'luzum-muzekkeresi-teslim-tesellum'
+          else if (bName.includes('ödeme') || bName.includes('odeme') || bName.includes('mif') || bName.includes('tahakkuk')) targetCode = 'odeme-yazisi'
+          else if (bName.includes('pusula') || bName.includes('makbuz')) targetCode = 'harcama-pusulasi'
         }
 
         if (targetCode) {
+          const normKey = targetCode.toLowerCase().replace(/_/g, '-')
           matchedSignedMap.set(targetCode, signed)
+          matchedSignedMap.set(normKey, signed)
+          matchedSignedMap.set(normKey.replace(/-/g, '_'), signed)
         } else {
           unmatchedSignedDocs.push(signed)
         }
@@ -480,8 +530,11 @@ export function useDosyaEvrakAkisi() {
 
       // Süreç şablonlarına eşleşen imzalı belgeleri ata
       items.forEach((item) => {
-        if (item.type === 'template' && matchedSignedMap.has(item.code)) {
-          const matched = matchedSignedMap.get(item.code)
+        const itemCodeNorm = item.code.toLowerCase().replace(/_/g, '-')
+        const itemCodeUnderscore = item.code.toLowerCase().replace(/-/g, '_')
+        const matched = matchedSignedMap.get(item.code) || matchedSignedMap.get(itemCodeNorm) || matchedSignedMap.get(itemCodeUnderscore)
+
+        if (item.type === 'template' && matched) {
           const filePath = matched.imzali_dosya_yolu || matched.dosya_yolu || ''
           let sayfaAraligi: string | undefined = undefined
           if (matched.veri_json) {

@@ -35,49 +35,52 @@ export function ImzaliBelgeYukleModal({
     if (initialTargetCode) return initialTargetCode
     const lower = fileName.toLowerCase()
     if (lower.includes('ihtiyaç') || lower.includes('ihtiyac') || lower.includes('lüzum') || lower.includes('talep')) {
-      return 'ihtiyac_listesi'
+      return 'ihtiyac-listesi'
     }
     if (lower.includes('onay')) {
-      return 'dogrudan_temin_onay_belgesi'
+      return 'dogrudan-temin-onay-belgesi'
     }
     if (lower.includes('harcama') && lower.includes('talimat')) {
-      return 'harcama_talimati'
+      return 'harcama-talimati'
     }
     if (lower.includes('görev') || lower.includes('gorev') || lower.includes('atama')) {
-      return 'piyasa_fiyat_arastirma_gorevlendirmesi'
+      return 'piyasa-fiyat-arastirma-gorevlendirmesi'
     }
     if (lower.includes('teklif') && lower.includes('isteme')) {
-      return 'fiyat_arastirma_mektubu'
+      return 'fiyat-arastirma-mektubu'
     }
     if (lower.includes('birim') && lower.includes('fiyat')) {
-      return 'birim_fiyat_teklif_mektubu'
+      return 'birim-fiyat-teklif-mektubu'
     }
     if (lower.includes('piyasa') || lower.includes('tutanak') || lower.includes('arastirma')) {
-      return 'piyasa_fiyat_arastirma_tutanagi'
+      return 'piyasa-fiyat-arastirma-tutanagi'
     }
     if (lower.includes('maliyet')) {
-      return 'yaklasik_maliyet_cetveli'
+      return 'yaklasik-maliyet-cetveli'
+    }
+    if (lower.includes('kabul') && lower.includes('teklif')) {
+      return 'kabul-edilen-teklif'
     }
     if (lower.includes('karar') || lower.includes('sonuç') || lower.includes('sonuc')) {
-      return 'dogrudan_temin_sonuc_onay_belgesi'
+      return 'dogrudan-temin-onay-belgesi'
     }
     if (lower.includes('sözleşme') || lower.includes('sozlesme')) {
-      return 'sozlesme_taslagi'
+      return 'dogrudan-temin-sozlesmesi'
     }
     if (lower.includes('sipariş') || lower.includes('siparis')) {
-      return 'siparis_mektubu'
+      return 'fiyat-arastirma-mektubu'
     }
     if (lower.includes('muayene') || lower.includes('kabul')) {
-      return 'muayene_kabul_tutanagi'
+      return 'muayene-kabul-tutanagi'
     }
     if (lower.includes('teslim') || lower.includes('tesellüm') || lower.includes('tesellum')) {
-      return 'teslim_tesellum_tutanagi'
+      return 'luzum-muzekkeresi-teslim-tesellum'
     }
-    if (lower.includes('hakediş') || lower.includes('hakedis')) {
-      return 'hakedis_raporu'
+    if (lower.includes('ödeme') || lower.includes('odeme') || lower.includes('mif') || lower.includes('tahakkuk')) {
+      return 'odeme-yazisi'
     }
-    if (lower.includes('ödeme') || lower.includes('odeme') || lower.includes('mif')) {
-      return 'odeme_emri_belgesi'
+    if (lower.includes('harcama') || lower.includes('pusula') || lower.includes('makbuz')) {
+      return 'harcama-pusulasi'
     }
     return ''
   }

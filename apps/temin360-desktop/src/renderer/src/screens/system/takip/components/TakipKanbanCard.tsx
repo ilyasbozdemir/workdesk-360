@@ -13,6 +13,7 @@ import {
 import type { TeminDosyasi } from '../../../dosyalar/dosyalar.hooks'
 import { DosyaHizliIcerikPopover } from '../../../dosyalar/components/DosyaHizliIcerikPopover'
 import { DosyaActionMenu } from '../../../dosyalar/components/DosyaActionMenu'
+import { AktarimDurumBadge } from '../../../dosyalar/components/Badges'
 
 export interface TakipKanbanCardProps {
   dosya: TeminDosyasi
@@ -173,6 +174,12 @@ export function TakipKanbanCard({
               <TurIcon size={10} />
               {turInfo.label}
             </span>
+            <AktarimDurumBadge
+              kayitKaynagi={dosya.kayit_kaynagi}
+              kaynakKayitId={dosya.kaynak_kayit_id}
+              isLocked={dosya.is_locked}
+              lockReason={dosya.lock_reason}
+            />
             {dosya.birim_adi && (
               <span className="text-slate-400 truncate max-w-28" title={dosya.birim_adi}>
                 {dosya.birim_adi}
@@ -277,12 +284,20 @@ export function TakipKanbanCard({
           </span>
         </div>
 
-        <span
-          className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${turInfo.classes} shrink-0`}
-        >
-          <TurIcon size={11} />
-          {turInfo.label}
-        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          <AktarimDurumBadge
+            kayitKaynagi={dosya.kayit_kaynagi}
+            kaynakKayitId={dosya.kaynak_kayit_id}
+            isLocked={dosya.is_locked}
+            lockReason={dosya.lock_reason}
+          />
+          <span
+            className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${turInfo.classes} shrink-0`}
+          >
+            <TurIcon size={11} />
+            {turInfo.label}
+          </span>
+        </div>
       </div>
 
       {/* Subject / Konu */}

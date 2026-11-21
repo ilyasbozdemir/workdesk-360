@@ -35,6 +35,7 @@ import { emitAppEvent } from '../../../../utils/appEvents'
 import { formatMoney } from '../../../../components/layout/temin-selector/teminSelector.utils'
 import { formatDate } from '../../../../utils/formatters'
 import { APP_ROUTES } from '../../../../constants/routeConstants'
+import { AktarimDurumBadge } from '../../../dosyalar/components/Badges'
 
 interface TakipDosyaDetayBilgileriProps {
   activeDosya: any
@@ -98,6 +99,27 @@ export function TakipDosyaDetayBilgileri({
     }
   }
 
+  const handlePromptKaynakId = async () => {
+    const val = window.prompt(
+      'Bu dosya için eski sistem/arşiv kaynak kayıt numarasını (ID) giriniz:',
+      d.kaynak_kayit_id ? String(d.kaynak_kayit_id) : ''
+    )
+    if (val === null) return
+    if (!d.id || !(window as any).electron?.ipcRenderer) return
+    try {
+      await (window as any).electron.ipcRenderer.invoke(
+        'db:run',
+        'UPDATE DATA_TeminDosyasi SET kaynak_kayit_id = ?, kayit_kaynagi = COALESCE(kayit_kaynagi, ?) WHERE id = ?',
+        [val.trim(), 'eski_sistem', d.id]
+      )
+      await queryClient.invalidateQueries({ queryKey: ['takip_dosya'] })
+      await queryClient.invalidateQueries({ queryKey: ['dosyalar'] })
+      emitAppEvent('dossier:updated', { dosyaId: d.id })
+    } catch (err) {
+      console.error('Kaynak kayıt ID güncellenemedi:', err)
+    }
+  }
+
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-6 animate-in fade-in duration-200">
       {/* BAŞLIK & İDARİ BİLGİLENDİRME BARI */}
@@ -117,6 +139,13 @@ export function TakipDosyaDetayBilgileri({
                 <CheckCircle2 size={10} className="text-emerald-500" />
                 Resmî Dosya Künyesi · Canlı Veri
               </span>
+              <AktarimDurumBadge
+                kayitKaynagi={d.kayit_kaynagi}
+                kaynakKayitId={d.kaynak_kayit_id}
+                isLocked={d.is_locked}
+                lockReason={d.lock_reason}
+                onEditKaynak={handlePromptKaynakId}
+              />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               4734 Sayılı Kamu İhale Kanunu, 5018 Sayılı Bütçe Kanunu ve Doğrudan Temin Tebliği mevzuat parametreleri.

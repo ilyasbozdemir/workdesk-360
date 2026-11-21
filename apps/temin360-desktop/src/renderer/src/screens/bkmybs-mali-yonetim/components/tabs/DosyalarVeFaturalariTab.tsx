@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { KamuRole } from "../../types";
 import { formatCurrency, formatDate } from "@renderer/utils/formatters";
+import { AktarimDurumBadge } from "@renderer/screens/dosyalar/components/Badges";
 import { CurrencyInput } from "@renderer/components/ui/CurrencyInput";
 import { useWorkspaceStore } from "@renderer/store/workspaceStore";
 import { useWorkspaceContextStore } from "@renderer/store/workspaceContextStore";
@@ -97,6 +98,10 @@ export interface DosyaOzet {
   kesintiKararPulu: number;
   kesintiKdvTevkifat: number;
   sozlesmeYapilacakMi: boolean;
+  kayitKaynagi?: string | null;
+  kaynakKayitId?: number | string | null;
+  isLocked?: number | null;
+  lockReason?: string | null;
   faturalar: FaturaKayit[];
 }
 
@@ -193,6 +198,10 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
          d.kesinti_karar_pulu,
          d.kesinti_kdv_tevkifat,
          COALESCE(d.sozlesme_yapilacak_mi, 0) AS sozlesme_yapilacak_mi,
+         d.kayit_kaynagi,
+         d.kaynak_kayit_id,
+         d.is_locked,
+         d.lock_reason,
          d.butce_kodu,
          d.ekonomik_kod,
          d.harcama_birimi,
@@ -492,6 +501,10 @@ async function loadDosyalarVeFaturalar(): Promise<DosyaOzet[]> {
         kesintiKararPulu: 0,
         kesintiKdvTevkifat: Number(d.kesinti_kdv_tevkifat || 0),
         sozlesmeYapilacakMi: Boolean(d.sozlesme_yapilacak_mi),
+        kayitKaynagi: d.kayit_kaynagi,
+        kaynakKayitId: d.kaynak_kayit_id,
+        isLocked: d.is_locked,
+        lockReason: d.lock_reason,
         faturalar,
       };
     });
@@ -1962,6 +1975,12 @@ export const DosyalarVeFaturalariTab: React.FC<DosyalarVeFaturalariTabProps> = (
                             </span>
                           )}
                           <AlimTuruBadge turu={dosya.tur} />
+                          <AktarimDurumBadge
+                            kayitKaynagi={dosya.kayitKaynagi}
+                            kaynakKayitId={dosya.kaynakKayitId}
+                            isLocked={dosya.isLocked}
+                            lockReason={dosya.lockReason}
+                          />
                           <span
                             className={cn(
                               "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border shrink-0",
