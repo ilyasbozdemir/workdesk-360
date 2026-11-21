@@ -1,0 +1,11 @@
+{
+  "name": "@temin360/temin-direct",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Doğrudan temin (4734 md. 22/d) için katmanlı, nesne tabanlı çekirdek: domain / application / infrastructure",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "test": "vitest run", "typecheck": "tsc --noEmit" },
+  "dependencies": { "@temin360/domain": "workspace:*" },
+  "devDependencies": { "typescript": "^5.6.0", "vitest": "^2.1.0", "better-sqlite3": "^11.0.0", "js-yaml": "^4.1.1", "@types/js-yaml": "^4.0.9", "@types/better-sqlite3": "^7.6.0", "@types/node": "^22.0.0" }
+}
