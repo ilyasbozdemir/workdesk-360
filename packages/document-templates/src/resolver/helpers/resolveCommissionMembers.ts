@@ -16,7 +16,11 @@ export async function resolveCommissionMembers(
                                  COALESCE(k.ad, '') as komisyon_turu_adi,
                                  COALESCE(k.tur, '') as komisyon_tur_kodu
                           FROM DATA_TeminKomisyon tk 
-                          LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id 
+                          LEFT JOIN TANIM_Personel p ON (
+                            (tk.personel_id IS NOT NULL AND tk.personel_id > 0 AND tk.personel_id = p.id)
+                            OR
+                            ((tk.personel_id IS NULL OR tk.personel_id = 0) AND LOWER(TRIM(tk.ad_soyad)) = LOWER(TRIM(p.ad_soyad)))
+                          )
                           LEFT JOIN TANIM_Komisyon k ON tk.komisyon_id = k.id
                           WHERE tk.temin_dosya_id = ?`;
     const fileKomRows = await queryExecutor(fileKomQuery, [activeDosyaId]);
@@ -63,6 +67,12 @@ export async function resolveCommissionMembers(
 
     if (sablonDegiskeni === 'fiyatKomisyonu' || sablonDegiskeni === 'gorevlendirilenler') {
       resolvedPayload.gorevlendirilenler = resolvedPayload[sablonDegiskeni];
+    } else if (
+      sablonDegiskeni === 'muayeneKomisyonu' &&
+      (templateId?.includes('muayene') || templateId?.includes('kabul'))
+    ) {
+      resolvedPayload.gorevlendirilenler = resolvedPayload[sablonDegiskeni];
+      resolvedPayload.dagitimListesi = resolvedPayload[sablonDegiskeni];
     }
   } catch (err) {
     resolvedPayload[sablonDegiskeni] = [];

@@ -560,9 +560,19 @@ export function useKabulVeOdemeData() {
     try {
       const allKomRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT id, komisyon_id, ad_soyad, unvan, gorev, komisyon_turu, COALESCE(rol, 'Asil') as asli_yedek FROM DATA_TeminKomisyon
-         WHERE temin_dosya_id = ?
-         ORDER BY (CASE WHEN LOWER(COALESCE(gorev, '')) LIKE '%başkan%' OR LOWER(COALESCE(gorev, '')) LIKE '%baskan%' THEN 0 ELSE 1 END) ASC, id ASC`,
+        `SELECT tk.id, tk.komisyon_id, 
+                COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as ad_soyad, 
+                COALESCE(NULLIF(tk.unvan, ''), NULLIF(p.unvan, ''), '') as unvan, 
+                tk.gorev, tk.komisyon_turu, 
+                COALESCE(tk.rol, 'Asil') as asli_yedek 
+         FROM DATA_TeminKomisyon tk
+         LEFT JOIN TANIM_Personel p ON (
+           (tk.personel_id IS NOT NULL AND tk.personel_id > 0 AND tk.personel_id = p.id)
+           OR
+           ((tk.personel_id IS NULL OR tk.personel_id = 0) AND LOWER(TRIM(tk.ad_soyad)) = LOWER(TRIM(p.ad_soyad)))
+         )
+         WHERE tk.temin_dosya_id = ?
+         ORDER BY (CASE WHEN LOWER(COALESCE(tk.gorev, '')) LIKE '%başkan%' OR LOWER(COALESCE(tk.gorev, '')) LIKE '%baskan%' THEN 0 ELSE 1 END) ASC, tk.id ASC`,
         [activeDosyaId]
       )
       if (allKomRes.success && Array.isArray(allKomRes.data)) {

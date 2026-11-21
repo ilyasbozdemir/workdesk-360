@@ -387,6 +387,7 @@ export function resolveTemplateRouteForDocument<T extends Record<string, any>>(
       if (validMembers.length > 0) {
         ;(enrichedData as any).komisyonUyeleri = validMembers
         ;(enrichedData as any).fiyatKomisyonu = validMembers
+        ;(enrichedData as any).muayeneKomisyonu = validMembers
         ;(enrichedData as any).gorevlendirilenler = validMembers
         ;(enrichedData as any).gorevliler = validMembers
         ;(enrichedData as any).dagitimListesi = validMembers

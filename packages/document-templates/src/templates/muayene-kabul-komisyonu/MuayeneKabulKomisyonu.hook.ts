@@ -121,14 +121,79 @@ export function useMuayeneKabulKomisyonu(
       return [];
     })();
 
+    const findTitleFromPersonelList = (name: string, pid?: any): string => {
+      if (!name) return "";
+      const pList: any[] = Array.isArray((data as any).personelListesi)
+        ? (data as any).personelListesi
+        : Array.isArray((data as any).personeller)
+        ? (data as any).personeller
+        : [];
+      if (pList.length === 0) return "";
+      if (pid) {
+        const byId = pList.find((p) => String(p.id) === String(pid));
+        if (byId?.unvan && String(byId.unvan).trim()) return String(byId.unvan).trim();
+      }
+      const cleanTarget = name.trim().toLowerCase();
+      const byName = pList.find(
+        (p) => String(p.adSoyad || p.ad_soyad || "").trim().toLowerCase() === cleanTarget,
+      );
+      return byName?.unvan && String(byName.unvan).trim() ? String(byName.unvan).trim() : "";
+    };
+
+    const extractOfficerTitle = (item: any): string => {
+      if (!item) return "";
+      if (typeof item === "string") return findTitleFromPersonelList(item);
+
+      const adSoyad = (item.adSoyad || item.ad_soyad || item.ad || item.adi || "").trim();
+      const pid = item.personel_id || item.personelId || item.id;
+
+      let unvan = String(
+        item.unvan ||
+        item.unvani ||
+        item.vekalet_unvani ||
+        item.vekaletUnvani ||
+        item.personel_unvan ||
+        item.title ||
+        item.u ||
+        ""
+      ).trim();
+
+      // "Üye", "Başkan", "Yedek Üye" birer komisyon görevidir; kadro unvanı değildir.
+      const isRoleOnly =
+        !unvan ||
+        unvan.toLowerCase() === "üye" ||
+        unvan.toLowerCase() === "uye" ||
+        unvan.toLowerCase() === "başkan" ||
+        unvan.toLowerCase() === "baskan" ||
+        unvan.toLowerCase() === "yedek üye" ||
+        unvan.toLowerCase() === "yedek uye" ||
+        unvan.toLowerCase() === "komisyon üyesi" ||
+        unvan.toLowerCase() === "komisyon uyesi";
+
+      if (isRoleOnly) {
+        const fromPool = findTitleFromPersonelList(adSoyad, pid);
+        if (fromPool) {
+          return fromPool;
+        }
+        // Eğer personelde de kadro unvanı yoksa ve eldeki değer görev değilse kullan
+        return isRoleOnly ? "" : unvan;
+      }
+
+      return unvan;
+    };
+
     const gorevlendirilenler: MuayeneOfficerInfo[] = (() => {
       const list = rawList
         .filter((g) => !isExcludedMuayeneOfficer(g, onaylayanAdi))
         .map((g: any) => {
-          if (typeof g === "string") return { adSoyad: g.trim(), unvan: "" };
+          if (typeof g === "string") {
+            const name = g.trim();
+            return { adSoyad: name, unvan: extractOfficerTitle(name) };
+          }
+          const adSoyad = (g.adSoyad || g.ad_soyad || g.ad || g.adi || "").trim();
           return {
-            adSoyad: (g.adSoyad || g.ad_soyad || g.ad || g.adi || "").trim(),
-            unvan: (g.unvan || g.unvani || g.gorev || "").trim(),
+            adSoyad,
+            unvan: extractOfficerTitle(g),
           };
         })
         .filter((g) => g.adSoyad.length > 0);
@@ -148,10 +213,14 @@ export function useMuayeneKabulKomisyonu(
       ) {
         const filtered = data.dagitimListesi
           .map((d: any) => {
-            if (typeof d === "string") return { adSoyad: d.trim(), unvan: "" };
+            if (typeof d === "string") {
+              const name = d.trim();
+              return { adSoyad: name, unvan: extractOfficerTitle(name) };
+            }
+            const adSoyad = (d.adSoyad || d.ad || d.ad_soyad || d.adi || "").trim();
             return {
-              adSoyad: (d.adSoyad || d.ad || d.adi || "").trim(),
-              unvan: (d.unvan || d.unvani || d.gorev || "").trim(),
+              adSoyad,
+              unvan: extractOfficerTitle(d),
             };
           })
           .filter((d: any) =>

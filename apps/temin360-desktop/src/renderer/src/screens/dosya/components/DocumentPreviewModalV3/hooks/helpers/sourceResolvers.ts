@@ -60,7 +60,11 @@ async function loadDosyaLists(dosyaId: number) {
               COALESCE(NULLIF(tk.unvan, ''), NULLIF(p.unvan, ''), '') as resolved_unvan,
               COALESCE(NULLIF(tk.birim, ''), NULLIF(p.birim, ''), '') as resolved_birim
        FROM DATA_TeminKomisyon tk
-       LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id
+       LEFT JOIN TANIM_Personel p ON (
+         (tk.personel_id IS NOT NULL AND tk.personel_id > 0 AND tk.personel_id = p.id)
+         OR
+         ((tk.personel_id IS NULL OR tk.personel_id = 0) AND LOWER(TRIM(tk.ad_soyad)) = LOWER(TRIM(p.ad_soyad)))
+       )
        WHERE tk.temin_dosya_id = ? AND (tk.belgede_goster = 1 OR tk.belgede_goster IS NULL)
        ORDER BY tk.id ASC`,
       [dosyaId]
@@ -126,7 +130,13 @@ export const dosyaResolver: DocumentResolver = {
         .filter((k: any) => {
           const gorev = String(k.gorev || '').toLowerCase()
           const tur = String(k.komisyon_turu || '').toLowerCase()
-          if (isMuayene) return tur.includes('muayene') || tur.includes('kabul')
+          if (isMuayene) {
+            const isMuayeneTur = tur.includes('muayene') || tur.includes('kabul')
+            const isMuayeneId = Number(k.komisyon_id) === 2
+            if (!isMuayeneTur && !isMuayeneId && lists.komisyon.some((m: any) => String(m.komisyon_turu || '').toLowerCase().includes('muayene') || Number(m.komisyon_id) === 2)) {
+              return false
+            }
+          }
           
           const isHarcamaYetkilisiOrGerceklestirme =
             gorev.includes('harcama yetkili') ||
@@ -147,7 +157,7 @@ export const dosyaResolver: DocumentResolver = {
         .map((k: any) => ({
           adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
           unvan: k.resolved_unvan || k.unvan || '',
-          gorevi: k.gorev || 'Fiyat Araştırma Görevlisi',
+          gorevi: k.gorev || (isMuayene ? 'Üye' : 'Fiyat Araştırma Görevlisi'),
           imzaTuru: k.imza_turu || 'İmza',
           asilMi: k.asli_yedek === 'Yedek' ? 0 : 1,
           birimId: k.birim_id,
@@ -156,6 +166,15 @@ export const dosyaResolver: DocumentResolver = {
 
       if (targetOfficers.length > 0) {
         ;(dataObj as any)._liveCommissionOfficers = targetOfficers
+        if (isMuayene) {
+          ;(dataObj as any).muayeneKomisyonu = targetOfficers
+          ;(dataObj as any).gorevlendirilenler = targetOfficers
+          ;(dataObj as any).dagitimListesi = targetOfficers
+        } else {
+          ;(dataObj as any).fiyatKomisyonu = targetOfficers
+          ;(dataObj as any).gorevlendirilenler = targetOfficers
+          ;(dataObj as any).dagitimListesi = targetOfficers
+        }
       }
     }
 
