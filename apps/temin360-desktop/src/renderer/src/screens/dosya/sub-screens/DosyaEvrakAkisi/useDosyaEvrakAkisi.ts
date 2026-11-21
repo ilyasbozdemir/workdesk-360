@@ -968,7 +968,10 @@ export function useDosyaEvrakAkisi() {
 
     try {
       for (const item of batchItems) {
-        const uploadRes = await window.electron.ipcRenderer.invoke('workspace:upload-file', item.filePath)
+        const uploadRes = await window.electron.ipcRenderer.invoke('workspace:upload-file', item.filePath, {
+          teminNo: dosyaInfo?.teminNo,
+          mirrorToProjectDir: true
+        })
         if (uploadRes?.success) {
           const relativePath = uploadRes.relativePath || uploadRes.data?.relativePath || item.filePath
           const baseName = item.fileName?.replace(/\.[^/.]+$/, '') || 'İmzalı Evrak'

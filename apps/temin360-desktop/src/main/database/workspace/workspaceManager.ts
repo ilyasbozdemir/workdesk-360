@@ -1,6 +1,7 @@
 import { shell } from 'electron'
 import fs from 'fs'
 import path from 'path'
+import AdmZip from 'adm-zip'
 import { DtmWorkspace } from './DtmWorkspace'
 
 let activeWorkspace: DtmWorkspace | null = null
@@ -148,7 +149,10 @@ export const workspaceManager = {
       return null
     }
   },
-  uploadAttachment: (sourcePath: string) => {
+  uploadAttachment: (
+    sourcePath: string,
+    options?: { teminNo?: string; mirrorToProjectDir?: boolean }
+  ) => {
     if (!activeWorkspace) throw new Error('Açık bir çalışma dosyası yok.')
     if (typeof sourcePath !== 'string' || !sourcePath.trim()) {
       throw new Error('Geçersiz kaynak dosya yolu.')
@@ -172,9 +176,81 @@ export const workspaceManager = {
     const destPath = path.join(attachmentsDir, safeName)
 
     fs.copyFileSync(resolvedSource, destPath)
+
+    // Kullanıcının isteği: Projenin bulunduğu dizinde dosya/temin adıyla klasör açıp PDF kopyasını saklama
+    let mirroredPath: string | null = null
+    const currentFilePath = activeWorkspace.getCurrentFilePath()
+    if (currentFilePath && options?.mirrorToProjectDir !== false) {
+      try {
+        const projectDir = path.dirname(currentFilePath)
+        const projectBaseName = path.basename(currentFilePath, path.extname(currentFilePath))
+        const folderName = options?.teminNo
+          ? `${options.teminNo.replace(/[/\\:*?"<>|]/g, '_')}_Belgeler`
+          : `${projectBaseName}_Belgeler`
+        const localDocDir = path.join(projectDir, folderName)
+        if (!fs.existsSync(localDocDir)) {
+          fs.mkdirSync(localDocDir, { recursive: true })
+        }
+        mirroredPath = path.join(localDocDir, `${baseName}${fileExt}`)
+        fs.copyFileSync(resolvedSource, mirroredPath)
+      } catch (mirrorErr) {
+        console.warn('[workspaceManager] Yerel dizine belge aynalama uyarısı:', mirrorErr)
+      }
+    }
+
     activeWorkspace.recordMutation()
     activeWorkspace.saveWorkspace()
-    return { fileName: safeName, relativePath: `attachments/${safeName}` }
+    return { fileName: safeName, relativePath: `attachments/${safeName}`, mirroredPath }
+  },
+  exportAttachmentsZip: async (targetPath?: string, teminNo?: string) => {
+    if (!activeWorkspace) throw new Error('Açık bir çalışma dosyası yok.')
+    const tempDir = (activeWorkspace as any).tempDir
+    if (!tempDir) throw new Error('Geçici çalışma dizini bulunamadı.')
+
+    const attachmentsDir = path.join(tempDir, 'attachments')
+    if (!fs.existsSync(attachmentsDir) || fs.readdirSync(attachmentsDir).length === 0) {
+      throw new Error('Dosyada henüz yüklenmiş bir ek/belge bulunamadı.')
+    }
+
+    const currentFilePath = activeWorkspace.getCurrentFilePath()
+    let destZip = targetPath
+    if (!destZip && currentFilePath) {
+      const projectDir = path.dirname(currentFilePath)
+      const projectBaseName = path.basename(currentFilePath, path.extname(currentFilePath))
+      const zipName = teminNo
+        ? `${teminNo.replace(/[/\\:*?"<>|]/g, '_')}_Belgeler.zip`
+        : `${projectBaseName}_Belgeler.zip`
+      destZip = path.join(projectDir, zipName)
+    }
+
+    if (!destZip) {
+      throw new Error('Hedef ZIP dosya yolu belirlenemedi.')
+    }
+
+    const zip = new AdmZip()
+    zip.addLocalFolder(attachmentsDir)
+    zip.writeZip(destZip)
+
+    return { success: true, zipPath: destZip, count: fs.readdirSync(attachmentsDir).length }
+  },
+  openProjectAttachmentsFolder: async (teminNo?: string) => {
+    if (!activeWorkspace) throw new Error('Açık bir çalışma dosyası yok.')
+    const currentFilePath = activeWorkspace.getCurrentFilePath()
+    if (!currentFilePath) throw new Error('Aktif bir proje dosyası açık değil.')
+
+    const projectDir = path.dirname(currentFilePath)
+    const projectBaseName = path.basename(currentFilePath, path.extname(currentFilePath))
+    const folderName = teminNo
+      ? `${teminNo.replace(/[/\\:*?"<>|]/g, '_')}_Belgeler`
+      : `${projectBaseName}_Belgeler`
+    const localDocDir = path.join(projectDir, folderName)
+
+    if (!fs.existsSync(localDocDir)) {
+      fs.mkdirSync(localDocDir, { recursive: true })
+    }
+
+    await shell.openPath(localDocDir)
+    return { success: true, folderPath: localDocDir }
   },
   openAttachment: async (relativePath: string) => {
     if (!activeWorkspace) throw new Error('Açık bir çalışma dosyası yok.')

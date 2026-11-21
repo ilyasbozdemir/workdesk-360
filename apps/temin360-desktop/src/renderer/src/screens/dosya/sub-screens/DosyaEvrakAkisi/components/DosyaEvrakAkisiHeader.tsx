@@ -1,28 +1,27 @@
-import React from 'react'
+import React from "react";
 import {
-  FileText,
-  FolderOpen,
-  FolderCheck,
-  RefreshCw,
   Building2,
-  Tag,
-  Coins,
-  ShieldCheck,
   CheckCircle2,
-  FileCheck
-} from 'lucide-react'
-import { DosyaSummaryInfo, EvrakItem } from '../types'
-import { formatCurrency } from '@renderer/utils/formatters'
+  Coins,
+  FileCheck,
+  FileText,
+  FolderCheck,
+  FolderOpen,
+  RefreshCw,
+  Tag,
+} from "lucide-react";
+import { DosyaSummaryInfo, EvrakItem } from "../types";
+import { formatCurrency } from "@renderer/utils/formatters";
 
 interface DosyaEvrakAkisiHeaderProps {
-  dosyaInfo: DosyaSummaryInfo | null
-  dosyalarList?: Array<{ id: number; teminNo: string; konu: string }>
-  activeDosyaId?: number | null
-  onSelectDosya?: (id: number) => void
-  onRefresh: () => void
-  loading: boolean
-  evraklar: EvrakItem[]
-  onOpenSignedDocsManagement?: () => void
+  dosyaInfo: DosyaSummaryInfo | null;
+  dosyalarList?: Array<{ id: number; teminNo: string; konu: string }>;
+  activeDosyaId?: number | null;
+  onSelectDosya?: (id: number) => void;
+  onRefresh: () => void;
+  loading: boolean;
+  evraklar: EvrakItem[];
+  onOpenSignedDocsManagement?: () => void;
 }
 
 export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
@@ -31,26 +30,28 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
   onRefresh,
   loading,
   evraklar,
-  onOpenSignedDocsManagement
+  onOpenSignedDocsManagement,
 }) => {
-  const signedCount = (evraklar || []).filter((e) => e.status === 'imzali').length
-  const readyCount = (evraklar || []).filter((e) => e.status === 'hazir').length
+  const signedCount =
+    (evraklar || []).filter((e) => e.status === "imzali").length;
+  const readyCount =
+    (evraklar || []).filter((e) => e.status === "hazir").length;
 
   const formatAlimTuru = (tur?: string) => {
     switch (tur?.toLowerCase()) {
-      case 'mal':
-        return 'Mal Alımı'
-      case 'hizmet':
-        return 'Hizmet Alımı'
-      case 'danismanlik':
-        return 'Danışmanlık'
-      case 'yapim':
-      case 'yapim_isi':
-        return 'Yapım İşi'
+      case "mal":
+        return "Mal Alımı";
+      case "hizmet":
+        return "Hizmet Alımı";
+      case "danismanlik":
+        return "Danışmanlık";
+      case "yapim":
+      case "yapim_isi":
+        return "Yapım İşi";
       default:
-        return tur || 'Doğrudan Temin'
+        return tur || "Doğrudan Temin";
     }
-  }
+  };
 
   return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-5 py-3 shadow-2xs">
@@ -64,11 +65,17 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-black font-mono px-2.5 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
-                {dosyaInfo?.teminNo || (activeDosyaId ? `Dosya #${activeDosyaId}` : 'Aktif Dosya Yok')}
+                {dosyaInfo?.teminNo ||
+                  (activeDosyaId
+                    ? `Dosya #${activeDosyaId}`
+                    : "Aktif Dosya Yok")}
               </span>
 
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 shadow-xs shrink-0">
-                <FolderCheck size={11} className="text-emerald-600 dark:text-emerald-400" />
+                <FolderCheck
+                  size={11}
+                  className="text-emerald-600 dark:text-emerald-400"
+                />
                 Aktif Temin Dosyası
               </span>
 
@@ -82,18 +89,22 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
                   <span
                     className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
                       dosyaInfo.sozlesmeliMi
-                        ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                        ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800"
+                        : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
                     }`}
                   >
-                    <span>{dosyaInfo.sozlesmeliMi ? 'Sözleşmeli' : 'Sözleşmesiz'}</span>
+                    <span>
+                      {dosyaInfo.sozlesmeliMi ? "Sözleşmeli" : "Sözleşmesiz"}
+                    </span>
                   </span>
                 </>
               )}
             </div>
 
             <h1 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 truncate mt-1">
-              {dosyaInfo?.konu || (activeDosyaId ? 'Doğrudan Temin Evrak Akışı & Belge İnceleme' : 'Lütfen üst bardaki Temin Seçici üzerinden aktif bir dosya belirleyiniz.')}
+              {dosyaInfo?.konu || (activeDosyaId
+                ? "Doğrudan Temin Evrak Akışı & Belge İnceleme"
+                : "Lütfen üst bardaki Temin Seçici üzerinden aktif bir dosya belirleyiniz.")}
             </h1>
           </div>
         </div>
@@ -103,7 +114,10 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
           {dosyaInfo && (
             <div className="hidden sm:flex items-center gap-3 text-xs font-medium text-slate-500 dark:text-slate-400 divide-x divide-slate-200 dark:divide-slate-800">
               {dosyaInfo.harcamaBirimi && (
-                <div className="flex items-center gap-1.5" title="Harcama Birimi">
+                <div
+                  className="flex items-center gap-1.5"
+                  title="Harcama Birimi"
+                >
                   <Building2 size={13} className="text-slate-400" />
                   <span className="font-bold text-slate-700 dark:text-slate-300">
                     {/^\d+$/.test(String(dosyaInfo.harcamaBirimi).trim())
@@ -117,7 +131,9 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
                 <Coins size={13} className="text-emerald-500" />
                 <span className="text-slate-400 text-[11px]">Bedel:</span>
                 <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
-                  {formatCurrency(dosyaInfo.netOdenen || dosyaInfo.yaklasikMaliyet)}
+                  {formatCurrency(
+                    dosyaInfo.netOdenen || dosyaInfo.yaklasikMaliyet,
+                  )}
                 </span>
               </div>
             </div>
@@ -149,7 +165,10 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
               className="h-8 inline-flex items-center gap-1.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-800 shadow-2xs transition-all cursor-pointer group"
               title="İmzalı nüshaları ve taranmış belgeleri yönet (Listele, Eşleştir, Aç, Sil)"
             >
-              <FileCheck size={13} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+              <FileCheck
+                size={13}
+                className="text-emerald-500 group-hover:scale-110 transition-transform"
+              />
               <span>{signedCount} İmzalı Nüsha</span>
             </button>
 
@@ -160,11 +179,14 @@ export const DosyaEvrakAkisiHeader: React.FC<DosyaEvrakAkisiHeaderProps> = ({
               className="w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-all cursor-pointer shadow-2xs disabled:opacity-50 shrink-0"
               title="Dosya evraklarını ve veritabanı snapshotlarını yenile"
             >
-              <RefreshCw size={13} className={loading ? 'animate-spin text-blue-500' : ''} />
+              <RefreshCw
+                size={13}
+                className={loading ? "animate-spin text-blue-500" : ""}
+              />
             </button>
           </div>
         </div>
       </div>
     </header>
-  )
-}
+  );
+};

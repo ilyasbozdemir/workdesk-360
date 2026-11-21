@@ -6,10 +6,13 @@ import {
   ExternalLink,
   FileCheck,
   FileText,
+  FolderArchive,
+  FolderOpen,
   Layers,
   Link2,
   RefreshCw,
   Search,
+  ShieldCheck,
   Sparkles,
   Trash2,
   Upload,
@@ -198,6 +201,50 @@ export function ImzaliBelgelerYonetimModal({
     }
   };
 
+  // Projenin yerel klasörünü aç (Dosyanın kurulduğu dizindeki Belgeler klasörü)
+  const handleOpenLocalFolder = async () => {
+    if (!window.electron?.ipcRenderer) return;
+    try {
+      await window.electron.ipcRenderer.invoke(
+        "workspace:open-attachments-folder",
+        { teminNo },
+      );
+    } catch (e: any) {
+      setFeedback({
+        msg: "Klasör açılamadı: " + (e?.message || ""),
+        type: "error",
+      });
+    }
+  };
+
+  // Tüm belgeleri sıkıştırılmış ZIP olarak dışa aktar
+  const handleExportZip = async () => {
+    if (!window.electron?.ipcRenderer) return;
+    try {
+      setLoading(true);
+      const res = await window.electron.ipcRenderer.invoke(
+        "workspace:export-attachments-zip",
+        { teminNo },
+      );
+      if (res?.success) {
+        setFeedback({
+          msg:
+            `Tüm belgeler sıkıştırılarak ZIP arşivi oluşturuldu (${res.zipPath})`,
+          type: "success",
+        });
+      } else {
+        setFeedback({
+          msg: res?.error || "ZIP oluşturulamadı.",
+          type: "error",
+        });
+      }
+    } catch (e: any) {
+      setFeedback({ msg: "ZIP hatası: " + (e?.message || ""), type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredDocs = docs.filter((d) => {
     const q = search.toLowerCase();
     return (
@@ -286,6 +333,38 @@ export function ImzaliBelgelerYonetimModal({
               <span>{feedback.msg}</span>
             </div>
           )}
+        </div>
+
+        {/* 2.1 YEREL ARŞİVLEME, SIKIŞTIRMA VE BULUT GÜVENLİK BİLGİ BANDI */}
+        <div className="bg-emerald-50/60 dark:bg-emerald-950/30 border-b border-emerald-200/70 dark:border-emerald-800/60 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+          <div className="flex items-center gap-2 flex-1 min-w-[280px]">
+            <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-tight">
+              Belgeleriniz <strong>.temin</strong> arşivi içine <strong>DEFLATE/ZIP</strong> ile sıkıştırılarak gömülür ve Google Drive bulutuna güvenle senkronize edilir. Ayrıca projenizin ana dizinindeki <strong>{teminNo ? `${teminNo}_Belgeler` : 'Belgeler'}</strong> klasörüne otomatik kopyalanır.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleOpenLocalFolder}
+              className="h-7 px-2.5 rounded-lg bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 text-[11px] font-bold hover:bg-emerald-100/50 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+              title="Projenin kurulduğu dizindeki Belgeler klasörünü Windows Gezgininde aç"
+            >
+              <FolderOpen size={13} className="text-emerald-600" />
+              <span>Klasörü Aç</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportZip}
+              className="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+              title="Tüm imzalı belgeleri sıkıştırarak tek bir ZIP arşivi olarak kaydet"
+            >
+              <FolderArchive size={13} />
+              <span>Sıkıştırılmış ZIP İndir</span>
+            </button>
+          </div>
         </div>
 
         {/* 3. ARAMA VE FİLTRE ÇUBUĞU */}
