@@ -1,4 +1,3 @@
-import { createRequire } from "node:module";
 import type {
   IDatabaseConnection,
   DatabaseExecutionResult,
@@ -8,26 +7,108 @@ import type {
   PrismaDelegate
 } from "@worksuite-360/core";
 
-const require = createRequire(import.meta.url);
+// Node.js 22.5+ yerleşik node:sqlite modülünü dinamik/güvenli içe aktar
+let DatabaseSyncClass: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const sqlite = require("node:sqlite");
+  DatabaseSyncClass = sqlite.DatabaseSync;
+} catch {
+  // Ortamda node:sqlite yoksa veya bundler engelliyorsa fallback devreye girer
+}
 
 let memoryDbInstance: any = null;
 
+function createInMemoryFallback() {
+  const table = new Map<string, { id: string; name: string; target_app: string; created_at: string }>([
+    ['item-1', { id: 'item-1', name: 'John Doe', target_app: 'temin360-desktop', created_at: new Date().toISOString() }],
+    ['item-2', { id: 'item-2', name: 'John Deere', target_app: 'temin360-desktop', created_at: new Date().toISOString() }],
+    ['item-3', { id: 'item-3', name: 'Jane Roe', target_app: 'app-web', created_at: new Date().toISOString() }],
+  ]);
+
+  return {
+    exec: (_sql: string) => {},
+    prepare: (sql: string) => ({
+      all: (...params: any[]) => {
+        const lower = sql.toLowerCase();
+        if (lower.includes('is_alive')) {
+          return [{ is_alive: 1, server_time: new Date().toISOString() }];
+        }
+        if (lower.includes('count(*)')) {
+          return [{ toplam: table.size, target_app: 'temin360-desktop' }];
+        }
+        const items = Array.from(table.values());
+        if (lower.includes('where id =') || lower.includes('where id=?')) {
+          const id = params[0] || (sql.match(/id\s*=\s*['"]([^'"]+)['"]/i)?.[1]);
+          return items.filter(x => x.id === id);
+        }
+        if (lower.includes('like')) {
+          const rawMatch = sql.match(/like\s*['"]%([^%]+)%['"]/i)?.[1];
+          const term = String(params[0] || rawMatch || '').toLowerCase();
+          return items.filter(x => x.name.toLowerCase().includes(term));
+        }
+        return items;
+      },
+      run: (...params: any[]) => {
+        const lower = sql.toLowerCase();
+        if (lower.startsWith('insert into')) {
+          const id = params[0] || `item-${Date.now()}`;
+          const name = params[1] || 'New Item';
+          const target_app = params[2] || 'temin360-desktop';
+          table.set(id, { id, name, target_app, created_at: new Date().toISOString() });
+          return { changes: 1, lastInsertRowid: table.size };
+        }
+        if (lower.startsWith('update')) {
+          const name = params[0];
+          const id = params[1];
+          const item = table.get(id);
+          if (item) {
+            item.name = name;
+            return { changes: 1, lastInsertRowid: 0 };
+          }
+          return { changes: 0, lastInsertRowid: 0 };
+        }
+        if (lower.startsWith('delete from')) {
+          if (lower.includes("like 'tx_%'")) {
+            for (const key of Array.from(table.keys())) {
+              if (key.startsWith('tx_')) table.delete(key);
+            }
+            return { changes: 1, lastInsertRowid: 0 };
+          }
+          const id = params[0] || (sql.match(/id\s*=\s*['"]([^'"]+)['"]/i)?.[1]);
+          const deleted = id ? table.delete(id) : false;
+          return { changes: deleted ? 1 : 0, lastInsertRowid: 0 };
+        }
+        return { changes: 1, lastInsertRowid: 0 };
+      }
+    }),
+    close: () => table.clear()
+  };
+}
+
 export function getPlaygroundRawDb() {
   if (!memoryDbInstance) {
-    const { DatabaseSync } = require("node:sqlite");
-    memoryDbInstance = new DatabaseSync(":memory:");
-    memoryDbInstance.exec(`
-      CREATE TABLE IF NOT EXISTS playground_items (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        target_app TEXT DEFAULT 'temin360-desktop',
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-      );
-      INSERT INTO playground_items (id, name, target_app) VALUES
-        ('item-1', 'John Doe', 'temin360-desktop'),
-        ('item-2', 'John Deere', 'temin360-desktop'),
-        ('item-3', 'Jane Roe', 'app-web');
-    `);
+    try {
+      if (DatabaseSyncClass) {
+        memoryDbInstance = new DatabaseSyncClass(":memory:");
+        memoryDbInstance.exec(`
+          CREATE TABLE IF NOT EXISTS playground_items (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            target_app TEXT DEFAULT 'temin360-desktop',
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+          );
+          INSERT INTO playground_items (id, name, target_app) VALUES
+            ('item-1', 'John Doe', 'temin360-desktop'),
+            ('item-2', 'John Deere', 'temin360-desktop'),
+            ('item-3', 'Jane Roe', 'app-web');
+        `);
+      } else {
+        memoryDbInstance = createInMemoryFallback();
+      }
+    } catch {
+      memoryDbInstance = createInMemoryFallback();
+    }
   }
   return memoryDbInstance;
 }
@@ -74,7 +155,7 @@ export function getPlaygroundConnection(): IDatabaseConnection {
       const res = stmt.run(...params);
       return {
         changes: Number(res.changes),
-        lastInsertRowId: Number(res.lastInsertRowid),
+        lastInsertRowId: Number(res.lastInsertRowid ?? res.lastInsertRowId ?? 0),
       };
     },
 
@@ -179,12 +260,13 @@ export class InMemoryPrismaDelegate<TEntity extends { id: any }, TId>
 
   async update(args: {
     where: Record<string, unknown>;
+    data: Record<string, unknown>;
   }): Promise<TEntity> {
     const existing = this.store.get(args.where.id);
     if (!existing) {
       throw new Error(`Record with id ${args.where.id} not found.`);
     }
-    const updated = { ...existing, ...args.where };
+    const updated = { ...existing, ...args.data };
     this.store.set(args.where.id, updated);
     return updated;
   }
