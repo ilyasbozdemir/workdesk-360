@@ -214,7 +214,8 @@ export class ProcurementFile {
             isMultiYear: props.isMultiYear ?? false,
             requiresContract: props.requiresContract ?? false,
             estimatedCostIncludesVat: props.estimatedCostIncludesVat ?? false,
-            isMedicalDeviceProcurement: props.isMedicalDeviceProcurement ?? false,
+            isMedicalDeviceProcurement: props.isMedicalDeviceProcurement ??
+                false,
             tags: [...(props.tags ?? [])],
             workDescriptionItems: [...(props.workDescriptionItems ?? [])],
             orderedDocuments: [...(props.orderedDocuments ?? [])],
@@ -765,7 +766,9 @@ export class ProcurementFile {
             this.status === ProcurementFileStatus.Completed ||
             this.status === ProcurementFileStatus.Cancelled
         ) {
-            throw new Error("Completed or cancelled files cannot be cancelled.");
+            throw new Error(
+                "Completed or cancelled files cannot be cancelled.",
+            );
         }
 
         this._props.status = ProcurementFileStatus.Cancelled;

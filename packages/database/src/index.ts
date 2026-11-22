@@ -1,108 +1,119 @@
 /* eslint-disable */
-import Database from 'better-sqlite3'
-import { initSessionContext, registerDefaultAuditTriggers } from './audit-trail'
-
+import Database from "better-sqlite3";
+import {
+  initSessionContext,
+  registerDefaultAuditTriggers,
+} from "./audit-trail";
+import {
+  syncDatabaseSchema,
+  recreateTableSafely,
+  type SchemaSyncResult,
+} from "./schema-sync";
 // ============================================================================
 // 1. KURUM, TEŞKİLAT VE PERSONEL TANIMLARI
 // ============================================================================
-import { TANIM_Kurum } from './tables/TANIM_Kurum'
-import { TANIM_Birim } from './tables/TANIM_Birim'
-import { TANIM_Personel } from './tables/TANIM_Personel'
-import { TANIM_PersonelUnvanGecmisi } from './tables/TANIM_PersonelUnvanGecmisi'
-import { TANIM_Roller } from './tables/TANIM_Roller'
+import { TANIM_Kurum } from "./tables/TANIM_Kurum";
+import { TANIM_Birim } from "./tables/TANIM_Birim";
+import { TANIM_Personel } from "./tables/TANIM_Personel";
+import { TANIM_PersonelUnvanGecmisi } from "./tables/TANIM_PersonelUnvanGecmisi";
+import { TANIM_Roller } from "./tables/TANIM_Roller";
 
 // ============================================================================
 // 2. MEVZUAT, SÜREÇ AŞAMALARI VE LİMİTLER
 // ============================================================================
-import { TANIM_Mevzuat } from './tables/TANIM_Mevzuat'
-import { TANIM_Asama } from './tables/TANIM_Asama'
-import { TANIM_AlimTuru } from './tables/TANIM_AlimTuru'
-import { TANIM_KikLimitDonemleri } from './tables/TANIM_KikLimitDonemleri'
-import { TANIM_SurecTaslak } from './tables/TANIM_SurecTaslak'
+import { TANIM_Mevzuat } from "./tables/TANIM_Mevzuat";
+import { TANIM_Asama } from "./tables/TANIM_Asama";
+import { TANIM_AlimTuru } from "./tables/TANIM_AlimTuru";
+import { TANIM_KikLimitDonemleri } from "./tables/TANIM_KikLimitDonemleri";
+import { TANIM_SurecTaslak } from "./tables/TANIM_SurecTaslak";
 
 // ============================================================================
 // 3. FİRMA VE TEDARİKÇİ YÖNETİMİ
 // ============================================================================
-import { TANIM_Firma } from './tables/TANIM_Firma'
-import { TANIM_FirmaIletisimNotu } from './tables/TANIM_FirmaIletisimNotu'
+import { TANIM_Firma } from "./tables/TANIM_Firma";
+import { TANIM_FirmaIletisimNotu } from "./tables/TANIM_FirmaIletisimNotu";
 
 // ============================================================================
 // 4. MALZEME, POZ, TAŞINIR VE BÜTÇE KODLARI
 // ============================================================================
-import { TANIM_Kalem } from './tables/TANIM_Kalem'
-import { TANIM_Poz } from './tables/TANIM_Poz'
-import { TANIM_OlcuBirimi } from './tables/TANIM_OlcuBirimi'
-import { TANIM_BirimDonusum } from './tables/TANIM_BirimDonusum'
-import { TANIM_TasinirKod } from './tables/TANIM_TasinirKod'
-import { TANIM_OkasKod } from './tables/TANIM_OkasKod'
-import { TANIM_ButceKod } from './tables/TANIM_ButceKod'
-import { TANIM_ButceOdenek } from './tables/TANIM_ButceOdenek'
-import { TANIM_KodSozlugu } from './tables/TANIM_KodSozlugu'
-import { TANIM_Proje } from './tables/TANIM_Proje'
+import { TANIM_Kalem } from "./tables/TANIM_Kalem";
+import { TANIM_Poz } from "./tables/TANIM_Poz";
+import { TANIM_OlcuBirimi } from "./tables/TANIM_OlcuBirimi";
+import { TANIM_BirimDonusum } from "./tables/TANIM_BirimDonusum";
+import { TANIM_TasinirKod } from "./tables/TANIM_TasinirKod";
+import { TANIM_OkasKod } from "./tables/TANIM_OkasKod";
+import { TANIM_ButceKod } from "./tables/TANIM_ButceKod";
+import { TANIM_ButceOdenek } from "./tables/TANIM_ButceOdenek";
+import { TANIM_KodSozlugu } from "./tables/TANIM_KodSozlugu";
+import { TANIM_Proje } from "./tables/TANIM_Proje";
 
 // ============================================================================
 // 5. KOMİSYON VE HEYET TANIMLARI
 // ============================================================================
-import { TANIM_KomisyonGorevi } from './tables/TANIM_KomisyonGorevi'
-import { TANIM_Komisyon } from './tables/TANIM_Komisyon'
-import { TANIM_KomisyonUye } from './tables/TANIM_KomisyonUye'
-import { TANIM_Komisyon_Sablon } from './tables/TANIM_Komisyon_Sablon'
+import { TANIM_KomisyonGorevi } from "./tables/TANIM_KomisyonGorevi";
+import { TANIM_Komisyon } from "./tables/TANIM_Komisyon";
+import { TANIM_KomisyonUye } from "./tables/TANIM_KomisyonUye";
+import { TANIM_Komisyon_Sablon } from "./tables/TANIM_Komisyon_Sablon";
 
 // ============================================================================
 // 6. AMBAR VE DEPO YÖNETİMİ TANIMLARI
 // ============================================================================
-import { TANIM_Ambar } from './tables/TANIM_Ambar'
+import { TANIM_Ambar } from "./tables/TANIM_Ambar";
 
 // ============================================================================
 // 7. ŞABLON VE YER TUTUCU (PLACEHOLDER) TANIMLARI
 // ============================================================================
-import { TANIM_Sablon } from './tables/TANIM_Sablon'
-import { TANIM_Placeholder } from './tables/TANIM_Placeholder'
-import { TANIM_AlimTuru_Sablon } from './tables/TANIM_AlimTuru_Sablon'
-import { SABLON_Placeholder } from './tables/SABLON_Placeholder'
+import { TANIM_Sablon } from "./tables/TANIM_Sablon";
+import { TANIM_Placeholder } from "./tables/TANIM_Placeholder";
+import { TANIM_AlimTuru_Sablon } from "./tables/TANIM_AlimTuru_Sablon";
+import { SABLON_Placeholder } from "./tables/SABLON_Placeholder";
 
 // ============================================================================
 // 8. TEMİN DOSYASI VE İHALE SÜREÇ VERİLERİ (DATA_)
 // ============================================================================
-import { DATA_TeminDosyasi } from './tables/DATA_TeminDosyasi'
-import { DATA_TeminKalem } from './tables/DATA_TeminKalem'
-import { DATA_TeminFirma } from './tables/DATA_TeminFirma'
-import { DATA_TeminKalemTeklif } from './tables/DATA_TeminKalemTeklif'
-import { DATA_TeminKomisyon } from './tables/DATA_TeminKomisyon'
-import { DATA_TeminBelge } from './tables/DATA_TeminBelge'
-import { DATA_DosyaSablonVeri } from './tables/DATA_DosyaSablonVeri'
-import { DATA_TeminBelgeSnapshot } from './tables/DATA_TeminBelgeSnapshot'
-import { DATA_DosyaRevizyon } from './tables/DATA_DosyaRevizyon'
-import { DATA_IhtiyacRaporu } from './tables/DATA_IhtiyacRaporu'
-import { DATA_IhtiyacRaporuKalem } from './tables/DATA_IhtiyacRaporuKalem'
-import { DATA_IhaleDosyasi } from './tables/DATA_IhaleDosyasi'
-import { DATA_IhaleKalem } from './tables/DATA_IhaleKalem'
-import { DATA_IhaleFirma } from './tables/DATA_IhaleFirma'
+import { DATA_TeminDosyasi } from "./tables/DATA_TeminDosyasi";
+import { DATA_TeminKalem } from "./tables/DATA_TeminKalem";
+import { DATA_TeminFirma } from "./tables/DATA_TeminFirma";
+import { DATA_TeminKalemTeklif } from "./tables/DATA_TeminKalemTeklif";
+import { DATA_TeminKomisyon } from "./tables/DATA_TeminKomisyon";
+import { DATA_TeminBelge } from "./tables/DATA_TeminBelge";
+import { DATA_DosyaSablonVeri } from "./tables/DATA_DosyaSablonVeri";
+import { DATA_TeminBelgeSnapshot } from "./tables/DATA_TeminBelgeSnapshot";
+import { DATA_DosyaRevizyon } from "./tables/DATA_DosyaRevizyon";
+import { DATA_IhtiyacRaporu } from "./tables/DATA_IhtiyacRaporu";
+import { DATA_IhtiyacRaporuKalem } from "./tables/DATA_IhtiyacRaporuKalem";
+import { DATA_IhaleDosyasi } from "./tables/DATA_IhaleDosyasi";
+import { DATA_IhaleKalem } from "./tables/DATA_IhaleKalem";
+import { DATA_IhaleFirma } from "./tables/DATA_IhaleFirma";
 
 // ============================================================================
 // 9. TAŞINIR (TİF) VE AMBAR STOK HAREKETLERİ (DATA_)
 // ============================================================================
-import { DATA_TIF } from './tables/DATA_TIF'
-import { DATA_TIF_Kalem } from './tables/DATA_TIF_Kalem'
-import { DATA_AmbarStok } from './tables/DATA_AmbarStok'
-import { DATA_AmbarHareket } from './tables/DATA_AmbarHareket'
+import { DATA_TIF } from "./tables/DATA_TIF";
+import { DATA_TIF_Kalem } from "./tables/DATA_TIF_Kalem";
+import { DATA_AmbarStok } from "./tables/DATA_AmbarStok";
+import { DATA_AmbarHareket } from "./tables/DATA_AmbarHareket";
 
 // ============================================================================
 // 10. GÖREVLER, NOTLAR VE SERBEST KÜTÜPHANE VERİLERİ (DATA_)
 // ============================================================================
-import { DATA_NotVeGorev } from './tables/DATA_NotVeGorev'
-import { DATA_KutuphaneGrup } from './tables/DATA_KutuphaneGrup'
-import { DATA_KutuphaneBelge } from './tables/DATA_KutuphaneBelge'
-import { DATA_KutuphaneBelgeSurum } from './tables/DATA_KutuphaneBelgeSurum'
-import { DATA_KutuphaneYerTutucu } from './tables/DATA_KutuphaneYerTutucu'
+import { DATA_NotVeGorev } from "./tables/DATA_NotVeGorev";
+import { DATA_KutuphaneGrup } from "./tables/DATA_KutuphaneGrup";
+import { DATA_KutuphaneBelge } from "./tables/DATA_KutuphaneBelge";
+import { DATA_KutuphaneBelgeSurum } from "./tables/DATA_KutuphaneBelgeSurum";
+import { DATA_KutuphaneYerTutucu } from "./tables/DATA_KutuphaneYerTutucu";
 
 // ============================================================================
 // 11. SİSTEM DENETİM VE GÜNLÜK KAYITLARI (LOG_)
 // ============================================================================
-import { LOG_SystemLog } from './tables/LOG_SystemLog'
+import { LOG_SystemLog } from "./tables/LOG_SystemLog";
 
-import { runMigrations, CURRENT_SCHEMA_VERSION, getAppSchemaMax } from './migrate'
-import { defineTable } from './BaseTable'
+import {
+  CURRENT_SCHEMA_VERSION,
+  getAppSchemaMax,
+  runMigrations,
+} from "./migrate";
+import { defineTable } from "./BaseTable";
 
 /**
  * Sistemde kayıtlı tüm veritabanı tablo tanımları listesi.
@@ -562,8 +573,8 @@ const rawTables = [
    * - **İş İhtiyacı:** Veri tabanı güncellemeleri, hata logları, dışa aktarım ve kritik kullanıcı eylemlerini izlenebilirlik için saklar.
    * - **Kritik Sütunlar:** `id` (PK), `seviye` ('INFO', 'WARN', 'ERROR'), `modul`, `islem`, `mesaj`, `detay_json`, `created_at`.
    */
-  LOG_SystemLog
-]
+  LOG_SystemLog,
+];
 
 /**
  * 4734 Sayılı Kanun Madde 22 Doğrudan Temin Sürecine Özel Tablolar Listesi.
@@ -571,97 +582,107 @@ const rawTables = [
  * veritabanlarında yer almaz; yalnızca Temin 360'a aittir.
  */
 export const DOGRUDAN_TEMIN_TABLE_NAMES = new Set([
-  'DATA_TeminDosyasi',
-  'DATA_TeminKalem',
-  'DATA_TeminFirma',
-  'DATA_TeminKalemTeklif',
-  'DATA_TeminKomisyon',
-  'DATA_TeminBelge',
-  'DATA_TeminBelgeSnapshot',
-  'DATA_DosyaSablonVeri',
-  'DATA_DosyaRevizyon',
-  'DATA_IhtiyacRaporu',
-  'DATA_IhtiyacRaporuKalem',
-  'TANIM_AlimTuru',
-  'TANIM_AlimTuru_Sablon'
-])
+  "DATA_TeminDosyasi",
+  "DATA_TeminKalem",
+  "DATA_TeminFirma",
+  "DATA_TeminKalemTeklif",
+  "DATA_TeminKomisyon",
+  "DATA_TeminBelge",
+  "DATA_TeminBelgeSnapshot",
+  "DATA_DosyaSablonVeri",
+  "DATA_DosyaRevizyon",
+  "DATA_IhtiyacRaporu",
+  "DATA_IhtiyacRaporuKalem",
+  "TANIM_AlimTuru",
+  "TANIM_AlimTuru_Sablon",
+]);
 
 export const IHALE_SPECIFIC_TABLE_NAMES = new Set([
-  'DATA_IhaleDosyasi',
-  'DATA_IhaleKalem',
-  'DATA_IhaleFirma'
-])
+  "DATA_IhaleDosyasi",
+  "DATA_IhaleKalem",
+  "DATA_IhaleFirma",
+]);
 
 /**
  * Yalnızca Doğrudan Temin modülüne ait tablolar
  */
-export const dogrudanTeminTables = rawTables.filter((t) => DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name))
+export const dogrudanTeminTables = rawTables.filter((t) =>
+  DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name)
+);
 
 /**
  * Yalnızca Kamu İhalesi (İhale 360 ve 2886) modülüne ait tablolar
  */
-export const ihaleSpecificTables = rawTables.filter((t) => IHALE_SPECIFIC_TABLE_NAMES.has(t.name))
+export const ihaleSpecificTables = rawTables.filter((t) =>
+  IHALE_SPECIFIC_TABLE_NAMES.has(t.name)
+);
 
 /**
  * WorkDesk 360 Suite tüm masaüstü uygulamaları (Temin 360, İhale 360, Devlet İhale 2886)
  * tarafından paylaşılan kurumsal teşkilat, personel, mevzuat, firma, bütçe ve ortak tablolar.
  */
 export const sharedFoundationTables = rawTables.filter(
-  (t) => !DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name) && !IHALE_SPECIFIC_TABLE_NAMES.has(t.name)
-)
+  (t) =>
+    !DOGRUDAN_TEMIN_TABLE_NAMES.has(t.name) &&
+    !IHALE_SPECIFIC_TABLE_NAMES.has(t.name),
+);
 
 export const ihaleSharedFoundationTables = sharedFoundationTables.map((t) => {
-  if (t.name === 'DATA_NotVeGorev') {
+  if (t.name === "DATA_NotVeGorev") {
     return {
       ...t,
       constraints: [
-        'FOREIGN KEY(temin_dosya_id) REFERENCES DATA_IhaleDosyasi(id) ON DELETE SET NULL'
-      ]
-    }
+        "FOREIGN KEY(temin_dosya_id) REFERENCES DATA_IhaleDosyasi(id) ON DELETE SET NULL",
+      ],
+    };
   }
-  return t
-})
+  return t;
+});
 
 export const ihale360SpecificTables = ihaleSpecificTables.map((t) => {
-  if (t.name === 'DATA_IhaleDosyasi') {
+  if (t.name === "DATA_IhaleDosyasi") {
     return {
       ...t,
       columns: t.columns.map((c: any) => {
-        if (c.name === 'madde') return { ...c, default: "'4734 Sayılı Kanun (Kamu İhalesi)'" }
-        if (c.name === 'ihale_tipi') return { ...c, default: "'Kamu İhalesi'" }
-        return c
-      })
-    }
+        if (c.name === "madde") {
+          return { ...c, default: "'4734 Sayılı Kanun (Kamu İhalesi)'" };
+        }
+        if (c.name === "ihale_tipi") return { ...c, default: "'Kamu İhalesi'" };
+        return c;
+      }),
+    };
   }
-  return t
-})
+  return t;
+});
 
 export const temin360Schema = {
-  database: 'DOGRUDAN_TEMIN_DB',
-  app_title: 'TEMİN 360',
-  app_id: 'temin360-desktop',
-  version: '1.0.0-rc.8',
+  database: "DOGRUDAN_TEMIN_DB",
+  app_title: "TEMİN 360",
+  app_id: "temin360-desktop",
+  version: "1.0.0-rc.8",
   schema_version: CURRENT_SCHEMA_VERSION,
-  tables: [...sharedFoundationTables, ...dogrudanTeminTables].map(defineTable)
-}
+  tables: [...sharedFoundationTables, ...dogrudanTeminTables].map(defineTable),
+};
 
 /**
  * İHALE 360 Veritabanı Şeması (Kamu İhalesi KİK Md. 19/21 - v1 / 1.0.0-beta.1 1. Adım)
  * Doğrudan temin tablolarından tamamen arındırılmış bağımsız kamu ihale şeması.
  */
 export const ihale360Schema = {
-  database: 'IHALE_360_DB',
-  app_title: 'İHALE 360',
-  app_id: 'ihale360-desktop',
-  version: '1.0.0-beta.1',
+  database: "IHALE_360_DB",
+  app_title: "İHALE 360",
+  app_id: "ihale360-desktop",
+  version: "1.0.0-beta.1",
   schema_version: 1,
-  tables: [...ihaleSharedFoundationTables, ...ihale360SpecificTables].map(defineTable)
-}
+  tables: [...ihaleSharedFoundationTables, ...ihale360SpecificTables].map(
+    defineTable,
+  ),
+};
 
 /**
  * Uygulamanın varsayılan veritabanı şema ve tablo tanımları kataloğu (Geriye dönük uyumluluk).
  */
-export const schema = temin360Schema
+export const schema = temin360Schema;
 
 /**
  * Verilen uygulama kimliğine göre ilgili uygulamanın şema tanımını döndürür.
@@ -669,10 +690,10 @@ export const schema = temin360Schema
  * (@worksuite-360/contracts -> FlowdeskModuleManifest) olarak çalıştırılır.
  */
 export function getAppSchema(appName: string) {
-  if (appName.includes('ihale360')) {
-    return ihale360Schema
+  if (appName.includes("ihale360")) {
+    return ihale360Schema;
   }
-  return temin360Schema
+  return temin360Schema;
 }
 
 /**
@@ -695,48 +716,54 @@ export interface InitializeDatabaseOptions {
    * Test personeli ve demo verilerinin başlangıçta eklenip eklenmeyeceği.
    * Varsayılan: false (Üretim ortamında gerçek kayıtlara test verisi karışmaz).
    */
-  seedTestData?: boolean
+  seedTestData?: boolean;
   /**
    * Kurum sistem yöneticisi adı için başlangıç varsayılanı.
    * Mevcut bir kullanıcı kaydı varsa üzerine yazılmaz (`INSERT OR IGNORE`).
    * Varsayılan: 'Sistem Yöneticisi'
    */
-  adminName?: string
+  adminName?: string;
   /**
    * Kurum sistem yöneticisi unvanı için başlangıç varsayılanı.
    * Mevcut bir kullanıcı kaydı varsa üzerine yazılmaz (`INSERT OR IGNORE`).
    * Varsayılan: 'Yönetici'
    */
-  adminTitle?: string
+  adminTitle?: string;
 }
 
 export function initializeDatabase(
   db: Database.Database,
   institutionName: string,
-  currentAppVersion: string = '1.0.0',
+  currentAppVersion: string = "1.0.0",
   appNameOrOptions?: string | InitializeDatabaseOptions,
-  options?: InitializeDatabaseOptions
+  options?: InitializeDatabaseOptions,
 ): void {
-  let appName: string | undefined
-  let resolvedOptions: InitializeDatabaseOptions | undefined
+  let appName: string | undefined;
+  let resolvedOptions: InitializeDatabaseOptions | undefined;
 
-  if (typeof appNameOrOptions === 'string') {
-    appName = appNameOrOptions
-    resolvedOptions = options
-  } else if (appNameOrOptions && typeof appNameOrOptions === 'object') {
-    appName = undefined
-    resolvedOptions = appNameOrOptions
+  if (typeof appNameOrOptions === "string") {
+    appName = appNameOrOptions;
+    resolvedOptions = options;
+  } else if (appNameOrOptions && typeof appNameOrOptions === "object") {
+    appName = undefined;
+    resolvedOptions = appNameOrOptions;
   } else {
-    resolvedOptions = options
+    resolvedOptions = options;
   }
 
-  const targetSchema = appName ? getAppSchema(appName) : schema
-  const targetSchemaVersion = appName ? getAppSchemaMax(appName) : CURRENT_SCHEMA_VERSION
-  const targetAppTitle = targetSchema.app_title || schema.app_title
+  const targetSchema = appName ? getAppSchema(appName) : schema;
+  const targetSchemaVersion = appName
+    ? getAppSchemaMax(appName)
+    : CURRENT_SCHEMA_VERSION;
+  const targetAppTitle = targetSchema.app_title || schema.app_title;
 
-  const safeInstName = (institutionName || 'Kurum').replace(/'/g, "''")
-  const defaultAdminName = (resolvedOptions?.adminName || 'Sistem Yöneticisi').replace(/'/g, "''")
-  const defaultAdminTitle = (resolvedOptions?.adminTitle || 'Yönetici').replace(/'/g, "''")
+  const safeInstName = (institutionName || "Kurum").replace(/'/g, "''");
+  const defaultAdminName = (resolvedOptions?.adminName || "Sistem Yöneticisi")
+    .replace(/'/g, "''");
+  const defaultAdminTitle = (resolvedOptions?.adminTitle || "Yönetici").replace(
+    /'/g,
+    "''",
+  );
 
   db.exec(`
     -- Uygulama genel ayarlarını (key-value) saklar
@@ -773,117 +800,159 @@ export function initializeDatabase(
     INSERT OR IGNORE INTO settings (key, value) VALUES ('activeKurumId', '1');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('rates', '[{"id":"1","ad":"Damga Vergisi","oran":"9,48","tur":"binde","hesapKodu":""},{"id":"2","ad":"Karar Pulu","oran":"5,69","tur":"binde","hesapKodu":""},{"id":"3","ad":"KDV (Genel)","oran":"20","tur":"yuzde","hesapKodu":""},{"id":"4","ad":"KDV (İndirimli)","oran":"10","tur":"yuzde","hesapKodu":""},{"id":"5","ad":"KDV (Özel)","oran":"1","tur":"yuzde","hesapKodu":""}]');
     INSERT OR IGNORE INTO settings (key, value) VALUES ('documentTemplateTheme', '{"typography":{"fontFamily":"Times New Roman, Times, serif","baseFontSize":"12pt","lineHeight":1.5,"fontSize":{"xs":"8pt","sm":"10pt","base":"12pt","lg":"14pt","xl":"16pt","2xl":"18pt"},"fontWeight":{"normal":400,"semibold":600,"bold":700}},"colors":{"text":"#000000","textLight":"#333333","textMuted":"#666666","border":"#333333","borderLight":"#999999","headerBg":"#ffffff","accentLine":"#cc0000","white":"#ffffff","black":"#000000"},"page":{"format":"A4","width":"21cm","height":"29.7cm","margins":{"top":1.5,"right":1.5,"bottom":1.5,"left":1.5},"printableHeight":890},"table":{"borderCollapse":"collapse","fontSize":"10pt","cellPadding":"6px","headerBgColor":"#f2f2f2","headerFontWeight":"bold","headerTextAlign":"center","borderColor":"#333333","borderWidth":"1px"},"spacing":{"headerHeight":"80px","footerHeight":"60px","approvalSpacing":"40px","marginBottom":"20px","marginTop":"20px","titleMargin":"20px 0"},"summary":{"description":"Tüm şablonlarda tutarlı görünüm.","lastUpdated":"2026-09-17T00:00:00.000Z"}}');
-  `)
+  `);
 
   targetSchema.tables.forEach((table: any) => {
     const columnsSql = table.columns
       .map((col: any) => {
-        let colDef = '"' + col.name + '" ' + col.type
-        if (col.primaryKey) colDef += ' PRIMARY KEY'
-        if (col.autoIncrement) colDef += ' AUTOINCREMENT'
-        if (col.unique) colDef += ' UNIQUE'
-        if (col.notNull) colDef += ' NOT NULL'
+        let colDef = '"' + col.name + '" ' + col.type;
+        if (col.primaryKey) colDef += " PRIMARY KEY";
+        if (col.autoIncrement) colDef += " AUTOINCREMENT";
+        if (col.unique) colDef += " UNIQUE";
+        if (col.notNull) colDef += " NOT NULL";
         if (col.default !== undefined) {
-          let defaultVal = col.default
-          if (typeof defaultVal === 'string') {
-            const trimmed = defaultVal.trim()
+          let defaultVal = col.default;
+          if (typeof defaultVal === "string") {
+            const trimmed = defaultVal.trim();
             const isSqlKeywordOrExpr =
-              trimmed.toUpperCase() === 'CURRENT_TIMESTAMP' ||
-              trimmed.toUpperCase() === 'NULL' ||
-              trimmed.toUpperCase() === 'CURRENT_DATE' ||
-              trimmed.toUpperCase() === 'CURRENT_TIME' ||
+              trimmed.toUpperCase() === "CURRENT_TIMESTAMP" ||
+              trimmed.toUpperCase() === "NULL" ||
+              trimmed.toUpperCase() === "CURRENT_DATE" ||
+              trimmed.toUpperCase() === "CURRENT_TIME" ||
               (trimmed.startsWith("'") && trimmed.endsWith("'")) ||
-              !isNaN(Number(trimmed))
+              !isNaN(Number(trimmed));
             if (!isSqlKeywordOrExpr) {
-              defaultVal = `'${trimmed.replace(/'/g, "''")}'`
+              defaultVal = `'${trimmed.replace(/'/g, "''")}'`;
             }
           }
-          colDef += ' DEFAULT ' + defaultVal
+          colDef += " DEFAULT " + defaultVal;
         }
-        return colDef
+        return colDef;
       })
-      .join(', ')
+      .join(", ");
 
-    const constraintsSql = table.constraints ? ', ' + table.constraints.join(', ') : ''
-    db.exec('CREATE TABLE IF NOT EXISTS ' + table.name + ' (' + columnsSql + constraintsSql + ');')
+    const constraintsSql = table.constraints
+      ? ", " + table.constraints.join(", ")
+      : "";
+    db.exec(
+      "CREATE TABLE IF NOT EXISTS " + table.name + " (" + columnsSql +
+        constraintsSql + ");",
+    );
 
     if (table.initialData && table.initialData.length > 0) {
       table.initialData.forEach((row: any) => {
-        const keys = Object.keys(row)
+        const keys = Object.keys(row);
         const values = Object.values(row).map((v) =>
-          typeof v === 'string' ? "'" + (v as string).replace(/'/g, "''") + "'" : v
-        )
+          typeof v === "string"
+            ? "'" + (v as string).replace(/'/g, "''") + "'"
+            : v
+        );
         db.exec(
-          `INSERT OR IGNORE INTO ${table.name} (${keys.join(', ')}) VALUES (${values.join(', ')});`
-        )
-      })
+          `INSERT OR IGNORE INTO ${table.name} (${keys.join(", ")}) VALUES (${
+            values.join(", ")
+          });`,
+        );
+      });
     }
-  })
+  });
+
+  // Bildirime dayalı otomatik şema eşitleme (Mevcut tablolardaki eksik kolonları ekler)
+  try {
+    syncDatabaseSchema(db, targetSchema);
+  } catch (syncErr) {
+    console.warn("[SchemaSync] Otomatik kolon eşitleme uyarısı:", syncErr);
+  }
 
   // İndeksler tablolar oluşturulduktan sonra tanımlanmalıdır
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_tasinirkod_tam_kod ON TANIM_TasinirKod(tam_kod);
     CREATE INDEX IF NOT EXISTS idx_tasinirkod_hesap ON TANIM_TasinirKod(hesap_kodu);
     CREATE INDEX IF NOT EXISTS idx_okaskod_kod ON TANIM_OkasKod(kod);
-  `)
+  `);
 
   // Geliştirme/test ortamı için başlangıç test personelleri (Seed)
   // Yalnızca açıkça `seedTestData: true` istendiğinde eklenir. Varsayılan: false (üretim güvenliği).
-  const shouldSeed = Boolean(resolvedOptions?.seedTestData)
+  const shouldSeed = Boolean(resolvedOptions?.seedTestData);
   if (shouldSeed) {
     try {
-      const persCountRes = db.prepare('SELECT COUNT(*) as cnt FROM TANIM_Personel').get() as {
-        cnt: number
-      }
+      const persCountRes = db.prepare(
+        "SELECT COUNT(*) as cnt FROM TANIM_Personel",
+      ).get() as {
+        cnt: number;
+      };
       if (persCountRes.cnt === 0) {
         const testPersoneller = [
-          { ad_soyad: 'İrtibat Yetkilisi (Test)', unvan: 'İrtibat Görevlisi', rol: 'ilgili_personel' },
-          { ad_soyad: 'Dosyayı Hazırlayan (Test)', unvan: 'Hazırlayan Personel', rol: 'hazirlayan' },
-          { ad_soyad: 'Talep Eden (Test)', unvan: 'Birim Sorumlusu', rol: 'talep_eden' },
-          { ad_soyad: 'Sunan Personel (Test)', unvan: 'Sunan Görevli', rol: 'sunan_personel' },
-          { ad_soyad: 'Harcama Yetkilisi (Test)', unvan: 'Harcama Yetkilisi', rol: 'harcama_yetkilisi' }
-        ]
+          {
+            ad_soyad: "İrtibat Yetkilisi (Test)",
+            unvan: "İrtibat Görevlisi",
+            rol: "ilgili_personel",
+          },
+          {
+            ad_soyad: "Dosyayı Hazırlayan (Test)",
+            unvan: "Hazırlayan Personel",
+            rol: "hazirlayan",
+          },
+          {
+            ad_soyad: "Talep Eden (Test)",
+            unvan: "Birim Sorumlusu",
+            rol: "talep_eden",
+          },
+          {
+            ad_soyad: "Sunan Personel (Test)",
+            unvan: "Sunan Görevli",
+            rol: "sunan_personel",
+          },
+          {
+            ad_soyad: "Harcama Yetkilisi (Test)",
+            unvan: "Harcama Yetkilisi",
+            rol: "harcama_yetkilisi",
+          },
+        ];
 
         const insertPers = db.prepare(
-          `INSERT INTO TANIM_Personel (ad_soyad, unvan, aktif_mi) VALUES (?, ?, 1)`
-        )
+          `INSERT INTO TANIM_Personel (ad_soyad, unvan, aktif_mi) VALUES (?, ?, 1)`,
+        );
         const updateRol = db.prepare(
-          `UPDATE TANIM_Roller SET varsayilan_personel_id = ? WHERE rol_kodu = ?`
-        )
+          `UPDATE TANIM_Roller SET varsayilan_personel_id = ? WHERE rol_kodu = ?`,
+        );
 
         db.transaction(() => {
           for (const p of testPersoneller) {
-            const info = insertPers.run(p.ad_soyad, p.unvan)
-            const newId = info.lastInsertRowid
+            const info = insertPers.run(p.ad_soyad, p.unvan);
+            const newId = info.lastInsertRowid;
 
-            const checkRol = db.prepare('SELECT id FROM TANIM_Roller WHERE rol_kodu = ?').get(p.rol)
+            const checkRol = db.prepare(
+              "SELECT id FROM TANIM_Roller WHERE rol_kodu = ?",
+            ).get(p.rol);
             if (!checkRol) {
               db.prepare(
-                'INSERT INTO TANIM_Roller (rol_adi, rol_kodu, varsayilan_personel_id) VALUES (?, ?, ?)'
-              ).run(p.rol.replace('_', ' ').toUpperCase(), p.rol, newId)
+                "INSERT INTO TANIM_Roller (rol_adi, rol_kodu, varsayilan_personel_id) VALUES (?, ?, ?)",
+              ).run(p.rol.replace("_", " ").toUpperCase(), p.rol, newId);
             } else {
-              updateRol.run(newId, p.rol)
+              updateRol.run(newId, p.rol);
             }
           }
-        })()
-        console.log('Test personelleri (Seed) başarıyla eklendi.')
+        })();
+        console.log("Test personelleri (Seed) başarıyla eklendi.");
       }
     } catch (error) {
-      console.error('Test personelleri eklenirken hata oluştu:', error)
+      console.error("Test personelleri eklenirken hata oluştu:", error);
     }
   }
 
   // İhale uygulamaları için geriye dönük uyumluluk (DATA_Temin... Görünümleri)
-  if (appName && appName.includes('ihale360')) {
-    ensureIhaleCompatibilityViews(db, appName)
+  if (appName && appName.includes("ihale360")) {
+    ensureIhaleCompatibilityViews(db, appName);
   }
 
   try {
-    initSessionContext(db)
-    registerDefaultAuditTriggers(db, appName || 'temin360-desktop')
+    initSessionContext(db);
+    registerDefaultAuditTriggers(db, appName || "temin360-desktop");
   } catch (auditErr) {
-    console.warn('[AuditTrail] initializeDatabase tetikleyici kaydi uyarisi:', auditErr)
-  
+    console.warn(
+      "[AuditTrail] initializeDatabase tetikleyici kaydi uyarisi:",
+      auditErr,
+    );
   }
 }
 
@@ -892,16 +961,21 @@ export function initializeDatabase(
  * DATA_TeminDosyasi, DATA_TeminKalem ve DATA_TeminFirma VIEW ve Trigger'larını tesis eder.
  * Tetikleyici varsayılanları ilgili uygulamanın bağlamına (2886 vs 4734) göre izole edilir.
  */
-export function ensureIhaleCompatibilityViews(db: Database.Database, _appName?: string): void {
+export function ensureIhaleCompatibilityViews(
+  db: Database.Database,
+  _appName?: string,
+): void {
   try {
-    const defaultUsul = 'Açık İhale (Md. 19)'
-    const defaultTipi = 'Kamu İhalesi'
-    const defaultTur = 'mal'
-    const defaultMadde = '4734 Sayılı Kanun (Kamu İhalesi)'
+    const defaultUsul = "Açık İhale (Md. 19)";
+    const defaultTipi = "Kamu İhalesi";
+    const defaultTur = "mal";
+    const defaultMadde = "4734 Sayılı Kanun (Kamu İhalesi)";
 
     const teminDosyasiTable = db
-      .prepare("SELECT type FROM sqlite_master WHERE name = 'DATA_TeminDosyasi'")
-      .get() as { type?: string } | undefined
+      .prepare(
+        "SELECT type FROM sqlite_master WHERE name = 'DATA_TeminDosyasi'",
+      )
+      .get() as { type?: string } | undefined;
     if (!teminDosyasiTable) {
       db.exec(`
         CREATE VIEW IF NOT EXISTS DATA_TeminDosyasi AS SELECT * FROM DATA_IhaleDosyasi;
@@ -964,11 +1038,12 @@ export function ensureIhaleCompatibilityViews(db: Database.Database, _appName?: 
     }
 
     const isPhysicalTable = (name: string): boolean => {
-      const res = db.prepare("SELECT type FROM sqlite_master WHERE name = ?").get(name) as { type?: string } | undefined
-      return res?.type === 'table'
-    }
+      const res = db.prepare("SELECT type FROM sqlite_master WHERE name = ?")
+        .get(name) as { type?: string } | undefined;
+      return res?.type === "table";
+    };
 
-    if (!isPhysicalTable('DATA_TeminKalem')) {
+    if (!isPhysicalTable("DATA_TeminKalem")) {
       db.exec(`
         DROP VIEW IF EXISTS DATA_TeminKalem;
         CREATE VIEW DATA_TeminKalem AS 
@@ -998,7 +1073,7 @@ export function ensureIhaleCompatibilityViews(db: Database.Database, _appName?: 
       `);
     }
 
-    if (!isPhysicalTable('DATA_TeminFirma')) {
+    if (!isPhysicalTable("DATA_TeminFirma")) {
       db.exec(`
         DROP VIEW IF EXISTS DATA_TeminFirma;
         CREATE VIEW DATA_TeminFirma AS 
@@ -1026,29 +1101,30 @@ export function ensureIhaleCompatibilityViews(db: Database.Database, _appName?: 
       `);
     }
   } catch (err: any) {
-    console.warn('[ensureIhaleCompatibilityViews] Uyari:', err?.message || err);
+    console.warn("[ensureIhaleCompatibilityViews] Uyari:", err?.message || err);
   }
 }
 
-export { runMigrations, CURRENT_SCHEMA_VERSION, getAppSchemaMax }
-export { TANIM_Placeholder } from './tables/TANIM_Placeholder'
-export { TANIM_OlcuBirimi } from './tables/TANIM_OlcuBirimi'
-export { TANIM_BirimDonusum } from './tables/TANIM_BirimDonusum'
-export { DATA_KutuphaneGrup } from './tables/DATA_KutuphaneGrup'
-export { DATA_KutuphaneBelge } from './tables/DATA_KutuphaneBelge'
-export { DATA_KutuphaneBelgeSurum } from './tables/DATA_KutuphaneBelgeSurum'
-export { DATA_KutuphaneYerTutucu } from './tables/DATA_KutuphaneYerTutucu'
-export { DATA_TeminBelgeSnapshot } from './tables/DATA_TeminBelgeSnapshot'
-export { DATA_IhtiyacRaporu } from './tables/DATA_IhtiyacRaporu'
-export { DATA_IhtiyacRaporuKalem } from './tables/DATA_IhtiyacRaporuKalem'
+export { CURRENT_SCHEMA_VERSION, getAppSchemaMax, runMigrations };
+export { TANIM_Placeholder } from "./tables/TANIM_Placeholder";
+export { TANIM_OlcuBirimi } from "./tables/TANIM_OlcuBirimi";
+export { TANIM_BirimDonusum } from "./tables/TANIM_BirimDonusum";
+export { DATA_KutuphaneGrup } from "./tables/DATA_KutuphaneGrup";
+export { DATA_KutuphaneBelge } from "./tables/DATA_KutuphaneBelge";
+export { DATA_KutuphaneBelgeSurum } from "./tables/DATA_KutuphaneBelgeSurum";
+export { DATA_KutuphaneYerTutucu } from "./tables/DATA_KutuphaneYerTutucu";
+export { DATA_TeminBelgeSnapshot } from "./tables/DATA_TeminBelgeSnapshot";
+export { DATA_IhtiyacRaporu } from "./tables/DATA_IhtiyacRaporu";
+export { DATA_IhtiyacRaporuKalem } from "./tables/DATA_IhtiyacRaporuKalem";
 export {
-  manifests,
   appManifests,
-  temin360Manifest,
+  devletIhale2886Manifest,
   ihale360Manifest,
-  devletIhale2886Manifest
-} from './schema-manifest/index'
-export { defineTable } from './BaseTable'
-export { auditColumns, auditColumnsNoRef } from './audit'
-export * from './migrate'
-export * from './audit-trail'
+  manifests,
+  temin360Manifest,
+} from "./schema-manifest/index";
+export { defineTable } from "./BaseTable";
+export { auditColumns, auditColumnsNoRef } from "./audit";
+export * from "./migrate";
+export * from "./audit-trail";
+export * from "./schema-sync";
