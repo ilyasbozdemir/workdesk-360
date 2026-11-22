@@ -207,4 +207,26 @@ describe("MuayeneKabulKomisyonu — Şablon Bileşen ve Data Mapping Testleri", 
     expect(html).toContain("Fen İşleri Md. Yrd.");
     expect(html).not.toContain("(Üye)");
   });
+
+  it("9. Veritabanında unvanı NULL olan personel için belediye ortamında 'Bld. Personeli' tamamlanır ve virgül öncesi boşluk kalmaz", () => {
+    const mockData = {
+      kurumumuz: "Güneyyurt Belediyesi",
+      isinAdi: "Lisans Sözleşmesi",
+      muayeneKomisyonu: [
+        { adSoyad: "Mustafa ÇALIŞKAN", unvan: "Komisyon Başkanı" },
+        { adSoyad: "Muhammet GÜNEŞ", unvan: "Memur" },
+      ],
+      personelListesi: [
+        { ad_soyad: "Mustafa ÇALIŞKAN", unvan: null },
+        { ad_soyad: "Muhammet GÜNEŞ", unvan: "Memur" },
+        { ad_soyad: "İlyas BOZDEMİR", unvan: "Bld. Personeli" },
+      ],
+    };
+
+    const html = renderToStaticMarkup(<MuayeneKabulKomisyonu data={mockData} />);
+
+    expect(html).toContain("Mustafa ÇALIŞKAN");
+    expect(html).toContain("(Bld. Personeli)");
+    expect(html).not.toContain("Mustafa ÇALIŞKAN ,");
+  });
 });
