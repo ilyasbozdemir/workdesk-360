@@ -149,7 +149,18 @@ export abstract class SQLiteWriteRepository<
         WHERE ${this.getIdColumn()} = ?
       `;
 
-            await this.connection.execute(sql, [id]);
+            const res = await this.connection.execute(sql, [id]);
+
+            if (res.changes === 0) {
+                return {
+                    success: false,
+                    error: new NotFoundError({
+                        resource: this.tableName,
+                        resourceId: String(id),
+                        message: "Entity not found for deletion.",
+                    }),
+                };
+            }
 
             return {
                 success: true,

@@ -229,12 +229,29 @@ describe("SQLiteReadRepository & SQLiteWriteRepository", () => {
                 expect(check.data).toBe(false);
             }
         });
+
+        it("var olmayan kaydı silmeye çalışınca NotFoundError döner", async () => {
+            const deleteRes = await writeRepo.delete(999);
+            expect(deleteRes.success).toBe(false);
+            if (!deleteRes.success) {
+                expect(deleteRes.error).toBeInstanceOf(NotFoundError);
+                expect((deleteRes.error as NotFoundError).resourceId).toBe("999");
+            }
+        });
     });
 
     describe("Güvenlik & SQL Enjeksiyon Koruması", () => {
         it("geçersiz tablo adlarında hata fırlatır", () => {
             expect(() => {
                 new (class extends SQLiteReadRepository<TestUser, number> {
+                    constructor() {
+                        super(conn, "users; DROP TABLE users;");
+                    }
+                })();
+            }).toThrow();
+
+            expect(() => {
+                new (class extends SQLiteWriteRepository<TestUser, number> {
                     constructor() {
                         super(conn, "users; DROP TABLE users;");
                     }

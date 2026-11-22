@@ -35,6 +35,7 @@ export * from "./database/contracts/ITeminPackage";
 export * from "./database/contracts/ISqlExecutor";
 export * from "./database/sqlite/BetterSqliteExecutor";
 export * from "./database/sqlite/IpcSqlExecutor";
+export * from "./database/sqlite/SqliteTransaction";
 export * from "./database/temin/TeminPackage";
 
 // 5. Persistence ve Repository Mimarisi

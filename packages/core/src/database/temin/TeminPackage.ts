@@ -6,6 +6,8 @@ import type {
   DatabaseQueryParameters,
   IDatabaseConnection,
 } from "../contracts/IDatabaseConnection";
+import type { IDatabaseTransaction } from "../contracts/IDatabaseTransaction";
+import { SqliteTransaction } from "../sqlite/SqliteTransaction";
 import type {
   ITeminAttachmentEntry,
   ITeminMeta,
@@ -52,7 +54,7 @@ function createSqliteConnection(sqliteFilePath: string): IDatabaseConnection {
     );
   }
 
-  return {
+  const conn: IDatabaseConnection = {
     async query<TResult = Record<string, unknown>>(
       sql: string,
       parameters?: DatabaseQueryParameters,
@@ -85,12 +87,18 @@ function createSqliteConnection(sqliteFilePath: string): IDatabaseConnection {
       };
     },
 
+    async beginTransaction(): Promise<IDatabaseTransaction> {
+      return SqliteTransaction.begin(conn);
+    },
+
     async close(): Promise<void> {
       if (dbInstance && typeof dbInstance.close === "function") {
         dbInstance.close();
       }
     },
   };
+
+  return conn;
 }
 
 /**
