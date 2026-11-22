@@ -22,6 +22,8 @@
  * await connection.close();
  */
 
+import { IDatabaseTransaction } from "./IDatabaseTransaction";
+
 /**
  * Veritabanı sorgularında kullanılabilecek parametreler.
  */
@@ -65,6 +67,14 @@ export interface IDatabaseConnection {
         sql: string,
         parameters?: DatabaseQueryParameters,
     ): Promise<DatabaseExecutionResult>;
+
+    /**
+     * Yeni bir veritabanı transaction başlatır.
+     *
+     * Transaction içerisindeki işlemler commit edilene kadar
+     * kalıcı hale gelmez.
+     */
+    beginTransaction(): Promise<IDatabaseTransaction>;
 
     /**
      * Veritabanı bağlantısını kapatır.
