@@ -1,8 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import type { IDatabaseConnection, DatabaseQueryParameters, DatabaseExecutionResult } from "../contracts/IDatabaseConnection";
-import type { ITeminPackage, ITeminMeta, ITeminAttachmentEntry } from "../contracts/ITeminPackage";
+import type {
+  DatabaseExecutionResult,
+  DatabaseQueryParameters,
+  IDatabaseConnection,
+} from "../contracts/IDatabaseConnection";
+import type {
+  ITeminAttachmentEntry,
+  ITeminMeta,
+  ITeminPackage,
+} from "../contracts/ITeminPackage";
 
 function safeRequire(moduleName: string): any {
   try {
@@ -163,7 +171,8 @@ export class TeminPackage implements ITeminPackage {
 
       // 2. database.sqlite dosyasını geçici klasöre çıkart
       const dbEntry = entries.find(
-        (e: any) => e.entryName === activeDbFileName || e.entryName === "database.sqlite",
+        (e: any) =>
+          e.entryName === activeDbFileName || e.entryName === "database.sqlite",
       );
       if (!dbEntry) {
         throw new Error(
