@@ -64,3 +64,6 @@ export * from "./infrastructure/database/mappers/AcceptanceJsonMapper";
 export * from "./infrastructure/database/SqliteFileRepository";
 export * from "./infrastructure/database/SqliteReactionAdapters";
 export * from "./infrastructure/database/composeDirectProcurement";
+
+// ─── 4. DOĞRUDAN TEMİN COMPOSITION & DEPENDENCY INJECTION ─────────────
+export * from "./dependency-injection";
