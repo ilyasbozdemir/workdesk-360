@@ -35,6 +35,10 @@ export abstract class SQLiteRepositoryBase<
             throw new Error("Table name cannot be empty.");
         }
 
+        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+            throw new Error(`Invalid SQLite table name: ${tableName}`);
+        }
+
         this.connection = connection;
         this.tableName = tableName;
     }

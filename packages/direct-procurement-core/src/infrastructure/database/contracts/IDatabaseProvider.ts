@@ -1,52 +1,21 @@
 /**
- * IDatabaseTransaction
+ * IDatabaseProvider
  *
- * Veritabanı transaction işlemlerinin sözleşmesi.
+ * Veritabanı sağlayıcı sözleşmesi.
  *
- * Sorumlulukları:
- * - Transaction başlatmak.
- * - İşlemleri onaylamak (commit).
- * - İşlemleri geri almak (rollback).
- * - Transaction durumunu takip etmek.
- *
- * Kullanım örneği:
- *
- * const transaction = await connection.beginTransaction();
- *
- * try {
- *   await transaction.execute(
- *     "INSERT INTO users (id, name) VALUES (?, ?)",
- *     [1, "İlyas"]
- *   );
- *
- *   await transaction.commit();
- * } catch (error) {
- *   await transaction.rollback();
- *   throw error;
- * }
+ * Veritabanı bağlantılarını ve havuzlarını yöneten arayüzdür.
  */
 
-export interface IDatabaseTransaction {
+import type { IDatabaseConnection } from "./IDatabaseConnection";
+
+export interface IDatabaseProvider {
     /**
-     * Transaction içerisindeki SQL komutunu çalıştırır.
+     * Veritabanı bağlantısı sağlar veya açar.
      */
-    execute(
-        sql: string,
-        parameters?: unknown[],
-    ): Promise<void>;
+    getConnection(): Promise<IDatabaseConnection>;
 
     /**
-     * Transaction işlemlerini kalıcı hale getirir.
+     * Veritabanı sağlayıcısını kapatır.
      */
-    commit(): Promise<void>;
-
-    /**
-     * Transaction işlemlerini geri alır.
-     */
-    rollback(): Promise<void>;
-
-    /**
-     * Transaction'ın aktif olup olmadığını belirtir.
-     */
-    readonly isActive: boolean;
+    close(): Promise<void>;
 }

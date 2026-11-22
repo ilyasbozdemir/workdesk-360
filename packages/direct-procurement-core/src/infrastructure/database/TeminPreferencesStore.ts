@@ -6,18 +6,12 @@ import {
   type ItemRef,
   type KabulTutanakJson,
 } from "./mappers/AcceptanceJsonMapper";
+import type {
+  ITeminPreferencesStore,
+  PrefsRead,
+} from "./contracts/ITeminPreferencesStore";
 
-/**
- * `DATA_TeminDosyasi.sablon_tercihleri` alanından okunan tercih ve tutanak verileri.
- */
-export interface PrefsRead {
-  /** Dosyaya ait kabul tutanakları JSON listesi */
-  acceptances: KabulTutanakJson[];
-  /** Sonuç onayının verildiği tarih (varsa) */
-  resultApprovedAt?: string;
-  /** Okunan ham değerlerin JSON imzası (değişiklik tespitinde gereksiz yazmaları önlemek için) */
-  signature: string;
-}
+export type { PrefsRead, ITeminPreferencesStore };
 
 /**
  * `DATA_TeminDosyasi.sablon_tercihleri` JSON sütununun kabul ve sonuç onayı anahtarlarını yöneten depo adaptörü.
@@ -31,7 +25,7 @@ export interface PrefsRead {
  * SQLite'ın yerel `json_set` fonksiyonu kullanılarak yalnızca ilgili anahtarlar atomik olarak güncellenir.
  * Böylece ek bir tablo veya karmaşık veri tabanı göçü (migration) gerekmez.
  */
-export class TeminPreferencesStore {
+export class TeminPreferencesStore implements ITeminPreferencesStore {
   /**
    * @param db - SQL sorgu yürütücü adaptörü.
    */

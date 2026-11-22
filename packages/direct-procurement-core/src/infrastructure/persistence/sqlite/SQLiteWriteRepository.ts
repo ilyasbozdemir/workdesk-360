@@ -29,9 +29,8 @@ import type {
     UpdateEntity,
 } from "../contracts/IWriteRepository";
 import type { Result } from "../../../common/types/Result";
-import type { AppError } from "../../../common/errors/AppError";
-
-import { AppError as ApplicationError } from "../../../common/errors/AppError";
+import { AppError } from "../../../common/errors/AppError";
+import { NotFoundError } from "../../../common/errors/NotFoundError";
 import { SQLiteRepositoryBase } from "./SQLiteRepositoryBase";
 
 export abstract class SQLiteWriteRepository<
@@ -120,9 +119,11 @@ export abstract class SQLiteWriteRepository<
             if (!entity) {
                 return {
                     success: false,
-                    error: new ApplicationError(
-                        "Entity not found after update.",
-                    ),
+                    error: new NotFoundError({
+                        resource: this.tableName,
+                        resourceId: String(id),
+                        message: "Entity not found after update.",
+                    }),
                 };
             }
 
@@ -177,12 +178,18 @@ export abstract class SQLiteWriteRepository<
      * Hataları AppError yapısına dönüştürür.
      */
     protected toAppError(error: unknown): AppError {
-        if (error instanceof Error) {
-            return new ApplicationError(error.message);
+        if (error instanceof AppError) {
+            return error;
         }
 
-        return new ApplicationError(
-            "An unexpected database error occurred.",
-        );
+        if (error instanceof Error) {
+            return new AppError({
+                code: "SQLITE_WRITE_ERROR",
+                message: error.message,
+                cause: error,
+            });
+        }
+
+        return new AppError("An unexpected database error occurred.");
     }
 }

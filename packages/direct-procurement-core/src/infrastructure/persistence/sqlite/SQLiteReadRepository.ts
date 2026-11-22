@@ -104,13 +104,13 @@ export abstract class SQLiteReadRepository<
     async exists(id: TId): Promise<Result<boolean, AppError>> {
         try {
             const sql = `
-        SELECT 1 AS exists
+        SELECT 1 AS is_present
         FROM ${this.getTableName()}
         WHERE ${this.getIdColumn()} = ?
         LIMIT 1
       `;
 
-            const rows = await this.connection.query<{ exists: number }>(
+            const rows = await this.connection.query<{ is_present: number }>(
                 sql,
                 this.getIdParameter(id),
             );

@@ -84,6 +84,19 @@ export * from "./infrastructure/database/SqliteFileRepository";
 export * from "./infrastructure/database/SqliteReactionAdapters";
 export * from "./infrastructure/database/composeDirectProcurement";
 
+// ─── PERSISTENCE & CONTRACTS (Depolama Sözleşmeleri & Adaptörleri) ────
+export * from "./infrastructure/database/contracts/IDatabaseConnection";
+export * from "./infrastructure/database/contracts/IDatabaseProvider";
+export * from "./infrastructure/database/contracts/IDatabaseTransaction";
+export * from "./infrastructure/database/contracts/ITeminPreferencesStore";
+export * from "./infrastructure/persistence/contracts/IReadRepository";
+export * from "./infrastructure/persistence/contracts/IWriteRepository";
+export * from "./infrastructure/persistence/contracts/IRepository";
+export * from "./infrastructure/persistence/sqlite/SQLiteReadRepository";
+export * from "./infrastructure/persistence/sqlite/SQLiteWriteRepository";
+export * from "./infrastructure/persistence/sqlite/SQLiteRepositoryBase";
+export * from "./infrastructure/persistence/memory/InMemoryRepository";
+
 // ─── COMMON (Ortak Temel Yapılar) ────────────────────────────────────
 export * from "./common";
 
