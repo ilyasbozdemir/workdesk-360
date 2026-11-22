@@ -1,0 +1,49 @@
+# Ripgrep / VSCode Search Ignore File
+# Bu dosya VSCode (Ctrl+Shift+F / Ctrl+P) ve ripgrep arama motorunun
+# .next, node_modules ve build dosyalarını arama sonuçlarından tamamen hariç tutmasını sağlar.
+
+# 1. Bağımlılıklar (Dependencies)
+node_modules/
+**/node_modules/
+.pnpm/
+**/.pnpm/
+.pnpm-store/
+**/.pnpm-store/
+
+# 2. Next.js, Web & Electron Derleme Çıktıları (Build Artifacts)
+.next/
+**/.next/
+.turbo/
+**/.turbo/
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+release/
+**/release/
+coverage/
+**/coverage/
+.cache/
+**/.cache/
+.vite/
+**/.vite/
+.eslintcache
+
+# 3. Kilit ve Geçici Dosyalar (Lockfiles, Logs, Info)
+pnpm-lock.yaml
+*.tsbuildinfo
+**/*.tsbuildinfo
+*.log
+**/*.log
+*.tmp
+**/*.tmp
+tmp/
+**/tmp/
+temp/
+**/temp/
+
+# 4. Versiyon Kontrolü
+.git/
+**/.git/
