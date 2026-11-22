@@ -3,6 +3,17 @@ export default [
     rules: {
       "max-lines": ["warn", { max: 300, skipBlankLines: true, skipComments: true }],
       "max-lines-per-function": ["warn", { max: 120, skipBlankLines: true, skipComments: true }],
+      "no-restricted-properties": [
+        "warn",
+        {
+          property: "toLowerCase",
+          message: "Türkçe metin karşılaştırması ve araması için trKey veya toLocaleLowerCase('tr-TR') kullanın.",
+        },
+        {
+          property: "toUpperCase",
+          message: "Türkçe metin karşılaştırması ve araması için toLocaleUpperCase('tr-TR') kullanın.",
+        },
+      ],
     },
   },
   {

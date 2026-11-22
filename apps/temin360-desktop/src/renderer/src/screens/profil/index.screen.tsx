@@ -100,6 +100,11 @@ export default function ProfilScreen(): React.JSX.Element {
   }
 
   const handleSaveCredentials = async (): Promise<void> => {
+    if (adminPassword && adminPassword.length < 6) {
+      showToast('Parola en az 6 karakter uzunluğunda olmalıdır.', 'error')
+      return
+    }
+
     setSaving(true)
     try {
       const dataToSave = {
@@ -111,12 +116,16 @@ export default function ProfilScreen(): React.JSX.Element {
         ekapPassword,
         useDesktopUserAsDefault: String(useDesktopUserAsDefault)
       }
-      await window.electron.ipcRenderer.invoke('db:save-settings', dataToSave)
+      const res = await window.electron.ipcRenderer.invoke('db:save-settings', dataToSave)
+      if (!res?.success) {
+        showToast(res?.error || 'Ayarlar kaydedilirken hata oluştu!', 'error')
+        return
+      }
       await reloadSettingsStore()
       await fetchPasswordHistory()
       showToast('Kullanıcı güvenlik ve giriş ayarları başarıyla kaydedildi.', 'success')
-    } catch {
-      showToast('Ayarlar kaydedilirken hata oluştu!', 'error')
+    } catch (err: any) {
+      showToast(err?.message || 'Ayarlar kaydedilirken hata oluştu!', 'error')
     } finally {
       setSaving(false)
     }

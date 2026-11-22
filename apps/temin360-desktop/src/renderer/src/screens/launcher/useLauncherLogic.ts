@@ -41,35 +41,27 @@ export function useLauncherLogic() {
       .catch(console.error)
   }, [])
 
-  const handleCreateNewFile = async (): Promise<void> => {
-    try {
-      const res = await window.electron?.ipcRenderer.invoke('dialog:showSaveDialog')
-      if (!res.canceled && res.filePath) {
-        const fileName = res.filePath.split(/[/\\]/).pop() || 'Yeni Kurum'
-        const projectName = fileName.replace(/\.temin$/i, '')
-
-        setPendingFilePath(res.filePath)
-        setInstitutionName(projectName)
-        setShowCreateModal(true)
-      }
-    } catch (e) {
-      console.error(e)
-    }
+  const handleCreateNewFile = (): void => {
+    setPendingFilePath(null)
+    setInstitutionName('')
+    setUsername('admin')
+    setPassword('')
+    setShowCreateModal(true)
   }
 
   const handleChangeSaveLocation = async (): Promise<void> => {
     try {
-      const res = await window.electron?.ipcRenderer.invoke('dialog:showSaveDialog')
+      const defaultFileName = institutionName.trim()
+        ? `${institutionName.trim().replace(/[/\\?%*:|"<>]/g, '_')}.temin`
+        : 'Yeni_Kurum.temin'
+      const res = await window.electron?.ipcRenderer.invoke('dialog:showSaveDialog', {
+        defaultPath: defaultFileName
+      })
       if (!res.canceled && res.filePath) {
-        const fileName = res.filePath.split(/[/\\]/).pop() || 'Yeni Kurum'
-        const projectName = fileName.replace(/\.temin$/i, '')
         setPendingFilePath(res.filePath)
-        if (
-          !institutionName ||
-          institutionName === 'Yeni Kurum' ||
-          institutionName === 'Yeni Dosya'
-        ) {
-          setInstitutionName(projectName)
+        if (!institutionName.trim()) {
+          const fileName = res.filePath.split(/[/\\]/).pop() || 'Yeni Kurum'
+          setInstitutionName(fileName.replace(/\.temin$/i, ''))
         }
       }
     } catch (e) {
@@ -79,16 +71,40 @@ export function useLauncherLogic() {
 
   const handleModalSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
-    if (!pendingFilePath) return
+    if (!institutionName.trim()) {
+      alert('Lütfen geçerli bir kurum adı girin.')
+      return
+    }
+
+    let savePath = pendingFilePath
+    if (!savePath) {
+      try {
+        const defaultFileName = `${institutionName.trim().replace(/[/\\?%*:|"<>]/g, '_')}.temin`
+        const res = await window.electron?.ipcRenderer.invoke('dialog:showSaveDialog', {
+          defaultPath: defaultFileName
+        })
+        if (res.canceled || !res.filePath) {
+          return
+        }
+        savePath = res.filePath
+        setPendingFilePath(savePath)
+      } catch (err: any) {
+        console.error(err)
+        alert('Dosya konumu seçilemedi: ' + (err.message || 'Bilinmeyen hata'))
+        return
+      }
+    }
+
+    if (!savePath) return
 
     setCreating(true)
     try {
       const result = await createWorkspace(
-        pendingFilePath,
-        institutionName,
+        savePath,
+        institutionName.trim(),
         undefined,
-        username,
-        password
+        username.trim() || 'admin',
+        '' // E-posta yapılandırması olmadan parola konulamaz
       )
       if (result.success) {
         queryClient.clear()

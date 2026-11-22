@@ -1,9 +1,17 @@
+import Decimal from "decimal.js";
+
+/**
+ * decimal.js'in izole, yüksek hassasiyetli kopyası. Genel `Decimal` ayarlarını (precision/rounding)
+ * değiştirmez; kuruş x oran çarpımları 50 anlamlı basamakta hesaplanır, taşma/kayıp olmaz.
+ */
+const D = Decimal.clone({ precision: 50 });
+
 /**
  * Kuruş altı hesaplamalarda kullanılacak yuvarlama yöntemi.
  * 'yariYukari': 0.5 ve üzeri değerler sıfırdan uzağa yuvarlanır.
  * 'asagi': Taban yuvarlama (floor) yapılır.
  */
-export type YuvarlamaKipi = 'yariYukari' | 'asagi';
+export type YuvarlamaKipi = "yariYukari" | "asagi";
 
 const TL_REGEX = /^-?\d+(\.\d{1,2})?$/;
 
@@ -29,7 +37,7 @@ export class Money {
    * @throws {RangeError} Number parametre güvenli tamsayı (`Number.isSafeInteger`) değilse fırlatılır.
    */
   static fromKurus(kurus: bigint | number): Money {
-    if (typeof kurus === 'number') {
+    if (typeof kurus === "number") {
       if (!Number.isSafeInteger(kurus)) {
         throw new RangeError(`Geçersiz kuruş değeri: ${kurus}`);
       }
@@ -52,7 +60,7 @@ export class Money {
    */
   static fromTL(tl: string | number): Money {
     let s: string;
-    if (typeof tl === 'number') {
+    if (typeof tl === "number") {
       if (!Number.isFinite(tl) || Math.abs(tl) > 1e13) {
         throw new RangeError(`Geçersiz TL değeri: ${tl}`);
       }
@@ -66,10 +74,66 @@ export class Money {
     if (!TL_REGEX.test(s)) {
       throw new RangeError(`Geçersiz TL biçimi: "${tl}"`);
     }
-    const negatif = s.startsWith('-');
-    const [tam, ondalik = ''] = (negatif ? s.slice(1) : s).split('.');
-    const kurus = BigInt(tam!) * 100n + BigInt(ondalik.padEnd(2, '0'));
+    const negatif = s.startsWith("-");
+    const [tam, ondalik = ""] = (negatif ? s.slice(1) : s).split(".");
+    const kurus = BigInt(tam!) * 100n + BigInt(ondalik.padEnd(2, "0"));
     return new Money(negatif ? -kurus : kurus);
+  }
+
+  /**
+   * decimal.js ile hesaplanmış bir TL değerinden Money üretir (kuruş altı kalan kısım yuvarlanır).
+   * `fromTL` 2 basamaktan fazlasını reddeder; bu yöntem ise hesaplanmış (ör. miktar x fiyat) değerler içindir.
+   * @param tl - TL tutarı (Decimal, string veya number; number'daki float gürültüsü yuvarlamayla temizlenir).
+   * @param kip - Kuruş altı yuvarlama (varsayılan: 'yariYukari').
+   * @throws {RangeError} Sayı olarak geçersiz veya sonsuz ise fırlatılır.
+   * @example
+   * ```ts
+   * Money.fromDecimal(new Decimal('1550').times('2.5')); // 3.875,00 TL
+   * ```
+   */
+  static fromDecimal(
+    tl: Decimal.Value,
+    kip: YuvarlamaKipi = "yariYukari",
+  ): Money {
+    return Money.kurusFromDecimal(new D(tl).times(100), kip);
+  }
+
+  /**
+   * Tutarı TL cinsinden tam hassasiyetli Decimal olarak verir (ör. 1550.25).
+   * Decimal tabanlı mevcut hesaplarla (`calculateLineTotal` vb.) köprü kurmak içindir.
+   */
+  toDecimal(): Decimal {
+    return new D(this.kurus.toString()).div(100);
+  }
+
+  /**
+   * Tutarı ondalıklı bir çarpanla (miktar, oran) çarpar ve kuruşa yuvarlar.
+   * Ondalıklı miktar için `mulRate` yerine bunu kullan: çarpan decimal olarak AYNEN işlenir.
+   * @param carpan - Çarpan (Decimal, string veya number).
+   * @param kip - Yuvarlama (varsayılan: 'yariYukari').
+   * @example
+   * ```ts
+   * Money.fromTL('1550').mulDecimal('2.5');      // 3.875,00 TL
+   * Money.fromTL('150798.33').mulDecimal('0.00569'); // 858,04 TL
+   * ```
+   */
+  mulDecimal(carpan: Decimal.Value, kip: YuvarlamaKipi = "yariYukari"): Money {
+    return Money.kurusFromDecimal(
+      new D(this.kurus.toString()).times(carpan),
+      kip,
+    );
+  }
+
+  /** Kuruş cinsinden (kesirli olabilir) Decimal'i tam kuruşa yuvarlayıp Money yapar. */
+  private static kurusFromDecimal(kurus: Decimal, kip: YuvarlamaKipi): Money {
+    if (!kurus.isFinite()) {
+      throw new RangeError(`Geçersiz tutar: ${kurus.toString()}`);
+    }
+    const yuvarlak = kurus.toDecimalPlaces(
+      0,
+      kip === "yariYukari" ? D.ROUND_HALF_UP : D.ROUND_FLOOR,
+    );
+    return new Money(BigInt(yuvarlak.toFixed(0)));
   }
 
   /**
@@ -98,17 +162,21 @@ export class Money {
    * @returns Hesaplanmış tutar.
    * @throws {RangeError} Payda sıfır veya negatif ise fırlatılır.
    */
-  mulRate(pay: bigint | number, payda: bigint | number, kip: YuvarlamaKipi = 'yariYukari'): Money {
+  mulRate(
+    pay: bigint | number,
+    payda: bigint | number,
+    kip: YuvarlamaKipi = "yariYukari",
+  ): Money {
     const p = BigInt(pay);
     const d = BigInt(payda);
-    if (d <= 0n) throw new RangeError('Payda pozitif olmalı');
+    if (d <= 0n) throw new RangeError("Payda pozitif olmalı");
     const n = this.kurus * p;
     let q = n / d; // sıfıra doğru keser
     const r = n % d;
-    if (kip === 'yariYukari') {
+    if (kip === "yariYukari") {
       const mutlakR = r < 0n ? -r : r;
       if (mutlakR * 2n >= d) q += n < 0n ? -1n : 1n;
-    } else if (kip === 'asagi') {
+    } else if (kip === "asagi") {
       if (r < 0n) q -= 1n; // gerçek floor
     }
     return new Money(q);
@@ -163,7 +231,7 @@ export class Money {
    * @throws {RangeError} Payda sıfır veya negatif ise fırlatılır.
    */
   oranBasisPuan(payda: Money): bigint {
-    if (payda.kurus <= 0n) throw new RangeError('Payda pozitif olmalı');
+    if (payda.kurus <= 0n) throw new RangeError("Payda pozitif olmalı");
     const n = this.kurus * 10000n;
     let q = n / payda.kurus;
     const r = n % payda.kurus;
@@ -178,7 +246,9 @@ export class Money {
    */
   toKurusNumber(): number {
     const n = Number(this.kurus);
-    if (!Number.isSafeInteger(n)) throw new RangeError('Tutar number olarak güvenle saklanamaz');
+    if (!Number.isSafeInteger(n)) {
+      throw new RangeError("Tutar number olarak güvenle saklanamaz");
+    }
     return n;
   }
 
@@ -189,9 +259,11 @@ export class Money {
   toTLString(): string {
     const negatif = this.kurus < 0n;
     const mutlak = negatif ? -this.kurus : this.kurus;
-    const tam = (mutlak / 100n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    const kurusKismi = (mutlak % 100n).toString().padStart(2, '0');
-    return `${negatif ? '-' : ''}${tam},${kurusKismi} TL`;
+    const tam = (mutlak / 100n).toString().replace(
+      /\B(?=(\d{3})+(?!\d))/g,
+      ".",
+    );
+    const kurusKismi = (mutlak % 100n).toString().padStart(2, "0");
+    return `${negatif ? "-" : ""}${tam},${kurusKismi} TL`;
   }
 }
-
