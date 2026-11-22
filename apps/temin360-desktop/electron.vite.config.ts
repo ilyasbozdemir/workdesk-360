@@ -101,7 +101,9 @@ export default defineConfig(({ mode, command }) => {
             '@temin360/document-templates',
             '@worksuite-360/document-engine',
             '@temin360/contracts',
-            '@workdesk-360/workflow-engine'
+            '@workdesk-360/workflow-engine',
+            '@worksuite-360/core',
+            '@temin360/direct-procurement-core'
           ]
         }
       }
@@ -112,7 +114,12 @@ export default defineConfig(({ mode, command }) => {
         bytecode: isBytecode,
         sourcemap: false,
         externalizeDeps: {
-          exclude: ['@temin360/contracts', '@workdesk-360/workflow-engine']
+          exclude: [
+            '@temin360/contracts',
+            '@workdesk-360/workflow-engine',
+            '@worksuite-360/core',
+            '@temin360/direct-procurement-core'
+          ]
         }
       }
     },
@@ -123,7 +130,9 @@ export default defineConfig(({ mode, command }) => {
           '@renderer': resolve('src/renderer/src'),
           '@workdesk-360/workflow-engine': resolve('../../packages/workflow-engine/src/index.ts'),
           '@worksuite-360/document-engine': resolve('../../packages/document-engine/src/index.ts'),
-          '@temin360/document-templates': resolve('../../packages/document-templates/src/index.ts')
+          '@temin360/document-templates': resolve('../../packages/document-templates/src/index.ts'),
+          '@worksuite-360/core': resolve('../../packages/core/src/index.ts'),
+          '@temin360/direct-procurement-core': resolve('../../packages/direct-procurement-core/src/index.ts')
         }
       },
       build: {

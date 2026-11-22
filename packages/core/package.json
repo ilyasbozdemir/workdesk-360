@@ -1,6 +1,7 @@
 {
   "name": "@worksuite-360/core",
   "version": "1.0.0",
+  "type": "module",
   "description": "WorkDesk 360 ekosistemi ortak çekirdek altyapı paketi (Common Types, Domain Base, Persistence, Database, Text)",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
