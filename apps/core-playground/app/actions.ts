@@ -54,9 +54,9 @@ class PlaygroundPrismaWriteRepo extends PrismaWriteRepository<{ id: string; name
 const inMemoryRepo = new InMemoryRepository<{ id: string; name: string; targetApp?: string }, string>()
 
 // Seed initial item into inMemoryRepo
-inMemoryRepo.create({ id: 'item-1', name: 'Mustafa ÇALIŞKAN', targetApp: 'temin360-desktop' })
-inMemoryRepo.create({ id: 'item-2', name: 'Mehmet MUTLU', targetApp: 'temin360-desktop' })
-inMemoryRepo.create({ id: 'item-3', name: 'Web Cloud User', targetApp: 'app-web' })
+inMemoryRepo.create({ id: 'item-1', name: 'John Doe', targetApp: 'temin360-desktop' })
+inMemoryRepo.create({ id: 'item-2', name: 'John Deere', targetApp: 'temin360-desktop' })
+inMemoryRepo.create({ id: 'item-3', name: 'Jane Roe', targetApp: 'app-web' })
 
 /**
  * 1. REPOSITORY TEST ACTION
@@ -84,7 +84,7 @@ export async function testRepositoryAction(
         case 'create': {
           const newItem = {
             id: payload?.id || createEntityId('item'),
-            name: payload?.name || 'Yeni Test Kaydı',
+            name: payload?.name || 'John Deere',
             targetApp
           }
           const res = await inMemoryRepo.create(newItem)
@@ -93,7 +93,7 @@ export async function testRepositoryAction(
         }
         case 'update': {
           const id = payload?.id || 'item-1'
-          const res = await inMemoryRepo.update(id, { name: payload?.name || 'Güncellenmiş Kayıt' })
+          const res = await inMemoryRepo.update(id, { name: payload?.name || 'John Deere (Updated)' })
           if (!res.success) throw res.error
           return res.data
         }
@@ -133,7 +133,7 @@ export async function testRepositoryAction(
           const id = payload?.id || createEntityId('sql')
           const item = {
             id,
-            name: payload?.name || 'SQLite Kaydı',
+            name: payload?.name || 'John Doe',
             target_app: targetApp
           }
           const res = await writeRepo.create(item)
@@ -142,7 +142,7 @@ export async function testRepositoryAction(
         }
         case 'update': {
           const id = payload?.id || 'item-1'
-          const res = await writeRepo.update(id, { name: payload?.name || 'SQLite Güncelleme' })
+          const res = await writeRepo.update(id, { name: payload?.name || 'John Doe (Updated)' })
           if (!res.success) throw res.error
           return res.data
         }
@@ -182,7 +182,7 @@ export async function testRepositoryAction(
           const id = payload?.id || createEntityId('prisma')
           const item = {
             id,
-            name: payload?.name || 'Prisma Kaydı',
+            name: payload?.name || 'Jane Roe',
             target_app: targetApp
           }
           const res = await writeRepo.create(item)
@@ -191,7 +191,7 @@ export async function testRepositoryAction(
         }
         case 'update': {
           const id = payload?.id || 'item-1'
-          const res = await writeRepo.update(id, { name: payload?.name || 'Prisma Güncelleme' })
+          const res = await writeRepo.update(id, { name: payload?.name || 'Jane Roe (Updated)' })
           if (!res.success) throw res.error
           return res.data
         }

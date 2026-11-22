@@ -24,9 +24,9 @@ export function getPlaygroundRawDb() {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
       INSERT INTO playground_items (id, name, target_app) VALUES
-        ('item-1', 'Mustafa ÇALIŞKAN', 'temin360-desktop'),
-        ('item-2', 'Mehmet MUTLU', 'temin360-desktop'),
-        ('item-3', 'Web Cloud User', 'app-web');
+        ('item-1', 'John Doe', 'temin360-desktop'),
+        ('item-2', 'John Deere', 'temin360-desktop'),
+        ('item-3', 'Jane Roe', 'app-web');
     `);
   }
   return memoryDbInstance;
@@ -154,8 +154,8 @@ export class InMemoryPrismaDelegate<TEntity extends { id: any }, TId>
   private store = new Map<any, TEntity>();
 
   constructor() {
-    this.store.set('item-1' as any, { id: 'item-1', name: 'Mustafa ÇALIŞKAN', target_app: 'temin360-desktop' } as unknown as TEntity);
-    this.store.set('item-2' as any, { id: 'item-2', name: 'Mehmet MUTLU', target_app: 'temin360-desktop' } as unknown as TEntity);
+    this.store.set('item-1' as any, { id: 'item-1', name: 'John Doe', target_app: 'temin360-desktop' } as unknown as TEntity);
+    this.store.set('item-2' as any, { id: 'item-2', name: 'John Deere', target_app: 'temin360-desktop' } as unknown as TEntity);
   }
 
   async findUnique(args: {

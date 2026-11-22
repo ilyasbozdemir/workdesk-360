@@ -12,8 +12,8 @@
  *
  * Örnekler:
  * - "ASİL ÜYE", "Asil Üye", "asil uye" -> "asil uye"
- * - "ÇALIŞKAN", "çalışkan" -> "caliskan"
- * - "İlyas", "ılyas", "ILYAS" -> "ilyas"
+ * - "John Deere (Çalışan)" -> "john deere calisan"
+ * - "İSMET", "ısmet", "ISMET" -> "ismet"
  * - Birleşik ve ayrık 'İ' -> 'i'
  *
  * @param text - Giriş metni

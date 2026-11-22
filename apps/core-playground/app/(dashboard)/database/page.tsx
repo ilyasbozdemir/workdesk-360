@@ -125,13 +125,13 @@ export default function DatabasePlaygroundPage() {
               <button
                 type="button"
                 onClick={() => {
-                  const s = 'SELECT id, name, LENGTH(name) as len FROM playground_items WHERE name LIKE "%ÇALIŞKAN%"'
+                  const s = 'SELECT id, name, LENGTH(name) as len FROM playground_items WHERE name LIKE "%John%"'
                   setSqlQuery(s)
                   runQuery(s)
                 }}
                 className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 cursor-pointer"
               >
-                Türkçe ÇALIŞKAN Ara
+                Filtrele: John Deere
               </button>
             </div>
 

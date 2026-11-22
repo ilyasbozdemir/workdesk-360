@@ -57,7 +57,7 @@ export default function ErrorsPlaygroundPage() {
                   message: 'Doğrudan Temin Tebliği (40666) gereği Harcama Yetkilisi muayene komisyonu üyesi olamaz',
                   details: {
                     mevzuatNo: '40666',
-                    personel: 'Ahmet ARI',
+                    personel: 'John Doe',
                     yasakliGorev: 'Harcama Yetkilisi'
                   }
                 })

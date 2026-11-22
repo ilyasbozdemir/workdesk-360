@@ -14,9 +14,9 @@ export default function RepositoriesPlaygroundPage() {
   const [loading, setLoading] = useState(false)
 
   // Form states
-  const [createName, setCreateName] = useState('Mustafa ÇALIŞKAN')
+  const [createName, setCreateName] = useState('John Deere')
   const [customId, setCustomId] = useState('item-1')
-  const [updateName, setUpdateName] = useState('Mustafa ÇALIŞKAN (Güncellendi)')
+  const [updateName, setUpdateName] = useState('John Deere (Güncellendi)')
 
   const runOp = async (
     op: 'getAll' | 'getById' | 'create' | 'update' | 'delete' | 'exists',

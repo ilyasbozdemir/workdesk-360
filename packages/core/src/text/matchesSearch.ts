@@ -10,8 +10,8 @@ import { trKey } from "./trKey";
  * Arama Türkçe karakter duyarsızdır (trKey kullanılır) ve kelime sırasından bağımsızdır.
  *
  * Örnek:
- * - query: "mus cal", field: "Mustafa ÇALIŞKAN" -> true
- * - query: "calis", field: "Mustafa ÇALIŞKAN" -> true
+ * - query: "john dee", field: "John Deere (Tedarikçi)" -> true
+ * - query: "calis", field: "John Deere (Çalışan)" -> true
  * - query: "", field: "Herhangi bir şey" -> true (Boş sorgu her kaydı kabul eder)
  *
  * @param query - Kullanıcının girdiği arama metni

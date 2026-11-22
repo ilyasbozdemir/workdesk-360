@@ -22,10 +22,10 @@ describe("ADIM 1 — Ortak Türkçe Metin Katmanı (shared/text)", () => {
     });
 
     it("Türkçe İ, ı, I, i karakterlerini ASCII 'i' harfine dönüştürür", () => {
-      expect(trKey("İLYAS")).toBe("ilyas");
-      expect(trKey("ılyas")).toBe("ilyas");
-      expect(trKey("Ilyas")).toBe("ilyas");
-      expect(trKey("ilyas")).toBe("ilyas");
+      expect(trKey("İSMET")).toBe("ismet");
+      expect(trKey("ısmet")).toBe("ismet");
+      expect(trKey("Ismet")).toBe("ismet");
+      expect(trKey("ismet")).toBe("ismet");
     });
 
     it("Ç, Ğ, Ö, Ş, Ü karakterlerini doğru ASCII karşılıklarına çevirir", () => {
@@ -35,10 +35,10 @@ describe("ADIM 1 — Ortak Türkçe Metin Katmanı (shared/text)", () => {
     });
 
     it("NFC ve NFD birleşik/ayrık 'İ' karakterlerini aynı sonuca ulaştırır", () => {
-      const ayrıkI = "I\u0307lyas"; // NFD (I + combining dot above)
-      const birlesikI = "İlyas"; // NFC
-      expect(trKey(ayrıkI)).toBe("ilyas");
-      expect(trKey(birlesikI)).toBe("ilyas");
+      const ayrıkI = "I\u0307smet"; // NFD (I + combining dot above)
+      const birlesikI = "İsmet"; // NFC
+      expect(trKey(ayrıkI)).toBe("ismet");
+      expect(trKey(birlesikI)).toBe("ismet");
       expect(trKey(ayrıkI)).toBe(trKey(birlesikI));
     });
 
@@ -69,7 +69,7 @@ describe("ADIM 1 — Ortak Türkçe Metin Katmanı (shared/text)", () => {
         "Cemal",
         "Ömer",
         "Çağla",
-        "İlyas",
+        "İsmet",
         "ÇALIŞKAN",
         "Şener",
         "Ilgaz",
@@ -86,7 +86,7 @@ describe("ADIM 1 — Ortak Türkçe Metin Katmanı (shared/text)", () => {
         "Çağla",
         "ÇALIŞKAN",
         "Ilgaz",
-        "İlyas",
+        "İsmet",
         "Oya",
         "Ömer",
         "Sevgi",
@@ -117,15 +117,16 @@ describe("ADIM 1 — Ortak Türkçe Metin Katmanı (shared/text)", () => {
 
   describe("4. matchesSearch() — Çok Kelimeli ve Kısmi Arama", () => {
     it("kısmi eşleşmeyi Türkçe karakter duyarsız olarak bulur", () => {
-      expect(matchesSearch("calis", "Mustafa ÇALIŞKAN")).toBe(true);
-      expect(matchesSearch("çalış", "Mustafa ÇALIŞKAN")).toBe(true);
-      expect(matchesSearch("CALIS", "Mustafa ÇALIŞKAN")).toBe(true);
+      expect(matchesSearch("deere", "John Deere (Çalışan)")).toBe(true);
+      expect(matchesSearch("calis", "John Deere (Çalışan)")).toBe(true);
+      expect(matchesSearch("çalış", "John Deere (Çalışan)")).toBe(true);
+      expect(matchesSearch("CALIS", "John Deere (Çalışan)")).toBe(true);
     });
 
-    it("çok kelimeli parçalı aramayı (mus cal) sıradan bağımsız bulur", () => {
-      expect(matchesSearch("mus cal", "Mustafa ÇALIŞKAN")).toBe(true);
-      expect(matchesSearch("cal mus", "Mustafa ÇALIŞKAN")).toBe(true);
-      expect(matchesSearch("kan mus", "Mustafa ÇALIŞKAN")).toBe(true);
+    it("çok kelimeli parçalı aramayı (john cal) sıradan bağımsız bulur", () => {
+      expect(matchesSearch("john cal", "John Deere (Çalışan)")).toBe(true);
+      expect(matchesSearch("cal john", "John Deere (Çalışan)")).toBe(true);
+      expect(matchesSearch("san john", "John Deere (Çalışan)")).toBe(true);
     });
 
     it("boş veya boşluklardan oluşan sorguda tüm kayıtları kabul eder", () => {
@@ -171,7 +172,7 @@ describe("ADIM 1 — Ortak Türkçe Metin Katmanı (shared/text)", () => {
       insert.run(2, "Çağla");
       insert.run(3, "ÇALIŞKAN");
       insert.run(4, "Ilgaz");
-      insert.run(5, "İlyas");
+      insert.run(5, "İsmet");
       insert.run(6, "Oya");
       insert.run(7, "Ömer");
       insert.run(8, "Sevgi");
@@ -183,15 +184,15 @@ describe("ADIM 1 — Ortak Türkçe Metin Katmanı (shared/text)", () => {
       const defaultLikeQuery = db.prepare("SELECT * FROM test_personel WHERE ad_soyad LIKE '%çalışkan%'").all();
       expect(defaultLikeQuery.length).toBe(0); // Varsayılan SQLite LIKE ÇALIŞKAN'ı bulamaz!
 
-      // 6.2: tr_key ile arama ("İLYAS", "ilyas", "ılyas" aynı kaydı bulur)
-      const qIlyasUpper = db.prepare("SELECT * FROM test_personel WHERE instr(tr_key(ad_soyad), tr_key(?)) > 0").all("İLYAS") as any[];
-      const qIlyasLower = db.prepare("SELECT * FROM test_personel WHERE instr(tr_key(ad_soyad), tr_key(?)) > 0").all("ilyas") as any[];
-      const qIlyasDotless = db.prepare("SELECT * FROM test_personel WHERE instr(tr_key(ad_soyad), tr_key(?)) > 0").all("ılyas") as any[];
+      // 6.2: tr_key ile arama ("İSMET", "ismet", "ısmet" aynı kaydı bulur)
+      const qIsmetUpper = db.prepare("SELECT * FROM test_personel WHERE instr(tr_key(ad_soyad), tr_key(?)) > 0").all("İSMET") as any[];
+      const qIsmetLower = db.prepare("SELECT * FROM test_personel WHERE instr(tr_key(ad_soyad), tr_key(?)) > 0").all("ismet") as any[];
+      const qIsmetDotless = db.prepare("SELECT * FROM test_personel WHERE instr(tr_key(ad_soyad), tr_key(?)) > 0").all("ısmet") as any[];
 
-      expect(qIlyasUpper.length).toBe(1);
-      expect(qIlyasUpper[0].ad_soyad).toBe("İlyas");
-      expect(qIlyasLower.length).toBe(1);
-      expect(qIlyasDotless.length).toBe(1);
+      expect(qIsmetUpper.length).toBe(1);
+      expect(qIsmetUpper[0].ad_soyad).toBe("İsmet");
+      expect(qIsmetLower.length).toBe(1);
+      expect(qIsmetDotless.length).toBe(1);
 
       // 6.3: tr_key ile ÇALIŞKAN araması
       const qCaliskan = db.prepare("SELECT * FROM test_personel WHERE instr(tr_key(ad_soyad), tr_key(?)) > 0").all("caliskan") as any[];
@@ -213,7 +214,7 @@ describe("ADIM 1 — Ortak Türkçe Metin Katmanı (shared/text)", () => {
         "Çağla",
         "ÇALIŞKAN",
         "Ilgaz",
-        "İlyas",
+        "İsmet",
         "Oya",
         "Ömer",
         "Sevgi",
