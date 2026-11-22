@@ -112,8 +112,9 @@ export async function testRepositoryAction(
             return res.data;
           }
           case "create": {
+            const generatedId = `item-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
             const newItem = {
-              id: payload?.id || createEntityId("item"),
+              id: payload?.id?.trim() ? createEntityId(payload.id.trim()) : createEntityId(generatedId),
               name: payload?.name || "John Deere",
               targetApp,
             };
@@ -162,7 +163,8 @@ export async function testRepositoryAction(
             return res.data;
           }
           case "create": {
-            const id = payload?.id || createEntityId("sql");
+            const generatedId = `sql-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            const id = payload?.id?.trim() ? createEntityId(payload.id.trim()) : createEntityId(generatedId);
             const item = {
               id,
               name: payload?.name || "John Doe",
@@ -213,7 +215,8 @@ export async function testRepositoryAction(
             return res.data;
           }
           case "create": {
-            const id = payload?.id || createEntityId("prisma");
+            const generatedId = `prisma-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            const id = payload?.id?.trim() ? createEntityId(payload.id.trim()) : createEntityId(generatedId);
             const item = {
               id,
               name: payload?.name || "Jane Roe",
@@ -478,7 +481,7 @@ export async function testTransactionAction(
     const tx = new PlaygroundDatabaseTransaction(conn);
     await tx.begin();
 
-    const tempId = createEntityId("tx_item");
+    const tempId = createEntityId(`tx_${Date.now()}_${Math.floor(Math.random() * 1000)}`);
     const steps: any[] = [];
 
     steps.push({

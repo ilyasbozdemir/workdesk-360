@@ -15,6 +15,7 @@ export default function RepositoriesPlaygroundPage() {
 
   // Form states
   const [createName, setCreateName] = useState('John Deere')
+  const [createId, setCreateId] = useState('')
   const [customId, setCustomId] = useState('item-1')
   const [updateName, setUpdateName] = useState('John Deere (Güncellendi)')
 
@@ -125,13 +126,20 @@ export default function RepositoriesPlaygroundPage() {
           <div className="space-y-2">
             <input
               type="text"
+              value={createId}
+              onChange={(e) => setCreateId(e.target.value)}
+              placeholder="Özel ID (İsteğe bağlı, boşsa otomatik üretilir)"
+              className="w-full text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-hidden focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+            <input
+              type="text"
               value={createName}
               onChange={(e) => setCreateName(e.target.value)}
               placeholder="Ad Soyad veya İsim"
               className="w-full text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-hidden focus:ring-2 focus:ring-blue-500"
             />
             <button
-              onClick={() => runOp('create', { name: createName })}
+              onClick={() => runOp('create', { id: createId, name: createName })}
               disabled={loading}
               className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
