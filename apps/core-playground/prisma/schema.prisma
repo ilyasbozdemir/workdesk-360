@@ -5,14 +5,14 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/client"
+  output   = "../generated/prisma-client"
 }
 
 model PlaygroundItem {
-  id        String   @id
+  id        String  @id
   name      String
-  targetApp String?  @map("target_app")
-  createdAt DateTime @default(now()) @map("created_at")
+  targetApp String? @map("target_app")
+  createdAt String? @map("created_at")
 
   @@map("playground_items")
 }

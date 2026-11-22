@@ -447,16 +447,14 @@ export function getPlaygroundPrismaClient() {
   if (!realPrismaClient) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { PrismaClient: PrismaClientClass } = require("../../generated/client");
+      const { PrismaClient: PrismaClientClass } = require("../../generated/prisma-client");
 
-      const dbFile = path.resolve(
-        process.cwd(),
-        "apps/core-playground/prisma/playground-prisma.sqlite",
-      );
+      const activeDb = getActiveDbPath();
+      const normalizedDbPath = path.resolve(activeDb).replace(/\\/g, "/");
       realPrismaClient = new PrismaClientClass({
         datasources: {
           db: {
-            url: `file:${dbFile}`,
+            url: `file:${normalizedDbPath}`,
           },
         },
       });
