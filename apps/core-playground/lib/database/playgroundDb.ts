@@ -235,7 +235,7 @@ export function resetPlaygroundDb() {
 export function getPlaygroundConnection(): IDatabaseConnection {
   const db = getPlaygroundRawDb();
 
-  return {
+  const conn: IDatabaseConnection = {
     async query<TResult = Record<string, unknown>>(
       sql: string,
       parameters?: DatabaseQueryParameters,
@@ -268,10 +268,18 @@ export function getPlaygroundConnection(): IDatabaseConnection {
       };
     },
 
+    async beginTransaction(): Promise<IDatabaseTransaction> {
+      const tx = new PlaygroundDatabaseTransaction(conn);
+      await tx.begin();
+      return tx;
+    },
+
     async close(): Promise<void> {
       resetPlaygroundDb();
     },
   };
+
+  return conn;
 }
 
 /**

@@ -294,6 +294,9 @@ importers:
       '@prisma/client':
         specifier: ^6.4.1
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      '@temin360/direct-procurement-core':
+        specifier: workspace:*
+        version: link:../../packages/direct-procurement-core
       '@worksuite-360/core':
         specifier: workspace:*
         version: link:../../packages/core

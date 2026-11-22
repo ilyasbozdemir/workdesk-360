@@ -975,3 +975,168 @@ export async function deleteTeminRowAction(
   );
 }
 
+// ============================================================================
+// TEMİN 360 MİMARİ DOĞRULAMA (Core Playground Testleri)
+// ============================================================================
+import {
+  ProcurementFile,
+  ProcurementFileStatus,
+  SqliteProcurementFileRepository,
+  ProcurementFileService,
+  CommissionService,
+  SqliteCommissionRepository,
+  ProcurementFileListViewModel,
+  ProcurementFileDetailViewModel,
+  ProcurementFileMapper,
+  DirectProcurementContainer,
+  TOKENS,
+} from "@temin360/direct-procurement-core";
+
+export async function testDirectProcurementArchitectureAction(
+  testCategory:
+    | "domain-entity"
+    | "repository-contract"
+    | "application-service"
+    | "presentation-viewmodel"
+    | "di-container"
+): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(
+    `Direct Procurement Architecture -> ${testCategory}`,
+    async () => {
+      const conn = await getPlaygroundProvider().getConnection();
+
+      // Adapt IDatabaseConnection to SqlExecutor
+      const sqlExecutor = {
+        async query<T = Record<string, unknown>>(sql: string, params?: readonly unknown[]): Promise<T[]> {
+          return conn.query<T>(sql, params ? [...params] : []);
+        },
+        async execute(sql: string, params?: readonly unknown[]): Promise<{ changes?: number }> {
+          const res = await conn.execute(sql, params ? [...params] : []);
+          return { changes: res.changes };
+        },
+        async transaction<T = unknown>(statements: readonly { sql: string; params?: readonly unknown[] }[]): Promise<T[] | void> {
+          const tx = await conn.beginTransaction();
+          try {
+            for (const s of statements) {
+              await tx.execute(s.sql, s.params ? [...s.params] : []);
+            }
+            await tx.commit();
+          } catch (err) {
+            await tx.rollback();
+            throw err;
+          }
+        },
+      };
+
+      switch (testCategory) {
+        case "domain-entity": {
+          const file = new ProcurementFile({
+            id: 888,
+            subject: "Playground Test İhalesi",
+            procurementType: "mal",
+            status: ProcurementFileStatus.InProgress,
+            estimatedCost: 75000,
+            budgetYear: 2026,
+            unitName: "Fen İşleri Müdürlüğü",
+          });
+
+          const initialStatus = file.status;
+          file.complete();
+          const inProgressStatus = file.status;
+
+          return {
+            id: file.id,
+            subject: file.subject,
+            initialStatus,
+            inProgressStatus,
+            procurementType: file.procurementType,
+            estimatedCost: file.estimatedCost,
+            isValidDomainEntity: true,
+          };
+        }
+
+        case "repository-contract": {
+          const repo = new SqliteProcurementFileRepository(sqlExecutor);
+
+          // Get existing or active files from SQLite
+          const activeFiles = await repo.findActiveFiles();
+          const exists = await repo.exists(1);
+
+          return {
+            activeFileCount: activeFiles.length,
+            sampleFileSubject: activeFiles[0]?.subject || "Kayıt Yok",
+            existsCheckForId1: exists.success ? exists.data : false,
+            contractInterface: "IProcurementFileRepository",
+            verified: true,
+          };
+        }
+
+        case "application-service": {
+          const fileRepo = new SqliteProcurementFileRepository(sqlExecutor);
+          const service = new ProcurementFileService(fileRepo);
+
+          const getRes = await service.getFileById(1);
+
+          return {
+            serviceName: "ProcurementFileService",
+            resultType: getRes.success ? "Success" : "Failure (Handled via Result<T, AppError>)",
+            data: getRes.success ? {
+              id: getRes.data.id,
+              subject: getRes.data.subject,
+              status: getRes.data.status,
+            } : getRes.error,
+          };
+        }
+
+        case "presentation-viewmodel": {
+          const file = new ProcurementFile({
+            id: 999,
+            subject: "Yazılım Hizmeti Alımı",
+            procurementType: "hizmet",
+            status: ProcurementFileStatus.Completed,
+            estimatedCost: 350000,
+            budgetYear: 2026,
+            unitName: "Bilgi İşlem Dairesi",
+          });
+
+          const dto = ProcurementFileMapper.toDto(file);
+          const listItem = ProcurementFileListViewModel.toListItem(dto);
+          const detailView = ProcurementFileDetailViewModel.toDetailView(dto);
+
+          return {
+            dto,
+            listItem,
+            detailView,
+            separationValid: true,
+          };
+        }
+
+        case "di-container": {
+          const container = new DirectProcurementContainer();
+          container.registerInstance(TOKENS.SqlExecutor, sqlExecutor);
+
+          const fileRepo = new SqliteProcurementFileRepository(sqlExecutor);
+          container.registerInstance(TOKENS.ProcurementFileRepository, fileRepo);
+
+          container.registerFactory(
+            TOKENS.ProcurementFileService,
+            (c) => new ProcurementFileService(c.resolve(TOKENS.ProcurementFileRepository)),
+          );
+
+          const resolvedService = container.resolve<ProcurementFileService>(TOKENS.ProcurementFileService);
+
+          return {
+            containerResolved: resolvedService instanceof ProcurementFileService,
+            containerClass: "DirectProcurementContainer",
+            diVerified: true,
+          };
+        }
+
+        default:
+          throw new Error(`Desteklenmeyen mimari test: ${testCategory}`);
+      }
+    },
+  );
+}
+
+

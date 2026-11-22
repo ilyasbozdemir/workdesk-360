@@ -13,6 +13,9 @@ export class ProcurementFileMapper {
             isLocked: entity.isLocked,
             estimatedCost: entity.estimatedCost,
             budgetYear: entity.budgetYear,
+            budgetType: entity.budgetType,
+            contractType: entity.contractType,
+            deliveryDays: entity.deliveryDays,
             unitName: entity.unitName,
         };
     }

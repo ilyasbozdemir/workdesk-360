@@ -37,5 +37,8 @@ export interface ProcurementFileDto {
     isLocked: boolean;
     estimatedCost: number;
     budgetYear?: number;
+    budgetType?: string;
+    contractType?: string;
+    deliveryDays?: number;
     unitName?: string;
 }
