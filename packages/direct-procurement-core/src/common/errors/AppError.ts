@@ -28,7 +28,11 @@ export class AppError extends Error {
     /** Hatanın ek bağlam bilgileri. */
     public readonly details?: Record<string, unknown>;
 
-    constructor(options: AppErrorOptions) {
+    constructor(messageOrOptions: string | AppErrorOptions) {
+        const options: AppErrorOptions = typeof messageOrOptions === "string"
+            ? { code: "APP_ERROR", message: messageOrOptions }
+            : messageOrOptions;
+
         super(options.message, { cause: options.cause });
 
         this.name = new.target.name;

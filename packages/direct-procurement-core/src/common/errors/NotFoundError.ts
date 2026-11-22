@@ -5,7 +5,7 @@ import { AppError } from "./AppError";
  */
 export interface NotFoundErrorOptions {
     /** Bulunamayan kaynak türü. */
-    resource: string;
+    resource?: string;
 
     /** Kaynağın kimliği. */
     resourceId?: string;
@@ -21,18 +21,19 @@ export class NotFoundError extends AppError {
     public readonly resource: string;
     public readonly resourceId?: string;
 
-    constructor(options: NotFoundErrorOptions) {
+    constructor(options: NotFoundErrorOptions = {}) {
+        const resourceName = options.resource ?? "Entity";
         super({
             code: "NOT_FOUND",
             message: options.message ??
-                `${options.resource} kaydı bulunamadı.`,
+                `${resourceName} kaydı bulunamadı.`,
             details: {
-                resource: options.resource,
+                resource: resourceName,
                 resourceId: options.resourceId,
             },
         });
 
-        this.resource = options.resource;
+        this.resource = resourceName;
         this.resourceId = options.resourceId;
     }
 }
