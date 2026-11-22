@@ -92,9 +92,15 @@ export * from "./infrastructure/database/contracts/ITeminPreferencesStore";
 export * from "./infrastructure/persistence/contracts/IReadRepository";
 export * from "./infrastructure/persistence/contracts/IWriteRepository";
 export * from "./infrastructure/persistence/contracts/IRepository";
+export * from "./infrastructure/persistence/base/RepositoryBase";
+export * from "./infrastructure/persistence/base/ReadRepositoryBase";
+export * from "./infrastructure/persistence/base/WriteRepositoryBase";
 export * from "./infrastructure/persistence/sqlite/SQLiteReadRepository";
 export * from "./infrastructure/persistence/sqlite/SQLiteWriteRepository";
 export * from "./infrastructure/persistence/sqlite/SQLiteRepositoryBase";
+export * from "./infrastructure/persistence/prisma/repositories/PrismaRepositoryBase";
+export * from "./infrastructure/persistence/prisma/repositories/PrismaReadRepository";
+export * from "./infrastructure/persistence/prisma/repositories/PrismaWriteRepository";
 export * from "./infrastructure/persistence/memory/InMemoryRepository";
 
 // ─── COMMON (Ortak Temel Yapılar) ────────────────────────────────────
