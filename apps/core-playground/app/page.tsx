@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Boxes,
@@ -12,17 +12,32 @@ import {
   ArrowRight,
   Layers,
   Sparkles,
-  Server
+  Server,
+  TableProperties,
+  FolderOpen,
+  Building2,
+  Users,
+  Package
 } from 'lucide-react'
 import { useTargetApp, APP_PROFILES, TargetApp } from '@/components/layout/AppContext'
-import { testDatabaseAction, testCommonAction } from './actions'
+import { testDatabaseAction, testCommonAction, fetchTeminStatsAction } from './actions'
 import { ResultDisplay } from '@/components/test-results/ResultDisplay'
 import { StatusBadge } from '@/components/playground/StatusBadge'
 
 export default function DashboardPage() {
   const { targetApp, profile, setTargetApp } = useTargetApp()
   const [quickTestResult, setQuickTestResult] = useState<any>(null)
+  const [teminStats, setTeminStats] = useState<any>(null)
   const [running, setRunning] = useState(false)
+
+  // Canlı Temin 360 veritabanı istatistiklerini yükle
+  useEffect(() => {
+    fetchTeminStatsAction().then((res) => {
+      if (res.success && res.data) {
+        setTeminStats(res.data)
+      }
+    }).catch(() => {})
+  }, [])
 
   const handleQuickSmokeTest = async () => {
     setRunning(true)
