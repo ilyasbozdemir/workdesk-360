@@ -117,14 +117,7 @@ export class TeminPackage implements ITeminPackage {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       AdmZipClass = require("adm-zip");
     } catch {
-      try {
-        const desktopAdmZip = path.resolve(
-          process.cwd(),
-          "apps/temin360-desktop/node_modules/adm-zip",
-        );
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        AdmZipClass = require(desktopAdmZip);
-      } catch {}
+      // adm-zip yoksa tar/powershell fallback devreye girer
     }
 
     let meta: ITeminMeta = {

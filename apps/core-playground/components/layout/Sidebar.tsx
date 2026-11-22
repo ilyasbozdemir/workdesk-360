@@ -11,7 +11,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Layers,
-  Sparkles
+  Sparkles,
+  TableProperties
 } from 'lucide-react'
 import { useTargetApp } from './AppContext'
 
@@ -39,6 +40,12 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Database Bağlantısı',
     icon: <Database className="w-4 h-4" />,
     badge: 'SQL'
+  },
+  {
+    href: '/live-data',
+    label: 'Canlı Temin Verileri',
+    icon: <TableProperties className="w-4 h-4" />,
+    badge: 'Canlı DB'
   },
   {
     href: '/transactions',

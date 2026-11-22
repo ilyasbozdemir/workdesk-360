@@ -21,8 +21,8 @@ import {
   getPlaygroundConnection,
   getPlaygroundPrismaClient,
   getPlaygroundProvider,
-  PlaygroundDatabaseTransaction,
   openTeminPackage,
+  PlaygroundDatabaseTransaction,
 } from "@/lib/database/playgroundDb";
 import {
   executePlaygroundTest,
@@ -702,4 +702,226 @@ export async function testTeminPackageAction(
       }
     },
   );
+}
+
+/**
+ * 7. GERÇEK TEMİN 360 VERİTABANI YÖNETİMİ & CRUD ACTIONS
+ */
+export async function fetchTeminStatsAction(): Promise<
+  TestRunResult<{
+    totalDosya: number;
+    totalFirma: number;
+    totalPersonel: number;
+    totalKalem: number;
+    totalSettings: number;
+    dbPath: string;
+  }>
+> {
+  return executePlaygroundTest("Temin DB -> İstatistikleri Getir", async () => {
+    const conn = await getPlaygroundProvider().getConnection();
+    const [dosyaRes, firmaRes, personelRes, kalemRes, settingsRes] =
+      await Promise.all([
+        conn.query<{ count: number }>("SELECT count(*) as count FROM DATA_TeminDosyasi WHERE is_deleted = 0 OR is_deleted IS NULL"),
+        conn.query<{ count: number }>("SELECT count(*) as count FROM TANIM_Firma WHERE is_deleted = 0 OR is_deleted IS NULL"),
+        conn.query<{ count: number }>("SELECT count(*) as count FROM TANIM_Personel WHERE is_deleted = 0 OR is_deleted IS NULL"),
+        conn.query<{ count: number }>("SELECT count(*) as count FROM DATA_TeminKalem WHERE is_deleted = 0 OR is_deleted IS NULL"),
+        conn.query<{ count: number }>("SELECT count(*) as count FROM settings"),
+      ]);
+
+    return {
+      totalDosya: Number(dosyaRes[0]?.count || 0),
+      totalFirma: Number(firmaRes[0]?.count || 0),
+      totalPersonel: Number(personelRes[0]?.count || 0),
+      totalKalem: Number(kalemRes[0]?.count || 0),
+      totalSettings: Number(settingsRes[0]?.count || 0),
+      dbPath: getActiveDbPath(),
+    };
+  });
+}
+
+export async function fetchTeminTableRowsAction(
+  tableName: "DATA_TeminDosyasi" | "TANIM_Firma" | "TANIM_Personel" | "DATA_TeminKalem" | "settings",
+  search?: string,
+): Promise<TestRunResult<{ rows: Record<string, any>[]; columns: string[]; total: number }>> {
+  return executePlaygroundTest(`Temin DB -> ${tableName} Tablosunu Oku`, async () => {
+    const conn = await getPlaygroundProvider().getConnection();
+
+    let sql = "";
+    const params: any[] = [];
+
+    switch (tableName) {
+      case "DATA_TeminDosyasi": {
+        if (search?.trim()) {
+          sql = "SELECT id, temin_no, konu, yaklasik_maliyet, tur, butce_yili, durum, created_at FROM DATA_TeminDosyasi WHERE (temin_no LIKE ? OR konu LIKE ?) AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY id DESC LIMIT 50";
+          params.push(`%${search.trim()}%`, `%${search.trim()}%`);
+        } else {
+          sql = "SELECT id, temin_no, konu, yaklasik_maliyet, tur, butce_yili, durum, created_at FROM DATA_TeminDosyasi WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id DESC LIMIT 50";
+        }
+        break;
+      }
+      case "TANIM_Firma": {
+        if (search?.trim()) {
+          sql = "SELECT id, unvan, vergi_no, telefon, email, ilgili_adi, adres FROM TANIM_Firma WHERE (unvan LIKE ? OR vergi_no LIKE ?) AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY id DESC LIMIT 50";
+          params.push(`%${search.trim()}%`, `%${search.trim()}%`);
+        } else {
+          sql = "SELECT id, unvan, vergi_no, telefon, email, ilgili_adi, adres FROM TANIM_Firma WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id DESC LIMIT 50";
+        }
+        break;
+      }
+      case "TANIM_Personel": {
+        if (search?.trim()) {
+          sql = "SELECT id, ad_soyad, unvan, gorev, eposta, telefon FROM TANIM_Personel WHERE (ad_soyad LIKE ? OR unvan LIKE ?) AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY id DESC LIMIT 50";
+          params.push(`%${search.trim()}%`, `%${search.trim()}%`);
+        } else {
+          sql = "SELECT id, ad_soyad, unvan, gorev, eposta, telefon FROM TANIM_Personel WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id DESC LIMIT 50";
+        }
+        break;
+      }
+      case "DATA_TeminKalem": {
+        if (search?.trim()) {
+          sql = "SELECT id, temin_dosya_id, kalem_adi, miktar, birim, birim_fiyat FROM DATA_TeminKalem WHERE kalem_adi LIKE ? AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY id DESC LIMIT 50";
+          params.push(`%${search.trim()}%`);
+        } else {
+          sql = "SELECT id, temin_dosya_id, kalem_adi, miktar, birim, birim_fiyat FROM DATA_TeminKalem WHERE is_deleted = 0 OR is_deleted IS NULL ORDER BY id DESC LIMIT 50";
+        }
+        break;
+      }
+      case "settings": {
+        if (search?.trim()) {
+          sql = "SELECT key, value FROM settings WHERE key LIKE ? OR value LIKE ? ORDER BY key ASC LIMIT 50";
+          params.push(`%${search.trim()}%`, `%${search.trim()}%`);
+        } else {
+          sql = "SELECT key, value FROM settings ORDER BY key ASC LIMIT 50";
+        }
+        break;
+      }
+      default:
+        throw new Error(`Desteklenmeyen tablo: ${tableName}`);
+    }
+
+    const rows = await conn.query<Record<string, any>>(sql, params);
+    const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+
+    return {
+      rows,
+      columns,
+      total: rows.length,
+    };
+  });
+}
+
+export async function insertTeminRowAction(
+  tableName: "DATA_TeminDosyasi" | "TANIM_Firma" | "TANIM_Personel" | "DATA_TeminKalem" | "settings",
+  data: Record<string, any>,
+): Promise<TestRunResult<{ inserted: boolean; id?: any; message: string }>> {
+  return executePlaygroundTest(`Temin DB -> ${tableName} Kayıt Ekle`, async () => {
+    const conn = await getPlaygroundProvider().getConnection();
+
+    switch (tableName) {
+      case "DATA_TeminDosyasi": {
+        const res = await conn.execute(
+          "INSERT INTO DATA_TeminDosyasi (temin_no, konu, yaklasik_maliyet, tur, butce_yili, durum, created_at, is_deleted) VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
+          [
+            data.temin_no || `2026/${Math.floor(Math.random() * 900 + 100)}`,
+            data.konu || "Doğrudan Temin Alımı (Playground)",
+            Number(data.yaklasik_maliyet || 50000),
+            data.tur || "mal",
+            Number(data.butce_yili || 2026),
+            data.durum || "taslak",
+            new Date().toISOString(),
+          ],
+        );
+        return {
+          inserted: true,
+          id: res.lastInsertRowId,
+          message: `Dosya eklendi (ID: ${res.lastInsertRowId})`,
+        };
+      }
+      case "TANIM_Firma": {
+        const res = await conn.execute(
+          "INSERT INTO TANIM_Firma (unvan, vergi_no, telefon, email, ilgili_adi, adres, is_deleted) VALUES (?, ?, ?, ?, ?, ?, 0)",
+          [
+            data.unvan || "Yeni Tedarikçi Firma Ltd.",
+            data.vergi_no || `${Math.floor(Math.random() * 9000000000 + 1000000000)}`,
+            data.telefon || "0212 555 0000",
+            data.email || "tedarik@firma.com",
+            data.ilgili_adi || "Yetkili Kişi",
+            data.adres || "İstanbul",
+          ],
+        );
+        return {
+          inserted: true,
+          id: res.lastInsertRowId,
+          message: `Firma eklendi (ID: ${res.lastInsertRowId})`,
+        };
+      }
+      case "TANIM_Personel": {
+        const res = await conn.execute(
+          "INSERT INTO TANIM_Personel (ad_soyad, unvan, gorev, eposta, telefon, is_deleted) VALUES (?, ?, ?, ?, ?, 0)",
+          [
+            data.ad_soyad || "Yeni Personel",
+            data.unvan || "Mühendis",
+            data.gorev || "Satın Alma Sorumlusu",
+            data.eposta || "personel@kurum.gov.tr",
+            data.telefon || "0312 444 0000",
+          ],
+        );
+        return {
+          inserted: true,
+          id: res.lastInsertRowId,
+          message: `Personel eklendi (ID: ${res.lastInsertRowId})`,
+        };
+      }
+      case "DATA_TeminKalem": {
+        const res = await conn.execute(
+          "INSERT INTO DATA_TeminKalem (temin_dosya_id, kalem_adi, miktar, birim, birim_fiyat, is_deleted) VALUES (?, ?, ?, ?, ?, 0)",
+          [
+            Number(data.temin_dosya_id || 1),
+            data.kalem_adi || "Kalem İhtiyacı",
+            Number(data.miktar || 10),
+            data.birim || "Adet",
+            Number(data.birim_fiyat || 100),
+          ],
+        );
+        return {
+          inserted: true,
+          id: res.lastInsertRowId,
+          message: `Kalem eklendi (ID: ${res.lastInsertRowId})`,
+        };
+      }
+      case "settings": {
+        await conn.execute(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+          [data.key, data.value],
+        );
+        return {
+          inserted: true,
+          id: data.key,
+          message: `Ayar kaydedildi (${data.key})`,
+        };
+      }
+      default:
+        throw new Error(`Desteklenmeyen tablo: ${tableName}`);
+    }
+  });
+}
+
+export async function deleteTeminRowAction(
+  tableName: "DATA_TeminDosyasi" | "TANIM_Firma" | "TANIM_Personel" | "DATA_TeminKalem" | "settings",
+  id: string | number,
+): Promise<TestRunResult<{ deleted: boolean; id: any }>> {
+  return executePlaygroundTest(`Temin DB -> ${tableName} Kayıt Sil (ID: ${id})`, async () => {
+    const conn = await getPlaygroundProvider().getConnection();
+
+    if (tableName === "settings") {
+      await conn.execute("DELETE FROM settings WHERE key = ?", [String(id)]);
+    } else {
+      await conn.execute(`DELETE FROM ${tableName} WHERE id = ?`, [id]);
+    }
+
+    return {
+      deleted: true,
+      id,
+    };
+  });
 }
