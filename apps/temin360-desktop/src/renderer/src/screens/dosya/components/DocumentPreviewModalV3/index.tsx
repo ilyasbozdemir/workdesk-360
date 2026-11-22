@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import { ChevronRight, Layers } from 'lucide-react'
 import { DocumentPreviewModalV3Props } from './types'
 import { useDocumentPreviewModal } from '../../hooks/useDocumentPreviewModal'
 import { DocumentPreviewHeader } from './components/DocumentPreviewHeader'
@@ -258,6 +259,43 @@ export function DocumentPreviewModalV3(props: DocumentPreviewModalV3Props): Reac
           >
             <div className="w-0.5 h-8 bg-slate-400/80 dark:bg-slate-600 group-hover:bg-white rounded-full transition-colors" />
           </div>
+        )}
+
+        {/* Sol Panel Daraltıldığında / Kapandığında Dikey Açma Şeridi */}
+        {!sidebarOpen && (
+          <div className="w-10 shrink-0 h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center py-3 gap-3 z-10 transition-all select-none">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              title="Belge & Süreç Panelini Aç (Genişlet)"
+              className="p-1.5 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/50 transition-colors cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </button>
+            <div className="w-5 h-px bg-slate-200 dark:bg-slate-800" />
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="text-[10px] font-bold text-slate-400 hover:text-blue-600 [writing-mode:vertical-lr] rotate-180 tracking-wider uppercase select-none transition-colors cursor-pointer py-2"
+              title="Paneli Aç"
+            >
+              Belge &amp; Süreç Paneli
+            </button>
+          </div>
+        )}
+
+        {/* Daraltılmış panelde tuval üstü hızlı açma butonu */}
+        {!sidebarOpen && (
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="absolute top-3 left-13 z-20 px-2.5 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs border border-slate-200/90 dark:border-slate-800 rounded-xl shadow-xs text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-102"
+            title="Belge & Süreç Panelini Genişlet"
+          >
+            <Layers className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <span>Belge &amp; Süreç Paneli</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+          </button>
         )}
 
         <DocumentPreviewCanvas

@@ -62,7 +62,10 @@ export function SyncPopover(): React.JSX.Element {
       </button>
 
       {showSyncPopover && (
-        <div className="absolute top-full right-0 mt-2 w-[360px] sm:w-[400px] max-w-[92vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 space-y-3 z-[100] text-left animate-in fade-in slide-in-from-top-2">
+        <div
+          className="absolute top-full right-0 mt-2 w-[360px] sm:w-[400px] max-w-[calc(100vw-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 space-y-3 z-[100] text-left animate-in fade-in slide-in-from-top-2 overflow-y-auto custom-scrollbar"
+          style={{ maxHeight: 'min(540px, calc(100vh - 100px))' }}
+        >
           <div className="border-b border-slate-100 dark:border-slate-800 pb-2 flex items-center justify-between">
             <div>
               <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">

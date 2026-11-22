@@ -272,16 +272,28 @@ export function MevzuatKutuphanesiTab(): React.JSX.Element {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+                  {activeMevzuat.lexperaUrl && (
+                    <a
+                      href={activeMevzuat.lexperaUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 transition-colors shadow-2xs"
+                      title="Lexpera Resmî Gazete Metnini Aç (32245 Sayılı RG)"
+                    >
+                      <span>Lexpera Resmî Gazete</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
                   {activeMevzuat.mevzuatGovTrUrl && (
                     <a
                       href={activeMevzuat.mevzuatGovTrUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-teal-600 transition-colors"
-                      title="Mevzuat.gov.tr veya KİK resmi metnine git"
+                      title="Mevzuat.gov.tr resmi metnine git"
                     >
-                      <span>Resmi Metin</span>
+                      <span>Mevzuat.gov.tr</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   )}

@@ -239,13 +239,26 @@ export function usePiyasaFiyatArastirmasiDashboard(props: PiyasaFiyatArastirmasi
     let minTotal = Infinity
     let minFirm: any = null
     invitedFirms.forEach((f: any) => {
-      if (f.teklif_toplami && f.teklif_toplami > 0 && f.teklif_toplami < minTotal) {
-        minTotal = f.teklif_toplami
+      let calculatedTotal = 0
+      if (props.items && props.bids) {
+        props.items.forEach((item: any) => {
+          const p =
+            props.bids[`${item.id}_${f.id}`] ??
+            (f.firma_id ? props.bids[`${item.id}_${f.firma_id}`] : undefined) ??
+            0
+          if (p > 0) {
+            calculatedTotal += p * (Number(item.miktar) > 0 ? Number(item.miktar) : 1)
+          }
+        })
+      }
+      const effectiveTotal = calculatedTotal > 0 ? calculatedTotal : Number(f.teklif_toplami) || 0
+      if (effectiveTotal > 0 && effectiveTotal < minTotal) {
+        minTotal = effectiveTotal
         minFirm = f
       }
     })
     return minFirm
-  }, [invitedFirms])
+  }, [invitedFirms, props.items, props.bids])
 
   const isStep1Done = Boolean(invitedFirms && invitedFirms.length >= 2)
   const isStep2Done = Boolean(

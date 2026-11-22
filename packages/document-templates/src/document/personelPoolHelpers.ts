@@ -450,6 +450,11 @@ export function buildMergedPersonelList(
   if (data) {
     if (Array.isArray(data.komisyonUyeleri)) combinedRaw.push(...data.komisyonUyeleri);
     if (Array.isArray(data.muayeneKomisyonu)) combinedRaw.push(...data.muayeneKomisyonu);
+    if (Array.isArray(data.fiyatKomisyonu)) combinedRaw.push(...data.fiyatKomisyonu);
+    if (Array.isArray(data.komisyon)) combinedRaw.push(...data.komisyon);
+    if (Array.isArray(data.gorevliler)) combinedRaw.push(...data.gorevliler);
+    if (Array.isArray(data.gorevlendirilenler)) combinedRaw.push(...data.gorevlendirilenler);
+    if (Array.isArray(data.dagitimListesi)) combinedRaw.push(...data.dagitimListesi);
     if (Array.isArray(data.fiyatArastirmaGorevlileri)) {
       combinedRaw.push(...data.fiyatArastirmaGorevlileri);
     }
@@ -488,7 +493,19 @@ export function buildMergedPersonelList(
     const cleanName = cleanPersonelName(rawName);
     if (!cleanName) continue;
 
-    const key = cleanName.toLocaleLowerCase("tr-TR");
+    const key = cleanName
+      .replace(/İ/g, "i")
+      .replace(/I/g, "ı")
+      .toLocaleLowerCase("tr-TR")
+      .replace(/ç/g, "c")
+      .replace(/ğ/g, "g")
+      .replace(/ı/g, "i")
+      .replace(/ö/g, "o")
+      .replace(/ş/g, "s")
+      .replace(/ü/g, "u")
+      .replace(/[^a-z0-9]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
     const unvan = String(
       rawObj.unvan ||
         rawObj.u ||
@@ -513,6 +530,36 @@ export function buildMergedPersonelList(
     const baseLabel = unvan ? `${cleanName} (${unvan})` : cleanName;
     const label = isPassive ? `${baseLabel} [Pasif]` : baseLabel;
 
+    const isRoleTitle = (t?: string): boolean => {
+      if (!t) return true;
+      const norm = t
+        .replace(/İ/g, "i")
+        .replace(/I/g, "ı")
+        .toLocaleLowerCase("tr-TR")
+        .replace(/ç/g, "c")
+        .replace(/ğ/g, "g")
+        .replace(/ı/g, "i")
+        .replace(/ö/g, "o")
+        .replace(/ş/g, "s")
+        .replace(/ü/g, "u")
+        .replace(/[^a-z0-9]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return (
+        norm === "" ||
+        norm === "uye" ||
+        norm === "baskan" ||
+        norm === "komisyon baskani" ||
+        norm === "yedek uye" ||
+        norm === "komisyon uyesi" ||
+        norm === "asil uye" ||
+        norm === "fiyat arastirma gorevlisi" ||
+        norm === "muayene kabul baskani" ||
+        norm === "muayene ve kabul komisyon baskani" ||
+        norm === "muayene komisyon baskani"
+      );
+    };
+
     const existing = seenMap.get(key);
     if (!existing) {
       seenMap.set(key, {
@@ -526,7 +573,16 @@ export function buildMergedPersonelList(
         aktif_mi,
       });
     } else {
-      if (!existing.unvan && unvan) {
+      if (
+        (!existing.unvan || isRoleTitle(existing.unvan)) &&
+        unvan &&
+        !isRoleTitle(unvan)
+      ) {
+        existing.unvan = unvan;
+        const pPassive = !isPersonelActive(existing);
+        const bLabel = `${existing.ad_soyad} (${unvan})`;
+        existing.label = pPassive ? `${bLabel} [Pasif]` : bLabel;
+      } else if (!existing.unvan && unvan) {
         existing.unvan = unvan;
         const pPassive = !isPersonelActive(existing);
         const bLabel = `${existing.ad_soyad} (${unvan})`;

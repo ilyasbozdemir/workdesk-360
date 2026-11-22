@@ -52,6 +52,7 @@ export function useCiktiMerkeziScreen() {
   const [isPrintManagerOpen, setIsPrintManagerOpen] = useState(false)
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>('all')
   const [toast, setToast] = useState<ToastInfo | null>(null)
+  const [snapshotDataKeys, setSnapshotDataKeys] = useState<Set<string>>(new Set())
 
   const readyCount = getReadyCountForDosya(activeDosyaId)
   const printedCount = getPrintedCountForDosya(activeDosyaId)
@@ -165,9 +166,119 @@ export function useCiktiMerkeziScreen() {
     }
   }, [activeDosya?.starred_docs, setActiveStarredDocs])
 
+  const fetchSnapshotsAndBelgeler = useCallback(async () => {
+    if (!activeDosyaId || !window.electron?.ipcRenderer) {
+      setSnapshotDataKeys(new Set())
+      return
+    }
+    try {
+      const keys = new Set<string>()
+      // 1. DATA_TeminBelgeSnapshot
+      const snapRes = await window.electron.ipcRenderer.invoke(
+        'db:query',
+        'SELECT sablon_kodu, sablon_id, veri_json FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND (is_deleted = 0 OR is_deleted IS NULL)',
+        [activeDosyaId]
+      )
+      if (snapRes?.success && Array.isArray(snapRes.data)) {
+        snapRes.data.forEach((row: any) => {
+          if (row.veri_json && String(row.veri_json).trim().length > 2) {
+            if (row.sablon_kodu) keys.add(normalizeForMatch(row.sablon_kodu))
+            if (row.sablon_id) keys.add(String(row.sablon_id))
+          }
+        })
+      }
+
+      // 2. DATA_TeminBelge (üretilmiş veya imzalanmış kayıtlar)
+      const belRes = await window.electron.ipcRenderer.invoke(
+        'db:query',
+        'SELECT belge_adi, sablon_id, dosya_yolu, is_signed, durum FROM DATA_TeminBelge WHERE temin_dosya_id = ?',
+        [activeDosyaId]
+      )
+      if (belRes?.success && Array.isArray(belRes.data)) {
+        belRes.data.forEach((row: any) => {
+          if (
+            row.is_signed === 1 ||
+            row.dosya_yolu ||
+            ['hazirlaniyor', 'beklemede', 'tamamlandi', 'yazdirildi'].includes(row.durum)
+          ) {
+            if (row.belge_adi) keys.add(normalizeForMatch(row.belge_adi))
+            if (row.sablon_id) keys.add(String(row.sablon_id))
+          }
+        })
+      }
+
+      setSnapshotDataKeys(keys)
+    } catch (err) {
+      console.error('Snapshot ve Belge verisi kontrol hatası:', err)
+    }
+  }, [activeDosyaId])
+
+  useEffect(() => {
+    fetchSnapshotsAndBelgeler()
+  }, [fetchSnapshotsAndBelgeler])
+
+  const hasDocumentData = useCallback(
+    (sablon: Sablon): boolean => {
+      const docKey = (sablon.dosya_adi || '').replace(/\.html$/, '')
+      const normalizedAd = normalizeForMatch(sablon.ad)
+      const normalizedKey = normalizeForMatch(docKey)
+      return (
+        snapshotDataKeys.has(normalizedKey) ||
+        snapshotDataKeys.has(normalizedAd) ||
+        snapshotDataKeys.has(String(sablon.id))
+      )
+    },
+    [snapshotDataKeys]
+  )
+
+  const { hasDataCount, noDataCount } = useMemo(() => {
+    let has = 0
+    let no = 0
+    sablons.forEach((s) => {
+      if (hasDocumentData(s)) {
+        has++
+      } else {
+        no++
+      }
+    })
+    return { hasDataCount: has, noDataCount: no }
+  }, [sablons, hasDocumentData])
+
+  const toggleStarDocument = useCallback(
+    async (docName: string) => {
+      if (!activeDosyaId) return
+      const normalizedTarget = normalizeForMatch(docName)
+      const exists = activeStarredDocs.some((d) => normalizeForMatch(d) === normalizedTarget)
+      const updated = exists
+        ? activeStarredDocs.filter((d) => normalizeForMatch(d) !== normalizedTarget)
+        : [...activeStarredDocs, docName]
+
+      setActiveStarredDocs(updated)
+      try {
+        if (window.electron?.ipcRenderer) {
+          await window.electron.ipcRenderer.invoke(
+            'db:run',
+            'UPDATE DATA_TeminDosyasi SET starred_docs = ? WHERE id = ?',
+            [JSON.stringify(updated), activeDosyaId]
+          )
+        }
+        window.dispatchEvent(new CustomEvent('global_starred_changed'))
+        showToast(
+          exists ? `"${docName}" hızlı erişimden çıkarıldı.` : `"${docName}" hızlı erişime eklendi.`,
+          'success'
+        )
+      } catch (err) {
+        console.error('Yıldızlı belge güncelleme hatası:', err)
+        showToast('Hızlı erişim güncellenirken hata oluştu.', 'error')
+      }
+    },
+    [activeDosyaId, activeStarredDocs, setActiveStarredDocs, showToast]
+  )
+
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
     try {
+      await fetchSnapshotsAndBelgeler()
       if (activeDosyaId) {
         const res = await window.electron.ipcRenderer.invoke(
           'db:query',
@@ -186,7 +297,7 @@ export function useCiktiMerkeziScreen() {
     } finally {
       setRefreshing(false)
     }
-  }, [activeDosyaId, setActiveStarredDocs])
+  }, [activeDosyaId, setActiveStarredDocs, fetchSnapshotsAndBelgeler])
 
   useEffect(() => {
     const onStarredChanged = () => {
@@ -237,6 +348,12 @@ export function useCiktiMerkeziScreen() {
       if (statusFilter === 'starred') {
         return activeStarredDocs.some((d) => normalizeForMatch(d) === normalizeForMatch(s.ad))
       }
+      if (statusFilter === 'has_data') {
+        return hasDocumentData(s)
+      }
+      if (statusFilter === 'no_data') {
+        return !hasDocumentData(s)
+      }
       return true
     })
 
@@ -246,7 +363,7 @@ export function useCiktiMerkeziScreen() {
       groups[cat].push(s)
     })
     return groups
-  }, [sablons, statusFilter, activeDosyaId, getDocumentStatus, activeStarredDocs])
+  }, [sablons, statusFilter, activeDosyaId, getDocumentStatus, activeStarredDocs, hasDocumentData])
 
   const toggleAllCategories = () => {
     const allCats = Object.keys(groupedSablons)
@@ -581,6 +698,11 @@ export function useCiktiMerkeziScreen() {
     setStatusFilter,
     readyCount,
     printedCount,
+    hasDataCount,
+    noDataCount,
+    hasDocumentData,
+    toggleStarDocument,
+    snapshotDataKeys,
     toast,
     presets,
     activePresetId,

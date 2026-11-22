@@ -25,6 +25,13 @@ export type { MalzemeTabloPopoverProps, PopoverCategoryConfig, PopoverItemConfig
 export function MalzemeTabloPopover(props: MalzemeTabloPopoverProps): React.JSX.Element | null {
   const [activeSubId, setActiveSubId] = useState<string | null>(null)
 
+  const tableActionItems = useMemo(() => buildTableActionItems(props), [props])
+
+  const documentCategories = useMemo(() => buildDocumentCategories(props), [props])
+
+  const hasTableActions = tableActionItems.length > 0
+  const hasDocumentCategories = documentCategories.length > 0
+
   const buttonLabelText = useMemo(() => {
     if (props.buttonLabel) return props.buttonLabel
     switch (props.step) {
@@ -36,16 +43,13 @@ export function MalzemeTabloPopover(props: MalzemeTabloPopoverProps): React.JSX.
         return 'Kabul & Ödeme Belgeleri'
       case 1:
       default:
-        return 'Tablo İşlemleri'
+        return hasDocumentCategories && hasTableActions
+          ? 'Tablo & Belge İşlemleri'
+          : hasDocumentCategories
+            ? 'Belge İşlemleri'
+            : 'Tablo İşlemleri'
     }
-  }, [props.buttonLabel, props.step])
-
-  const tableActionItems = useMemo(() => buildTableActionItems(props), [props])
-
-  const documentCategories = useMemo(() => buildDocumentCategories(props), [props])
-
-  const hasTableActions = tableActionItems.length > 0
-  const hasDocumentCategories = documentCategories.length > 0
+  }, [props.buttonLabel, props.step, hasDocumentCategories, hasTableActions])
 
   if (!hasTableActions && !hasDocumentCategories) {
     return null

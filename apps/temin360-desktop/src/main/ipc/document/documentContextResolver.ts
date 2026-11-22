@@ -137,10 +137,31 @@ export function resolveDocumentPayload(
           `
     SELECT tk.*, 
            COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as resolved_ad_soyad,
-           COALESCE(NULLIF(tk.unvan, ''), NULLIF(p.unvan, ''), '') as resolved_unvan,
+           CASE 
+             WHEN tk.unvan IS NOT NULL 
+              AND LOWER(TRIM(tk.unvan)) NOT IN (
+                'komisyon başkanı', 'komisyon baskani', 'başkan', 'baskan', 
+                'üye', 'uye', 'yedek üye', 'yedek uye', 'komisyon üyesi', 'komisyon uyesi',
+                'fiyat araştırma görevlisi', 'fiyat arastirma gorevlisi',
+                'muayene kabul başkanı', 'muayene kabul baskani',
+                'muayene ve kabul komisyon başkanı', 'muayene ve kabul komisyon baskani',
+                'muayene komisyon başkanı', 'muayene komisyon baskani',
+                'asil üye', 'asil uye',
+                'Üye', 'Uye', 'ÜYE', 'Başkan', 'Baskan', 'BAŞKAN',
+                'Komisyon Başkanı', 'Komisyon Baskani', 'KOMİSYON BAŞKANI',
+                'Yedek Üye', 'Yedek Uye', 'Komisyon Üyesi', 'Komisyon Uyesi',
+                'Asil Üye', 'Asil Uye', 'Fiyat Araştırma Görevlisi', 'Muayene Kabul Başkanı'
+              )
+             THEN tk.unvan
+             ELSE COALESCE(NULLIF(p.unvan, ''), NULLIF(tk.unvan, ''), '')
+           END as resolved_unvan,
            COALESCE(k.ad, '') as komisyon_turu_adi
     FROM DATA_TeminKomisyon tk
-    LEFT JOIN TANIM_Personel p ON tk.personel_id = p.id
+    LEFT JOIN TANIM_Personel p ON (
+      (tk.personel_id IS NOT NULL AND tk.personel_id > 0 AND tk.personel_id = p.id)
+      OR
+      ((tk.personel_id IS NULL OR tk.personel_id = 0) AND LOWER(TRIM(tk.ad_soyad)) = LOWER(TRIM(p.ad_soyad)))
+    )
     LEFT JOIN TANIM_Komisyon k ON tk.komisyon_id = k.id
     WHERE tk.temin_dosya_id = ?
   `,

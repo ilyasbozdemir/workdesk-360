@@ -54,23 +54,35 @@ export function DosyaActionMenu({
 
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [openUpward, setOpenUpward] = useState(false);
+  const [menuCoords, setMenuCoords] = useState<{ top: number; left: number } | null>(null);
 
-  // Ekranda veya kolonda yer yoksa yukarı doğru aç (Stacking & Overflow koruması)
+  // Ekranda veya kolonda yer yoksa yukarı doğru aç ve Fixed position ile overflow kesilmesini önle
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      // Menü yüksekliği yaklaşık 280px
-      if (spaceBelow < 290 && rect.top > 290) {
-        setOpenUpward(true);
-      } else {
-        setOpenUpward(false);
+      const menuHeight = 310;
+      const menuWidth = 208; // w-52 (13rem = 208px)
+
+      let top = rect.bottom + 4;
+      if (spaceBelow < menuHeight && rect.top > menuHeight) {
+        top = Math.max(8, rect.top - menuHeight - 4);
       }
+
+      // Sağa veya sola taşmaması için
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8;
+      if (left + menuWidth > window.innerWidth - 8) {
+        left = window.innerWidth - menuWidth - 8;
+      }
+
+      setMenuCoords({ top, left });
+    } else {
+      setMenuCoords(null);
     }
   }, [isOpen]);
 
-  // Dışarı tıklandığında menüyü kapat
+  // Dışarı tıklandığında veya pencere kaydırıldığında menüyü kapat
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
@@ -83,8 +95,17 @@ export function DosyaActionMenu({
         setOpenMenuId(null);
       }
     };
+    const handleScrollOrResize = () => {
+      setOpenMenuId(null);
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
   }, [isOpen, setOpenMenuId]);
 
   return (
@@ -118,12 +139,19 @@ export function DosyaActionMenu({
       {isOpen && (
         <div
           ref={menuRef}
+          style={
+            menuCoords
+              ? {
+                  position: "fixed",
+                  top: `${menuCoords.top}px`,
+                  left: `${menuCoords.left}px`,
+                  zIndex: 99999,
+                }
+              : undefined
+          }
           className={cn(
-            "absolute bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl py-1 flex flex-col text-xs font-semibold z-[9999]",
-            menuClassName ||
-              (openUpward
-                ? "right-0 bottom-full mb-1 w-52"
-                : "right-0 top-full mt-1 w-52"),
+            "fixed bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl py-1 flex flex-col text-xs font-semibold z-[99999] w-52 animate-in fade-in-50 zoom-in-95 duration-100",
+            menuClassName,
           )}
         >
           <button

@@ -119,6 +119,7 @@ export function getTabLabel(fullPath: string): string {
   if (path.startsWith(APP_ROUTES.NOTLAR)) return 'Notlar & Yapılacaklar (To-Do)'
   if (path.startsWith(APP_ROUTES.HARCAMA_MERKEZI)) return 'Harcama Merkezi & İhale'
   if (path.startsWith(APP_ROUTES.DOSYA_KUNYE)) return 'Dosya Detayı'
+  if (path.startsWith(APP_ROUTES.DOSYA_EVRAK_AKISI)) return '📂 Evrak Akışı & İnceleme'
   if (path.startsWith(APP_ROUTES.BELGE_ONIZLEME)) {
     const query = fullPath.split('?')[1] || ''
     const sp = new URLSearchParams(query)
@@ -140,7 +141,7 @@ export function getTabLabel(fullPath: string): string {
     if (tab === 'sozlesme') return 'BKMYBS — Harcama Sözleşmeleri'
     if (tab === 'dosyalar') return 'BKMYBS — Dosyalar & Faturaları'
     if (tab === 'mevzuat') return 'BKMYBS — Mevzuat & Parametreler'
-    return 'BKMYBS & Mali Yönetim (5018)'
+    return 'BKMYBS & Mali Yönetim (Beta)'
   }
   if (path.startsWith(APP_ROUTES.DOSYA_DETAY)) return 'Dosya Detayları'
   if (path.startsWith(APP_ROUTES.TAKIP)) return 'Takip & Durum'

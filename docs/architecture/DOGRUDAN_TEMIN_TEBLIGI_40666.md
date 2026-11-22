@@ -1,5 +1,8 @@
 # Doğrudan Temin Yöntemiyle Yapılacak Alımlara İlişkin Tebliğ (Mevzuat No: 40666)
-**Resmî Gazete:** 11 Temmuz 2023 / Sayı: 32245 | **Mevzuat Türü / No:** Tebliğ / 40666
+**Resmî Gazete:** 11 Temmuz 2023 / Sayı: 32245 | **Mevzuat Türü / No:** Tebliğ / 40666  
+**Resmî Metin Bağlantıları:**
+- [Lexpera Resmî Gazete Metni](https://www.lexpera.com.tr/resmi-gazete/metin/dogrudan-temin-yontemiyle-yapilacak-alimlara-iliskin-teblig-32245)
+- [Mevzuat.gov.tr Resmî Metin](https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=40666&MevzuatTur=9&MevzuatTertip=5)
 
 Bu belge, WorkDesk 360 / Temin 360 modülünün ve tüm belge şablonlarının, rota çözücülerinin ve veri akışlarının uymakla yükümlü olduğu **temel mevzuat kurallarını** içerir.
 
@@ -27,8 +30,34 @@ Bu belge, WorkDesk 360 / Temin 360 modülünün ve tüm belge şablonlarının, 
 - Toplanan teklifler **Piyasa Fiyat Araştırması Tutanağı** ile kayıt altına alınır ve en avantajlı teklifi veren istekli belirlenir.
 - **Önemli Kural:** Piyasa Fiyat Araştırma görevlileri malı teslim alan veya muayene eden heyet ile zorunlu olarak aynı kişiler olmak zorunda değildir; rolleri karıştırılamaz.
 
-### Aşama 4: Sipariş / Sözleşme
-- 4734 sayılı Kanunun 22/d bendi kapsamındaki alımlarda kural olarak sözleşme yapılması ve teminat alınması zorunlu değildir. İdarenin gerek görmesi halinde doğrudan temin sözleşmesi imzalanabilir; aksi halde sipariş mektubu düzenlenir.
+### Aşama 4: Sipariş, Kabul Edilen Teklif ve Sözleşme (Temel Ayrım)
+4734 sayılı Kanunun 22/d bendi kapsamındaki alımlarda kural olarak sözleşme yapılması ve teminat alınması zorunlu değildir. İdarenin gerek görmesi halinde doğrudan temin sözleşmesi imzalanabilir; sözleşmesiz alımlarda ise süreç **Kabul Edilen Teklif** veya **Sipariş Yazısı** ile yürütülür. Bu iki belge hukuken ve işlevsel olarak birbirinden farklıdır:
+
+#### 1. Kabul Edilen Teklif (Teklif Değerlendirme Bildirimi)
+- **Amaç:** İstekli firmanın teklifinin uygun bulunduğunu ve alımın o teklif doğrultusunda yapılmasının kararlaştırıldığını bildiren sonuç/karar belgesidir.
+- **Muhatap:** Teklif veren istekli firma.
+- **İşlev:** Sonuç / Karar Bildirimi.
+- **Standart İdare Metni:**
+  > *"Belediyemizce/İdaremizce ihtiyaç duyulan aşağıda belirtilen malın/hizmetin, 4734 sayılı Kamu İhale Kanunu'nun 22/d maddesi kapsamında doğrudan temin yöntemiyle satın alınmasına yönelik tarafınızca sunulan fiyat teklifi değerlendirilmiş olup, teklifiniz uygun bulunmuştur.*
+  > *Söz konusu malın/hizmetin toplam [Tutar] TL bedelle firmanızdan temin edilmesine karar verilmiştir.*
+  > *Bilgilerinize sunulur."*
+
+#### 2. Sipariş Yazısı (Sipariş Mektubu / Teslim Talebi)
+- **Amaç:** Alımın kesinleştiğini yükleniciye bildirerek malın fiziki teslimini veya hizmetin yerine getirilmesini talep eden icra belgesidir.
+- **Muhatap:** Alımı yapılacak yüklenici firma.
+- **İşlev:** Sipariş ve teslim / ifa talebi (teslim süresi, teslim yeri/adresi).
+- **Standart İdare Metni:**
+  > *"Aşağıdaki listede belirtilen ihtiyacın, 4734 sayılı Kamu İhale Kanunu'nun 22/d maddesi gereğince piyasa araştırması sırasında vermiş olduğunuz fiyat dikkate alınarak, doğrudan temin usulüyle firmanızdan satın alınmasına karar verilmiştir.*
+  > *Söz konusu malın [teslim süresi] gün içinde mesai saatleri dâhilinde [Belediye / Teslim Adresi] adresine teslim edilmesini rica ederiz.*
+  > *Bilgilerinize ve gereğine rica olunur."*
+
+#### 3. Aralarındaki Temel Farklar Karşılaştırma Tablosu
+| Kriter | Kabul Edilen Teklif | Sipariş Yazısı |
+| :--- | :--- | :--- |
+| **Amaç** | Teklifin uygun bulunduğunu bildirmek | Malın teslimini / hizmetin ifasını istemek |
+| **Muhatap** | Teklif veren firma | Alımı yapılacak yüklenici firma |
+| **İçerik** | Teklifin değerlendirilmesi ve uygun bulunması | Alım kararı, teslim süresi, teslim yeri |
+| **İşlev** | Sonuç / karar bildirimi | Sipariş ve teslim talebi |
 
 ### Aşama 5: Teslim, Tesellüm ve Kabul Süreci (ALIM TÜRÜNE GÖRE KESİN AYRIM)
 Mevzuat uyarınca teslim ve kabul işlemleri alım türüne göre katı kurallara bağlıdır:

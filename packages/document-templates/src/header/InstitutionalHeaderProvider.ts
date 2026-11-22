@@ -756,15 +756,34 @@ export class InstitutionalHeaderProvider
     if (dosyaId) {
       const rows = await execQuery(
         `SELECT d.id, d.temin_no, d.evrak_sayisi, d.konu, d.butce_yili, d.tarih, d.sunulacak_makam, d.birim_id,
+                d.birim, d.harcama_birimi, d.antet_ek_satir as dosya_antet_ek_satir,
                 d.hazirlayan_personel_id, d.talep_eden_personel_id, d.onay_personel_id, d.sunan_personel_id,
                 b.birim_adi, b.antet_ek_satir, b.harcama_yetkilisi_id, b.harcama_yetkilisi_unvan
          FROM DATA_TeminDosyasi d
-         LEFT JOIN TANIM_Birim b ON d.birim_id = b.id
+         LEFT JOIN TANIM_Birim b ON (d.birim_id IS NOT NULL AND d.birim_id = b.id)
          WHERE d.id = ?`,
         [dosyaId]
       )
       if (rows && rows[0]) {
         dosyaRow = rows[0]
+        // Eğer birim_id üzerinden join yapılamadıysa ama d.birim/harcama_birimi varsa TANIM_Birim tablosundan isimle ara
+        if (!dosyaRow.birim_adi && (dosyaRow.birim || dosyaRow.harcama_birimi)) {
+          const targetName = String(dosyaRow.birim || dosyaRow.harcama_birimi).trim().toLowerCase()
+          try {
+            const bRows = await execQuery(
+              `SELECT birim_adi, antet_ek_satir, harcama_yetkilisi_id, harcama_yetkilisi_unvan 
+               FROM TANIM_Birim 
+               WHERE LOWER(TRIM(birim_adi)) = ? OR LOWER(TRIM(ad)) = ? LIMIT 1`,
+              [targetName, targetName]
+            )
+            if (bRows && bRows[0]) {
+              dosyaRow.birim_adi = bRows[0].birim_adi
+              dosyaRow.antet_ek_satir = bRows[0].antet_ek_satir || dosyaRow.dosya_antet_ek_satir
+              dosyaRow.harcama_yetkilisi_id = dosyaRow.harcama_yetkilisi_id || bRows[0].harcama_yetkilisi_id
+              dosyaRow.harcama_yetkilisi_unvan = dosyaRow.harcama_yetkilisi_unvan || bRows[0].harcama_yetkilisi_unvan
+            }
+          } catch {}
+        }
       }
     }
 
@@ -881,13 +900,16 @@ export class InstitutionalHeaderProvider
     const baseLines = this.parseKurumBaseAntetLines(kurumRow, kurumAdiText)
     const effectiveBirimSatir =
       dosyaRow?.antet_ek_satir ||
+      dosyaRow?.dosya_antet_ek_satir ||
       dosyaRow?.birim_adi ||
+      dosyaRow?.birim ||
+      dosyaRow?.harcama_birimi ||
       ''
     const antetSatirlari = effectiveBirimSatir
       ? this.composeBirimAntetLines(
           baseLines,
           effectiveBirimSatir,
-          dosyaRow?.antet_ek_satir,
+          dosyaRow?.antet_ek_satir || dosyaRow?.dosya_antet_ek_satir,
           undefined,
           kurumAdiText
         )
@@ -895,7 +917,10 @@ export class InstitutionalHeaderProvider
 
     const effectiveMudurluk =
       dosyaRow?.birim_adi ||
+      dosyaRow?.birim ||
+      dosyaRow?.harcama_birimi ||
       (dosyaRow?.antet_ek_satir ? String(dosyaRow.antet_ek_satir).trim() : '') ||
+      (dosyaRow?.dosya_antet_ek_satir ? String(dosyaRow.dosya_antet_ek_satir).trim() : '') ||
       settings.departmentName ||
       ''
 

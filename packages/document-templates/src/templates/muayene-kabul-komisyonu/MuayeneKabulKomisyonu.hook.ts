@@ -2,16 +2,24 @@ import { useMemo } from "react";
 import { MuayeneKabulKomisyonuData } from "./MuayeneKabulKomisyonu.schema";
 import { formatOfficialEvrakSayisi } from "../../resolver/helpers/resolveEvrakSayisi";
 import { cleanKanunMaddesi } from "../../utils/textHelpers";
+import { useTemplateEdit } from "../../document/TemplateEditContext";
+import {
+  buildMergedPersonelList,
+  cleanPersonelName,
+} from "../../document/ApprovalSignature";
 
 export interface MuayeneOfficerInfo {
   adSoyad: string;
   unvan: string;
+  personel_id?: number | string;
+  personelId?: number | string;
 }
 
 export interface UseMuayeneKabulKomisyonuParams {
   data?: Partial<MuayeneKabulKomisyonuData> & Record<string, any>;
   pageSize?: "A4" | "A3";
   orientation?: "portrait" | "landscape";
+  personelListesi?: any[];
 }
 
 export interface UseMuayeneKabulKomisyonuResult {
@@ -26,6 +34,57 @@ export interface UseMuayeneKabulKomisyonuResult {
   kapanisMetni: string;
   onaylayanAdi: string;
   onaylayanUnvan: string;
+}
+
+export function isRoleTitleString(title?: string): boolean {
+  if (!title) return true;
+  const t = title
+    .replace(/İ/g, "i")
+    .replace(/I/g, "ı")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return (
+    t === "" ||
+    t === "uye" ||
+    t === "baskan" ||
+    t === "komisyon baskani" ||
+    t === "yedek uye" ||
+    t === "komisyon uyesi" ||
+    t === "asil uye" ||
+    t === "fiyat arastirma gorevlisi" ||
+    t === "muayene kabul baskani" ||
+    t === "muayene ve kabul komisyon baskani" ||
+    t === "muayene komisyon baskani" ||
+    t === "muayene kabul uyesi" ||
+    t === "komisyon baskan" ||
+    t === "muayene kabul gorevlisi"
+  );
+}
+
+export function normalizeTurkishName(name?: string | null): string {
+  if (!name || typeof name !== "string") return "";
+  return cleanPersonelName(name)
+    .replace(/İ/g, "i")
+    .replace(/I/g, "ı")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/[^a-z0-9]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function isExcludedMuayeneOfficer(
@@ -82,7 +141,8 @@ export function isExcludedMuayeneOfficer(
 export function useMuayeneKabulKomisyonu(
   params: UseMuayeneKabulKomisyonuParams = {},
 ): UseMuayeneKabulKomisyonuResult {
-  const { data = {} } = params;
+  const editContext = useTemplateEdit();
+  const { data = {}, personelListesi: paramPersonelListesi } = params;
 
   return useMemo(() => {
     const onaylayanAdi = String(
@@ -121,14 +181,151 @@ export function useMuayeneKabulKomisyonu(
       return [];
     })();
 
+    const activePersonelList =
+      paramPersonelListesi ||
+      (Array.isArray((data as any).personelListesi) && (data as any).personelListesi.length > 0
+        ? (data as any).personelListesi
+        : editContext?.personelListesi);
+
+    const mergedPersonelList = buildMergedPersonelList(
+      activePersonelList,
+      data as any,
+    );
+
+    const findTitleFromPersonelList = (name: string, pid?: any): string => {
+      if (!name && !pid) return "";
+
+      const normName = normalizeTurkishName(name);
+
+      // 1. ID eşleşmesi (merged list)
+      if (pid) {
+        const byId = mergedPersonelList.find(
+          (p: any) =>
+            String(p.id || p.personel_id || p.personelId) === String(pid),
+        );
+        if (byId?.unvan && !isRoleTitleString(byId.unvan)) {
+          return String(byId.unvan).trim();
+        }
+      }
+
+      // 2. İsim eşleşmesi (merged list)
+      if (normName) {
+        const byName = mergedPersonelList.find((p: any) => {
+          const pName = normalizeTurkishName(
+            p.adSoyad || p.ad_soyad || p.adiSoyadi || p.label || "",
+          );
+          return pName === normName;
+        });
+        if (byName?.unvan && !isRoleTitleString(byName.unvan)) {
+          return String(byName.unvan).trim();
+        }
+      }
+
+      // 3. Fallback: pools (fiyatKomisyonu, komisyon, gorevliler, gorevlendirilenler, dagitimListesi, personelListesi, personeller)
+      const pools: any[] = [
+        ...(Array.isArray((data as any).fiyatKomisyonu) ? (data as any).fiyatKomisyonu : []),
+        ...(Array.isArray((data as any).komisyon) ? (data as any).komisyon : []),
+        ...(Array.isArray((data as any).fiyatArastirmaGorevlileri) ? (data as any).fiyatArastirmaGorevlileri : []),
+        ...(Array.isArray((data as any).gorevlendirilenler) ? (data as any).gorevlendirilenler : []),
+        ...(Array.isArray((data as any).personelListesi) ? (data as any).personelListesi : []),
+        ...(Array.isArray((data as any).personeller) ? (data as any).personeller : []),
+        ...(Array.isArray((data as any).personel) ? (data as any).personel : []),
+        ...(typeof window !== "undefined" && Array.isArray((window as any)?.__activePersonelListesi)
+          ? (window as any).__activePersonelListesi
+          : []),
+      ];
+
+      for (const p of pools) {
+        if (!p) continue;
+        const pId = p.id || p.personel_id || p.personelId;
+        const pUnvan = String(
+          p.kadro_unvani ||
+          p.kadroUnvani ||
+          p.personel_unvan ||
+          p.personelUnvan ||
+          p.vekalet_unvani ||
+          p.vekaletUnvani ||
+          p.unvan ||
+          p.unvani ||
+          ""
+        ).trim();
+
+        if (pUnvan && !isRoleTitleString(pUnvan)) {
+          if (pid && String(pId) === String(pid)) {
+            return pUnvan;
+          }
+          const pName = normalizeTurkishName(
+            p.adSoyad || p.ad_soyad || p.adiSoyadi || p.label || ""
+          );
+          if (normName && pName === normName) {
+            return pUnvan;
+          }
+        }
+      }
+
+      return "";
+    };
+
+    const extractOfficerTitle = (item: any): string => {
+      if (!item) return "";
+      if (typeof item === "string") return findTitleFromPersonelList(item);
+
+      const adSoyad = (item.adSoyad || item.ad_soyad || item.ad || item.adi || "").trim();
+      const pid = item.personel_id || item.personelId || item.id;
+
+      // 1. Kadro unvanı doğrudan kolon olarak mevcutsa (kadro_unvani, personel_unvan, vekalet_unvani)
+      const explicitKadroUnvan = String(
+        item.kadro_unvani ||
+        item.kadroUnvani ||
+        item.personel_unvan ||
+        item.personelUnvan ||
+        item.vekalet_unvani ||
+        item.vekaletUnvani ||
+        ""
+      ).trim();
+
+      if (explicitKadroUnvan && !isRoleTitleString(explicitKadroUnvan)) {
+        return explicitKadroUnvan;
+      }
+
+      // 2. item.unvan alanını kontrol et
+      const rawUnvan = String(
+        item.unvan ||
+        item.unvani ||
+        item.title ||
+        item.u ||
+        ""
+      ).trim();
+
+      // "Komisyon Başkanı", "Üye" gibi görev adları unvan değildir; sadece gerçek kadro unvanları kabul edilir
+      if (rawUnvan && !isRoleTitleString(rawUnvan)) {
+        return rawUnvan;
+      }
+
+      // 3. Görev adıysa veya boşsa havuzdan (TANIM_Personel / personelListesi) personelin gerçek unvanını bul
+      const fromPool = findTitleFromPersonelList(adSoyad, pid);
+      if (fromPool) {
+        return fromPool;
+      }
+
+      return "";
+    };
+
     const gorevlendirilenler: MuayeneOfficerInfo[] = (() => {
       const list = rawList
         .filter((g) => !isExcludedMuayeneOfficer(g, onaylayanAdi))
         .map((g: any) => {
-          if (typeof g === "string") return { adSoyad: g.trim(), unvan: "" };
+          if (typeof g === "string") {
+            const name = g.trim();
+            return { adSoyad: name, unvan: extractOfficerTitle(name) };
+          }
+          const adSoyad = (g.adSoyad || g.ad_soyad || g.ad || g.adi || "").trim();
+          const pid = g.personel_id || g.personelId || g.id;
           return {
-            adSoyad: (g.adSoyad || g.ad_soyad || g.ad || g.adi || "").trim(),
-            unvan: (g.unvan || g.unvani || g.gorev || "").trim(),
+            adSoyad,
+            unvan: extractOfficerTitle(g),
+            personel_id: pid,
+            personelId: pid,
           };
         })
         .filter((g) => g.adSoyad.length > 0);
@@ -148,10 +345,17 @@ export function useMuayeneKabulKomisyonu(
       ) {
         const filtered = data.dagitimListesi
           .map((d: any) => {
-            if (typeof d === "string") return { adSoyad: d.trim(), unvan: "" };
+            if (typeof d === "string") {
+              const name = d.trim();
+              return { adSoyad: name, unvan: extractOfficerTitle(name) };
+            }
+            const adSoyad = (d.adSoyad || d.ad || d.ad_soyad || d.adi || "").trim();
+            const pid = d.personel_id || d.personelId || d.id;
             return {
-              adSoyad: (d.adSoyad || d.ad || d.adi || "").trim(),
-              unvan: (d.unvan || d.unvani || d.gorev || "").trim(),
+              adSoyad,
+              unvan: extractOfficerTitle(d),
+              personel_id: pid,
+              personelId: pid,
             };
           })
           .filter((d: any) =>
@@ -227,5 +431,5 @@ export function useMuayeneKabulKomisyonu(
       onaylayanAdi,
       onaylayanUnvan,
     };
-  }, [data]);
+  }, [data, paramPersonelListesi, editContext?.personelListesi]);
 }

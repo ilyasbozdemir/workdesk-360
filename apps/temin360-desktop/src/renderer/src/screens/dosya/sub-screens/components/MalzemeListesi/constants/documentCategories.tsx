@@ -68,10 +68,26 @@ export function buildDocumentCategories(props: MalzemeTabloPopoverProps): Popove
     onTeklifMektubuKarma,
     onFirmalarTeklifCetveli,
     onYasaklilikSorgulama,
-    onOnayBelgesi
+    onOnayBelgesi,
+    onKabulEdilenTeklif,
+    onSiparisFormu,
+    onKabulMektubu,
+    onSonucOnayBelgesi,
+    onSozlesmeyeDavet,
+    onStandartSozlesme,
+    onAlternatifSozlesme,
+    onUzunFormSozlesme,
+    onButceSorgusu,
+    onMuayeneKabulTutanagi,
+    onHizmetKabulTutanagi,
+    onKik048,
+    onKik049,
+    onKik050,
+    onKik051,
+    onOdemeEmriBelgesi,
+    onOdemeYazisi,
+    onTasinirIslemFisi
   } = props
-
-  if (!disableDocumentGuidance) return []
 
   const rawCategories: PopoverCategoryConfig[] = [
     {
@@ -281,6 +297,160 @@ export function buildDocumentCategories(props: MalzemeTabloPopoverProps): Popove
           iconColorClass: 'text-amber-500',
           onClick: onOnayBelgesi,
           steps: [2]
+        }
+      ]
+    },
+    {
+      id: 'siparisSozlesme',
+      title: 'Sipariş & Sözleşme Belgeleri',
+      icon: FileSignature,
+      iconColorClass: 'text-violet-500',
+      steps: [3],
+      items: [
+        {
+          id: 'kabulEdilenTeklif',
+          label: 'Kabul Edilen Teklif / Sipariş Formu',
+          icon: FileText,
+          iconColorClass: 'text-blue-500',
+          onClick: onKabulEdilenTeklif || onSiparisFormu || onKabulMektubu,
+          steps: [3]
+        },
+        {
+          id: 'sonucOnayBelgesi',
+          label: 'Doğrudan Temin Sonuç Onay Belgesi',
+          icon: FileCheck,
+          iconColorClass: 'text-emerald-500',
+          onClick: onSonucOnayBelgesi,
+          steps: [3]
+        },
+        {
+          id: 'sozlesmeyeDavet',
+          label: 'Sözleşmeye Davet Mektubu',
+          icon: Send,
+          iconColorClass: 'text-violet-500',
+          onClick: onSozlesmeyeDavet,
+          steps: [3]
+        },
+        {
+          id: 'standartSozlesme',
+          label: 'Doğrudan Temin Sözleşmesi (Standart)',
+          icon: FileSignature,
+          iconColorClass: 'text-indigo-600',
+          onClick: onStandartSozlesme,
+          steps: [3]
+        },
+        {
+          id: 'alternatifSozlesme',
+          label: 'Doğrudan Temin Sözleşmesi (Alternatif)',
+          icon: FileSignature,
+          iconColorClass: 'text-purple-500',
+          onClick: onAlternatifSozlesme,
+          steps: [3]
+        },
+        {
+          id: 'uzunFormSozlesme',
+          label: 'Doğrudan Temin Sözleşmesi (Kapsamlı)',
+          icon: FileSignature,
+          iconColorClass: 'text-fuchsia-500',
+          onClick: onUzunFormSozlesme,
+          steps: [3]
+        },
+        {
+          id: 'butceSorgusu',
+          label: 'Bütçe Sorgusu / Ödenek Uygunluk',
+          icon: Calculator,
+          iconColorClass: 'text-teal-600',
+          onClick: onButceSorgusu,
+          steps: [3]
+        }
+      ]
+    },
+    {
+      id: 'kabulOdeme',
+      title: 'Muayene & Kabul & Ödeme Belgeleri',
+      icon: Check,
+      iconColorClass: 'text-emerald-600',
+      steps: [4],
+      items: [
+        {
+          id: 'muayeneKabulTutanagi',
+          label: 'Muayene ve Kabul Tutanağı (Mal/İş)',
+          icon: FileCheck,
+          iconColorClass: 'text-emerald-500',
+          onClick: onMuayeneKabulTutanagi,
+          steps: [4]
+        },
+        {
+          id: 'hizmetKabulTutanagi',
+          label: 'Hizmet İşleri Kabul Tutanağı',
+          icon: FileText,
+          iconColorClass: 'text-sky-500',
+          onClick: onHizmetKabulTutanagi,
+          steps: [4]
+        },
+        {
+          id: 'kik048',
+          label: 'KİK048 - Geçici Kabul Teklif Belgesi (Yapım)',
+          icon: FileSignature,
+          iconColorClass: 'text-amber-600',
+          onClick: onKik048,
+          steps: [4]
+        },
+        {
+          id: 'kik049',
+          label: 'KİK049 - Geçici Kabul Tutanağı (Yapım)',
+          icon: FileCheck,
+          iconColorClass: 'text-amber-500',
+          onClick: onKik049,
+          steps: [4]
+        },
+        {
+          id: 'kik050',
+          label: 'KİK050 - Kesin Kabul Teklif Belgesi (Yapım)',
+          icon: FileSignature,
+          iconColorClass: 'text-orange-600',
+          onClick: onKik050,
+          steps: [4]
+        },
+        {
+          id: 'kik051',
+          label: 'KİK051 - Kesin Kabul Tutanağı (Yapım)',
+          icon: FileCheck,
+          iconColorClass: 'text-orange-500',
+          onClick: onKik051,
+          steps: [4]
+        },
+        {
+          id: 'tasinirIslemFisi',
+          label: 'Taşınır İşlem Fişi (TİF)',
+          icon: Layers,
+          iconColorClass: 'text-teal-600',
+          onClick: onTasinirIslemFisi,
+          steps: [4]
+        },
+        {
+          id: 'odemeEmriBelgesi',
+          label: 'Ödeme Emri Belgesi',
+          icon: Calculator,
+          iconColorClass: 'text-blue-600',
+          onClick: onOdemeEmriBelgesi,
+          steps: [4]
+        },
+        {
+          id: 'harcamaPusulasi',
+          label: 'Harcama Pusulası',
+          icon: FileText,
+          iconColorClass: 'text-indigo-500',
+          onClick: onHarcamaPusulasi,
+          steps: [4]
+        },
+        {
+          id: 'odemeYazisi',
+          label: 'Ödeme Yazısı',
+          icon: Send,
+          iconColorClass: 'text-slate-600',
+          onClick: onOdemeYazisi,
+          steps: [4]
         }
       ]
     }

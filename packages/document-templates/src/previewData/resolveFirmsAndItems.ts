@@ -241,11 +241,14 @@ export function resolveFirmsAndItems(
                         b.temin_kalem_id === kalem.siraNo ||
                         b.temin_kalem_id === idx + 1 ||
                         b.kalem_id === kalemId) &&
-                      (b.temin_firma_id === firmId ||
-                        b.temin_firma_id === firm.temin_firma_id ||
-                        b.temin_firma_id === firm.id ||
-                        b.firma_id === firm.firma_id ||
-                        b.firma_id === firm.id)
+                      ((b.temin_firma_id !== undefined &&
+                        (b.temin_firma_id === firmId ||
+                          (firm.temin_firma_id !== undefined && b.temin_firma_id === firm.temin_firma_id) ||
+                          (firm.id !== undefined && b.temin_firma_id === firm.id))) ||
+                        (b.firma_id !== undefined &&
+                          ((firm.firma_id !== undefined && b.firma_id === firm.firma_id) ||
+                            (firm.id !== undefined && b.firma_id === firm.id) ||
+                            (firmId !== undefined && b.firma_id === firmId))))
                   )
                 : []
               const bid = matchingBids.length > 0 ? matchingBids[matchingBids.length - 1] : undefined
@@ -292,7 +295,9 @@ export function resolveFirmsAndItems(
 
               if (
                 winnerFirm &&
-                (firm.id === winnerFirm.id || firm.temin_firma_id === winnerFirm.temin_firma_id) &&
+                ((firm.id !== undefined && firm.id === winnerFirm.id) ||
+                  (firm.temin_firma_id !== undefined && firm.temin_firma_id === winnerFirm.temin_firma_id) ||
+                  (firm.firma_id !== undefined && firm.firma_id === winnerFirm.firma_id)) &&
                 priceNum > 0
               ) {
                 winnerPrice = priceNum

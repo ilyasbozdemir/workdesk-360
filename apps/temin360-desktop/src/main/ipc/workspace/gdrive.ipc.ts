@@ -715,9 +715,32 @@ export function registerGdriveIpcHandlers(closeAllSecondaryWindows: () => void):
           // Cihaz / PC Kimlik Bilgileri
           const devInfo = getDeviceInfo()
 
-          // Güncel yerel veriyi kaydet
-          workspaceManager.save()
-          const currentData = fs.readFileSync(filePath)
+          // Güncel yerel veriyi kaydet (Diskte dosya yoksa force: true ile oluşturulmasını sağla)
+          try {
+            if (!fs.existsSync(filePath)) {
+              workspaceManager.save(true)
+            } else {
+              workspaceManager.save()
+            }
+          } catch (saveErr) {
+            console.warn('[Google Drive] Dosya diske kaydedilemedi veya sürücüye ulaşılamıyor:', saveErr)
+          }
+
+          let currentData: Buffer
+          try {
+            if (!fs.existsSync(filePath)) {
+              return {
+                success: false,
+                error: `Yedeklenecek çalışma dosyası bulunamadı veya sürücüye (harici disk/USB) erişilemiyor: ${filePath}`
+              }
+            }
+            currentData = fs.readFileSync(filePath)
+          } catch (readErr: any) {
+            return {
+              success: false,
+              error: `Çalışma dosyası okunamadı (sürücü bağlantısını kontrol ediniz): ${readErr?.message || String(readErr)}`
+            }
+          }
 
           const currentAppVersion = app?.getVersion ? app.getVersion() : '1.0.0'
           const activeMeta = workspaceManager.getMeta()

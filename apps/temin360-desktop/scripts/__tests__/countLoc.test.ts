@@ -11,6 +11,7 @@ const {
   countFile,
   countDir,
   resolvePackages,
+  isPackageRelatedToApp,
   readWorkspacePatterns,
   sourceDirOf,
   sleepSync,
@@ -538,6 +539,24 @@ describe('LOC Counter (count-loc.js) Kapsamlı Test Paketi', () => {
       fs.writeFileSync(path.join(noSrcDir, 'package.json'), JSON.stringify({ name: 'nosrc-pkg' }))
       const srcDir = sourceDirOf({ dir: noSrcDir })
       expect(srcDir).toBe(noSrcDir)
+    })
+
+    it('isPackageRelatedToApp fonksiyonu her uygulamanın yalnızca kendi domainindeki paketleri dahil eder', () => {
+      // Temin 360 kontrolleri
+      expect(isPackageRelatedToApp('temin360-desktop', 'temin360-desktop')).toBe(true)
+      expect(isPackageRelatedToApp('@temin360/contracts', 'temin360-desktop')).toBe(true)
+      expect(isPackageRelatedToApp('@temin360/document-templates', 'temin360-desktop')).toBe(true)
+      expect(isPackageRelatedToApp('@dt/database', 'temin360-desktop')).toBe(true)
+      // Genel platform motorları Temin 360 kapsamına girmez
+      expect(isPackageRelatedToApp('@worksuite-360/document-engine', 'temin360-desktop')).toBe(false)
+      expect(isPackageRelatedToApp('@workdesk-360/workflow-engine', 'temin360-desktop')).toBe(false)
+      expect(isPackageRelatedToApp('@worksuite-360/contracts', 'temin360-desktop')).toBe(false)
+
+      // Diğer app kontrolleri (Personel 360, Flowdesk)
+      expect(isPackageRelatedToApp('@personel360/contracts', 'personel360-desktop')).toBe(true)
+      expect(isPackageRelatedToApp('@worksuite-360/document-engine', 'personel360-desktop')).toBe(false)
+      expect(isPackageRelatedToApp('@flowdesk/core', 'flowdesk-desktop')).toBe(true)
+      expect(isPackageRelatedToApp('@workdesk-360/workflow-engine', 'flowdesk-desktop')).toBe(false)
     })
   })
 

@@ -225,6 +225,10 @@ export * from "./templates/kik050-yapim-kesin-kabul-teklif/Kik050YapimKesinKabul
 export * from "./templates/kik051-yapim-kesin-kabul-tutanagi/Kik051YapimKesinKabulTutanagi.schema";
 export * from "./templates/kik051-yapim-kesin-kabul-tutanagi/Kik051YapimKesinKabulTutanagi.template";
 
+// --- 6. Dosya Kapağı & Klasör Şablonları ---
+export * from "./templates/dogrudan-temin-dosyasi/DogrudanTeminDosyasi.schema";
+export * from "./templates/dogrudan-temin-dosyasi/DogrudanTeminDosyasi.template";
+
 
 // ============================================================================
 // 4. VERİ ÇÖZÜMLEME HATTI & HARİTALAMA (RESOLVER ENGINE)

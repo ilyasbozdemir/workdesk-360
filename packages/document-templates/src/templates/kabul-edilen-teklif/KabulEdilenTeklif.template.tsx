@@ -88,6 +88,20 @@ export function KabulEdilenTeklif({
   const teminSekli = data.teminSekli ||
     "4734 sayılı Kanun'un 22/d maddesi gereğince Doğrudan Temin";
   const kurumAdi = data.kurumAdi || "İdaremiz";
+  const teslimAdresi = data.teslimAdresi || data.teslimYeri || kurumAdi;
+
+  const isKabulBildirimi =
+    data.belgeTipi === "kabul_edilen_teklif" ||
+    data.belgeTuru === "Kabul Edilen Teklif";
+
+  const defaultKonu = data.dosyaKonusu ||
+    (isKabulBildirimi ? "Kabul Edilen Teklif" : "Sipariş Yazısı");
+
+  const defaultSiparisMetni =
+    `Aşağıdaki listede belirtilen ihtiyacın, 4734 sayılı Kamu İhale Kanunu'nun 22/d maddesi gereğince piyasa araştırması sırasında vermiş olduğunuz fiyat dikkate alınarak, doğrudan temin usulüyle firmanızdan satın alınmasına karar verilmiştir.\n\nSöz konusu malın/hizmetin ${teslimGunu} gün içinde mesai saatleri dâhilinde ${teslimAdresi} adresine teslim edilmesini rica ederiz.\n\nBilgilerinize ve gereğine rica olunur.`;
+
+  const defaultKabulMetni =
+    `${kurumAdi} bünyesinde ihtiyaç duyulan aşağıda belirtilen malın/hizmetin, 4734 sayılı Kamu İhale Kanunu'nun 22/d maddesi kapsamında doğrudan temin yöntemiyle satın alınmasına yönelik tarafınızca sunulan fiyat teklifi değerlendirilmiş olup, teklifiniz uygun bulunmuştur.\n\nSöz konusu malın/hizmetin toplam ${data.toplamBedel || data.toplamTutar || "-"} TL bedelle firmanızdan temin edilmesine karar verilmiştir.\n\nBilgilerinize sunulur.`;
 
   return (
     <>
@@ -152,7 +166,7 @@ export function KabulEdilenTeklif({
                         Konu:{" "}
                         <EditableField
                           name="dosyaKonusu"
-                          value={"Kabul Edilen Teklif"}
+                          value={defaultKonu}
                           placeholder="İşin Konusu"
                         />
                       </td>
@@ -200,30 +214,18 @@ export function KabulEdilenTeklif({
                     marginBottom: "20px",
                     lineHeight: 1.6,
                     fontSize: "11pt",
+                    whiteSpace: "pre-line",
                   }}
                 >
-                  Aşağıdaki listede belirtilen ihtiyacın{" "}
                   <EditableField
-                    name="teminSekli"
-                    value={teminSekli}
-                    placeholder="Doğrudan Temin"
-                  />{" "}
-                  usulü ile firmanızdan satın alınmasına karar verilmiştir.
-                  Malı/Hizmeti/İşi{" "}
-                  <strong>
-                    <EditableField
-                      name="teslimGun"
-                      value={teslimGunu}
-                      placeholder="7"
-                    />
-                  </strong>{" "}
-                  gün içinde mesai saatleri dahilinde{" "}
-                  <EditableField
-                    name="kurumAdi"
-                    value={kurumAdi}
-                    placeholder="Kurum Adı"
-                  />{" "}
-                  adresine teslim etmenizi rica ederiz.
+                    name="govdeMetni"
+                    value={
+                      data.govdeMetni ||
+                      (isKabulBildirimi ? defaultKabulMetni : defaultSiparisMetni)
+                    }
+                    placeholder="Sipariş / Teklif Kabul Metni"
+                    multiline
+                  />
                 </div>
 
                 {/* PREPARED BY SIGNATURE */}

@@ -184,6 +184,10 @@ const ImzaliBelgeler = lazyRoute(
   () => import("./screens/dosya/SubScreens.screen"),
   "ImzaliBelgeler",
 );
+const DosyaEvrakAkisi = lazyRoute(
+  () => import("./screens/dosya/SubScreens.screen"),
+  "DosyaEvrakAkisiScreen",
+);
 
 const rootRoute = createRootRoute({
   component: PageWrapper,
@@ -553,6 +557,12 @@ const imzaliBelgelerRoute = createRoute({
   component: ImzaliBelgeler,
 });
 
+const dosyaEvrakAkisiRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: APP_ROUTES.DOSYA_EVRAK_AKISI,
+  component: DosyaEvrakAkisi,
+});
+
 const hakedisRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: APP_ROUTES.HAKEDIS,
@@ -665,6 +675,7 @@ const routeTree = rootRoute.addChildren([
   ciktiMerkeziRoute,
   faturaVeIrsaliyeRoute,
   imzaliBelgelerRoute,
+  dosyaEvrakAkisiRoute,
   hakedisRoute,
   notlarRoute,
   playgroundRoute,

@@ -129,9 +129,26 @@ export function useDocumentPreviewData({
     const targetTemplate = tplId || resolvedId || selectedDocId
     const { enrichedData } = resolveTemplateRouteForDocument(targetTemplate, baseData, dId)
     const defaultRotaConf = getRotaConfigForTemplate(targetTemplate, dId)
-    if (defaultRotaConf && enrichedData.olurYazisi === undefined && defaultRotaConf.olurYazisi !== undefined) {
+    if (defaultRotaConf && defaultRotaConf.olurYazisi !== undefined) {
       enrichedData.olurYazisi = defaultRotaConf.olurYazisi
     }
+
+    // Canlı Komisyon Senkronizasyonu:
+    // Eğer Rota Yönetimi'nde henüz özel komisyon üyeleri tanımlanmamışsa,
+    // dosyanın DATA_TeminKomisyon masasındaki güncel personellerini kullan (bayat/silinmiş snapshot üyelerini temizle)
+    if (
+      (!Array.isArray(defaultRotaConf?.komisyonUyeleri) || defaultRotaConf.komisyonUyeleri.length === 0) &&
+      Array.isArray((baseData as any)?._liveCommissionOfficers) &&
+      (baseData as any)._liveCommissionOfficers.length > 0
+    ) {
+      const liveList = (baseData as any)._liveCommissionOfficers
+      ;(enrichedData as any).komisyonUyeleri = liveList
+      ;(enrichedData as any).fiyatKomisyonu = liveList
+      ;(enrichedData as any).gorevlendirilenler = liveList
+      ;(enrichedData as any).gorevliler = liveList
+      ;(enrichedData as any).dagitimListesi = liveList
+    }
+
     return enrichedData
   }
 
@@ -388,6 +405,16 @@ export function useDocumentPreviewData({
             ? {
                 sunulacakMakamAdi: conf.sunulacakMakamAdi,
                 sunulacakMakam: conf.sunulacakMakamAdi
+              }
+            : {}),
+          ...(conf.olurYazisi !== undefined ? { olurYazisi: conf.olurYazisi } : {}),
+          ...(Array.isArray(conf.komisyonUyeleri) && conf.komisyonUyeleri.length > 0
+            ? {
+                komisyonUyeleri: conf.komisyonUyeleri,
+                fiyatKomisyonu: conf.komisyonUyeleri,
+                gorevlendirilenler: conf.komisyonUyeleri,
+                gorevliler: conf.komisyonUyeleri,
+                dagitimListesi: conf.komisyonUyeleri
               }
             : {})
         }

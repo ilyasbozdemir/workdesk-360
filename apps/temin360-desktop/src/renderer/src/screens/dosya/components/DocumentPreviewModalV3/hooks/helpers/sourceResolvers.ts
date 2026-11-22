@@ -43,7 +43,7 @@ async function queryRows(sql: string, params: unknown[] = []): Promise<any[]> {
 }
 
 async function loadDosyaLists(dosyaId: number) {
-  const [personel, birim, firma] = await Promise.all([
+  const [personel, birim, firma, komisyonRows] = await Promise.all([
     queryRows(
       "SELECT id, ad_soyad, unvan, telefon, eposta, birim, birim_id, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' ORDER BY ad_soyad ASC"
     ),
@@ -53,6 +53,38 @@ async function loadDosyaLists(dosyaId: number) {
     queryRows(
       'SELECT f.id, f.unvan, f.vergi_no, f.adres, f.telefon, f.email FROM DATA_TeminFirma tf JOIN TANIM_Firma f ON tf.firma_id = f.id WHERE tf.temin_dosya_id = ? ORDER BY tf.id ASC',
       [dosyaId]
+    ),
+    queryRows(
+      `SELECT tk.*, 
+              COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as resolved_ad_soyad,
+              CASE 
+                WHEN tk.unvan IS NOT NULL 
+                 AND LOWER(TRIM(tk.unvan)) NOT IN (
+                   'komisyon başkanı', 'komisyon baskani', 'başkan', 'baskan', 
+                   'üye', 'uye', 'yedek üye', 'yedek uye', 'komisyon üyesi', 'komisyon uyesi',
+                   'fiyat araştırma görevlisi', 'fiyat arastirma gorevlisi',
+                   'muayene kabul başkanı', 'muayene kabul baskani',
+                   'muayene ve kabul komisyon başkanı', 'muayene ve kabul komisyon baskani',
+                   'muayene komisyon başkanı', 'muayene komisyon baskani',
+                   'asil üye', 'asil uye',
+                   'Üye', 'Uye', 'ÜYE', 'Başkan', 'Baskan', 'BAŞKAN',
+                   'Komisyon Başkanı', 'Komisyon Baskani', 'KOMİSYON BAŞKANI',
+                   'Yedek Üye', 'Yedek Uye', 'Komisyon Üyesi', 'Komisyon Uyesi',
+                   'Asil Üye', 'Asil Uye', 'Fiyat Araştırma Görevlisi', 'Muayene Kabul Başkanı'
+                 )
+                THEN tk.unvan
+                ELSE COALESCE(NULLIF(p.unvan, ''), NULLIF(tk.unvan, ''), '')
+              END as resolved_unvan,
+              COALESCE(NULLIF(tk.birim, ''), NULLIF(p.birim, ''), '') as resolved_birim
+       FROM DATA_TeminKomisyon tk
+       LEFT JOIN TANIM_Personel p ON (
+         (tk.personel_id IS NOT NULL AND tk.personel_id > 0 AND tk.personel_id = p.id)
+         OR
+         ((tk.personel_id IS NULL OR tk.personel_id = 0) AND LOWER(TRIM(tk.ad_soyad)) = LOWER(TRIM(p.ad_soyad)))
+       )
+       WHERE tk.temin_dosya_id = ? AND (tk.belgede_goster = 1 OR tk.belgede_goster IS NULL)
+       ORDER BY tk.id ASC`,
+      [dosyaId]
     )
   ])
   const firmaFinal = firma.length
@@ -60,7 +92,7 @@ async function loadDosyaLists(dosyaId: number) {
     : await queryRows(
         'SELECT id, unvan, vergi_no, adres, telefon, email FROM TANIM_Firma ORDER BY unvan ASC LIMIT 200'
       )
-  return { personel, birim, firma: firmaFinal }
+  return { personel, birim, firma: firmaFinal, komisyon: komisyonRows }
 }
 
 export const dosyaResolver: DocumentResolver = {
@@ -105,6 +137,66 @@ export const dosyaResolver: DocumentResolver = {
     }
     const lists = await loadDosyaLists(source.dosyaId)
     const pick = (a: unknown[] | undefined, b: unknown[]) => (a && a.length > 0 ? a : b)
+
+    // Canlı Komisyon Senkronizasyonu:
+    // DATA_TeminKomisyon tablosundaki güncel personelleri canlı veri olarak hazırla
+    if (Array.isArray(lists.komisyon) && lists.komisyon.length > 0) {
+      const isMuayene =
+        templateId.toLowerCase().includes('muayene') || templateId.toLowerCase().includes('kabul')
+      const targetOfficers = lists.komisyon
+        .filter((k: any) => {
+          const gorev = String(k.gorev || '').toLowerCase()
+          const tur = String(k.komisyon_turu || '').toLowerCase()
+          if (isMuayene) {
+            const isMuayeneTur = tur.includes('muayene') || tur.includes('kabul')
+            const isMuayeneId = Number(k.komisyon_id) === 2
+            if (!isMuayeneTur && !isMuayeneId && lists.komisyon.some((m: any) => String(m.komisyon_turu || '').toLowerCase().includes('muayene') || Number(m.komisyon_id) === 2)) {
+              return false
+            }
+          }
+          
+          const isHarcamaYetkilisiOrGerceklestirme =
+            gorev.includes('harcama yetkili') ||
+            gorev.includes('gerçekleştirme') ||
+            gorev.includes('gerceklestirme') ||
+            gorev.includes('muhasebe')
+          if (isHarcamaYetkilisiOrGerceklestirme) return false
+
+          // Onaylayan veya Hazırlayan personel listeye dahil edilmez (Rol İzolasyonu)
+          const adSoyad = String(k.resolved_ad_soyad || k.ad_soyad || '').trim().toLowerCase()
+          const onaylayan = String(dataObj.onaylayanPersonelAdi || dataObj.harcamaYetkilisiAdi || '').trim().toLowerCase()
+          const hazirlayan = String(dataObj.hazirlayanPersonelAdi || '').trim().toLowerCase()
+          if (onaylayan && adSoyad === onaylayan) return false
+          if (hazirlayan && adSoyad === hazirlayan) return false
+
+          return true
+        })
+        .map((k: any) => ({
+          adSoyad: k.resolved_ad_soyad || k.ad_soyad || '',
+          unvan: k.resolved_unvan || k.unvan || '',
+          gorevi: k.gorev || (isMuayene ? 'Üye' : 'Fiyat Araştırma Görevlisi'),
+          imzaTuru: k.imza_turu || 'İmza',
+          asilMi: k.asli_yedek === 'Yedek' ? 0 : 1,
+          birimId: k.birim_id,
+          birim: k.resolved_birim || k.birim,
+          personel_id: k.personel_id,
+          personelId: k.personel_id,
+          id: k.personel_id || k.id
+        }))
+
+      if (targetOfficers.length > 0) {
+        ;(dataObj as any)._liveCommissionOfficers = targetOfficers
+        if (isMuayene) {
+          ;(dataObj as any).muayeneKomisyonu = targetOfficers
+          ;(dataObj as any).gorevlendirilenler = targetOfficers
+          ;(dataObj as any).dagitimListesi = targetOfficers
+        } else {
+          ;(dataObj as any).fiyatKomisyonu = targetOfficers
+          ;(dataObj as any).gorevlendirilenler = targetOfficers
+          ;(dataObj as any).dagitimListesi = targetOfficers
+        }
+      }
+    }
 
     return {
       resolvedData: dataObj,

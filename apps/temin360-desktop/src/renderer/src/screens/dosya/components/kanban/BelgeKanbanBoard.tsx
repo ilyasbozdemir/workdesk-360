@@ -25,6 +25,7 @@ export interface BelgeKanbanBoardProps {
   ) => Promise<void>
   onOpenPreview: (sablon: Sablon) => void
   onUpdateBeklemeNedeni?: (itemId: string, reason: string) => Promise<void>
+  onToggleStar?: (docName: string) => void
 }
 
 export function BelgeKanbanBoard({
@@ -32,7 +33,8 @@ export function BelgeKanbanBoard({
   loading,
   errorMessage,
   onMoveItem,
-  onOpenPreview
+  onOpenPreview,
+  onToggleStar
 }: BelgeKanbanBoardProps): React.JSX.Element {
   const [activeDropStatus, setActiveDropStatus] = useState<BelgeKanbanStatus | null>(null)
   const [selectedItemForDetail, setSelectedItemForDetail] = useState<BelgeKanbanItem | null>(null)
@@ -151,6 +153,7 @@ export function BelgeKanbanBoard({
                       item={item}
                       onOpenDetail={(i) => setSelectedItemForDetail(i)}
                       onPreview={handlePreviewItem}
+                      onToggleStar={onToggleStar}
                     />
                   ))
                 )}

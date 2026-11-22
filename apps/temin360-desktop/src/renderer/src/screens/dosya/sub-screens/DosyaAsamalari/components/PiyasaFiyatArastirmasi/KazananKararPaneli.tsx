@@ -11,10 +11,10 @@ export function KazananKararPaneli({
   hesaplamaEsasi,
   setHesaplamaEsasi
 }: KazananKararPaneliProps): React.JSX.Element {
+  const normalizedEsas = hesaplamaEsasi || 'Ortalama fiyat esasına göre'
   const isLowestBasis =
-    !hesaplamaEsasi ||
-    hesaplamaEsasi.toLowerCase().includes('en düşük') ||
-    hesaplamaEsasi.toLowerCase().includes('en dusuk')
+    normalizedEsas.toLowerCase().includes('en düşük') ||
+    normalizedEsas.toLowerCase().includes('en dusuk')
 
   return (
     <div className="p-4 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
@@ -31,13 +31,13 @@ export function KazananKararPaneli({
             {/* Dosyadaki Hesaplama Esası Göstergesi / Değiştirici */}
             {setHesaplamaEsasi ? (
               <select
-                value={hesaplamaEsasi || 'En Düşük fiyat esasına göre'}
+                value={normalizedEsas}
                 onChange={(e) => setHesaplamaEsasi(e.target.value)}
                 className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100/90 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-800/80 focus:outline-none cursor-pointer"
                 title="Dosya Hesaplama Esasını Değiştir"
               >
-                <option value="En Düşük fiyat esasına göre">⚙️ En Düşük Fiyat Esası</option>
                 <option value="Ortalama fiyat esasına göre">⚙️ Ortalama Fiyat Esası</option>
+                <option value="En Düşük fiyat esasına göre">⚙️ En Düşük Fiyat Esası</option>
               </select>
             ) : (
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800">

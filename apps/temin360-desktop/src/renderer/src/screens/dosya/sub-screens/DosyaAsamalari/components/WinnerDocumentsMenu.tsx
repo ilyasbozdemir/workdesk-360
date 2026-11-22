@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react'
 import {
   Building2,
+  Calculator,
   ChevronDown,
   Clock,
   FileCheck,
@@ -25,6 +26,7 @@ interface WinnerDocumentsMenuProps {
   onPrintResultApproval: () => void
   onPrintAcceptanceLetter: () => void
   onPrintOrderForm?: () => void
+  onPrintButceSorgusu?: () => void
   onPrintContractInvitation?: () => void
   onPrintContract?: () => void
   onPrintContractAlternative?: () => void
@@ -40,6 +42,7 @@ export function WinnerDocumentsMenu({
   onPrintResultApproval,
   onPrintAcceptanceLetter,
   onPrintOrderForm,
+  onPrintButceSorgusu,
   onPrintContractInvitation,
   onPrintContract,
   onPrintContractAlternative,
@@ -77,6 +80,13 @@ export function WinnerDocumentsMenu({
           <FileText className="mr-2 h-4 w-4 text-blue-500" />
           <span>Kabul Edilen Teklif / Sipariş Formu</span>
         </DropdownMenuItem>
+
+        {onPrintButceSorgusu && (
+          <DropdownMenuItem onClick={onPrintButceSorgusu} className="cursor-pointer">
+            <Calculator className="mr-2 h-4 w-4 text-teal-600" />
+            <span>Bütçe Sorgusu / Ödenek Uygunluk</span>
+          </DropdownMenuItem>
+        )}
 
         {/* ── 📝 Sözleşme Belgeleri (Yalnızca Sözleşme Düzenlenecekse) ── */}
         {sozlesmeYapilacakMi && (

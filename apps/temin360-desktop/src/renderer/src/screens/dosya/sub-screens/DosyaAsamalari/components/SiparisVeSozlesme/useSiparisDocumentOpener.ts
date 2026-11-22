@@ -14,6 +14,8 @@ interface UseSiparisDocumentOpenerProps {
   activeDosyaId: number | null
   sonucOnayEkler: string[]
   islemlerData?: IslemlerData | null
+  kazananFirmaId?: number | null
+  kazananFirmaUnvan?: string | null
   handleOpenPreviewForSablon: (
     sablon: any,
     title: string,
@@ -27,6 +29,8 @@ export function useSiparisDocumentOpener({
   activeDosyaId,
   sonucOnayEkler,
   islemlerData,
+  kazananFirmaId,
+  kazananFirmaUnvan,
   handleOpenPreviewForSablon
 }: UseSiparisDocumentOpenerProps) {
   const sharedInitialData = {
@@ -34,174 +38,154 @@ export function useSiparisDocumentOpener({
     teslimGunu: String(islemlerData?.teslimGunu ?? 10),
     teslimSuresi: String(islemlerData?.teslimGunu ?? 10),
     teslimTarihi: islemlerData?.teslimTarihi ?? '',
-    sozlesmeYapilacakMi: Boolean(islemlerData?.sozlesmeYapilacakMi)
+    sozlesmeYapilacakMi: Boolean(islemlerData?.sozlesmeYapilacakMi),
+    yukleniciFirma: kazananFirmaUnvan || '',
+    firmaUnvan: kazananFirmaUnvan || '',
+    kazananFirmaAdi: kazananFirmaUnvan || ''
+  }
+
+  const selectedFirma = kazananFirmaId
+    ? {
+        id: kazananFirmaId,
+        firma_id: kazananFirmaId,
+        temin_firma_id: kazananFirmaId,
+        unvan: kazananFirmaUnvan || 'Yüklenici Firma'
+      }
+    : null
+
+  const openDoc = (
+    matchPredicate: (sb: any) => boolean,
+    docKey: string,
+    fallbackTitle: string,
+    extraData?: Record<string, any>
+  ): void => {
+    const s = stageSablons.find(matchPredicate)
+    const initialData = { ...sharedInitialData, ...(extraData || {}) }
+    const title = s?.ad || fallbackTitle
+
+    if (s) {
+      handleOpenPreviewForSablon(s, title, initialData, selectedFirma)
+    } else {
+      const syntheticSablon = {
+        id: 0,
+        ad: fallbackTitle,
+        dosya_adi: `${docKey}.html`,
+        route_path: docKey,
+        kategori: '3-siparis-ve-sozlesme'
+      }
+      handleOpenPreviewForSablon(syntheticSablon, fallbackTitle, initialData, selectedFirma)
+    }
+
+    useGlobalDocumentPreviewStore.getState().openDocument({
+      documentId: docKey,
+      dosyaId: activeDosyaId || undefined,
+      documentTitle: title,
+      selectedFirma: selectedFirma || null,
+      stage: '3-siparis-ve-sozlesme',
+      initialTemplateId: docKey,
+      initialData
+    })
   }
 
   const handleOpenSonucOnay = (): void => {
-    const s = stageSablons.find(
-      (sb) =>
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('dogrudanteminonay') ||
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('sonuconay') ||
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('onaybelgesi') ||
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('karar')
+    openDoc(
+      (sb) => {
+        const norm = normalizeForMatch(sb.dosya_adi + sb.ad)
+        return (
+          norm.includes('dogrudanteminonay') ||
+          norm.includes('sonuconay') ||
+          norm.includes('onaybelgesi') ||
+          norm.includes('karar')
+        )
+      },
+      'dogrudan-temin-onay-belgesi',
+      'Doğrudan Temin Onay Belgesi',
+      { ekler: sonucOnayEkler }
     )
-    if (s) {
-      handleOpenPreviewForSablon(s, s.ad || 'Doğrudan Temin Onay Belgesi', {
-        ekler: sonucOnayEkler,
-        ...sharedInitialData
-      })
-    } else {
-      useGlobalDocumentPreviewStore.getState().openDocument({
-        documentId: 'dogrudan-temin-onay-belgesi',
-        dosyaId: activeDosyaId || undefined,
-        documentTitle: 'Doğrudan Temin Onay Belgesi',
-        initialData: { ekler: sonucOnayEkler, ...sharedInitialData }
-      })
-    }
   }
 
   const handleOpenButceSorgusu = (): void => {
-    const s = stageSablons.find(
-      (sb) =>
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('butce') ||
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('odenek')
+    openDoc(
+      (sb) => {
+        const norm = normalizeForMatch(sb.dosya_adi + sb.ad)
+        return norm.includes('butce') || norm.includes('odenek')
+      },
+      'butce-sorgusu',
+      'Bütçe Sorgusu / Ödenek Uygunluk Belgesi'
     )
-    if (s) {
-      handleOpenPreviewForSablon(
-        s,
-        s.ad || 'Bütçe Sorgusu / Ödenek Uygunluk Belgesi',
-        sharedInitialData
-      )
-    } else {
-      useGlobalDocumentPreviewStore.getState().openDocument({
-        documentId: 'butce-sorgusu',
-        dosyaId: activeDosyaId || undefined,
-        documentTitle: 'Bütçe Sorgusu / Ödenek Uygunluk Belgesi',
-        initialData: sharedInitialData
-      })
-    }
   }
 
   const handleOpenKabulMektubu = (): void => {
-    const s = stageSablons.find(
-      (sb) =>
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('kabulyazisi') ||
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('kabuledilenteklif') ||
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('kabul')
+    openDoc(
+      (sb) => {
+        const norm = normalizeForMatch(sb.dosya_adi + sb.ad)
+        return (
+          norm.includes('kabulyazisi') ||
+          norm.includes('kabuledilenteklif') ||
+          norm.includes('kabul') ||
+          norm.includes('siparis')
+        )
+      },
+      'kabul-edilen-teklif',
+      'Kabul Edilen Teklif / Sipariş Formu'
     )
-    if (s) {
-      handleOpenPreviewForSablon(
-        s,
-        s.ad || 'Kabul Edilen Teklif / Sipariş Formu',
-        sharedInitialData
-      )
-    } else {
-      useGlobalDocumentPreviewStore.getState().openDocument({
-        documentId: 'kabul-edilen-teklif',
-        dosyaId: activeDosyaId || undefined,
-        documentTitle: 'Kabul Edilen Teklif Mektubu / Sipariş Formu',
-        initialData: sharedInitialData
-      })
-    }
   }
 
   const handleOpenSiparisFormu = (): void => {
-    const s = stageSablons.find(
-      (sb) =>
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('siparisformu') ||
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('siparis')
+    openDoc(
+      (sb) => {
+        const norm = normalizeForMatch(sb.dosya_adi + sb.ad)
+        return (
+          norm.includes('siparisformu') ||
+          norm.includes('siparis') ||
+          norm.includes('kabuledilenteklif') ||
+          norm.includes('kabul')
+        )
+      },
+      'kabul-edilen-teklif',
+      'Kabul Edilen Teklif / Sipariş Formu'
     )
-    if (s) {
-      handleOpenPreviewForSablon(
-        s,
-        s.ad || 'Kabul Edilen Teklif / Sipariş Formu',
-        sharedInitialData
-      )
-    } else {
-      useGlobalDocumentPreviewStore.getState().openDocument({
-        documentId: 'kabul-edilen-teklif',
-        dosyaId: activeDosyaId || undefined,
-        documentTitle: 'Kabul Edilen Teklif Mektubu / Sipariş Formu',
-        initialData: sharedInitialData
-      })
-    }
   }
 
   const handleOpenDavetMektubu = (): void => {
-    const s = stageSablons.find((sb) => normalizeForMatch(sb.dosya_adi + sb.ad).includes('davet'))
-    if (s) {
-      handleOpenPreviewForSablon(s, s.ad || 'Sözleşmeye Davet Mektubu', sharedInitialData)
-    } else {
-      useGlobalDocumentPreviewStore.getState().openDocument({
-        documentId: 'sozlesmeye-davet',
-        dosyaId: activeDosyaId || undefined,
-        documentTitle: 'Sözleşmeye Davet Mektubu',
-        initialData: sharedInitialData
-      })
-    }
+    openDoc(
+      (sb) => normalizeForMatch(sb.dosya_adi + sb.ad).includes('davet'),
+      'sozlesmeye-davet',
+      'Sözleşmeye Davet Mektubu'
+    )
   }
 
   const handleOpenStandartSozlesme = (): void => {
-    const s = stageSablons.find(
-      (sb) =>
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('sozlesme') &&
-        !normalizeForMatch(sb.dosya_adi + sb.ad).includes('alternatif') &&
-        !normalizeForMatch(sb.dosya_adi + sb.ad).includes('uzun')
+    openDoc(
+      (sb) => {
+        const norm = normalizeForMatch(sb.dosya_adi + sb.ad)
+        return norm.includes('sozlesme') && !norm.includes('alternatif') && !norm.includes('uzun')
+      },
+      'dogrudan-temin-sozlesmesi',
+      'Doğrudan Temin Sözleşmesi'
     )
-    if (s) {
-      handleOpenPreviewForSablon(s, s.ad || 'Doğrudan Temin Sözleşmesi', sharedInitialData)
-    } else {
-      useGlobalDocumentPreviewStore.getState().openDocument({
-        documentId: 'dogrudan-temin-sozlesmesi',
-        dosyaId: activeDosyaId || undefined,
-        documentTitle: 'Doğrudan Temin Sözleşmesi',
-        initialData: sharedInitialData
-      })
-    }
   }
 
   const handleOpenAlternatifSozlesme = (): void => {
-    const s = stageSablons.find(
-      (sb) =>
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('sozlesme') &&
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('alternatif')
+    openDoc(
+      (sb) => {
+        const norm = normalizeForMatch(sb.dosya_adi + sb.ad)
+        return norm.includes('sozlesme') && norm.includes('alternatif')
+      },
+      'dogrudan-temin-sozlesmesi-alternatif',
+      'Doğrudan Temin Sözleşmesi (Alternatif)'
     )
-    if (s) {
-      handleOpenPreviewForSablon(
-        s,
-        s.ad || 'Doğrudan Temin Sözleşmesi (Alternatif)',
-        sharedInitialData
-      )
-    } else {
-      useGlobalDocumentPreviewStore.getState().openDocument({
-        documentId: 'dogrudan-temin-sozlesmesi-alternatif',
-        dosyaId: activeDosyaId || undefined,
-        documentTitle: 'Doğrudan Temin Sözleşmesi (Alternatif)',
-        initialData: sharedInitialData
-      })
-    }
   }
 
   const handleOpenUzunFormSozlesme = (): void => {
-    const s = stageSablons.find(
-      (sb) =>
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('sozlesme') &&
-        normalizeForMatch(sb.dosya_adi + sb.ad).includes('uzun')
+    openDoc(
+      (sb) => {
+        const norm = normalizeForMatch(sb.dosya_adi + sb.ad)
+        return norm.includes('sozlesme') && norm.includes('uzun')
+      },
+      'dogrudan-temin-sozlesmesi-uzun',
+      'Doğrudan Temin Sözleşmesi (Kapsamlı)'
     )
-    if (s) {
-      handleOpenPreviewForSablon(
-        s,
-        s.ad || 'Doğrudan Temin Sözleşmesi (Kapsamlı)',
-        sharedInitialData
-      )
-    } else {
-      useGlobalDocumentPreviewStore.getState().openDocument({
-        documentId: 'dogrudan-temin-sozlesmesi-uzun',
-        dosyaId: activeDosyaId || undefined,
-        documentTitle: 'Doğrudan Temin Sözleşmesi (Kapsamlı)',
-        initialData: sharedInitialData
-      })
-    }
   }
 
   return {

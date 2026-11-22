@@ -9,6 +9,7 @@ import {
   FolderOpen
 } from 'lucide-react'
 import { formatCurrency } from '@renderer/utils/formatters'
+import { CurrencyInput } from '@renderer/components/ui/CurrencyInput'
 import { useWorkspaceStore } from '@renderer/store/workspaceStore'
 import {
   fetchCanonicalDossierPricing,
@@ -263,17 +264,11 @@ export const TaxDeductionsPage: React.FC = () => {
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Fatura / Hakediş Tutarı (KDV Hariç Matrah)
             </label>
-            <div className="relative">
-              <input
-                type="number"
-                value={brutTutar}
-                onChange={(e) => setBrutTutar(Number(e.target.value) || 0)}
-                className="w-full px-3.5 py-2.5 text-sm font-bold rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/30 text-slate-900 dark:text-slate-100"
-              />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                ₺
-              </span>
-            </div>
+            <CurrencyInput
+              value={brutTutar}
+              onChange={(val) => setBrutTutar(val || 0)}
+              placeholder="0,00"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

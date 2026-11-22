@@ -34,8 +34,10 @@ export const NotificationPopover = React.memo(function NotificationPopover(): Re
         setNotifications(notifs || [])
         setTasks(tsks || [])
       }
-    } catch (err) {
-      console.warn('[NotificationPopover] load error:', err)
+    } catch {
+      // Açık çalışma alanı yokken veya servis hazır değilken sessizce boş dizi ata
+      setNotifications([])
+      setTasks([])
     }
   }
 
@@ -110,7 +112,10 @@ export const NotificationPopover = React.memo(function NotificationPopover(): Re
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-88 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2">
+        <div
+          className="absolute top-full right-0 mt-2 w-88 max-w-[calc(100vw-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 flex flex-col"
+          style={{ maxHeight: 'min(500px, calc(100vh - 100px))' }}
+        >
           {/* Header */}
           <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
             <div className="flex items-center gap-2">

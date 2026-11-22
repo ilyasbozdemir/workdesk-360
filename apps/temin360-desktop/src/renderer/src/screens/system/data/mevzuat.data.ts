@@ -19,6 +19,7 @@ export interface MevzuatItem {
   resmiGazete?: string
   kanunNo?: string
   mevzuatGovTrUrl?: string
+  lexperaUrl?: string
   aciklama: string
   maddeler: MevzuatMadde[]
 }
@@ -419,48 +420,74 @@ export const MEVZUAT_KUTUPHANESI: MevzuatItem[] = [
   // 4. TEBLİĞLER
   {
     id: 'dogrudan-temin-tebligi',
-    baslik: 'Doğrudan Temin Yöntemiyle Yapılacak Alımlara İlişkin Tebliğ',
+    baslik: 'Doğrudan Temin Yöntemiyle Yapılacak Alımlara İlişkin Tebliğ (RG: 32245)',
+    kisaBaslik: 'Doğrudan Temin Tebliği (32245)',
     kategori: 'Tebliğ',
-    resmiGazete: 'Kamu İhale Genel Tebliği Md. 22 Düzenlemeleri',
-    mevzuatGovTrUrl: 'https://www.ihale.gov.tr/Mevzuat/Tebligler.aspx',
+    resmiGazete: '11.07.2023 / 32245 (Mevzuat No: 40666)',
+    mevzuatGovTrUrl: 'https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=40666&MevzuatTur=9&MevzuatTertip=5',
+    lexperaUrl: 'https://www.lexpera.com.tr/resmi-gazete/metin/dogrudan-temin-yontemiyle-yapilacak-alimlara-iliskin-teblig-32245',
     aciklama:
-      '4734 sayılı Kanunun 22 nci maddesi uyarınca doğrudan teminle yapılan alımlarda onay belgesi, piyasa fiyat araştırması ve limitlerin uygulanması.',
+      '11 Temmuz 2023 tarih ve 32245 sayılı Resmî Gazete’de yayımlanan Doğrudan Temin Yöntemiyle Yapılacak Alımlara İlişkin Tebliğ (Mevzuat No: 40666) ve 4734 sayılı Kanunun 22 nci maddesi uygulama esasları.',
     maddeler: [
       {
         no: 'Madde 1',
-        baslik: 'Doğrudan Teminin Niteliği',
+        baslik: 'Amaç ve Kapsam',
         metin:
-          '4734 sayılı Kanunun 22 nci maddesinde belirtilen doğrudan temin bir ihale usulü olmayıp, idarelerin ivedi ve küçük ölçekli ihtiyaçlarını formalitelerden uzak, hızlı ve esnek bir şekilde karşılamalarını sağlayan bir alım yöntemidir.'
+          'Bu Tebliğin amacı, 4/1/2002 tarihli ve 4734 sayılı Kamu İhale Kanununun 22 nci maddesi kapsamında doğrudan temin yöntemiyle yapılacak alımlarda uygulanacak usul ve esasları belirlemektir. 4734 sayılı Kanun kapsamındaki idarelerin doğrudan temin yöntemiyle gerçekleştirecekleri mal ve hizmet alımları ile yapım işleri bu Tebliğ hükümlerine tabidir.'
       },
       {
         no: 'Madde 2',
-        baslik: 'Onay Belgesi Düzenlenmesi',
+        baslik: 'Yasal Dayanak ve Doğrudan Teminin Niteliği',
         metin:
-          'Doğrudan temin usulüyle yapılacak alımlarda ihale yetkilisinden Harcama/Onay Belgesi alınması zorunludur. Onay belgesinde alımın konusu, miktarı, yaklaşık bedeli ve ödenek tertibi açıkça belirtilir.'
+          'Bu Tebliğ, 4734 sayılı Kanunun 22 nci maddesi ile 53 üncü maddesine dayanılarak hazırlanmıştır. Doğrudan temin bir ihale usulü olmayıp; idarelerin ivedi ve küçük ölçekli ihtiyaçlarını ilan yapılmaksızın, teminat alınmaksızın ve ihale komisyonu kurma zorunluluğu bulunmaksızın hızlı ve esnek şekilde karşılamasını sağlayan özel bir alım yöntemidir.'
       },
       {
         no: 'Madde 3',
-        baslik: 'Piyasa Fiyat Araştırması Görevlendirmesi',
+        baslik: 'Doğrudan Temin Kayıt Formu ve Doğrudan Temin Numarası (DTN)',
         metin:
-          'Harcama yetkilisi tarafından doğrudan temin konusu alımı gerçekleştirmek ve piyasa fiyat araştırması yapmak üzere idare personelinden bir veya birden fazla kişi görevlendirilir.'
+          'Doğrudan temin yöntemiyle yapılan alımların takibi amacıyla EKAP üzerinden Doğrudan Temin Kayıt Formu doldurularak Doğrudan Temin Numarası (DTN) alınır. Elektronik ortamda teklif alınması ve sonuç bildirimlerinin EKAP üzerinden yapılması esastır.'
       },
       {
         no: 'Madde 4',
-        baslik: 'İhale Komisyonu ve Teminat Zorunluluğu Bulunmaması',
+        baslik: 'Onay Belgesi ve Görevlendirme',
         metin:
-          'Doğrudan temin yöntemiyle yapılan alımlarda ihale komisyonu kurulması, geçici veya kesin teminat alınması ve ilan yapılması zorunlu değildir.'
+          'Doğrudan temin usulüyle yapılacak alımlarda alım sürecine başlanmadan önce harcama yetkilisinden Onay Belgesi (veya Harcama Talimatı) alınması zorunludur. Onay belgesinde alımın konusu, gerekçesi, miktarı, yaklaşık bedeli, kullanılabilir ödeneği ve piyasa araştırmasını yapacak personel(ler) açıkça belirtilir.'
       },
       {
         no: 'Madde 5',
-        baslik: 'Yasaklılık Teyidi ve Sözleşme Düzenlenmesi',
+        baslik: 'Piyasa Fiyat Araştırması ve Görevliler',
         metin:
-          'Doğrudan temin alımlarında sözleşme düzenlenmesi idarenin takdirindedir. Ancak işin özelliğine göre veya belirli bir süreci kapsayan alımlarda sözleşme yapılması tavsiye edilir. Yasaklılık teyidi alım öncesinde EKAP üzerinden sorgulanır.'
+          'Harcama yetkilisi tarafından doğrudan temin konusu alımı gerçekleştirmek ve piyasa araştırmasını yürütmek üzere idare personelinden bir veya birden fazla kişi görevlendirilir. Teklifler yazılı, faks, e-posta veya EKAP üzerinden toplanarak Piyasa Fiyat Araştırması Tutanağına bağlanır ve en avantajlı teklif belirlenir. Piyasa araştırması görevlileri ile malı teslim alan heyet aynı olmak zorunda değildir (rol ayrılığı esastır).'
       },
       {
         no: 'Madde 6',
-        baslik: '%10 Bütçe Limiti Takibi (Md. 62/ı)',
+        baslik: 'Kabul Edilen Teklif Bildirimi ve Sipariş Yazısı Ayrımı',
         metin:
-          "4734 sayılı Kanunun 22 nci maddesinin (d) bendine göre yapılan harcamaların yıllık toplamı, idare bütçesine konulan ödeneklerin %10'unu Kamu İhale Kurulunun uygun görüşü olmaksızın aşamaz. Limit aşımı riskine karşı harcamalar düzenli olarak izlenmelidir."
+          '4734 sayılı Kanunun 22/d bendi kapsamındaki alımlarda sözleşme düzenlenmesi zorunlu değildir. Sözleşmesiz alımlarda:\n1) Kabul Edilen Teklif (Teklif Değerlendirme Bildirimi): İstekli firmanın teklifinin uygun bulunduğunu ve alımın o teklif doğrultusunda yapılacağını bildiren sonuç/karar belgesidir.\n2) Sipariş Yazısı (Sipariş Mektubu / Teslim Talebi): Yükleniciye malın fiziki teslimini veya hizmetin ifasını teslim süresi ve teslim adresi belirterek talep eden icra belgesidir.'
+      },
+      {
+        no: 'Madde 7',
+        baslik: 'Sözleşme Düzenlenmesi ve Damga Vergisi',
+        metin:
+          'Doğrudan temin alımlarında sözleşme yapılması ve teminat alınması idarenin takdirindedir. İşin süresi, ifa biçimi veya garanti şartları gerektiriyorsa sözleşme düzenlenebilir. Sözleşme imzalanması durumunda 488 sayılı Damga Vergisi Kanunu uyarınca sözleşme damga vergisi (‰ 9,48) ve karar damga vergisi tahsil edilir; sözleşmesiz sipariş mektuplarında sözleşme damga vergisi muafiyeti uygulanır.'
+      },
+      {
+        no: 'Madde 8',
+        baslik: 'Mal Alımlarında Taşınır Teslim Tesellüm ve Muayene Kabul',
+        metin:
+          'Fiziki mal teslimi içeren alımlarda mal ambara/depoya girerken Taşınır Kayıt ve Kontrol Yetkilisi (Ambar Memuru) tarafından Taşınır Teslim Tesellüm Belgesi düzenlenir (tek görevli teslim alır; 5 kişilik piyasa komisyonu teslim alan olarak basılamaz). Ardından muayene ve kabul heyetince Muayene Kabul Tutanağı tanzim edilerek Taşınır İşlem Fişi (TİF) kesilir.'
+      },
+      {
+        no: 'Madde 9',
+        baslik: 'Hizmet ve Yapım İşlerinde Kabul Esasları',
+        metin:
+          'Hizmet alımlarında fiziki mal teslimi olmadığından teslim tesellüm düzenlenmez; işin ifasını tevsik eden Hizmet Kabul Tutanağı ve Puantaj Cetveli düzenlenir. Yapım işlerinde ise şantiye kabulü için mevzuattaki standart Geçici ve Kesin Kabul Tutanakları (KİK048-KİK051) tanzim edilir.'
+      },
+      {
+        no: 'Madde 10',
+        baslik: '%10 Bütçe Limiti Takibi ve İhtiyaçların Bölünememesi (Md. 62/ı)',
+        metin:
+          '4734 sayılı Kanunun 22 nci maddesinin (d) bendi uyarınca yapılacak harcamaların yıllık toplamı, idarenin ilgili bütçe ödeneklerinin %10’unu Kamu İhale Kurulunun uygun görüşü olmaksızın aşamaz. Aynı mali yıl içinde planlanabilir alımların kısımlara bölünerek doğrudan temin limitleri altında bırakılması kanunen yasaktır.'
       }
     ]
   },

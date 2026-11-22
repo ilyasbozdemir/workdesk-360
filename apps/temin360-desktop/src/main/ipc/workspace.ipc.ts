@@ -243,15 +243,44 @@ export function registerWorkspaceIpcHandlers(closeAllSecondaryWindows: () => voi
     }
   })
 
-  ipcMain.handle('workspace:upload-file', async (_, sourcePath: string) => {
-    try {
-      const result = workspaceManager.uploadAttachment(sourcePath)
-      return { success: true, ...result }
-    } catch (error: any) {
-      console.error('Upload attachment error:', error)
-      return { success: false, error: error.message }
+  ipcMain.handle(
+    'workspace:upload-file',
+    async (_, sourcePath: string, options?: { teminNo?: string; mirrorToProjectDir?: boolean }) => {
+      try {
+        const result = workspaceManager.uploadAttachment(sourcePath, options)
+        return { success: true, ...result }
+      } catch (error: any) {
+        console.error('Upload attachment error:', error)
+        return { success: false, error: error.message }
+      }
     }
-  })
+  )
+
+  ipcMain.handle(
+    'workspace:export-attachments-zip',
+    async (_, args?: { targetPath?: string; teminNo?: string }) => {
+      try {
+        const result = await workspaceManager.exportAttachmentsZip(args?.targetPath, args?.teminNo)
+        return result
+      } catch (error: any) {
+        console.error('Export attachments zip error:', error)
+        return { success: false, error: error.message }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'workspace:open-attachments-folder',
+    async (_, args?: { teminNo?: string }) => {
+      try {
+        const result = await workspaceManager.openProjectAttachmentsFolder(args?.teminNo)
+        return result
+      } catch (error: any) {
+        console.error('Open attachments folder error:', error)
+        return { success: false, error: error.message }
+      }
+    }
+  )
 
   ipcMain.handle('workspace:open-file', async (_, relativePath: string) => {
     try {
@@ -259,6 +288,16 @@ export function registerWorkspaceIpcHandlers(closeAllSecondaryWindows: () => voi
       return { success }
     } catch (error: any) {
       console.error('Open attachment error:', error)
+      return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('workspace:read-attachment-base64', async (_, relativePath: string) => {
+    try {
+      const data = await workspaceManager.readAttachmentBase64(relativePath)
+      return { success: true, data }
+    } catch (error: any) {
+      console.error('Read attachment base64 error:', error)
       return { success: false, error: error.message }
     }
   })

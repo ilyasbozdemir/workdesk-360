@@ -67,6 +67,8 @@ export const DATA_TeminDosyasi = {
       description: "Tur",
     }, // Alım Türü: mal | hizmet | yapim_isi | danismanlik
     { name: "ihale_sekli", type: "TEXT", description: "Ihale Sekli" }, // 22/d*, 22/a vb.
+    { name: "ihale_usulu", type: "TEXT", description: "İhale / Temin Usulü" },
+    { name: "tedarik_sekli", type: "TEXT", description: "Tedarik Şekli" },
 
     // Teklif ve Sözleşme
     {

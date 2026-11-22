@@ -251,7 +251,18 @@ export const CANONICAL_TEMPLATE_ALIASES: Record<string, string> = {
   'yapim-isleri-kesin-kabul-tutanagi': 'kik051-yapim-kesin-kabul-tutanagi',
   'yapim-kesin-kabul-tutanagi': 'kik051-yapim-kesin-kabul-tutanagi',
   'kesin-kabul-tutanagi': 'kik051-yapim-kesin-kabul-tutanagi',
-  'kesinkabultutanagi': 'kik051-yapim-kesin-kabul-tutanagi'
+  'kesinkabultutanagi': 'kik051-yapim-kesin-kabul-tutanagi',
+
+  // Doğrudan Temin Dosyası (Dosya Kapağı)
+  'dogrudan-temin-dosyasi': 'dogrudan-temin-dosyasi',
+  'dogrudantemindosyasi': 'dogrudan-temin-dosyasi',
+  'dogrudan-temin-kapagi': 'dogrudan-temin-dosyasi',
+  'dosya-kapagi': 'dogrudan-temin-dosyasi',
+  'dosyakapagi': 'dogrudan-temin-dosyasi',
+  'ihale-kapagi': 'dogrudan-temin-dosyasi',
+  'ihalekapagi': 'dogrudan-temin-dosyasi',
+  'kapak': 'dogrudan-temin-dosyasi',
+  'kapak-sablonu': 'dogrudan-temin-dosyasi'
 }
 
 export function normalizeTemplateKey(str: string | null | undefined): string {

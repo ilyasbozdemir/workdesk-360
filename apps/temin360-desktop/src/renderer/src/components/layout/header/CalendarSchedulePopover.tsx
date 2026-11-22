@@ -252,12 +252,15 @@ export const CalendarSchedulePopover: React.FC = () => {
         }`}
         title="İhale & Süreç Takvimi"
       >
-        <CalendarDays size={18} />
+        <CalendarDays className="w-3.5 h-3.5" />
       </button>
 
       {/* Açılır Panel (Dropdown Menu: ~380px) */}
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-[380px] max-w-[90vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 select-none text-left flex flex-col max-h-[560px]">
+        <div
+          className="absolute top-full right-0 mt-2 w-[380px] max-w-[calc(100vw-32px)] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 select-none text-left flex flex-col"
+          style={{ maxHeight: 'min(520px, calc(100vh - 100px))' }}
+        >
           {/* 1. Başlık Çubuğu */}
           <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 shrink-0 bg-slate-50/50 dark:bg-slate-800/30">
             <div className="flex items-center gap-2">

@@ -12,8 +12,19 @@ export const muayeneKabulRoute: TemplateRouteDefinition = {
       defaultSource: "document",
       required: true,
       fieldKey: "muayeneKomisyonu",
-      targetFieldKeys: ["komisyonUyeleri", "komisyon"],
-      sourceFieldKeys: ["muayeneKomisyonu", "komisyonUyeleri", "komisyon"],
+      targetFieldKeys: [
+        "komisyonUyeleri",
+        "komisyon",
+        "gorevlendirilenler",
+        "dagitimListesi",
+      ],
+      sourceFieldKeys: [
+        "muayeneKomisyonu",
+        "komisyonUyeleri",
+        "komisyon",
+        "gorevlendirilenler",
+        "dagitimListesi",
+      ],
       description: "Muayene ve kabul işlemlerini gerçekleştiren komisyon üyeleri",
     },
     {

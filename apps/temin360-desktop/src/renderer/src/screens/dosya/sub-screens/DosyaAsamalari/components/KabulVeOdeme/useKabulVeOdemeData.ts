@@ -542,12 +542,18 @@ export function useKabulVeOdemeData() {
           gorevi: u.gorev || 'Üye',
           adSoyad: u.ad_soyad,
           ad_soyad: u.ad_soyad,
-          unvan: u.unvan || ''
+          unvan: u.unvan || '',
+          personel_id: (u as any).personel_id || (u as any).personelId,
+          personelId: (u as any).personel_id || (u as any).personelId,
+          id: (u as any).personel_id || u.id
         })),
         muayeneKomisyonu: komisyonUyeleri.map((u) => ({
           gorevi: u.gorev || 'Üye',
           adSoyad: u.ad_soyad,
-          unvan: u.unvan || ''
+          unvan: u.unvan || '',
+          personel_id: (u as any).personel_id || (u as any).personelId,
+          personelId: (u as any).personel_id || (u as any).personelId,
+          id: (u as any).personel_id || u.id
         }))
       }
     }
@@ -560,9 +566,32 @@ export function useKabulVeOdemeData() {
     try {
       const allKomRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        `SELECT id, komisyon_id, ad_soyad, unvan, gorev, komisyon_turu, COALESCE(rol, 'Asil') as asli_yedek FROM DATA_TeminKomisyon
-         WHERE temin_dosya_id = ?
-         ORDER BY (CASE WHEN LOWER(COALESCE(gorev, '')) LIKE '%başkan%' OR LOWER(COALESCE(gorev, '')) LIKE '%baskan%' THEN 0 ELSE 1 END) ASC, id ASC`,
+        `SELECT tk.id, tk.komisyon_id, tk.personel_id,
+                COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as ad_soyad, 
+                CASE 
+                  WHEN tk.unvan IS NOT NULL 
+                   AND LOWER(TRIM(tk.unvan)) NOT IN (
+                     'komisyon başkanı', 'komisyon baskani', 'başkan', 'baskan', 
+                     'üye', 'uye', 'yedek üye', 'yedek uye', 'komisyon üyesi', 'komisyon uyesi',
+                     'fiyat araştırma görevlisi', 'fiyat arastirma gorevlisi',
+                     'muayene kabul başkanı', 'muayene kabul baskani',
+                     'muayene ve kabul komisyon başkanı', 'muayene ve kabul komisyon baskani',
+                     'muayene komisyon başkanı', 'muayene komisyon baskani',
+                     'asil üye', 'asil uye'
+                   )
+                  THEN tk.unvan
+                  ELSE COALESCE(NULLIF(p.unvan, ''), NULLIF(tk.unvan, ''), '')
+                END as unvan, 
+                tk.gorev, tk.komisyon_turu, 
+                COALESCE(tk.rol, 'Asil') as asli_yedek 
+         FROM DATA_TeminKomisyon tk
+         LEFT JOIN TANIM_Personel p ON (
+           (tk.personel_id IS NOT NULL AND tk.personel_id > 0 AND tk.personel_id = p.id)
+           OR
+           ((tk.personel_id IS NULL OR tk.personel_id = 0) AND LOWER(TRIM(tk.ad_soyad)) = LOWER(TRIM(p.ad_soyad)))
+         )
+         WHERE tk.temin_dosya_id = ?
+         ORDER BY (CASE WHEN LOWER(COALESCE(tk.gorev, '')) LIKE '%başkan%' OR LOWER(COALESCE(tk.gorev, '')) LIKE '%baskan%' THEN 0 ELSE 1 END) ASC, tk.id ASC`,
         [activeDosyaId]
       )
       if (allKomRes.success && Array.isArray(allKomRes.data)) {
@@ -609,9 +638,32 @@ export function useKabulVeOdemeData() {
         ),
         window.electron.ipcRenderer.invoke(
           'db:query',
-          `SELECT id, komisyon_id, ad_soyad, unvan, gorev, komisyon_turu, COALESCE(rol, 'Asil') as asli_yedek FROM DATA_TeminKomisyon
-           WHERE temin_dosya_id = ?
-           ORDER BY (CASE WHEN LOWER(COALESCE(gorev, '')) LIKE '%başkan%' OR LOWER(COALESCE(gorev, '')) LIKE '%baskan%' THEN 0 ELSE 1 END) ASC, id ASC`,
+          `SELECT tk.id, tk.komisyon_id, tk.personel_id,
+                  COALESCE(NULLIF(tk.ad_soyad, ''), NULLIF(p.ad_soyad, ''), '') as ad_soyad,
+                  CASE 
+                    WHEN tk.unvan IS NOT NULL 
+                     AND LOWER(TRIM(tk.unvan)) NOT IN (
+                       'komisyon başkanı', 'komisyon baskani', 'başkan', 'baskan', 
+                       'üye', 'uye', 'yedek üye', 'yedek uye', 'komisyon üyesi', 'komisyon uyesi',
+                       'fiyat araştırma görevlisi', 'fiyat arastirma gorevlisi',
+                       'muayene kabul başkanı', 'muayene kabul baskani',
+                       'muayene ve kabul komisyon başkanı', 'muayene ve kabul komisyon baskani',
+                       'muayene komisyon başkanı', 'muayene komisyon baskani',
+                       'asil üye', 'asil uye'
+                     )
+                    THEN tk.unvan
+                    ELSE COALESCE(NULLIF(p.unvan, ''), NULLIF(tk.unvan, ''), '')
+                  END as unvan,
+                  tk.gorev, tk.komisyon_turu, 
+                  COALESCE(tk.rol, 'Asil') as asli_yedek 
+           FROM DATA_TeminKomisyon tk
+           LEFT JOIN TANIM_Personel p ON (
+             (tk.personel_id IS NOT NULL AND tk.personel_id > 0 AND tk.personel_id = p.id)
+             OR
+             ((tk.personel_id IS NULL OR tk.personel_id = 0) AND LOWER(TRIM(tk.ad_soyad)) = LOWER(TRIM(p.ad_soyad)))
+           )
+           WHERE tk.temin_dosya_id = ?
+           ORDER BY (CASE WHEN LOWER(COALESCE(tk.gorev, '')) LIKE '%başkan%' OR LOWER(COALESCE(tk.gorev, '')) LIKE '%baskan%' THEN 0 ELSE 1 END) ASC, tk.id ASC`,
           [activeDosyaId]
         ),
         fetchCanonicalDossierPricing(activeDosyaId)

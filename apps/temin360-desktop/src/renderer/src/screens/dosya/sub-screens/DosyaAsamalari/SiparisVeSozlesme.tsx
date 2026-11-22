@@ -43,6 +43,8 @@ export function SiparisVeSozlesme(): React.JSX.Element {
     activeDosyaId,
     sonucOnayEkler,
     islemlerData,
+    kazananFirmaId,
+    kazananFirmaUnvan,
     handleOpenPreviewForSablon
   })
 
@@ -78,6 +80,7 @@ export function SiparisVeSozlesme(): React.JSX.Element {
             onPrintResultApproval={docOpener.handleOpenSonucOnay}
             onPrintAcceptanceLetter={docOpener.handleOpenKabulMektubu}
             onPrintOrderForm={docOpener.handleOpenSiparisFormu}
+            onPrintButceSorgusu={docOpener.handleOpenButceSorgusu}
             onPrintContractInvitation={docOpener.handleOpenDavetMektubu}
             onPrintContract={docOpener.handleOpenStandartSozlesme}
             onPrintContractAlternative={docOpener.handleOpenAlternatifSozlesme}

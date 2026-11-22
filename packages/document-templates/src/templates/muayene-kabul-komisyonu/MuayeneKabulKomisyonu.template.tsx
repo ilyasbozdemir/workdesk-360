@@ -5,6 +5,7 @@ import { MetadataBlock, PersonelCard } from "../../document/ApprovalSignature";
 import { MuayeneKabulKomisyonuData } from "./MuayeneKabulKomisyonu.schema";
 import { formatUnvan } from "../../utils/textHelpers";
 import { useMuayeneKabulKomisyonu } from "./MuayeneKabulKomisyonu.hook";
+import { useTemplateEdit } from "../../document/TemplateEditContext";
 
 interface Props {
   data?: Partial<MuayeneKabulKomisyonuData> & Record<string, any>;
@@ -12,6 +13,7 @@ interface Props {
   orientation?: "portrait" | "landscape";
   hideHeader?: boolean;
   hideFooter?: boolean;
+  personelListesi?: any[];
 }
 
 export const MuayeneKabulKomisyonu: React.FC<Props> = ({
@@ -20,7 +22,9 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
   orientation = "portrait",
   hideHeader = false,
   hideFooter = false,
+  personelListesi: propPersonelListesi,
 }) => {
+  const { personelListesi: contextPersonelListesi } = useTemplateEdit();
   const {
     evrakNo,
     konuMetni,
@@ -33,7 +37,15 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
     kapanisMetni,
     onaylayanAdi,
     onaylayanUnvan,
-  } = useMuayeneKabulKomisyonu({ data, pageSize, orientation });
+  } = useMuayeneKabulKomisyonu({
+    data,
+    pageSize,
+    orientation,
+    personelListesi:
+      propPersonelListesi ||
+      (data as any)?.personelListesi ||
+      contextPersonelListesi,
+  });
 
   const dagitimVar = dagitimListesi.length > 0;
   const hitapMetni = data.hitapMetni ||

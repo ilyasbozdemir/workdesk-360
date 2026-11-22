@@ -23,7 +23,7 @@ export function PiyasaFiyatStepper({
   mappedBelgelerCount
 }: PiyasaFiyatStepperProps): React.JSX.Element {
   return (
-    <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-3 shadow-xs">
+    <div className="sticky top-2 z-20 rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 shadow-md shadow-slate-900/5 transition-all">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
         {/* Adım 1 Butonu */}
         <button

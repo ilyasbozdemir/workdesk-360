@@ -11,7 +11,7 @@ import {
   TrendingUp
 } from 'lucide-react'
 import { cn } from '../../../utils/cn'
-import { DurumBadge, ProjectBadge, TagBadge, TurBadge } from './Badges'
+import { DurumBadge, ProjectBadge, TagBadge, TurBadge, AktarimDurumBadge } from './Badges'
 import { DosyaActionMenu } from './DosyaActionMenu'
 import { DosyaHizliIcerikPopover } from './DosyaHizliIcerikPopover'
 import { useNavigate } from '@tanstack/react-router'
@@ -142,14 +142,12 @@ export function DosyalarGridView({
                         <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-950 px-1.5 py-0.5 rounded border border-slate-100 dark:border-slate-800 truncate max-w-[120px]">
                           {getDosyaNoLabel(dosya)}
                         </span>
-                        {dosya.kaynak_kayit_id && (
-                          <span
-                            className="text-[9px] font-sans font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-200/60 dark:border-indigo-800/60"
-                            title={`Eski Sistem Dosya Numarası: ${dosya.kaynak_kayit_id}`}
-                          >
-                            Eski No: #{dosya.kaynak_kayit_id}
-                          </span>
-                        )}
+                        <AktarimDurumBadge
+                          kayitKaynagi={dosya.kayit_kaynagi}
+                          kaynakKayitId={dosya.kaynak_kayit_id}
+                          isLocked={dosya.is_locked}
+                          lockReason={dosya.lock_reason}
+                        />
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <DurumBadge
