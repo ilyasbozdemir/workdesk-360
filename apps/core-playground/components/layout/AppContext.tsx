@@ -45,7 +45,7 @@ export const APP_PROFILES: Record<TargetApp, AppProfile> = {
     shortName: 'Core Engine',
     badge: 'Core Package',
     icon: '⚙️',
-    description: '@temin360/direct-procurement-core saf domain ve veri adaptörleri havuzu',
+    description: '@worksuite-360/core saf çekirdek altyapı ve veri adaptörleri havuzu',
     dbEngine: 'In-Memory SQLite & InMemoryRepository',
     runtime: 'Pure TypeScript / Vitest',
     defaultTable: 'playground_items'

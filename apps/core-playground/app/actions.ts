@@ -471,11 +471,12 @@ export async function testTransactionAction(
     const provider = getPlaygroundProvider();
     const conn = await provider.getConnection();
     const tx = new PlaygroundDatabaseTransaction(conn);
+    await tx.begin();
 
     const tempId = createEntityId("tx_item");
     const steps: any[] = [];
 
-    steps.push({ step: 1, action: "BEGIN", txActive: tx.isActive });
+    steps.push({ step: 1, action: "BEGIN (SQLite Savepoint / Transaction)", txActive: tx.isActive });
 
     // Insert into table within transaction
     await tx.execute(

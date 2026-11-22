@@ -300,11 +300,26 @@ export function getPlaygroundProvider(): IDatabaseProvider {
 
 /**
  * Concrete IDatabaseTransaction for Playground.
+ * Gerçek SQLite SAVEPOINT / ROLLBACK TO SAVEPOINT / RELEASE motor komutlarını yürütür.
  */
 export class PlaygroundDatabaseTransaction implements IDatabaseTransaction {
-  private _isActive = true;
+  private _isActive = false;
+  private readonly savepointId: string;
 
-  constructor(private readonly conn: IDatabaseConnection) {}
+  constructor(private readonly conn: IDatabaseConnection) {
+    this.savepointId = `sp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  }
+
+  /**
+   * Gerçek SQLite Savepoint / Transaction başlatır.
+   */
+  async begin(): Promise<void> {
+    if (this._isActive) {
+      throw new Error("Transaction is already active.");
+    }
+    await this.conn.execute(`SAVEPOINT ${this.savepointId}`);
+    this._isActive = true;
+  }
 
   get isActive(): boolean {
     return this._isActive;
@@ -312,25 +327,32 @@ export class PlaygroundDatabaseTransaction implements IDatabaseTransaction {
 
   async execute(sql: string, parameters?: unknown[]): Promise<void> {
     if (!this._isActive) {
-      throw new Error("Transaction is not active.");
+      throw new Error("Transaction is not active. Call begin() first.");
     }
     await this.conn.execute(sql, (parameters as any) || []);
   }
 
+  /**
+   * Gerçek SQLite RELEASE (Commit): Değişiklikleri veritabanına kalıcı olarak işler.
+   */
   async commit(): Promise<void> {
     if (!this._isActive) {
       throw new Error("Cannot commit an inactive transaction.");
     }
+    await this.conn.execute(`RELEASE SAVEPOINT ${this.savepointId}`);
     this._isActive = false;
   }
 
+  /**
+   * Gerçek SQLite ROLLBACK: Veritabanı motoru savepoint anından sonraki tüm değişiklikleri geri alır.
+   * Asla sahte DELETE veya manuel kayıt temizleme hilesi içermez!
+   */
   async rollback(): Promise<void> {
     if (!this._isActive) {
       throw new Error("Cannot rollback an inactive transaction.");
     }
-    await this.conn.execute(
-      "DELETE FROM playground_items WHERE id LIKE 'tx_%'",
-    );
+    await this.conn.execute(`ROLLBACK TO SAVEPOINT ${this.savepointId}`);
+    await this.conn.execute(`RELEASE SAVEPOINT ${this.savepointId}`);
     this._isActive = false;
   }
 }
@@ -416,8 +438,68 @@ const defaultPrismaDelegate = new InMemoryPrismaDelegate<
   { id: string; name: string; target_app?: string },
   string
 >();
+
+let realPrismaClient: any = null;
+
 export function getPlaygroundPrismaClient() {
+  if (!realPrismaClient) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { PrismaClient: PrismaClientClass } = require("../../generated/client");
+
+      const dbFile = path.resolve(
+        process.cwd(),
+        "apps/core-playground/prisma/playground-prisma.sqlite",
+      );
+      realPrismaClient = new PrismaClientClass({
+        datasources: {
+          db: {
+            url: `file:${dbFile}`,
+          },
+        },
+      });
+
+      // Başlangıç tohum verisi
+      (async () => {
+        try {
+          const count = await realPrismaClient.playgroundItem.count();
+          if (count === 0) {
+            await realPrismaClient.playgroundItem.createMany({
+              data: [
+                {
+                  id: "item-1",
+                  name: "John Doe",
+                  targetApp: "temin360-desktop",
+                },
+                {
+                  id: "item-2",
+                  name: "John Deere",
+                  targetApp: "temin360-desktop",
+                },
+                {
+                  id: "item-3",
+                  name: "Jane Roe",
+                  targetApp: "app-web",
+                },
+              ],
+            });
+          }
+        } catch {}
+      })();
+    } catch (e) {
+      console.warn("Could not load real PrismaClient, falling back to InMemoryPrismaDelegate:", e);
+      return { item: defaultPrismaDelegate };
+    }
+  }
+
   return {
-    item: defaultPrismaDelegate,
+    item: {
+      findUnique: (args: any) => realPrismaClient.playgroundItem.findUnique(args),
+      findMany: (args?: any) => realPrismaClient.playgroundItem.findMany(args),
+      create: (args: any) => realPrismaClient.playgroundItem.create(args),
+      update: (args: any) => realPrismaClient.playgroundItem.update(args),
+      delete: (args: any) => realPrismaClient.playgroundItem.delete(args),
+      count: (args?: any) => realPrismaClient.playgroundItem.count(args),
+    } as PrismaDelegate<{ id: string; name: string; target_app?: string }, string>,
   };
 }

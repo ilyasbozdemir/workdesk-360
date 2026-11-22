@@ -62,7 +62,7 @@ export default function DashboardPage() {
           </h2>
 
           <p className="text-sm text-blue-200/90 leading-relaxed">
-            <code className="text-blue-300 font-mono font-bold">@temin360/direct-procurement-core</code>{' '}
+            <code className="text-blue-300 font-mono font-bold">@worksuite-360/core</code>{' '}
             paketini Electron veya harici bağımlılıklara ihtiyaç duymadan doğrudan çalıştırın, CRUD
             adaptörlerini, SQL sağlayıcılarını, işlem bütünlüğünü ve mevzuat kurallarını canlı test edin.
           </p>

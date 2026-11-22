@@ -27,10 +27,10 @@
         "./*"
       ],
       "@core": [
-        "../../packages/direct-procurement-core/src/index.ts"
+        "../../packages/core/src/index.ts"
       ],
       "@core/*": [
-        "../../packages/direct-procurement-core/src/*"
+        "../../packages/core/src/*"
       ]
     }
   },

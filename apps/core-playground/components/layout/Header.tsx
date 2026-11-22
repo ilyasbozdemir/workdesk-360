@@ -62,7 +62,7 @@ export const Header: React.FC = () => {
         {/* Canlı Bağlantı Rozeti */}
         <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-          <span className="font-mono text-[11px]">direct-procurement-core</span>
+          <span className="font-mono text-[11px]">@worksuite-360/core</span>
         </div>
       </div>
     </header>
