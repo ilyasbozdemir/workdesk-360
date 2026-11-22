@@ -16,6 +16,14 @@
     "test:node": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "@temin360/domain": "workspace:*",
     "@worksuite-360/core": "workspace:*"
@@ -24,6 +32,7 @@
     "@types/better-sqlite3": "^7.6.12",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.1",
+    "@types/react": "^19.0.0",
     "better-sqlite3": "^12.10.0",
     "js-yaml": "^4.1.0",
     "typescript": "^5.6.3",

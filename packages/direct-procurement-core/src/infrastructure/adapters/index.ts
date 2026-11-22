@@ -1,0 +1,1 @@
+export { RateProviderAdapter } from "./RateProviderAdapter";

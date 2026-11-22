@@ -8,10 +8,12 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
+    "jsx": "react-jsx",
     "paths": {
       "@temin360/domain": ["../domain/src/index.ts"],
       "@worksuite-360/core": ["../core/src/index.ts"],
-      "better-sqlite3": ["../../node_modules/.pnpm/@types+better-sqlite3@7.6.13/node_modules/@types/better-sqlite3/index.d.ts"]
+      "better-sqlite3": ["../../node_modules/.pnpm/@types+better-sqlite3@7.6.13/node_modules/@types/better-sqlite3/index.d.ts"],
+      "react": ["../../node_modules/.pnpm/@types+react@19.2.15/node_modules/@types/react"]
     }
   },
   "include": ["src/**/*", "test/**/*"],

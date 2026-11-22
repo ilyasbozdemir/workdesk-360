@@ -24,6 +24,22 @@ import {
 } from "./RepositoryBinding";
 import { DirectProcurementService } from "./DirectProcurementService";
 import type { ITeminPreferencesStore } from "../infrastructure/database/contracts/ITeminPreferencesStore";
+import { SqliteProcurementFileRepository } from "../infrastructure/persistence/repositories/SqliteProcurementFileRepository";
+import { SqliteCommissionRepository } from "../infrastructure/persistence/repositories/SqliteCommissionRepository";
+import { SqliteApprovalRepository } from "../infrastructure/persistence/repositories/SqliteApprovalRepository";
+import { SqliteRequirementRepository } from "../infrastructure/persistence/repositories/SqliteRequirementRepository";
+import { SqlitePriceResearchRepository } from "../infrastructure/persistence/repositories/SqlitePriceResearchRepository";
+import { ProcurementFileService } from "../application/services/ProcurementFileService";
+import { CommissionService } from "../application/services/CommissionService";
+import { ApprovalService } from "../application/services/ApprovalService";
+import { RequirementService } from "../application/services/RequirementService";
+import { PriceResearchService } from "../application/services/PriceResearchService";
+import { DocumentService } from "../application/services/DocumentService";
+import type { IProcurementFileRepository } from "../application/contracts/IProcurementFileRepository";
+import type { ICommissionRepository } from "../application/contracts/ICommissionRepository";
+import type { IApprovalRepository } from "../application/contracts/IApprovalRepository";
+import type { IRequirementRepository } from "../application/contracts/IRequirementRepository";
+import type { IPriceResearchRepository } from "../application/contracts/IPriceResearchRepository";
 
 /**
  * Dependency Injection Token Tanımları
@@ -39,6 +55,13 @@ export const TOKENS = {
     RateProvider: Symbol.for("RateProvider"),
     ReactionManager: Symbol.for("ReactionManager"),
 
+    // Repositories
+    ProcurementFileRepository: Symbol.for("ProcurementFileRepository"),
+    CommissionRepository: Symbol.for("CommissionRepository"),
+    ApprovalRepository: Symbol.for("ApprovalRepository"),
+    RequirementRepository: Symbol.for("RequirementRepository"),
+    PriceResearchRepository: Symbol.for("PriceResearchRepository"),
+
     // Use Cases
     EnterQuoteUseCase: Symbol.for("EnterQuoteUseCase"),
     SelectWinnerUseCase: Symbol.for("SelectWinnerUseCase"),
@@ -49,6 +72,12 @@ export const TOKENS = {
 
     // Services
     DirectProcurementService: Symbol.for("DirectProcurementService"),
+    ProcurementFileService: Symbol.for("ProcurementFileService"),
+    CommissionService: Symbol.for("CommissionService"),
+    ApprovalService: Symbol.for("ApprovalService"),
+    RequirementService: Symbol.for("RequirementService"),
+    PriceResearchService: Symbol.for("PriceResearchService"),
+    DocumentService: Symbol.for("DocumentService"),
 } as const;
 
 export type TokenKey = keyof typeof TOKENS;
@@ -208,6 +237,26 @@ export function createDirectProcurementContainer(
         TOKENS.RateProvider,
         () => bindRateProvider(db),
     );
+    container.registerFactory<IProcurementFileRepository>(
+        TOKENS.ProcurementFileRepository,
+        () => new SqliteProcurementFileRepository(db),
+    );
+    container.registerFactory<ICommissionRepository>(
+        TOKENS.CommissionRepository,
+        () => new SqliteCommissionRepository(db),
+    );
+    container.registerFactory<IApprovalRepository>(
+        TOKENS.ApprovalRepository,
+        () => new SqliteApprovalRepository(db),
+    );
+    container.registerFactory<IRequirementRepository>(
+        TOKENS.RequirementRepository,
+        () => new SqliteRequirementRepository(db),
+    );
+    container.registerFactory<IPriceResearchRepository>(
+        TOKENS.PriceResearchRepository,
+        () => new SqlitePriceResearchRepository(db),
+    );
 
     // 4. Use Cases
     container.registerFactory<EnterQuoteUseCase>(
@@ -289,6 +338,32 @@ export function createDirectProcurementContainer(
                     TOKENS.CalculateDeductionsUseCase,
                 ),
             }),
+    );
+
+    // 6. Application Services
+    container.registerFactory<ProcurementFileService>(
+        TOKENS.ProcurementFileService,
+        (c) => new ProcurementFileService(c.resolve<IProcurementFileRepository>(TOKENS.ProcurementFileRepository)),
+    );
+    container.registerFactory<CommissionService>(
+        TOKENS.CommissionService,
+        (c) => new CommissionService(c.resolve<ICommissionRepository>(TOKENS.CommissionRepository)),
+    );
+    container.registerFactory<ApprovalService>(
+        TOKENS.ApprovalService,
+        (c) => new ApprovalService(c.resolve<IApprovalRepository>(TOKENS.ApprovalRepository)),
+    );
+    container.registerFactory<RequirementService>(
+        TOKENS.RequirementService,
+        (c) => new RequirementService(c.resolve<IRequirementRepository>(TOKENS.RequirementRepository)),
+    );
+    container.registerFactory<PriceResearchService>(
+        TOKENS.PriceResearchService,
+        (c) => new PriceResearchService(c.resolve<IPriceResearchRepository>(TOKENS.PriceResearchRepository)),
+    );
+    container.registerFactory<DocumentService>(
+        TOKENS.DocumentService,
+        (c) => new DocumentService(c.resolve<IApprovalRepository>(TOKENS.ApprovalRepository)),
     );
 
     return container;

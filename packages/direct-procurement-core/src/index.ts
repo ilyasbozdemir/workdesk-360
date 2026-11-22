@@ -38,7 +38,7 @@ export * from "./domain/winner/WinnerSelectionStrategy";
 export * from "./domain/services/DeductionCalculator";
 export * from "./domain/services/Md22dLimitPolicy";
 
-// ─── 2. DOĞRUDAN TEMİN APPLICATION KATMANI (Use Cases & Portlar) ──────
+// ─── 2. DOĞRUDAN TEMİN APPLICATION KATMANI (Use Cases, Portlar, Services, Contracts, DTOs) ──────
 export type {
     AuditLogPort,
     DocumentStatusPort,
@@ -54,16 +54,15 @@ export * from "./application/usecases/ApproveResult";
 export * from "./application/usecases/Acceptance";
 export * from "./application/usecases/CalculateDeductions";
 export * from "./application/reactions/FileReactionManager";
+export * from "./application/services";
+export * from "./application/contracts";
+export * from "./application/dto";
 
 // ─── 3. DOĞRUDAN TEMİN INFRASTRUCTURE KATMANI ─────────────────────────
-export * from "./infrastructure/database/InMemoryFileRepository";
-export * from "./infrastructure/database/SqliteMevzuatRateProvider";
-export * from "./infrastructure/database/TeminPreferencesStore";
-export * from "./infrastructure/database/contracts/ITeminPreferencesStore";
-export * from "./infrastructure/database/mappers/AcceptanceJsonMapper";
-export * from "./infrastructure/database/SqliteFileRepository";
-export * from "./infrastructure/database/SqliteReactionAdapters";
-export * from "./infrastructure/database/composeDirectProcurement";
+export * from "./infrastructure";
 
-// ─── 4. DOĞRUDAN TEMİN COMPOSITION & DEPENDENCY INJECTION ─────────────
+// ─── 4. DOĞRUDAN TEMİN PRESENTATION KATMANI (Hooks & Mappers) ──────────
+export * from "./presentation";
+
+// ─── 5. DOĞRUDAN TEMİN COMPOSITION & DEPENDENCY INJECTION ─────────────
 export * from "./dependency-injection";
