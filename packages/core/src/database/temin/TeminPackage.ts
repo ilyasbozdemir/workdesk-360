@@ -4,6 +4,17 @@ import os from "node:os";
 import type { IDatabaseConnection, DatabaseQueryParameters, DatabaseExecutionResult } from "../contracts/IDatabaseConnection";
 import type { ITeminPackage, ITeminMeta, ITeminAttachmentEntry } from "../contracts/ITeminPackage";
 
+function safeRequire(moduleName: string): any {
+  try {
+    // Dinamik isimle çağrı Vite / esbuild statik tarayıcısının (deps-scan)
+    // Node.js native paketlerini browser context'inde aramaya çalışmasını engeller.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return typeof require !== "undefined" ? require(moduleName) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Node.js 22+ yerleşik node:sqlite veya better-sqlite3 sürücüsünü dinamik yükler.
  */
@@ -11,19 +22,26 @@ function createSqliteConnection(sqliteFilePath: string): IDatabaseConnection {
   let dbInstance: any = null;
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { DatabaseSync } = require("node:sqlite");
-    dbInstance = new DatabaseSync(sqliteFilePath);
-  } catch {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const Database = require("better-sqlite3");
-      dbInstance = new Database(sqliteFilePath);
-    } catch (err) {
-      throw new Error(
-        `SQLite sürücüsü yüklenemedi (node:sqlite veya better-sqlite3 bulunamadı): ${err}`,
-      );
+    const nodeSqlite = safeRequire("node:sqlite");
+    if (nodeSqlite?.DatabaseSync) {
+      dbInstance = new nodeSqlite.DatabaseSync(sqliteFilePath);
     }
+  } catch {}
+
+  if (!dbInstance) {
+    try {
+      const betterSqliteName = ["better", "sqlite3"].join("-");
+      const Database = safeRequire(betterSqliteName);
+      if (Database) {
+        dbInstance = new Database(sqliteFilePath);
+      }
+    } catch {}
+  }
+
+  if (!dbInstance) {
+    throw new Error(
+      "SQLite sürücüsü yüklenemedi (node:sqlite veya better-sqlite3 bulunamadı)",
+    );
   }
 
   return {
@@ -114,8 +132,8 @@ export class TeminPackage implements ITeminPackage {
 
     let AdmZipClass: any = null;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      AdmZipClass = require("adm-zip");
+      const admZipName = ["adm", "zip"].join("-");
+      AdmZipClass = safeRequire(admZipName);
     } catch {
       // adm-zip yoksa tar/powershell fallback devreye girer
     }

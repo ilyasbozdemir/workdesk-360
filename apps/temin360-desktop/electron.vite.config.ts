@@ -135,6 +135,9 @@ export default defineConfig(({ mode, command }) => {
           '@temin360/direct-procurement-core': resolve('../../packages/direct-procurement-core/src/index.ts')
         }
       },
+      optimizeDeps: {
+        exclude: ['better-sqlite3', 'adm-zip']
+      },
       build: {
         sourcemap: false
       },

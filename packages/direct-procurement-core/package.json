@@ -12,7 +12,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run",
+    "test": "node ../../apps/temin360-desktop/scripts/test-electron.js run",
+    "test:node": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
