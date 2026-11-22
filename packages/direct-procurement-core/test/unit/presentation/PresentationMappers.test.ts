@@ -3,6 +3,8 @@ import { ProcurementFileMapper } from "../../../src/presentation/mappers/Procure
 import { CommissionMapper } from "../../../src/presentation/mappers/CommissionMapper";
 import { ApprovalMapper } from "../../../src/presentation/mappers/ApprovalMapper";
 import { RequirementMapper } from "../../../src/presentation/mappers/RequirementMapper";
+import { PriceResearchMapper } from "../../../src/presentation/mappers/PriceResearchMapper";
+import { PriceOffer } from "../../../src/domain/price-research/PriceOffer";
 import { ProcurementFile } from "../../../src/domain/procurement-file/ProcurementFile";
 import { ProcurementFileStatus } from "../../../src/domain/procurement-file/ProcurementFileStatus";
 import { ProcurementCommissionMember } from "../../../src/domain/commission/ProcurementCommission";
@@ -72,5 +74,23 @@ describe("Presentation Mappers", () => {
         expect(reqDto.id).toBe(30);
         expect(reqDto.reportNumber).toBe("İHT-2026-001");
         expect(reqDto.estimatedBudget).toBe(45000);
+    });
+
+    it("PriceResearchMapper entity -> DTO dönüşümünü yapar", () => {
+        const offer = new PriceOffer({
+            id: 201,
+            procurementFileId: 50,
+            itemId: 12,
+            supplierId: 3,
+            unitPrice: 1500,
+            vatAmount: 300,
+            hasOffer: true,
+        });
+
+        const dto = PriceResearchMapper.toOfferDto(offer);
+        expect(dto.id).toBe(201);
+        expect(dto.unitPrice).toBe(1500);
+        expect(dto.vatAmount).toBe(300);
+        expect(dto.supplierId).toBe(3);
     });
 });

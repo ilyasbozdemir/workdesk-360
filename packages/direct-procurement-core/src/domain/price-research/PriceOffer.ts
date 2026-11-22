@@ -75,6 +75,14 @@ export class PriceOffer {
         return this.unitPrice + this.vatAmount;
     }
 
+    get createdAt(): Date | string | undefined {
+        return this._props.createdAt;
+    }
+
+    get updatedAt(): Date | string | undefined {
+        return this._props.updatedAt;
+    }
+
     /**
      * Teklif birim fiyatını günceller.
      */

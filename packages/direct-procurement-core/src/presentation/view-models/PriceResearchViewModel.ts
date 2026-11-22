@@ -1,3 +1,5 @@
+import type { PriceOfferDto } from "../../application/dto/price-research/PriceResearchDto";
+
 export interface PriceOfferItemView {
     id: number;
     itemId: number;
@@ -11,28 +13,24 @@ export interface PriceOfferItemView {
 }
 
 export class PriceResearchViewModel {
-    static toOfferView(offer: {
-        id: number;
-        itemId: number;
-        supplierId: number;
-        supplierName?: string;
-        unitPrice: number;
-        vatAmount?: number;
-        hasOffer?: boolean;
-    }, isLowest = false): PriceOfferItemView {
+    static toOfferView(dto: PriceOfferDto, isLowest = false): PriceOfferItemView {
         return {
-            id: offer.id,
-            itemId: offer.itemId,
-            supplierId: offer.supplierId,
-            supplierName: offer.supplierName,
-            unitPrice: offer.unitPrice,
+            id: dto.id,
+            itemId: dto.itemId,
+            supplierId: dto.supplierId,
+            supplierName: dto.supplierName,
+            unitPrice: dto.unitPrice,
             formattedUnitPrice: new Intl.NumberFormat("tr-TR", {
                 style: "currency",
                 currency: "TRY",
-            }).format(offer.unitPrice),
-            vatAmount: offer.vatAmount ?? 0,
-            hasOffer: offer.hasOffer !== false,
+            }).format(dto.unitPrice),
+            vatAmount: dto.vatAmount ?? 0,
+            hasOffer: dto.hasOffer !== false,
             isLowestOffer: isLowest,
         };
+    }
+
+    static toOfferList(dtos: PriceOfferDto[], lowestOfferId?: number): PriceOfferItemView[] {
+        return dtos.map((dto) => this.toOfferView(dto, dto.id === lowestOfferId));
     }
 }

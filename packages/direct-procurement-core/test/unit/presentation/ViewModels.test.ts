@@ -4,6 +4,7 @@ import { ProcurementFileDetailViewModel } from "../../../src/presentation/view-m
 import { CommissionViewModel } from "../../../src/presentation/view-models/CommissionViewModel";
 import { RequirementViewModel } from "../../../src/presentation/view-models/RequirementViewModel";
 import { PriceResearchViewModel } from "../../../src/presentation/view-models/PriceResearchViewModel";
+import { ApprovalViewModel } from "../../../src/presentation/view-models/ApprovalViewModel";
 import type { ProcurementFileDto } from "../../../src/application/dto/procurement-file/ProcurementFileDto";
 
 describe("Presentation ViewModels", () => {
@@ -77,6 +78,7 @@ describe("Presentation ViewModels", () => {
 
         const offerView = PriceResearchViewModel.toOfferView({
             id: 1,
+            procurementFileId: 10,
             itemId: 10,
             supplierId: 2,
             unitPrice: 500,
@@ -84,5 +86,21 @@ describe("Presentation ViewModels", () => {
 
         expect(offerView.isLowestOffer).toBe(true);
         expect(offerView.formattedUnitPrice).toContain("500");
+    });
+
+    it("ApprovalViewModel onay belgeleri için doğru rozet ve durum metinlerini döner", () => {
+        const view = ApprovalViewModel.toView({
+            id: 15,
+            procurementFileId: 101,
+            documentName: "Onay Belgesi",
+            isSigned: true,
+            status: "signed",
+            signedFilePath: "/docs/onay.pdf",
+        });
+
+        expect(view.statusBadgeColor).toBe("green");
+        expect(view.statusLabel).toBe("İmzalandı");
+        expect(view.isSigned).toBe(true);
+        expect(view.signedFilePath).toBe("/docs/onay.pdf");
     });
 });
