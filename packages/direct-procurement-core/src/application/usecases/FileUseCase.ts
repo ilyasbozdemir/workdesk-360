@@ -4,7 +4,7 @@ import type {
   FileRepository,
   RateProvider,
 } from "../ports";
-import { DomainError } from "../../domain/shared/DomainError";
+import { DomainError } from "@worksuite-360/core";
 
 /**
  * Doğrudan temin dosyası üzerinde çalışan komut işlemlerinin soyut temel sınıfı.

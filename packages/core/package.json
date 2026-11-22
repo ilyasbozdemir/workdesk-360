@@ -1,0 +1,29 @@
+{
+  "name": "@worksuite-360/core",
+  "version": "1.0.0",
+  "description": "WorkDesk 360 ekosistemi ortak çekirdek altyapı paketi (Common Types, Domain Base, Persistence, Database, Text)",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./text": {
+      "types": "./src/text/index.ts",
+      "import": "./src/text/index.ts",
+      "default": "./src/text/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.7"
+  }
+}

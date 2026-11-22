@@ -1,4 +1,4 @@
-import { DomainError } from "../shared/DomainError";
+import { DomainError } from "@worksuite-360/core";
 
 /**
  * Muayene kabul tutanağında teslim alınan tek bir kalemi ve miktarını temsil eder.

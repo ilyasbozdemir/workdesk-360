@@ -1,15 +1,14 @@
 import { Money } from "@temin360/domain";
 import type {
   FileRepository,
-  SqlExecutor,
-  SqlStatement,
 } from "../../application/ports";
+import type { SqlExecutor, SqlStatement } from "@worksuite-360/core";
 import { Bidder } from "../../domain/file/Bidder";
 import { DirectProcurementFile } from "../../domain/file/DirectProcurementFile";
 import { NeedItem } from "../../domain/file/NeedItem";
 import { DIRECT_PROCUREMENT_PROFILE } from "../../domain/profile/profiles";
-import { DomainError } from "../../domain/shared/DomainError";
-import { lineTotal } from "../../domain/shared/numeric";
+import { DomainError } from "@worksuite-360/core";
+import { lineTotal } from "../../domain/numeric";
 import { TeminPreferencesStore } from "./TeminPreferencesStore";
 import type { ItemRef } from "./mappers/AcceptanceJsonMapper";
 

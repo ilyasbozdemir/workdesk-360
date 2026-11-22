@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@temin360/direct-procurement-core"],
+  transpilePackages: ["@worksuite-360/core", "@temin360/direct-procurement-core"],
   serverExternalPackages: ["better-sqlite3"],
 };
 

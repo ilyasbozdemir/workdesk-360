@@ -1,9 +1,16 @@
-import type { DomainEvent } from "../domain/shared/DomainEvent";
+import type {
+  EventPublisher,
+  SqlExecutor,
+  SqlStatement,
+} from "@worksuite-360/core";
 import type {
   DirectProcurementFile,
   FileStage,
 } from "../domain/file/DirectProcurementFile";
 import type { RateSnapshot } from "../domain/profile/DeductionRule";
+
+// Genel altyapı sözleşmelerini modül içi kullanım ve uyumluluk için dışa aktar
+export type { EventPublisher, SqlExecutor, SqlStatement };
 
 /**
  * Dosya Deposu Arayüzü (Repository Port).
@@ -39,21 +46,6 @@ export interface RateProvider {
    * @param isoDate - İşlem tarihi (ISO formatı YYYY-MM-DD)
    */
   ratesFor(isoDate: string): Promise<RateSnapshot>;
-}
-
-/**
- * Olay Yayınlayıcı Arayüzü (Event Publisher Port).
- *
- * Transaction tamamlandığında aggregate tarafından üretilen etki alanı olaylarını
- * ilgili dinleyicilere (reaction handlers, UI, log vb.) iletir.
- */
-export interface EventPublisher {
-  /**
-   * Etki alanı olaylarını yayınlar.
-   *
-   * @param events - Yayınlanacak olaylar listesi
-   */
-  publish(events: readonly DomainEvent[]): Promise<void>;
 }
 
 /* ---- Olay Tepkilerinin (Reaction) İhtiyaç Duyduğu Portlar ---- */
@@ -105,40 +97,4 @@ export interface AuditLogPort {
       level: "info" | "success" | "warning" | "error";
     },
   ): Promise<void>;
-}
-
-/**
- * SQL Çalıştırma İfadesi.
- */
-export interface SqlStatement {
-  /** SQL sorgusu */
-  sql: string;
-  /** Parametreler dizisi */
-  params?: readonly unknown[];
-}
-
-/**
- * SQL Erişim Portu (SqlExecutor Port).
- *
- * Hem Main sürecinde (`better-sqlite3`), hem de Renderer sürecinde (`electron.ipcRenderer`)
- * aynı repository kodunun şeffaf bir şekilde çalışabilmesini sağlayan soyutlamadır.
- */
-export interface SqlExecutor {
-  /**
-   * Salt okunur SQL sorgusu çalıştırır ve kayıtları döndürür.
-   *
-   * @param sql - SQL SELECT ifadesi
-   * @param params - Sorgu parametreleri
-   */
-  query<T = Record<string, unknown>>(
-    sql: string,
-    params?: readonly unknown[],
-  ): Promise<T[]>;
-  /**
-   * Verilen tüm ifadeleri tek bir atomik veritabanı transaction bloğunda çalıştırır.
-   * Herhangi bir ifade hata verirse tüm işlem geri alınır (rollback).
-   *
-   * @param statements - Çalıştırılacak SQL ifadeleri dizisi
-   */
-  transaction(statements: readonly SqlStatement[]): Promise<void>;
 }

@@ -1,4 +1,4 @@
-import { DomainEvent } from "../shared/DomainEvent";
+import { DomainEvent } from "@worksuite-360/core";
 
 /**
  * Teklif Değişti Olayı (Domain Event).

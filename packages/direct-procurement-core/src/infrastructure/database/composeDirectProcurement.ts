@@ -6,9 +6,8 @@ import {
 import { CalculateDeductionsUseCase } from "../../application/usecases/CalculateDeductions";
 import { EnterQuoteUseCase } from "../../application/usecases/EnterQuote";
 import { SelectWinnerUseCase } from "../../application/usecases/SelectWinner";
-import { InProcessEventBus } from "../../application/events/InProcessEventBus";
+import { InProcessEventBus, type SqlExecutor } from "@worksuite-360/core";
 import { FileReactionManager } from "../../application/reactions/FileReactionManager";
-import type { SqlExecutor } from "../../application/ports";
 import {
   SqliteAuditLog,
   SqliteDocumentStatus,

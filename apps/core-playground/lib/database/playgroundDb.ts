@@ -6,7 +6,7 @@ import type {
   IDatabaseProvider,
   IDatabaseTransaction,
   PrismaDelegate
-} from "@temin360/direct-procurement-core";
+} from "@worksuite-360/core";
 
 const require = createRequire(import.meta.url);
 

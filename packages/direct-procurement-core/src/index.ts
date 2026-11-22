@@ -7,43 +7,20 @@
  * Bu paket, 4734 Sayılı Kamu İhale Kanunu Madde 22 ve ilgili Doğrudan Temin Tebliği (Mevzuat No: 40666)
  * hükümleri doğrultusunda Doğrudan Temin süreçlerinin tüm iş kurallarını (domain logic),
  * kullanım senaryolarını (use cases) ve veritabanı/IPC altyapı adaptörlerini (infrastructure)
- * Clean Architecture / Domain-Driven Design (DDD) prensipleriyle yöneten saf çekirdek kütüphanedir.
+ * Clean Architecture / Domain-Driven Design (DDD) prensipleriyle yöneten etki alanı kütüphanesidir.
  *
- * ## Mimari Katmanlar
- * ```
- * ┌────────────────────────────────────────────────────────┐
- * │  Domain (Saf İş Kuralları, Varlıklar, Değer Nesneleri)   │
- * │  - DirectProcurementFile (Aggregate Root)              │
- * │  - NeedItem, Bidder, QuoteMatrix, AcceptanceRecord     │
- * │  - PricingBasis, ApproximateCostCalculator             │
- * │  - WinnerSelectionStrategy, DeductionCalculator        │
- * └───────────────────────────┬────────────────────────────┘
- *                             ▲
- * ┌───────────────────────────┴────────────────────────────┐
- * │  Application (Kullanım Senaryoları / Use Cases)        │
- * │  - OpenFile, EnterQuote, SelectWinner, ApproveResult   │
- * │  - Acceptance, CalculateDeductions                     │
- * │  - Ports & Interfaces (Repository, EventBus)           │
- * └───────────────────────────┬────────────────────────────┘
- *                             ▲
- * ┌───────────────────────────┴────────────────────────────┐
- * │  Infrastructure (Adaptörler ve Somut Uygulamalar)      │
- * │  - SqliteFileRepository, InMemoryFileRepository       │
- * │  - BetterSqliteExecutor, IpcSqlExecutor                │
- * │  - composeDirectProcurement (Composition Root)         │
- * └────────────────────────────────────────────────────────┘
- * ```
+ * Genel WorkDesk Core altyapısı `@worksuite-360/core` paketinden tüketilir ve dışa aktarılır.
  *
  * @author WorkDesk 360 / Temin 360 Team
  * @version 1.0.0
  */
 
-// ─── DOMAIN KATMANI (Saf İş Mantığı) ──────────────────────────────────
-export * from "./domain/shared/DomainError";
-export * from "./domain/shared/DomainEvent";
-export * from "./domain/shared/AggregateRoot";
+// ─── 0. GENEL WORKDESK CORE ALTYAPISI (Re-exported from @worksuite-360/core) ───
+export * from "@worksuite-360/core";
+
+// ─── 1. DOĞRUDAN TEMİN DOMAIN KATMANI (Saf İş Mantığı) ─────────────────
 export * from "./domain/money";
-export * from "./domain/shared/numeric";
+export * from "./domain/numeric";
 export * from "./domain/file/DirectProcurementFile";
 export * from "./domain/file/NeedItem";
 export * from "./domain/file/Bidder";
@@ -60,8 +37,14 @@ export * from "./domain/winner/WinnerSelectionStrategy";
 export * from "./domain/services/DeductionCalculator";
 export * from "./domain/services/Md22dLimitPolicy";
 
-// ─── APPLICATION KATMANI (Use Case & Portlar) ─────────────────────────
-export * from "./application/ports";
+// ─── 2. DOĞRUDAN TEMİN APPLICATION KATMANI (Use Cases & Portlar) ──────
+export type {
+  FileRepository,
+  RateProvider,
+  DocumentStatusPort,
+  StageProgressPort,
+  AuditLogPort,
+} from "./application/ports";
 export * from "./application/usecases/FileUseCase";
 export * from "./application/usecases/OpenFile";
 export * from "./application/usecases/EnterQuote";
@@ -69,45 +52,14 @@ export * from "./application/usecases/SelectWinner";
 export * from "./application/usecases/ApproveResult";
 export * from "./application/usecases/Acceptance";
 export * from "./application/usecases/CalculateDeductions";
-export * from "./application/events/InProcessEventBus";
 export * from "./application/reactions/FileReactionManager";
 
-// ─── INFRASTRUCTURE KATMANI (Veritabanı & Adaptörler) ─────────────────
+// ─── 3. DOĞRUDAN TEMİN INFRASTRUCTURE KATMANI ─────────────────────────
 export * from "./infrastructure/database/InMemoryFileRepository";
-export * from "./infrastructure/database/CollectingEventPublisher";
 export * from "./infrastructure/database/SqliteMevzuatRateProvider";
-export * from "./infrastructure/database/BetterSqliteExecutor";
-export * from "./infrastructure/database/IpcSqlExecutor";
 export * from "./infrastructure/database/TeminPreferencesStore";
+export * from "./infrastructure/database/contracts/ITeminPreferencesStore";
 export * from "./infrastructure/database/mappers/AcceptanceJsonMapper";
 export * from "./infrastructure/database/SqliteFileRepository";
 export * from "./infrastructure/database/SqliteReactionAdapters";
 export * from "./infrastructure/database/composeDirectProcurement";
-
-// ─── PERSISTENCE & CONTRACTS (Depolama Sözleşmeleri & Adaptörleri) ────
-export * from "./infrastructure/database/contracts/IDatabaseConnection";
-export * from "./infrastructure/database/contracts/IDatabaseProvider";
-export * from "./infrastructure/database/contracts/IDatabaseTransaction";
-export * from "./infrastructure/database/contracts/ITeminPreferencesStore";
-export * from "./infrastructure/persistence/contracts/IReadRepository";
-export * from "./infrastructure/persistence/contracts/IWriteRepository";
-export * from "./infrastructure/persistence/contracts/IRepository";
-export * from "./infrastructure/persistence/base/RepositoryBase";
-export * from "./infrastructure/persistence/base/ReadRepositoryBase";
-export * from "./infrastructure/persistence/base/WriteRepositoryBase";
-export * from "./infrastructure/persistence/sqlite/SQLiteReadRepository";
-export * from "./infrastructure/persistence/sqlite/SQLiteWriteRepository";
-export * from "./infrastructure/persistence/sqlite/SQLiteRepositoryBase";
-export * from "./infrastructure/persistence/prisma/repositories/PrismaRepositoryBase";
-export * from "./infrastructure/persistence/prisma/repositories/PrismaReadRepository";
-export * from "./infrastructure/persistence/prisma/repositories/PrismaWriteRepository";
-export * from "./infrastructure/persistence/memory/InMemoryRepository";
-
-// ─── COMMON (Ortak Temel Yapılar) ────────────────────────────────────
-export * from "./common";
-
-// ─── DOMAIN KATMANI ──────────────────────────────────────────────────
-export * from "./domain/shared/DomainError";
-
-// ─── TÜRKÇE METİN KATMANI (Arama, Sıralama, Normalizasyon) ───────────
-export * from "./shared/text";

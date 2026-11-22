@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@temin360/domain": "workspace:*"
+    "@temin360/domain": "workspace:*",
+    "@worksuite-360/core": "workspace:*"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

@@ -72,6 +72,8 @@
     "test": "pnpm --filter temin360-desktop test",
     "test:workspace": "pnpm --filter app-workspace test",
     "test:ecosystem": "pnpm --filter @worksuite-360/contracts test",
+    "test:core": "pnpm --filter @worksuite-360/core test",
+    "test:direct-core": "pnpm --filter @temin360/direct-procurement-core test",
     "test:contracts": "pnpm --filter @worksuite-360/contracts test",
     "test:templates": "pnpm --filter @temin360/document-templates test",
     "test:all": "pnpm test:temin && pnpm test:ihale && pnpm test:personel && pnpm test:flowdesk && pnpm test:workspace && pnpm test:contracts && pnpm test:templates && pnpm test:archive",
