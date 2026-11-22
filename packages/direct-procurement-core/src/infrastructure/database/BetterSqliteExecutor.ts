@@ -1,4 +1,4 @@
-import type { SqlExecutor, SqlStatement } from '../application/ports'
+import type { SqlExecutor, SqlStatement } from "../../application/ports";
 
 /**
  * better-sqlite3 veritabanı sürücüsünün temel arayüz tanımı.
@@ -9,12 +9,14 @@ export interface BetterSqliteLike {
    * SQL ifadesini derler.
    * @param sql - Hazırlanacak SQL sorgusu.
    */
-  prepare(sql: string): { all(...p: unknown[]): unknown[]; run(...p: unknown[]): unknown }
+  prepare(
+    sql: string,
+  ): { all(...p: unknown[]): unknown[]; run(...p: unknown[]): unknown };
   /**
    * Bir fonksiyonu veritabanı işlemi (transaction) içinde sarmalar.
    * @param fn - Yürütülecek fonksiyon.
    */
-  transaction<F extends (...a: never[]) => unknown>(fn: F): F
+  transaction<F extends (...a: never[]) => unknown>(fn: F): F;
 }
 
 /**
@@ -37,7 +39,7 @@ export class BetterSqliteExecutor implements SqlExecutor {
    * @param params - Sorgu parametreleri.
    */
   async query<T>(sql: string, params: readonly unknown[] = []): Promise<T[]> {
-    return this.db.prepare(sql).all(...params) as T[]
+    return this.db.prepare(sql).all(...params) as T[];
   }
 
   /**
@@ -46,8 +48,10 @@ export class BetterSqliteExecutor implements SqlExecutor {
    */
   async transaction(statements: readonly SqlStatement[]): Promise<void> {
     const run = this.db.transaction(() => {
-      for (const s of statements) this.db.prepare(s.sql).run(...(s.params ?? []))
-    })
-    run()
+      for (const s of statements) {
+        this.db.prepare(s.sql).run(...(s.params ?? []));
+      }
+    });
+    run();
   }
 }

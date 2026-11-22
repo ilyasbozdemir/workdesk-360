@@ -1,17 +1,22 @@
-import type { AcceptanceRecord } from '../domain/file/AcceptanceRecord'
-import type { SqlExecutor, SqlStatement } from '../application/ports'
-import { acceptancesFromJson, acceptancesToJson, type ItemRef, type KabulTutanakJson } from './mappers/AcceptanceJsonMapper'
+import type { AcceptanceRecord } from "../../domain/file/AcceptanceRecord";
+import type { SqlExecutor, SqlStatement } from "../../application/ports";
+import {
+  acceptancesFromJson,
+  acceptancesToJson,
+  type ItemRef,
+  type KabulTutanakJson,
+} from "./mappers/AcceptanceJsonMapper";
 
 /**
  * `DATA_TeminDosyasi.sablon_tercihleri` alanından okunan tercih ve tutanak verileri.
  */
 export interface PrefsRead {
   /** Dosyaya ait kabul tutanakları JSON listesi */
-  acceptances: KabulTutanakJson[]
+  acceptances: KabulTutanakJson[];
   /** Sonuç onayının verildiği tarih (varsa) */
-  resultApprovedAt?: string
+  resultApprovedAt?: string;
   /** Okunan ham değerlerin JSON imzası (değişiklik tespitinde gereksiz yazmaları önlemek için) */
-  signature: string
+  signature: string;
 }
 
 /**
@@ -39,17 +44,34 @@ export class TeminPreferencesStore {
    */
   async read(dosyaId: number): Promise<PrefsRead> {
     const [row] = await this.db.query<{ sablon_tercihleri: string | null }>(
-      'SELECT sablon_tercihleri FROM DATA_TeminDosyasi WHERE id = ?', [dosyaId])
-    let obj: Record<string, unknown> = {}
+      "SELECT sablon_tercihleri FROM DATA_TeminDosyasi WHERE id = ?",
+      [dosyaId],
+    );
+    let obj: Record<string, unknown> = {};
     try {
-      const parsed: unknown = typeof row?.sablon_tercihleri === 'string' ? JSON.parse(row.sablon_tercihleri) : {}
-      if (parsed && typeof parsed === 'object') obj = parsed as Record<string, unknown>
-    } catch { /* bozuk JSON: boş say, yazarken json_set hata verir ve işlem geri alınır */ }
+      const parsed: unknown = typeof row?.sablon_tercihleri === "string"
+        ? JSON.parse(row.sablon_tercihleri)
+        : {};
+      if (parsed && typeof parsed === "object") {
+        obj = parsed as Record<string, unknown>;
+      }
+    } catch {
 
-    const acceptances = Array.isArray(obj.kabulTutanaklari) ? (obj.kabulTutanaklari as KabulTutanakJson[]) : []
-    const onay = obj.sonucOnayDurumu as { onaylandi?: boolean; tarih?: string } | undefined
-    const resultApprovedAt = onay?.onaylandi ? (onay.tarih ?? '') : undefined
-    return { acceptances, resultApprovedAt, signature: JSON.stringify([acceptances, resultApprovedAt ?? null]) }
+      /* bozuk JSON: boş say, yazarken json_set hata verir ve işlem geri alınır */
+    }
+
+    const acceptances = Array.isArray(obj.kabulTutanaklari)
+      ? (obj.kabulTutanaklari as KabulTutanakJson[])
+      : [];
+    const onay = obj.sonucOnayDurumu as
+      | { onaylandi?: boolean; tarih?: string }
+      | undefined;
+    const resultApprovedAt = onay?.onaylandi ? (onay.tarih ?? "") : undefined;
+    return {
+      acceptances,
+      resultApprovedAt,
+      signature: JSON.stringify([acceptances, resultApprovedAt ?? null]),
+    };
   }
 
   /**
@@ -58,7 +80,7 @@ export class TeminPreferencesStore {
    * @param items - İhtiyaç kalemleri referans listesi.
    */
   toRecords(prefs: PrefsRead, items: readonly ItemRef[]): AcceptanceRecord[] {
-    return acceptancesFromJson(prefs.acceptances, items)
+    return acceptancesFromJson(prefs.acceptances, items);
   }
 
   /**
@@ -79,16 +101,25 @@ export class TeminPreferencesStore {
     resultApprovedAt: string | undefined,
     items: readonly ItemRef[],
   ): SqlStatement | undefined {
-    const nextAcc = acceptancesToJson(before.acceptances, records, items, dosyaId)
-    if (JSON.stringify([nextAcc, resultApprovedAt ?? null]) === before.signature) return undefined
+    const nextAcc = acceptancesToJson(
+      before.acceptances,
+      records,
+      items,
+      dosyaId,
+    );
+    if (
+      JSON.stringify([nextAcc, resultApprovedAt ?? null]) === before.signature
+    ) return undefined;
 
-    const onay = resultApprovedAt !== undefined ? { onaylandi: true, tarih: resultApprovedAt } : null
+    const onay = resultApprovedAt !== undefined
+      ? { onaylandi: true, tarih: resultApprovedAt }
+      : null;
     return {
       sql: `UPDATE DATA_TeminDosyasi
             SET sablon_tercihleri = json_set(COALESCE(NULLIF(sablon_tercihleri, ''), '{}'),
                   '$.kabulTutanaklari', json(?), '$.sonucOnayDurumu', json(?))
             WHERE id = ?`,
       params: [JSON.stringify(nextAcc), JSON.stringify(onay), dosyaId],
-    }
+    };
   }
 }

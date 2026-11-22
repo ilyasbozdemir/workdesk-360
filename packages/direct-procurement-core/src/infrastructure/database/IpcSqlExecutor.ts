@@ -1,7 +1,7 @@
-import type { SqlExecutor, SqlStatement } from '../application/ports'
+import type { SqlExecutor, SqlStatement } from "../../application/ports";
 
-type IpcResult = { success: boolean; data?: unknown[]; error?: string }
-type Invoke = (channel: string, ...args: unknown[]) => Promise<IpcResult>
+type IpcResult = { success: boolean; data?: unknown[]; error?: string };
+type Invoke = (channel: string, ...args: unknown[]) => Promise<IpcResult>;
 
 /**
  * Electron Renderer sürecinden Main sürece IPC üzerinden SQL sorgusu ve transaction ileten adaptör.
@@ -23,9 +23,9 @@ export class IpcSqlExecutor implements SqlExecutor {
    * @throws {Error} IPC çağrısı başarısız olursa veya veritabanı hatası dönerse fırlatılır.
    */
   async query<T>(sql: string, params: readonly unknown[] = []): Promise<T[]> {
-    const res = await this.invoke('db:query', sql, [...params])
-    if (!res?.success) throw new Error(res?.error ?? 'db:query başarısız')
-    return (res.data ?? []) as T[]
+    const res = await this.invoke("db:query", sql, [...params]);
+    if (!res?.success) throw new Error(res?.error ?? "db:query başarısız");
+    return (res.data ?? []) as T[];
   }
 
   /**
@@ -34,7 +34,12 @@ export class IpcSqlExecutor implements SqlExecutor {
    * @throws {Error} Transaction başarısız olursa fırlatılır.
    */
   async transaction(statements: readonly SqlStatement[]): Promise<void> {
-    const res = await this.invoke('db:transaction', statements.map((s) => ({ sql: s.sql, params: [...(s.params ?? [])] })))
-    if (!res?.success) throw new Error(res?.error ?? 'db:transaction başarısız')
+    const res = await this.invoke(
+      "db:transaction",
+      statements.map((s) => ({ sql: s.sql, params: [...(s.params ?? [])] })),
+    );
+    if (!res?.success) {
+      throw new Error(res?.error ?? "db:transaction başarısız");
+    }
   }
 }

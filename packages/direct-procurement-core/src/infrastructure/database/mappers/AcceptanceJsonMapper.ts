@@ -1,4 +1,4 @@
-import { AcceptanceRecord } from "../../domain/file/AcceptanceRecord";
+import { AcceptanceRecord } from "../../../domain/file/AcceptanceRecord";
 
 /**
  * Uygulamanın KabulTutanakItem biçimindeki mal kalemi JSON yapısı.

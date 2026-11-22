@@ -73,13 +73,22 @@ export * from "./application/events/InProcessEventBus";
 export * from "./application/reactions/FileReactionManager";
 
 // ─── INFRASTRUCTURE KATMANI (Veritabanı & Adaptörler) ─────────────────
-export * from "./infrastructure/InMemoryFileRepository";
-export * from "./infrastructure/CollectingEventPublisher";
-export * from "./infrastructure/SqliteMevzuatRateProvider";
-export * from "./infrastructure/BetterSqliteExecutor";
-export * from "./infrastructure/IpcSqlExecutor";
-export * from "./infrastructure/TeminPreferencesStore";
-export * from "./infrastructure/mappers/AcceptanceJsonMapper";
-export * from "./infrastructure/SqliteFileRepository";
-export * from "./infrastructure/SqliteReactionAdapters";
-export * from "./infrastructure/composeDirectProcurement";
+export * from "./infrastructure/database/InMemoryFileRepository";
+export * from "./infrastructure/database/CollectingEventPublisher";
+export * from "./infrastructure/database/SqliteMevzuatRateProvider";
+export * from "./infrastructure/database/BetterSqliteExecutor";
+export * from "./infrastructure/database/IpcSqlExecutor";
+export * from "./infrastructure/database/TeminPreferencesStore";
+export * from "./infrastructure/database/mappers/AcceptanceJsonMapper";
+export * from "./infrastructure/database/SqliteFileRepository";
+export * from "./infrastructure/database/SqliteReactionAdapters";
+export * from "./infrastructure/database/composeDirectProcurement";
+
+// ─── COMMON (Ortak Temel Yapılar) ────────────────────────────────────
+export * from "./common";
+
+// ─── DOMAIN KATMANI ──────────────────────────────────────────────────
+export * from "./domain/shared/DomainError";
+
+// ─── TÜRKÇE METİN KATMANI (Arama, Sıralama, Normalizasyon) ───────────
+export * from "./shared/text";
