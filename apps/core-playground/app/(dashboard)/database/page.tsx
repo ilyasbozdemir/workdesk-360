@@ -8,7 +8,8 @@ import {
   testDatabaseAction,
   testAuthAction,
   getRememberedCredentialsAction,
-  saveRememberedCredentialsAction
+  saveRememberedCredentialsAction,
+  testTeminPackageAction
 } from '@/app/actions'
 import {
   Database,
@@ -19,7 +20,8 @@ import {
   KeyRound,
   UserCheck,
   RotateCcw,
-  Save
+  Save,
+  PackageCheck
 } from 'lucide-react'
 
 export default function DatabasePlaygroundPage() {
@@ -145,6 +147,16 @@ export default function DatabasePlaygroundPage() {
     }
   }
 
+  const runTeminPackage = async () => {
+    setLoading(true)
+    try {
+      const res = await testTeminPackageAction()
+      setLastResult(res)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Başlık */}
@@ -157,11 +169,20 @@ export default function DatabasePlaygroundPage() {
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            IDatabaseProvider ve IDatabaseConnection sözleşmeleri üzerinden canlı SQL sorguları, kimlik doğrulama ve &quot;Beni Hatırla&quot; DB ayarlarını yönetin.
+            IDatabaseProvider ve IDatabaseConnection sözleşmeleri üzerinden canlı SQL sorguları, .temin paketi ayıklama ve &quot;Beni Hatırla&quot; DB ayarlarını yönetin.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={runTeminPackage}
+            disabled={loading}
+            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            <PackageCheck className="w-4 h-4" />
+            <span>.temin Paketini Aç (test-projesi.temin)</span>
+          </button>
+
           <button
             onClick={runAuth}
             disabled={loading}

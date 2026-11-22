@@ -6,8 +6,10 @@ import type {
   IDatabaseConnection,
   IDatabaseProvider,
   IDatabaseTransaction,
+  ITeminPackage,
   PrismaDelegate,
 } from "@worksuite-360/core";
+import { TeminPackage } from "@worksuite-360/core";
 
 // Node.js 22.5+ yerleşik node:sqlite modülünü dinamik/güvenli içe aktar
 let DatabaseSyncClass: any = null;
@@ -502,4 +504,23 @@ export function getPlaygroundPrismaClient() {
       count: (args?: any) => realPrismaClient.playgroundItem.count(args),
     } as PrismaDelegate<{ id: string; name: string; target_app?: string }, string>,
   };
+}
+
+/**
+ * .temin paketini doğrudan açıp içindeki SQLite veritabanına erişim sağlar.
+ */
+export async function openTeminPackage(filePath?: string): Promise<ITeminPackage> {
+  const candidates = [
+    filePath,
+    path.resolve(process.cwd(), "tests/fixtures/temin/files/test-projesi.temin"),
+    path.resolve(process.cwd(), "../../tests/fixtures/temin/files/test-projesi.temin"),
+    path.resolve(process.cwd(), "test-projesi.temin"),
+  ].filter(Boolean) as string[];
+
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      return TeminPackage.open(c);
+    }
+  }
+  throw new Error("Geçerli bir .temin arşiv dosyası bulunamadı.");
 }

@@ -17,11 +17,12 @@ import {
   ValidationError,
 } from "@/lib/core";
 import {
+  getActiveDbPath,
   getPlaygroundConnection,
   getPlaygroundPrismaClient,
   getPlaygroundProvider,
   PlaygroundDatabaseTransaction,
-  getActiveDbPath,
+  openTeminPackage,
 } from "@/lib/database/playgroundDb";
 import {
   executePlaygroundTest,
@@ -29,42 +30,38 @@ import {
 } from "@/lib/test-utils/runTest";
 
 // Concrete SQLite repositories for playground table
-class PlaygroundSqliteReadRepo
-  extends SQLiteReadRepository<
-    { id: string; name: string; target_app?: string },
-    string
-  > {
+class PlaygroundSqliteReadRepo extends SQLiteReadRepository<
+  { id: string; name: string; target_app?: string },
+  string
+> {
   constructor(conn: IDatabaseConnection) {
     super(conn, "playground_items");
   }
 }
 
-class PlaygroundSqliteWriteRepo
-  extends SQLiteWriteRepository<
-    { id: string; name: string; target_app?: string },
-    string
-  > {
+class PlaygroundSqliteWriteRepo extends SQLiteWriteRepository<
+  { id: string; name: string; target_app?: string },
+  string
+> {
   constructor(conn: IDatabaseConnection) {
     super(conn, "playground_items");
   }
 }
 
 // Concrete Prisma repositories for playground table
-class PlaygroundPrismaReadRepo
-  extends PrismaReadRepository<
-    { id: string; name: string; target_app?: string },
-    string
-  > {
+class PlaygroundPrismaReadRepo extends PrismaReadRepository<
+  { id: string; name: string; target_app?: string },
+  string
+> {
   constructor(delegate: any) {
     super(delegate, "Item");
   }
 }
 
-class PlaygroundPrismaWriteRepo
-  extends PrismaWriteRepository<
-    { id: string; name: string; target_app?: string },
-    string
-  > {
+class PlaygroundPrismaWriteRepo extends PrismaWriteRepository<
+  { id: string; name: string; target_app?: string },
+  string
+> {
   constructor(delegate: any) {
     super(delegate, "Item");
   }
@@ -335,25 +332,31 @@ export async function getRememberedCredentialsAction(): Promise<
     database: string;
   }>
 > {
-  return executePlaygroundTest("Auth -> Get Remembered Credentials from DB", async () => {
-    const conn = await getPlaygroundProvider().getConnection();
-    const rows = await conn.query<{ key: string; value: string }>(
-      "SELECT key, value FROM settings WHERE key IN ('adminUsername', 'rememberMe', 'rememberedUsername', 'rememberedPassword')",
-    );
-    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  return executePlaygroundTest(
+    "Auth -> Get Remembered Credentials from DB",
+    async () => {
+      const conn = await getPlaygroundProvider().getConnection();
+      const rows = await conn.query<{ key: string; value: string }>(
+        "SELECT key, value FROM settings WHERE key IN ('adminUsername', 'rememberMe', 'rememberedUsername', 'rememberedPassword')",
+      );
+      const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
 
-    const rememberMe = map["rememberMe"] === "true";
-    const rememberedUsername = map["rememberedUsername"] || map["adminUsername"] || "";
-    const rememberedPassword = rememberMe ? map["rememberedPassword"] || "" : "";
+      const rememberMe = map["rememberMe"] === "true";
+      const rememberedUsername = map["rememberedUsername"] ||
+        map["adminUsername"] || "";
+      const rememberedPassword = rememberMe
+        ? map["rememberedPassword"] || ""
+        : "";
 
-    return {
-      rememberMe,
-      rememberedUsername,
-      rememberedPassword,
-      adminUsername: map["adminUsername"] || "",
-      database: getActiveDbPath(),
-    };
-  });
+      return {
+        rememberMe,
+        rememberedUsername,
+        rememberedPassword,
+        adminUsername: map["adminUsername"] || "",
+        database: getActiveDbPath(),
+      };
+    },
+  );
 }
 
 export async function saveRememberedCredentialsAction(params: {
@@ -455,7 +458,9 @@ export async function testAuthAction(
       authenticated: matchedUser && verified,
       role: "admin",
       institution: map["institutionName"] || "Acme Corporation",
-      rememberMe: typeof rememberMe === "boolean" ? rememberMe : map["rememberMe"] === "true",
+      rememberMe: typeof rememberMe === "boolean"
+        ? rememberMe
+        : map["rememberMe"] === "true",
       database: getActiveDbPath(),
     };
   });
@@ -476,7 +481,11 @@ export async function testTransactionAction(
     const tempId = createEntityId("tx_item");
     const steps: any[] = [];
 
-    steps.push({ step: 1, action: "BEGIN (SQLite Savepoint / Transaction)", txActive: tx.isActive });
+    steps.push({
+      step: 1,
+      action: "BEGIN (SQLite Savepoint / Transaction)",
+      txActive: tx.isActive,
+    });
 
     // Insert into table within transaction
     await tx.execute(
@@ -637,4 +646,60 @@ export async function testErrorAction(
 
     throw errorToThrow;
   });
+}
+
+/**
+ * 6. TEMIN PACKAGE (.temin ARŞİVİ VE İÇİNDEKİ DATABASE.SQLITE) TEST ACTION
+ */
+export async function testTeminPackageAction(
+  filePath?: string,
+): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(
+    "TeminPackage -> .temin Arşivi ve SQLite Veritabanı Ayıklama",
+    async () => {
+      const pkg = await openTeminPackage(filePath);
+
+      try {
+        const meta = pkg.meta;
+        const dbPath = pkg.getDatabasePath();
+        const prismaUrl = pkg.getPrismaDatasourceUrl();
+        const attachments = pkg.attachments;
+
+        // Ayıklanan database.sqlite üzerinden doğrudan canlı SQL sorgusu
+        const conn = await pkg.getConnection();
+        const settings = await conn.query<{ key: string; value: string }>(
+          "SELECT key, value FROM settings WHERE key IN ('adminUsername', 'institutionName', 'dbVersion', 'rememberMe')",
+        );
+        const settingsMap = Object.fromEntries(
+          settings.map((r) => [r.key, r.value]),
+        );
+
+        let filesCount = 0;
+        try {
+          const countRes = await conn.query<{ count: number }>(
+            "SELECT count(*) as count FROM DATA_TeminDosyasi",
+          );
+          filesCount = Number(countRes[0]?.count || 0);
+        } catch {}
+
+        return {
+          archivePath: pkg.filePath,
+          activeDbFileName: pkg.activeDbFileName,
+          extractedDbPath: dbPath,
+          prismaDatasourceUrl: prismaUrl,
+          meta: {
+            projectId: meta.project_id,
+            institution: meta.institution,
+            appVersion: meta.app_version,
+            createdAt: meta.created_at,
+          },
+          attachmentsCount: attachments.length,
+          databaseSettings: settingsMap,
+          totalFilesInData: filesCount,
+        };
+      } finally {
+        await pkg.close();
+      }
+    },
+  );
 }

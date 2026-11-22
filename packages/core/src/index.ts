@@ -31,9 +31,11 @@ export * from "./domain/DomainError";
 export * from "./database/contracts/IDatabaseConnection";
 export * from "./database/contracts/IDatabaseProvider";
 export * from "./database/contracts/IDatabaseTransaction";
+export * from "./database/contracts/ITeminPackage";
 export * from "./database/contracts/ISqlExecutor";
 export * from "./database/sqlite/BetterSqliteExecutor";
 export * from "./database/sqlite/IpcSqlExecutor";
+export * from "./database/temin/TeminPackage";
 
 // 5. Persistence ve Repository Mimarisi
 export * from "./persistence/contracts/IReadRepository";
