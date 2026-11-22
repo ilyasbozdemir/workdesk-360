@@ -21,6 +21,7 @@ export * from "@worksuite-360/core";
 // ─── 1. DOĞRUDAN TEMİN DOMAIN KATMANI (Saf İş Mantığı) ─────────────────
 export * from "./domain/money";
 export * from "./domain/numeric";
+export * from "./domain/procurement-file";
 export * from "./domain/file/DirectProcurementFile";
 export * from "./domain/file/NeedItem";
 export * from "./domain/file/Bidder";
