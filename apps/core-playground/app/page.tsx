@@ -101,6 +101,99 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Canlı Temin 360 Veritabanı Sayaçları */}
+      {teminStats && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TableProperties className="w-4 h-4 text-purple-600" />
+              <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Canlı Temin 360 Veritabanı Durumu (.temin / test-projesi.sqlite)
+              </h3>
+            </div>
+            <Link
+              href="/live-data"
+              className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-semibold"
+            >
+              <span>Tablo Yöneticisini Aç</span>
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <Link
+              href="/live-data"
+              className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700 transition-all shadow-2xs"
+            >
+              <div className="flex items-center justify-between text-slate-500 text-xs">
+                <span>Temin Dosyaları</span>
+                <FolderOpen className="w-3.5 h-3.5 text-blue-500" />
+              </div>
+              <div className="mt-1.5 text-lg font-bold text-slate-900 dark:text-slate-100">
+                {teminStats.totalDosya}
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">DATA_TeminDosyasi</div>
+            </Link>
+
+            <Link
+              href="/live-data"
+              className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700 transition-all shadow-2xs"
+            >
+              <div className="flex items-center justify-between text-slate-500 text-xs">
+                <span>Tedarikçi Firma</span>
+                <Building2 className="w-3.5 h-3.5 text-emerald-500" />
+              </div>
+              <div className="mt-1.5 text-lg font-bold text-slate-900 dark:text-slate-100">
+                {teminStats.totalFirma}
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">TANIM_Firma</div>
+            </Link>
+
+            <Link
+              href="/live-data"
+              className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700 transition-all shadow-2xs"
+            >
+              <div className="flex items-center justify-between text-slate-500 text-xs">
+                <span>Personel</span>
+                <Users className="w-3.5 h-3.5 text-purple-500" />
+              </div>
+              <div className="mt-1.5 text-lg font-bold text-slate-900 dark:text-slate-100">
+                {teminStats.totalPersonel}
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">TANIM_Personel</div>
+            </Link>
+
+            <Link
+              href="/live-data"
+              className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700 transition-all shadow-2xs"
+            >
+              <div className="flex items-center justify-between text-slate-500 text-xs">
+                <span>Kalem İhtiyacı</span>
+                <Package className="w-3.5 h-3.5 text-amber-500" />
+              </div>
+              <div className="mt-1.5 text-lg font-bold text-slate-900 dark:text-slate-100">
+                {teminStats.totalKalem}
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">DATA_TeminKalem</div>
+            </Link>
+
+            <Link
+              href="/live-data"
+              className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-300 dark:hover:border-purple-700 transition-all shadow-2xs"
+            >
+              <div className="flex items-center justify-between text-slate-500 text-xs">
+                <span>Sistem Ayarları</span>
+                <Database className="w-3.5 h-3.5 text-rose-500" />
+              </div>
+              <div className="mt-1.5 text-lg font-bold text-slate-900 dark:text-slate-100">
+                {teminStats.totalSettings}
+              </div>
+              <div className="text-[10px] text-slate-400 font-mono">settings (Acme DB)</div>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Duman Testi Çıktısı (varsa) */}
       {quickTestResult && (
         <div className="space-y-2">
@@ -220,6 +313,31 @@ export default function DashboardPage() {
               </h4>
               <p className="text-xs text-slate-500 mt-1">
                 IDatabaseConnection ve IDatabaseProvider sözleşmeleriyle SQL query, execute ve connection lifecycle.
+              </p>
+            </div>
+          </Link>
+
+          <Link
+            href="/live-data"
+            className="group p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-purple-400 dark:hover:border-purple-600 transition-all shadow-xs space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center">
+                <TableProperties className="w-5 h-5" />
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Canlı Temin 360 Tabloları
+                </h4>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+                  Canlı DB
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                DATA_TeminDosyasi, TANIM_Firma, TANIM_Personel, DATA_TeminKalem ve settings tablolarını canlı izleyin ve yönetin.
               </p>
             </div>
           </Link>
