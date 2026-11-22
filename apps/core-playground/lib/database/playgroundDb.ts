@@ -1,3 +1,5 @@
+import path from "node:path";
+import fs from "node:fs";
 import type {
   IDatabaseConnection,
   DatabaseExecutionResult,
@@ -14,10 +16,44 @@ try {
   const sqlite = require("node:sqlite");
   DatabaseSyncClass = sqlite.DatabaseSync;
 } catch {
-  // Ortamda node:sqlite yoksa veya bundler engelliyorsa fallback devreye girer
+  // Ortamda node:sqlite yoksa fallback devreye girer
 }
 
-let memoryDbInstance: any = null;
+let activeDbInstance: any = null;
+let activeDbPath: string | null = null;
+
+function resolveFixtureDbPath(): string | null {
+  const candidates = [
+    path.resolve(process.cwd(), "tests/fixtures/temin/files/test-projesi.sqlite"),
+    path.resolve(process.cwd(), "../../tests/fixtures/temin/files/test-projesi.sqlite"),
+    path.resolve(process.cwd(), "test-projesi.sqlite"),
+    path.resolve(process.cwd(), "tests/fixtures/temin/files/test-projesi.temin"),
+    path.resolve(process.cwd(), "../../tests/fixtures/temin/files/test-projesi.temin"),
+  ];
+
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      if (c.endsWith(".temin")) {
+        const extracted = c.replace(/\.temin$/, ".sqlite");
+        if (!fs.existsSync(extracted)) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const cp = require("node:child_process");
+            cp.execSync(`tar -xf "${c}" database.sqlite`, { cwd: path.dirname(c) });
+            const defaultDb = path.join(path.dirname(c), "database.sqlite");
+            if (fs.existsSync(defaultDb)) {
+              fs.renameSync(defaultDb, extracted);
+            }
+          } catch {}
+        }
+        if (fs.existsSync(extracted)) return extracted;
+      } else {
+        return c;
+      }
+    }
+  }
+  return null;
+}
 
 function createInMemoryFallback() {
   const table = new Map<string, { id: string; name: string; target_app: string; created_at: string }>([
@@ -87,11 +123,20 @@ function createInMemoryFallback() {
 }
 
 export function getPlaygroundRawDb() {
-  if (!memoryDbInstance) {
+  if (!activeDbInstance) {
     try {
       if (DatabaseSyncClass) {
-        memoryDbInstance = new DatabaseSyncClass(":memory:");
-        memoryDbInstance.exec(`
+        const fixtureDb = resolveFixtureDbPath();
+        if (fixtureDb && fs.existsSync(fixtureDb)) {
+          activeDbInstance = new DatabaseSyncClass(fixtureDb);
+          activeDbPath = fixtureDb;
+        } else {
+          activeDbInstance = new DatabaseSyncClass(":memory:");
+          activeDbPath = ":memory:";
+        }
+
+        // 1. Ensure playground_items exists
+        activeDbInstance.exec(`
           CREATE TABLE IF NOT EXISTS playground_items (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -101,24 +146,45 @@ export function getPlaygroundRawDb() {
           INSERT INTO playground_items (id, name, target_app) VALUES
             ('item-1', 'John Doe', 'temin360-desktop'),
             ('item-2', 'John Deere', 'temin360-desktop'),
-            ('item-3', 'Jane Roe', 'app-web');
+            ('item-3', 'Jane Roe', 'app-web')
+          ON CONFLICT(id) DO NOTHING;
+        `);
+
+        // 2. Ensure Acme credentials in settings
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const crypto = require("node:crypto");
+        const salt = crypto.randomBytes(16).toString("hex");
+        const hash = crypto.scryptSync("AcmeAcme", salt, 64).toString("hex");
+        const passwordHash = `scrypt$${salt}$${hash}`;
+
+        activeDbInstance.exec(`
+          INSERT OR REPLACE INTO settings (key, value) VALUES ('adminUsername', 'Acme');
+          INSERT OR REPLACE INTO settings (key, value) VALUES ('adminPassword', '${passwordHash}');
+          INSERT OR REPLACE INTO settings (key, value) VALUES ('adminName', 'Acme');
+          INSERT OR REPLACE INTO settings (key, value) VALUES ('institutionName', 'Acme Corporation');
         `);
       } else {
-        memoryDbInstance = createInMemoryFallback();
+        activeDbInstance = createInMemoryFallback();
       }
     } catch {
-      memoryDbInstance = createInMemoryFallback();
+      activeDbInstance = createInMemoryFallback();
     }
   }
-  return memoryDbInstance;
+  return activeDbInstance;
+}
+
+export function getActiveDbPath(): string {
+  if (!activeDbPath) getPlaygroundRawDb();
+  return activeDbPath || "test-projesi.sqlite (Fixture DB)";
 }
 
 export function resetPlaygroundDb() {
-  if (memoryDbInstance) {
+  if (activeDbInstance) {
     try {
-      memoryDbInstance.close();
+      activeDbInstance.close();
     } catch {}
-    memoryDbInstance = null;
+    activeDbInstance = null;
+    activeDbPath = null;
   }
 }
 

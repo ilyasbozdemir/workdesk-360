@@ -4,8 +4,8 @@ import React, { useState } from 'react'
 import { ActionCard } from '@/components/playground/ActionCard'
 import { ResultDisplay } from '@/components/test-results/ResultDisplay'
 import { useTargetApp } from '@/components/layout/AppContext'
-import { testDatabaseAction } from '@/app/actions'
-import { Database, Terminal, Play, CheckCircle2, ShieldCheck } from 'lucide-react'
+import { testDatabaseAction, testAuthAction } from '@/app/actions'
+import { Database, Terminal, Play, CheckCircle2, ShieldCheck, KeyRound } from 'lucide-react'
 
 export default function DatabasePlaygroundPage() {
   const { profile } = useTargetApp()
@@ -20,6 +20,16 @@ export default function DatabasePlaygroundPage() {
     setLoading(true)
     try {
       const res = await testDatabaseAction('health')
+      setLastResult(res)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const runAuth = async () => {
+    setLoading(true)
+    try {
+      const res = await testAuthAction('Acme', 'AcmeAcme')
       setLastResult(res)
     } finally {
       setLoading(false)
@@ -63,14 +73,25 @@ export default function DatabasePlaygroundPage() {
           </p>
         </div>
 
-        <button
-          onClick={runHealth}
-          disabled={loading}
-          className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
-        >
-          <CheckCircle2 className="w-4 h-4" />
-          <span>Bağlantı Sağlık Kontrolü</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={runAuth}
+            disabled={loading}
+            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            <KeyRound className="w-4 h-4" />
+            <span>Acme Girişini Doğrula (Acme/AcmeAcme)</span>
+          </button>
+
+          <button
+            onClick={runHealth}
+            disabled={loading}
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Bağlantı Sağlık Kontrolü</span>
+          </button>
+        </div>
       </div>
 
       {/* Profil Detayı */}
@@ -103,35 +124,57 @@ export default function DatabasePlaygroundPage() {
               <button
                 type="button"
                 onClick={() => {
+                  const s = 'SELECT id, temin_no, konu, yaklasik_maliyet, tur FROM DATA_TeminDosyasi'
+                  setSqlQuery(s)
+                  runQuery(s)
+                }}
+                className="text-[10px] px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-semibold hover:bg-blue-200 cursor-pointer"
+              >
+                Dosyalar (DATA_TeminDosyasi)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const s = 'SELECT id, unvan, vergi_no, telefon FROM TANIM_Firma'
+                  setSqlQuery(s)
+                  runQuery(s)
+                }}
+                className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-semibold hover:bg-emerald-200 cursor-pointer"
+              >
+                Firmalar (TANIM_Firma)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const s = 'SELECT id, ad_soyad, unvan, eposta FROM TANIM_Personel'
+                  setSqlQuery(s)
+                  runQuery(s)
+                }}
+                className="text-[10px] px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 font-semibold hover:bg-purple-200 cursor-pointer"
+              >
+                Personel (TANIM_Personel)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const s = 'SELECT key, value FROM settings WHERE key IN ("adminUsername", "adminName", "institutionName")'
+                  setSqlQuery(s)
+                  runQuery(s)
+                }}
+                className="text-[10px] px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-semibold hover:bg-amber-200 cursor-pointer"
+              >
+                Ayarlar (settings)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   const s = 'SELECT * FROM playground_items ORDER BY id ASC'
                   setSqlQuery(s)
                   runQuery(s)
                 }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 cursor-pointer"
+                className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
               >
-                Tümünü Listele
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'SELECT COUNT(*) as toplam, target_app FROM playground_items GROUP BY target_app'
-                  setSqlQuery(s)
-                  runQuery(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 cursor-pointer"
-              >
-                Grupla
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'SELECT id, name, LENGTH(name) as len FROM playground_items WHERE name LIKE "%John%"'
-                  setSqlQuery(s)
-                  runQuery(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-blue-100 cursor-pointer"
-              >
-                Filtrele: John Deere
+                Playground Items
               </button>
             </div>
 
@@ -159,6 +202,30 @@ export default function DatabasePlaygroundPage() {
           description="Etkilenen satır sayısını (affectedRows) döndüren DML sorgularını çalıştırır."
         >
           <div className="space-y-3">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] text-slate-500 font-semibold">Örnek Ekleme:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const s = 'INSERT INTO TANIM_Firma (unvan, vergi_no, telefon) VALUES ("Acme Test Ortaklığı A.Ş.", "3344556677", "0212 333 4455")'
+                  setExecuteSql(s)
+                }}
+                className="text-[10px] px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-semibold hover:bg-blue-200 cursor-pointer"
+              >
+                Firma Ekle
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const s = 'INSERT INTO DATA_TeminDosyasi (temin_no, konu, yaklasik_maliyet, tur) VALUES ("2026/88", "Acme Lisans ve Destek Hizmeti", 90000.00, "hizmet")'
+                  setExecuteSql(s)
+                }}
+                className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-semibold hover:bg-emerald-200 cursor-pointer"
+              >
+                Dosya Ekle
+              </button>
+            </div>
+
             <textarea
               rows={4}
               value={executeSql}

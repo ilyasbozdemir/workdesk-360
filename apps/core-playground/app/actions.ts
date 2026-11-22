@@ -21,6 +21,7 @@ import {
   getPlaygroundPrismaClient,
   getPlaygroundProvider,
   PlaygroundDatabaseTransaction,
+  getActiveDbPath,
 } from "@/lib/database/playgroundDb";
 import {
   executePlaygroundTest,
@@ -271,10 +272,23 @@ export async function testDatabaseAction(
         const rows = await conn.query(
           'SELECT 1 as is_alive, datetime("now") as server_time',
         );
+        let settingsInfo: any[] = [];
+        try {
+          settingsInfo = await conn.query(
+            "SELECT key, value FROM settings WHERE key IN ('adminUsername', 'adminName', 'institutionName')",
+          );
+        } catch {}
         return {
           status: "CONNECTED",
           provider: "PlaygroundDatabaseProvider",
-          engine: "SQLite (node:sqlite / memory)",
+          databasePath: getActiveDbPath(),
+          engine: "SQLite (test-projesi.temin / test-projesi.sqlite)",
+          credentials: {
+            username: "Acme",
+            passwordConfigured: true,
+            institution: "Acme Corporation",
+          },
+          settings: settingsInfo,
           result: rows,
         };
       }
@@ -307,6 +321,44 @@ export async function testDatabaseAction(
       throw new Error(`Bilinmeyen işlem: ${operation}`);
     },
   );
+}
+
+/**
+ * 2.1 AUTH / CREDENTIAL VERIFICATION ACTION
+ */
+export async function testAuthAction(
+  username: string = "Acme",
+  password: string = "AcmeAcme",
+): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(`Auth Verification -> ${username}`, async () => {
+    const conn = await getPlaygroundProvider().getConnection();
+    const rows = await conn.query<{ key: string; value: string }>(
+      "SELECT key, value FROM settings WHERE key IN ('adminUsername', 'adminPassword', 'institutionName')",
+    );
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    const matchedUser = map["adminUsername"] === username;
+
+    const stored = map["adminPassword"];
+    let verified = false;
+    if (stored && stored.startsWith("scrypt$")) {
+      const [, salt, hash] = stored.split("$");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const crypto = require("node:crypto");
+      const expected = Buffer.from(hash, "hex");
+      const actual = crypto.scryptSync(password, salt, expected.length);
+      verified = crypto.timingSafeEqual(expected, actual);
+    }
+
+    return {
+      username,
+      userFound: matchedUser,
+      passwordValid: verified,
+      authenticated: matchedUser && verified,
+      role: "admin",
+      institution: map["institutionName"] || "Acme Corporation",
+      database: getActiveDbPath(),
+    };
+  });
 }
 
 /**
