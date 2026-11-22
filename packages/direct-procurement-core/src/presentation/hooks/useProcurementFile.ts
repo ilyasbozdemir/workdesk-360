@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useState } from "react";
 import type { ProcurementFileDto } from "../../application/dto/procurement-file/ProcurementFileDto";
 

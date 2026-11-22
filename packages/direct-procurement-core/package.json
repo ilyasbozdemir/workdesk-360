@@ -8,6 +8,7 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./hooks": "./src/presentation/hooks/index.ts",
     "./text": "./src/shared/text/index.ts"
   },
   "scripts": {

@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useState } from "react";
 import type { CommissionMemberDto } from "../../application/dto/commission/CommissionDto";
 
