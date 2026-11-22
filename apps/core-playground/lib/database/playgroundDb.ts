@@ -24,11 +24,23 @@ let activeDbPath: string | null = null;
 
 function resolveFixtureDbPath(): string | null {
   const candidates = [
-    path.resolve(process.cwd(), "tests/fixtures/temin/files/test-projesi.sqlite"),
-    path.resolve(process.cwd(), "../../tests/fixtures/temin/files/test-projesi.sqlite"),
+    path.resolve(
+      process.cwd(),
+      "tests/fixtures/temin/files/test-projesi.sqlite",
+    ),
+    path.resolve(
+      process.cwd(),
+      "../../tests/fixtures/temin/files/test-projesi.sqlite",
+    ),
     path.resolve(process.cwd(), "test-projesi.sqlite"),
-    path.resolve(process.cwd(), "tests/fixtures/temin/files/test-projesi.temin"),
-    path.resolve(process.cwd(), "../../tests/fixtures/temin/files/test-projesi.temin"),
+    path.resolve(
+      process.cwd(),
+      "tests/fixtures/temin/files/test-projesi.temin",
+    ),
+    path.resolve(
+      process.cwd(),
+      "../../tests/fixtures/temin/files/test-projesi.temin",
+    ),
   ];
 
   for (const c of candidates) {
@@ -39,7 +51,9 @@ function resolveFixtureDbPath(): string | null {
           try {
             // eslint-disable-next-line @typescript-eslint/no-require-imports
             const cp = require("node:child_process");
-            cp.execSync(`tar -xf "${c}" database.sqlite`, { cwd: path.dirname(c) });
+            cp.execSync(`tar -xf "${c}" database.sqlite`, {
+              cwd: path.dirname(c),
+            });
             const defaultDb = path.join(path.dirname(c), "database.sqlite");
             if (fs.existsSync(defaultDb)) {
               fs.renameSync(defaultDb, extracted);
