@@ -15,6 +15,7 @@ const allowedChannels = new Set([
   'db:save-settings',
   'db:check-auth-setup',
   'db:setup-auth',
+  'db:set-remember-me',
   'db:get-password-history',
   'system:get-pc-info',
   'db:send-recovery-email',

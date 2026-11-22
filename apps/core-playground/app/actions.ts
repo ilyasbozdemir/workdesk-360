@@ -324,16 +324,91 @@ export async function testDatabaseAction(
 }
 
 /**
- * 2.1 AUTH / CREDENTIAL VERIFICATION ACTION
+ * 2.1 AUTH & REMEMBER ME / CREDENTIAL VERIFICATION ACTIONS
  */
+export async function getRememberedCredentialsAction(): Promise<
+  TestRunResult<{
+    rememberMe: boolean;
+    rememberedUsername: string;
+    rememberedPassword: string;
+    adminUsername: string;
+    database: string;
+  }>
+> {
+  return executePlaygroundTest("Auth -> Get Remembered Credentials from DB", async () => {
+    const conn = await getPlaygroundProvider().getConnection();
+    const rows = await conn.query<{ key: string; value: string }>(
+      "SELECT key, value FROM settings WHERE key IN ('adminUsername', 'rememberMe', 'rememberedUsername', 'rememberedPassword')",
+    );
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+
+    const rememberMe = map["rememberMe"] === "true";
+    const rememberedUsername = map["rememberedUsername"] || map["adminUsername"] || "";
+    const rememberedPassword = rememberMe ? map["rememberedPassword"] || "" : "";
+
+    return {
+      rememberMe,
+      rememberedUsername,
+      rememberedPassword,
+      adminUsername: map["adminUsername"] || "",
+      database: getActiveDbPath(),
+    };
+  });
+}
+
+export async function saveRememberedCredentialsAction(params: {
+  username: string;
+  password?: string;
+  rememberMe: boolean;
+}): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(
+    `Auth -> Save Remember Me (${params.rememberMe ? "Aktif" : "Pasif"}) to DB`,
+    async () => {
+      const conn = await getPlaygroundProvider().getConnection();
+      if (params.rememberMe) {
+        await conn.execute(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberMe', 'true')",
+        );
+        await conn.execute(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberedUsername', ?)",
+          [params.username],
+        );
+        if (params.password) {
+          await conn.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberedPassword', ?)",
+            [params.password],
+          );
+        }
+      } else {
+        await conn.execute(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberMe', 'false')",
+        );
+        await conn.execute(
+          "DELETE FROM settings WHERE key IN ('rememberedPassword')",
+        );
+      }
+
+      const rows = await conn.query<{ key: string; value: string }>(
+        "SELECT key, value FROM settings WHERE key IN ('rememberMe', 'rememberedUsername', 'rememberedPassword')",
+      );
+      return {
+        updated: true,
+        currentSettings: Object.fromEntries(rows.map((r) => [r.key, r.value])),
+        database: getActiveDbPath(),
+      };
+    },
+  );
+}
+
 export async function testAuthAction(
   username: string = "Acme",
   password: string = "AcmeAcme",
+  rememberMe?: boolean,
 ): Promise<TestRunResult<any>> {
   return executePlaygroundTest(`Auth Verification -> ${username}`, async () => {
     const conn = await getPlaygroundProvider().getConnection();
     const rows = await conn.query<{ key: string; value: string }>(
-      "SELECT key, value FROM settings WHERE key IN ('adminUsername', 'adminPassword', 'institutionName')",
+      "SELECT key, value FROM settings WHERE key IN ('adminUsername', 'adminPassword', 'institutionName', 'rememberMe', 'rememberedUsername', 'rememberedPassword')",
     );
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
     const matchedUser = map["adminUsername"] === username;
@@ -349,6 +424,30 @@ export async function testAuthAction(
       verified = crypto.timingSafeEqual(expected, actual);
     }
 
+    // Beni Hatırla DB senkronizasyonu
+    if (matchedUser && verified && typeof rememberMe === "boolean") {
+      if (rememberMe) {
+        await conn.execute(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberMe', 'true')",
+        );
+        await conn.execute(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberedUsername', ?)",
+          [username],
+        );
+        await conn.execute(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberedPassword', ?)",
+          [password],
+        );
+      } else {
+        await conn.execute(
+          "INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberMe', 'false')",
+        );
+        await conn.execute(
+          "DELETE FROM settings WHERE key IN ('rememberedPassword')",
+        );
+      }
+    }
+
     return {
       username,
       userFound: matchedUser,
@@ -356,6 +455,7 @@ export async function testAuthAction(
       authenticated: matchedUser && verified,
       role: "admin",
       institution: map["institutionName"] || "Acme Corporation",
+      rememberMe: typeof rememberMe === "boolean" ? rememberMe : map["rememberMe"] === "true",
       database: getActiveDbPath(),
     };
   });

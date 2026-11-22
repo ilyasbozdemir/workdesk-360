@@ -1,12 +1,12 @@
 import path from "node:path";
 import fs from "node:fs";
 import type {
-  IDatabaseConnection,
   DatabaseExecutionResult,
   DatabaseQueryParameters,
+  IDatabaseConnection,
   IDatabaseProvider,
   IDatabaseTransaction,
-  PrismaDelegate
+  PrismaDelegate,
 } from "@worksuite-360/core";
 
 // Node.js 22.5+ yerleşik node:sqlite modülünü dinamik/güvenli içe aktar
@@ -56,10 +56,28 @@ function resolveFixtureDbPath(): string | null {
 }
 
 function createInMemoryFallback() {
-  const table = new Map<string, { id: string; name: string; target_app: string; created_at: string }>([
-    ['item-1', { id: 'item-1', name: 'John Doe', target_app: 'temin360-desktop', created_at: new Date().toISOString() }],
-    ['item-2', { id: 'item-2', name: 'John Deere', target_app: 'temin360-desktop', created_at: new Date().toISOString() }],
-    ['item-3', { id: 'item-3', name: 'Jane Roe', target_app: 'app-web', created_at: new Date().toISOString() }],
+  const table = new Map<
+    string,
+    { id: string; name: string; target_app: string; created_at: string }
+  >([
+    ["item-1", {
+      id: "item-1",
+      name: "John Doe",
+      target_app: "temin360-desktop",
+      created_at: new Date().toISOString(),
+    }],
+    ["item-2", {
+      id: "item-2",
+      name: "John Deere",
+      target_app: "temin360-desktop",
+      created_at: new Date().toISOString(),
+    }],
+    ["item-3", {
+      id: "item-3",
+      name: "Jane Roe",
+      target_app: "app-web",
+      created_at: new Date().toISOString(),
+    }],
   ]);
 
   return {
@@ -67,34 +85,40 @@ function createInMemoryFallback() {
     prepare: (sql: string) => ({
       all: (...params: any[]) => {
         const lower = sql.toLowerCase();
-        if (lower.includes('is_alive')) {
+        if (lower.includes("is_alive")) {
           return [{ is_alive: 1, server_time: new Date().toISOString() }];
         }
-        if (lower.includes('count(*)')) {
-          return [{ toplam: table.size, target_app: 'temin360-desktop' }];
+        if (lower.includes("count(*)")) {
+          return [{ toplam: table.size, target_app: "temin360-desktop" }];
         }
         const items = Array.from(table.values());
-        if (lower.includes('where id =') || lower.includes('where id=?')) {
-          const id = params[0] || (sql.match(/id\s*=\s*['"]([^'"]+)['"]/i)?.[1]);
-          return items.filter(x => x.id === id);
+        if (lower.includes("where id =") || lower.includes("where id=?")) {
+          const id = params[0] ||
+            (sql.match(/id\s*=\s*['"]([^'"]+)['"]/i)?.[1]);
+          return items.filter((x) => x.id === id);
         }
-        if (lower.includes('like')) {
+        if (lower.includes("like")) {
           const rawMatch = sql.match(/like\s*['"]%([^%]+)%['"]/i)?.[1];
-          const term = String(params[0] || rawMatch || '').toLowerCase();
-          return items.filter(x => x.name.toLowerCase().includes(term));
+          const term = String(params[0] || rawMatch || "").toLowerCase();
+          return items.filter((x) => x.name.toLowerCase().includes(term));
         }
         return items;
       },
       run: (...params: any[]) => {
         const lower = sql.toLowerCase();
-        if (lower.startsWith('insert into')) {
+        if (lower.startsWith("insert into")) {
           const id = params[0] || `item-${Date.now()}`;
-          const name = params[1] || 'New Item';
-          const target_app = params[2] || 'temin360-desktop';
-          table.set(id, { id, name, target_app, created_at: new Date().toISOString() });
+          const name = params[1] || "New Item";
+          const target_app = params[2] || "temin360-desktop";
+          table.set(id, {
+            id,
+            name,
+            target_app,
+            created_at: new Date().toISOString(),
+          });
           return { changes: 1, lastInsertRowid: table.size };
         }
-        if (lower.startsWith('update')) {
+        if (lower.startsWith("update")) {
           const name = params[0];
           const id = params[1];
           const item = table.get(id);
@@ -104,21 +128,22 @@ function createInMemoryFallback() {
           }
           return { changes: 0, lastInsertRowid: 0 };
         }
-        if (lower.startsWith('delete from')) {
+        if (lower.startsWith("delete from")) {
           if (lower.includes("like 'tx_%'")) {
             for (const key of Array.from(table.keys())) {
-              if (key.startsWith('tx_')) table.delete(key);
+              if (key.startsWith("tx_")) table.delete(key);
             }
             return { changes: 1, lastInsertRowid: 0 };
           }
-          const id = params[0] || (sql.match(/id\s*=\s*['"]([^'"]+)['"]/i)?.[1]);
+          const id = params[0] ||
+            (sql.match(/id\s*=\s*['"]([^'"]+)['"]/i)?.[1]);
           const deleted = id ? table.delete(id) : false;
           return { changes: deleted ? 1 : 0, lastInsertRowid: 0 };
         }
         return { changes: 1, lastInsertRowid: 0 };
-      }
+      },
     }),
-    close: () => table.clear()
+    close: () => table.clear(),
   };
 }
 
@@ -197,7 +222,7 @@ export function getPlaygroundConnection(): IDatabaseConnection {
   return {
     async query<TResult = Record<string, unknown>>(
       sql: string,
-      parameters?: DatabaseQueryParameters
+      parameters?: DatabaseQueryParameters,
     ): Promise<TResult[]> {
       const stmt = db.prepare(sql);
       const params = Array.isArray(parameters)
@@ -210,7 +235,7 @@ export function getPlaygroundConnection(): IDatabaseConnection {
 
     async execute(
       sql: string,
-      parameters?: DatabaseQueryParameters
+      parameters?: DatabaseQueryParameters,
     ): Promise<DatabaseExecutionResult> {
       const stmt = db.prepare(sql);
       const params = Array.isArray(parameters)
@@ -221,7 +246,9 @@ export function getPlaygroundConnection(): IDatabaseConnection {
       const res = stmt.run(...params);
       return {
         changes: Number(res.changes),
-        lastInsertRowId: Number(res.lastInsertRowid ?? res.lastInsertRowId ?? 0),
+        lastInsertRowId: Number(
+          res.lastInsertRowid ?? res.lastInsertRowId ?? 0,
+        ),
       };
     },
 
@@ -287,7 +314,9 @@ export class PlaygroundDatabaseTransaction implements IDatabaseTransaction {
     if (!this._isActive) {
       throw new Error("Cannot rollback an inactive transaction.");
     }
-    await this.conn.execute("DELETE FROM playground_items WHERE id LIKE 'tx_%'");
+    await this.conn.execute(
+      "DELETE FROM playground_items WHERE id LIKE 'tx_%'",
+    );
     this._isActive = false;
   }
 }
@@ -296,13 +325,26 @@ export class PlaygroundDatabaseTransaction implements IDatabaseTransaction {
  * Concrete in-memory PrismaDelegate implementation for Playground.
  */
 export class InMemoryPrismaDelegate<TEntity extends { id: any }, TId>
-  implements PrismaDelegate<TEntity, TId>
-{
+  implements PrismaDelegate<TEntity, TId> {
   private store = new Map<any, TEntity>();
 
   constructor() {
-    this.store.set('item-1' as any, { id: 'item-1', name: 'John Doe', target_app: 'temin360-desktop' } as unknown as TEntity);
-    this.store.set('item-2' as any, { id: 'item-2', name: 'John Deere', target_app: 'temin360-desktop' } as unknown as TEntity);
+    this.store.set(
+      "item-1" as any,
+      {
+        id: "item-1",
+        name: "John Doe",
+        target_app: "temin360-desktop",
+      } as unknown as TEntity,
+    );
+    this.store.set(
+      "item-2" as any,
+      {
+        id: "item-2",
+        name: "John Deere",
+        target_app: "temin360-desktop",
+      } as unknown as TEntity,
+    );
   }
 
   async findUnique(args: {
@@ -356,9 +398,12 @@ export class InMemoryPrismaDelegate<TEntity extends { id: any }, TId>
   }
 }
 
-const defaultPrismaDelegate = new InMemoryPrismaDelegate<{ id: string; name: string; target_app?: string }, string>();
+const defaultPrismaDelegate = new InMemoryPrismaDelegate<
+  { id: string; name: string; target_app?: string },
+  string
+>();
 export function getPlaygroundPrismaClient() {
   return {
-    item: defaultPrismaDelegate
+    item: defaultPrismaDelegate,
   };
 }
