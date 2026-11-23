@@ -1429,7 +1429,7 @@ export async function fetchPlaygroundFilesAction(): Promise<any[]> {
        WHERE is_deleted = 0 OR is_deleted IS NULL 
        ORDER BY id DESC`
     );
-    return rows;
+    return JSON.parse(JSON.stringify(rows));
   } catch (err) {
     console.warn("[fetchPlaygroundFilesAction] Hata:", err);
     return [];
@@ -1532,16 +1532,18 @@ export async function fetchPlaygroundFileAggregateAction(
       teklif_tutari: Number(offers[0].teklif_tutari || offers[0].toplam_teklif || 0),
     } : undefined;
 
-    return {
-      file,
-      items,
-      offers,
-      stats: {
-        totalItems: items.length,
-        calculatedTotal,
-        bestOffer,
-      },
-    };
+    return JSON.parse(
+      JSON.stringify({
+        file,
+        items,
+        offers,
+        stats: {
+          totalItems: items.length,
+          calculatedTotal,
+          bestOffer,
+        },
+      })
+    );
   } catch (err) {
     console.warn("[fetchPlaygroundFileAggregateAction] Hata:", err);
     return null;

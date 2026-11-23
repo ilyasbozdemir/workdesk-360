@@ -18,8 +18,9 @@ export async function executePlaygroundTest<T>(
 ): Promise<TestRunResult<T>> {
   const start = performance.now();
   try {
-    const data = await fn();
+    const rawData = await fn();
     const durationMs = Math.round((performance.now() - start) * 100) / 100;
+    const data = rawData !== undefined ? JSON.parse(JSON.stringify(rawData)) : undefined;
     return {
       name,
       durationMs,

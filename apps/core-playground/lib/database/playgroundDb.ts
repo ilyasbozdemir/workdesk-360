@@ -698,16 +698,18 @@ export function getActiveDatabaseInfo(): ActiveDatabaseInfo {
     offerCount = Number(oRes?.cnt || 0);
   } catch {}
 
-  return {
-    path: currentPath,
-    source,
-    isDesktopRunning: Boolean(desktopPath),
-    detectedDesktopPath: desktopPath,
-    fileCount,
-    itemCount,
-    offerCount,
-    customLabel: activeCustomLabel || undefined,
-  };
+  return JSON.parse(
+    JSON.stringify({
+      path: currentPath,
+      source,
+      isDesktopRunning: Boolean(desktopPath),
+      detectedDesktopPath: desktopPath,
+      fileCount,
+      itemCount,
+      offerCount,
+      customLabel: activeCustomLabel || undefined,
+    })
+  );
 }
 
 export function resetPlaygroundDb() {
@@ -737,7 +739,10 @@ export function getPlaygroundConnection(): IDatabaseConnection {
         : parameters
         ? Object.values(parameters)
         : [];
-      return stmt.all(...params) as TResult[];
+      const rawRows = stmt.all(...params);
+      // Next.js Server Actions gereksinimi: node:sqlite null prototype ([Object: null prototype]) nesneler döndürür.
+      // React Server Components serileştirmesi için bunları düz (plain) nesnelere çeviriyoruz.
+      return JSON.parse(JSON.stringify(rawRows)) as TResult[];
     },
 
     async execute(
@@ -752,7 +757,7 @@ export function getPlaygroundConnection(): IDatabaseConnection {
         : [];
       const res = stmt.run(...params);
       return {
-        changes: Number(res.changes),
+        changes: Number(res.changes || 0),
         lastInsertRowId: Number(
           res.lastInsertRowid ?? res.lastInsertRowId ?? 0,
         ),
