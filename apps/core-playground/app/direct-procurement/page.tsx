@@ -17,7 +17,7 @@ import {
   Clock,
   RefreshCw,
 } from 'lucide-react'
-import { testDirectProcurementArchitectureAction } from '../../actions'
+import { testDirectProcurementArchitectureAction } from '@/app/actions'
 import { ResultDisplay } from '@/components/test-results/ResultDisplay'
 import { StatusBadge } from '@/components/playground/StatusBadge'
 
