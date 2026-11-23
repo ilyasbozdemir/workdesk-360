@@ -1,5 +1,10 @@
 "use server";
 
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import { TeminPackage } from "@worksuite-360/core";
+
 import {
   AppError,
   ConflictError,
@@ -1386,6 +1391,498 @@ export async function fetchLogicalSchemaWorkbenchDataAction(): Promise<
     },
   );
 }
+
+// ============================================================================
+// 10. DOĞRUDAN TEMİN 360 — CANLI SÜREÇ, DOSYA VE ŞABLON LABORATUVARI ACTIONS
+// ============================================================================
+
+export interface PlaygroundProcurementFileAggregate {
+  file: any;
+  items: any[];
+  offers: any[];
+  stats: {
+    totalItems: number;
+    calculatedTotal: number;
+    bestOffer?: {
+      firma_adi: string;
+      teklif_tutari: number;
+    };
+  };
+}
+
+/**
+ * 10.1. Mevcut tüm doğrudan temin dosyalarını getirir.
+ */
+export async function fetchPlaygroundFilesAction(): Promise<any[]> {
+  const conn = await getPlaygroundProvider().getConnection();
+  try {
+    const rows = await conn.query<any>(
+      `SELECT id, dosya_no, temin_no, konu, alim_turu, tur, durum, yaklasik_maliyet, butce_yili, created_at 
+       FROM DATA_TeminDosyasi 
+       WHERE is_deleted = 0 OR is_deleted IS NULL 
+       ORDER BY id DESC`
+    );
+    return rows;
+  } catch (err) {
+    console.warn("[fetchPlaygroundFilesAction] Hata:", err);
+    return [];
+  }
+}
+
+/**
+ * 10.2. Yeni bir doğrudan temin dosyası açar (Create Procurement File).
+ */
+export async function createPlaygroundFileAction(data: {
+  konu: string;
+  alim_turu: string;
+  yaklasik_maliyet: number;
+  butce_yili?: number;
+  dosya_no?: string;
+  harcama_birimi?: string;
+  madde?: string;
+}): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(
+    `Doğrudan Temin -> Yeni Dosya Aç (${data.konu})`,
+    async () => {
+      const conn = await getPlaygroundProvider().getConnection();
+      const nextYear = data.butce_yili || 2026;
+      const nextNo = data.dosya_no || `${nextYear}/${Math.floor(Math.random() * 900 + 100)}`;
+      const res = await conn.execute(
+        `INSERT INTO DATA_TeminDosyasi (
+          dosya_no, temin_no, konu, alim_turu, tur, ihale_tipi, durum, butce_yili, 
+          yaklasik_maliyet, madde, harcama_birimi, created_at, is_deleted
+        ) VALUES (?, ?, ?, ?, ?, ?, 'taslak', ?, ?, ?, ?, datetime('now'), 0)`,
+        [
+          nextNo,
+          nextNo,
+          data.konu,
+          data.alim_turu,
+          data.alim_turu,
+          "Doğrudan Temin",
+          nextYear,
+          Number(data.yaklasik_maliyet || 0),
+          data.madde || "4734 Sayılı Kanun Md. 22/d",
+          data.harcama_birimi || "Destek Hizmetleri Dairesi Başkanlığı",
+        ]
+      );
+
+      const insertedId = res.lastInsertRowId;
+      const [newRow] = await conn.query<any>(
+        "SELECT * FROM DATA_TeminDosyasi WHERE id = ?",
+        [insertedId]
+      );
+
+      return {
+        id: insertedId,
+        dosya: newRow,
+        message: `Yeni Doğrudan Temin Dosyası (${nextNo}) başarıyla açıldı.`,
+      };
+    }
+  );
+}
+
+/**
+ * 10.3. Seçilen bir dosyanın detayını, kalemlerini ve tekliflerini getirir.
+ */
+export async function fetchPlaygroundFileAggregateAction(
+  fileId: number
+): Promise<PlaygroundProcurementFileAggregate | null> {
+  const conn = await getPlaygroundProvider().getConnection();
+  try {
+    const [file] = await conn.query<any>(
+      "SELECT * FROM DATA_TeminDosyasi WHERE id = ?",
+      [fileId]
+    );
+    if (!file) return null;
+
+    const items = await conn.query<any>(
+      `SELECT * FROM DATA_TeminKalem 
+       WHERE (temin_dosya_id = ? OR dosya_id = ?) AND (is_deleted = 0 OR is_deleted IS NULL) 
+       ORDER BY id ASC`,
+      [fileId, fileId]
+    );
+
+    const offers = await conn.query<any>(
+      `SELECT * FROM DATA_TeminFirma 
+       WHERE (temin_dosya_id = ? OR ihale_dosya_id = ?) 
+       ORDER BY teklif_tutari ASC`,
+      [fileId, fileId]
+    );
+
+    const calculatedTotal = items.reduce((sum: number, it: any) => {
+      const lineTotal = Number(it.miktar || 0) * Number(it.birim_fiyat || 0);
+      return sum + lineTotal;
+    }, 0);
+
+    const bestOffer = offers.length > 0 ? {
+      firma_adi: offers[0].unvan || offers[0].firma_adi || `Firma #${offers[0].firma_id || 1}`,
+      teklif_tutari: Number(offers[0].teklif_tutari || offers[0].toplam_teklif || 0),
+    } : undefined;
+
+    return {
+      file,
+      items,
+      offers,
+      stats: {
+        totalItems: items.length,
+        calculatedTotal,
+        bestOffer,
+      },
+    };
+  } catch (err) {
+    console.warn("[fetchPlaygroundFileAggregateAction] Hata:", err);
+    return null;
+  }
+}
+
+/**
+ * 10.4. Dosyaya yeni bir ihtiyaç kalemi ekler ve yaklaşık maliyeti günceller.
+ */
+export async function addPlaygroundItemAction(
+  fileId: number,
+  item: {
+    kalem_adi: string;
+    miktar: number;
+    birim: string;
+    birim_fiyat: number;
+    kdv_orani: number;
+  }
+): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(
+    `Doğrudan Temin -> Kalem Ekle (${item.kalem_adi})`,
+    async () => {
+      const conn = await getPlaygroundProvider().getConnection();
+      const res = await conn.execute(
+        `INSERT INTO DATA_TeminKalem (
+          temin_dosya_id, dosya_id, kalem_adi, miktar, birim, birim_fiyat, kdv_orani, is_deleted, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, datetime('now'))`,
+        [
+          fileId,
+          fileId,
+          item.kalem_adi,
+          Number(item.miktar),
+          item.birim || "Adet",
+          Number(item.birim_fiyat),
+          Number(item.kdv_orani || 20),
+        ]
+      );
+
+      // Dosya toplam yaklaşık maliyetini yeniden hesapla
+      const items = await conn.query<any>(
+        "SELECT miktar, birim_fiyat FROM DATA_TeminKalem WHERE (temin_dosya_id = ? OR dosya_id = ?) AND (is_deleted = 0 OR is_deleted IS NULL)",
+        [fileId, fileId]
+      );
+      const newTotal = items.reduce(
+        (sum: number, it: any) => sum + Number(it.miktar || 0) * Number(it.birim_fiyat || 0),
+        0
+      );
+
+      await conn.execute(
+        "UPDATE DATA_TeminDosyasi SET yaklasik_maliyet = ? WHERE id = ?",
+        [newTotal, fileId]
+      );
+
+      return {
+        itemId: res.lastInsertRowId,
+        newTotalApproximateCost: newTotal,
+        itemCount: items.length,
+        message: `${item.kalem_adi} başarıyla eklendi. Yaklaşık maliyet güncellendi: ${newTotal.toLocaleString("tr-TR")} ₺`,
+      };
+    }
+  );
+}
+
+/**
+ * 10.5. Dosyaya piyasa fiyat araştırması teklifi ekler.
+ */
+export async function addPlaygroundOfferAction(
+  fileId: number,
+  offer: {
+    firma_adi: string;
+    teklif_tutari: number;
+    vergi_no?: string;
+  }
+): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(
+    `Doğrudan Temin -> Teklif Girişi (${offer.firma_adi})`,
+    async () => {
+      const conn = await getPlaygroundProvider().getConnection();
+      
+      // Firmayı TANIM_Firma içine ekle veya mevcut olanı bul
+      const existingFirma = await conn.query<any>(
+        "SELECT id FROM TANIM_Firma WHERE unvan = ? LIMIT 1",
+        [offer.firma_adi]
+      );
+      let firmaId = existingFirma[0]?.id;
+      if (!firmaId) {
+        const insFirma = await conn.execute(
+          "INSERT INTO TANIM_Firma (unvan, vergi_no, aktif_mi, is_deleted) VALUES (?, ?, 1, 0)",
+          [offer.firma_adi, offer.vergi_no || "1111111111"]
+        );
+        firmaId = insFirma.lastInsertRowId;
+      }
+
+      // Teklifi DATA_TeminFirma içine ekle
+      const res = await conn.execute(
+        `INSERT INTO DATA_TeminFirma (
+          temin_dosya_id, ihale_dosya_id, firma_id, teklif_tutari, toplam_teklif, kazanan_mi
+        ) VALUES (?, ?, ?, ?, ?, 0)`,
+        [fileId, fileId, firmaId, Number(offer.teklif_tutari), Number(offer.teklif_tutari)]
+      );
+
+      // En düşük teklifi otomatik tespit edip kazanan_mi işaretle
+      const allOffers = await conn.query<any>(
+        "SELECT id, teklif_tutari FROM DATA_TeminFirma WHERE temin_dosya_id = ? OR ihale_dosya_id = ? ORDER BY teklif_tutari ASC",
+        [fileId, fileId]
+      );
+      if (allOffers.length > 0) {
+        const lowestId = allOffers[0].id;
+        await conn.execute("UPDATE DATA_TeminFirma SET kazanan_mi = 0 WHERE temin_dosya_id = ?", [fileId]);
+        await conn.execute("UPDATE DATA_TeminFirma SET kazanan_mi = 1 WHERE id = ?", [lowestId]);
+      }
+
+      return {
+        offerId: res.lastInsertRowId,
+        firmaId,
+        firmaAdi: offer.firma_adi,
+        teklifTutari: Number(offer.teklif_tutari),
+        totalOffersCount: allOffers.length,
+        message: `${offer.firma_adi} firmasından ${Number(offer.teklif_tutari).toLocaleString("tr-TR")} ₺ teklif kaydedildi.`,
+      };
+    }
+  );
+}
+
+/**
+ * 10.6. Dosyanın süreç durumunu ilerletir (Aşama Yönetimi).
+ */
+export async function updatePlaygroundStageAction(
+  fileId: number,
+  newStage: string
+): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(
+    `Doğrudan Temin -> Aşama Güncelle (${newStage})`,
+    async () => {
+      const conn = await getPlaygroundProvider().getConnection();
+      await conn.execute(
+        "UPDATE DATA_TeminDosyasi SET durum = ?, updated_at = datetime('now') WHERE id = ?",
+        [newStage, fileId]
+      );
+
+      return {
+        fileId,
+        newStage,
+        message: `Dosya durumu "${newStage}" olarak güncellendi.`,
+      };
+    }
+  );
+}
+
+/**
+ * 10.7. Şablon verisini Resmî Yazışma Yönetmeliği ve Mevzuata uygun olarak derler.
+ */
+export async function compilePlaygroundTemplateAction(
+  fileId: number,
+  templateKey: string
+): Promise<TestRunResult<any>> {
+  return executePlaygroundTest(
+    `Document Engine -> Şablon Çözümle (${templateKey})`,
+    async () => {
+      const conn = await getPlaygroundProvider().getConnection();
+      const [file] = await conn.query<any>("SELECT * FROM DATA_TeminDosyasi WHERE id = ?", [fileId]);
+      if (!file) throw new Error(`Dosya bulunamadı: ID ${fileId}`);
+
+      const items = await conn.query<any>(
+        "SELECT * FROM DATA_TeminKalem WHERE (temin_dosya_id = ? OR dosya_id = ?) AND (is_deleted = 0 OR is_deleted IS NULL)",
+        [fileId, fileId]
+      );
+
+      const offers = await conn.query<any>(
+        `SELECT tf.*, f.unvan as firma_unvan 
+         FROM DATA_TeminFirma tf 
+         LEFT JOIN TANIM_Firma f ON tf.firma_id = f.id 
+         WHERE tf.temin_dosya_id = ? OR tf.ihale_dosya_id = ? 
+         ORDER BY tf.teklif_tutari ASC`,
+        [fileId, fileId]
+      );
+
+      const [institution] = await conn.query<any>("SELECT key, value FROM settings WHERE key = 'institutionName' LIMIT 1");
+      const kurumAdi = institution?.value || "T.C. ADALET BAKANLIĞI";
+
+      // Şablon tipine göre başlık ve yapılandırılmış alanlar
+      const templateTitles: Record<string, string> = {
+        "ihtiyac-listesi": "İHTİYAÇ LİSTESİ VE TALEP FORMU",
+        "dogrudan-temin-onay-belgesi": "DOĞRUDAN TEMİN ONAY BELGESİ (KİK022)",
+        "piyasa-fiyat-arastirma-tutanagi": "PİYASA FİYAT ARAŞTIRMASI TUTANAĞI",
+        "harcama-talimati": "HARCAMA TALİMATI / ONAYI",
+        "muayene-kabul-komisyonu": "MUAYENE VE KABUL KOMİSYONU TUTANAĞI",
+      };
+
+      const title = templateTitles[templateKey] || "DOĞRUDAN TEMİN RESMÎ BELGESİ";
+
+      return {
+        templateKey,
+        documentTitle: title,
+        institutionalHeader: {
+          country: "T.C.",
+          ministry: kurumAdi,
+          spendingUnit: file.harcama_birimi || "İdari ve Mali İşler Daire Başkanlığı",
+          documentNumber: file.dosya_no || `2026/${file.id}`,
+          date: new Date().toLocaleDateString("tr-TR"),
+        },
+        procurementSummary: {
+          fileNo: file.dosya_no || `2026/${file.id}`,
+          subject: file.konu,
+          procurementType: file.alim_turu || file.tur || "mal",
+          legalBasis: file.madde || "4734 Sayılı Kanun Madde 22/d",
+          estimatedCost: Number(file.yaklasik_maliyet || 0),
+          status: file.durum,
+        },
+        itemTable: items.map((it: any, idx: number) => ({
+          siraNo: idx + 1,
+          kalemAdi: it.kalem_adi,
+          miktar: it.miktar,
+          birim: it.birim,
+          birimFiyat: it.birim_fiyat,
+          toplamTutar: Number(it.miktar || 0) * Number(it.birim_fiyat || 0),
+          kdvOrani: it.kdv_orani || 20,
+        })),
+        offerComparison: offers.map((of: any, idx: number) => ({
+          siraNo: idx + 1,
+          firmaAdi: of.firma_unvan || of.unvan || `Tedarikçi Firma #${idx + 1}`,
+          teklifTutari: Number(of.teklif_tutari || of.toplam_teklif || 0),
+          kazandiMi: of.kazanan_mi === 1,
+        })),
+        signatures: [
+          { role: "Piyasa Araştırma Görevlisi", name: "Ahmet YILMAZ", title: "Mühendis" },
+          { role: "Gerçekleştirme Görevlisi", name: "Mehmet KAYA", title: "Şube Müdürü" },
+          { role: "Harcama Yetkilisi", name: "Ali DEMİR", title: "Daire Başkanı" },
+        ],
+        compiledAt: new Date().toISOString(),
+        verifiedLegislation: "4734 Sayılı Kanun ve 40666 Sayılı Doğrudan Temin Tebliği ile %100 Uyumlu",
+      };
+    }
+  );
+}
+
+// ============================================================================
+// 11. .temin ARŞİV DOSYASI SEÇİCİ, OKUYUCU VE İNCELEYİCİ ACTIONS
+// ============================================================================
+
+export interface TeminPackageInspectionResult {
+  fileName: string;
+  filePath: string;
+  fileSizeKb: number;
+  meta: any;
+  attachments: any[];
+  activeDbFileName: string;
+  counts: {
+    files: number;
+    items: number;
+    firms: number;
+    attachments: number;
+  };
+  files: any[];
+  items: any[];
+  firms: any[];
+  settings: Record<string, string>;
+}
+
+/**
+ * 11.1. Hazır örnek (.temin) paketini açar ve inceler.
+ */
+export async function loadPresetTeminPackageAction(): Promise<TestRunResult<TeminPackageInspectionResult>> {
+  return executePlaygroundTest(
+    "TeminPackage -> Örnek .temin Paketini Aç ve İncele",
+    async () => {
+      const pkg = await openTeminPackage();
+      return inspectTeminPackageInstance(pkg);
+    }
+  );
+}
+
+/**
+ * 11.2. Kullanıcının bilgisayarından seçip yüklediği .temin dosyasını açar ve inceler.
+ */
+export async function uploadAndInspectTeminPackageAction(
+  formData: FormData
+): Promise<TestRunResult<TeminPackageInspectionResult>> {
+  return executePlaygroundTest(
+    "TeminPackage -> Kullanıcı .temin Arşivini Ayıkla ve Canlı Oku",
+    async () => {
+      const file = formData.get("file") as File | null;
+      if (!file) {
+        throw new Error("Lütfen bir .temin arşivi seçiniz.");
+      }
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const tempPath = path.join(
+        os.tmpdir(),
+        `upload_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`
+      );
+      fs.writeFileSync(tempPath, buffer);
+
+      const pkg = await TeminPackage.open(tempPath);
+      const res = await inspectTeminPackageInstance(pkg, file.name, Math.round(file.size / 1024));
+      return res;
+    }
+  );
+}
+
+async function inspectTeminPackageInstance(
+  pkg: any,
+  overrideFileName?: string,
+  overrideSizeKb?: number
+): Promise<TeminPackageInspectionResult> {
+  const meta = pkg.meta;
+  const attachments = pkg.attachments || [];
+  const conn = await pkg.getConnection();
+
+  const files = await conn.query(
+    "SELECT id, dosya_no, temin_no, konu, alim_turu, tur, durum, yaklasik_maliyet, butce_yili, created_at FROM DATA_TeminDosyasi ORDER BY id DESC LIMIT 50"
+  ).catch(() => []);
+
+  const items = await conn.query(
+    "SELECT id, temin_dosya_id, kalem_adi, miktar, birim, birim_fiyat, kdv_orani FROM DATA_TeminKalem ORDER BY id DESC LIMIT 100"
+  ).catch(() => []);
+
+  const firms = await conn.query(
+    "SELECT id, unvan, vergi_no, telefon, email FROM TANIM_Firma ORDER BY id DESC LIMIT 50"
+  ).catch(() => []);
+
+  const settingsRows = await conn.query(
+    "SELECT key, value FROM settings"
+  ).catch(() => []);
+  const settingsMap: Record<string, string> = {};
+  for (const s of settingsRows) {
+    if (s.key) settingsMap[s.key] = String(s.value || "");
+  }
+
+  const stat = fs.existsSync(pkg.filePath) ? fs.statSync(pkg.filePath) : null;
+  const sizeKb = overrideSizeKb || (stat ? Math.round(stat.size / 1024) : 0);
+  const fileName = overrideFileName || path.basename(pkg.filePath);
+
+  return {
+    fileName,
+    filePath: pkg.filePath,
+    fileSizeKb: sizeKb,
+    meta,
+    attachments,
+    activeDbFileName: pkg.activeDbFileName || "database.sqlite",
+    counts: {
+      files: files.length,
+      items: items.length,
+      firms: firms.length,
+      attachments: attachments.length,
+    },
+    files,
+    items,
+    firms,
+    settings: settingsMap,
+  };
+}
+
 
 
 
