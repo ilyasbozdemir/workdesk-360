@@ -22,11 +22,11 @@ import {
   ValidationError,
 } from "@/lib/core";
 import type { ActiveDatabaseInfo } from "@/lib/database/playgroundDb";
-export type { ActiveDatabaseInfo };
 import {
   getActiveDbPath,
   getActiveDatabaseInfo,
   setActiveDbPath,
+  setActiveCustomLabel,
   findLatestDesktopWorkspaceDb,
   resetPlaygroundDb,
   getPlaygroundConnection,
@@ -1936,6 +1936,92 @@ export async function switchPlaygroundDatabaseAction(
 
       setActiveDbPath(targetPath);
       const info = getActiveDatabaseInfo();
+      return info;
+    }
+  );
+}
+
+/**
+ * 11.3. Kullanıcının bilgisayarından seçip yüklediği .temin veya .sqlite dosyasını
+ * doğrudan çalışma alanı (aktif veritabanı) olarak açar ve oturumu bu veritabanına bağlar.
+ */
+export async function openAndActivateTeminPackageAction(
+  formData: FormData
+): Promise<TestRunResult<ActiveDatabaseInfo>> {
+  return executePlaygroundTest(
+    "TeminPackage -> .temin Dosyasını Çalışma Alanı Olarak Aç",
+    async () => {
+      const file = formData.get("file") as File | null;
+      if (!file) {
+        throw new Error("Lütfen bir .temin veya .sqlite dosyası seçiniz.");
+      }
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const workspacesDir = path.resolve(process.cwd(), ".temin_workspaces");
+      if (!fs.existsSync(workspacesDir)) {
+        fs.mkdirSync(workspacesDir, { recursive: true });
+      }
+
+      const cleanBase = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const targetDir = path.join(workspacesDir, `${Date.now()}_${cleanBase.replace(/\.(temin|sqlite)$/i, "")}`);
+      fs.mkdirSync(targetDir, { recursive: true });
+
+      let extractedDbPath: string;
+
+      if (file.name.toLowerCase().endsWith(".sqlite")) {
+        extractedDbPath = path.join(targetDir, "database.sqlite");
+        fs.writeFileSync(extractedDbPath, buffer);
+      } else {
+        const archivePath = path.join(targetDir, cleanBase);
+        fs.writeFileSync(archivePath, buffer);
+
+        const pkg = await TeminPackage.open(archivePath);
+        extractedDbPath = pkg.getDatabasePath();
+      }
+
+      setActiveCustomLabel(file.name);
+      setActiveDbPath(extractedDbPath);
+      const info = getActiveDatabaseInfo();
+      info.customLabel = file.name;
+      return info;
+    }
+  );
+}
+
+/**
+ * 11.4. Repo içindeki hazır test-projesi.temin dosyasını açıp çalışma alanı yapar.
+ */
+export async function openPresetTeminPackageAction(): Promise<TestRunResult<ActiveDatabaseInfo>> {
+  return executePlaygroundTest(
+    "TeminPackage -> test-projesi.temin Dosyasını Çalışma Alanı Olarak Aç",
+    async () => {
+      const candidateRoots = [
+        process.cwd(),
+        path.resolve(process.cwd(), ".."),
+        path.resolve(process.cwd(), "../.."),
+        path.resolve(process.cwd(), "../../.."),
+      ];
+
+      let teminPath: string | null = null;
+      for (const r of candidateRoots) {
+        const p = path.join(r, "tests", "fixtures", "temin", "files", "test-projesi.temin");
+        if (fs.existsSync(p)) {
+          teminPath = p;
+          break;
+        }
+      }
+
+      if (!teminPath) {
+        throw new Error("test-projesi.temin dosyası repo içinde bulunamadı.");
+      }
+
+      const pkg = await TeminPackage.open(teminPath);
+      setActiveCustomLabel("test-projesi.temin");
+      setActiveDbPath(pkg.getDatabasePath());
+      const info = getActiveDatabaseInfo();
+      info.customLabel = "test-projesi.temin";
       return info;
     }
   );

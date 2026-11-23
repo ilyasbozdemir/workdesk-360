@@ -32,6 +32,7 @@ import {
   Database,
   Paperclip,
   Check,
+  Package,
 } from 'lucide-react'
 import {
   testDirectProcurementArchitectureAction,
@@ -44,12 +45,14 @@ import {
   compilePlaygroundTemplateAction,
   loadPresetTeminPackageAction,
   uploadAndInspectTeminPackageAction,
+  openAndActivateTeminPackageAction,
+  openPresetTeminPackageAction,
   getActiveDatabaseInfoAction,
   switchPlaygroundDatabaseAction,
-  type ActiveDatabaseInfo,
   type TeminPackageInspectionResult,
   type PlaygroundProcurementFileAggregate,
 } from '@/app/actions'
+import type { ActiveDatabaseInfo } from '@/lib/database/playgroundDb'
 import { ResultDisplay } from '@/components/test-results/ResultDisplay'
 import { StatusBadge } from '@/components/playground/StatusBadge'
 
@@ -187,6 +190,7 @@ export default function DirectProcurementLaboratoryPage() {
   const [inspectedPackage, setInspectedPackage] = useState<TeminPackageInspectionResult | null>(null)
   const [isLoadingPackage, setIsLoadingPackage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const bannerFileInputRef = useRef<HTMLInputElement>(null)
 
   // Aktif Veritabanı State
   const [activeDbInfo, setActiveDbInfo] = useState<ActiveDatabaseInfo | null>(null)
@@ -223,6 +227,37 @@ export default function DirectProcurementLaboratoryPage() {
     setIsSwitchingDb(true)
     try {
       const res = await switchPlaygroundDatabaseAction(target)
+      if (res.success && res.data) {
+        setActiveDbInfo(res.data)
+        await loadFiles()
+      }
+    } finally {
+      setIsSwitchingDb(false)
+    }
+  }
+
+  const handleBannerFileOpen = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsSwitchingDb(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await openAndActivateTeminPackageAction(formData)
+      if (res.success && res.data) {
+        setActiveDbInfo(res.data)
+        await loadFiles()
+      }
+    } finally {
+      setIsSwitchingDb(false)
+      if (bannerFileInputRef.current) bannerFileInputRef.current.value = ''
+    }
+  }
+
+  const handleOpenPresetTemin = async () => {
+    setIsSwitchingDb(true)
+    try {
+      const res = await openPresetTeminPackageAction()
       if (res.success && res.data) {
         setActiveDbInfo(res.data)
         await loadFiles()
@@ -414,10 +449,16 @@ export default function DirectProcurementLaboratoryPage() {
             <div className="flex items-center gap-3">
               <div className={`p-2.5 rounded-xl ${
                 activeDbInfo?.source === 'desktop_active' 
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : activeDbInfo?.source === 'temin_package'
+                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
                   : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
               }`}>
-                <Database className="w-5 h-5" />
+                {activeDbInfo?.source === 'temin_package' ? (
+                  <Package className="w-5 h-5 text-purple-400" />
+                ) : (
+                  <Database className="w-5 h-5" />
+                )}
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -427,10 +468,16 @@ export default function DirectProcurementLaboratoryPage() {
                   <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                     activeDbInfo?.source === 'desktop_active'
                       ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : activeDbInfo?.source === 'temin_package'
+                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                      : activeDbInfo?.source === 'fixture'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
                   }`}>
                     {activeDbInfo?.source === 'desktop_active'
                       ? '🟢 Masaüstü Uygulaması (Canlı Oturum)'
+                      : activeDbInfo?.source === 'temin_package'
+                      ? `📦 Açık Dosya: ${activeDbInfo.customLabel || '.temin Paketi'}`
                       : activeDbInfo?.source === 'fixture'
                       ? '📁 Statik Test Fikstürü (test-projesi.sqlite)'
                       : '⚙️ Özel Veritabanı'}
@@ -450,36 +497,65 @@ export default function DirectProcurementLaboratoryPage() {
             </div>
 
             {/* Hızlı Değiştirme ve Senkronizasyon Aksiyonları */}
-            <div className="flex items-center gap-2 self-end lg:self-center">
+            <div className="flex flex-wrap items-center gap-2 self-start lg:self-center">
+              {/* Gizli .temin Dosya Seçici Input */}
+              <input
+                type="file"
+                ref={bannerFileInputRef}
+                onChange={handleBannerFileOpen}
+                accept=".temin,.sqlite"
+                className="hidden"
+              />
+
+              <button
+                onClick={() => bannerFileInputRef.current?.click()}
+                disabled={isSwitchingDb}
+                className="px-3.5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow transition flex items-center gap-1.5 disabled:opacity-50"
+                title="Bilgisayarınızdan dilediğiniz .temin veya .sqlite dosyasını seçip çalışma alanı olarak açar"
+              >
+                <FolderOpen className="w-4 h-4" />
+                .temin Dosyası Seç & Aç
+              </button>
+
+              <button
+                onClick={handleOpenPresetTemin}
+                disabled={isSwitchingDb}
+                className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 rounded-lg transition flex items-center gap-1.5 disabled:opacity-50"
+                title="Repo içindeki hazır test-projesi.temin dosyasını çalışma alanı olarak açar"
+              >
+                <Package className="w-3.5 h-3.5" />
+                Örnek .temin
+              </button>
+
               {activeDbInfo?.isDesktopRunning && activeDbInfo.source !== 'desktop_active' && (
                 <button
                   onClick={() => handleSwitchDb('desktop')}
                   disabled={isSwitchingDb}
-                  className="px-3.5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow transition flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-3 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow transition flex items-center gap-1.5 disabled:opacity-50"
                   title="Sol ekrandaki açık masaüstü uygulaması oturumuna anında bağlanır"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  Masaüstü Uygulamasına Bağlan (Canlı)
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Masaüstüne Bağlan
                 </button>
               )}
-              {activeDbInfo?.source === 'desktop_active' && (
+              {activeDbInfo?.source !== 'fixture' && (
                 <button
                   onClick={() => handleSwitchDb('fixture')}
                   disabled={isSwitchingDb}
-                  className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+                  className="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
                   title="İzole test fikstürüne geri döner"
                 >
-                  Fikstüre Geç (test-projesi)
+                  Fikstür
                 </button>
               )}
               <button
                 onClick={() => loadFiles()}
                 disabled={isLoadingFiles}
-                className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition flex items-center gap-1.5"
+                className="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition flex items-center gap-1.5"
                 title="Veritabanındaki taze kayıtları yeniden yükle"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                {isLoadingFiles ? 'Yenileniyor...' : 'Yenile'}
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingFiles ? 'animate-spin' : ''}`} />
+                {isLoadingFiles ? '...' : 'Yenile'}
               </button>
             </div>
           </div>

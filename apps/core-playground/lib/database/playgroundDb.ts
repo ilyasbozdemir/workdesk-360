@@ -51,6 +51,11 @@ export function getDatabaseSyncClass(): any {
 
 let activeDbInstance: any = null;
 let activeDbPath: string | null = null;
+let activeCustomLabel: string | null = null;
+
+export function setActiveCustomLabel(label: string | null): void {
+  activeCustomLabel = label;
+}
 
 function getConfigFilePath(): string {
   const rootCandidate = path.resolve(process.cwd(), ".active-playground-db.json");
@@ -649,12 +654,13 @@ export function getActiveDbPath(): string {
 
 export interface ActiveDatabaseInfo {
   path: string;
-  source: 'desktop_active' | 'fixture' | 'custom' | 'memory';
+  source: 'desktop_active' | 'fixture' | 'temin_package' | 'custom' | 'memory';
   isDesktopRunning: boolean;
   detectedDesktopPath: string | null;
   fileCount: number;
   itemCount: number;
   offerCount: number;
+  customLabel?: string;
 }
 
 export function getActiveDatabaseInfo(): ActiveDatabaseInfo {
@@ -665,6 +671,8 @@ export function getActiveDatabaseInfo(): ActiveDatabaseInfo {
   let source: ActiveDatabaseInfo['source'] = 'custom';
   if (desktopPath && path.resolve(currentPath) === path.resolve(desktopPath)) {
     source = 'desktop_active';
+  } else if (currentPath.includes('.temin_workspaces') || (activeCustomLabel && activeCustomLabel.endsWith('.temin'))) {
+    source = 'temin_package';
   } else if (currentPath.includes('test-projesi')) {
     source = 'fixture';
   } else if (currentPath === ':memory:') {
@@ -698,6 +706,7 @@ export function getActiveDatabaseInfo(): ActiveDatabaseInfo {
     fileCount,
     itemCount,
     offerCount,
+    customLabel: activeCustomLabel || undefined,
   };
 }
 
