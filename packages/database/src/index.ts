@@ -9,6 +9,8 @@ import {
   recreateTableSafely,
   type SchemaSyncResult,
 } from "./schema-sync";
+import { INDEX_REGISTRY } from "./schema/registry/indexRegistry";
+import type { LogicalIndex } from "./schema/types";
 // ============================================================================
 // 1. KURUM, TEŞKİLAT VE PERSONEL TANIMLARI
 // ============================================================================
@@ -120,7 +122,7 @@ import { defineTable } from "./BaseTable";
  * Kurumsal tanımlar (`TANIM_*`), süreç verileri (`DATA_*`) ve denetim loglarını (`LOG_*`) kapsar.
  * Her tanım SQLite DDL oluşturucu (`defineTable`) tarafından işlenir.
  */
-const rawTables = [
+export const rawTables = [
   // =========================================================================
   // 1. KURUM, TEŞKİLAT VE PERSONEL TANIMLARI
   // =========================================================================
@@ -863,12 +865,23 @@ export function initializeDatabase(
     console.warn("[SchemaSync] Otomatik kolon eşitleme uyarısı:", syncErr);
   }
 
-  // İndeksler tablolar oluşturulduktan sonra tanımlanmalıdır
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_tasinirkod_tam_kod ON TANIM_TasinirKod(tam_kod);
-    CREATE INDEX IF NOT EXISTS idx_tasinirkod_hesap ON TANIM_TasinirKod(hesap_kodu);
-    CREATE INDEX IF NOT EXISTS idx_okaskod_kod ON TANIM_OkasKod(kod);
-  `);
+  // İndeksler tablolar oluşturulduktan sonra INDEX_REGISTRY üzerinden tanımlanır
+  for (const [tableName, indexes] of Object.entries(INDEX_REGISTRY)) {
+    const tableExists = targetSchema.tables.some((t: any) => t.name === tableName);
+    if (!tableExists) continue;
+
+    for (const idx of (indexes as LogicalIndex[])) {
+      const cols = idx.columns.map((c: string) => `"${c}"`).join(", ");
+      const uniqueClause = idx.unique ? "UNIQUE " : "";
+      try {
+        db.exec(
+          `CREATE ${uniqueClause}INDEX IF NOT EXISTS "${idx.name}" ON "${idx.tableName}"(${cols});`,
+        );
+      } catch (idxErr) {
+        console.warn(`[IndexRegistry] ${idx.name} oluşturulamadı:`, idxErr);
+      }
+    }
+  }
 
   // Geliştirme/test ortamı için başlangıç test personelleri (Seed)
   // Yalnızca açıkça `seedTestData: true` istendiğinde eklenir. Varsayılan: false (üretim güvenliği).
@@ -1128,3 +1141,5 @@ export { auditColumns, auditColumnsNoRef } from "./audit";
 export * from "./migrate";
 export * from "./audit-trail";
 export * from "./schema-sync";
+export * from "./schema";
+

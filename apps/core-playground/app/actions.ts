@@ -28,6 +28,12 @@ import {
   executePlaygroundTest,
   type TestRunResult,
 } from "@/lib/test-utils/runTest";
+import {
+  rawTables,
+  convertAllTablesToLogicalSchema,
+  COLUMN_OVERRIDE_REGISTRY,
+  INDEX_REGISTRY,
+} from "@dt/database";
 
 // Concrete SQLite repositories for playground table
 class PlaygroundSqliteReadRepo extends SQLiteReadRepository<
@@ -1315,5 +1321,71 @@ export async function testDirectProcurementArchitectureAction(
     },
   );
 }
+
+/**
+ * Adım 1: Database Workbench için 55 tablo mantıksal şema, denetim raporu ve kısıt metriklerini yükler.
+ */
+export async function fetchLogicalSchemaWorkbenchDataAction(): Promise<
+  TestRunResult<{
+    auditReport: any;
+    tables: any[];
+    financialColumns: any[];
+    indexes: any[];
+    unresolvedCount: number;
+  }>
+> {
+  return executePlaygroundTest(
+    "logical-schema-workbench",
+    async () => {
+      const { logicalTables, auditReport } = convertAllTablesToLogicalSchema(rawTables);
+
+      // Finansal kolonları filtrele ve listele
+      const financialColumns: any[] = [];
+      for (const t of logicalTables) {
+        for (const [colName, col] of Object.entries(t.columns) as [string, any][]) {
+          if (col.isFinancial) {
+            financialColumns.push({
+              tableName: t.name,
+              columnName: colName,
+              type: col.type,
+              scale: col.scale,
+              precision: col.precision,
+              originType: col.originType,
+            });
+          }
+        }
+      }
+
+      // İndeksleri düz liste hâline getir
+      const allIndexes: any[] = [];
+      for (const [tbl, idxList] of Object.entries(INDEX_REGISTRY) as [string, any[]][]) {
+        for (const idx of idxList) {
+          allIndexes.push(idx);
+        }
+      }
+
+      return {
+        auditReport,
+        tables: logicalTables.map((t: any) => ({
+          name: t.name,
+          description: t.description || "",
+          columnCount: Object.keys(t.columns).length,
+          hasPrimaryKey: t.hasPrimaryKey,
+          primaryKey: t.primaryKey,
+          constraintCount: t.constraints.length,
+          indexCount: t.indexes.length,
+          isExportReady: t.isExportReady,
+          unresolvedCount: t.unresolvedConstraintsCount,
+          constraints: t.constraints,
+          columns: t.columns,
+        })),
+        financialColumns,
+        indexes: allIndexes,
+        unresolvedCount: auditReport.unresolvedConstraints.length,
+      };
+    },
+  );
+}
+
 
 

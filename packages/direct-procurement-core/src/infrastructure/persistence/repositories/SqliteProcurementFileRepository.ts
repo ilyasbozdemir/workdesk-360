@@ -40,11 +40,15 @@ export class SqliteProcurementFileRepository implements IProcurementFileReposito
     constructor(private readonly db: SqlExecutor) {}
 
     private mapRowToEntity(row: RowTeminDosyasi): ProcurementFile {
+        const rawId = Number(row.id);
+        const validId = Number.isInteger(rawId) && rawId > 0 ? rawId : 1;
+        const validSubject = (row.konu && row.konu.trim()) ? row.konu.trim() : (row.dosya_no ? `Dosya ${row.dosya_no}` : "Doğrudan Temin Dosyası");
+
         return new ProcurementFile({
-            id: row.id,
+            id: validId,
             procurementNumber: row.dosya_no ?? undefined,
             documentNumber: row.evrak_sayisi ?? undefined,
-            subject: row.konu ?? "",
+            subject: validSubject,
             procurementType: (row.ihale_tipi as ProcurementFileType) ?? "mal",
             status: (row.durum as ProcurementFileStatus) ?? ProcurementFileStatus.Draft,
             budgetYear: row.butce_yili ?? new Date().getFullYear(),

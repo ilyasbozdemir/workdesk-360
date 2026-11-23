@@ -14,6 +14,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@worksuite-360/core": "workspace:*",
     "better-sqlite3": "^12.10.0",
     "js-yaml": "^4.1.1"
   },

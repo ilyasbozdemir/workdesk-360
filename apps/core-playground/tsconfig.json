@@ -37,6 +37,12 @@
       ],
       "@temin360/direct-procurement-core/*": [
         "../../packages/direct-procurement-core/src/*"
+      ],
+      "@dt/database": [
+        "../../packages/database/src/index.ts"
+      ],
+      "@dt/database/*": [
+        "../../packages/database/src/*"
       ]
     }
   },

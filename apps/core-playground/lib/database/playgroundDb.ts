@@ -25,54 +25,51 @@ let activeDbInstance: any = null;
 let activeDbPath: string | null = null;
 
 function resolveFixtureDbPath(): string | null {
-  const candidates = [
-    path.resolve(
-      process.cwd(),
-      "tests/fixtures/temin/files/test-projesi.sqlite",
-    ),
-    path.resolve(
-      process.cwd(),
-      "../../tests/fixtures/temin/files/test-projesi.sqlite",
-    ),
-    path.resolve(process.cwd(), "test-projesi.sqlite"),
-    path.resolve(
-      process.cwd(),
-      "tests/fixtures/temin/files/test-projesi.temin",
-    ),
-    path.resolve(
-      process.cwd(),
-      "../../tests/fixtures/temin/files/test-projesi.temin",
-    ),
+  const searchRoots = [
+    process.cwd(),
+    path.resolve(process.cwd(), ".."),
+    path.resolve(process.cwd(), "../.."),
+    path.resolve(process.cwd(), "../../.."),
   ];
 
-  for (const c of candidates) {
-    if (fs.existsSync(c)) {
-      if (c.endsWith(".temin")) {
-        const extracted = c.replace(/\.temin$/, ".sqlite");
-        if (!fs.existsSync(extracted)) {
-          try {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const cp = require("node:child_process");
-            cp.execSync(`tar -xf "${c}" database.sqlite`, {
-              cwd: path.dirname(c),
-            });
-            const defaultDb = path.join(path.dirname(c), "database.sqlite");
-            if (fs.existsSync(defaultDb)) {
-              fs.renameSync(defaultDb, extracted);
-            }
-          } catch {}
-        }
-        if (fs.existsSync(extracted)) return extracted;
-      } else {
-        return c;
-      }
+  for (const root of searchRoots) {
+    const sqlitePath = path.join(root, "tests", "fixtures", "temin", "files", "test-projesi.sqlite");
+    if (fs.existsSync(sqlitePath)) {
+      return sqlitePath;
     }
+    const teminPath = path.join(root, "tests", "fixtures", "temin", "files", "test-projesi.temin");
+    if (fs.existsSync(teminPath)) {
+      const extracted = teminPath.replace(/\.temin$/, ".sqlite");
+      if (!fs.existsSync(extracted)) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const cp = require("node:child_process");
+          cp.execSync(`tar -xf "${teminPath}" database.sqlite`, {
+            cwd: path.dirname(teminPath),
+          });
+          const defaultDb = path.join(path.dirname(teminPath), "database.sqlite");
+          if (fs.existsSync(defaultDb)) {
+            fs.renameSync(defaultDb, extracted);
+          }
+        } catch {}
+      }
+      if (fs.existsSync(extracted)) return extracted;
+    }
+  }
+
+  // Fallback to local files
+  const localCandidates = [
+    path.resolve(process.cwd(), "test-projesi.sqlite"),
+    path.resolve(process.cwd(), "tests/fixtures/temin/files/test-projesi.sqlite"),
+  ];
+  for (const c of localCandidates) {
+    if (fs.existsSync(c)) return c;
   }
   return null;
 }
 
 function createInMemoryFallback() {
-  const table = new Map<
+  const playgroundItems = new Map<
     string,
     { id: string; name: string; target_app: string; created_at: string }
   >([
@@ -96,6 +93,41 @@ function createInMemoryFallback() {
     }],
   ]);
 
+  const teminFiles = new Map<number, any>([
+    [1, {
+      id: 1,
+      dosya_no: "2026/1",
+      temin_no: "2026/1",
+      konu: "Acme Sunucu ve Donanım Alımı",
+      ihale_tipi: "mal",
+      tur: "mal",
+      durum: "taslak",
+      butce_yili: 2026,
+      yaklasik_maliyet: 125000,
+      is_deleted: 0,
+      created_at: new Date().toISOString(),
+    }],
+    [2, {
+      id: 2,
+      dosya_no: "2026/2",
+      temin_no: "2026/2",
+      konu: "Yazılım ve Bulut Hizmeti Alımı",
+      ihale_tipi: "hizmet",
+      tur: "hizmet",
+      durum: "taslak",
+      butce_yili: 2026,
+      yaklasik_maliyet: 85000,
+      is_deleted: 0,
+      created_at: new Date().toISOString(),
+    }],
+  ]);
+
+  const settingsMap = new Map<string, string>([
+    ["adminUsername", "Acme"],
+    ["adminName", "Acme"],
+    ["institutionName", "Acme Corporation"],
+  ]);
+
   return {
     exec: (_sql: string) => {},
     prepare: (sql: string) => ({
@@ -104,10 +136,44 @@ function createInMemoryFallback() {
         if (lower.includes("is_alive")) {
           return [{ is_alive: 1, server_time: new Date().toISOString() }];
         }
-        if (lower.includes("count(*)")) {
-          return [{ toplam: table.size, target_app: "temin360-desktop" }];
+
+        // DATA_TeminDosyasi sorguları
+        if (lower.includes("data_temindosyasi")) {
+          if (lower.includes("count(*)")) {
+            const idMatch = sql.match(/id\s*=\s*['"]?(\d+)['"]?/i) || params[0];
+            const checkId = idMatch ? Number(idMatch) : null;
+            if (checkId !== null && !isNaN(checkId)) {
+              const has = teminFiles.has(checkId) && teminFiles.get(checkId)?.is_deleted === 0;
+              return [{ count: has ? 1 : 0 }];
+            }
+            const activeCount = Array.from(teminFiles.values()).filter((f) => f.is_deleted === 0).length;
+            return [{ count: activeCount }];
+          }
+
+          if (lower.includes("where id =") || lower.includes("where id=?")) {
+            const id = Number(params[0] || (sql.match(/id\s*=\s*['"]?(\d+)['"]?/i)?.[1]));
+            const found = teminFiles.get(id);
+            return found && found.is_deleted === 0 ? [found] : [];
+          }
+
+          const allActive = Array.from(teminFiles.values()).filter((f) => f.is_deleted === 0);
+          return allActive;
         }
-        const items = Array.from(table.values());
+
+        // settings tablosu sorguları
+        if (lower.includes("from settings")) {
+          const result: Array<{ key: string; value: string }> = [];
+          for (const [k, v] of settingsMap.entries()) {
+            result.push({ key: k, value: v });
+          }
+          return result;
+        }
+
+        // Genel / playground_items sorguları
+        if (lower.includes("count(*)")) {
+          return [{ toplam: playgroundItems.size, target_app: "temin360-desktop" }];
+        }
+        const items = Array.from(playgroundItems.values());
         if (lower.includes("where id =") || lower.includes("where id=?")) {
           const id = params[0] ||
             (sql.match(/id\s*=\s*['"]([^'"]+)['"]/i)?.[1]);
@@ -122,22 +188,42 @@ function createInMemoryFallback() {
       },
       run: (...params: any[]) => {
         const lower = sql.toLowerCase();
-        if (lower.startsWith("insert into")) {
+        if (lower.includes("data_temindosyasi")) {
+          if (lower.startsWith("insert into")) {
+            const newId = teminFiles.size + 1;
+            teminFiles.set(newId, {
+              id: newId,
+              temin_no: params[0] || `2026/${newId}`,
+              konu: params[1] || "Yeni Doğrudan Temin",
+              yaklasik_maliyet: Number(params[2] || 50000),
+              tur: params[3] || "mal",
+              ihale_tipi: params[3] || "mal",
+              butce_yili: Number(params[4] || 2026),
+              durum: params[5] || "taslak",
+              is_deleted: 0,
+              created_at: new Date().toISOString(),
+            });
+            return { changes: 1, lastInsertRowid: newId };
+          }
+          return { changes: 1, lastInsertRowid: 0 };
+        }
+
+        if (lower.startsWith("insert into playground_items") || lower.startsWith("insert into")) {
           const id = params[0] || `item-${Date.now()}`;
           const name = params[1] || "New Item";
           const target_app = params[2] || "temin360-desktop";
-          table.set(id, {
+          playgroundItems.set(id, {
             id,
             name,
             target_app,
             created_at: new Date().toISOString(),
           });
-          return { changes: 1, lastInsertRowid: table.size };
+          return { changes: 1, lastInsertRowid: playgroundItems.size };
         }
         if (lower.startsWith("update")) {
           const name = params[0];
           const id = params[1];
-          const item = table.get(id);
+          const item = playgroundItems.get(id);
           if (item) {
             item.name = name;
             return { changes: 1, lastInsertRowid: 0 };
@@ -146,20 +232,24 @@ function createInMemoryFallback() {
         }
         if (lower.startsWith("delete from")) {
           if (lower.includes("like 'tx_%'")) {
-            for (const key of Array.from(table.keys())) {
-              if (key.startsWith("tx_")) table.delete(key);
+            for (const key of Array.from(playgroundItems.keys())) {
+              if (key.startsWith("tx_")) playgroundItems.delete(key);
             }
             return { changes: 1, lastInsertRowid: 0 };
           }
           const id = params[0] ||
             (sql.match(/id\s*=\s*['"]([^'"]+)['"]/i)?.[1]);
-          const deleted = id ? table.delete(id) : false;
+          const deleted = id ? playgroundItems.delete(id) : false;
           return { changes: deleted ? 1 : 0, lastInsertRowid: 0 };
         }
         return { changes: 1, lastInsertRowid: 0 };
       },
     }),
-    close: () => table.clear(),
+    close: () => {
+      playgroundItems.clear();
+      teminFiles.clear();
+      settingsMap.clear();
+    },
   };
 }
 
@@ -191,7 +281,7 @@ export function getPlaygroundRawDb() {
           ON CONFLICT(id) DO NOTHING;
         `);
 
-        // 2. Ensure Acme credentials in settings
+        // 2. Ensure settings table exists before inserting
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const crypto = require("node:crypto");
         const salt = crypto.randomBytes(16).toString("hex");
@@ -199,15 +289,49 @@ export function getPlaygroundRawDb() {
         const passwordHash = `scrypt$${salt}$${hash}`;
 
         activeDbInstance.exec(`
+          CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+          );
           INSERT OR REPLACE INTO settings (key, value) VALUES ('adminUsername', 'Acme');
           INSERT OR REPLACE INTO settings (key, value) VALUES ('adminPassword', '${passwordHash}');
           INSERT OR REPLACE INTO settings (key, value) VALUES ('adminName', 'Acme');
           INSERT OR REPLACE INTO settings (key, value) VALUES ('institutionName', 'Acme Corporation');
         `);
+
+        // 3. Ensure DATA_TeminDosyasi exists in :memory: if not opened from full fixture
+        activeDbInstance.exec(`
+          CREATE TABLE IF NOT EXISTS DATA_TeminDosyasi (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dosya_no TEXT,
+            temin_no TEXT,
+            evrak_sayisi TEXT,
+            konu TEXT NOT NULL,
+            ihale_tipi TEXT DEFAULT 'Doğrudan Temin',
+            alim_turu TEXT DEFAULT 'mal',
+            tur TEXT DEFAULT 'mal',
+            durum TEXT DEFAULT 'taslak',
+            butce_yili INTEGER DEFAULT 2026,
+            butce_turu TEXT DEFAULT 'Öz Bütçe',
+            birim_id INTEGER,
+            birim_adi TEXT,
+            sozlesme_turu TEXT DEFAULT 'Doğrudan Temin',
+            yaklasik_maliyet REAL DEFAULT 0,
+            teslim_suresi_gun INTEGER DEFAULT 7,
+            is_deleted INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+          INSERT INTO DATA_TeminDosyasi (id, dosya_no, temin_no, konu, ihale_tipi, tur, durum, butce_yili, yaklasik_maliyet, is_deleted)
+          VALUES 
+            (1, '2026/1', '2026/1', 'Acme Sunucu ve Donanım Alımı', 'mal', 'mal', 'taslak', 2026, 125000, 0),
+            (2, '2026/2', '2026/2', 'Yazılım ve Bulut Hizmeti Alımı', 'hizmet', 'hizmet', 'taslak', 2026, 85000, 0)
+          ON CONFLICT(id) DO NOTHING;
+        `);
       } else {
         activeDbInstance = createInMemoryFallback();
       }
-    } catch {
+    } catch (err) {
+      console.warn("[playgroundDb] SQLite init warning, falling back to in-memory:", err);
       activeDbInstance = createInMemoryFallback();
     }
   }

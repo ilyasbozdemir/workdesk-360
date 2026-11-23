@@ -291,6 +291,9 @@ importers:
 
   apps/core-playground:
     dependencies:
+      '@dt/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       '@prisma/client':
         specifier: ^6.4.1
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
@@ -1028,6 +1031,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@worksuite-360/core':
+        specifier: workspace:*
+        version: link:../core
       better-sqlite3:
         specifier: ^12.10.0
         version: 12.10.0

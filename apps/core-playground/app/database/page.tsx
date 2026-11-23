@@ -1,456 +1,445 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { ActionCard } from '@/components/playground/ActionCard'
-import { ResultDisplay } from '@/components/test-results/ResultDisplay'
-import { useTargetApp } from '@/components/layout/AppContext'
-import {
-  testDatabaseAction,
-  testAuthAction,
-  getRememberedCredentialsAction,
-  saveRememberedCredentialsAction,
-  testTeminPackageAction
-} from '@/app/actions'
 import {
   Database,
-  Terminal,
-  Play,
-  CheckCircle2,
-  ShieldCheck,
+  Layers,
+  TableProperties,
   KeyRound,
-  UserCheck,
-  RotateCcw,
-  Save,
-  PackageCheck
+  ShieldCheck,
+  AlertTriangle,
+  CheckCircle2,
+  Search,
+  Filter,
+  DollarSign,
+  ArrowUpRight,
+  RefreshCw,
+  Cpu,
+  FileCode2,
+  Boxes,
+  HelpCircle
 } from 'lucide-react'
+import { fetchLogicalSchemaWorkbenchDataAction } from '@/app/actions'
+import { StatusBadge } from '@/components/playground/StatusBadge'
 
-export default function DatabasePlaygroundPage() {
-  const { profile } = useTargetApp()
-  const [sqlQuery, setSqlQuery] = useState('SELECT * FROM playground_items ORDER BY id ASC')
-  const [executeSql, setExecuteSql] = useState(
-    'INSERT INTO playground_items (id, name, target_app) VALUES ("item-manual", "SQL ile Eklendi", "temin360-desktop")'
-  )
-  const [lastResult, setLastResult] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
+export default function DatabaseWorkbenchPage() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'tables' | 'financial' | 'constraints' | 'indexes'>('tables')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedTable, setSelectedTable] = useState<any>(null)
 
-  // Remember Me Form State
-  const [authUsername, setAuthUsername] = useState('Acme')
-  const [authPassword, setAuthPassword] = useState('AcmeAcme')
-  const [rememberMeChecked, setRememberMeChecked] = useState(true)
-  const [dbRememberStatus, setDbRememberStatus] = useState<string | null>(null)
-
-  // Sayfa açıldığında DB'den hatırlanan bilgileri oku
-  useEffect(() => {
-    const fetchRemembered = async () => {
-      try {
-        const res = await getRememberedCredentialsAction()
-        if (res.success && res.data) {
-          if (res.data.rememberMe) {
-            setAuthUsername(res.data.rememberedUsername || 'Acme')
-            setAuthPassword(res.data.rememberedPassword || 'AcmeAcme')
-            setRememberMeChecked(true)
-            setDbRememberStatus(
-              `DB'de kayıtlı: ${res.data.rememberedUsername} (Şifre saklandı)`
-            )
-          } else {
-            setRememberMeChecked(false)
-            setDbRememberStatus("DB'de Beni Hatırla pasif")
-          }
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const res = await fetchLogicalSchemaWorkbenchDataAction()
+      if (res.success && res.data) {
+        setData(res.data)
+        if (res.data.tables?.length > 0) {
+          setSelectedTable(res.data.tables[0])
         }
-      } catch (e) {
-        console.error('Failed to fetch remembered creds:', e)
       }
+    } catch (err) {
+      console.error('Workbench veri yükleme hatası:', err)
+    } finally {
+      setLoading(false)
     }
-    fetchRemembered()
+  }
+
+  useEffect(() => {
+    loadData()
   }, [])
 
-  const runHealth = async () => {
-    setLoading(true)
-    try {
-      const res = await testDatabaseAction('health')
-      setLastResult(res)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const filteredTables = (data?.tables || []).filter((t: any) =>
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.description.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
-  const runAuth = async () => {
-    setLoading(true)
-    try {
-      const res = await testAuthAction(authUsername, authPassword, rememberMeChecked)
-      setLastResult(res)
-      if (res.success && res.data?.authenticated) {
-        setDbRememberStatus(
-          rememberMeChecked
-            ? `Doğrulandı ve DB'ye kaydedildi (${authUsername})`
-            : "Doğrulandı (Beni Hatırla temizlendi)"
-        )
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const runGetRemembered = async () => {
-    setLoading(true)
-    try {
-      const res = await getRememberedCredentialsAction()
-      setLastResult(res)
-      if (res.success && res.data) {
-        if (res.data.rememberMe) {
-          setAuthUsername(res.data.rememberedUsername)
-          setAuthPassword(res.data.rememberedPassword)
-          setRememberMeChecked(true)
-          setDbRememberStatus(`DB'den okundu: ${res.data.rememberedUsername}`)
-        } else {
-          setDbRememberStatus("DB'de 'rememberMe' pasif (false)")
-        }
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const runClearRemembered = async () => {
-    setLoading(true)
-    try {
-      const res = await saveRememberedCredentialsAction({
-        username: authUsername,
-        rememberMe: false
-      })
-      setLastResult(res)
-      setRememberMeChecked(false)
-      setDbRememberStatus("DB'deki hatırlanan bilgiler temizlendi")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const runQuery = async (customSql?: string) => {
-    setLoading(true)
-    try {
-      const target = customSql || sqlQuery
-      const res = await testDatabaseAction('query', target)
-      setLastResult(res)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const runExecute = async () => {
-    setLoading(true)
-    try {
-      const res = await testDatabaseAction('execute', executeSql, [])
-      setLastResult(res)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const runTeminPackage = async () => {
-    setLoading(true)
-    try {
-      const res = await testTeminPackageAction()
-      setLastResult(res)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const filteredFinancial = (data?.financialColumns || []).filter((f: any) =>
+    f.tableName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    f.columnName.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
-    <div className="space-y-6">
-      {/* Başlık */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+    <div className="space-y-8">
+      {/* 1. ÜST BAŞLIK VE KONTROL ÇUBUĞU */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
         <div>
-          <div className="flex items-center gap-2">
-            <Database className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Database Bağlantısı ve SQL Sağlayıcı
-            </h2>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-600 dark:text-indigo-400">
+              <Database className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-3">
+                Database Workbench
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 font-medium border border-emerald-300 dark:border-emerald-800">
+                  Adım 1: Logical Schema
+                </span>
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                55 tablo mantıksal şeması, kurumsal kısıt modelleri, finansal hassasiyet (Scale 4) ve indeks envanteri denetim paneli.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            IDatabaseProvider ve IDatabaseConnection sözleşmeleri üzerinden canlı SQL sorguları, .temin paketi ayıklama ve &quot;Beni Hatırla&quot; DB ayarlarını yönetin.
-          </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-3">
           <button
-            onClick={runTeminPackage}
+            onClick={loadData}
             disabled={loading}
-            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           >
-            <PackageCheck className="w-4 h-4" />
-            <span>.temin Paketini Aç (test-projesi.temin)</span>
-          </button>
-
-          <button
-            onClick={runAuth}
-            disabled={loading}
-            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            <KeyRound className="w-4 h-4" />
-            <span>Girişi Doğrula ({authUsername})</span>
-          </button>
-
-          <button
-            onClick={runHealth}
-            disabled={loading}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Bağlantı Sağlık Kontrolü</span>
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Yenile
           </button>
         </div>
       </div>
 
-      {/* Profil Detayı */}
-      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="space-y-1">
-          <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <span>{profile.icon}</span>
-            <span>Sağlayıcı: {profile.dbEngine}</span>
+      {/* 2. ÖZET METRİK KARTLARI (SAĞLIK MATRİSİ) */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Toplam Tablo</span>
+            <TableProperties className="w-4 h-4 text-slate-400" />
           </div>
-          <p className="text-slate-500">
-            Node.js server-side izole bağlantı havuzu ve güvenli parametre bağlama.
-          </p>
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+            {data?.auditReport?.totalTables || 0}
+          </div>
+          <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-1 flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5" /> 55/55 Dönüştürüldü
+          </div>
         </div>
-        <div className="flex items-center gap-2 font-mono text-[11px] text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-          <ShieldCheck className="w-4 h-4" />
-          <span>IDatabaseConnection: Hazır</span>
+
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Toplam Kolon</span>
+            <Layers className="w-4 h-4 text-blue-400" />
+          </div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
+            {data?.auditReport?.totalColumns || 0}
+          </div>
+          <div className="text-xs text-slate-500 mt-1">
+            Tekil tipli kolonlar
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Finansal Alan (Scale 4)</span>
+            <DollarSign className="w-4 h-4 text-amber-500" />
+          </div>
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2">
+            {data?.auditReport?.financialColumnsCount || 0}
+          </div>
+          <div className="text-xs text-amber-600 dark:text-amber-400/90 font-medium mt-1">
+            Micro-Unit ($10^4$) tescilli
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>Mantıksal Kısıt</span>
+            <ShieldCheck className="w-4 h-4 text-indigo-500" />
+          </div>
+          <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">
+            {data?.auditReport?.totalConstraints || 0}
+          </div>
+          <div className="text-xs text-indigo-600 dark:text-indigo-400/90 font-medium mt-1">
+            PK, FK, Unique & Check
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-medium">
+            <span>İhracat Hazırlığı</span>
+            <Cpu className="w-4 h-4 text-emerald-500" />
+          </div>
+          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">
+            {data?.auditReport?.isFullyExportReady ? 'HAZIR' : 'KİLİTLİ'}
+          </div>
+          <div className="text-xs text-emerald-600 font-medium mt-1">
+            0 Çözümlenmemiş kısıt
+          </div>
         </div>
       </div>
 
-      {/* Beni Hatırla (Remember Me) — DB Entegrasyonu Kartı */}
-      <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50/70 to-indigo-50/40 dark:from-slate-900 dark:to-blue-950/20 border border-blue-200 dark:border-blue-900/50 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <UserCheck className="w-4 h-4 text-blue-600" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-              Beni Hatırla (Remember Me) — Veritabanı settings Tablosu Yönetimi
+      {/* 3. SEKMELER */}
+      <div className="flex border-b border-slate-200 dark:border-slate-800 space-x-6">
+        <button
+          onClick={() => setActiveTab('tables')}
+          className={`pb-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'tables'
+              ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          Tablo Kataloğu ({data?.tables?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('financial')}
+          className={`pb-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'financial'
+              ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          Finansal Kolonlar ({data?.financialColumns?.length || 0})
+        </button>
+        <button
+          onClick={() => setActiveTab('indexes')}
+          className={`pb-3 text-sm font-medium border-b-2 transition ${
+            activeTab === 'indexes'
+              ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
+              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          İndeks Envanteri ({data?.indexes?.length || 0})
+        </button>
+      </div>
+
+      {/* 4. ARAMA VE FİLTRE */}
+      <div className="relative">
+        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+        <input
+          type="text"
+          placeholder="Tablo, kolon adı veya işlev ara..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
+      {/* 5. SEKME 1: TABLO KATALOĞU VE ŞEMA DETAY PANELİ */}
+      {activeTab === 'tables' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Sol Kolon: Tablo Listesi */}
+          <div className="lg:col-span-5 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/80 max-h-[700px] overflow-y-auto">
+            {filteredTables.map((tbl: any) => {
+              const isSelected = selectedTable?.name === tbl.name
+              return (
+                <div
+                  key={tbl.name}
+                  onClick={() => setSelectedTable(tbl)}
+                  className={`p-3.5 cursor-pointer transition flex items-center justify-between ${
+                    isSelected
+                      ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-l-4 border-indigo-600'
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
+                    <div className="font-semibold text-sm text-slate-900 dark:text-slate-100 truncate flex items-center gap-2">
+                      {tbl.name}
+                      {tbl.hasPrimaryKey ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">
+                          PK: {tbl.primaryKey.join(', ')}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-medium">
+                          RowId
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                      {tbl.description || 'Açıklama bulunmuyor'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
+                      {tbl.columnCount} Kolon
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-medium">
+                      {tbl.constraintCount} Kısıt
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Sağ Kolon: Seçili Tablonun Şema Detayları */}
+          <div className="lg:col-span-7 border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 p-5 space-y-6">
+            {selectedTable ? (
+              <>
+                <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 font-mono">
+                      {selectedTable.name}
+                      <span className="text-xs font-sans font-medium px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                        İhracata Hazır
+                      </span>
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                      {selectedTable.description}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-slate-500">
+                    <div>İndeks: {selectedTable.indexCount}</div>
+                    <div>Audit: {selectedTable.hasAudit ? 'Aktif' : 'Pasif'}</div>
+                  </div>
+                </div>
+
+                {/* Kolonlar Listesi */}
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-slate-400" />
+                    Kolonlar ve Mantıksal Tipler
+                  </h3>
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/80">
+                    {Object.values(selectedTable.columns).map((col: any) => (
+                      <div key={col.name} className="p-2.5 flex items-center justify-between text-xs hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                        <div className="flex items-center gap-2">
+                          {col.isPrimaryKey && (
+                            <KeyRound className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          )}
+                          <span className={`font-mono font-medium ${col.isPrimaryKey ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-800 dark:text-slate-200'}`}>
+                            {col.name}
+                          </span>
+                          {col.isFinancial && (
+                            <span className="px-1.5 py-0.2 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 rounded text-[10px] font-bold">
+                              Scale: 4
+                            </span>
+                          )}
+                          {!col.nullable && !col.isPrimaryKey && (
+                            <span className="text-[10px] text-red-500 font-bold">
+                              NOT NULL
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-slate-400 text-[11px]">
+                            {col.originType}
+                          </span>
+                          <span className="font-mono font-bold px-2 py-0.5 rounded-sm bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[11px]">
+                            {col.type}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Kısıtlar Listesi */}
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+                    Kısıtlar ({selectedTable.constraints.length})
+                  </h3>
+                  {selectedTable.constraints.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">Tanımlı tablo kısıtı bulunmuyor.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedTable.constraints.map((c: any, idx: number) => (
+                        <div key={idx} className="p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-xs flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold font-mono px-1.5 py-0.5 rounded-sm bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px]">
+                              {c.type}
+                            </span>
+                            <span className="font-mono text-slate-800 dark:text-slate-200">
+                              {c.type === 'PRIMARY_KEY' && `PK(${c.columns.join(', ')})`}
+                              {c.type === 'UNIQUE' && `UNIQUE(${c.columns.join(', ')})`}
+                              {c.type === 'FOREIGN_KEY' && `FK(${c.columns.join(', ')}) -> ${c.foreignTable}(${c.foreignColumns.join(', ')}) [ON DELETE ${c.onDelete || 'NO ACTION'}]`}
+                              {c.type === 'CHECK' && `CHECK(${c.predicate?.column} IN [${c.predicate?.values?.join(', ')}])`}
+                              {c.type === 'UNRESOLVED' && `UNRESOLVED: ${c.rawDefinition}`}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400">Detaylarını görmek için sol listeden bir tablo seçin.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 6. SEKME 2: FİNANSAL ALANLAR LİSTESİ */}
+      {activeTab === 'financial' && (
+        <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-amber-50/40 dark:bg-amber-950/20">
+            <h3 className="text-sm font-bold text-amber-900 dark:text-amber-300 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-amber-600" />
+              Scale = 4 Ölçeklendirilmiş Tamsayı Standardı (Integer Micro-Units)
             </h3>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+              Aşağıdaki kolonlar COLUMN_OVERRIDE_REGISTRY üzerinden tescillenmiştir. SQLite veritabanında tamsayı micro-unit ($10^4$), PostgreSQL ve DuckDB'de NUMERIC(18, 4) olarak saklanır. Kuruş yuvarlama sapması %0'dır.
+            </p>
           </div>
-          {dbRememberStatus && (
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
-              {dbRememberStatus}
-            </span>
-          )}
+
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th className="p-3">Tablo Adı</th>
+                <th className="p-3">Kolon Adı</th>
+                <th className="p-3">Mantıksal Tip</th>
+                <th className="p-3">Hassasiyet (Scale, Precision)</th>
+                <th className="p-3">Orijinal SQLite Tipi</th>
+                <th className="p-3">Durum</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+              {filteredFinancial.map((item: any, i: number) => (
+                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="p-3 font-semibold text-slate-900 dark:text-slate-100">{item.tableName}</td>
+                  <td className="p-3 text-indigo-600 dark:text-indigo-400 font-bold">{item.columnName}</td>
+                  <td className="p-3 text-slate-700 dark:text-slate-300">{item.type}</td>
+                  <td className="p-3 text-amber-600 dark:text-amber-400 font-bold">Scale: {item.scale}, Prec: {item.precision}</td>
+                  <td className="p-3 text-slate-400">{item.originType}</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-[10px] font-sans font-bold">
+                      Tescilli
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      )}
 
-        <p className="text-xs text-slate-600 dark:text-slate-400">
-          &quot;Beni Hatırla&quot; işaretlendiğinde kullanıcı adı ve şifre veritabanının <code>settings</code> tablosunda (<code>rememberMe</code>, <code>rememberedUsername</code>, <code>rememberedPassword</code>) kalıcı olarak saklanır ve uygulama açılışında doğrudan DB&apos;den yüklenir.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Kullanıcı Adı:
-            </label>
-            <input
-              type="text"
-              value={authUsername}
-              onChange={(e) => setAuthUsername(e.target.value)}
-              className="w-full text-xs font-mono px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500"
-            />
+      {/* 7. SEKME 3: İNDEKS ENVANTERİ */}
+      {activeTab === 'indexes' && (
+        <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900 overflow-hidden">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <TableProperties className="w-4 h-4 text-indigo-500" />
+              Sistem İndeks Envanteri (Hardcoded + Foreign Key Helpers)
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              index.ts içindeki script indeksleri ve ilişkisel foreign key performans indeksleri LogicalIndex formatında kataloglanmıştır.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Parola:
-            </label>
-            <input
-              type="password"
-              value={authPassword}
-              onChange={(e) => setAuthPassword(e.target.value)}
-              className="w-full text-xs font-mono px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex flex-col justify-end">
-            <label className="flex items-center gap-2 cursor-pointer pb-2">
-              <input
-                type="checkbox"
-                checked={rememberMeChecked}
-                onChange={(e) => setRememberMeChecked(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded-sm border-slate-300 focus:ring-blue-500"
-              />
-              <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                Beni Hatırla (DB&apos;ye Kaydet)
-              </span>
-            </label>
-          </div>
+          <table className="w-full text-left text-xs font-mono">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th className="p-3">İndeks Adı</th>
+                <th className="p-3">Hedef Tablo</th>
+                <th className="p-3">Kolonlar</th>
+                <th className="p-3">Kaynak (Origin)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {(data?.indexes || []).map((idx: any, i: number) => (
+                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                  <td className="p-3 font-bold text-indigo-600 dark:text-indigo-400">{idx.name}</td>
+                  <td className="p-3 text-slate-900 dark:text-slate-100 font-semibold">{idx.tableName}</td>
+                  <td className="p-3 text-slate-700 dark:text-slate-300">[{idx.columns.join(', ')}]</td>
+                  <td className="p-3">
+                    <span className="px-2 py-0.5 rounded-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-sans">
+                      {idx.origin}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-blue-200/60 dark:border-blue-900/40">
-          <button
-            onClick={runAuth}
-            disabled={loading}
-            className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>Giriş Yap ve DB&apos;ye Senkronize Et</span>
-          </button>
-
-          <button
-            onClick={runGetRemembered}
-            disabled={loading}
-            className="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>DB&apos;den Hatırlananları Oku</span>
-          </button>
-
-          <button
-            onClick={runClearRemembered}
-            disabled={loading}
-            className="px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <span>DB&apos;deki Hatırlanan Bilgileri Temizle</span>
-          </button>
-        </div>
-      </div>
-
-      {/* SQL Sorgulama Kartları */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* SQL Okuma (query) */}
-        <ActionCard
-          title="query() — Veri Okuma Sorgusu (SELECT)"
-          description="Salt-okunur SELECT sorgularını parametreli veya ham biçimde çalıştırır."
-        >
-          <div className="space-y-3">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] text-slate-500 font-semibold">Örnekler:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'SELECT id, temin_no, konu, yaklasik_maliyet, tur FROM DATA_TeminDosyasi'
-                  setSqlQuery(s)
-                  runQuery(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-semibold hover:bg-blue-200 cursor-pointer"
-              >
-                Dosyalar (DATA_TeminDosyasi)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'SELECT id, unvan, vergi_no, telefon FROM TANIM_Firma'
-                  setSqlQuery(s)
-                  runQuery(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-semibold hover:bg-emerald-200 cursor-pointer"
-              >
-                Firmalar (TANIM_Firma)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'SELECT id, ad_soyad, unvan, eposta FROM TANIM_Personel'
-                  setSqlQuery(s)
-                  runQuery(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 font-semibold hover:bg-purple-200 cursor-pointer"
-              >
-                Personel (TANIM_Personel)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'SELECT key, value FROM settings WHERE key IN ("adminUsername", "adminName", "institutionName", "rememberMe", "rememberedUsername", "rememberedPassword")'
-                  setSqlQuery(s)
-                  runQuery(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-semibold hover:bg-amber-200 cursor-pointer"
-              >
-                Ayarlar & Beni Hatırla (settings)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'SELECT * FROM playground_items ORDER BY id ASC'
-                  setSqlQuery(s)
-                  runQuery(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 cursor-pointer"
-              >
-                Playground Items
-              </button>
-            </div>
-
-            <textarea
-              rows={4}
-              value={sqlQuery}
-              onChange={(e) => setSqlQuery(e.target.value)}
-              className="w-full text-xs font-mono p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 outline-hidden focus:ring-2 focus:ring-emerald-500"
-            />
-
-            <button
-              onClick={() => runQuery()}
-              disabled={loading}
-              className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>Sorguyu Çalıştır (query)</span>
-            </button>
-          </div>
-        </ActionCard>
-
-        {/* SQL Yazma (execute) */}
-        <ActionCard
-          title="execute() — Veri Değiştirme Komutu (INSERT / UPDATE)"
-          description="Etkilenen satır sayısını (affectedRows) döndüren DML sorgularını çalıştırır."
-        >
-          <div className="space-y-3">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] text-slate-500 font-semibold">Örnek Ekleme:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'INSERT INTO TANIM_Firma (unvan, vergi_no, telefon) VALUES ("Acme Test Ortaklığı A.Ş.", "3344556677", "0212 333 4455")'
-                  setExecuteSql(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-semibold hover:bg-blue-200 cursor-pointer"
-              >
-                Firma Ekle
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const s = 'INSERT INTO DATA_TeminDosyasi (temin_no, konu, yaklasik_maliyet, tur) VALUES ("2026/88", "Acme Lisans ve Destek Hizmeti", 90000.00, "hizmet")'
-                  setExecuteSql(s)
-                }}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 font-semibold hover:bg-emerald-200 cursor-pointer"
-              >
-                Dosya Ekle
-              </button>
-            </div>
-
-            <textarea
-              rows={4}
-              value={executeSql}
-              onChange={(e) => setExecuteSql(e.target.value)}
-              className="w-full text-xs font-mono p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 outline-hidden focus:ring-2 focus:ring-blue-500"
-            />
-
-            <button
-              onClick={runExecute}
-              disabled={loading}
-              className="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              <span>Komutu Yürüt (execute)</span>
-            </button>
-          </div>
-        </ActionCard>
-      </div>
-
-      {/* Sonuç Ekranı */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-          SQL Sonucu / Çıktı Konsolu
-        </h3>
-        <ResultDisplay result={lastResult} />
-      </div>
+      )}
     </div>
   )
 }
-

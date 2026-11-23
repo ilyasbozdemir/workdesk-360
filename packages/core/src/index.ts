@@ -33,6 +33,7 @@ export * from "./database/contracts/IDatabaseProvider";
 export * from "./database/contracts/IDatabaseTransaction";
 export * from "./database/contracts/ITeminPackage";
 export * from "./database/contracts/ISqlExecutor";
+export * from "./database/schema";
 export * from "./database/sqlite/BetterSqliteExecutor";
 export * from "./database/sqlite/IpcSqlExecutor";
 export * from "./database/sqlite/SqliteTransaction";
