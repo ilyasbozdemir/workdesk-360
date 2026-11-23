@@ -4,3 +4,7 @@ export { ApprovalService } from "./ApprovalService";
 export { RequirementService } from "./RequirementService";
 export { PriceResearchService } from "./PriceResearchService";
 export { DocumentService } from "./DocumentService";
+export { PrinterService } from "./PrinterService";
+export { CompliancePolicyService } from "./CompliancePolicyService";
+export { DocumentExportService } from "./DocumentExportService";
+export { DirectProcurementFacade, type DirectProcurementFacadeDeps } from "./DirectProcurementFacade";

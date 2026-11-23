@@ -60,4 +60,20 @@ export class PriceResearchService {
             );
         }
     }
+
+    async getOffersByFileId(
+        procurementFileId: number,
+    ): Promise<Result<PriceOffer[], AppError>> {
+        try {
+            const offers = await this.repo.findByProcurementFileId(procurementFileId);
+            return success(offers);
+        } catch (error) {
+            return failure(
+                error instanceof AppError ? error : new AppError({
+                    code: "PRICE_OFFERS_GET_ERROR",
+                    message: error instanceof Error ? error.message : String(error),
+                }),
+            );
+        }
+    }
 }

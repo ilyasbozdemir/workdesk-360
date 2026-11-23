@@ -20,6 +20,7 @@ export {
 export {
     IPC_PROCUREMENT_CHANNELS,
     registerProcurementIpcHandlers,
+    registerProcurementFacadeIpcHandlers,
     createProcurementIpcClient,
     type IpcMainLike,
     type IpcRendererLike,

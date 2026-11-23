@@ -46,6 +46,13 @@ export type {
     RateProvider,
     StageProgressPort,
 } from "./application/ports";
+export type {
+    IPrinterPort,
+    PrinterInfo,
+    PrintJobOptions,
+    PrintJobResult,
+    PrintMargins,
+} from "./application/ports/IPrinterPort";
 export * from "./application/usecases/FileUseCase";
 export * from "./application/usecases/OpenFile";
 export * from "./application/usecases/EnterQuote";

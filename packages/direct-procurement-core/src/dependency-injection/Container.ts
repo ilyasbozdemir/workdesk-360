@@ -35,6 +35,12 @@ import { ApprovalService } from "../application/services/ApprovalService";
 import { RequirementService } from "../application/services/RequirementService";
 import { PriceResearchService } from "../application/services/PriceResearchService";
 import { DocumentService } from "../application/services/DocumentService";
+import { PrinterService } from "../application/services/PrinterService";
+import { CompliancePolicyService } from "../application/services/CompliancePolicyService";
+import { DocumentExportService } from "../application/services/DocumentExportService";
+import { DirectProcurementFacade } from "../application/services/DirectProcurementFacade";
+import { SystemPrinterAdapter } from "../infrastructure/adapters/PrinterAdapter";
+import type { IPrinterPort } from "../application/ports/IPrinterPort";
 import type { IProcurementFileRepository } from "../application/contracts/IProcurementFileRepository";
 import type { ICommissionRepository } from "../application/contracts/ICommissionRepository";
 import type { IApprovalRepository } from "../application/contracts/IApprovalRepository";
@@ -78,6 +84,11 @@ export const TOKENS = {
     RequirementService: Symbol.for("RequirementService"),
     PriceResearchService: Symbol.for("PriceResearchService"),
     DocumentService: Symbol.for("DocumentService"),
+    PrinterPort: Symbol.for("PrinterPort"),
+    PrinterService: Symbol.for("PrinterService"),
+    CompliancePolicyService: Symbol.for("CompliancePolicyService"),
+    DocumentExportService: Symbol.for("DocumentExportService"),
+    DirectProcurementFacade: Symbol.for("DirectProcurementFacade"),
 } as const;
 
 export type TokenKey = keyof typeof TOKENS;
@@ -364,6 +375,42 @@ export function createDirectProcurementContainer(
     container.registerFactory<DocumentService>(
         TOKENS.DocumentService,
         (c) => new DocumentService(c.resolve<IApprovalRepository>(TOKENS.ApprovalRepository)),
+    );
+
+    // 7. Non-DB External Services (Yazıcı, Mevzuat Uyumluluk, Dışa Aktarım, En Üst Cephe)
+    container.registerFactory<IPrinterPort>(
+        TOKENS.PrinterPort,
+        () => new SystemPrinterAdapter(),
+    );
+    container.registerFactory<PrinterService>(
+        TOKENS.PrinterService,
+        (c) => new PrinterService(c.resolve<IPrinterPort>(TOKENS.PrinterPort)),
+    );
+    container.registerFactory<CompliancePolicyService>(
+        TOKENS.CompliancePolicyService,
+        () => new CompliancePolicyService(),
+    );
+    container.registerFactory<DocumentExportService>(
+        TOKENS.DocumentExportService,
+        () => new DocumentExportService(),
+    );
+
+    // 8. En Üst Seviye Orkestrasyon Servisi (Master Facade)
+    container.registerFactory<DirectProcurementFacade>(
+        TOKENS.DirectProcurementFacade,
+        (c) =>
+            new DirectProcurementFacade({
+                fileService: c.resolve<ProcurementFileService>(TOKENS.ProcurementFileService),
+                requirementService: c.resolve<RequirementService>(TOKENS.RequirementService),
+                commissionService: c.resolve<CommissionService>(TOKENS.CommissionService),
+                priceResearchService: c.resolve<PriceResearchService>(TOKENS.PriceResearchService),
+                approvalService: c.resolve<ApprovalService>(TOKENS.ApprovalService),
+                documentService: c.resolve<DocumentService>(TOKENS.DocumentService),
+                printerService: c.resolve<PrinterService>(TOKENS.PrinterService),
+                complianceService: c.resolve<CompliancePolicyService>(TOKENS.CompliancePolicyService),
+                exportService: c.resolve<DocumentExportService>(TOKENS.DocumentExportService),
+                coreProcurementService: c.resolve<DirectProcurementService>(TOKENS.DirectProcurementService),
+            }),
     );
 
     return container;

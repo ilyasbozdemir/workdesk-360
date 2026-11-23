@@ -1,6 +1,9 @@
 import type { DirectProcurementService } from "./DirectProcurementService";
+import type { DirectProcurementFacade } from "../application/services/DirectProcurementFacade";
 import type { EnterQuoteCommand } from "../application/usecases/EnterQuote";
 import type { AcceptanceLine } from "../domain/file/AcceptanceRecord";
+import type { PrintJobOptions } from "../application/ports/IPrinterPort";
+import type { CreateProcurementFileDto } from "../application/dto/procurement-file/ProcurementFileDto";
 
 /**
  * Electron Main IPC Arabirimi
@@ -27,6 +30,13 @@ export const IPC_PROCUREMENT_CHANNELS = {
     RECORD_ACCEPTANCE: "procurement:record-acceptance",
     APPROVE_ACCEPTANCE: "procurement:approve-acceptance",
     CALCULATE_DEDUCTIONS: "procurement:calculate-deductions",
+    // Ek Yazıcı, Görünüm ve En Üst Servis Kanalları
+    GET_PRINTERS: "procurement:get-printers",
+    PRINT_DOCUMENT: "procurement:print-document",
+    GET_FILE_LIST_ITEM: "procurement:get-file-list-item",
+    GET_FILE_DETAIL_VIEW: "procurement:get-file-detail-view",
+    CHECK_COMPLIANCE: "procurement:check-compliance",
+    GENERATE_EKAP_FORM: "procurement:generate-ekap-form",
 } as const;
 
 /**
@@ -94,6 +104,56 @@ export function registerProcurementIpcHandlers(
 }
 
 /**
+ * DirectProcurementFacade için IPC İşleyicilerini Kaydeder.
+ */
+export function registerProcurementFacadeIpcHandlers(
+    ipcMain: IpcMainLike,
+    facade: DirectProcurementFacade,
+): void {
+    ipcMain.handle(
+        IPC_PROCUREMENT_CHANNELS.GET_FILE,
+        async (_event, fileId: number) => {
+            return facade.getFile(fileId);
+        },
+    );
+
+    ipcMain.handle(
+        IPC_PROCUREMENT_CHANNELS.GET_FILE_LIST_ITEM,
+        async (_event, fileId: number) => {
+            return facade.getFileListItem(fileId);
+        },
+    );
+
+    ipcMain.handle(
+        IPC_PROCUREMENT_CHANNELS.GET_FILE_DETAIL_VIEW,
+        async (_event, fileId: number) => {
+            return facade.getFileDetailView(fileId);
+        },
+    );
+
+    ipcMain.handle(
+        IPC_PROCUREMENT_CHANNELS.GET_PRINTERS,
+        async () => {
+            return facade.listAvailablePrinters();
+        },
+    );
+
+    ipcMain.handle(
+        IPC_PROCUREMENT_CHANNELS.PRINT_DOCUMENT,
+        async (_event, title: string, html: string, options?: PrintJobOptions) => {
+            return facade.printDocument(title, html, options);
+        },
+    );
+
+    ipcMain.handle(
+        IPC_PROCUREMENT_CHANNELS.GENERATE_EKAP_FORM,
+        async (_event, fileId: number, extra?: any) => {
+            return facade.generateEkapForm(fileId, extra);
+        },
+    );
+}
+
+/**
  * Electron Renderer Süreci İçin IPC Servis İstemcisi Oluşturur.
  */
 export function createProcurementIpcClient(ipcRenderer: IpcRendererLike) {
@@ -146,6 +206,36 @@ export function createProcurementIpcClient(ipcRenderer: IpcRendererLike) {
                 IPC_PROCUREMENT_CHANNELS.CALCULATE_DEDUCTIONS,
                 fileId,
                 date,
+            );
+        },
+        async getPrinters() {
+            return ipcRenderer.invoke(IPC_PROCUREMENT_CHANNELS.GET_PRINTERS);
+        },
+        async printDocument(title: string, html: string, options?: PrintJobOptions) {
+            return ipcRenderer.invoke(
+                IPC_PROCUREMENT_CHANNELS.PRINT_DOCUMENT,
+                title,
+                html,
+                options,
+            );
+        },
+        async getFileListItem(fileId: number) {
+            return ipcRenderer.invoke(
+                IPC_PROCUREMENT_CHANNELS.GET_FILE_LIST_ITEM,
+                fileId,
+            );
+        },
+        async getFileDetailView(fileId: number) {
+            return ipcRenderer.invoke(
+                IPC_PROCUREMENT_CHANNELS.GET_FILE_DETAIL_VIEW,
+                fileId,
+            );
+        },
+        async generateEkapForm(fileId: number, extra?: any) {
+            return ipcRenderer.invoke(
+                IPC_PROCUREMENT_CHANNELS.GENERATE_EKAP_FORM,
+                fileId,
+                extra,
             );
         },
     };
