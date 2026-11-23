@@ -27,6 +27,19 @@ export interface UpdateProcurementFileDto {
     deliveryDays?: number;
 }
 
+export interface ProcurementFilePermissionsDto {
+    canEdit?: boolean;
+    canApprove?: boolean;
+    canDelete?: boolean;
+    reason?: string;
+}
+
+/**
+ * ProcurementFileDto
+ *
+ * Hem liste hem detay ekranının ortak tükettiği temel DTO.
+ * Farklı mapper'lar bu DTO'dan farklı ViewModel'ler üretir.
+ */
 export interface ProcurementFileDto {
     id: number;
     subject: string;
@@ -35,10 +48,15 @@ export interface ProcurementFileDto {
     procurementType: string;
     status: string;
     isLocked: boolean;
+    lockReason?: string;
     estimatedCost: number;
+    totalAmount?: number;
     budgetYear?: number;
     budgetType?: string;
     contractType?: string;
     deliveryDays?: number;
     unitName?: string;
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
+    permissions?: ProcurementFilePermissionsDto;
 }

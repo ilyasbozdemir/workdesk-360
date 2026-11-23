@@ -1,71 +1,63 @@
 import type { ProcurementFileDto } from "../../application/dto/procurement-file/ProcurementFileDto";
+import { ProcurementFileDetailMapper } from "../mappers/ProcurementFileDetailMapper";
 
+/**
+ * Düzenleme Yetkisi Göstergesi
+ */
+export interface EditPermissionIndicator {
+    canEdit: boolean;
+    badgeText: string; // "Düzenlenebilir" | "Salt Okunur (Kilitli)" | "Yetki Yok"
+    badgeColor: "green" | "amber" | "red" | "gray";
+    reason?: string;
+}
+
+/**
+ * Detay Ekranı ViewModel Kontratı
+ *
+ * İstenen temel alan grupları:
+ * - Dosya bilgileri (subject, procurementNumber, documentNumber, unitName, budget vb.)
+ * - Alım türü (procurementType, procurementTypeLabel)
+ * - Kilit durumu (isLocked, lockStatusLabel, lockBadgeColor, lockReason)
+ * - Düzenleme yetkisi göstergesi (canEdit, editPermissionIndicator)
+ */
 export interface ProcurementFileDetailView {
+    // 1. Dosya bilgileri
     id: number;
     procurementNumber: string;
     documentNumber: string;
     subject: string;
-    status: string;
-    statusBadgeColor: "gray" | "blue" | "green" | "red";
-    statusLabel: string;
-    procurementType: string;
-    procurementTypeLabel: string;
+    unitName: string;
     budgetYear: number;
     budgetType: string;
-    unitName: string;
     contractType: string;
+    deliveryDays: number | null;
     estimatedCost: number;
     formattedEstimatedCost: string;
-    deliveryDays: number | null;
+    status: string;
+    statusLabel: string;
+    statusBadgeColor: "gray" | "blue" | "green" | "red";
+    createdAt?: string | Date;
+    formattedCreatedAt?: string;
+
+    // 2. Alım türü
+    procurementType: string;
+    procurementTypeLabel: string;
+
+    // 3. Kilit durumu
     isLocked: boolean;
+    lockStatusLabel: string;
+    lockBadgeColor: "red" | "green";
+    lockReason?: string;
+
+    // 4. Düzenleme yetkisi göstergesi
+    canEdit: boolean;
+    canApprove: boolean;
+    canDelete: boolean;
+    editPermissionIndicator: EditPermissionIndicator;
 }
 
 export class ProcurementFileDetailViewModel {
     static toDetailView(dto: ProcurementFileDto): ProcurementFileDetailView {
-        const badgeColors: Record<string, "gray" | "blue" | "green" | "red"> = {
-            draft: "gray",
-            in_progress: "blue",
-            completed: "green",
-            cancelled: "red",
-        };
-
-        const statusLabels: Record<string, string> = {
-            draft: "Taslak",
-            in_progress: "Süreç Devam Ediyor",
-            completed: "Sonuçlandırıldı",
-            cancelled: "İptal Edildi",
-        };
-
-        const typeLabels: Record<string, string> = {
-            mal: "Mal Alımı",
-            hizmet: "Hizmet Alımı",
-            yapim_isi: "Yapım İşi",
-            danismanlik: "Danışmanlık Hizmet Alımı",
-        };
-
-        const formattedCost = new Intl.NumberFormat("tr-TR", {
-            style: "currency",
-            currency: "TRY",
-        }).format(dto.estimatedCost || 0);
-
-        return {
-            id: dto.id,
-            procurementNumber: dto.procurementNumber || "—",
-            documentNumber: dto.documentNumber || "—",
-            subject: dto.subject,
-            status: dto.status,
-            statusBadgeColor: badgeColors[dto.status] || "gray",
-            statusLabel: statusLabels[dto.status] || dto.status,
-            procurementType: dto.procurementType,
-            procurementTypeLabel: typeLabels[dto.procurementType] || dto.procurementType,
-            budgetYear: dto.budgetYear || new Date().getFullYear(),
-            budgetType: dto.budgetType || "Öz Bütçe",
-            unitName: dto.unitName || "Belirtilmemiş Birim",
-            contractType: dto.contractType || "Doğrudan Temin",
-            estimatedCost: dto.estimatedCost || 0,
-            formattedEstimatedCost: formattedCost,
-            deliveryDays: dto.deliveryDays ?? null,
-            isLocked: dto.status === "completed" || dto.status === "cancelled",
-        };
+        return ProcurementFileDetailMapper.toDetailView(dto);
     }
 }
