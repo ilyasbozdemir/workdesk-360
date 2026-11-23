@@ -182,15 +182,16 @@ export class ProcurementFile {
     private _props: ProcurementFileProps;
 
     constructor(props: ProcurementFileProps) {
-        if (!Number.isInteger(props.id) || props.id <= 0) {
+        const numericId = Number(props.id);
+        if (!Number.isInteger(numericId) || numericId <= 0) {
             throw new Error("Procurement file ID must be a positive integer.");
         }
 
-        if (!props.subject.trim()) {
+        if (!props.subject || !props.subject.trim()) {
             throw new Error("Procurement file subject cannot be empty.");
         }
 
-        this._id = props.id;
+        this._id = numericId;
 
         this._props = {
             ...props,

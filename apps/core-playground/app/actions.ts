@@ -1456,12 +1456,15 @@ export async function createPlaygroundFileAction(data: {
       const nextNo = data.dosya_no || `${nextYear}/${Math.floor(Math.random() * 900 + 100)}`;
       const res = await conn.execute(
         `INSERT INTO DATA_TeminDosyasi (
-          dosya_no, temin_no, konu, alim_turu, tur, ihale_tipi, durum, butce_yili, 
+          dosya_no, temin_no, konu, dosya_adi, is_tanimi, is_adi, alim_turu, tur, ihale_tipi, durum, butce_yili, 
           yaklasik_maliyet, madde, harcama_birimi, created_at, is_deleted
-        ) VALUES (?, ?, ?, ?, ?, ?, 'taslak', ?, ?, ?, ?, datetime('now'), 0)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'taslak', ?, ?, ?, ?, datetime('now'), 0)`,
         [
           nextNo,
           nextNo,
+          data.konu,
+          data.konu,
+          data.konu,
           data.konu,
           data.alim_turu,
           data.alim_turu,
@@ -1710,11 +1713,11 @@ export async function compilePlaygroundTemplateAction(
       );
 
       const offers = await conn.query<any>(
-        `SELECT tf.*, f.unvan as firma_unvan 
+        `SELECT tf.*, COALESCE(tf.unvan, f.unvan) as firma_unvan, COALESCE(tf.teklif_toplami, 0) as teklif_tutari 
          FROM DATA_TeminFirma tf 
          LEFT JOIN TANIM_Firma f ON tf.firma_id = f.id 
-         WHERE tf.temin_dosya_id = ? OR tf.ihale_dosya_id = ? 
-         ORDER BY tf.teklif_tutari ASC`,
+         WHERE tf.temin_dosya_id = ? OR tf.dosya_id = ? 
+         ORDER BY COALESCE(tf.teklif_toplami, 0) ASC`,
         [fileId, fileId]
       );
 
