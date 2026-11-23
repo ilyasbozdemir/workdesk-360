@@ -278,6 +278,28 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link
+            href="/direct-procurement"
+            className="group p-5 rounded-xl bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20 border border-indigo-200 dark:border-indigo-800/60 hover:border-indigo-400 dark:hover:border-indigo-600 transition-all shadow-xs space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-600 text-white">
+                9 Katman
+              </span>
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Doğrudan Temin Laboratuvarı
+              </h4>
+              <p className="text-xs text-slate-500 mt-1">
+                Domain, SQLite Repositories, Servisler, 2 Mapper (Liste/Detay), Yazıcı, Tebliğ 40666, EKAP ve En Üst Facade testi.
+              </p>
+            </div>
+          </Link>
+
+          <Link
             href="/repositories"
             className="group p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-all shadow-xs space-y-3"
           >

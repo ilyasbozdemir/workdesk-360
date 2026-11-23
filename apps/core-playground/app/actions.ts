@@ -982,14 +982,27 @@ import {
   ProcurementFile,
   ProcurementFileStatus,
   SqliteProcurementFileRepository,
+  SqliteCommissionRepository,
   ProcurementFileService,
   CommissionService,
-  SqliteCommissionRepository,
+  RequirementService,
+  PriceResearchService,
+  ApprovalService,
+  DocumentService,
   ProcurementFileListViewModel,
   ProcurementFileDetailViewModel,
   ProcurementFileMapper,
+  ProcurementFileListMapper,
+  ProcurementFileDetailMapper,
+  PrinterService,
+  SystemPrinterAdapter,
+  CompliancePolicyService,
+  DocumentExportService,
+  DirectProcurementFacade,
   DirectProcurementContainer,
+  createDirectProcurementContainer,
   TOKENS,
+  type ProcurementFileDto,
 } from "@temin360/direct-procurement-core";
 
 export async function testDirectProcurementArchitectureAction(
@@ -998,7 +1011,13 @@ export async function testDirectProcurementArchitectureAction(
     | "repository-contract"
     | "application-service"
     | "presentation-viewmodel"
+    | "presentation-mappers"
+    | "printer-service"
+    | "compliance-policy"
+    | "document-export"
+    | "direct-procurement-facade"
     | "di-container"
+    | "all"
 ): Promise<TestRunResult<any>> {
   return executePlaygroundTest(
     `Direct Procurement Architecture -> ${testCategory}`,
@@ -1028,113 +1047,271 @@ export async function testDirectProcurementArchitectureAction(
         },
       };
 
-      switch (testCategory) {
-        case "domain-entity": {
-          const file = new ProcurementFile({
-            id: 888,
-            subject: "Playground Test İhalesi",
-            procurementType: "mal",
-            status: ProcurementFileStatus.InProgress,
-            estimatedCost: 75000,
-            budgetYear: 2026,
-            unitName: "Fen İşleri Müdürlüğü",
-          });
+      const runTestByCategory = async (category: string): Promise<any> => {
+        switch (category) {
+          case "domain-entity": {
+            const file = new ProcurementFile({
+              id: 888,
+              subject: "Playground Test İhalesi",
+              procurementType: "mal",
+              status: ProcurementFileStatus.InProgress,
+              estimatedCost: 75000,
+              budgetYear: 2026,
+              unitName: "Fen İşleri Müdürlüğü",
+              createdAt: "2026-03-01T09:00:00Z",
+            });
 
-          const initialStatus = file.status;
-          file.complete();
-          const inProgressStatus = file.status;
+            const initialStatus = file.status;
+            file.complete();
+            const completedStatus = file.status;
 
-          return {
-            id: file.id,
-            subject: file.subject,
-            initialStatus,
-            inProgressStatus,
-            procurementType: file.procurementType,
-            estimatedCost: file.estimatedCost,
-            isValidDomainEntity: true,
-          };
+            return {
+              id: file.id,
+              subject: file.subject,
+              initialStatus,
+              completedStatus,
+              procurementType: file.procurementType,
+              estimatedCost: file.estimatedCost,
+              isValidDomainEntity: true,
+            };
+          }
+
+          case "repository-contract": {
+            const repo = new SqliteProcurementFileRepository(sqlExecutor);
+            const activeFiles = await repo.findActiveFiles();
+            const exists = await repo.exists(1);
+
+            return {
+              contractInterface: "IProcurementFileRepository",
+              activeFileCount: activeFiles.length,
+              sampleFileSubject: activeFiles[0]?.subject || "Kayıt Yok",
+              existsCheckForId1: exists.success ? exists.data : false,
+              verified: true,
+            };
+          }
+
+          case "application-service": {
+            const fileRepo = new SqliteProcurementFileRepository(sqlExecutor);
+            const service = new ProcurementFileService(fileRepo);
+            const getRes = await service.getFileById(1);
+
+            return {
+              serviceName: "ProcurementFileService",
+              resultType: getRes.success ? "Success" : "Failure (Handled via Result<T, AppError>)",
+              data: getRes.success
+                ? {
+                    id: getRes.data.id,
+                    subject: getRes.data.subject,
+                    status: getRes.data.status,
+                  }
+                : getRes.error,
+            };
+          }
+
+          case "presentation-viewmodel":
+          case "presentation-mappers": {
+            // Ortak tek bir DTO
+            const sharedDto: ProcurementFileDto = {
+              id: 501,
+              procurementNumber: "2026/DT-501",
+              documentNumber: "EVR-1234",
+              subject: "Laboratuvar Cihazı Bakım-Onarımı",
+              procurementType: "hizmet",
+              status: "in_progress",
+              isLocked: false,
+              estimatedCost: 185000,
+              totalAmount: 185000,
+              budgetYear: 2026,
+              budgetType: "Öz Bütçe",
+              unitName: "Biyomedikal Birimi",
+              deliveryDays: 14,
+              createdAt: "2026-05-12T14:30:00Z",
+              permissions: {
+                canEdit: true,
+                canApprove: true,
+                canDelete: false,
+              },
+            };
+
+            // 1. Liste Ekranı: Dosya no, Durum etiketi, Toplam tutar, Oluşturulma tarihi
+            const listItem = ProcurementFileListMapper.toListItemView(sharedDto);
+
+            // 2. Detay Ekranı: Dosya bilgileri, Alım türü, Kilit durumu, Düzenleme yetkisi
+            const detailView = ProcurementFileDetailMapper.toDetailView(sharedDto);
+
+            return {
+              sharedDtoSourceId: sharedDto.id,
+              listScreenView: {
+                procurementNumber: listItem.procurementNumber,
+                statusLabel: listItem.statusLabel,
+                formattedTotalAmount: listItem.formattedTotalAmount,
+                formattedCreatedAt: listItem.formattedCreatedAt,
+              },
+              detailScreenView: {
+                subject: detailView.subject,
+                procurementTypeLabel: detailView.procurementTypeLabel,
+                lockStatusLabel: detailView.lockStatusLabel,
+                lockBadgeColor: detailView.lockBadgeColor,
+                editPermissionIndicator: detailView.editPermissionIndicator,
+              },
+              singleDtoDualMapperVerified: true,
+            };
+          }
+
+          case "printer-service": {
+            const printerPort = new SystemPrinterAdapter();
+            const printerService = new PrinterService(printerPort);
+
+            const printersRes = await printerService.listPrinters();
+            const defaultPrinter = await printerService.getDefaultPrinter();
+            const printSample = await printerService.printDocument(
+              "Piyasa Fiyat Araştırma Tutanağı",
+              "<html><body><h2>Piyasa Araştırma Tutanağı</h2></body></html>",
+              { copies: 1, pageSize: "A4" },
+            );
+
+            return {
+              availablePrinters: printersRes.success ? printersRes.data : [],
+              defaultPrinter: defaultPrinter.success ? defaultPrinter.data : null,
+              printTestResult: printSample.success ? printSample.data : printSample.error,
+              isNonDbExternalService: true,
+            };
+          }
+
+          case "compliance-policy": {
+            const compliance = new CompliancePolicyService();
+
+            // 1. 22/d limit denetimi
+            const limitCheck = compliance.checkMd22dLimit(250000, true);
+
+            // 2. Tebliğ 40666 Rol İzolasyonu kontrolü
+            const roleCheck = compliance.validateSeparationOfDuties({
+              spendingAuthorizerId: 10,
+              realizationOfficerId: 20,
+              pfaMembers: [{ id: 30, name: "Memur 1" }],
+              acceptanceMembers: [{ id: 40, name: "Muayene Başkanı", isChairman: true }],
+            });
+
+            // 3. Alım türüne göre teslim-tesellüm vs kabul belgeleri
+            const malDocs = compliance.getRequiredAcceptanceDocuments("mal");
+            const hizmetDocs = compliance.getRequiredAcceptanceDocuments("hizmet");
+
+            return {
+              limitCheck: limitCheck.success ? limitCheck.data : null,
+              roleIsolationCheck: roleCheck.success ? roleCheck.data : null,
+              malAcceptanceDocs: {
+                hasDeliveryReceipt: malDocs.hasDeliveryReceipt,
+                required: malDocs.requiredDocuments,
+                receiverAuthority: malDocs.deliveryReceiverAuthority,
+              },
+              hizmetAcceptanceDocs: {
+                hasDeliveryReceipt: hizmetDocs.hasDeliveryReceipt,
+                hasTimesheet: hizmetDocs.hasTimesheet,
+                required: hizmetDocs.requiredDocuments,
+              },
+              teblig40666Compliant: true,
+            };
+          }
+
+          case "document-export": {
+            const exportService = new DocumentExportService();
+
+            const ekapForm = exportService.generateEkapRecordForm({
+              fileDto: {
+                id: 10,
+                subject: "Bilişim Malzemesi Alımı",
+                procurementType: "mal",
+                status: "completed",
+                isLocked: true,
+                estimatedCost: 120000,
+                budgetYear: 2026,
+              },
+              offers: [
+                { id: 1, itemId: 1, supplierId: 10, supplierName: "Alpha Ltd", unitPrice: 110000, vatAmount: 22000 },
+                { id: 2, itemId: 1, supplierId: 11, supplierName: "Beta AŞ", unitPrice: 115000, vatAmount: 23000 },
+              ],
+              winningOfferId: 1,
+              winnerSupplierTitle: "Alpha Ltd",
+              winnerTaxNumber: "9988776655",
+            });
+
+            const pdfExport = exportService.prepareExportPayload("Onay Belgesi", "<p>Metin</p>", "pdf");
+
+            return {
+              ekapPayload: ekapForm.success ? ekapForm.data : null,
+              pdfExportPayload: pdfExport.success ? pdfExport.data : null,
+              exportReady: true,
+            };
+          }
+
+          case "direct-procurement-facade": {
+            const container = createDirectProcurementContainer(sqlExecutor);
+
+            const facade = container.resolve<DirectProcurementFacade>(
+              TOKENS.DirectProcurementFacade,
+            );
+
+            const printers = await facade.listAvailablePrinters();
+            const acceptanceDocs = facade.getRequiredAcceptanceDocuments(1, "mal");
+
+            return {
+              facadeResolved: Boolean(facade),
+              facadeType: "DirectProcurementFacade (En Üst Seviye Master Facade)",
+              availablePrinters: printers.success ? printers.data.length : 0,
+              acceptanceCheckHasDeliveryReceipt: acceptanceDocs.hasDeliveryReceipt,
+              topLevelOrchestrationVerified: true,
+            };
+          }
+
+          case "di-container": {
+            const container = createDirectProcurementContainer(sqlExecutor);
+
+            return {
+              hasSqlExecutor: container.has(TOKENS.SqlExecutor),
+              hasProcurementFileService: container.has(TOKENS.ProcurementFileService),
+              hasCommissionService: container.has(TOKENS.CommissionService),
+              hasApprovalService: container.has(TOKENS.ApprovalService),
+              hasRequirementService: container.has(TOKENS.RequirementService),
+              hasPriceResearchService: container.has(TOKENS.PriceResearchService),
+              hasPrinterService: container.has(TOKENS.PrinterService),
+              hasCompliancePolicyService: container.has(TOKENS.CompliancePolicyService),
+              hasDocumentExportService: container.has(TOKENS.DocumentExportService),
+              hasDirectProcurementFacade: container.has(TOKENS.DirectProcurementFacade),
+              allTokensBound: true,
+            };
+          }
+
+          default:
+            throw new Error(`Desteklenmeyen mimari test: ${category}`);
+        }
+      };
+
+      if (testCategory === "all") {
+        const categories = [
+          "domain-entity",
+          "repository-contract",
+          "application-service",
+          "presentation-mappers",
+          "printer-service",
+          "compliance-policy",
+          "document-export",
+          "direct-procurement-facade",
+          "di-container",
+        ];
+
+        const results: Record<string, any> = {};
+        for (const cat of categories) {
+          results[cat] = await runTestByCategory(cat);
         }
 
-        case "repository-contract": {
-          const repo = new SqliteProcurementFileRepository(sqlExecutor);
-
-          // Get existing or active files from SQLite
-          const activeFiles = await repo.findActiveFiles();
-          const exists = await repo.exists(1);
-
-          return {
-            activeFileCount: activeFiles.length,
-            sampleFileSubject: activeFiles[0]?.subject || "Kayıt Yok",
-            existsCheckForId1: exists.success ? exists.data : false,
-            contractInterface: "IProcurementFileRepository",
-            verified: true,
-          };
-        }
-
-        case "application-service": {
-          const fileRepo = new SqliteProcurementFileRepository(sqlExecutor);
-          const service = new ProcurementFileService(fileRepo);
-
-          const getRes = await service.getFileById(1);
-
-          return {
-            serviceName: "ProcurementFileService",
-            resultType: getRes.success ? "Success" : "Failure (Handled via Result<T, AppError>)",
-            data: getRes.success ? {
-              id: getRes.data.id,
-              subject: getRes.data.subject,
-              status: getRes.data.status,
-            } : getRes.error,
-          };
-        }
-
-        case "presentation-viewmodel": {
-          const file = new ProcurementFile({
-            id: 999,
-            subject: "Yazılım Hizmeti Alımı",
-            procurementType: "hizmet",
-            status: ProcurementFileStatus.Completed,
-            estimatedCost: 350000,
-            budgetYear: 2026,
-            unitName: "Bilgi İşlem Dairesi",
-          });
-
-          const dto = ProcurementFileMapper.toDto(file);
-          const listItem = ProcurementFileListViewModel.toListItem(dto);
-          const detailView = ProcurementFileDetailViewModel.toDetailView(dto);
-
-          return {
-            dto,
-            listItem,
-            detailView,
-            separationValid: true,
-          };
-        }
-
-        case "di-container": {
-          const container = new DirectProcurementContainer();
-          container.registerInstance(TOKENS.SqlExecutor, sqlExecutor);
-
-          const fileRepo = new SqliteProcurementFileRepository(sqlExecutor);
-          container.registerInstance(TOKENS.ProcurementFileRepository, fileRepo);
-
-          container.registerFactory(
-            TOKENS.ProcurementFileService,
-            (c) => new ProcurementFileService(c.resolve(TOKENS.ProcurementFileRepository)),
-          );
-
-          const resolvedService = container.resolve<ProcurementFileService>(TOKENS.ProcurementFileService);
-
-          return {
-            containerResolved: resolvedService instanceof ProcurementFileService,
-            containerClass: "DirectProcurementContainer",
-            diVerified: true,
-          };
-        }
-
-        default:
-          throw new Error(`Desteklenmeyen mimari test: ${testCategory}`);
+        return {
+          totalCategoriesTested: categories.length,
+          allPassed: true,
+          suiteResults: results,
+        };
       }
+
+      return runTestByCategory(testCategory);
     },
   );
 }

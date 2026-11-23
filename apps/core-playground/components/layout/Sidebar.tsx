@@ -30,6 +30,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: <LayoutDashboard className="w-4 h-4" />
   },
   {
+    href: '/direct-procurement',
+    label: 'Doğrudan Temin Laboratuvarı',
+    icon: <Sparkles className="w-4 h-4 text-amber-500" />,
+    badge: '9 Katman'
+  },
+  {
     href: '/repositories',
     label: 'Repository Laboratuvarı',
     icon: <Boxes className="w-4 h-4" />,

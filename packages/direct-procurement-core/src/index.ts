@@ -67,6 +67,7 @@ export * from "./application/dto";
 
 // ─── 3. DOĞRUDAN TEMİN INFRASTRUCTURE KATMANI ─────────────────────────
 export * from "./infrastructure";
+export { SystemPrinterAdapter } from "./infrastructure/adapters/PrinterAdapter";
 
 // ─── 4. DOĞRUDAN TEMİN PRESENTATION KATMANI (Hooks & Mappers) ──────────
 export * from "./presentation";
