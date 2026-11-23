@@ -21,8 +21,14 @@ import {
   success,
   ValidationError,
 } from "@/lib/core";
+import type { ActiveDatabaseInfo } from "@/lib/database/playgroundDb";
+export type { ActiveDatabaseInfo };
 import {
   getActiveDbPath,
+  getActiveDatabaseInfo,
+  setActiveDbPath,
+  findLatestDesktopWorkspaceDb,
+  resetPlaygroundDb,
   getPlaygroundConnection,
   getPlaygroundPrismaClient,
   getPlaygroundProvider,
@@ -1380,6 +1386,7 @@ export async function fetchLogicalSchemaWorkbenchDataAction(): Promise<
           constraintCount: t.constraints.length,
           indexCount: t.indexes.length,
           isExportReady: t.isExportReady,
+          exportReadiness: t.exportReadiness,
           unresolvedCount: t.unresolvedConstraintsCount,
           constraints: t.constraints,
           columns: t.columns,
@@ -1503,8 +1510,11 @@ export async function fetchPlaygroundFileAggregateAction(
     );
 
     const offers = await conn.query<any>(
-      `SELECT * FROM DATA_TeminFirma 
-       WHERE (temin_dosya_id = ? OR ihale_dosya_id = ?) 
+      `SELECT id, temin_dosya_id, dosya_id, firma_id, unvan, vergi_no, 
+              COALESCE(teklif_toplami, 0) as teklif_tutari,
+              kazandi_mi, kazanan_mi, teklif_durumu 
+       FROM DATA_TeminFirma 
+       WHERE (temin_dosya_id = ? OR dosya_id = ?) AND (is_deleted = 0 OR is_deleted IS NULL) 
        ORDER BY teklif_tutari ASC`,
       [fileId, fileId]
     );
@@ -1625,20 +1635,22 @@ export async function addPlaygroundOfferAction(
       // Teklifi DATA_TeminFirma içine ekle
       const res = await conn.execute(
         `INSERT INTO DATA_TeminFirma (
-          temin_dosya_id, ihale_dosya_id, firma_id, teklif_tutari, toplam_teklif, kazanan_mi
-        ) VALUES (?, ?, ?, ?, ?, 0)`,
-        [fileId, fileId, firmaId, Number(offer.teklif_tutari), Number(offer.teklif_tutari)]
+          temin_dosya_id, dosya_id, firma_id, unvan, vergi_no, teklif_toplami, teklif_verdi_mi, kazandi_mi, kazanan_mi, teklif_durumu, is_deleted
+        ) VALUES (?, ?, ?, ?, ?, ?, 1, 0, 0, 'Teklif Alındı', 0)`,
+        [fileId, fileId, firmaId, offer.firma_adi, offer.vergi_no || "1111111111", Number(offer.teklif_tutari)]
       );
 
-      // En düşük teklifi otomatik tespit edip kazanan_mi işaretle
+      // En düşük teklifi otomatik tespit edip kazanan_mi / kazandi_mi işaretle
       const allOffers = await conn.query<any>(
-        "SELECT id, teklif_tutari FROM DATA_TeminFirma WHERE temin_dosya_id = ? OR ihale_dosya_id = ? ORDER BY teklif_tutari ASC",
+        "SELECT id, COALESCE(teklif_toplami, 0) as teklif_tutari FROM DATA_TeminFirma WHERE (temin_dosya_id = ? OR dosya_id = ?) AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY teklif_tutari ASC",
         [fileId, fileId]
       );
       if (allOffers.length > 0) {
         const lowestId = allOffers[0].id;
-        await conn.execute("UPDATE DATA_TeminFirma SET kazanan_mi = 0 WHERE temin_dosya_id = ?", [fileId]);
-        await conn.execute("UPDATE DATA_TeminFirma SET kazanan_mi = 1 WHERE id = ?", [lowestId]);
+        await conn.execute(
+          "UPDATE DATA_TeminFirma SET kazanan_mi = CASE WHEN id = ? THEN 1 ELSE 0 END, kazandi_mi = CASE WHEN id = ? THEN 1 ELSE 0 END WHERE (temin_dosya_id = ? OR dosya_id = ?)",
+          [lowestId, lowestId, fileId, fileId]
+        );
       }
 
       return {
@@ -1881,6 +1893,49 @@ async function inspectTeminPackageInstance(
     firms,
     settings: settingsMap,
   };
+}
+
+// ============================================================================
+// 12. VERİTABANI KAYNAĞI YÖNETİMİ ACTIONS (Canlı Desktop Sync)
+// ============================================================================
+
+export async function getActiveDatabaseInfoAction(): Promise<ActiveDatabaseInfo> {
+  return getActiveDatabaseInfo();
+}
+
+export async function switchPlaygroundDatabaseAction(
+  target: "desktop" | "fixture" | string
+): Promise<TestRunResult<ActiveDatabaseInfo>> {
+  return executePlaygroundTest(
+    `Veritabanı Değiştir -> ${target}`,
+    async () => {
+      let targetPath = target;
+      if (target === "desktop") {
+        const desktopPath = findLatestDesktopWorkspaceDb();
+        if (!desktopPath) {
+          throw new Error(
+            "Masaüstü uygulamasına ait aktif çalışma alanı (dtm_temp) bulunamadı. Lütfen masaüstü uygulamasında bir dosya açtığınızdan emin olun."
+          );
+        }
+        targetPath = desktopPath;
+      } else if (target === "fixture") {
+        const fixtureCandidates = [
+          path.resolve(process.cwd(), "../../tests/fixtures/temin/files/test-projesi.sqlite"),
+          path.resolve(process.cwd(), "tests/fixtures/temin/files/test-projesi.sqlite"),
+          path.resolve(process.cwd(), "../../../tests/fixtures/temin/files/test-projesi.sqlite"),
+        ];
+        const found = fixtureCandidates.find((c) => fs.existsSync(c));
+        if (!found) {
+          throw new Error("test-projesi.sqlite fikstür dosyası bulunamadı.");
+        }
+        targetPath = found;
+      }
+
+      setActiveDbPath(targetPath);
+      const info = getActiveDatabaseInfo();
+      return info;
+    }
+  );
 }
 
 

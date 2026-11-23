@@ -24,7 +24,89 @@ try {
 let activeDbInstance: any = null;
 let activeDbPath: string | null = null;
 
+const CONFIG_FILE = path.resolve(process.cwd(), ".active-playground-db.json");
+
+/**
+ * Kullanıcının masaüstü uygulamasında (Temin 360 Desktop / Electron)
+ * şu an açık olan en son çalışma alanı veritabanını otomatik tespit eder.
+ */
+export function findLatestDesktopWorkspaceDb(): string | null {
+  try {
+    const appData = process.env.APPDATA || "";
+    const dirs = [
+      path.join(appData, "temin360-desktop", "dtm_temp"),
+      path.join(appData, "temin360-desktop-dev", "dtm_temp"),
+    ];
+    let newest: string | null = null;
+    let maxTime = 0;
+    for (const d of dirs) {
+      if (!fs.existsSync(d)) continue;
+      for (const sub of fs.readdirSync(d)) {
+        const dbFile = path.join(d, sub, "database.sqlite");
+        if (fs.existsSync(dbFile)) {
+          const m = fs.statSync(dbFile).mtimeMs;
+          if (m > maxTime) {
+            maxTime = m;
+            newest = dbFile;
+          }
+        }
+      }
+    }
+    return newest;
+  } catch {
+    return null;
+  }
+}
+
+export function getSavedActiveDbPath(): string | null {
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      const content = fs.readFileSync(CONFIG_FILE, "utf-8");
+      const data = JSON.parse(content);
+      if (data?.path && fs.existsSync(data.path)) {
+        return data.path;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+export function saveActiveDbPath(filePath: string): void {
+  try {
+    fs.writeFileSync(
+      CONFIG_FILE,
+      JSON.stringify({ path: filePath, updatedAt: new Date().toISOString() }, null, 2),
+      "utf-8"
+    );
+  } catch {}
+}
+
+export function setActiveDbPath(filePath: string): boolean {
+  if (filePath !== ":memory:" && !fs.existsSync(filePath)) {
+    throw new Error(`Veritabanı dosyası bulunamadı: ${filePath}`);
+  }
+  resetPlaygroundDb();
+  saveActiveDbPath(filePath);
+  activeDbPath = filePath;
+  getPlaygroundRawDb();
+  return true;
+}
+
 function resolveFixtureDbPath(): string | null {
+  // 1. Kullanıcının daha önce seçip kaydettiği aktif veritabanı
+  const saved = getSavedActiveDbPath();
+  if (saved && fs.existsSync(saved)) {
+    return saved;
+  }
+
+  // 2. Masaüstü uygulamasının çalışmakta olduğu aktif oturum (Auto-detect)
+  const desktopDb = findLatestDesktopWorkspaceDb();
+  if (desktopDb && fs.existsSync(desktopDb)) {
+    saveActiveDbPath(desktopDb);
+    return desktopDb;
+  }
+
+  // 3. Repo içi fikstür dosyası
   const searchRoots = [
     process.cwd(),
     path.resolve(process.cwd(), ".."),
@@ -35,6 +117,7 @@ function resolveFixtureDbPath(): string | null {
   for (const root of searchRoots) {
     const sqlitePath = path.join(root, "tests", "fixtures", "temin", "files", "test-projesi.sqlite");
     if (fs.existsSync(sqlitePath)) {
+      saveActiveDbPath(sqlitePath);
       return sqlitePath;
     }
     const teminPath = path.join(root, "tests", "fixtures", "temin", "files", "test-projesi.temin");
@@ -53,7 +136,10 @@ function resolveFixtureDbPath(): string | null {
           }
         } catch {}
       }
-      if (fs.existsSync(extracted)) return extracted;
+      if (fs.existsSync(extracted)) {
+        saveActiveDbPath(extracted);
+        return extracted;
+      }
     }
   }
 
@@ -63,7 +149,10 @@ function resolveFixtureDbPath(): string | null {
     path.resolve(process.cwd(), "tests/fixtures/temin/files/test-projesi.sqlite"),
   ];
   for (const c of localCandidates) {
-    if (fs.existsSync(c)) return c;
+    if (fs.existsSync(c)) {
+      saveActiveDbPath(c);
+      return c;
+    }
   }
   return null;
 }
@@ -268,6 +357,9 @@ export function getPlaygroundRawDb() {
 
         // 1. Ensure playground_items exists
         activeDbInstance.exec(`
+          PRAGMA journal_mode = WAL;
+          PRAGMA synchronous = NORMAL;
+
           CREATE TABLE IF NOT EXISTS playground_items (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -299,7 +391,7 @@ export function getPlaygroundRawDb() {
           INSERT OR REPLACE INTO settings (key, value) VALUES ('institutionName', 'Acme Corporation');
         `);
 
-        // 3. Ensure DATA_TeminDosyasi exists in :memory: if not opened from full fixture
+        // 3. Ensure Temin tables exist
         activeDbInstance.exec(`
           CREATE TABLE IF NOT EXISTS DATA_TeminDosyasi (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -321,6 +413,47 @@ export function getPlaygroundRawDb() {
             is_deleted INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
           );
+
+          CREATE TABLE IF NOT EXISTS DATA_TeminKalem (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            temin_dosya_id INTEGER NOT NULL,
+            dosya_id INTEGER,
+            sira_no INTEGER,
+            kalem_adi TEXT NOT NULL,
+            tipi TEXT DEFAULT 'Mal',
+            birim TEXT DEFAULT 'Adet',
+            miktar REAL NOT NULL DEFAULT 1,
+            birim_fiyat REAL DEFAULT 0,
+            kdv_orani REAL DEFAULT 20,
+            aciklama TEXT,
+            is_deleted INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+
+          CREATE TABLE IF NOT EXISTS TANIM_Firma (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            unvan TEXT NOT NULL,
+            vergi_no TEXT,
+            aktif_mi INTEGER DEFAULT 1,
+            is_deleted INTEGER DEFAULT 0
+          );
+
+          CREATE TABLE IF NOT EXISTS DATA_TeminFirma (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            temin_dosya_id INTEGER NOT NULL,
+            dosya_id INTEGER,
+            firma_id INTEGER NOT NULL,
+            unvan TEXT NOT NULL,
+            vergi_no TEXT,
+            teklif_toplami REAL,
+            teklif_verdi_mi INTEGER DEFAULT 1,
+            kazandi_mi INTEGER DEFAULT 0,
+            kazanan_mi INTEGER DEFAULT 0,
+            teklif_durumu TEXT DEFAULT 'Teklif Alındı',
+            is_deleted INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+
           INSERT INTO DATA_TeminDosyasi (id, dosya_no, temin_no, konu, ihale_tipi, tur, durum, butce_yili, yaklasik_maliyet, is_deleted)
           VALUES 
             (1, '2026/1', '2026/1', 'Acme Sunucu ve Donanım Alımı', 'mal', 'mal', 'taslak', 2026, 125000, 0),
@@ -341,6 +474,60 @@ export function getPlaygroundRawDb() {
 export function getActiveDbPath(): string {
   if (!activeDbPath) getPlaygroundRawDb();
   return activeDbPath || "test-projesi.sqlite (Fixture DB)";
+}
+
+export interface ActiveDatabaseInfo {
+  path: string;
+  source: 'desktop_active' | 'fixture' | 'custom' | 'memory';
+  isDesktopRunning: boolean;
+  detectedDesktopPath: string | null;
+  fileCount: number;
+  itemCount: number;
+  offerCount: number;
+}
+
+export function getActiveDatabaseInfo(): ActiveDatabaseInfo {
+  const db = getPlaygroundRawDb();
+  const currentPath = activeDbPath || ":memory:";
+  const desktopPath = findLatestDesktopWorkspaceDb();
+
+  let source: ActiveDatabaseInfo['source'] = 'custom';
+  if (desktopPath && path.resolve(currentPath) === path.resolve(desktopPath)) {
+    source = 'desktop_active';
+  } else if (currentPath.includes('test-projesi')) {
+    source = 'fixture';
+  } else if (currentPath === ':memory:') {
+    source = 'memory';
+  }
+
+  let fileCount = 0;
+  let itemCount = 0;
+  let offerCount = 0;
+
+  try {
+    const fRes = db.prepare("SELECT count(*) as cnt FROM DATA_TeminDosyasi WHERE is_deleted = 0 OR is_deleted IS NULL").get() as any;
+    fileCount = Number(fRes?.cnt || 0);
+  } catch {}
+
+  try {
+    const iRes = db.prepare("SELECT count(*) as cnt FROM DATA_TeminKalem WHERE is_deleted = 0 OR is_deleted IS NULL").get() as any;
+    itemCount = Number(iRes?.cnt || 0);
+  } catch {}
+
+  try {
+    const oRes = db.prepare("SELECT count(*) as cnt FROM DATA_TeminFirma WHERE is_deleted = 0 OR is_deleted IS NULL").get() as any;
+    offerCount = Number(oRes?.cnt || 0);
+  } catch {}
+
+  return {
+    path: currentPath,
+    source,
+    isDesktopRunning: Boolean(desktopPath),
+    detectedDesktopPath: desktopPath,
+    fileCount,
+    itemCount,
+    offerCount,
+  };
 }
 
 export function resetPlaygroundDb() {
@@ -399,7 +586,7 @@ export function getPlaygroundConnection(): IDatabaseConnection {
     },
 
     async close(): Promise<void> {
-      resetPlaygroundDb();
+      // Bağlantı havuzu uygulama oturumu boyunca açık kalır, resetPlaygroundDb yalnızca açıkça istendiğinde çağrılır
     },
   };
 

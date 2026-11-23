@@ -6,16 +6,16 @@ import {
   parseRawConstraint,
   COLUMN_OVERRIDE_REGISTRY,
   INDEX_REGISTRY,
-} from '../../../database/src/index';
+} from '../src/index';
 import type {
   LogicalTable,
   UniqueConstraint,
   ForeignKeyConstraint,
   CheckConstraint,
   UnresolvedConstraint,
-} from '../../src/index';
+} from '@worksuite-360/core';
 
-describe('Adım 1: Logical Schema & 7-Layer Structural Verification', () => {
+describe('Adım 1: Database Logical Schema & 7-Layer Structural Verification', () => {
   const { logicalTables, auditReport } = convertAllTablesToLogicalSchema(rawTables);
   const tableMap = new Map<string, LogicalTable>(logicalTables.map((t) => [t.name, t]));
 
@@ -249,6 +249,41 @@ describe('Adım 1: Logical Schema & 7-Layer Structural Verification', () => {
       expect(auditReport.totalConstraints).toBeGreaterThan(40);
       expect(auditReport.totalIndexes).toBeGreaterThan(0);
       expect(auditReport.isFullyExportReady).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // Layer 8: Motor Bazlı Export Readiness (SQLite, PostgreSQL, DuckDB, CDC)
+  // =========================================================================
+  describe('Layer 8: Motor Bazlı Dışa Aktarım Hazırlığı (Multi-Engine Readiness)', () => {
+    it('SQLite, PostgreSQL ve DuckDB için tüm 55 tablo aktarıma hazır olmalı', () => {
+      expect(auditReport.engineReadiness.sqlite.ready).toBe(true);
+      expect(auditReport.engineReadiness.postgres.ready).toBe(true);
+      expect(auditReport.engineReadiness.duckdb.ready).toBe(true);
+      expect(auditReport.engineReadiness.sqlite.blockedTables.length).toBe(0);
+      expect(auditReport.engineReadiness.postgres.blockedTables.length).toBe(0);
+      expect(auditReport.engineReadiness.duckdb.blockedTables.length).toBe(0);
+    });
+
+    it('DuckDB analitik aktarımında uygulanmayacak kısıtlar şeffaf biçimde warnings olarak raporlanmalı', () => {
+      const teklifTable = tableMap.get('DATA_TeminKalemTeklif')!;
+      expect(teklifTable.exportReadiness.duckdb.ready).toBe(true);
+      expect(teklifTable.exportReadiness.duckdb.warnings.length).toBeGreaterThan(0);
+      const hasFkWarning = teklifTable.exportReadiness.duckdb.warnings.some((w) =>
+        w.includes('Foreign Key') && w.includes('zorlanmayacaktır')
+      );
+      expect(hasFkWarning).toBe(true);
+    });
+
+    it('PostgreSQL normal aktarım ile mantıksal replikasyon (CDC) hazırlığı ayrıştırılmalı', () => {
+      for (const lt of logicalTables) {
+        expect(lt.exportReadiness.postgres.ready).toBe(true);
+        if (lt.hasPrimaryKey) {
+          expect(lt.exportReadiness.postgres.cdcReady).toBe(true);
+        } else {
+          expect(lt.exportReadiness.postgres.cdcReady).toBe(false);
+        }
+      }
     });
   });
 });

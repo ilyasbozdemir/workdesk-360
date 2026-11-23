@@ -148,6 +148,37 @@ export interface LogicalColumn {
 }
 
 /**
+ * Desteklenen hedef veritabanı motorları.
+ */
+export type TargetEngine = 'sqlite' | 'postgres' | 'duckdb';
+
+/**
+ * Tek bir veritabanı motoru için dışa aktarım hazırlık ayrıntısı.
+ */
+export interface EngineReadinessDetail {
+  /** Motor bu tabloyu aktarabilir mi (kritik engel yok mu) */
+  readonly ready: boolean;
+  /** Aktarımı kesin olarak engelleyen kritik blokörler */
+  readonly blockers: readonly string[];
+  /** Aktarımı engellemeyen fakat veri bütünlüğü / kısıt farklarını bildiren uyarılar */
+  readonly warnings: readonly string[];
+  /**
+   * PostgreSQL için mantıksal replikasyon / CDC (Change Data Capture) uygunluğu.
+   * Tabloda açık bir Primary Key veya REPLICA IDENTITY FULL gereklidir.
+   */
+  readonly cdcReady?: boolean;
+}
+
+/**
+ * Desteklenen tüm motorlar için ayrıntılı dışa aktarım hazırlık karnesi.
+ */
+export interface EngineExportReadiness {
+  readonly sqlite: EngineReadinessDetail;
+  readonly postgres: EngineReadinessDetail;
+  readonly duckdb: EngineReadinessDetail;
+}
+
+/**
  * Mantıksal tablo tanımı (Logical Table Model).
  */
 export interface LogicalTable {
@@ -160,9 +191,10 @@ export interface LogicalTable {
   readonly indexes: readonly LogicalIndex[];
   readonly hasAudit: boolean;
   // Dışa aktarım ve doğrulama durumu
-  readonly isExportReady: boolean;
+  readonly isExportReady: boolean; // Geriye dönük uyumluluk (Varsayılan genel aktarım durumu)
+  readonly exportReadiness: EngineExportReadiness; // Motor bazlı ayrıntılı hazırlık
   readonly unresolvedConstraintsCount: number;
-  readonly exportBlockers: readonly string[];
+  readonly exportBlockers: readonly string[]; // Birleşik blokör listesi
 }
 
 /**
@@ -183,4 +215,9 @@ export interface SchemaAuditReport {
   }>;
   readonly totalIndexes: number;
   readonly isFullyExportReady: boolean;
+  readonly engineReadiness: {
+    readonly sqlite: { readonly ready: boolean; readonly blockedTables: readonly string[]; readonly warningCount: number };
+    readonly postgres: { readonly ready: boolean; readonly blockedTables: readonly string[]; readonly cdcBlockedTables: readonly string[]; readonly warningCount: number };
+    readonly duckdb: { readonly ready: boolean; readonly blockedTables: readonly string[]; readonly warningCount: number };
+  };
 }

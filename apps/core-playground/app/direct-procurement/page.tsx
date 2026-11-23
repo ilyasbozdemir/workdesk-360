@@ -44,6 +44,9 @@ import {
   compilePlaygroundTemplateAction,
   loadPresetTeminPackageAction,
   uploadAndInspectTeminPackageAction,
+  getActiveDatabaseInfoAction,
+  switchPlaygroundDatabaseAction,
+  type ActiveDatabaseInfo,
   type TeminPackageInspectionResult,
   type PlaygroundProcurementFileAggregate,
 } from '@/app/actions'
@@ -185,21 +188,47 @@ export default function DirectProcurementLaboratoryPage() {
   const [isLoadingPackage, setIsLoadingPackage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // İlk yüklemede dosyaları çek
+  // Aktif Veritabanı State
+  const [activeDbInfo, setActiveDbInfo] = useState<ActiveDatabaseInfo | null>(null)
+  const [isSwitchingDb, setIsSwitchingDb] = useState(false)
+
+  // İlk yüklemede dosyaları ve veritabanı durumunu çek
   useEffect(() => {
     loadFiles()
   }, [])
 
-  const loadFiles = async () => {
+  const loadFiles = async (preferredFileId?: number) => {
     setIsLoadingFiles(true)
     try {
-      const rows = await fetchPlaygroundFilesAction()
+      const [rows, dbInfo] = await Promise.all([
+        fetchPlaygroundFilesAction(),
+        getActiveDatabaseInfoAction(),
+      ])
       setFiles(rows)
-      if (rows.length > 0 && !selectedFileId) {
-        selectFile(rows[0].id)
+      setActiveDbInfo(dbInfo)
+
+      const targetId = preferredFileId || selectedFileId || (rows.length > 0 ? rows[0].id : null)
+      if (targetId) {
+        await selectFile(targetId)
+      } else {
+        setSelectedFileId(null)
+        setFileAggregate(null)
       }
     } finally {
       setIsLoadingFiles(false)
+    }
+  }
+
+  const handleSwitchDb = async (target: 'desktop' | 'fixture') => {
+    setIsSwitchingDb(true)
+    try {
+      const res = await switchPlaygroundDatabaseAction(target)
+      if (res.success && res.data) {
+        setActiveDbInfo(res.data)
+        await loadFiles()
+      }
+    } finally {
+      setIsSwitchingDb(false)
     }
   }
 
@@ -375,6 +404,83 @@ export default function DirectProcurementLaboratoryPage() {
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Canlı dosya oluşturma, ihtiyaç listesi, firma teklifleri, şablon derleme ve .temin arşiv paket yöneticisi
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Canlı Veritabanı Kaynağı ve Senkronizasyon Durum Çubuğu */}
+        <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 text-white rounded-2xl p-4 shadow-md border border-slate-800">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl ${
+                activeDbInfo?.source === 'desktop_active' 
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                  : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+              }`}>
+                <Database className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Aktif Veritabanı:
+                  </span>
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                    activeDbInfo?.source === 'desktop_active'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                      : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  }`}>
+                    {activeDbInfo?.source === 'desktop_active'
+                      ? '🟢 Masaüstü Uygulaması (Canlı Oturum)'
+                      : activeDbInfo?.source === 'fixture'
+                      ? '📁 Statik Test Fikstürü (test-projesi.sqlite)'
+                      : '⚙️ Özel Veritabanı'}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-300 font-mono mt-0.5 truncate max-w-xl" title={activeDbInfo?.path}>
+                  {activeDbInfo?.path || 'Veritabanı yolu aranıyor...'}
+                </div>
+                <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
+                  <span>Toplam Dosya: <strong className="text-white">{activeDbInfo?.fileCount ?? files.length}</strong></span>
+                  <span>•</span>
+                  <span>Kayıtlı Kalemler: <strong className="text-white">{activeDbInfo?.itemCount ?? 0}</strong></span>
+                  <span>•</span>
+                  <span>Kayıtlı Teklifler: <strong className="text-white">{activeDbInfo?.offerCount ?? 0}</strong></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hızlı Değiştirme ve Senkronizasyon Aksiyonları */}
+            <div className="flex items-center gap-2 self-end lg:self-center">
+              {activeDbInfo?.isDesktopRunning && activeDbInfo.source !== 'desktop_active' && (
+                <button
+                  onClick={() => handleSwitchDb('desktop')}
+                  disabled={isSwitchingDb}
+                  className="px-3.5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow transition flex items-center gap-1.5 disabled:opacity-50"
+                  title="Sol ekrandaki açık masaüstü uygulaması oturumuna anında bağlanır"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Masaüstü Uygulamasına Bağlan (Canlı)
+                </button>
+              )}
+              {activeDbInfo?.source === 'desktop_active' && (
+                <button
+                  onClick={() => handleSwitchDb('fixture')}
+                  disabled={isSwitchingDb}
+                  className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+                  title="İzole test fikstürüne geri döner"
+                >
+                  Fikstüre Geç (test-projesi)
+                </button>
+              )}
+              <button
+                onClick={() => loadFiles()}
+                disabled={isLoadingFiles}
+                className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition flex items-center gap-1.5"
+                title="Veritabanındaki taze kayıtları yeniden yükle"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                {isLoadingFiles ? 'Yenileniyor...' : 'Yenile'}
+              </button>
             </div>
           </div>
         </div>

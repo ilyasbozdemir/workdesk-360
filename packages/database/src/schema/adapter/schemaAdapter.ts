@@ -7,6 +7,7 @@ import type {
   UniqueConstraint,
   SchemaAuditReport,
   LogicalColumnType,
+  EngineExportReadiness,
 } from '../types';
 import type { TableSchema, TableColumn } from '../../types';
 import { COLUMN_OVERRIDE_REGISTRY } from '../registry/columnOverrides';
@@ -182,37 +183,98 @@ export function legacyTableToLogicalSchema(rawTable: TableSchema): LogicalTable 
   // 5. İndeksleri Kataloğundan Çek
   const registeredIndexes = INDEX_REGISTRY[tableName] || [];
 
-  // 6. Gelişmiş İhracat Hazırlığı ve Engel Denetimi (Export Readiness & Blockers)
-  const exportBlockers: string[] = [];
-  const unresolvedCount = derivedConstraints.filter((c) => c.type === 'UNRESOLVED').length;
-  if (unresolvedCount > 0) {
-    exportBlockers.push(`${unresolvedCount} adet çözümlenemeyen kısıt (UNRESOLVED) mevcut.`);
-  }
+  // 6. Gelişmiş Motor Bazlı Dışa Aktarım Hazırlığı ve Engel/Uyarı Denetimi (Engine Export Readiness)
+  const sqliteBlockers: string[] = [];
+  const sqliteWarnings: string[] = [];
 
-  // Primary key kontrolü: ilişkisel hedef motorlar için açık PK gereklidir
-  if (primaryKeyCols.length === 0) {
-    exportBlockers.push('Tabloda birincil anahtar (Primary Key) tanımlı değil; PostgreSQL/DuckDB için açık PK gereklidir.');
-  }
+  const postgresBlockers: string[] = [];
+  const postgresWarnings: string[] = [];
 
-  // Kolon tiplerinin geçerlilik denetimi
+  const duckdbBlockers: string[] = [];
+  const duckdbWarnings: string[] = [];
+
+  // A. Kolon tiplerinin geçerlilik denetimi (Tüm motorlar için temel koşul)
   for (const col of Object.values(columnsRecord)) {
     if (!col.type) {
-      exportBlockers.push(`${col.name} kolonunun mantıksal tipi belirlenemedi.`);
+      const msg = `"${col.name}" kolonunun mantıksal tipi belirlenemedi.`;
+      sqliteBlockers.push(msg);
+      postgresBlockers.push(msg);
+      duckdbBlockers.push(msg);
     }
   }
+
+  // B. Çözümlenemeyen kısıtlar (UNRESOLVED)
+  const unresolvedCount = derivedConstraints.filter((c) => c.type === 'UNRESOLVED').length;
+  if (unresolvedCount > 0) {
+    sqliteWarnings.push(`${unresolvedCount} adet çözümlenemeyen kısıt (UNRESOLVED) mevcut; SQLite raw/passthrough olarak çalışacaktır.`);
+    // PostgreSQL strict DDL ürettiği için UNRESOLVED kısıtlar aktarımı engeller
+    postgresBlockers.push(`${unresolvedCount} adet çözümlenemeyen kısıt (UNRESOLVED) PostgreSQL DDL derlemesini engelliyor.`);
+    // DuckDB analitikte kısıtları zorlamaz ancak şeffaf uyarı olarak raporlar
+    duckdbWarnings.push(`${unresolvedCount} adet çözümlenemeyen kısıt DuckDB analitik aktarımında göz ardı edilecektir.`);
+  }
+
+  // C. Primary Key Denetimi (Motor bazlı farklılaşma)
+  const hasPk = primaryKeyCols.length > 0;
+  if (!hasPk) {
+    sqliteWarnings.push('Tabloda birincil anahtar (Primary Key) tanımlı değil; SQLite örtük rowid kullanacaktır.');
+    postgresWarnings.push('Tabloda birincil anahtar tanımlı değil; standart tablo aktarılabilir ancak satır güncelleme performansı ve tekillik güvencesi zayıftır.');
+    duckdbWarnings.push('Tabloda birincil anahtar tanımlı değil; DuckDB kolonsal OLAP analitiğinde PK zorunlu değildir.');
+  }
+
+  // D. DuckDB Kısıt Uyarıları (Analitik aktarımda uygulanmayacak kısıtların ve veri bütünlüğü etkisinin açık raporlanması)
+  const fkCount = derivedConstraints.filter((c) => c.type === 'FOREIGN_KEY').length;
+  if (fkCount > 0) {
+    duckdbWarnings.push(`${fkCount} adet Foreign Key ilişkisi DuckDB analitik motorunda zorlanmayacaktır (Unenforced). İlişkisel referans bütünlüğü kaynak veritabanına bağlıdır.`);
+  }
+
+  const uqCount = derivedConstraints.filter((c) => c.type === 'UNIQUE').length;
+  const chkCount = derivedConstraints.filter((c) => c.type === 'CHECK').length;
+  if (uqCount > 0 || chkCount > 0) {
+    duckdbWarnings.push(`${uqCount + chkCount} adet UNIQUE/CHECK kısıtı DuckDB analitik aktarımında uygulanmayacaktır. Mükerrer kayıt denetimi analitik seviyede yapılmalıdır.`);
+  }
+
+  // E. Motor bazlı karne
+  const exportReadiness: EngineExportReadiness = {
+    sqlite: {
+      ready: sqliteBlockers.length === 0,
+      blockers: sqliteBlockers,
+      warnings: sqliteWarnings,
+    },
+    postgres: {
+      ready: postgresBlockers.length === 0,
+      blockers: postgresBlockers,
+      warnings: postgresWarnings,
+      // CDC / Mantıksal Replikasyon için açık PK zorunludur
+      cdcReady: postgresBlockers.length === 0 && hasPk,
+    },
+    duckdb: {
+      ready: duckdbBlockers.length === 0,
+      blockers: duckdbBlockers,
+      warnings: duckdbWarnings,
+    },
+  };
+
+  const combinedExportBlockers = Array.from(
+    new Set([...sqliteBlockers, ...postgresBlockers, ...duckdbBlockers])
+  );
+  const isExportReady =
+    exportReadiness.sqlite.ready &&
+    exportReadiness.postgres.ready &&
+    exportReadiness.duckdb.ready;
 
   return {
     name: tableName,
     description: rawTable.description,
     columns: columnsRecord,
     primaryKey: primaryKeyCols,
-    hasPrimaryKey: primaryKeyCols.length > 0,
+    hasPrimaryKey: hasPk,
     constraints: derivedConstraints,
     indexes: registeredIndexes,
     hasAudit: rawTable.hasAudit !== false,
-    isExportReady: exportBlockers.length === 0,
+    isExportReady,
+    exportReadiness,
     unresolvedConstraintsCount: unresolvedCount,
-    exportBlockers,
+    exportBlockers: combinedExportBlockers,
   };
 }
 
@@ -274,6 +336,24 @@ export function convertAllTablesToLogicalSchema(tables: TableSchema[]): {
     unresolvedConstraints: unresolvedConstraintsList,
     totalIndexes,
     isFullyExportReady: logicalTables.every((t) => t.isExportReady) && unresolvedConstraintsList.length === 0,
+    engineReadiness: {
+      sqlite: {
+        ready: logicalTables.every((t) => t.exportReadiness.sqlite.ready),
+        blockedTables: logicalTables.filter((t) => !t.exportReadiness.sqlite.ready).map((t) => t.name),
+        warningCount: logicalTables.reduce((acc, t) => acc + t.exportReadiness.sqlite.warnings.length, 0),
+      },
+      postgres: {
+        ready: logicalTables.every((t) => t.exportReadiness.postgres.ready),
+        blockedTables: logicalTables.filter((t) => !t.exportReadiness.postgres.ready).map((t) => t.name),
+        cdcBlockedTables: logicalTables.filter((t) => !t.exportReadiness.postgres.cdcReady).map((t) => t.name),
+        warningCount: logicalTables.reduce((acc, t) => acc + t.exportReadiness.postgres.warnings.length, 0),
+      },
+      duckdb: {
+        ready: logicalTables.every((t) => t.exportReadiness.duckdb.ready),
+        blockedTables: logicalTables.filter((t) => !t.exportReadiness.duckdb.ready).map((t) => t.name),
+        warningCount: logicalTables.reduce((acc, t) => acc + t.exportReadiness.duckdb.warnings.length, 0),
+      },
+    },
   };
 
   return {

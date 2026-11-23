@@ -38,3 +38,4 @@ yedek/
 *.arsiv
 *.arsiv360
 arsiv360.db
+.active-playground-db.json

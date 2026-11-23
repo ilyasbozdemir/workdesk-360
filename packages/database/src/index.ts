@@ -5,11 +5,17 @@ import {
   registerDefaultAuditTriggers,
 } from "./audit-trail";
 import {
-  syncDatabaseSchema,
   recreateTableSafely,
   type SchemaSyncResult,
+  syncDatabaseSchema,
 } from "./schema-sync";
-import { INDEX_REGISTRY } from "./schema/registry/indexRegistry";
+import {
+  buildSqliteIndexDdl,
+  createRegisteredIndexes,
+  INDEX_REGISTRY,
+  IndexCreationError,
+  type IndexExecutionReport,
+} from "./schema";
 import type { LogicalIndex } from "./schema/types";
 // ============================================================================
 // 1. KURUM, TEŞKİLAT VE PERSONEL TANIMLARI
@@ -731,6 +737,13 @@ export interface InitializeDatabaseOptions {
    * Varsayılan: 'Yönetici'
    */
   adminTitle?: string;
+  /**
+   * İndeks oluşturma katılık modu (Strict Mode).
+   * true ise: Bir indeks oluşturulamazsa `IndexCreationError` fırlatılır (Test/migration).
+   * false ise: Hatalar loglanır ve raporda saklanır, süreç kesilmez (Üretim toleransı).
+   * Varsayılan: false
+   */
+  strictIndexes?: boolean;
 }
 
 export function initializeDatabase(
@@ -866,22 +879,10 @@ export function initializeDatabase(
   }
 
   // İndeksler tablolar oluşturulduktan sonra INDEX_REGISTRY üzerinden tanımlanır
-  for (const [tableName, indexes] of Object.entries(INDEX_REGISTRY)) {
-    const tableExists = targetSchema.tables.some((t: any) => t.name === tableName);
-    if (!tableExists) continue;
-
-    for (const idx of (indexes as LogicalIndex[])) {
-      const cols = idx.columns.map((c: string) => `"${c}"`).join(", ");
-      const uniqueClause = idx.unique ? "UNIQUE " : "";
-      try {
-        db.exec(
-          `CREATE ${uniqueClause}INDEX IF NOT EXISTS "${idx.name}" ON "${idx.tableName}"(${cols});`,
-        );
-      } catch (idxErr) {
-        console.warn(`[IndexRegistry] ${idx.name} oluşturulamadı:`, idxErr);
-      }
-    }
-  }
+  createRegisteredIndexes(db, {
+    strict: resolvedOptions?.strictIndexes,
+    targetSchema,
+  });
 
   // Geliştirme/test ortamı için başlangıç test personelleri (Seed)
   // Yalnızca açıkça `seedTestData: true` istendiğinde eklenir. Varsayılan: false (üretim güvenliği).
@@ -1142,4 +1143,3 @@ export * from "./migrate";
 export * from "./audit-trail";
 export * from "./schema-sync";
 export * from "./schema";
-
