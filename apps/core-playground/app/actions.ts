@@ -2027,6 +2027,48 @@ export async function openPresetTeminPackageAction(): Promise<TestRunResult<Acti
   );
 }
 
+/**
+ * 12.3. Kullanıcının masaüstünde (Desktop) bulunan gerçek .temin paketini bulup doğrudan açar.
+ */
+export async function openDesktopTeminPackageAction(): Promise<TestRunResult<ActiveDatabaseInfo>> {
+  return executePlaygroundTest(
+    "TeminPackage -> Masaüstündeki .temin Dosyasını Çalışma Alanı Olarak Aç",
+    async () => {
+      const userProfile = process.env.USERPROFILE || "";
+      const desktopDir = path.join(userProfile, "Desktop");
+
+      let foundTemin: string | null = null;
+      if (fs.existsSync(desktopDir)) {
+        const files = fs.readdirSync(desktopDir).filter((f) => f.toLowerCase().endsWith(".temin"));
+        if (files.length > 0) {
+          // Varsa en son güncelleneni seç
+          let maxTime = 0;
+          for (const f of files) {
+            const full = path.join(desktopDir, f);
+            const m = fs.statSync(full).mtimeMs;
+            if (m > maxTime) {
+              maxTime = m;
+              foundTemin = full;
+            }
+          }
+        }
+      }
+
+      if (!foundTemin) {
+        throw new Error("Masaüstünde (.temin) uzantılı proje dosyası bulunamadı.");
+      }
+
+      const cleanFileName = path.basename(foundTemin);
+      const pkg = await TeminPackage.open(foundTemin);
+      setActiveCustomLabel(cleanFileName);
+      setActiveDbPath(pkg.getDatabasePath());
+      const info = getActiveDatabaseInfo();
+      info.customLabel = cleanFileName;
+      return info;
+    }
+  );
+}
+
 
 
 

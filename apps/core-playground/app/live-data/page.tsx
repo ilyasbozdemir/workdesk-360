@@ -7,6 +7,7 @@ import {
   insertTeminRowAction,
   deleteTeminRowAction
 } from '@/app/actions'
+import { DatabaseSourceBanner } from '@/components/playground/DatabaseSourceBanner'
 import {
   TableProperties,
   FolderOpen,
@@ -167,6 +168,15 @@ export default function LiveDataPage() {
           </button>
         </div>
       </div>
+
+      {/* Aktif Veritabanı Kaynağı */}
+      <DatabaseSourceBanner
+        compact
+        onRefreshExtra={() => {
+          loadStats()
+          loadRows(activeTable, search)
+        }}
+      />
 
       {/* İstatistik Rozetleri */}
       {stats && (

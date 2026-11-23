@@ -53,6 +53,8 @@ import {
   type PlaygroundProcurementFileAggregate,
 } from '@/app/actions'
 import type { ActiveDatabaseInfo } from '@/lib/database/playgroundDb'
+import { DatabaseSourceBanner } from '@/components/playground/DatabaseSourceBanner'
+import { usePlaygroundDatabase } from '@/components/layout/PlaygroundDatabaseContext'
 import { ResultDisplay } from '@/components/test-results/ResultDisplay'
 import { StatusBadge } from '@/components/playground/StatusBadge'
 
@@ -190,28 +192,26 @@ export default function DirectProcurementLaboratoryPage() {
   const [inspectedPackage, setInspectedPackage] = useState<TeminPackageInspectionResult | null>(null)
   const [isLoadingPackage, setIsLoadingPackage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const bannerFileInputRef = useRef<HTMLInputElement>(null)
 
-  // Aktif Veritabanı State
-  const [activeDbInfo, setActiveDbInfo] = useState<ActiveDatabaseInfo | null>(null)
-  const [isSwitchingDb, setIsSwitchingDb] = useState(false)
+  // Global Veritabanı Context
+  const { activeDbInfo, lastUpdated, refreshDbInfo } = usePlaygroundDatabase()
 
-  // İlk yüklemede dosyaları ve veritabanı durumunu çek
+  // İlk yüklemede ve veritabanı değiştiğinde dosyaları çek
   useEffect(() => {
     loadFiles()
-  }, [])
+  }, [lastUpdated])
 
   const loadFiles = async (preferredFileId?: number) => {
     setIsLoadingFiles(true)
     try {
-      const [rows, dbInfo] = await Promise.all([
-        fetchPlaygroundFilesAction(),
-        getActiveDatabaseInfoAction(),
-      ])
+      const rows = await fetchPlaygroundFilesAction()
       setFiles(rows)
-      setActiveDbInfo(dbInfo)
 
-      const targetId = preferredFileId || selectedFileId || (rows.length > 0 ? rows[0].id : null)
+      const savedIdStr = typeof window !== 'undefined' ? localStorage.getItem('playground_selected_file_id') : null
+      const savedId = savedIdStr ? parseInt(savedIdStr, 10) : null
+      const savedIdValid = savedId && rows.some((r: any) => r.id === savedId)
+
+      const targetId = preferredFileId || (savedIdValid ? savedId : null) || selectedFileId || (rows.length > 0 ? rows[0].id : null)
       if (targetId) {
         await selectFile(targetId)
       } else {
@@ -223,52 +223,11 @@ export default function DirectProcurementLaboratoryPage() {
     }
   }
 
-  const handleSwitchDb = async (target: 'desktop' | 'fixture') => {
-    setIsSwitchingDb(true)
-    try {
-      const res = await switchPlaygroundDatabaseAction(target)
-      if (res.success && res.data) {
-        setActiveDbInfo(res.data)
-        await loadFiles()
-      }
-    } finally {
-      setIsSwitchingDb(false)
-    }
-  }
-
-  const handleBannerFileOpen = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setIsSwitchingDb(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await openAndActivateTeminPackageAction(formData)
-      if (res.success && res.data) {
-        setActiveDbInfo(res.data)
-        await loadFiles()
-      }
-    } finally {
-      setIsSwitchingDb(false)
-      if (bannerFileInputRef.current) bannerFileInputRef.current.value = ''
-    }
-  }
-
-  const handleOpenPresetTemin = async () => {
-    setIsSwitchingDb(true)
-    try {
-      const res = await openPresetTeminPackageAction()
-      if (res.success && res.data) {
-        setActiveDbInfo(res.data)
-        await loadFiles()
-      }
-    } finally {
-      setIsSwitchingDb(false)
-    }
-  }
-
   const selectFile = async (id: number) => {
     setSelectedFileId(id)
+    try {
+      localStorage.setItem('playground_selected_file_id', String(id))
+    } catch {}
     const agg = await fetchPlaygroundFileAggregateAction(id)
     setFileAggregate(agg)
     setCompiledTemplateResult(null)
@@ -444,122 +403,7 @@ export default function DirectProcurementLaboratoryPage() {
         </div>
 
         {/* Canlı Veritabanı Kaynağı ve Senkronizasyon Durum Çubuğu */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 text-white rounded-2xl p-4 shadow-md border border-slate-800">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl ${
-                activeDbInfo?.source === 'desktop_active' 
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : activeDbInfo?.source === 'temin_package'
-                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                  : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-              }`}>
-                {activeDbInfo?.source === 'temin_package' ? (
-                  <Package className="w-5 h-5 text-purple-400" />
-                ) : (
-                  <Database className="w-5 h-5" />
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Aktif Veritabanı:
-                  </span>
-                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                    activeDbInfo?.source === 'desktop_active'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : activeDbInfo?.source === 'temin_package'
-                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                      : activeDbInfo?.source === 'fixture'
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                      : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                  }`}>
-                    {activeDbInfo?.source === 'desktop_active'
-                      ? '🟢 Masaüstü Uygulaması (Canlı Oturum)'
-                      : activeDbInfo?.source === 'temin_package'
-                      ? `📦 Açık Dosya: ${activeDbInfo.customLabel || '.temin Paketi'}`
-                      : activeDbInfo?.source === 'fixture'
-                      ? '📁 Statik Test Fikstürü (test-projesi.sqlite)'
-                      : '⚙️ Özel Veritabanı'}
-                  </span>
-                </div>
-                <div className="text-xs text-slate-300 font-mono mt-0.5 truncate max-w-xl" title={activeDbInfo?.path}>
-                  {activeDbInfo?.path || 'Veritabanı yolu aranıyor...'}
-                </div>
-                <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
-                  <span>Toplam Dosya: <strong className="text-white">{activeDbInfo?.fileCount ?? files.length}</strong></span>
-                  <span>•</span>
-                  <span>Kayıtlı Kalemler: <strong className="text-white">{activeDbInfo?.itemCount ?? 0}</strong></span>
-                  <span>•</span>
-                  <span>Kayıtlı Teklifler: <strong className="text-white">{activeDbInfo?.offerCount ?? 0}</strong></span>
-                </div>
-              </div>
-            </div>
-
-            {/* Hızlı Değiştirme ve Senkronizasyon Aksiyonları */}
-            <div className="flex flex-wrap items-center gap-2 self-start lg:self-center">
-              {/* Gizli .temin Dosya Seçici Input */}
-              <input
-                type="file"
-                ref={bannerFileInputRef}
-                onChange={handleBannerFileOpen}
-                accept=".temin,.sqlite"
-                className="hidden"
-              />
-
-              <button
-                onClick={() => bannerFileInputRef.current?.click()}
-                disabled={isSwitchingDb}
-                className="px-3.5 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow transition flex items-center gap-1.5 disabled:opacity-50"
-                title="Bilgisayarınızdan dilediğiniz .temin veya .sqlite dosyasını seçip çalışma alanı olarak açar"
-              >
-                <FolderOpen className="w-4 h-4" />
-                .temin Dosyası Seç & Aç
-              </button>
-
-              <button
-                onClick={handleOpenPresetTemin}
-                disabled={isSwitchingDb}
-                className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 rounded-lg transition flex items-center gap-1.5 disabled:opacity-50"
-                title="Repo içindeki hazır test-projesi.temin dosyasını çalışma alanı olarak açar"
-              >
-                <Package className="w-3.5 h-3.5" />
-                Örnek .temin
-              </button>
-
-              {activeDbInfo?.isDesktopRunning && activeDbInfo.source !== 'desktop_active' && (
-                <button
-                  onClick={() => handleSwitchDb('desktop')}
-                  disabled={isSwitchingDb}
-                  className="px-3 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow transition flex items-center gap-1.5 disabled:opacity-50"
-                  title="Sol ekrandaki açık masaüstü uygulaması oturumuna anında bağlanır"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Masaüstüne Bağlan
-                </button>
-              )}
-              {activeDbInfo?.source !== 'fixture' && (
-                <button
-                  onClick={() => handleSwitchDb('fixture')}
-                  disabled={isSwitchingDb}
-                  className="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
-                  title="İzole test fikstürüne geri döner"
-                >
-                  Fikstür
-                </button>
-              )}
-              <button
-                onClick={() => loadFiles()}
-                disabled={isLoadingFiles}
-                className="px-2.5 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition flex items-center gap-1.5"
-                title="Veritabanındaki taze kayıtları yeniden yükle"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingFiles ? 'animate-spin' : ''}`} />
-                {isLoadingFiles ? '...' : 'Yenile'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <DatabaseSourceBanner onRefreshExtra={loadFiles} />
 
         {/* Ana Sekme Seçimi */}
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { fetchLogicalSchemaWorkbenchDataAction } from '@/app/actions'
 import { StatusBadge } from '@/components/playground/StatusBadge'
+import { DatabaseSourceBanner } from '@/components/playground/DatabaseSourceBanner'
 
 export default function DatabaseWorkbenchPage() {
   const [data, setData] = useState<any>(null)
@@ -94,6 +95,9 @@ export default function DatabaseWorkbenchPage() {
           </button>
         </div>
       </div>
+
+      {/* Aktif Veritabanı Kaynak Göstergesi */}
+      <DatabaseSourceBanner compact onRefreshExtra={loadData} />
 
       {/* 2. ÖZET METRİK KARTLARI (SAĞLIK MATRİSİ) */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

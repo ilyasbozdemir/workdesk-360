@@ -5,6 +5,7 @@ import { ActionCard } from '@/components/playground/ActionCard'
 import { ResultDisplay } from '@/components/test-results/ResultDisplay'
 import { useTargetApp } from '@/components/layout/AppContext'
 import { testRepositoryAction } from '@/app/actions'
+import { DatabaseSourceBanner } from '@/components/playground/DatabaseSourceBanner'
 import { Boxes, Plus, Search, Trash2, Edit, CheckCircle } from 'lucide-react'
 
 export default function RepositoriesPlaygroundPage() {
@@ -87,6 +88,9 @@ export default function RepositoriesPlaygroundPage() {
           </button>
         </div>
       </div>
+
+      {/* Aktif Veritabanı Kaynağı */}
+      <DatabaseSourceBanner compact onRefreshExtra={() => runOp('getAll')} />
 
       {/* Aktif Bağlam Uyarısı */}
       <div className="flex items-center justify-between p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 text-xs text-blue-800 dark:text-blue-300">

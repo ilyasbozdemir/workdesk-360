@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { AppProvider } from '@/components/layout/AppContext'
+import { PlaygroundDatabaseProvider } from '@/components/layout/PlaygroundDatabaseContext'
 import { Header } from '@/components/layout/Header'
 import { Sidebar } from '@/components/layout/Sidebar'
 
@@ -18,15 +19,17 @@ export default function RootLayout({
     <html lang="tr" className="h-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased">
       <body className="min-h-full flex flex-col font-sans">
         <AppProvider>
-          <Header />
-          <div className="flex-1 flex w-full">
-            <Sidebar />
-            <main className="flex-1 min-w-0 p-8 overflow-y-auto">
-              <div className="max-w-6xl mx-auto space-y-8">
-                {children}
-              </div>
-            </main>
-          </div>
+          <PlaygroundDatabaseProvider>
+            <Header />
+            <div className="flex-1 flex w-full">
+              <Sidebar />
+              <main className="flex-1 min-w-0 p-8 overflow-y-auto">
+                <div className="max-w-6xl mx-auto space-y-8">
+                  {children}
+                </div>
+              </main>
+            </div>
+          </PlaygroundDatabaseProvider>
         </AppProvider>
       </body>
     </html>
