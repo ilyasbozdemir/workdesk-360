@@ -91,7 +91,7 @@ export function PiyasaFiyatArastirmasiNew(): React.JSX.Element {
     },
   );
 
-  const changeDocViewMode = (mode: "grid" | "list" | "table") => {
+  const changeDocViewMode = (mode: "grid" | "list" | "table"): void => {
     setDocViewMode(mode);
     try {
       localStorage.setItem("dta_doc_view_mode", mode);
