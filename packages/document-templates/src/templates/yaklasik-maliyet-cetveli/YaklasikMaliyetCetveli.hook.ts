@@ -109,6 +109,8 @@ export function useYaklasikMaliyetCetveli(
       raw.dosyaKonusu ||
       "";
     const tarih = toTrDate(
+      raw.maliyetCetveliTarihi ||
+      raw.maliyet_cetveli_tarihi ||
       raw.tarih ||
       raw.dosyaTarihi ||
       raw.acilisTarihi ||

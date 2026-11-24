@@ -409,7 +409,8 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     { name: 'kaynak_kayit_id', def: 'TEXT' },
     { name: 'piyasa_fiyat_onay_durumu', def: "TEXT DEFAULT 'taslak'" },
     { name: 'piyasa_fiyat_onay_tarihi', def: 'DATETIME' },
-    { name: 'piyasa_fiyat_onay_kullanici', def: 'TEXT' }
+    { name: 'piyasa_fiyat_onay_kullanici', def: 'TEXT' },
+    { name: 'maliyet_cetveli_tarihi', def: 'DATE' }
   ]
   for (const c of teminDosyasiColumns) {
     safeAddColumn(db, 'DATA_TeminDosyasi', c.name, c.def)

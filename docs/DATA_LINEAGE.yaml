@@ -72,7 +72,7 @@ dataGroups:
     description: "Temin dosya numarası, açılış tarihi, konusu, alım türü, ihale usulü ve işin açıklaması."
     sourceTables:
       - table: "DATA_TeminDosyasi"
-        columns: ["id", "temin_no", "dosya_no", "konu", "isin_aciklamasi", "dosya_acilis_tarihi", "temin_tarihi", "ihale_sekli", "tur", "alim_turu", "sunulacak_makam", "ihtiyac_yeri", "yaklasik_maliyet", "durum"]
+        columns: ["id", "temin_no", "dosya_no", "konu", "isin_aciklamasi", "dosya_acilis_tarihi", "temin_tarihi", "maliyet_cetveli_tarihi", "ihale_sekli", "tur", "alim_turu", "sunulacak_makam", "ihtiyac_yeri", "yaklasik_maliyet", "durum"]
     engineEntryPoints:
       - "TemplateResolver.resolve(mapping, dosyaId, templateKey)"
       - "DefaultDocumentResolver.resolve(context)"

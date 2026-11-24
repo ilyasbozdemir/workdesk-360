@@ -12,7 +12,7 @@ export default {
     "devlet-ihale-2886-desktop": "1.0.0-beta.1"
   },
   schema_min: 1,
-  schema_max: 48,
+  schema_max: 49,
   release_date: "2026-11-20",
   changes: [
     {
@@ -134,6 +134,18 @@ export default {
         }
       ],
       raw_sql: ["ALTER TABLE DATA_TeminDosyasi ADD COLUMN ihale_usulu TEXT DEFAULT NULL;", "ALTER TABLE DATA_TeminDosyasi ADD COLUMN tedarik_sekli TEXT DEFAULT NULL;"]
+    },
+    {
+      schema: 49,
+      type: "update",
+      description: "DATA_TeminDosyasi tablosuna Yaklaşık Maliyet Hesap Cetveli düzenleme tarihi için maliyet_cetveli_tarihi kolonu eklendi.",
+      columns_added: [
+        {
+          table: "DATA_TeminDosyasi",
+          column: "maliyet_cetveli_tarihi"
+        }
+      ],
+      raw_sql: ["ALTER TABLE DATA_TeminDosyasi ADD COLUMN maliyet_cetveli_tarihi DATE DEFAULT NULL;"]
     }
   ]
 };

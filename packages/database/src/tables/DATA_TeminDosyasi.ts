@@ -213,6 +213,11 @@ export const DATA_TeminDosyasi = {
     },
     { name: "butce_kodu", type: "TEXT", description: "Butce Kodu" },
     { name: "temin_tarihi", type: "DATE", description: "Temin Tarihi" },
+    {
+      name: "maliyet_cetveli_tarihi",
+      type: "DATE",
+      description: "Yaklaşık Maliyet Cetveli Düzenleme Tarihi",
+    },
     { name: "firma_id", type: "INTEGER", description: "Firma ID" }, // Seçilen kazanan firma
     {
       name: "onay_personel_id",

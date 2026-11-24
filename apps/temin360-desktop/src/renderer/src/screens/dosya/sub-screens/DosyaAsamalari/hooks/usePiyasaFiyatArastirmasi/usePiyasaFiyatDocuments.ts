@@ -58,8 +58,8 @@ export function usePiyasaFiyatDocuments(
     try {
       await window.electron.ipcRenderer.invoke(
         'db:run',
-        'UPDATE DATA_TeminDosyasi SET yaklasik_maliyet = ?, hesaplama_esasi = ? WHERE id = ?',
-        [total, hesaplamaEsasi || 'Ortalama fiyat esasına göre', activeDosyaId]
+        'UPDATE DATA_TeminDosyasi SET yaklasik_maliyet = ?, hesaplama_esasi = ?, maliyet_cetveli_tarihi = ? WHERE id = ?',
+        [total, hesaplamaEsasi || 'Ortalama fiyat esasına göre', maliyetCetveliTarihi || null, activeDosyaId]
       )
 
       const effectiveMode = targetMode === 'save_only' ? formMode || 'tutanak' : targetMode
