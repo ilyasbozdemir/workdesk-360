@@ -11,12 +11,13 @@ import {
 import { cn } from '../../../utils/cn'
 import { useWorkspaceStore } from '../../../store/workspaceStore'
 import { documentPreloadService } from '../../../services/documentPreloadService'
+import { APP_ROUTES, AppRoute } from '../../../constants/routeConstants'
 
 interface StepConfig {
   id: number
   label: string
   shortLabel: string
-  route: string
+  route: AppRoute
   icon: React.ElementType
   docTemplates: string[]
 }
@@ -26,7 +27,7 @@ const STEPS: StepConfig[] = [
     id: 1,
     label: 'İhtiyaç Listesi & Maliyet & Onay',
     shortLabel: 'Hazırlık',
-    route: '/dosya/hazirlik-ve-ihtiyac',
+    route: APP_ROUTES.HAZIRLIK_VE_IHTIYAC,
     icon: Package,
     docTemplates: [
       'ihtiyac-listesi',
@@ -39,7 +40,7 @@ const STEPS: StepConfig[] = [
     id: 2,
     label: 'Piyasa Fiyat Araştırması',
     shortLabel: 'Araştırma',
-    route: '/dosya/piyasa-fiyat-arastirmasi',
+    route: APP_ROUTES.PIYASA_FIYAT_ARASTIRMASI,
     icon: Search,
     docTemplates: [
       'piyasa-fiyat-arastirma-tutanagi',
@@ -52,7 +53,7 @@ const STEPS: StepConfig[] = [
     id: 3,
     label: 'Yüklenici & Sipariş İşlemleri',
     shortLabel: 'Yüklenici İşlemleri',
-    route: '/dosya/siparis-ve-sozlesme',
+    route: APP_ROUTES.SIPARIS_VE_SOZLESME,
     icon: FileSignature,
     docTemplates: ['kabul-edilen-teklif', 'dogrudan-temin-sozlesmesi', 'harcama-talimati']
   },
@@ -60,7 +61,7 @@ const STEPS: StepConfig[] = [
     id: 4,
     label: 'Muayene & Kabul & Ödeme',
     shortLabel: 'Muayene & Kabul & Ödeme',
-    route: '/dosya/kabul-ve-odeme',
+    route: APP_ROUTES.KABUL_VE_ODEME,
     icon: CheckCircle2,
     docTemplates: ['muayene-kabul-tutanagi', 'muayene-kabul-komisyonu', 'fatura-ve-odeme-belgesi']
   }
@@ -82,7 +83,7 @@ export function ProcessStepper({ currentRoute }: ProcessStepperProps): React.JSX
   const prevStep = currentIndex > 0 ? STEPS[currentIndex - 1] : null
   const nextStep = currentIndex < STEPS.length - 1 ? STEPS[currentIndex + 1] : null
 
-  const goTo = (route: string): void => {
+  const goTo = (route: AppRoute): void => {
     navigate({ to: route as any })
   }
 
