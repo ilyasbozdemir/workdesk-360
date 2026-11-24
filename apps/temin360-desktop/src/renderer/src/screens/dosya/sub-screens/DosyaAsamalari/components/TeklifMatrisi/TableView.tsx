@@ -14,10 +14,12 @@ export function TableView({
 }: TableViewProps): React.JSX.Element {
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map())
   const [activeColIndex, setActiveColIndex] = useState<number | null>(null)
+  const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null)
   const [activeCellKey, setActiveCellKey] = useState<string | null>(null)
 
   const focusCell = (itemIdx: number, firmIdx: number) => {
     setActiveColIndex(firmIdx)
+    setActiveRowIndex(itemIdx)
     setActiveCellKey(`${itemIdx}_${firmIdx}`)
     const key = `${itemIdx}_${firmIdx}`
     const el = inputRefs.current.get(key)
@@ -146,16 +148,40 @@ export function TableView({
           {items.map((kalem, kIdx) => {
             const lowest = getLowestBidInfo(kalem.id)
             const avgPrice = getAverageBid(kalem.id)
+            const isRowActive = activeRowIndex === kIdx
 
             return (
               <tr
                 key={`tr_kalem_${kalem.id ?? kIdx}_${kIdx}`}
-                className="hover:bg-slate-50/30 dark:hover:bg-slate-950/10 transition-colors"
+                className={`transition-colors ${
+                  isRowActive
+                    ? 'bg-blue-50/50 dark:bg-blue-955/25'
+                    : 'hover:bg-slate-50/30 dark:hover:bg-slate-955/10'
+                }`}
               >
-                <td className="p-3 border border-slate-200 dark:border-slate-805 font-semibold text-slate-800 dark:text-slate-200 bg-slate-50/20 dark:bg-slate-950/5">
-                  {kalem.kalem_adi}
+                <td
+                  className={`p-3 border font-semibold transition-colors ${
+                    isRowActive
+                      ? 'bg-blue-100/60 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100 border-blue-300 dark:border-blue-800'
+                      : 'border-slate-200 dark:border-slate-805 text-slate-800 dark:text-slate-200 bg-slate-50/20 dark:bg-slate-950/5'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    {isRowActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 shrink-0"></span>
+                    )}
+                    <span className="truncate" title={kalem.kalem_adi}>
+                      {kalem.kalem_adi}
+                    </span>
+                  </div>
                 </td>
-                <td className="p-3 border border-slate-200 dark:border-slate-805 text-center text-slate-500">
+                <td
+                  className={`p-3 border text-center font-medium transition-colors ${
+                    isRowActive
+                      ? 'bg-blue-50/70 dark:bg-blue-950/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-900/60'
+                      : 'border-slate-200 dark:border-slate-805 text-slate-500'
+                  }`}
+                >
                   {kalem.miktar} {kalem.birim}
                 </td>
                 {invitedFirms.map((firma, fIdx) => {
@@ -169,18 +195,26 @@ export function TableView({
                       key={`td_firm_${kalem.id ?? kIdx}_${firma.id ?? fIdx}_${fIdx}`}
                       className={`p-0 border text-right transition-colors ${
                         isCellFocused
-                          ? 'ring-2 ring-blue-500 z-10 border-blue-500 bg-blue-50/70 dark:bg-blue-950/40'
-                          : isColActive
-                            ? 'bg-blue-50/30 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/60'
-                            : isLowest
-                              ? 'bg-emerald-500/[0.05] dark:bg-emerald-500/[0.02] border-slate-200 dark:border-slate-805'
-                              : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-805'
+                          ? 'ring-2 ring-blue-600 dark:ring-blue-400 z-10 border-blue-600 dark:border-blue-400 bg-blue-100/90 dark:bg-blue-900/60 shadow-xs'
+                          : isColActive && isRowActive
+                            ? 'bg-blue-100/50 dark:bg-blue-900/35 border-blue-300 dark:border-blue-800'
+                            : isColActive
+                              ? 'bg-blue-50/40 dark:bg-blue-950/25 border-blue-200 dark:border-blue-900/60'
+                              : isRowActive
+                                ? 'bg-blue-50/30 dark:bg-blue-955/20 border-slate-200 dark:border-slate-805'
+                                : isLowest
+                                  ? 'bg-emerald-500/[0.05] dark:bg-emerald-500/[0.02] border-slate-200 dark:border-slate-805'
+                                  : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-805'
                       }`}
                     >
                       <div className="relative flex items-center w-full h-full">
                         <span
                           className={`absolute left-2 text-[10px] font-bold select-none ${
-                            isColActive ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'
+                            isCellFocused
+                              ? 'text-blue-700 dark:text-blue-300'
+                              : isColActive || isRowActive
+                                ? 'text-blue-500 dark:text-blue-400'
+                                : 'text-slate-400'
                           }`}
                         >
                           ₺
@@ -195,6 +229,7 @@ export function TableView({
                           onKeyDown={(e) => handleKeyDown(e, kIdx, fIdx)}
                           onFocus={() => {
                             setActiveColIndex(fIdx)
+                            setActiveRowIndex(kIdx)
                             setActiveCellKey(`${kIdx}_${fIdx}`)
                           }}
                           onBlur={() => {
@@ -207,7 +242,13 @@ export function TableView({
                     </td>
                   )
                 })}
-                <td className="p-3 border border-slate-200 dark:border-slate-805 text-right font-bold text-slate-700 dark:text-slate-300 bg-slate-100/10 dark:bg-slate-950/10 font-mono">
+                <td
+                  className={`p-3 border text-right font-bold font-mono transition-colors ${
+                    isRowActive
+                      ? 'bg-blue-50/60 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-900/60'
+                      : 'border-slate-200 dark:border-slate-805 text-slate-700 dark:text-slate-300 bg-slate-100/10 dark:bg-slate-950/10'
+                  }`}
+                >
                   {avgPrice > 0
                     ? `${avgPrice.toLocaleString('tr-TR', {
                         minimumFractionDigits: 2,
@@ -215,7 +256,13 @@ export function TableView({
                       })} ₺`
                     : '-'}
                 </td>
-                <td className="p-3 border border-slate-200 dark:border-slate-805 text-right font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/[0.02] dark:bg-emerald-500/[0.005] font-mono">
+                <td
+                  className={`p-3 border text-right font-extrabold font-mono transition-colors ${
+                    isRowActive
+                      ? 'bg-emerald-500/[0.08] dark:bg-emerald-500/[0.04] text-emerald-700 dark:text-emerald-300 border-blue-200 dark:border-blue-900/60'
+                      : 'border-slate-200 dark:border-slate-805 text-emerald-600 dark:text-emerald-400 bg-emerald-500/[0.02] dark:bg-emerald-500/[0.005]'
+                  }`}
+                >
                   <div className="flex items-center justify-end gap-1">
                     {lowest.price > 0 && <Award className="w-3.5 h-3.5 text-emerald-500" />}
                     <span>
