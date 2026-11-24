@@ -1,13 +1,53 @@
 import React, { useState } from "react";
-import { PackageSearch } from "lucide-react";
+import { Layers, PackageSearch } from "lucide-react";
 import { SubScreen } from "../../SubScreens.screen";
 import { FirmaSecmeModali } from "./components/FirmaSecmeModali";
 import { PiyasaFiyatArastirmasiDashboard } from "./components/PiyasaFiyatArastirmasiDashboard";
 import { PiyasaFiyatArastirmasiForm } from "./components/PiyasaFiyatArastirmasiForm";
+import { PiyasaFiyatArastirmasiOld } from "./PiyasaFiyatArastirmasi.old";
 import { usePiyasaFiyatArastirmasiLogic } from "./hooks/usePiyasaFiyatArastirmasi";
 import { useSettingsStore } from "../../../../store/settingsStore";
 
 export function PiyasaFiyatArastirmasi(): React.JSX.Element {
+  const [useOldView, setUseOldView] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("temin360_use_old_piyasa_view") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleViewMode = () => {
+    setUseOldView((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("temin360_use_old_piyasa_view", String(next));
+      } catch (e) {
+        console.error(e);
+      }
+      return next;
+    });
+  };
+
+  if (useOldView) {
+    return (
+      <div className="relative">
+        <div className="absolute top-2 right-4 z-50">
+          <button
+            type="button"
+            onClick={toggleViewMode}
+            className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Yeni Tasarıma Geç"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>⚡ Yeni Görünüme Geç</span>
+          </button>
+        </div>
+        <PiyasaFiyatArastirmasiOld />
+      </div>
+    );
+  }
+
   const logic = usePiyasaFiyatArastirmasiLogic();
   const {
     sablonsContext: {
@@ -118,6 +158,7 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
       {!isFormOpen
         ? (
           <PiyasaFiyatArastirmasiDashboard
+            onToggleViewMode={toggleViewMode}
             setIsFormOpen={setIsFormOpen}
             handleNewDocument={handleNewDocument}
             setActiveFormTab={setActiveFormTab}

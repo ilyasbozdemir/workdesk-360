@@ -148,8 +148,19 @@ export function PiyasaFiyatArastirmasiDashboard(
           </button>
         </div>
 
-        {/* Önceki / Sonraki Hızlı Butonlar */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* Önceki / Sonraki Hızlı Butonlar & Old Görünüme Geçiş */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {props.onToggleViewMode && (
+            <button
+              type="button"
+              onClick={props.onToggleViewMode}
+              title="Eski Tasarıma (Old View) Geç"
+              className="px-2.5 py-1.5 rounded-xl text-slate-500 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-[11px] font-bold border border-dashed border-slate-300 dark:border-slate-700 hover:border-amber-400 transition-all cursor-pointer flex items-center gap-1"
+            >
+              <span>🏛️ Eski Tasarım</span>
+            </button>
+          )}
+
           <button
             type="button"
             disabled={currentStep === 1}
