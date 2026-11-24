@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { Award } from 'lucide-react'
 import { BiddingFirm, BiddingKalem, TableViewProps } from './types'
 import { BidPriceInput } from './BidPriceInput'
@@ -12,6 +12,89 @@ export function TableView({
   getAverageBid,
   handlePriceChange
 }: TableViewProps): React.JSX.Element {
+  const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map())
+
+  const focusCell = (itemIdx: number, firmIdx: number) => {
+    const key = `${itemIdx}_${firmIdx}`
+    const el = inputRefs.current.get(key)
+    if (el) {
+      el.focus()
+      el.select()
+    }
+  }
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    itemIdx: number,
+    firmIdx: number
+  ) => {
+    const totalItems = items.length
+    const totalFirms = invitedFirms.length
+
+    // 1. Alt + Yön Tuşları: Tüm firmalar arasında yatay veya dikey hızlı geçiş
+    //    Alt+ArrowRight: Sonraki firma
+    //    Alt+ArrowLeft: Önceki firma
+    //    Alt+ArrowDown: Sonraki kalem (aynı firma)
+    //    Alt+ArrowUp: Önceki kalem (aynı firma)
+    if (e.altKey) {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        const nextFirm = (firmIdx + 1) % totalFirms
+        focusCell(itemIdx, nextFirm)
+        return
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        const prevFirm = (firmIdx - 1 + totalFirms) % totalFirms
+        focusCell(itemIdx, prevFirm)
+        return
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        const nextItem = (itemIdx + 1) % totalItems
+        focusCell(nextItem, firmIdx)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        const prevItem = (itemIdx - 1 + totalItems) % totalItems
+        focusCell(prevItem, firmIdx)
+        return
+      }
+    }
+
+    // 2. Normal Enter: Bir sonraki kaleme (aşağı) in (Excel stili)
+    //    Shift + Enter: Bir önceki kaleme (yukarı) çık
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (e.shiftKey) {
+        if (itemIdx > 0) {
+          focusCell(itemIdx - 1, firmIdx)
+        }
+      } else {
+        if (itemIdx < totalItems - 1) {
+          focusCell(itemIdx + 1, firmIdx)
+        } else if (firmIdx < totalFirms - 1) {
+          // Son kalemde Enter'a basarsa bir sonraki firmanın ilk kalemine geç
+          focusCell(0, firmIdx + 1)
+        }
+      }
+      return
+    }
+
+    // 3. Normal Ok Tuşları ile Hücreler Arası Gezinme (Yukarı / Aşağı kesin)
+    if (e.key === 'ArrowDown') {
+      if (itemIdx < totalItems - 1) {
+        e.preventDefault()
+        focusCell(itemIdx + 1, firmIdx)
+      }
+    } else if (e.key === 'ArrowUp') {
+      if (itemIdx > 0) {
+        e.preventDefault()
+        focusCell(itemIdx - 1, firmIdx)
+      }
+    }
+  }
   return (
     <div className="overflow-x-auto w-full border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs animate-in fade-in duration-300">
       <table className="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 text-xs">
@@ -75,8 +158,13 @@ export function TableView({
                           ₺
                         </span>
                         <BidPriceInput
+                          inputRef={(el) => {
+                            if (el) inputRefs.current.set(`${kIdx}_${fIdx}`, el)
+                            else inputRefs.current.delete(`${kIdx}_${fIdx}`)
+                          }}
                           initialValue={val}
                           onChange={(newVal) => handlePriceChange(kalem.id, firma.id, newVal)}
+                          onKeyDown={(e) => handleKeyDown(e, kIdx, fIdx)}
                           isLowest={isLowest}
                           isExcelStyle={true}
                         />
