@@ -1,0 +1,14 @@
+{{#> layouts/official-document title="Fiyat Araştırma İsteme Mektubu"}}
+  <div class="greeting mb-4 text-xs">
+    Sayın: <span class="font-bold">{{company.name}}</span>
+  </div>
+
+  <p class="text-xs leading-relaxed mb-4">
+    İdaremiz ihtiyacı olan ve aşağıda cins ve miktarları belirtilen alım işi için KDV hariç birim ve toplam teklif fiyatlarınızın 
+    en geç <strong>{{formatDate deadlineDate}}</strong> tarihine kadar idaremize bildirilmesini rica ederim.
+  </p>
+
+  {{> tables/item-table items=items}}
+
+  {{> signatures/single-signature signatory=officialSignatory}}
+{{/layouts/official-document}}

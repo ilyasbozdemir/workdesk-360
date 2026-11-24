@@ -1,0 +1,4 @@
+@media print {
+  body { background: transparent !important; margin: 0 !important; padding: 0 !important; }
+  .page { page-break-after: always; }
+}

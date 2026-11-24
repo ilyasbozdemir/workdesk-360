@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>{{title}} - Ek Sayfa</title>
+  <link rel="stylesheet" href="../styles/index.css">
+</head>
+<body class="a4-portrait">
+  <div class="page continuation">
+    <div class="continuation-header">
+      <span>{{title}} (Devam)</span>
+      <span>Tarih: {{formatDate date}}</span>
+    </div>
+    <main class="content">
+      {{{body}}}
+    </main>
+    {{> shared/page-number}}
+  </div>
+</body>
+</html>

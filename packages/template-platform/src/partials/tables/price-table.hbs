@@ -1,0 +1,30 @@
+<table class="price-table w-full border border-gray-300 text-xs mt-3">
+  <thead>
+    <tr class="bg-gray-100">
+      <th class="p-2 border w-10 text-center">S.No</th>
+      <th class="p-2 border text-left">İş Kalemi Açıklaması</th>
+      <th class="p-2 border text-right">Miktar</th>
+      <th class="p-2 border text-center">Birim</th>
+      <th class="p-2 border text-right">Birim Fiyat</th>
+      <th class="p-2 border text-right">Toplam Tutar</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each items}}
+      <tr>
+        <td class="p-2 border text-center">{{add @index 1}}</td>
+        <td class="p-2 border">{{this.name}}</td>
+        <td class="p-2 border text-right">{{formatNumber this.quantity}}</td>
+        <td class="p-2 border text-center">{{this.unit}}</td>
+        <td class="p-2 border text-right">{{formatCurrency this.unitPrice}}</td>
+        <td class="p-2 border text-right">{{formatCurrency this.totalPrice}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+  <tfoot>
+    <tr class="font-bold bg-gray-50">
+      <td colspan="5" class="p-2 border text-right">GENEL TOPLAM:</td>
+      <td class="p-2 border text-right text-indigo-700">{{formatCurrency grandTotal}}</td>
+    </tr>
+  </tfoot>
+</table>

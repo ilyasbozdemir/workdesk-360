@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "temin.summary",
+  "title": "İhtiyaç Özeti",
+  "page": { "size": "A4", "orientation": "portrait", "marginMm": 20 },
+  "components": [
+    { "id": "c1", "type": "heading", "props": { "level": 1, "text": "İhtiyaç Özeti" } },
+    { "id": "c2", "type": "paragraph", "props": { "textBinding": "description" } },
+    { "id": "c3", "type": "table", "props": { "dataBinding": "items", "columns": ["name", "quantity", "total"] } }
+  ]
+}
