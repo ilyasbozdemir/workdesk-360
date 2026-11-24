@@ -9,6 +9,9 @@
   "search.useIgnoreFiles": true,
   "search.useGlobalIgnoreFiles": true,
   "search.useParentIgnoreFiles": true,
+  "search.smartCase": true,
+  "search.quickOpen.includeSymbols": false,
+  "search.quickOpen.includeHistory": true,
   "search.exclude": {
     "**/node_modules": true,
     "**/node_modules/**": true,
@@ -18,6 +21,7 @@
     "**/.pnpm-store/**": true,
     "**/.next": true,
     "**/.next/**": true,
+    "**/.next-internal/**": true,
     "**/.turbo": true,
     "**/.turbo/**": true,
     "**/dist": true,
@@ -40,6 +44,18 @@
     "**/vendor/**": true,
     "**/tmp": true,
     "**/temp": true,
+    "**/test-results": true,
+    "**/test-results/**": true,
+    "**/playwright-report/**": true,
+    "**/blob-report/**": true,
+    "**/e2e-screenshots/**": true,
+    "**/.system_generated/**": true,
+    "**/*.sqlite": true,
+    "**/*.sqlite-wal": true,
+    "**/*.sqlite-shm": true,
+    "**/*.temin": true,
+    "**/*.zip": true,
+    "**/*.db": true,
     "**/pnpm-lock.yaml": true,
     "**/*.tsbuildinfo": true,
     "**/*.map": true,
@@ -60,7 +76,9 @@
     "**/.git": true,
     "**/.cache": true,
     "**/vendor": true,
-    "**/*.tsbuildinfo": true
+    "**/*.tsbuildinfo": true,
+    "**/test-results": true,
+    "**/.system_generated": true
   },
   "files.watcherExclude": {
     "**/node_modules/**": true,
@@ -70,13 +88,20 @@
     "**/out/**": true,
     "**/build/**": true,
     "**/.next/**": true,
+    "**/.next-internal/**": true,
     "**/.turbo/**": true,
     "**/.vite/**": true,
     "**/coverage/**": true,
     "**/release/**": true,
-    "**/.git/objects/**": true,
-    "**/.git/subtree-cache/**": true,
+    "**/.git/**": true,
     "**/.cache/**": true,
-    "**/vendor/**": true
-  }
+    "**/vendor/**": true,
+    "**/test-results/**": true,
+    "**/playwright-report/**": true,
+    "**/e2e-screenshots/**": true,
+    "**/.system_generated/**": true,
+    "**/*.sqlite*": true,
+    "**/*.temin": true
+  },
+  "typescript.tsserver.maxTsServerMemory": 4096
 }
