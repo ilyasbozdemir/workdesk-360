@@ -10,8 +10,8 @@ export const temin360Manifest = {
   version: "1.0.0-rc.40",
   suite: "workdesk-360",
   schema_min: 1,
-  schema_max: 48,
-  release_date: "2026-11-21",
+  schema_max: 49,
+  release_date: "2026-11-24",
   inheritsHistoricalSuiteManifests: true,
   shared_schema_scope: "dogrudan-temin",
   changes: [
@@ -119,6 +119,30 @@ export const temin360Manifest = {
         }
       ],
       raw_sql: ["ALTER TABLE DATA_TeminDosyasi ADD COLUMN ihale_usulu TEXT DEFAULT NULL;", "ALTER TABLE DATA_TeminDosyasi ADD COLUMN tedarik_sekli TEXT DEFAULT NULL;"]
+    },
+    {
+      schema: 49,
+      type: "update",
+      description: "DATA_TeminDosyasi tablosuna Piyasa Fiyat Onay/Kilit durumu (piyasa_fiyat_onay_durumu, piyasa_fiyat_onay_tarihi, piyasa_fiyat_onay_kullanici) ve Yaklaşık Maliyet Cetveli Düzenleme Tarihi (maliyet_cetveli_tarihi) kolonları eklendi.",
+      columns_added: [
+        {
+          table: "DATA_TeminDosyasi",
+          column: "piyasa_fiyat_onay_durumu"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "piyasa_fiyat_onay_tarihi"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "piyasa_fiyat_onay_kullanici"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "maliyet_cetveli_tarihi"
+        }
+      ],
+      raw_sql: ["ALTER TABLE DATA_TeminDosyasi ADD COLUMN piyasa_fiyat_onay_durumu TEXT DEFAULT 'taslak';", "ALTER TABLE DATA_TeminDosyasi ADD COLUMN piyasa_fiyat_onay_tarihi DATETIME DEFAULT NULL;", "ALTER TABLE DATA_TeminDosyasi ADD COLUMN piyasa_fiyat_onay_kullanici TEXT DEFAULT NULL;", "ALTER TABLE DATA_TeminDosyasi ADD COLUMN maliyet_cetveli_tarihi DATE DEFAULT NULL;"]
     }
   ]
 };
