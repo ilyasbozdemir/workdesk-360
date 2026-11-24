@@ -48,6 +48,16 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
     );
   }
 
+  return <PiyasaFiyatArastirmasiNew onToggleViewMode={toggleViewMode} />;
+}
+
+interface PiyasaFiyatArastirmasiNewProps {
+  onToggleViewMode: () => void;
+}
+
+function PiyasaFiyatArastirmasiNew({
+  onToggleViewMode,
+}: PiyasaFiyatArastirmasiNewProps): React.JSX.Element {
   const logic = usePiyasaFiyatArastirmasiLogic();
   const {
     sablonsContext: {
@@ -158,7 +168,7 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
       {!isFormOpen
         ? (
           <PiyasaFiyatArastirmasiDashboard
-            onToggleViewMode={toggleViewMode}
+            onToggleViewMode={onToggleViewMode}
             setIsFormOpen={setIsFormOpen}
             handleNewDocument={handleNewDocument}
             setActiveFormTab={setActiveFormTab}
