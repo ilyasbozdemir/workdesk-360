@@ -7,6 +7,8 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
   isLowest,
   isExcelStyle,
   onKeyDown,
+  onFocus,
+  onBlur,
   inputRef,
   ...restProps
 }) => {
@@ -21,8 +23,9 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
     }
   }, [initialValue, isFocused]);
 
-  const handleBlur = () => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);
+    onBlur?.(e);
     const trimmed = tempValue.trim();
     if (!trimmed) {
       // Eğer kullanıcı açıkça sildiyse veya sıfırladıysa 0 gönder
@@ -41,11 +44,12 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
     onChange(cleanValue);
   };
 
-  const handleFocus = () => {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
     setTempValue(
       initialValue === 0 ? "" : initialValue.toString().replace(".", ","),
     );
+    onFocus?.(e);
   };
 
   const displayValue = isFocused

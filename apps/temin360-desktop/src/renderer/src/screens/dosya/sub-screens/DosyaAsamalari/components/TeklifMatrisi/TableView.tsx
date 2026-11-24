@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { Award } from 'lucide-react'
 import { BiddingFirm, BiddingKalem, TableViewProps } from './types'
 import { BidPriceInput } from './BidPriceInput'
@@ -13,8 +13,12 @@ export function TableView({
   handlePriceChange
 }: TableViewProps): React.JSX.Element {
   const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map())
+  const [activeColIndex, setActiveColIndex] = useState<number | null>(null)
+  const [activeCellKey, setActiveCellKey] = useState<string | null>(null)
 
   const focusCell = (itemIdx: number, firmIdx: number) => {
+    setActiveColIndex(firmIdx)
+    setActiveCellKey(`${itemIdx}_${firmIdx}`)
     const key = `${itemIdx}_${firmIdx}`
     const el = inputRefs.current.get(key)
     if (el) {
@@ -106,16 +110,30 @@ export function TableView({
             <th className="p-3 border border-slate-200 dark:border-slate-800 font-bold text-slate-700 dark:text-slate-300 text-center w-28">
               Miktar / Birim
             </th>
-            {invitedFirms.map((firma, fIdx) => (
-              <th
-                key={`th_firm_${firma.id ?? fIdx}_${fIdx}`}
-                className="p-3 border border-slate-200 dark:border-slate-800 font-bold text-slate-700 dark:text-slate-300 text-right min-w-[150px]"
-              >
-                <div className="truncate w-36 ml-auto text-right" title={firma.unvan}>
-                  {firma.unvan}
-                </div>
-              </th>
-            ))}
+            {invitedFirms.map((firma, fIdx) => {
+              const isColActive = activeColIndex === fIdx
+              return (
+                <th
+                  key={`th_firm_${firma.id ?? fIdx}_${fIdx}`}
+                  className={`p-3 border font-bold text-right min-w-[155px] transition-all cursor-pointer ${
+                    isColActive
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-slate-900/60'
+                  }`}
+                  onClick={() => focusCell(0, fIdx)}
+                  title={`${firma.unvan} sütununa odaklan (Alt+Sağ/Sol)`}
+                >
+                  <div className="flex items-center justify-end gap-1.5">
+                    {isColActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    )}
+                    <div className="truncate max-w-[140px] text-right font-extrabold" title={firma.unvan}>
+                      {firma.unvan}
+                    </div>
+                  </div>
+                </th>
+              )
+            })}
             <th className="p-3 border border-slate-200 dark:border-slate-800 font-bold text-slate-700 dark:text-slate-300 text-right w-36 bg-slate-100/30 dark:bg-slate-950/20">
               Ort. (Yaklaşık)
             </th>
@@ -143,18 +161,28 @@ export function TableView({
                 {invitedFirms.map((firma, fIdx) => {
                   const val = bids[`${kalem.id}_${firma.id}`] || 0
                   const isLowest = lowest.price > 0 && lowest.firmaId === firma.id
+                  const isColActive = activeColIndex === fIdx
+                  const isCellFocused = activeCellKey === `${kIdx}_${fIdx}`
 
                   return (
                     <td
                       key={`td_firm_${kalem.id ?? kIdx}_${firma.id ?? fIdx}_${fIdx}`}
-                      className={`p-0 border border-slate-200 dark:border-slate-805 text-right transition-colors ${
-                        isLowest
-                          ? 'bg-emerald-500/[0.05] dark:bg-emerald-500/[0.02]'
-                          : 'bg-white dark:bg-slate-950'
+                      className={`p-0 border text-right transition-colors ${
+                        isCellFocused
+                          ? 'ring-2 ring-blue-500 z-10 border-blue-500 bg-blue-50/70 dark:bg-blue-950/40'
+                          : isColActive
+                            ? 'bg-blue-50/30 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/60'
+                            : isLowest
+                              ? 'bg-emerald-500/[0.05] dark:bg-emerald-500/[0.02] border-slate-200 dark:border-slate-805'
+                              : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-805'
                       }`}
                     >
                       <div className="relative flex items-center w-full h-full">
-                        <span className="absolute left-2 text-[10px] font-bold text-slate-400 select-none">
+                        <span
+                          className={`absolute left-2 text-[10px] font-bold select-none ${
+                            isColActive ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400'
+                          }`}
+                        >
                           ₺
                         </span>
                         <BidPriceInput
@@ -165,6 +193,13 @@ export function TableView({
                           initialValue={val}
                           onChange={(newVal) => handlePriceChange(kalem.id, firma.id, newVal)}
                           onKeyDown={(e) => handleKeyDown(e, kIdx, fIdx)}
+                          onFocus={() => {
+                            setActiveColIndex(fIdx)
+                            setActiveCellKey(`${kIdx}_${fIdx}`)
+                          }}
+                          onBlur={() => {
+                            setActiveCellKey(null)
+                          }}
                           isLowest={isLowest}
                           isExcelStyle={true}
                         />
@@ -202,19 +237,26 @@ export function TableView({
               Toplam Teklif Tutarı
             </td>
             <td className="p-3.5 border border-slate-200 dark:border-slate-800"></td>
-            {invitedFirms.map((firma, fIdx) => (
-              <td
-                key={`td_total_firm_${firma.id ?? fIdx}_${fIdx}`}
-                className="p-3.5 border border-slate-200 dark:border-slate-800 text-right text-sm font-extrabold text-slate-900 dark:text-slate-100 font-mono"
-              >
-                {firma.teklif_toplami
-                  ? `${firma.teklif_toplami.toLocaleString('tr-TR', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })} ₺`
-                  : '0,00 ₺'}
-              </td>
-            ))}
+            {invitedFirms.map((firma, fIdx) => {
+              const isColActive = activeColIndex === fIdx
+              return (
+                <td
+                  key={`td_total_firm_${firma.id ?? fIdx}_${fIdx}`}
+                  className={`p-3.5 border text-right text-sm font-extrabold font-mono transition-colors ${
+                    isColActive
+                      ? 'bg-blue-100/70 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-400 dark:border-blue-700'
+                      : 'border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100'
+                  }`}
+                >
+                  {firma.teklif_toplami
+                    ? `${firma.teklif_toplami.toLocaleString('tr-TR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} ₺`
+                    : '0,00 ₺'}
+                </td>
+              )
+            })}
             <td className="p-3.5 border border-slate-200 dark:border-slate-800 bg-slate-100/10 dark:bg-slate-950/10 text-right font-extrabold text-slate-900 dark:text-slate-100 font-mono">
               {getEstimatedCostTotal() > 0
                 ? `${getEstimatedCostTotal().toLocaleString('tr-TR', {
