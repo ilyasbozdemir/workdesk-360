@@ -26,6 +26,8 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
   const [isFirmModalOpen, setIsFirmModalOpen] = useState(false)
   const [selectedFirmIds, setSelectedFirmIds] = useState<number[]>([])
   const [modalSearchQuery, setModalSearchQuery] = useState('')
+  const [piyasaFiyatOnayDurumu, setPiyasaFiyatOnayDurumu] = useState<'taslak' | 'onaylandi'>('taslak')
+  const [piyasaFiyatOnayTarihi, setPiyasaFiyatOnayTarihi] = useState<string | null>(null)
 
   const loadData = useCallback(async (): Promise<void> => {
     if (!activeDosyaId) return
@@ -73,7 +75,7 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
 
       const resDosya = await window.electron.ipcRenderer.invoke(
         'db:query',
-        'SELECT dosya_acilis_tarihi, temin_no, evrak_sayisi, hesaplama_esasi, komisyon_takdiri, temin_tarihi, firma_id FROM DATA_TeminDosyasi WHERE id = ?',
+        'SELECT dosya_acilis_tarihi, temin_no, evrak_sayisi, hesaplama_esasi, komisyon_takdiri, temin_tarihi, firma_id, piyasa_fiyat_onay_durumu, piyasa_fiyat_onay_tarihi FROM DATA_TeminDosyasi WHERE id = ?',
         [activeDosyaId]
       )
 
@@ -129,6 +131,10 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
         } else {
           setManualWinnerFirmaId(null)
         }
+        setPiyasaFiyatOnayDurumu(
+          resDosya.data[0].piyasa_fiyat_onay_durumu === 'onaylandi' ? 'onaylandi' : 'taslak'
+        )
+        setPiyasaFiyatOnayTarihi(resDosya.data[0].piyasa_fiyat_onay_tarihi || null)
       }
 
       const resBelgeler = await window.electron.ipcRenderer.invoke(
@@ -455,6 +461,21 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     }
   }
 
+  const togglePiyasaFiyatOnay = useCallback(async (): Promise<'taslak' | 'onaylandi'> => {
+    if (!activeDosyaId) return 'taslak'
+    const nextDurum = piyasaFiyatOnayDurumu === 'onaylandi' ? 'taslak' : 'onaylandi'
+    const nextTarih = nextDurum === 'onaylandi' ? new Date().toISOString() : null
+
+    await window.electron.ipcRenderer.invoke(
+      'db:query',
+      'UPDATE DATA_TeminDosyasi SET piyasa_fiyat_onay_durumu = ?, piyasa_fiyat_onay_tarihi = ? WHERE id = ?',
+      [nextDurum, nextTarih, activeDosyaId]
+    )
+    setPiyasaFiyatOnayDurumu(nextDurum)
+    setPiyasaFiyatOnayTarihi(nextTarih)
+    return nextDurum
+  }, [activeDosyaId, piyasaFiyatOnayDurumu])
+
   return {
     invitedFirms,
     setInvitedFirms,
@@ -488,6 +509,10 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     setSelectedFirmIds,
     modalSearchQuery,
     setModalSearchQuery,
+    piyasaFiyatOnayDurumu,
+    setPiyasaFiyatOnayDurumu,
+    piyasaFiyatOnayTarihi,
+    togglePiyasaFiyatOnay,
     loadData,
     handleBulkAddFirms,
     handleCreateNewFirm,

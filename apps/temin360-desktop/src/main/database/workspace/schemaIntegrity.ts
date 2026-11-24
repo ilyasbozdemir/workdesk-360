@@ -406,7 +406,10 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     { name: 'lock_reason', def: 'TEXT' },
     { name: 'kayit_kaynagi', def: "TEXT DEFAULT 'yeni'" },
     { name: 'aktarim_grubu_id', def: 'TEXT' },
-    { name: 'kaynak_kayit_id', def: 'TEXT' }
+    { name: 'kaynak_kayit_id', def: 'TEXT' },
+    { name: 'piyasa_fiyat_onay_durumu', def: "TEXT DEFAULT 'taslak'" },
+    { name: 'piyasa_fiyat_onay_tarihi', def: 'DATETIME' },
+    { name: 'piyasa_fiyat_onay_kullanici', def: 'TEXT' }
   ]
   for (const c of teminDosyasiColumns) {
     safeAddColumn(db, 'DATA_TeminDosyasi', c.name, c.def)

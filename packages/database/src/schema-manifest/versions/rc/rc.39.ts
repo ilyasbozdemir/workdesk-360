@@ -45,6 +45,18 @@ export default {
           column: "antet_birim_gosterilsin"
         },
         {
+          table: "DATA_TeminDosyasi",
+          column: "piyasa_fiyat_onay_durumu"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "piyasa_fiyat_onay_tarihi"
+        },
+        {
+          table: "DATA_TeminDosyasi",
+          column: "piyasa_fiyat_onay_kullanici"
+        },
+        {
           table: "TANIM_KomisyonUye",
           column: "imza_turu"
         },
@@ -76,6 +88,9 @@ export default {
         "ALTER TABLE DATA_TeminDosyasi ADD COLUMN aktarim_grubu_id TEXT DEFAULT NULL;",
         "ALTER TABLE DATA_TeminDosyasi ADD COLUMN kaynak_kayit_id TEXT DEFAULT NULL;",
         "ALTER TABLE DATA_TeminDosyasi ADD COLUMN antet_birim_gosterilsin INTEGER DEFAULT 1;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN piyasa_fiyat_onay_durumu TEXT DEFAULT 'taslak';",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN piyasa_fiyat_onay_tarihi DATETIME DEFAULT NULL;",
+        "ALTER TABLE DATA_TeminDosyasi ADD COLUMN piyasa_fiyat_onay_kullanici TEXT DEFAULT NULL;",
         "ALTER TABLE TANIM_KomisyonUye ADD COLUMN imza_turu TEXT DEFAULT 'İmza';",
         "ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim_id INTEGER DEFAULT NULL;",
         "ALTER TABLE TANIM_KomisyonUye ADD COLUMN birim TEXT DEFAULT NULL;",

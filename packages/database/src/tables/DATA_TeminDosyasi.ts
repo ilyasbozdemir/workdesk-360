@@ -306,6 +306,22 @@ export const DATA_TeminDosyasi = {
         "Kilitleme nedeni (eski_aktarim_imzali, ekap_gonderildi, manuel_kilit vb.)",
     },
     {
+      name: "piyasa_fiyat_onay_durumu",
+      type: "TEXT",
+      default: "'taslak'",
+      description: "Piyasa Fiyat Araştırması Onay Durumu (taslak, onaylandi)",
+    },
+    {
+      name: "piyasa_fiyat_onay_tarihi",
+      type: "DATETIME",
+      description: "Piyasa Fiyat Araştırması Onay Tarihi",
+    },
+    {
+      name: "piyasa_fiyat_onay_kullanici",
+      type: "TEXT",
+      description: "Piyasa Fiyat Araştırmasını Onaylayan Kullanıcı",
+    },
+    {
       name: "created_at",
       type: "DATETIME",
       default: "CURRENT_TIMESTAMP",
