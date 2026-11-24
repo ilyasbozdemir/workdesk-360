@@ -121,7 +121,7 @@ export function compilePredicateToSqlite(predicate: StructuredPredicate): string
       if (!Array.isArray(predicate.conditions) || predicate.conditions.length === 0) {
         throw new PredicateCompilationError('"and" koşulu için en az bir alt koşul gereklidir.');
       }
-      const compiled = predicate.conditions.map((c) => `(${compilePredicateToSqlite(c)})`).join(' AND ');
+      const compiled = predicate.conditions.map((c: StructuredPredicate) => `(${compilePredicateToSqlite(c)})`).join(' AND ');
       return compiled;
     }
 
@@ -129,7 +129,7 @@ export function compilePredicateToSqlite(predicate: StructuredPredicate): string
       if (!Array.isArray(predicate.conditions) || predicate.conditions.length === 0) {
         throw new PredicateCompilationError('"or" koşulu için en az bir alt koşul gereklidir.');
       }
-      const compiled = predicate.conditions.map((c) => `(${compilePredicateToSqlite(c)})`).join(' OR ');
+      const compiled = predicate.conditions.map((c: StructuredPredicate) => `(${compilePredicateToSqlite(c)})`).join(' OR ');
       return compiled;
     }
 

@@ -306,7 +306,7 @@ export function convertAllTablesToLogicalSchema(tables: TableSchema[]): {
 
     const cols = Object.values(lt.columns);
     totalColumns += cols.length;
-    financialColumnsCount += cols.filter((c) => c.isFinancial).length;
+    financialColumnsCount += cols.filter((c: LogicalColumn) => c.isFinancial).length;
 
     totalConstraints += lt.constraints.length;
     for (const c of lt.constraints) {
