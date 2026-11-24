@@ -53,8 +53,16 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
     if (numValue === 0) {
       setTempValue('')
     } else {
-      setTempValue(numValue.toString().replace('.', ','))
+      const hasFractions = numValue % 1 !== 0
+      setTempValue(
+        hasFractions
+          ? numValue.toFixed(fractionDigits).replace('.', ',')
+          : numValue.toString()
+      )
     }
+    setTimeout(() => {
+      e.target.select()
+    }, 10)
     rest.onFocus?.(e)
   }
 

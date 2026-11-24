@@ -18,7 +18,12 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
   useEffect(() => {
     if (!isFocused) {
       setTempValue(
-        initialValue === 0 ? "" : initialValue.toString().replace(".", ","),
+        initialValue === 0
+          ? ""
+          : initialValue.toLocaleString("tr-TR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
       );
     }
   }, [initialValue, isFocused]);
@@ -28,16 +33,19 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
     onBlur?.(e);
     const trimmed = tempValue.trim();
     if (!trimmed) {
-      // Eğer kullanıcı açıkça sildiyse veya sıfırladıysa 0 gönder
       onChange("0");
       return;
     }
     const cleanValue = trimmed.replace(/\./g, "").replace(",", ".");
     const parsed = parseFloat(cleanValue);
     if (isNaN(parsed) || parsed < 0) {
-      // Geçersiz format girilmişse eski geçerli değere geri dön, veritabanını bozma
       setTempValue(
-        initialValue === 0 ? "" : initialValue.toString().replace(".", ","),
+        initialValue === 0
+          ? ""
+          : initialValue.toLocaleString("tr-TR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
       );
       return;
     }
@@ -46,9 +54,22 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
-    setTempValue(
-      initialValue === 0 ? "" : initialValue.toString().replace(".", ","),
-    );
+    // Odaklanınca kullanıcının düzenlemesi için ham temiz formatı göster:
+    // Örneğin 1.500,00 ₺ yerine doğrudan "1500" veya küsurat varsa "1500,50"
+    if (initialValue === 0) {
+      setTempValue("");
+    } else {
+      const hasFractions = initialValue % 1 !== 0;
+      setTempValue(
+        hasFractions
+          ? initialValue.toFixed(2).replace(".", ",")
+          : initialValue.toString(),
+      );
+    }
+    // Kullanıcı tıkladığında tüm metni otomatik seçsin (hızlı yazım için)
+    setTimeout(() => {
+      e.target.select();
+    }, 10);
     onFocus?.(e);
   };
 
