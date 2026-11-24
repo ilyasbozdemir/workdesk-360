@@ -376,12 +376,12 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
                   {isApproved ? (
                     <>
                       <Unlock className="w-3.5 h-3.5" />
-                      <span>Kilidi Aç / Taslağa Al</span>
+                      <span>Kilidi Aç</span>
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Araştırmayı Onayla &amp; Kilitle</span>
+                      <span>Kilitle</span>
                     </>
                   )}
                 </button>
