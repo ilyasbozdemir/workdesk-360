@@ -71,10 +71,18 @@ export function useMalzemeTablosuActions({
 
     try {
       for (const id of ids) {
+        // İlgili kalem silinirken tekliflerini de dosya bazlı temizle
+        if (activeDosyaId) {
+          await (window as any).electron.ipcRenderer.invoke(
+            'db:run',
+            'DELETE FROM DATA_TeminKalemTeklif WHERE temin_kalem_id = ? AND temin_dosya_id = ?',
+            [id, activeDosyaId]
+          )
+        }
         await (window as any).electron.ipcRenderer.invoke(
           'db:run',
-          'DELETE FROM DATA_TeminKalem WHERE id = ?',
-          [id]
+          'DELETE FROM DATA_TeminKalem WHERE id = ?' + (activeDosyaId ? ' AND temin_dosya_id = ?' : ''),
+          activeDosyaId ? [id, activeDosyaId] : [id]
         )
       }
       setSelectedIds(new Set())

@@ -18,7 +18,19 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
 
   const handleBlur = () => {
     setIsFocused(false)
-    const cleanValue = tempValue.replace(/\./g, '').replace(',', '.')
+    const trimmed = tempValue.trim()
+    if (!trimmed) {
+      // Eğer kullanıcı açıkça sildiyse veya sıfırladıysa 0 gönder
+      onChange('0')
+      return
+    }
+    const cleanValue = trimmed.replace(/\./g, '').replace(',', '.')
+    const parsed = parseFloat(cleanValue)
+    if (isNaN(parsed) || parsed < 0) {
+      // Geçersiz format girilmişse eski geçerli değere geri dön, veritabanını bozma
+      setTempValue(initialValue === 0 ? '' : initialValue.toString().replace('.', ','))
+      return
+    }
     onChange(cleanValue)
   }
 

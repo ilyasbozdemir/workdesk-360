@@ -378,9 +378,10 @@ export function PricesSummaryDashboard({
                 const itemBids = invitedFirms
                   .map((f: any) => {
                     const key = `${item.id}_${f.id}`;
+                    const fallbackKey = f.firma_id ? `${item.id}_${f.firma_id}` : null;
                     return {
                       firmId: f.id,
-                      price: bids[key] || 0,
+                      price: bids[key] ?? (fallbackKey ? bids[fallbackKey] : 0) ?? 0,
                     };
                   })
                   .filter((b) => b.price > 0);
@@ -402,7 +403,8 @@ export function PricesSummaryDashboard({
                     </td>
                     {invitedFirms.map((firm: any, fIdx: number) => {
                       const key = `${item.id}_${firm.id}`;
-                      const bidVal = bids[key] || 0;
+                      const fallbackKey = firm.firma_id ? `${item.id}_${firm.firma_id}` : null;
+                      const bidVal = bids[key] ?? (fallbackKey ? bids[fallbackKey] : 0) ?? 0;
                       const isItemWinner = bidVal > 0 &&
                         bidVal === minItemPrice;
 
