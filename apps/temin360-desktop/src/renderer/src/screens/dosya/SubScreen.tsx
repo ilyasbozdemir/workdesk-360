@@ -79,54 +79,57 @@ export function SubScreen({
 
   return (
     <div className="w-full flex flex-col gap-3.5 animate-in fade-in duration-200">
-      {/* HEADER */}
-      <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800/80 pb-2.5 print:hidden">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
-            <Icon className="w-4.5 h-4.5" />
+      {/* STICKY TOP SECTION: HEADER + PROCESS STEPPER */}
+      <div className="sticky -top-6 z-20 bg-slate-50/95 dark:bg-slate-950/95 backdrop-blur-md pt-2 pb-2.5 flex flex-col gap-2.5 -mx-6 px-6 border-b border-slate-200/80 dark:border-slate-800/80 print:hidden transition-all shadow-2xs">
+        {/* HEADER */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200/80 dark:border-blue-800/60 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+              <Icon className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-855 dark:text-slate-100 truncate">
+                {title}
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-2xl mt-0.5">
+                {description}
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-855 dark:text-slate-100 truncate">
-              {title}
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-xs truncate max-w-2xl mt-0.5">
-              {description}
-            </p>
-          </div>
+
+          {activeDosyaId && (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    localStorage.setItem("temin_takip_view_mode", "detay");
+                    window.dispatchEvent(
+                      new CustomEvent("takip:view-mode-changed", {
+                        detail: { mode: "detay", dosyaId: activeDosyaId },
+                      }),
+                    );
+                  } catch {
+                    // ignore
+                  }
+                  addTab(APP_ROUTES.DOSYA_DETAY);
+                  navigate({ to: APP_ROUTES.DOSYA_DETAY });
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
+                title="Dosya Detaylarına ve Süreç Takip Paneline Git"
+              >
+                <Layers className="w-3.5 h-3.5 text-indigo-500" />
+                Dosya Detayı
+              </button>
+            </div>
+          )}
         </div>
 
-        {activeDosyaId && (
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  localStorage.setItem("temin_takip_view_mode", "detay");
-                  window.dispatchEvent(
-                    new CustomEvent("takip:view-mode-changed", {
-                      detail: { mode: "detay", dosyaId: activeDosyaId },
-                    }),
-                  );
-                } catch {
-                  // ignore
-                }
-                addTab(APP_ROUTES.DOSYA_DETAY);
-                navigate({ to: APP_ROUTES.DOSYA_DETAY });
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
-              title="Dosya Detaylarına ve Süreç Takip Paneline Git"
-            >
-              <Layers className="w-3.5 h-3.5 text-indigo-500" />
-              Dosya Detayı
-            </button>
-          </div>
+        {/* PROCESS STEPPER */}
+        {showStepper && activeDosyaId && (
+          <ProcessStepper currentRoute={currentPath} />
         )}
       </div>
-
-      {/* PROCESS STEPPER */}
-      {showStepper && activeDosyaId && (
-        <ProcessStepper currentRoute={currentPath} />
-      )}
 
       {/* ACTIVE DOSYA CONTEXT */}
       {requireActiveDosya && !activeDosyaId && (

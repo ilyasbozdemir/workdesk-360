@@ -78,9 +78,9 @@ export function MalzemeTablosuBody({
   }
 
   return (
-    <div className="overflow-x-auto custom-scrollbar flex-1">
+    <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] min-h-[280px] custom-scrollbar flex-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs">
       <table className="w-full border-collapse text-left text-xs">
-        <thead className="sticky top-0 bg-slate-50 dark:bg-slate-950 text-slate-500 font-bold border-b border-slate-100 dark:border-slate-800">
+        <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-slate-900/95 backdrop-blur-xs text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800 shadow-2xs">
           <tr>
             <th className="p-3 pl-4 w-10">
               <input
