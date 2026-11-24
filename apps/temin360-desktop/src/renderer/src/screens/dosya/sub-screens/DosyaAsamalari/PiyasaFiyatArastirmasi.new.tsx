@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  FileCheck2,
   FileSpreadsheet,
   FileText,
   Lock,
@@ -16,6 +17,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sparkles,
+  Table,
   Trophy,
   Unlock,
 } from "lucide-react";
@@ -140,9 +142,19 @@ export function PiyasaFiyatArastirmasiNew(): React.JSX.Element {
     );
   }, [invitedFirms]);
 
-  // Dağıtım belgeleri kartı: Fiyat girilmişse başlangıçta kapalı (sakin mod), girilmemişse açık
+  // AKILLI GÖSTER/GİZLE DURUMLARI (UX Sadeleştirme)
+  // Fiyatlar girilmişse dağıtım ve firmalar tablosu varsayılan olarak kapalıdır (sakin mod)
   const [isDagitimExpanded, setIsDagitimExpanded] = useState<boolean>(
     () => !hasPricesEntered,
+  );
+  const [isFirmsExpanded, setIsFirmsExpanded] = useState<boolean>(
+    () => !hasPricesEntered,
+  );
+  const [isMatrixExpanded, setIsMatrixExpanded] = useState<boolean>(
+    () => hasPricesEntered,
+  );
+  const [isSonucExpanded, setIsSonucExpanded] = useState<boolean>(
+    () => hasPricesEntered,
   );
 
   // Koruma / Değişiklik Önlem Modalı Durumu
@@ -241,7 +253,7 @@ export function PiyasaFiyatArastirmasiNew(): React.JSX.Element {
     >
       {!isFormOpen ? (
         <div className="flex flex-col gap-4 animate-in fade-in duration-200 pb-16">
-          {/* 1. ÜST KISIM: 3. ADIMDAKİ GİBİ ŞIK KAZANAN / YÜKLENİCİ VE ONAY KARTI */}
+          {/* 1. ÜST KART: KAZANAN / YÜKLENİCİ VE ONAY KARTI */}
           <div
             className={cn(
               "p-4 rounded-2xl border transition-all shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4",
@@ -347,7 +359,6 @@ export function PiyasaFiyatArastirmasiNew(): React.JSX.Element {
                   type="button"
                   onClick={async (): Promise<void> => {
                     if (isApproved) {
-                      // Kilitliyken açmak istiyorsa uyarı göster
                       setIsWarningModalOpen(true);
                       setPendingAction(null);
                     } else {
@@ -412,9 +423,12 @@ export function PiyasaFiyatArastirmasiNew(): React.JSX.Element {
             </div>
           </div>
 
-          {/* 2. TEKLİF İSTEME & DAĞITIM BELGELERİ (Akıllı ve Sakin Çubuk) */}
+          {/* 2. TEKLİF İSTEME & DAĞITIM BELGELERİ (Akıllı ve Sakin Katlanabilir Çubuk) */}
           <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-xs overflow-hidden transition-all">
-            <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-slate-50 via-white to-indigo-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/20">
+            <div
+              onClick={(): void => setIsDagitimExpanded((prev) => !prev)}
+              className="flex items-center justify-between p-3.5 bg-gradient-to-r from-slate-50 via-white to-indigo-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/20 cursor-pointer select-none hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
+            >
               <div className="flex items-center gap-3">
                 <div
                   className={cn(
@@ -432,13 +446,13 @@ export function PiyasaFiyatArastirmasiNew(): React.JSX.Element {
                 </div>
 
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100">
                       Teklif İsteme &amp; Dağıtım Belgeleri
                     </h3>
                     {hasPricesEntered ? (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                        ✓ Fiyatlar Alındı ({invitedFirms.length} İstekli)
+                        ✓ Hazır ({invitedFirms.length} İstekli)
                       </span>
                     ) : (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
@@ -457,12 +471,15 @@ export function PiyasaFiyatArastirmasiNew(): React.JSX.Element {
               {/* Aç / Kapa Butonu */}
               <button
                 type="button"
-                onClick={(): void => setIsDagitimExpanded((prev) => !prev)}
+                onClick={(e): void => {
+                  e.stopPropagation();
+                  setIsDagitimExpanded((prev) => !prev);
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
               >
                 <Printer className="w-3.5 h-3.5 text-slate-500" />
                 <span>
-                  {isDagitimExpanded ? "Belgeleri Gizle" : "Belgeleri Aç & Yazdır"}
+                  {isDagitimExpanded ? "Gizle" : "Belgeleri Göster & Yazdır"}
                 </span>
                 {isDagitimExpanded ? (
                   <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
@@ -482,75 +499,243 @@ export function PiyasaFiyatArastirmasiNew(): React.JSX.Element {
             )}
           </div>
 
-          {/* 3. ANA ÇALIŞMA ALANI: İSTEKLİ FİRMALAR & FİYAT MATRİSİ */}
-          <div className="flex flex-col gap-5">
-            {/* İstekli Firmalar Tablosu */}
-            <FiyatIstenenFirmalarınSecilmesi
-              title="Fiyat İstenen İstekli Firmalar"
-              firms={formattedFirms}
-              columns={firmaColumns}
-              winnerFirmaId={manualWinnerFirmaId}
-              onSetWinnerFirma={(f): void => {
-                handleProtectedAction(() => {
-                  if (handleSetWinnerFirma) {
-                    const targetId = (f.firma_id as number) || f.id;
-                    handleSetWinnerFirma(
-                      manualWinnerFirmaId === targetId ? null : targetId,
-                    );
-                  }
-                });
-              }}
-              onCreateNewFirm={logic.handleCreateNewFirm}
-              onFiyatGir={(): void => {
-                handleProtectedAction(() => {
-                  setIsFormOpen(true);
-                  setActiveFormTab("matrix");
-                });
-              }}
-              onEkapSorgula={handleOpenEkapSorgu}
-              onOpenFirmaSecmeModali={(): void => {
-                handleProtectedAction(() => {
-                  if (setIsFirmModalOpen) setIsFirmModalOpen(true);
-                });
-              }}
-              onFirmaCikar={(f): void => {
-                handleProtectedAction(() => {
-                  if (handleRemoveFirm) handleRemoveFirm(f.id);
-                });
-              }}
-              onFirmaEkle={(f): void => {
-                handleProtectedAction(() => {
-                  if (handleAddSingleFirm) handleAddSingleFirm(f);
-                });
-              }}
-            />
+          {/* 3. FİYAT İSTENEN İSTEKLİ FİRMALAR (UX Katlanabilir / Göster-Gizle Çubuğu) */}
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-xs overflow-hidden transition-all">
+            <div
+              onClick={(): void => setIsFirmsExpanded((prev) => !prev)}
+              className="flex items-center justify-between p-3.5 bg-gradient-to-r from-slate-50 via-white to-blue-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20 cursor-pointer select-none hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-xs">
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                      Fiyat İstenen İstekli Firmalar
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                      {invitedFirms.length} İstekli Firma
+                    </span>
 
-            {/* Fiyat Özeti & Canlı Matris Önizlemesi */}
-            <PricesSummaryDashboard
-              invitedFirms={invitedFirms}
-              items={items}
-              bids={bids}
-              manualWinnerFirmaId={manualWinnerFirmaId}
-              handleSetWinnerFirma={handleSetWinnerFirma}
-              hesaplamaEsasi={hesaplamaEsasi}
-              onManageFirmsClick={(): void => {
-                handleProtectedAction(() => {
-                  setIsFormOpen(true);
-                  setActiveFormTab("matrix");
-                });
-              }}
-            />
+                    {/* Kazanan veya En Uygun İstekli Rozeti */}
+                    {activeWinnerFirma ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 flex items-center gap-1 shadow-2xs">
+                        <Trophy className="w-3 h-3 text-amber-600" />
+                        <span>Kazanan: {activeWinnerFirma.unvan}</span>
+                      </span>
+                    ) : lowestBidFirm ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1 shadow-2xs">
+                        <Trophy className="w-3 h-3 text-emerald-600" />
+                        <span>En Uygun: {lowestBidFirm.unvan}</span>
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {hasPricesEntered
+                      ? "İstekli firmalar ve teklifleri kayıtlı. Firma listesini düzenlemek veya yeni istekli eklemek için tıklayın."
+                      : "Teklif toplanacak istekli firmaları ekleyin ve yönetin."}
+                  </p>
+                </div>
+              </div>
 
-            {/* 4. SONUÇ ÇIKTILARI (Piyasa Fiyat Araştırması Tutanağı & Yaklaşık Maliyet Cetveli) */}
-            {hasPricesEntered && (
-              <div className="mt-1">
-                <SonucBelgesiKartlari
-                  handleOpenSablonByDosyaAdi={handleOpenSablonByDosyaAdi}
-                  handleNewDocument={handleNewDocument}
+              {/* Göster / Gizle Butonu */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e): void => {
+                    e.stopPropagation();
+                    setIsFirmsExpanded((prev) => !prev);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                  <span>
+                    {isFirmsExpanded
+                      ? "Listeyi Gizle"
+                      : `Firmaları Göster (${invitedFirms.length})`}
+                  </span>
+                  {isFirmsExpanded ? (
+                    <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Genişletilmiş İstekli Firmalar Tablosu */}
+            {isFirmsExpanded && (
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/30 dark:bg-slate-950/30 animate-in fade-in duration-150">
+                <FiyatIstenenFirmalarınSecilmesi
+                  title="Fiyat İstenen İstekli Firmalar"
+                  firms={formattedFirms}
+                  columns={firmaColumns}
+                  winnerFirmaId={manualWinnerFirmaId}
+                  onSetWinnerFirma={(f): void => {
+                    handleProtectedAction(() => {
+                      if (handleSetWinnerFirma) {
+                        const targetId = (f.firma_id as number) || f.id;
+                        handleSetWinnerFirma(
+                          manualWinnerFirmaId === targetId ? null : targetId,
+                        );
+                      }
+                    });
+                  }}
+                  onCreateNewFirm={logic.handleCreateNewFirm}
+                  onFiyatGir={(): void => {
+                    handleProtectedAction(() => {
+                      setIsFormOpen(true);
+                      setActiveFormTab("matrix");
+                    });
+                  }}
+                  onEkapSorgula={handleOpenEkapSorgu}
+                  onOpenFirmaSecmeModali={(): void => {
+                    handleProtectedAction(() => {
+                      if (setIsFirmModalOpen) setIsFirmModalOpen(true);
+                    });
+                  }}
+                  onFirmaCikar={(f): void => {
+                    handleProtectedAction(() => {
+                      if (handleRemoveFirm) handleRemoveFirm(f.id);
+                    });
+                  }}
+                  onFirmaEkle={(f): void => {
+                    handleProtectedAction(() => {
+                      if (handleAddSingleFirm) handleAddSingleFirm(f);
+                    });
+                  }}
                 />
               </div>
             )}
           </div>
+
+          {/* 4. TEKLİF VE FİYAT MATRİSİ (Katlanabilir Kart) */}
+          <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-xs overflow-hidden transition-all">
+            <div
+              onClick={(): void => setIsMatrixExpanded((prev) => !prev)}
+              className="flex items-center justify-between p-3.5 bg-gradient-to-r from-slate-50 via-white to-emerald-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/20 cursor-pointer select-none hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs">
+                  <Table className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                      Teklif Fiyat Matrisi &amp; Karşılaştırma
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      {items.length} Kalem &bull; {invitedFirms.length} İstekli
+                    </span>
+                    {hasPricesEntered && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        {isMatrixExpanded ? "Aktif Görüntüleniyor" : "Özeti Görmek İçin Tıklayın"}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Tüm kalemler için firmalardan toplanan birim fiyatlar ve toplam teklifler.
+                  </p>
+                </div>
+              </div>
+
+              {/* Matris Aç / Kapa Butonu */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e): void => {
+                    e.stopPropagation();
+                    setIsMatrixExpanded((prev) => !prev);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                >
+                  <Table className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{isMatrixExpanded ? "Tabloyu Gizle" : "Tabloyu Göster"}</span>
+                  {isMatrixExpanded ? (
+                    <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Genişletilmiş Matris */}
+            {isMatrixExpanded && (
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/20 dark:bg-slate-950/20 animate-in fade-in duration-150">
+                <PricesSummaryDashboard
+                  invitedFirms={invitedFirms}
+                  items={items}
+                  bids={bids}
+                  manualWinnerFirmaId={manualWinnerFirmaId}
+                  handleSetWinnerFirma={handleSetWinnerFirma}
+                  hesaplamaEsasi={hesaplamaEsasi}
+                  onManageFirmsClick={(): void => {
+                    handleProtectedAction(() => {
+                      setIsFormOpen(true);
+                      setActiveFormTab("matrix");
+                    });
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* 5. SONUÇ ÇIKTILARI (Piyasa Tutanağı & Yaklaşık Maliyet Cetveli) */}
+          {hasPricesEntered && (
+            <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-xs overflow-hidden transition-all">
+              <div
+                onClick={(): void => setIsSonucExpanded((prev) => !prev)}
+                className="flex items-center justify-between p-3.5 bg-gradient-to-r from-slate-50 via-white to-purple-50/20 dark:from-slate-900 dark:via-slate-900 dark:to-purple-950/20 cursor-pointer select-none hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-xs">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                        Sonuç &amp; Resmî Evrak Çıktıları
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                        Tutanak ve Cetvel Hazır
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      Piyasa Fiyat Araştırma Tutanağı ve Yaklaşık Maliyet Hesap Cetveli resmi evrakları.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e): void => {
+                    e.stopPropagation();
+                    setIsSonucExpanded((prev) => !prev);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                >
+                  <FileText className="w-3.5 h-3.5 text-slate-500" />
+                  <span>{isSonucExpanded ? "Gizle" : "Belgeleri Göster"}</span>
+                  {isSonucExpanded ? (
+                    <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  )}
+                </button>
+              </div>
+
+              {isSonucExpanded && (
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/20 dark:bg-slate-950/20 animate-in fade-in duration-150">
+                  <SonucBelgesiKartlari
+                    handleOpenSablonByDosyaAdi={handleOpenSablonByDosyaAdi}
+                    handleNewDocument={handleNewDocument}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* GÜVENLİK / DEĞİŞİKLİK ÖNLEM VE UYARI MODALI */}
           {isWarningModalOpen && (
