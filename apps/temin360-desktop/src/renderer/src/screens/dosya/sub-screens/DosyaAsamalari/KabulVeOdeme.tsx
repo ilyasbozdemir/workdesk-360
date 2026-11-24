@@ -1,5 +1,5 @@
 import React from 'react'
-import { CreditCard, PackageCheck, Users } from 'lucide-react'
+import { CreditCard, FileCheck, PackageCheck, Users } from 'lucide-react'
 import { SubScreen } from '../../SubScreens.screen'
 import { PrintDropdownButton } from '../../components/PrintDropdownButton'
 import { TifOlusturModal } from '../../../../components/ui/TifOlusturModal'
@@ -63,8 +63,13 @@ export function KabulVeOdeme(): React.JSX.Element {
     handleToggleApproveTutanak,
     handleBulkApproveTutanaklar,
     handleQuickPreview,
-    handleReloadKomisyon
+    handleReloadKomisyon,
+    formatCurrency,
+    formatDate
   } = useKabulVeOdemeData()
+
+  const isYapim = alimTuru === 'yapim'
+  const isHizmet = alimTuru === 'hizmet'
 
   return (
     <SubScreen
@@ -85,13 +90,34 @@ export function KabulVeOdeme(): React.JSX.Element {
 
       {kazananFirmaId && (
         <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-          {/* Header Row */}
+          {/* Header Row - Üst Butonlar (Referans Tasarım: Kabul Komisyonu, İhale Komisyon Kararı, Çıktı Merkezi) */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/60 pb-5">
             <div className="flex items-center gap-2 flex-wrap">
+              {/* Kabul Komisyonu Butonu */}
+              <Button
+                onClick={() => setIsKomisyonModalOpen(true)}
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm text-xs font-bold py-2.5 px-4 rounded-xl shrink-0 cursor-pointer"
+                title="Muayene ve Kabul Komisyonunu Düzenle / Üyeleri Gör"
+              >
+                <Users className="w-4 h-4" />
+                Kabul Komisyonu
+              </Button>
+
+              {/* İhale Komisyon Kararı Butonu */}
+              <Button
+                onClick={() => handleQuickPreview('ihale-komisyon-karari')}
+                className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm text-xs font-bold py-2.5 px-4 rounded-xl shrink-0 cursor-pointer"
+                title="İhale Komisyon Kararını Önizle ve Yazdır"
+              >
+                <FileCheck className="w-4 h-4" />
+                İhale Komisyon Kararı
+              </Button>
+
               {isMal && (
                 <Button
                   onClick={() => setIsTifModalOpen(true)}
-                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm text-xs font-bold py-2.5 px-4 rounded-xl shrink-0"
+                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm text-xs font-bold py-2.5 px-4 rounded-xl shrink-0 cursor-pointer"
+                  title="Taşınır İşlem Fişi (TİF) Oluştur ve Ambara Aktar"
                 >
                   <PackageCheck className="w-4 h-4" />
                   TİF Oluştur &amp; Ambara Aktar
@@ -122,6 +148,22 @@ export function KabulVeOdeme(): React.JSX.Element {
             )}
           </div>
 
+          {/* 1. Bölüm: Bu İhaleye Ait Kazanan Firmalar */}
+          <KabulYukleniciCard
+            kazananFirmaUnvan={kazananFirmaUnvan}
+            firmaStats={firmaStats}
+            alimTuru={alimTuru}
+            isMal={isMal}
+            isHizmet={isHizmet}
+            isYapim={isYapim}
+            formatCurrency={formatCurrency}
+            formatDate={formatDate}
+            onOpenAddTutanak={handleOpenAddTutanak}
+            onOpenPreview={handleQuickPreview}
+            onOpenKomisyonModal={() => setIsKomisyonModalOpen(true)}
+          />
+
+          {/* 2. Bölüm: Bu İhaleye Ait Kabul Tutanakları */}
           <KabulTutanaklariListCard
             kazananFirmaUnvan={kazananFirmaUnvan}
             firmaStats={firmaStats}
