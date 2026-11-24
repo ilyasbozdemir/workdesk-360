@@ -10,7 +10,11 @@ export const DATA_TeminDosyasi = {
       description: "Kayıt Numarası",
     },
     { name: "temin_no", type: "TEXT", description: "Kurum İçi Dosya Numarası" }, // Kurum içi numara (Örn: 2026/DT-001)
-    { name: "evrak_sayisi", type: "TEXT", description: "Resmî EBYS / E-DETSİS Evrak Sayısı" },
+    {
+      name: "evrak_sayisi",
+      type: "TEXT",
+      description: "Resmî EBYS / E-DETSİS Evrak Sayısı",
+    },
     {
       name: "dosya_acilis_tarihi",
       type: "DATE",
@@ -38,7 +42,8 @@ export const DATA_TeminDosyasi = {
       name: "antet_birim_gosterilsin",
       type: "INTEGER",
       default: 1,
-      description: "Antette Birim Satırı Gösterilsin mi (1: Evet, 0: Hayır - Sadece Üst Kurum)",
+      description:
+        "Antette Birim Satırı Gösterilsin mi (1: Evet, 0: Hayır - Sadece Üst Kurum)",
     },
     { name: "sunulacak_makam", type: "TEXT", description: "Sunulacak Makam" },
     { name: "ihtiyac_yeri", type: "TEXT", description: "Ihtiyac Yeri" },
@@ -291,12 +296,14 @@ export const DATA_TeminDosyasi = {
       name: "is_locked",
       type: "INTEGER",
       default: 0,
-      description: "Dosya Kilitli mi? (1: Kilitli/İmzalı/Değiştirilemez, 0: Düzenlenebilir)",
+      description:
+        "Dosya Kilitli mi? (1: Kilitli/İmzalı/Değiştirilemez, 0: Düzenlenebilir)",
     },
     {
       name: "lock_reason",
       type: "TEXT",
-      description: "Kilitleme nedeni (eski_aktarim_imzali, ekap_gonderildi, manuel_kilit vb.)",
+      description:
+        "Kilitleme nedeni (eski_aktarim_imzali, ekap_gonderildi, manuel_kilit vb.)",
     },
     {
       name: "created_at",

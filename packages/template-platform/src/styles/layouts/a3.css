@@ -1,0 +1,2 @@
+@page { size: A3 landscape; margin: 15mm; }
+.a3-landscape { width: 420mm; min-height: 297mm; padding: 15mm; margin: 0 auto; background: white; }

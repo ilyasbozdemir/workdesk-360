@@ -289,15 +289,6 @@ export function EskiDosyaKopyalaModal({
                                   .toLocaleDateString("tr-TR")
                                 : "-"}
                             </span>
-                            {dosya.yaklasik_maliyet
-                              ? (
-                                <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                                  ₺ {dosya.yaklasik_maliyet.toLocaleString(
-                                    "tr-TR",
-                                  )}
-                                </span>
-                              )
-                              : null}
                           </div>
                         </div>
                         <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all text-slate-400 shrink-0 shadow-xs">

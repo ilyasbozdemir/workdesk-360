@@ -47,4 +47,10 @@ export interface BidPriceInputProps {
   onChange: (val: string) => void
   isLowest: boolean
   isExcelStyle?: boolean
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void
+  inputRef?: React.Ref<HTMLInputElement>
+  'data-item-index'?: number
+  'data-firm-index'?: number
 }

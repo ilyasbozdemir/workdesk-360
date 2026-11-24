@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>{{documentTitle}}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #222; }
+    .document-header { display: flex; justify-content: space-between; border-bottom: 1px solid #999; padding-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #bbb; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+  {{> documentHeader}}
+  <h1>{{documentTitle}}</h1>
+  <p>Talep sahibi: {{requester}}</p>
+  <p>Açıklama: {{description}}</p>
+  <table>
+    <thead><tr><th>Kalem</th><th>Miktar</th><th>Tutar</th></tr></thead>
+    <tbody>
+      {{#each items}}
+      <tr><td>{{name}}</td><td>{{quantity}}</td><td>{{currencyTRY total}}</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+  <p><strong>Genel toplam: {{currencyTRY grandTotal}}</strong></p>
+</body>
+</html>

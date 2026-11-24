@@ -191,7 +191,7 @@ export async function cloneDosyaWithItems(
       }
     }
 
-    // 3. Yeni dosya ana kaydını oluştur
+    // 3. Yeni dosya ana kaydını oluştur (temiz, sıfır maliyet ve tekliflerle)
     const newDosyaPayload: any = {
       ...eskiDosya,
       id: undefined,
@@ -203,6 +203,10 @@ export async function cloneDosyaWithItems(
       teslim_tarihi: finalTeslimTarihi,
       status: 'devam_ediyor',
       komisyon_seed_edildi: shouldCloneCommissions ? 1 : 2,
+      yaklasik_maliyet: 0,
+      toplam_yaklasik_maliyet: 0,
+      sozlesme_bedeli: 0,
+      firma_id: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -218,6 +222,7 @@ export async function cloneDosyaWithItems(
     delete newDosyaPayload.kalem_sayisi
     delete newDosyaPayload.toplam_tutar
     delete newDosyaPayload.kazanan_firma_adi
+    delete newDosyaPayload.kazanan_firma_unvan
     delete newDosyaPayload.fatura_no
     delete newDosyaPayload.fatura_tarihi
     delete newDosyaPayload.fatura_tutari
@@ -257,14 +262,14 @@ export async function cloneDosyaWithItems(
         }
       }
 
-      // 5. İstekli firmaları klonla (Eğer seçildiyse)
+      // 5. İstekli firmaları klonla (Eğer seçildiyse - teklif toplamları ve kazanan durumu sıfırlanmış olarak)
       if (shouldCloneFirms && oldFirms.length > 0) {
         for (const f of oldFirms) {
           await window.electron.ipcRenderer.invoke(
             'db:run',
             `INSERT INTO DATA_TeminFirma 
-             (temin_dosya_id, firma_id, unvan, yetkili_ad_soyad, telefon, email, adres, vergi_no, vergi_dairesi)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (temin_dosya_id, firma_id, unvan, yetkili_ad_soyad, telefon, email, adres, vergi_no, vergi_dairesi, teklif_toplami, teklif_verdi_mi, teklif_durumu, kazandi_mi)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 'Davet Edildi', 0)`,
             [
               newId,
               f.firma_id,

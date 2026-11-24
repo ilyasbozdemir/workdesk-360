@@ -517,12 +517,32 @@ export function registerDbAuthHandlers(): void {
 
       const isKnown = hasCredentials ? isDeviceKnown(db, hostname) : false
 
+      const rememberMeRow = db.prepare("SELECT value FROM settings WHERE key = 'rememberMe'").get() as
+        | { value: string }
+        | undefined
+      const isRemembered = rememberMeRow?.value === 'true'
+      let rememberedUser = ''
+      let rememberedPass = ''
+      if (isRemembered) {
+        const remUserRow = db.prepare("SELECT value FROM settings WHERE key = 'rememberedUsername'").get() as
+          | { value: string }
+          | undefined
+        const remPassRow = db.prepare("SELECT value FROM settings WHERE key = 'rememberedPassword'").get() as
+          | { value: string }
+          | undefined
+        rememberedUser = remUserRow?.value || userRow?.value || ''
+        rememberedPass = remPassRow?.value || ''
+      }
+
       return {
         hasCredentials,
         isKnownDevice: isKnown,
         hostname,
         osUsername: os.userInfo().username,
-        expectedUser: userRow?.value || 'admin'
+        expectedUser: userRow?.value || 'admin',
+        rememberMe: isRemembered,
+        rememberedUser,
+        rememberedPass
       }
     } catch (error: any) {
       console.error('Check auth setup error:', error)
@@ -586,28 +606,75 @@ export function registerDbAuthHandlers(): void {
 
   /**
    * <summary>
+   * Veritabanı Düzeyinde "Beni Hatırla" (Remember Me) Kaydı
+   * Kullanıcı adı ve şifreyi SQLite settings tablosunda kalıcı olarak saklar veya temizler.
+   * </summary>
+   */
+  ipcMain.handle(
+    'db:set-remember-me',
+    async (_, user: string, pass: string, remember: boolean) => {
+      try {
+        const db = workspaceManager.getDb()
+        if (remember) {
+          db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberMe', 'true')").run()
+          db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberedUsername', ?)").run(user)
+          db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberedPassword', ?)").run(pass)
+        } else {
+          db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberMe', 'false')").run()
+          db.prepare("DELETE FROM settings WHERE key IN ('rememberedPassword')").run()
+        }
+        workspaceManager.recordMutation('SETTINGS')
+        workspaceManager.save()
+        return { success: true }
+      } catch (error: any) {
+        console.error('Set remember me error:', error)
+        return { success: false, error: error.message }
+      }
+    }
+  )
+
+  /**
+   * <summary>
    * Kullanıcı Giriş İşleyicisi & Çoklu Bilgisayar Eşleştirme (Workstation Pairing)
    * Başarılı girişte kullanıcının kimliği veritabanı denetim bağlamına (sys_session_context) mühürlenir.
    * Başka bir bilgisayarda açıldığında cihazı yetkilendirir ve audit günlüğünde ilgili PC ile eşleştirir.
    * </summary>
    */
-  ipcMain.handle('db:login', async (_, _code: string, user: string, pass: string) => {
-    try {
-      const db = workspaceManager.getDb()
-      const hostname = os.hostname()
-      const finish = <T extends Record<string, unknown>>(result: T): T => {
-        scrubPasswordHistory(db)
-        const loggedUser = String(result.username || user || 'admin')
-        try {
-          initSessionContext(db, {
-            userId: loggedUser,
-            macHash: `${hostname} [${os.userInfo().username}]`
-          })
-        } catch (ctxErr) {
-          console.warn('[AuditTrail] Failed to set session context on login:', ctxErr)
+  ipcMain.handle(
+    'db:login',
+    async (_, _code: string, user: string, pass: string, rememberMe?: boolean) => {
+      try {
+        const db = workspaceManager.getDb()
+        const hostname = os.hostname()
+        const finish = <T extends Record<string, unknown>>(result: T): T => {
+          scrubPasswordHistory(db)
+          const loggedUser = String(result.username || user || 'admin')
+          if (typeof rememberMe === 'boolean') {
+            try {
+              if (rememberMe) {
+                db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberMe', 'true')").run()
+                db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberedUsername', ?)").run(loggedUser)
+                db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberedPassword', ?)").run(pass)
+              } else {
+                db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('rememberMe', 'false')").run()
+                db.prepare("DELETE FROM settings WHERE key IN ('rememberedPassword')").run()
+              }
+              workspaceManager.recordMutation('SETTINGS')
+              workspaceManager.save()
+            } catch (remErr) {
+              console.warn('[RememberMe] Failed to update settings on login:', remErr)
+            }
+          }
+          try {
+            initSessionContext(db, {
+              userId: loggedUser,
+              macHash: `${hostname} [${os.userInfo().username}]`
+            })
+          } catch (ctxErr) {
+            console.warn('[AuditTrail] Failed to set session context on login:', ctxErr)
+          }
+          return result
         }
-        return result
-      }
 
       const userRow = db.prepare("SELECT value FROM settings WHERE key = 'adminUsername'").get() as
         | { value: string }

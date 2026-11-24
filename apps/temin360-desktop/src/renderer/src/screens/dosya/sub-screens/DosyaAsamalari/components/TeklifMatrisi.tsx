@@ -35,8 +35,7 @@ export const TeklifMatrisi: React.FC<TeklifMatrisiProps> = ({
             Teklif Giriş Tablosu & Karşılaştırma
           </h3>
           <p className="text-xs text-slate-500 mt-1">
-            Her firma için malzeme birim fiyatlarını girin. En uygun teklifler yeşil renkle
-            vurgulanır ve yaklaşık maliyet otomatik hesaplanır.
+            Her firma için malzeme birim fiyatlarını girin. <span className="text-blue-600 dark:text-blue-400 font-semibold">Enter / Ok Tuşları</span> ile alt satıra geçebilir, <span className="text-emerald-600 dark:text-emerald-400 font-bold">Alt + Sağ / Sol</span> ile firmalar arasında hızlıca kayabilirsiniz.
           </p>
         </div>
 

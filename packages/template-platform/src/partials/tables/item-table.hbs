@@ -1,0 +1,20 @@
+<table class="item-table w-full border border-gray-300 text-xs mt-3">
+  <thead>
+    <tr class="bg-gray-100 text-gray-700">
+      <th class="p-2 border w-12 text-center">S.No</th>
+      <th class="p-2 border text-left">Mal / Hizmet / Yapım İşi Tanımı</th>
+      <th class="p-2 border w-24 text-right">Miktar</th>
+      <th class="p-2 border w-20 text-center">Birimi</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each items}}
+      <tr>
+        <td class="p-2 border text-center">{{add @index 1}}</td>
+        <td class="p-2 border">{{this.name}}</td>
+        <td class="p-2 border text-right">{{formatNumber this.quantity}}</td>
+        <td class="p-2 border text-center">{{this.unit}}</td>
+      </tr>
+    {{/each}}
+  </tbody>
+</table>

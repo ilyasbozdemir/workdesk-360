@@ -1,0 +1,10 @@
+{{#> layouts/official-document title="Muayene ve Kabul Komisyonu Tutanağı"}}
+  <div class="text-xs my-3 leading-relaxed">
+    Yüklenici <strong>{{company.name}}</strong> tarafından taahhüt edilen alım konusu iş kalemleri incelenmiş, 
+    şartname ve sözleşme hükümlerine tam uygun olduğu görülerek kabulü oy birliğiyle yapılmıştır.
+  </div>
+
+  {{> tables/item-table items=items}}
+
+  {{> signatures/commission-signatures members=commissionMembers}}
+{{/layouts/official-document}}

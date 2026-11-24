@@ -1,167 +1,184 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  Building2,
   Code2,
   Cpu,
   Database,
   ExternalLink,
   FileCheck,
+  FileSpreadsheet,
   GitBranch,
   Globe,
   Landmark,
+  Layers,
+  Scale,
   ShieldCheck,
   Sparkles,
-  Layers,
-  Building2,
-  Scale,
-  FileSpreadsheet
-} from 'lucide-react'
-import defaultAppIcon from '../../assets/icon.png'
-import { useSettingsStore } from '../../store/settingsStore'
-import { useWorkspaceStore } from '../../store/workspaceStore'
+} from "lucide-react";
+import defaultAppIcon from "../../assets/icon.png";
+import { useSettingsStore } from "../../store/settingsStore";
+import { useWorkspaceStore } from "../../store/workspaceStore";
+
+import packageJson from "../../../../../package.json";
 
 interface SplashScreenProps {
-  onComplete?: () => void
-  durationMs?: number
-  autoHide?: boolean
+  onComplete?: () => void;
+  durationMs?: number;
+  autoHide?: boolean;
 }
 
 const LOADING_STEPS = [
   {
     progress: 15,
-    title: 'Sistem Çekirdeği & IPC Başlatılıyor',
-    subtitle: 'Electron çalışma motoru, bellek optimizasyonu ve yerel IPC kanalları yapılandırılıyor...',
+    title: "Sistem Çekirdeği & IPC Başlatılıyor",
+    subtitle:
+      "Electron çalışma motoru, bellek optimizasyonu ve yerel IPC kanalları yapılandırılıyor...",
     icon: Cpu,
-    color: 'from-blue-600 via-sky-500 to-cyan-400'
+    color: "from-blue-600 via-sky-500 to-cyan-400",
   },
   {
     progress: 35,
-    title: 'SQLite Veritabanı & Çalışma Alanı',
-    subtitle: 'Yerel dosya şeması, bütçe kodları, firma havuzu ve veri bütünlüğü doğrulanıyor...',
+    title: "SQLite Veritabanı & Çalışma Alanı",
+    subtitle:
+      "Yerel dosya şeması, bütçe kodları, firma havuzu ve veri bütünlüğü doğrulanıyor...",
     icon: Database,
-    color: 'from-indigo-600 via-blue-600 to-sky-400'
+    color: "from-indigo-600 via-blue-600 to-sky-400",
   },
   {
     progress: 60,
-    title: '4734 KİK Madde 22 & Parasal Limit Motoru',
-    subtitle: '22/d harcama tavanı, %10 bütçe denetleyicisi ve Decimal.js finans motoru yükleniyor...',
+    title: "4734 KİK Madde 22 & Parasal Limit Motoru",
+    subtitle:
+      "22/d harcama tavanı, %10 bütçe denetleyicisi ve Decimal.js finans motoru yükleniyor...",
     icon: FileCheck,
-    color: 'from-sky-500 via-indigo-500 to-violet-500'
+    color: "from-sky-500 via-indigo-500 to-violet-500",
   },
   {
     progress: 85,
-    title: 'Modül Ekosistemi & Belge Stüdyosu',
-    subtitle: 'Piyasa araştırması, EBYS şablonları, kabul heyetleri ve dinamik form motoru hazırlandı...',
+    title: "Modül Ekosistemi & Belge Stüdyosu",
+    subtitle:
+      "Piyasa araştırması, EBYS şablonları, kabul heyetleri ve dinamik form motoru hazırlandı...",
     icon: Layers,
-    color: 'from-violet-600 via-purple-600 to-indigo-600'
+    color: "from-violet-600 via-purple-600 to-indigo-600",
   },
   {
     progress: 100,
-    title: 'Temin 360 Başlamaya Hazır!',
-    subtitle: 'Çalışma alanı ve belgeleriniz hazır. Verimli ve hatasız çalışmalar dileriz!',
+    title: "Temin 360 Başlamaya Hazır!",
+    subtitle:
+      "Çalışma alanı ve belgeleriniz hazır. Verimli ve hatasız çalışmalar dileriz!",
     icon: Sparkles,
-    color: 'from-emerald-500 via-teal-400 to-cyan-400'
-  }
-]
+    color: "from-emerald-500 via-teal-400 to-cyan-400",
+  },
+];
 
 export function SplashScreen({
   onComplete,
-  durationMs = 4000,
-  autoHide = true
+  durationMs = 5000,
+  autoHide = true,
 }: SplashScreenProps): React.JSX.Element | null {
-  const [visible, setVisible] = useState(true)
-  const [fadingOut, setFadingOut] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [currentStepIdx, setCurrentStepIdx] = useState(0)
+  const [visible, setVisible] = useState(true);
+  const [fadingOut, setFadingOut] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentStepIdx, setCurrentStepIdx] = useState(0);
 
-  const { institutionLogo, logoLeft, institutionName, harcamaBirimAdi, loadSettings } =
-    useSettingsStore()
-  const { activeMeta } = useWorkspaceStore()
+  const {
+    institutionLogo,
+    logoLeft,
+    institutionName,
+    harcamaBirimAdi,
+    loadSettings,
+  } = useSettingsStore();
+  const { activeMeta } = useWorkspaceStore();
 
   useEffect(() => {
-    loadSettings().catch(() => null)
-  }, [loadSettings])
+    loadSettings().catch(() => null);
+  }, [loadSettings]);
 
   // Kurum ve çalışma alanı tespiti
-  const currentInstitutionName =
-    activeMeta?.institution ||
-    (institutionName && institutionName !== 'Kurum Bilgisi Bekleniyor...' ? institutionName : null)
-  const customInstLogo = institutionLogo || logoLeft
+  const currentInstitutionName = activeMeta?.institution ||
+    (institutionName && institutionName !== "Kurum Bilgisi Bekleniyor..."
+      ? institutionName
+      : null);
+  const customInstLogo = institutionLogo || logoLeft;
 
   const finishImmediately = useCallback((): void => {
-    setProgress(100)
-    setCurrentStepIdx(4)
-    setFadingOut(true)
+    setProgress(100);
+    setCurrentStepIdx(4);
+    setFadingOut(true);
     setTimeout(() => {
-      setVisible(false)
-      if (onComplete) onComplete()
-    }, 250)
-  }, [onComplete])
+      setVisible(false);
+      if (onComplete) onComplete();
+    }, 250);
+  }, [onComplete]);
 
   const handleOpenLink = (e: React.MouseEvent, url: string): void => {
-    e.stopPropagation()
+    e.stopPropagation();
     try {
       if (window.electron?.ipcRenderer?.invoke) {
-        window.electron.ipcRenderer.invoke('shell:openExternal', url)
+        window.electron.ipcRenderer.invoke("shell:openExternal", url);
       } else {
-        window.open(url, '_blank')
+        window.open(url, "_blank");
       }
     } catch {
-      window.open(url, '_blank')
+      window.open(url, "_blank");
     }
-  }
+  };
 
   useEffect(() => {
-    const startTime = Date.now()
+    const startTime = Date.now();
     const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime
-      const rawRatio = Math.min(elapsed / durationMs, 1)
+      const elapsed = Date.now() - startTime;
+      const rawRatio = Math.min(elapsed / durationMs, 1);
 
-      const eased = Math.round(rawRatio * 100)
-      setProgress(eased)
+      const eased = Math.round(rawRatio * 100);
+      setProgress(eased);
 
-      if (eased >= 95) setCurrentStepIdx(4)
-      else if (eased >= 75) setCurrentStepIdx(3)
-      else if (eased >= 45) setCurrentStepIdx(2)
-      else if (eased >= 20) setCurrentStepIdx(1)
-      else setCurrentStepIdx(0)
+      if (eased >= 95) setCurrentStepIdx(4);
+      else if (eased >= 75) setCurrentStepIdx(3);
+      else if (eased >= 45) setCurrentStepIdx(2);
+      else if (eased >= 20) setCurrentStepIdx(1);
+      else setCurrentStepIdx(0);
 
       if (rawRatio >= 1) {
-        clearInterval(interval)
+        clearInterval(interval);
         if (autoHide) {
           setTimeout(() => {
-            setFadingOut(true)
+            setFadingOut(true);
             setTimeout(() => {
-              setVisible(false)
-              if (onComplete) onComplete()
-            }, 450)
-          }, 300)
+              setVisible(false);
+              if (onComplete) onComplete();
+            }, 450);
+          }, 300);
         }
       }
-    }, 25)
+    }, 25);
 
     const handleKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
-        finishImmediately()
+      if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+        finishImmediately();
       }
-    }
+    };
 
-    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      clearInterval(interval)
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [durationMs, autoHide, onComplete, finishImmediately])
+      clearInterval(interval);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [durationMs, autoHide, onComplete, finishImmediately]);
 
-  if (!visible) return null
+  if (!visible) return null;
 
-  const CurrentStep = LOADING_STEPS[currentStepIdx]
-  const CurrentIcon = CurrentStep.icon
+  const CurrentStep = LOADING_STEPS[currentStepIdx];
+  const CurrentIcon = CurrentStep.icon;
+
+  const version = packageJson?.version || "1.0.0";
 
   return (
     <div
       className={`fixed inset-0 z-99999 flex flex-col justify-between p-6 sm:p-10 md:p-14 bg-slate-50/95 dark:bg-[#080d1a]/95 backdrop-blur-2xl text-slate-900 dark:text-slate-100 select-none transition-all duration-500 ease-out overflow-hidden ${
-        fadingOut ? 'opacity-0 scale-98 pointer-events-none' : 'opacity-100 scale-100'
+        fadingOut
+          ? "opacity-0 scale-98 pointer-events-none"
+          : "opacity-100 scale-100"
       }`}
       onClick={finishImmediately}
       title="Hemen başlatmak için tıklayın veya ESC tuşuna basın"
@@ -180,14 +197,14 @@ export function SplashScreen({
         <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-xs backdrop-blur-md">
           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
           <span className="text-xs font-bold tracking-tight text-slate-700 dark:text-slate-300">
-            4734 Sayılı KİK m.22 • Doğrudan Temin, Piyasa Araştırması & Akıllı Belge Süiti
+            Kamu Temin, İhale, Harcama ve Hakediş Yönetim Sistemi
           </span>
         </div>
 
         {/* Right: Version & Quick Skip */}
         <div className="flex items-center gap-3">
           <span className="px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-sky-300 text-xs font-mono font-extrabold border border-blue-200/80 dark:border-blue-800/60 shadow-xs">
-            v2.4.0 PRO
+            v{version}
           </span>
 
           <button
@@ -245,32 +262,37 @@ export function SplashScreen({
 
           {/* Active Workspace / Institution Profile Card */}
           <div className="w-full max-w-md p-5 rounded-3xl bg-white/85 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/90 shadow-xl dark:shadow-2xl shadow-slate-200/50 dark:shadow-black/60 backdrop-blur-xl flex items-center gap-4 text-left transition-all">
-            {customInstLogo ? (
-              <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
-                <img
-                  src={customInstLogo}
-                  alt="Kurum Logosu"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            ) : (
-              <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 border border-blue-200 dark:border-blue-800/60 flex items-center justify-center shrink-0">
-                <Landmark className="w-7 h-7 text-blue-600 dark:text-sky-400" />
-              </div>
-            )}
+            {customInstLogo
+              ? (
+                <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-2 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+                  <img
+                    src={customInstLogo}
+                    alt="Kurum Logosu"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )
+              : (
+                <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 border border-blue-200 dark:border-blue-800/60 flex items-center justify-center shrink-0">
+                  <Landmark className="w-7 h-7 text-blue-600 dark:text-sky-400" />
+                </div>
+              )}
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-sky-400">
-                  {currentInstitutionName ? 'Aktif Kurum Çalışma Alanı' : 'Çalışma Dosyası'}
+                  {currentInstitutionName
+                    ? "Aktif Kurum Çalışma Alanı"
+                    : "Çalışma Dosyası"}
                 </span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               </div>
               <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate mt-0.5">
-                {currentInstitutionName || 'Genel Kurum Çalışma Alanı'}
+                {currentInstitutionName || "Genel Kurum Çalışma Alanı"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
-                {harcamaBirimAdi || 'SQLite Yerel Veritabanı • Çevrimdışı Güvenli'}
+                {harcamaBirimAdi ||
+                  "SQLite Yerel Veritabanı • Çevrimdışı Güvenli"}
               </p>
             </div>
           </div>
@@ -283,8 +305,12 @@ export function SplashScreen({
               <FileCheck className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">4734 m.22/d Süreci</h5>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">7 Aşamalı Uçtan Uca Takip</p>
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                4734 m.22/d Süreci
+              </h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                7 Aşamalı Uçtan Uca Takip
+              </p>
             </div>
           </div>
 
@@ -293,8 +319,12 @@ export function SplashScreen({
               <Building2 className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Piyasa Fiyat Havuzu</h5>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">İstekli & Teklif Kıyaslama</p>
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                Piyasa Fiyat Havuzu
+              </h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                İstekli & Teklif Kıyaslama
+              </p>
             </div>
           </div>
 
@@ -303,8 +333,12 @@ export function SplashScreen({
               <Scale className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">KİK Limit & %10 Tavanı</h5>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">Bütçe Aşım Risk Uyarısı</p>
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                KİK Limit & %10 Tavanı
+              </h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                Bütçe Aşım Risk Uyarısı
+              </p>
             </div>
           </div>
 
@@ -313,8 +347,12 @@ export function SplashScreen({
               <FileSpreadsheet className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">Dinamik Belge Stüdyosu</h5>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">A4 Baskı & EYP 2.0 EBYS</p>
+              <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                Dinamik Belge Stüdyosu
+              </h5>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                A4 Baskı & EYP 2.0 EBYS
+              </p>
             </div>
           </div>
         </div>
@@ -358,25 +396,31 @@ export function SplashScreen({
           {/* 5-Step Pipeline Dots */}
           <div className="grid grid-cols-5 gap-2 mt-3.5">
             {LOADING_STEPS.map((step, idx) => {
-              const isPassed = progress >= step.progress
-              const isCurrent = currentStepIdx === idx
+              const isPassed = progress >= step.progress;
+              const isCurrent = currentStepIdx === idx;
               return (
                 <div
                   key={step.title}
                   className={`flex items-center gap-1.5 text-left transition-opacity duration-300 ${
-                    isCurrent ? 'opacity-100' : isPassed ? 'opacity-70' : 'opacity-35'
+                    isCurrent
+                      ? "opacity-100"
+                      : isPassed
+                      ? "opacity-70"
+                      : "opacity-35"
                   }`}
                 >
                   <div
                     className={`w-2 h-2 rounded-full shrink-0 transition-colors ${
-                      isPassed ? 'bg-blue-600 dark:bg-sky-400' : 'bg-slate-300 dark:bg-slate-700'
+                      isPassed
+                        ? "bg-blue-600 dark:bg-sky-400"
+                        : "bg-slate-300 dark:bg-slate-700"
                     }`}
                   />
                   <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 truncate hidden md:inline">
-                    {step.title.split(' ')[0]}
+                    {step.title.split(" ")[0]}
                   </span>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
@@ -403,7 +447,8 @@ export function SplashScreen({
             <div className="flex items-center gap-3 mt-0.5">
               <button
                 type="button"
-                onClick={(e) => handleOpenLink(e, 'https://github.com/ilyasbozdemir')}
+                onClick={(e) =>
+                  handleOpenLink(e, "https://github.com/ilyasbozdemir")}
                 className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-sky-400 transition-colors cursor-pointer"
               >
                 <GitBranch className="w-3 h-3" />
@@ -415,7 +460,11 @@ export function SplashScreen({
 
               <button
                 type="button"
-                onClick={(e) => handleOpenLink(e, 'https://github.com/ilyasbozdemir/workdesk-360')}
+                onClick={(e) =>
+                  handleOpenLink(
+                    e,
+                    "https://github.com/ilyasbozdemir/workdesk-360",
+                  )}
                 className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-sky-400 transition-colors cursor-pointer"
               >
                 <Code2 className="w-3 h-3" />
@@ -427,7 +476,7 @@ export function SplashScreen({
 
               <button
                 type="button"
-                onClick={(e) => handleOpenLink(e, 'https://ilyasbozdemir.dev')}
+                onClick={(e) => handleOpenLink(e, "https://ilyasbozdemir.dev")}
                 className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-blue-600 dark:text-sky-400 hover:underline transition-colors cursor-pointer"
               >
                 <Globe className="w-3 h-3" />
@@ -441,9 +490,11 @@ export function SplashScreen({
         {/* Right: Security & Storage Assurance */}
         <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
           <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <span>Yerel SQLite Mimarisi • %100 Çevrimdışı & KVKK Uyumlu Güvenlik</span>
+          <span>
+            Yerel SQLite Mimarisi • %100 Çevrimdışı & KVKK Uyumlu Güvenlik
+          </span>
         </div>
       </footer>
     </div>
-  )
+  );
 }

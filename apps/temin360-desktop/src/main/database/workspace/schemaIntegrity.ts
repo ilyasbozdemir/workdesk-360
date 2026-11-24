@@ -138,6 +138,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
         kayit_sayisi INTEGER DEFAULT 0,
         durum TEXT NOT NULL DEFAULT 'bekliyor',
         ozet_bilgi TEXT,
+        detay_json TEXT,
         eklenen_detay TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
@@ -204,6 +205,8 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     'Temel Tablolar ve İhtiyaç Raporu Kurulumu'
   )
 
+  safeAddColumn(db, 'SYS_KurulumTakip', 'detay_json', 'TEXT DEFAULT NULL')
+  safeAddColumn(db, 'SYS_KurulumTakip', 'eklenen_detay', 'TEXT DEFAULT NULL')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'talep_eden_unvan', 'TEXT')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'evrak_sayisi', 'TEXT')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'belge_snapshot_json', 'TEXT')

@@ -44,6 +44,7 @@ export interface PiyasaFiyatArastirmasiDashboardProps {
   lowestTotalFirmaId?: number | null
   hesaplamaEsasi?: string
   setHesaplamaEsasi?: (val: string) => Promise<void> | void
+  onToggleViewMode?: () => void
 }
 
 export interface DagitimBelgeleriKartlariProps {
@@ -59,6 +60,7 @@ export interface KazananKararPaneliProps {
   setActiveFormTab: (tab: 'firms' | 'matrix') => void
   hesaplamaEsasi?: string
   setHesaplamaEsasi?: (val: string) => Promise<void> | void
+  onToggleViewMode?: () => void
 }
 
 export interface PiyasaFiyatStepperProps {

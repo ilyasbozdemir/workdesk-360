@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { Award } from 'lucide-react'
 import { BiddingFirm, BiddingKalem, FirmBasedEntryViewProps } from './types'
 import { BidPriceInput } from './BidPriceInput'
@@ -13,6 +13,77 @@ export function FirmBasedEntryView({
   handlePriceChange
 }: FirmBasedEntryViewProps): React.JSX.Element {
   const selectedFirm = invitedFirms.find((f) => f.id === selectedFirmId)
+  const inputRefs = useRef<Map<number, HTMLInputElement>>(new Map())
+
+  const focusInput = (kIdx: number) => {
+    const el = inputRefs.current.get(kIdx)
+    if (el) {
+      el.focus()
+      el.select()
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, kIdx: number) => {
+    const currentFirmIndex = invitedFirms.findIndex((f) => f.id === selectedFirmId)
+    const totalFirms = invitedFirms.length
+    const totalItems = items.length
+
+    // 1. Alt + Yön Tuşları: Firmalar ve Kalemler arasında hızlı geçiş
+    //    Alt + ArrowRight: Bir sonraki firmaya geç
+    //    Alt + ArrowLeft: Bir önceki firmaya geç
+    //    Alt + ArrowDown / ArrowUp: Kalemler arasında gezin
+    if (e.altKey) {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault()
+        if (totalFirms > 0 && currentFirmIndex !== -1) {
+          const nextFirm = invitedFirms[(currentFirmIndex + 1) % totalFirms]
+          setSelectedFirmId(nextFirm.id)
+        }
+        return
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault()
+        if (totalFirms > 0 && currentFirmIndex !== -1) {
+          const prevFirm = invitedFirms[(currentFirmIndex - 1 + totalFirms) % totalFirms]
+          setSelectedFirmId(prevFirm.id)
+        }
+        return
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        const nextK = (kIdx + 1) % totalItems
+        focusInput(nextK)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        const prevK = (kIdx - 1 + totalItems) % totalItems
+        focusInput(prevK)
+        return
+      }
+    }
+
+    // 2. Enter / Shift+Enter veya ArrowDown / ArrowUp: Kalemler arası gezinme
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (kIdx < totalItems - 1) {
+        focusInput(kIdx + 1)
+      } else if (e.key === 'Enter' && currentFirmIndex < totalFirms - 1) {
+        // Son kalemde Enter basıldığında sonraki firmaya geçip ilk kaleme odaklan
+        const nextFirm = invitedFirms[currentFirmIndex + 1]
+        setSelectedFirmId(nextFirm.id)
+        setTimeout(() => focusInput(0), 50)
+      }
+      return
+    }
+
+    if (e.key === 'ArrowUp') {
+      if (kIdx > 0) {
+        e.preventDefault()
+        focusInput(kIdx - 1)
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4 animate-in fade-in duration-300">
@@ -89,8 +160,13 @@ export function FirmBasedEntryView({
                     ₺
                   </span>
                   <BidPriceInput
+                    inputRef={(el) => {
+                      if (el) inputRefs.current.set(kIdx, el)
+                      else inputRefs.current.delete(kIdx)
+                    }}
                     initialValue={val}
                     onChange={(newVal) => handlePriceChange(kalem.id, selectedFirmId, newVal)}
+                    onKeyDown={(e) => handleKeyDown(e, kIdx)}
                     isLowest={isLowest}
                   />
                 </div>

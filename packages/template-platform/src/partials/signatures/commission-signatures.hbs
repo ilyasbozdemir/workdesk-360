@@ -1,0 +1,13 @@
+<div class="commission-signatures mt-8">
+  <div class="grid grid-cols-3 gap-4 text-center">
+    {{#each members}}
+      <div class="member-box border p-2 rounded">
+        <div class="role text-[11px] font-bold text-gray-500 uppercase">{{this.role}}</div>
+        <div class="name font-bold text-xs mt-1">{{this.name}}</div>
+        <div class="title text-xs text-gray-600">{{this.title}}</div>
+        <div class="sign-space h-10"></div>
+        <div class="date text-[10px] text-gray-400">İmza</div>
+      </div>
+    {{/each}}
+  </div>
+</div>

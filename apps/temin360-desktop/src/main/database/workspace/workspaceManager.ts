@@ -8,11 +8,11 @@ let activeWorkspace: DtmWorkspace | null = null
 let debouncedSaveTimer: NodeJS.Timeout | null = null
 
 export const workspaceManager = {
-  create: (filePath: string, institutionName: string) => {
+  create: (filePath: string, institutionName: string, adminUsername?: string) => {
     workspaceManager.flushSave()
     if (activeWorkspace) activeWorkspace.closeWorkspace()
     activeWorkspace = new DtmWorkspace()
-    return activeWorkspace.createWorkspace(filePath, institutionName)
+    return activeWorkspace.createWorkspace(filePath, institutionName, adminUsername)
   },
   open: (filePath: string, allowMigration: boolean = false) => {
     workspaceManager.flushSave()

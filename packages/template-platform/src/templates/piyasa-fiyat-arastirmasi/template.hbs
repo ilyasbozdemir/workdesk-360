@@ -1,0 +1,14 @@
+{{#> layouts/official-document title="Piyasa Fiyat Araştırması Tutanağı"}}
+  <div class="intro text-xs mb-3">
+    4734 sayılı Kamu İhale Kanununun 22 nci maddesi uyarınca doğrudan temin usulüyle yapılacak alıma ilişkin piyasa fiyat araştırması yapılmış ve aşağıdaki teklifler tespit edilmiştir.
+  </div>
+
+  {{> tables/price-table items=items grandTotal=grandTotal}}
+
+  <div class="result-box p-3 bg-gray-50 border rounded mt-4 text-xs">
+    <span class="font-bold">Değerlendirme Sonucu:</span> 
+    En uygun fiyatı veren <strong>{{winnerCompany.name}}</strong> firması üzerine alımın yapılması uygun görülmüştür.
+  </div>
+
+  {{> signatures/commission-signatures members=commissionMembers}}
+{{/layouts/official-document}}

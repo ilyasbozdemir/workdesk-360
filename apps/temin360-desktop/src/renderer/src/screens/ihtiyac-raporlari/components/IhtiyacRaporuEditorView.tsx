@@ -24,6 +24,7 @@ import {
 import { dbClient } from "../../../services/db/dbClient";
 import { formatCurrency } from "../../../utils/formatters";
 import { cn } from "../../../utils/cn";
+import { CurrencyInput } from "../../../components/ui/CurrencyInput";
 import { BirimOption, CatalogKalemOption, PersonelOption } from "../types";
 
 interface EditorViewProps {
@@ -1076,18 +1077,14 @@ export function IhtiyacRaporuEditorView({
                               </select>
                             </td>
                             <td className="py-2 px-3 text-right">
-                              <input
-                                type="number"
-                                min="0"
-                                step="any"
-                                value={k.tahmini_birim_fiyat || ""}
-                                onChange={(e) =>
+                              <CurrencyInput
+                                value={k.tahmini_birim_fiyat || 0}
+                                onChange={(newVal) =>
                                   handleUpdateKalem(idx, {
-                                    tahmini_birim_fiyat:
-                                      parseFloat(e.target.value) || 0,
+                                    tahmini_birim_fiyat: newVal,
                                   })}
-                                placeholder="0.00"
-                                className="w-28 px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-right font-mono text-slate-800 dark:text-slate-100 focus:outline-hidden"
+                                placeholder="0,00"
+                                className="w-28 py-1 text-xs"
                               />
                             </td>
                             <td className="py-2 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">

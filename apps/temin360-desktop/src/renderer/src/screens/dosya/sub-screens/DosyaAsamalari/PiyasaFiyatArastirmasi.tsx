@@ -1,223 +1,154 @@
-import React, { useState } from 'react'
-import { PackageSearch } from 'lucide-react'
-import { SubScreen } from '../../SubScreens.screen'
-import { isV2Template, normalizeForMatch } from './useDosyaAsamasiSablons'
-import { FirmaSecmeModali } from './components/FirmaSecmeModali'
-import { PiyasaFiyatArastirmasiDashboard } from './components/PiyasaFiyatArastirmasiDashboard'
-import { PiyasaFiyatArastirmasiForm } from './components/PiyasaFiyatArastirmasiForm'
-import { usePiyasaFiyatArastirmasiLogic } from './hooks/usePiyasaFiyatArastirmasi'
-import { useSettingsStore } from '../../../../store/settingsStore'
-import { useWorkspaceStore } from '../../../../store/workspaceStore'
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { Layers, Sparkles } from "lucide-react";
+import { cn } from "@renderer/utils/cn";
+import { PiyasaFiyatArastirmasiNew } from "./PiyasaFiyatArastirmasi.new";
+import { PiyasaFiyatArastirmasiOld } from "./PiyasaFiyatArastirmasi.old";
 
 export function PiyasaFiyatArastirmasi(): React.JSX.Element {
-  const { activeDosyaId } = useWorkspaceStore()
-  const logic = usePiyasaFiyatArastirmasiLogic()
-  const {
-    sablonsContext: {
-      masterHtml,
-      dosyaContext,
-      placeholders,
-      personelListesi,
-      previewModalOpen,
-      setPreviewModalOpen,
-      previewData,
-      executePrint,
-      executeExportPdf,
-      executeExportDocx,
-      executeExportUdf,
-      quickPrint,
-      quickExport,
-      quickOpenExternal,
-      toggleStar,
-      refreshSnapshot,
-      saveSnapshot,
-      activeStarredDocs,
-      contextsByPath,
-      handleOpenPreviewForSablon,
-      sablons,
-      ciktiLoading,
-      isSablonDisabled
-    },
-    invitedFirms,
-    allPoolFirms,
-    isFormOpen,
-    setIsFormOpen,
-    items,
-    bids,
-    hesaplamaEsasi,
-    setHesaplamaEsasi,
-    isFirmModalOpen,
-    setIsFirmModalOpen,
-    selectedFirmIds,
-    setSelectedFirmIds,
-    modalSearchQuery,
-    setModalSearchQuery,
-    handleBulkAddFirms,
-    handleAddSingleFirm,
-    handleRemoveFirm,
-    handlePriceChange,
-    getLowestBidInfo,
-    getAverageBid,
-    getEstimatedCostTotal,
-    handleSaveToDosya,
-    handleNewDocument,
-    lowestTotalFirmaId,
-    isEditingFirms,
-    setIsEditingFirms,
-    setMaliyetCetveliTarihi,
-    tutanakTarihi,
-    setTutanakTarihi,
-    savedDocuments,
-    stageSablons,
-    formMode,
-    setFormMode,
-    syncTutanak,
-    setSyncTutanak,
-    setLowestFirmAsWinner,
-    setSetLowestFirmAsWinner,
-    manualWinnerFirmaId,
-    setManualWinnerFirmaId,
-    maliyetCetveliTarihi,
-    belgeleriKaydet,
-    setBelgeleriKaydet,
-    handleUpdateDocumentDate,
-    handleDeleteDocument,
-    handleSetWinnerFirma
-  } = logic
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const [activeFormTab, setActiveFormTab] = useState<'firms' | 'matrix' | 'comparison'>(() => {
-    return invitedFirms.length > 0 ? 'matrix' : 'firms'
-  })
-  const [activeActionDropdown, setActiveActionDropdown] = useState<string | null>(null)
-  const [isFormFullscreen, setIsFormFullscreen] = useState<boolean>(false)
-  const [dashboardViewMode, setDashboardViewMode] = useState<'documents' | 'prices'>('documents')
-  const [docViewMode, setDocViewMode] = useState<'grid' | 'list' | 'table'>(() => {
+  // URL search parametresinden (?view=old / ?view=new) çözümle
+  const getViewFromUrl = (): "old" | "new" | null => {
     try {
-      return (localStorage.getItem('dta_doc_view_mode') as any) || 'grid'
+      const searchObj = location.search as Record<string, unknown> | undefined;
+      if (searchObj && typeof searchObj === "object" && "view" in searchObj) {
+        const val = String(searchObj.view).toLowerCase();
+        if (val === "old" || val === "new") return val;
+      }
     } catch {
-      return 'grid'
+      // fallback
     }
-  })
+    return null;
+  };
 
-  const changeDocViewMode = (mode: 'grid' | 'list' | 'table') => {
-    setDocViewMode(mode)
+  const getInitialView = (): "old" | "new" => {
+    const urlView = getViewFromUrl();
+    if (urlView) return urlView;
     try {
-      localStorage.setItem('dta_doc_view_mode', mode)
-    } catch (e) {
-      console.error(e)
+      const stored = localStorage.getItem("temin360_use_old_piyasa_view");
+      if (stored === "true" || stored === "old") return "old";
+    } catch {
+      // fallback
     }
-  }
+    return "new";
+  };
 
-  const stageDocs = savedDocuments
-  const { disableDocumentGuidance } = useSettingsStore()
+  const [activeView, setActiveView] = useState<"old" | "new">(getInitialView);
 
-  const isStarred = previewData?.title
-    ? activeStarredDocs.some(
-        (d) => normalizeForMatch(d) === normalizeForMatch(previewData.title || '')
-      )
-    : false
+  // URL değiştiğinde aktif görünümü senkronize et
+  useEffect(() => {
+    const urlView = getViewFromUrl();
+    if (urlView && urlView !== activeView) {
+      setActiveView(urlView);
+    }
+  }, [location.search]);
 
-  const isV2 = isV2Template(previewData?.dosyaAdi)
+  // Görünümü değiştir ve URL ile senkronize et
+  const setViewMode = (mode: "old" | "new"): void => {
+    setActiveView(mode);
+    try {
+      localStorage.setItem(
+        "temin360_use_old_piyasa_view",
+        mode === "old" ? "true" : "false",
+      );
+    } catch (e) {
+      console.error(e);
+    }
+
+    navigate({
+      search: ((prev: Record<string, unknown> = {}) => ({
+        ...prev,
+        view: mode,
+      })) as any,
+    });
+  };
 
   return (
-    <SubScreen
-      title="Teklifler & Piyasa Fiyat Araştırması"
-      icon={PackageSearch}
-      description="Tedarikçi teklif mektupları hazırlayabilir, toplanan teklifleri fiyat araştırma tablosuna girerek en uygun teklifleri ve yaklaşık maliyeti belirleyebilirsiniz."
-      previewDocumentId={previewModalOpen && previewData?.dosyaAdi ? previewData.dosyaAdi : null}
-      selectedFirma={previewData?.selectedFirma}
-      invitedFirms={logic.invitedFirms}
-      onClosePreview={() => setPreviewModalOpen(false)}
-    >
-      {!isFormOpen ? (
-        <PiyasaFiyatArastirmasiDashboard
-          setIsFormOpen={setIsFormOpen}
-          handleNewDocument={handleNewDocument}
-          setActiveFormTab={setActiveFormTab}
-          dashboardViewMode={dashboardViewMode}
-          setDashboardViewMode={setDashboardViewMode}
-          docViewMode={docViewMode}
-          changeDocViewMode={changeDocViewMode}
-          activeActionDropdown={activeActionDropdown}
-          setActiveActionDropdown={setActiveActionDropdown}
-          stageDocs={stageDocs}
-          stageSablons={stageSablons}
-          disableDocumentGuidance={disableDocumentGuidance}
-          invitedFirms={invitedFirms}
-          allPoolFirms={allPoolFirms}
-          handleAddSingleFirm={handleAddSingleFirm}
-          handleCreateNewFirm={logic.handleCreateNewFirm}
-          handleRemoveFirm={handleRemoveFirm}
-          items={items}
-          bids={bids}
-          sablons={sablons}
-          activeStarredDocs={activeStarredDocs}
-          ciktiLoading={ciktiLoading}
-          handleOpenPreviewForSablon={handleOpenPreviewForSablon}
-          quickPrint={quickPrint}
-          quickExport={quickExport}
-          quickOpenExternal={quickOpenExternal}
-          isSablonDisabled={isSablonDisabled}
-          handleUpdateDocumentDate={handleUpdateDocumentDate}
-          handleDeleteDocument={handleDeleteDocument}
-          setIsFirmModalOpen={setIsFirmModalOpen}
-          handleSaveToDosya={handleSaveToDosya}
-          getEstimatedCostTotal={getEstimatedCostTotal}
-          manualWinnerFirmaId={manualWinnerFirmaId}
-          handleSetWinnerFirma={handleSetWinnerFirma}
-          lowestTotalFirmaId={lowestTotalFirmaId}
-          hesaplamaEsasi={hesaplamaEsasi}
-          setHesaplamaEsasi={setHesaplamaEsasi}
-        />
-      ) : (
-        <PiyasaFiyatArastirmasiForm
-          formMode={formMode}
-          setIsFormOpen={setIsFormOpen}
-          activeFormTab={activeFormTab}
-          setActiveFormTab={setActiveFormTab}
-          hesaplamaEsasi={hesaplamaEsasi}
-          setHesaplamaEsasi={setHesaplamaEsasi}
-          invitedFirms={invitedFirms}
-          items={items}
-          bids={bids}
-          getEstimatedCostTotal={getEstimatedCostTotal}
-          handleSaveToDosya={handleSaveToDosya}
-          maliyetCetveliTarihi={maliyetCetveliTarihi}
-          setMaliyetCetveliTarihi={setMaliyetCetveliTarihi}
-          tutanakTarihi={tutanakTarihi}
-          setTutanakTarihi={setTutanakTarihi}
-          syncTutanak={syncTutanak}
-          setSyncTutanak={setSyncTutanak}
-          setLowestFirmAsWinner={setLowestFirmAsWinner}
-          setSetLowestFirmAsWinner={setSetLowestFirmAsWinner}
-          manualWinnerFirmaId={manualWinnerFirmaId}
-          setManualWinnerFirmaId={setManualWinnerFirmaId}
-          belgeleriKaydet={belgeleriKaydet}
-          setBelgeleriKaydet={setBelgeleriKaydet}
-          isEditingFirms={isEditingFirms}
-          setIsEditingFirms={setIsEditingFirms}
-          setIsFirmModalOpen={setIsFirmModalOpen}
-          lowestTotalFirmaId={lowestTotalFirmaId}
-          handleRemoveFirm={handleRemoveFirm}
-          getLowestBidInfo={getLowestBidInfo}
-          getAverageBid={getAverageBid}
-          handlePriceChange={handlePriceChange}
-          isFormFullscreen={isFormFullscreen}
-        />
-      )}
+    <div className="relative flex flex-col gap-2">
+      {/* ÜST GEÇİŞ VE MEVCUT GÖRÜNÜM BİLGİ DOCK'U */}
+      <div className="sticky top-2 z-40 flex items-center justify-between gap-3 px-3.5 py-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs select-none">
+        {/* Sol Alan: Mevcut Aktif Görünüm Bilgisi */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 text-xs font-semibold text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+            <span
+              className={cn(
+                "w-2 h-2 rounded-full animate-pulse shrink-0",
+                activeView === "new" ? "bg-blue-500 shadow-blue-500/50" : "bg-amber-500 shadow-amber-500/50",
+              )}
+            />
+            <span className="text-slate-400 dark:text-slate-400 font-normal text-[11px]">
+              Mevcut Görünüm:
+            </span>
+            <span className="font-bold text-slate-900 dark:text-white text-[11px]">
+              {activeView === "new" ? "⚡ Yeni Tasarım (Studio & Matris)" : "🏛️ Eski Tasarım (Klasik Form)"}
+            </span>
+          </div>
 
-      {/* İSTEKLİ FİRMALARDAN SEÇ MODALI */}
-      <FirmaSecmeModali
-        isOpen={isFirmModalOpen}
-        onClose={() => setIsFirmModalOpen(false)}
-        allPoolFirms={allPoolFirms}
-        invitedFirms={invitedFirms}
-        selectedFirmIds={selectedFirmIds}
-        setSelectedFirmIds={setSelectedFirmIds}
-        modalSearchQuery={modalSearchQuery}
-        setModalSearchQuery={setModalSearchQuery}
-        onAddFirms={handleBulkAddFirms}
-      />
-    </SubScreen>
-  )
+          <span className="hidden md:inline text-[11px] text-slate-400 dark:text-slate-500 italic">
+            {activeView === "new"
+              ? "• 3 Adımlı iş akışı ve dinamik teklif tablosu"
+              : "• Geliştirici düzenleme ve karşılaştırma referansı"}
+          </span>
+        </div>
+
+        {/* Sağ Alan: Segment Geçiş Butonları (Rotalı) */}
+        <div className="flex items-center bg-slate-100/90 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+          {/* Yeni Tasarım Butonu */}
+          <button
+            type="button"
+            onClick={() => setViewMode("new")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border",
+              activeView === "new"
+                ? "bg-blue-600 text-white border-blue-500 shadow-xs shadow-blue-500/25"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/60",
+            )}
+            title="Yeni Tasarıma Geç (Rota: ?view=new)"
+          >
+            <Sparkles
+              className={cn(
+                "w-3.5 h-3.5",
+                activeView === "new" ? "text-amber-300" : "text-slate-400",
+              )}
+            />
+            <span>⚡ Yeni Tasarım</span>
+            {activeView === "new" && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 ml-0.5" />
+            )}
+          </button>
+
+          {/* Eski Tasarım Butonu */}
+          <button
+            type="button"
+            onClick={() => setViewMode("old")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border",
+              activeView === "old"
+                ? "bg-amber-500 text-white border-amber-400 shadow-xs shadow-amber-500/25"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-700/60",
+            )}
+            title="Eski Tasarıma Geç (Rota: ?view=old)"
+          >
+            <Layers
+              className={cn(
+                "w-3.5 h-3.5",
+                activeView === "old" ? "text-white" : "text-slate-400",
+              )}
+            />
+            <span>🏛️ Eski Tasarım</span>
+            {activeView === "old" && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 ml-0.5" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* SEÇİLİ EKRAN (YENİ / ESKİ) */}
+      {activeView === "old" ? <PiyasaFiyatArastirmasiOld /> : <PiyasaFiyatArastirmasiNew />}
+    </div>
+  );
 }
+
+export default PiyasaFiyatArastirmasi;

@@ -2,15 +2,18 @@ import { ipcMain, BrowserWindow, dialog } from 'electron'
 import { defaultFormat, allFormatsFilter, openDialogFilters } from '../config/fileFormats'
 
 export function registerDialogIpcHandlers(): void {
-  ipcMain.handle('dialog:showSaveDialog', async () => {
-    const mainWindow = BrowserWindow.getAllWindows()[0]
-    const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
-      title: 'Yeni Proje Dosyası Oluştur',
-      defaultPath: `Yeni Proje.${defaultFormat.ext}`,
-      filters: [allFormatsFilter]
-    })
-    return { canceled, filePath }
-  })
+  ipcMain.handle(
+    'dialog:showSaveDialog',
+    async (_event, options?: { title?: string; defaultPath?: string }) => {
+      const mainWindow = BrowserWindow.getAllWindows()[0]
+      const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+        title: options?.title || 'Yeni Proje Dosyası Oluştur',
+        defaultPath: options?.defaultPath || `Yeni Proje.${defaultFormat.ext}`,
+        filters: [allFormatsFilter]
+      })
+      return { canceled, filePath }
+    }
+  )
 
   ipcMain.handle(
     'dialog:showOpenDialog',

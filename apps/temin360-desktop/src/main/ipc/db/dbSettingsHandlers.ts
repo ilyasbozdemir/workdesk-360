@@ -187,6 +187,33 @@ export function registerDbSettingsHandlers(): void {
           .prepare("SELECT value FROM settings WHERE key = 'adminPassword'")
           .get() as { value?: string } | undefined
         if (!verifyPassword(pass, current?.value)) {
+          // 1. Minimum 6 karakter kontrolü
+          if (typeof pass !== 'string' || pass.length < 6) {
+            return {
+              success: false,
+              error: 'Parola en az 6 karakter uzunluğunda olmalıdır.'
+            }
+          }
+
+          // 2. E-posta (SMTP) ayarı kontrolü
+          const smtpHost =
+            getSetting('smtpHost') ||
+            getSetting('smtp_host') ||
+            settingsMap.smtpHost ||
+            settingsMap.smtp_host
+          const smtpUser =
+            getSetting('smtpUser') ||
+            getSetting('smtp_user') ||
+            settingsMap.smtpUser ||
+            settingsMap.smtp_user
+          if (!smtpHost || !smtpUser) {
+            return {
+              success: false,
+              error:
+                'E-posta (SMTP) ayarları yapılandırılmadan güvenlik parolası belirlenemez! E-posta sunucusu kurulmazsa parolanızı unuttuğunuzda sistem kurtarma e-postası gönderemez ve verilerinizi yazılım ekibi dahil hiç kimse kurtaramaz. Lütfen önce Ayarlar > E-Posta sekmesinden SMTP kurulumunu tamamlayın.'
+            }
+          }
+
           applyPassword(db, user, pass, hostname)
         }
       }

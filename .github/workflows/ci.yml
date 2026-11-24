@@ -53,14 +53,17 @@ jobs:
           npm_config_msvs_version: "2022"
           ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
 
-      - name: Build Database Package
-        run: pnpm --filter @dt/database build
+      - name: Build Core & Database Packages
+        run: |
+          pnpm --filter @worksuite-360/core build
+          pnpm --filter @dt/database build
 
       - name: Database Schema & Snapshot Parity Check
         run: pnpm check:schema
 
       - name: Typecheck Apps & Packages
         run: |
+          pnpm --filter @worksuite-360/core typecheck
           pnpm --filter @temin360/document-templates typecheck
           pnpm --filter temin360-desktop typecheck:node
           pnpm --filter temin360-desktop typecheck:web
@@ -69,6 +72,7 @@ jobs:
 
       - name: Run Unit & Integration Tests
         run: |
+          pnpm --filter @worksuite-360/core test
           pnpm --filter @temin360/document-templates test
           pnpm --filter temin360-desktop test
           pnpm --filter flowdesk-desktop test
@@ -76,6 +80,7 @@ jobs:
 
       - name: Build All Core Apps
         run: |
+          pnpm --filter @worksuite-360/core build
           pnpm --filter temin360-desktop build
           pnpm --filter flowdesk-desktop build
 

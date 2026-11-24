@@ -1,4 +1,4 @@
-import { DomainError } from '../shared/DomainError'
+import { DomainError } from '@worksuite-360/core'
 
 /**
  * İhtiyaç Kalemi (Entity).
