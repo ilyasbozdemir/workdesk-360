@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react'
-import { cn } from '../../utils/cn'
+import React, { useEffect, useState } from "react";
+import { cn } from "../../utils/cn";
 
 export interface CurrencyInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
-  value: number | string | undefined | null
-  onChange: (value: number) => void
-  currencySymbol?: string
-  fractionDigits?: number
-  allowNegative?: boolean
+  extends
+    Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> {
+  value: number | string | undefined | null;
+  onChange: (value: number) => void;
+  currencySymbol?: string;
+  fractionDigits?: number;
+  allowNegative?: boolean;
 }
 
 /**
@@ -20,82 +21,85 @@ export interface CurrencyInputProps
 export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   value,
   onChange,
-  currencySymbol = '₺',
+  currencySymbol = "₺",
   fractionDigits = 2,
   allowNegative = false,
   className,
   disabled,
-  placeholder = '0,00',
+  placeholder = "0,00",
   ...rest
 }) => {
-  const [isFocused, setIsFocused] = useState(false)
-  const [tempValue, setTempValue] = useState('')
+  const [isFocused, setIsFocused] = useState(false);
+  const [tempValue, setTempValue] = useState("");
 
-  const numValue = typeof value === 'number' ? value : Number(value) || 0
+  const numValue = typeof value === "number" ? value : Number(value) || 0;
 
   useEffect(() => {
     if (!isFocused) {
-      if (numValue === 0 && (value === '' || value === undefined || value === null)) {
-        setTempValue('')
+      if (
+        numValue === 0 &&
+        (value === "" || value === undefined || value === null)
+      ) {
+        setTempValue("");
       } else {
         setTempValue(
-          numValue.toLocaleString('tr-TR', {
+          numValue.toLocaleString("tr-TR", {
             minimumFractionDigits: fractionDigits,
-            maximumFractionDigits: fractionDigits
-          })
-        )
+            maximumFractionDigits: fractionDigits,
+          }),
+        );
       }
     }
-  }, [numValue, isFocused, fractionDigits, value])
+  }, [numValue, isFocused, fractionDigits, value]);
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    setIsFocused(true)
+    setIsFocused(true);
     if (numValue === 0) {
-      setTempValue('')
+      setTempValue("");
     } else {
-      const hasFractions = numValue % 1 !== 0
+      const hasFractions = numValue % 1 !== 0;
       setTempValue(
         hasFractions
-          ? numValue.toFixed(fractionDigits).replace('.', ',')
-          : numValue.toString()
-      )
+          ? numValue.toFixed(fractionDigits).replace(".", ",")
+          : numValue.toString(),
+      );
     }
     setTimeout(() => {
-      e.target.select()
-    }, 10)
-    rest.onFocus?.(e)
-  }
+      e.target.select();
+    }, 10);
+    rest.onFocus?.(e);
+  };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    setIsFocused(false)
-    const raw = tempValue.trim()
+    setIsFocused(false);
+    const raw = tempValue.trim();
     if (!raw) {
-      onChange(0)
+      onChange(0);
     } else {
       // 1.250,50 -> 1250.50
-      const cleanValue = raw.replace(/\./g, '').replace(',', '.')
-      const parsed = parseFloat(cleanValue)
-      onChange(isNaN(parsed) ? 0 : Number(parsed.toFixed(fractionDigits)))
+      const cleanValue = raw.replace(/\./g, "").replace(",", ".");
+      const parsed = parseFloat(cleanValue);
+      onChange(isNaN(parsed) ? 0 : Number(parsed.toFixed(fractionDigits)));
     }
-    rest.onBlur?.(e)
-  }
+    rest.onBlur?.(e);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
-    const regex = allowNegative ? /^-?[0-9.,]*$/ : /^[0-9.,]*$/
-    if (regex.test(val) || val === '') {
-      setTempValue(val)
+    const val = e.target.value;
+    const regex = allowNegative ? /^-?[0-9.,]*$/ : /^[0-9.,]*$/;
+    if (regex.test(val) || val === "") {
+      setTempValue(val);
     }
-  }
+  };
 
   const displayValue = isFocused
     ? tempValue
-    : numValue === 0 && (value === '' || value === undefined || value === null)
-      ? ''
-      : numValue.toLocaleString('tr-TR', {
-          minimumFractionDigits: fractionDigits,
-          maximumFractionDigits: fractionDigits
-        })
+    : numValue === 0 && (value === "" || value === undefined || value === null)
+    ? ""
+    : numValue.toLocaleString("tr-TR", {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
 
   return (
     <div className="relative flex items-center w-full">
@@ -109,9 +113,9 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
         onBlur={handleBlur}
         onChange={handleChange}
         className={cn(
-          'w-full text-right font-mono text-xs px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-800 dark:text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all',
-          currencySymbol ? 'pr-7' : '',
-          className
+          "w-full text-right font-mono text-xs px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-800 dark:text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all",
+          currencySymbol ? "pr-7" : "",
+          className,
         )}
         {...rest}
       />
@@ -121,7 +125,7 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
         </span>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default CurrencyInput
+export default CurrencyInput;

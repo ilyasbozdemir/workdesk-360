@@ -18,12 +18,10 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
   useEffect(() => {
     if (!isFocused) {
       setTempValue(
-        initialValue === 0
-          ? ""
-          : initialValue.toLocaleString("tr-TR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }),
+        initialValue === 0 ? "" : initialValue.toLocaleString("tr-TR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
       );
     }
   }, [initialValue, isFocused]);
@@ -40,12 +38,10 @@ export const BidPriceInput: React.FC<BidPriceInputProps> = ({
     const parsed = parseFloat(cleanValue);
     if (isNaN(parsed) || parsed < 0) {
       setTempValue(
-        initialValue === 0
-          ? ""
-          : initialValue.toLocaleString("tr-TR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }),
+        initialValue === 0 ? "" : initialValue.toLocaleString("tr-TR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
       );
       return;
     }
