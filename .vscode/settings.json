@@ -59,6 +59,7 @@
     "**/pnpm-lock.yaml": true,
     "**/*.tsbuildinfo": true,
     "**/*.map": true,
+    "**/*.nft.json": true,
     "**/.eslintcache": true
   },
   "files.exclude": {
@@ -69,6 +70,7 @@
     "**/out": true,
     "**/build": true,
     "**/.next": true,
+    "**/.next/**": true,
     "**/.turbo": true,
     "**/.vite": true,
     "**/coverage": true,
@@ -77,6 +79,7 @@
     "**/.cache": true,
     "**/vendor": true,
     "**/*.tsbuildinfo": true,
+    "**/*.nft.json": true,
     "**/test-results": true,
     "**/.system_generated": true
   },
