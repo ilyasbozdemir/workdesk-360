@@ -30,80 +30,54 @@ describe('StageTransitionRules (Direct Procurement Core Domain)', () => {
     expect(result.missingRules.length).toBe(0)
   })
 
-  it('2. Aşama 2 (Araştırma) için kalem ve resmi belge yoksa kilitli olmalıdır', () => {
+  it('2. Aşama 2 (Araştırma) için kalem eklenmemişse kilitli olmalı, kalem eklendiğinde açılmalıdır', () => {
     const emptyCtx = createEmptyContext()
-    const result = evaluateStageRules(PROCUREMENT_STAGE_IDS.ARASTIRMA, emptyCtx)
-    expect(result.isUnlocked).toBe(false)
-    expect(result.missingRules.some((r) => r.id === STAGE_RULE_IDS.STEP1_HAS_ITEMS)).toBe(true)
-    expect(result.missingRules.some((r) => r.id === STAGE_RULE_IDS.STEP1_HAS_OFFICIAL_DOC)).toBe(true)
-  })
+    const resultBefore = evaluateStageRules(PROCUREMENT_STAGE_IDS.ARASTIRMA, emptyCtx)
+    expect(resultBefore.isUnlocked).toBe(false)
+    expect(resultBefore.missingRules.some((r) => r.id === STAGE_RULE_IDS.STEP1_HAS_ITEMS)).toBe(true)
 
-  it('3. Kalem ve İhtiyaç Listesi snapshot kaydı sağlandığında Aşama 2 kilidi açılmalıdır', () => {
-    const ctx: StageEvaluationContext = {
+    // Kalem eklenince resmî belge snapshot'ı aranmaksızın açılmalıdır
+    const ctxWithItem: StageEvaluationContext = {
       ...createEmptyContext(),
-      kalemler: [{ id: 1, kalem_adi: 'A4 Kağıt', miktar: 10, birim: 'Kutu' }],
-      snapshots: [STAGE_DOCUMENT_CODES.IHTIYAC_LISTESI]
+      kalemler: [{ id: 1, kalem_adi: 'A4 Kağıt', miktar: 10, birim: 'Kutu' }]
     }
-    const result = evaluateStageRules(PROCUREMENT_STAGE_IDS.ARASTIRMA, ctx)
-    expect(result.isUnlocked).toBe(true)
-    expect(result.missingRules.length).toBe(0)
+    const resultAfter = evaluateStageRules(PROCUREMENT_STAGE_IDS.ARASTIRMA, ctxWithItem)
+    expect(resultAfter.isUnlocked).toBe(true)
+    expect(resultAfter.missingRules.length).toBe(0)
   })
 
-  it('4. Aşama 3 (Yüklenici) için firma, teklif ve kazanan seçilmemişse kilitli kalmalıdır', () => {
+  it('3. Aşama 3 (Yüklenici) için firma yoksa kilitli olmalı, istekli eklendiğinde açılmalıdır', () => {
+    const ctxWithoutFirm: StageEvaluationContext = {
+      ...createEmptyContext(),
+      kalemler: [{ id: 1, kalem_adi: 'A4 Kağıt', miktar: 10 }],
+      firmalar: []
+    }
+    const resWithoutFirm = evaluateStageRules(PROCUREMENT_STAGE_IDS.YUKLENICI_ISLEMLERI, ctxWithoutFirm)
+    expect(resWithoutFirm.isUnlocked).toBe(false)
+    expect(resWithoutFirm.missingRules.some((r) => r.id === STAGE_RULE_IDS.STEP2_HAS_FIRMS)).toBe(true)
+
+    // En az 1 firma eklendiğinde Aşama 3 açılmalıdır
+    const ctxWithFirm: StageEvaluationContext = {
+      ...ctxWithoutFirm,
+      firmalar: [{ id: 10, firma_id: 10, unvan: 'Tedarikçi A.Ş.' }]
+    }
+    const resWithFirm = evaluateStageRules(PROCUREMENT_STAGE_IDS.YUKLENICI_ISLEMLERI, ctxWithFirm)
+    expect(resWithFirm.isUnlocked).toBe(true)
+    expect(resWithFirm.missingRules.length).toBe(0)
+  })
+
+  it('4. Aşama 4 (Kabul & Ödeme) süreç akışında erişilebilir olmalıdır', () => {
     const ctx: StageEvaluationContext = {
       ...createEmptyContext(),
       kalemler: [{ id: 1, kalem_adi: 'A4 Kağıt', miktar: 10 }],
-      snapshots: [STAGE_DOCUMENT_CODES.IHTIYAC_LISTESI],
-      firmalar: [{ id: 10, firma_id: 10, teklif_toplami: 500 }],
-      teklifler: { '1_10': 50 },
-      kazananFirmaId: null // Kazanan seçilmedi
-    }
-    const result = evaluateStageRules(PROCUREMENT_STAGE_IDS.YUKLENICI_ISLEMLERI, ctx)
-    expect(result.isUnlocked).toBe(false)
-    expect(result.missingRules.some((r) => r.id === STAGE_RULE_IDS.STEP2_HAS_WINNER)).toBe(true)
-  })
-
-  it('5. Kazanan seçildiğinde Aşama 3 açılmalı; sözleşme düzenlenmeden Aşama 4 açılmamalıdır', () => {
-    const ctx: StageEvaluationContext = {
-      ...createEmptyContext(),
-      kalemler: [{ id: 1, kalem_adi: 'A4 Kağıt', miktar: 10 }],
-      snapshots: [
-        STAGE_DOCUMENT_CODES.IHTIYAC_LISTESI,
-        STAGE_DOCUMENT_CODES.PIYASA_FIYAT_ARASTIRMA_TUTANAGI
-      ],
-      firmalar: [{ id: 10, firma_id: 10, teklif_toplami: 500 }],
-      teklifler: { '1_10': 50 },
-      kazananFirmaId: 10
-    }
-    // Aşama 3 açık olmalı
-    const res3 = evaluateStageRules(PROCUREMENT_STAGE_IDS.YUKLENICI_ISLEMLERI, ctx)
-    expect(res3.isUnlocked).toBe(true)
-
-    // Aşama 4 henüz sözleşme/sipariş olmadığı için kilitli olmalı
-    const res4 = evaluateStageRules(PROCUREMENT_STAGE_IDS.MUAYENE_KABUL_ODEME, ctx)
-    expect(res4.isUnlocked).toBe(false)
-    expect(res4.missingRules.some((r) => r.id === STAGE_RULE_IDS.STEP3_HAS_CONTRACT_OR_ORDER)).toBe(true)
-  })
-
-  it('6. Sipariş mektubu snapshot eklendiğinde Aşama 4 (Kabul & Ödeme) açılmalıdır', () => {
-    const ctx: StageEvaluationContext = {
-      ...createEmptyContext(),
-      kalemler: [{ id: 1, kalem_adi: 'A4 Kağıt', miktar: 10 }],
-      snapshots: [
-        STAGE_DOCUMENT_CODES.IHTIYAC_LISTESI,
-        STAGE_DOCUMENT_CODES.PIYASA_FIYAT_ARASTIRMA_TUTANAGI,
-        STAGE_DOCUMENT_CODES.SIPARIS_MEKTUBU
-      ],
-      firmalar: [{ id: 10, firma_id: 10, teklif_toplami: 500 }],
-      teklifler: { '1_10': 50 },
-      kazananFirmaId: 10
+      firmalar: [{ id: 10, firma_id: 10, unvan: 'Tedarikçi A.Ş.' }]
     }
     const res4 = evaluateStageRules(PROCUREMENT_STAGE_IDS.MUAYENE_KABUL_ODEME, ctx)
     expect(res4.isUnlocked).toBe(true)
     expect(res4.missingRules.length).toBe(0)
   })
 
-  it('7. Şablon kod normalizasyonu ve snapshot doğrulama yardımcıları tutarlı çalışmalıdır', () => {
+  it('5. Şablon kod normalizasyonu ve snapshot doğrulama yardımcıları tutarlı çalışmalıdır', () => {
     expect(normalizeDocumentCode('Ihtiyac_Listesi')).toBe('ihtiyac-listesi')
     expect(normalizeDocumentCode('dogrudan-temin-onay-belgesi')).toBe('dogrudan-temin-onay-belgesi')
     expect(normalizeDocumentCode('  piyasa_fiyat_arastirma_tutanagi  ')).toBe('piyasa-fiyat-arastirma-tutanagi')

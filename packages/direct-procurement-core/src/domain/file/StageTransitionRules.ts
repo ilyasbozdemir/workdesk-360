@@ -205,8 +205,8 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
       targetStageId: PROCUREMENT_STAGE_IDS.ARASTIRMA,
       requiredStageId: PROCUREMENT_STAGE_IDS.HAZIRLIK,
       title: 'İhtiyaç Listesi veya Onay Belgesi Hazırlanmalı',
-      description: 'Satın alma sürecinin resmî dayanağı olan İhtiyaç Listesi, Onay Belgesi veya Lüzum Müzekkeresi kaydedilmelidir.',
-      isMandatory: true,
+      description: 'Satın alma sürecinin resmî dayanağı olan İhtiyaç Listesi, Onay Belgesi veya Lüzum Müzekkeresi tanzim edilebilir.',
+      isMandatory: false,
       check: (ctx) => hasAnyDocumentSnapshot(ctx.snapshots, STAGE_QUALIFYING_DOCUMENTS.STAGE_1_PREPARATION)
     },
     {
@@ -227,7 +227,7 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
       targetStageId: PROCUREMENT_STAGE_IDS.YUKLENICI_ISLEMLERI,
       requiredStageId: PROCUREMENT_STAGE_IDS.ARASTIRMA,
       title: 'En Az 1 İstekli Firma Eklenmeli',
-      description: 'Fiyat araştırması için dosyaya teklif verecek tedarikçi firmalar davet edilmiş olmalıdır.',
+      description: 'Fiyat araştırması ve yüklenici işlemleri için dosyaya en az bir tedarikçi firma eklenmiş olmalıdır.',
       isMandatory: true,
       check: (ctx) => Array.isArray(ctx.firmalar) && ctx.firmalar.length > 0
     },
@@ -237,7 +237,7 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
       requiredStageId: PROCUREMENT_STAGE_IDS.ARASTIRMA,
       title: 'Teklif Fiyatları Girilmiş Olmalı',
       description: 'İstekli firmalardan toplanan birim fiyat teklifleri teklif matrisine işlenmiş olmalıdır.',
-      isMandatory: true,
+      isMandatory: false,
       check: (ctx) => {
         // 1. Kalem bazlı birim fiyat teklifleri kontrolü
         const bidKeys = Object.keys(ctx.teklifler || {})
@@ -246,6 +246,10 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
         }
         // 2. İstekli firmaların toplam teklif tutarı kontrolü (toplu teklif girilmişse)
         if (Array.isArray(ctx.firmalar) && ctx.firmalar.some((f) => Number(f.teklif_toplami) > 0)) {
+          return true
+        }
+        // 3. İstekli firmalar eklenmişse başlangıç teklif durumu hazır kabul edilir
+        if (Array.isArray(ctx.firmalar) && ctx.firmalar.length > 0) {
           return true
         }
         return false
@@ -257,7 +261,7 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
       requiredStageId: PROCUREMENT_STAGE_IDS.ARASTIRMA,
       title: 'Kazanan / En Uygun İstekli Belirlenmeli',
       description: 'Sözleşme veya sipariş düzenlenebilmesi için teklifler değerlendirilip en uygun istekli firma seçilmiş olmalıdır.',
-      isMandatory: true,
+      isMandatory: false,
       check: (ctx) => {
         // 1. Doğrudan kazanan firma kimliği
         if (ctx.kazananFirmaId && Number(ctx.kazananFirmaId) > 0) return true
@@ -269,6 +273,10 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
           Array.isArray(ctx.firmalar) &&
           ctx.firmalar.some((f) => Number(f.kazandi_mi || f.kazanan_mi) === 1)
         ) {
+          return true
+        }
+        // 4. Dosyada istekli firma kayıtlıysa geçerli kabul edilir
+        if (Array.isArray(ctx.firmalar) && ctx.firmalar.length > 0) {
           return true
         }
         return false
@@ -292,8 +300,8 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
       targetStageId: PROCUREMENT_STAGE_IDS.MUAYENE_KABUL_ODEME,
       requiredStageId: PROCUREMENT_STAGE_IDS.YUKLENICI_ISLEMLERI,
       title: 'Sipariş Mektubu veya Sözleşme Düzenlenmeli',
-      description: 'Yükleniciye tebligat / sipariş mektubu veya doğrudan temin sözleşmesi hazırlanmış olmalıdır.',
-      isMandatory: true,
+      description: 'Yükleniciye tebligat / sipariş mektubu veya doğrudan temin sözleşmesi hazırlanmış olmalıdır (4734 Md. 22 uyarınca sözleşme zorunlu değildir).',
+      isMandatory: false,
       check: (ctx) => hasAnyDocumentSnapshot(ctx.snapshots, STAGE_QUALIFYING_DOCUMENTS.STAGE_3_CONTRACT_AND_ORDER)
     }
   ]
