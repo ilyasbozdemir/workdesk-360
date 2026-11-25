@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   StageRule,
   StageEvaluationContext,
@@ -24,8 +25,7 @@ export interface StepGuardState {
 const BYPASS_STORAGE_KEY = 'temin_bypass_stage_guards'
 
 export function useStepGuards(activeDosyaId: number | null): StepGuardState {
-  const [loading, setLoading] = useState(false)
-  const [context, setContext] = useState<StageEvaluationContext | null>(null)
+  const queryClient = useQueryClient()
   const [bypassGuards, setBypassGuardsState] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(BYPASS_STORAGE_KEY) === 'true'
@@ -50,15 +50,18 @@ export function useStepGuards(activeDosyaId: number | null): StepGuardState {
     })
   }, [])
 
-  // Aktif dosyanın durumunu kanonik servis ve veritabanından topla
-  const refreshGuards = useCallback(async () => {
-    if (!activeDosyaId || !window.electron?.ipcRenderer) {
-      setContext(null)
-      return
-    }
-
-    try {
-      setLoading(true)
+  // Kanonik Servis ve Snapshot Verilerini TanStack Query ile Çek
+  // Cascading render veya senkron setState uyarısını önler
+  const {
+    data: context = null,
+    isLoading: loading,
+    refetch
+  } = useQuery<StageEvaluationContext | null>({
+    queryKey: ['step_guards', activeDosyaId],
+    queryFn: async () => {
+      if (!activeDosyaId || !window.electron?.ipcRenderer) {
+        return null
+      }
 
       // 1. Kanonik Fiyatlandırma, İstekliler, Teklifler ve Kazanan
       const canonical = await fetchCanonicalDossierPricing(activeDosyaId)
@@ -84,10 +87,11 @@ export function useStepGuards(activeDosyaId: number | null): StepGuardState {
         canonical.kazananFirma?.id ||
         dosya?.kazanan_firma_id ||
         dosya?.firma_id ||
-        firmalar.find((f: any) => Number(f.kazandi_mi || f.kazanan_mi) === 1)?.id ||
-        null
+        (firmalar.length > 0
+          ? firmalar.find((f: any) => Number(f.kazandi_mi || f.kazanan_mi) === 1)?.id || firmalar[0].id
+          : null)
 
-      setContext({
+      return {
         dosyaId: activeDosyaId,
         dosya,
         kalemler,
@@ -95,23 +99,24 @@ export function useStepGuards(activeDosyaId: number | null): StepGuardState {
         teklifler: teklifMap,
         snapshots,
         kazananFirmaId: winnerId ? Number(winnerId) : null
-      })
-    } catch (err) {
-      console.warn('[useStepGuards] Error refreshing guards:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [activeDosyaId])
+      }
+    },
+    enabled: Boolean(activeDosyaId),
+    staleTime: 5000
+  })
 
-  useEffect(() => {
-    refreshGuards()
-  }, [refreshGuards])
+  // Dışarıya açılan manuel tazeleme fonksiyonu
+  const refreshGuards = useCallback(async () => {
+    await refetch()
+  }, [refetch])
 
-  // Olay dinleyicileri (Dosya, teklif, kalem veya belgeler değiştiğinde otomatik yenile)
+  // Olay dinleyicileri (Dosya, teklif, kalem veya belgeler değiştiğinde query'yi yenile)
   useAppEventListener(
     ['dossier:updated', 'bids:changed', 'items:changed', 'documents:changed'],
     () => {
-      refreshGuards()
+      if (activeDosyaId) {
+        queryClient.invalidateQueries({ queryKey: ['step_guards', activeDosyaId] })
+      }
     }
   )
 
