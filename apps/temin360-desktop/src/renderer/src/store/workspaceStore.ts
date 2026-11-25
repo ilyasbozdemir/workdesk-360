@@ -171,9 +171,30 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
               set({ activeDosyaId: id, activeStarredDocs: [] })
             }
 
-            // Aktif dosya seçildiğinde: evrak_sayisi kolonunu kontrol et, yoksa bir kez oluşturup kolona yaz (kalıtım için kaynak)
+            // Aktif dosya seçildiğinde: evrak_sayisi kolonunu kontrol et, yoksa veya temin_no ile uyumsuzsa oluşturup kolona yaz
             const curEvrak = String(row.evrak_sayisi || '').replace(/^E-/i, '').trim()
-            if (!curEvrak || curEvrak.includes('/') || !/^\d+-\d+\.\d+-\d+$/.test(curEvrak)) {
+            const dosyaTeminNo = String(row.temin_no || '').trim()
+            let dosyaSeq: number | null = null
+            if (dosyaTeminNo) {
+              const parts = dosyaTeminNo.split(/[/_ -]+/)
+              for (let i = parts.length - 1; i >= 0; i--) {
+                const n = parseInt(parts[i], 10)
+                if (!isNaN(n) && n > 0 && n < 100000) {
+                  dosyaSeq = n
+                  break
+                }
+              }
+            }
+            let evrakSeq: number | null = null
+            if (curEvrak) {
+              const match = curEvrak.match(/-(\d+)$/)
+              if (match) {
+                evrakSeq = parseInt(match[1], 10)
+              }
+            }
+            const isSeqMismatch = dosyaSeq !== null && evrakSeq !== null && dosyaSeq !== evrakSeq
+
+            if (!curEvrak || curEvrak.includes('/') || !/^\d+-\d+\.\d+-\d+$/.test(curEvrak) || isSeqMismatch) {
               try {
                 const officialSayi = await resolveEvrakSayisi(id, queryExecutor)
                 if (officialSayi) {

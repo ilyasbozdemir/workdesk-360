@@ -196,6 +196,7 @@ export async function cloneDosyaWithItems(
       ...eskiDosya,
       id: undefined,
       temin_no: finalTeminNo,
+      evrak_sayisi: null, // Yeni dosya eski dosyanın resmî evrak numarasını miras alamaz; yeni temin_no'ya göre üretilir
       butce_yili: targetYear,
       konu: finalKonu,
       dosya_acilis_tarihi: finalAcilisTarihi,
@@ -212,6 +213,7 @@ export async function cloneDosyaWithItems(
     }
 
     // Tabloda olmayan join ve aşama çıktı alanlarını temizle (temiz başlangıç)
+    delete newDosyaPayload.evrak_sayisi
     delete newDosyaPayload.birim_adi
     delete newDosyaPayload.hazirlayan_ad
     delete newDosyaPayload.onaylayan_ad

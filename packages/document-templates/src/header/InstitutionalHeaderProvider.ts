@@ -937,8 +937,33 @@ export class InstitutionalHeaderProvider
     // 4. Dosya Evrak Sayısı Çözümlenmesi & PRESERVE (Tüm belgelere tek kaynaktan kalıcı kalıtım)
     let detsisEvrakSayisi = ''
     const currentEvrak = String(dosyaRow?.evrak_sayisi || '').replace(/^E-/i, '').trim()
-    if (currentEvrak && !currentEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(currentEvrak)) {
-      // Dosyada zaten resmi DETSİS formatında sayı varsa doğrudan miras/kalıtım al!
+
+    // Temin_no'dan dosya sıra numarasını çıkar (Örn: "2026/52" -> 52, "20" -> 20)
+    const dosyaTeminNo = String(dosyaRow?.temin_no || '').trim()
+    let dosyaSeq: number | null = null
+    if (dosyaTeminNo) {
+      const parts = dosyaTeminNo.split(/[/_ -]+/)
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const n = parseInt(parts[i], 10)
+        if (!isNaN(n) && n > 0 && n < 100000 && n !== dosyaRow?.butce_yili) {
+          dosyaSeq = n
+          break
+        }
+      }
+    }
+
+    let evrakSeq: number | null = null
+    if (currentEvrak) {
+      const match = currentEvrak.match(/-(\d+)$/)
+      if (match) {
+        evrakSeq = parseInt(match[1], 10)
+      }
+    }
+
+    const isSeqMismatch = dosyaSeq !== null && evrakSeq !== null && dosyaSeq !== evrakSeq
+
+    if (currentEvrak && !currentEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(currentEvrak) && !isSeqMismatch) {
+      // Dosyada zaten resmi DETSİS formatında VE dosya sıra no ile uyumlu sayı varsa doğrudan miras/kalıtım al!
       detsisEvrakSayisi = currentEvrak
     } else if (dosyaId && this.evrakSayisiResolver) {
       try {

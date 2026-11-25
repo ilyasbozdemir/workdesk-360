@@ -1,4 +1,4 @@
-import { applyRefreshPolicy } from '@temin360/document-templates'
+import { applyRefreshPolicy, InstitutionalHeaderProvider } from '@temin360/document-templates'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import { TemplateKey, resolveTemplateKey } from '@temin360/document-templates'
@@ -198,16 +198,32 @@ export async function saveDocumentToDb({
     documentPreloadService.updateCachedResolvedData(selectedDocId, activeDosyaId, dataToSave)
   }
 
-  // Dosya genelinde de sunulacak makamı senkronize et
-  if (activeDosyaId && explicitMakam && window.electron?.ipcRenderer) {
-    try {
-      await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'UPDATE DATA_TeminDosyasi SET sunulacak_makam = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [explicitMakam, activeDosyaId]
-      )
-    } catch (e) {
-      console.warn('[saveDocumentToDb] Dosya sunulacak_makam güncelleme hatası:', e)
+  // Dosya genelinde de sunulacak makamı ve evrak sayısını senkronize et
+  if (activeDosyaId && window.electron?.ipcRenderer) {
+    if (explicitMakam) {
+      try {
+        await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'UPDATE DATA_TeminDosyasi SET sunulacak_makam = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [explicitMakam, activeDosyaId]
+        )
+      } catch (e) {
+        console.warn('[saveDocumentToDb] Dosya sunulacak_makam güncelleme hatası:', e)
+      }
+    }
+
+    const explicitEvrakSayisi = formData.evrakSayisi ? String(formData.evrakSayisi).replace(/^E-/i, '').trim() : null
+    if (explicitEvrakSayisi && !explicitEvrakSayisi.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(explicitEvrakSayisi)) {
+      try {
+        await window.electron.ipcRenderer.invoke(
+          'db:query',
+          'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [explicitEvrakSayisi, activeDosyaId]
+        )
+        InstitutionalHeaderProvider.clearCache(activeDosyaId)
+      } catch (e) {
+        console.warn('[saveDocumentToDb] Dosya evrak_sayisi güncelleme hatası:', e)
+      }
     }
   }
 
