@@ -6,6 +6,7 @@ import {
   STAGE_TRANSITION_RULES
 } from '@temin360/direct-procurement-core'
 import { useAppEventListener } from '../../../../utils/appEvents'
+import { fetchCanonicalDossierPricing } from '../../../../services/dossier/dossierPriceSyncService'
 
 export interface StepGuardState {
   loading: boolean
@@ -49,7 +50,7 @@ export function useStepGuards(activeDosyaId: number | null): StepGuardState {
     })
   }, [])
 
-  // Aktif dosyanın durumunu veritabanından topla
+  // Aktif dosyanın durumunu kanonik servis ve veritabanından topla
   const refreshGuards = useCallback(async () => {
     if (!activeDosyaId || !window.electron?.ipcRenderer) {
       setContext(null)
@@ -59,56 +60,32 @@ export function useStepGuards(activeDosyaId: number | null): StepGuardState {
     try {
       setLoading(true)
 
-      // 1. Dosya Ana Kaydı
-      const dosyaRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT id, birim_id, kazanan_firma_id, firma_id, yaklasik_maliyet, hesaplama_esasi FROM DATA_TeminDosyasi WHERE id = ?',
-        [activeDosyaId]
-      )
-      const dosya = dosyaRes?.data?.[0] || null
+      // 1. Kanonik Fiyatlandırma, İstekliler, Teklifler ve Kazanan
+      const canonical = await fetchCanonicalDossierPricing(activeDosyaId)
+      const dosya = canonical.dosya
+      const kalemler = canonical.kalemler || []
+      const firmalar = canonical.firmalar || []
+      const teklifMap = canonical.bidsMap || {}
 
-      // 2. Kalemler
-      const kalemRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT id, kalem_adi, miktar, birim FROM DATA_TeminKalem WHERE temin_dosya_id = ? AND (is_deleted = 0 OR is_deleted IS NULL)',
-        [activeDosyaId]
-      )
-      const kalemler = kalemRes?.data || []
-
-      // 3. İstekli Firmalar
-      const firmaRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT id, firma_id, teklif_toplami FROM DATA_TeminFirma WHERE dosya_id = ? AND (is_deleted = 0 OR is_deleted IS NULL)',
-        [activeDosyaId]
-      )
-      const firmalar = firmaRes?.data || []
-
-      // 4. Teklif Fiyatları
-      const teklifRes = await window.electron.ipcRenderer.invoke(
-        'db:query',
-        'SELECT kalem_id, temin_firma_id, teklif_birim_fiyat FROM DATA_TeminKalemTeklif WHERE temin_dosya_id = ?',
-        [activeDosyaId]
-      )
-      const teklifMap: Record<string, number> = {}
-      if (Array.isArray(teklifRes?.data)) {
-        teklifRes.data.forEach((r: any) => {
-          if (r.kalem_id && r.temin_firma_id) {
-            teklifMap[`${r.kalem_id}_${r.temin_firma_id}`] = Number(r.teklif_birim_fiyat) || 0
-          }
-        })
-      }
-
-      // 5. Belge Snapshot Kayıtları
+      // 2. Belge Snapshot Kayıtları
       const snapRes = await window.electron.ipcRenderer.invoke(
         'db:query',
-        'SELECT sablon_kodu FROM DATA_TeminBelgeSnapshot WHERE dosya_id = ? AND (is_deleted = 0 OR is_deleted IS NULL)',
-        [activeDosyaId]
+        'SELECT sablon_kodu FROM DATA_TeminBelgeSnapshot WHERE (dosya_id = ? OR temin_dosya_id = ?) AND (is_deleted = 0 OR is_deleted IS NULL)',
+        [activeDosyaId, activeDosyaId]
       )
       const snapshots: string[] = Array.isArray(snapRes?.data)
         ? snapRes.data.map((s: any) => String(s.sablon_kodu || '').trim())
         : []
 
-      const winnerId = dosya?.kazanan_firma_id || dosya?.firma_id || null
+      // Kazanan firma kimliğini belirle (Kanonik -> Dosya -> Firmalar)
+      const winnerId =
+        canonical.kazananFirma?.master_firma_id ||
+        canonical.kazananFirma?.temin_firma_id ||
+        canonical.kazananFirma?.id ||
+        dosya?.kazanan_firma_id ||
+        dosya?.firma_id ||
+        firmalar.find((f: any) => Number(f.kazandi_mi || f.kazanan_mi) === 1)?.id ||
+        null
 
       setContext({
         dosyaId: activeDosyaId,

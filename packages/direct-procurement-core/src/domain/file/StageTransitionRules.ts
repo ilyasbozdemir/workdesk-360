@@ -169,8 +169,10 @@ export interface StageEvaluationContext {
   }>
   firmalar: Array<{
     id?: number
-    firma_id?: number
+    firma_id?: number | null
     teklif_toplami?: number
+    kazandi_mi?: number | boolean
+    kazanan_mi?: number | boolean
     [key: string]: any
   }>
   teklifler: Record<string, number> // 'kalemId_firmaId' -> teklif_birim_fiyat
@@ -237,8 +239,16 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
       description: 'İstekli firmalardan toplanan birim fiyat teklifleri teklif matrisine işlenmiş olmalıdır.',
       isMandatory: true,
       check: (ctx) => {
+        // 1. Kalem bazlı birim fiyat teklifleri kontrolü
         const bidKeys = Object.keys(ctx.teklifler || {})
-        return bidKeys.length > 0 && bidKeys.some((k) => Number(ctx.teklifler[k]) > 0)
+        if (bidKeys.length > 0 && bidKeys.some((k) => Number(ctx.teklifler[k]) > 0)) {
+          return true
+        }
+        // 2. İstekli firmaların toplam teklif tutarı kontrolü (toplu teklif girilmişse)
+        if (Array.isArray(ctx.firmalar) && ctx.firmalar.some((f) => Number(f.teklif_toplami) > 0)) {
+          return true
+        }
+        return false
       }
     },
     {
@@ -249,8 +259,19 @@ export const STAGE_TRANSITION_RULES: Record<number, StageRule[]> = {
       description: 'Sözleşme veya sipariş düzenlenebilmesi için teklifler değerlendirilip en uygun istekli firma seçilmiş olmalıdır.',
       isMandatory: true,
       check: (ctx) => {
-        const winnerId = ctx.kazananFirmaId || ctx.dosya?.kazanan_firma_id || ctx.dosya?.firma_id
-        return Boolean(winnerId && Number(winnerId) > 0)
+        // 1. Doğrudan kazanan firma kimliği
+        if (ctx.kazananFirmaId && Number(ctx.kazananFirmaId) > 0) return true
+        // 2. Dosya üzerindeki kazanan firma alanları
+        if (ctx.dosya?.kazanan_firma_id && Number(ctx.dosya.kazanan_firma_id) > 0) return true
+        if (ctx.dosya?.firma_id && Number(ctx.dosya.firma_id) > 0) return true
+        // 3. İstekli firma listesinde kazandı / kazanan olarak işaretlenmiş kayıt
+        if (
+          Array.isArray(ctx.firmalar) &&
+          ctx.firmalar.some((f) => Number(f.kazandi_mi || f.kazanan_mi) === 1)
+        ) {
+          return true
+        }
+        return false
       }
     },
     {
