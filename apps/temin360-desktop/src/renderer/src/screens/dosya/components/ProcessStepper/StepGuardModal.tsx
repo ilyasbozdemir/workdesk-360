@@ -1,25 +1,25 @@
-import React from 'react'
+import React from "react";
 import {
-  Lock,
   AlertTriangle,
-  CheckCircle2,
-  XCircle,
   ArrowRight,
+  CheckCircle2,
+  Lock,
   Unlock,
-  X
-} from 'lucide-react'
-import { StageRule } from '@temin360/direct-procurement-core'
-import { StepConfig } from './types'
-import { STEPS } from './steps.config'
-import { AppRoute } from '../../../../constants/routeConstants'
+  X,
+  XCircle,
+} from "lucide-react";
+import { StageRule } from "@temin360/direct-procurement-core";
+import { StepConfig } from "./types";
+import { STEPS } from "./steps.config";
+import { AppRoute } from "../../../../constants/routeConstants";
 
 interface StepGuardModalProps {
-  isOpen: boolean
-  onClose: () => void
-  targetStep: StepConfig | null
-  allRules: Array<{ rule: StageRule; passed: boolean }>
-  onNavigateToStep: (route: AppRoute) => void
-  onBypassAndProceed: () => void
+  isOpen: boolean;
+  onClose: () => void;
+  targetStep: StepConfig | null;
+  allRules: Array<{ rule: StageRule; passed: boolean }>;
+  onNavigateToStep: (route: AppRoute) => void;
+  onBypassAndProceed: () => void;
 }
 
 export const StepGuardModal: React.FC<StepGuardModalProps> = ({
@@ -28,18 +28,21 @@ export const StepGuardModal: React.FC<StepGuardModalProps> = ({
   targetStep,
   allRules,
   onNavigateToStep,
-  onBypassAndProceed
+  onBypassAndProceed,
 }) => {
-  if (!isOpen || !targetStep) return null
+  if (!isOpen || !targetStep) return null;
 
-  const missingMandatoryRules = allRules.filter((r) => r.rule.isMandatory && !r.passed)
-  const passedRules = allRules.filter((r) => r.passed)
+  const missingMandatoryRules = allRules.filter((r) =>
+    r.rule.isMandatory && !r.passed
+  );
+  const passedRules = allRules.filter((r) => r.passed);
 
   // Eksik şartların hangi aşamada tamamlanması gerektiğini bul
   const earliestIncompleteStepId = missingMandatoryRules.length > 0
     ? Math.min(...missingMandatoryRules.map((m) => m.rule.requiredStageId))
-    : 1
-  const incompleteStepConfig = STEPS.find((s) => s.id === earliestIncompleteStepId) || STEPS[0]
+    : 1;
+  const incompleteStepConfig =
+    STEPS.find((s) => s.id === earliestIncompleteStepId) || STEPS[0];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150 select-none">
@@ -80,7 +83,9 @@ export const StepGuardModal: React.FC<StepGuardModalProps> = ({
         {/* İçerik & Kural Listesi */}
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Kamu İhale Mevzuatı ve Doğrudan Temin kuralları gereği bu aşamaya geçebilmek için önceki adımlardaki zorunlu işlemlerin tamamlanması gerekmektedir.
+            Kamu İhale Mevzuatı ve Doğrudan Temin kuralları gereği bu aşamaya
+            geçebilmek için önceki adımlardaki zorunlu işlemlerin tamamlanması
+            gerekmektedir.
           </p>
 
           {/* Eksik Zorunlu Kurallar */}
@@ -88,7 +93,10 @@ export const StepGuardModal: React.FC<StepGuardModalProps> = ({
             <div className="space-y-2">
               <div className="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
                 <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Tamamlanması Gereken Zorunlu Şartlar ({missingMandatoryRules.length})</span>
+                <span>
+                  Tamamlanması Gereken Zorunlu Şartlar ({missingMandatoryRules
+                    .length})
+                </span>
               </div>
 
               <div className="space-y-2">
@@ -175,5 +183,5 @@ export const StepGuardModal: React.FC<StepGuardModalProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
