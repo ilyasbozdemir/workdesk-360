@@ -180,7 +180,7 @@ export function useDosyaEvrakAkisi() {
       }
 
       const sozlesmeliMi = Number(d.sozlesme_yapilacak_mi) === 1 || d.sozlesme_yapilacak_mi === true
-      const alimTuru = (d.alim_turu || d.tur || 'mal').toLowerCase()
+      const alimTuru = (d.tur || 'mal').toLowerCase()
 
       const summary: DosyaSummaryInfo = {
         id: actualDosyaId,

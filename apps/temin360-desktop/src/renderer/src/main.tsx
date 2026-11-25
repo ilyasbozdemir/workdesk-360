@@ -6,6 +6,7 @@ import App from './App'
 import { useGlobalDocumentPreviewStore } from './store/globalDocumentPreviewStore'
 import { useTabStore } from './store/tabStore'
 import { useWorkspaceStore } from './store/workspaceStore'
+import { useSettingsStore } from './store/settingsStore'
 import { configureTeminEngine } from '@temin360/document-templates'
 import { DocumentEngine } from '@worksuite-360/document-engine'
 import { createElectronStorageAdapter } from './services/electronDocumentStorageAdapter'
@@ -37,7 +38,8 @@ if (typeof window !== 'undefined') {
   ;(window as any).__teminStores = {
     useGlobalDocumentPreviewStore,
     useTabStore,
-    useWorkspaceStore
+    useWorkspaceStore,
+    useSettingsStore
   }
 }
 

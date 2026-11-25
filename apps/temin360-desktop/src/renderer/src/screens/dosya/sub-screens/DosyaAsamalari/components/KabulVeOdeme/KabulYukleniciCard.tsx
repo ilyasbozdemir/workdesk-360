@@ -6,7 +6,7 @@ import { FirmaStats } from './types'
 interface KabulYukleniciCardProps {
   kazananFirmaUnvan: string
   firmaStats: FirmaStats
-  alimTuru?: 'mal' | 'hizmet' | 'yapim'
+  alimTuru?: 'mal' | 'hizmet' | 'yapim' | string
   isMal?: boolean
   isHizmet?: boolean
   isYapim?: boolean
