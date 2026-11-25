@@ -960,10 +960,8 @@ export class InstitutionalHeaderProvider
       }
     }
 
-    const isSeqMismatch = dosyaSeq !== null && evrakSeq !== null && dosyaSeq !== evrakSeq
-
-    if (currentEvrak && !currentEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(currentEvrak) && !isSeqMismatch) {
-      // Dosyada zaten resmi DETSİS formatında VE dosya sıra no ile uyumlu sayı varsa doğrudan miras/kalıtım al!
+    if (currentEvrak && !currentEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(currentEvrak)) {
+      // Dosyada zaten resmi DETSİS formatında sayı varsa (resmi evrak sayısı esastır) doğrudan miras/kalıtım al!
       detsisEvrakSayisi = currentEvrak
     } else if (dosyaId && this.evrakSayisiResolver) {
       try {
@@ -973,10 +971,18 @@ export class InstitutionalHeaderProvider
         // tek bir sabit sayıyı kullanır, asla birbirinden farklılaşmaz!
         if (detsisEvrakSayisi) {
           try {
-            await execQuery(
-              'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
-              [detsisEvrakSayisi, dosyaId]
-            )
+            if (typeof window !== 'undefined' && (window as any).electron?.ipcRenderer?.invoke) {
+              await (window as any).electron.ipcRenderer.invoke(
+                'db:run',
+                'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
+                [detsisEvrakSayisi, dosyaId]
+              )
+            } else {
+              await execQuery(
+                'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
+                [detsisEvrakSayisi, dosyaId]
+              )
+            }
             if (dosyaRow) {
               dosyaRow.evrak_sayisi = detsisEvrakSayisi
             }
