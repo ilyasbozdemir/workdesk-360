@@ -6,8 +6,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  FileCheck2,
-  FileSpreadsheet,
   FileText,
   Lock,
   PackageSearch,
@@ -143,12 +141,12 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
   }, [invitedFirms]);
 
   // AKILLI GÖSTER/GİZLE DURUMLARI (UX Sadeleştirme)
-  // Fiyatlar girilmişse dağıtım ve firmalar tablosu varsayılan olarak kapalıdır (sakin mod)
+  // Fiyatlar girilmişse veya kazanan belirlenmişse dağıtım ve firmalar tablosu varsayılan olarak kapalıdır (sakin mod)
   const [isDagitimExpanded, setIsDagitimExpanded] = useState<boolean>(
     () => !hasPricesEntered,
   );
   const [isFirmsExpanded, setIsFirmsExpanded] = useState<boolean>(
-    () => !hasPricesEntered,
+    () => !hasPricesEntered && !manualWinnerFirmaId,
   );
   const [isMatrixExpanded, setIsMatrixExpanded] = useState<boolean>(
     () => hasPricesEntered,
@@ -159,6 +157,7 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
 
   // Koruma / Değişiklik Önlem Modalı Durumu
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const isApproved = piyasaFiyatOnayDurumu === "onaylandi";
@@ -237,6 +236,23 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
   const normalizedEsas = hesaplamaEsasi || "Ortalama fiyat esasına göre";
   const isLowestBasis = normalizedEsas.toLowerCase().includes("en düşük") ||
     normalizedEsas.toLowerCase().includes("en dusuk");
+
+  // En uygun teklif veren isteklinin halihazırda kazanan olup olmadığını kontrol et
+  const isLowestAlreadyWinner = useMemo(() => {
+    if (!activeWinnerFirma || !lowestBidFirm) return false;
+    const activeId = activeWinnerFirma.firma_id ?? activeWinnerFirma.id;
+    const lowestId = lowestBidFirm.firma_id ?? lowestBidFirm.id;
+    if (activeId && lowestId && activeId === lowestId) return true;
+    if (
+      activeWinnerFirma.unvan &&
+      lowestBidFirm.unvan &&
+      activeWinnerFirma.unvan.trim().toLowerCase() ===
+        lowestBidFirm.unvan.trim().toLowerCase()
+    ) {
+      return true;
+    }
+    return false;
+  }, [activeWinnerFirma, lowestBidFirm]);
 
   return (
     <SubScreen
@@ -352,20 +368,56 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
 
               {/* Sağ: Hızlı Aksiyon Butonları (Düzenle + Onayla) */}
               <div className="flex flex-wrap items-center gap-2 shrink-0">
-                {/* Fiyatları Düzenle Butonu (Korumalı) */}
-                <button
-                  type="button"
-                  onClick={(): void => {
-                    handleProtectedAction(() => {
-                      setIsFormOpen(true);
-                      setActiveFormTab("matrix");
-                    });
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-xs cursor-pointer border-0"
-                >
-                  <Calculator className="w-3.5 h-3.5" />
-                  <span>Teklif Fiyatlarını Düzenle</span>
-                </button>
+                {/* Dinamik Eylem Butonu (Firma Yoksa: Firma Ekle, Fiyat Yoksa: Fiyat Gir, Fiyat Varsa: Düzenle) */}
+                {invitedFirms.length === 0
+                  ? (
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        handleProtectedAction(() => {
+                          if (setIsFirmModalOpen) setIsFirmModalOpen(true);
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-xs cursor-pointer border-0"
+                      title="Teklif almak için istekli firma ekleyin"
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>İstekli Firma Seç / Ekle</span>
+                    </button>
+                  )
+                  : !hasPricesEntered
+                  ? (
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        handleProtectedAction(() => {
+                          setIsFormOpen(true);
+                          setActiveFormTab("matrix");
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-xs cursor-pointer border-0"
+                      title="İstekli firmaların teklif fiyatlarını girin"
+                    >
+                      <Calculator className="w-3.5 h-3.5" />
+                      <span>Teklif Fiyatlarını Gir</span>
+                    </button>
+                  )
+                  : (
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        handleProtectedAction(() => {
+                          setIsFormOpen(true);
+                          setActiveFormTab("matrix");
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-xs cursor-pointer border-0"
+                      title="Teklif fiyatlarını ve matrisi düzenleyin"
+                    >
+                      <Calculator className="w-3.5 h-3.5" />
+                      <span>Teklif Fiyatlarını Düzenle</span>
+                    </button>
+                  )}
 
                 {/* Onayla / Kilidi Aç Butonu */}
                 {togglePiyasaFiyatOnay && hasPricesEntered && (
@@ -405,8 +457,8 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
                   </button>
                 )}
 
-                {/* En Uygun Teklifi Kazanan Yap Butonu */}
-                {lowestBidFirm && !isApproved && (
+                {/* En Uygun Teklifi Kazanan Yap Butonu (Kazanan zaten en uygun istekli ise gizlenir) */}
+                {lowestBidFirm && !isApproved && !isLowestAlreadyWinner && (
                   <button
                     type="button"
                     onClick={(): void => {
@@ -424,17 +476,15 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
                   </button>
                 )}
 
-                {/* Seçimi Sıfırla */}
+                {/* Seçimi Sıfırla (Resmî Evrak Güvenlik Uyarısı ile Korumalı) */}
                 {activeWinnerFirma && !isApproved && (
                   <button
                     type="button"
                     onClick={(): void => {
-                      if (handleSetWinnerFirma) {
-                        handleSetWinnerFirma(null);
-                      }
+                      setIsResetConfirmOpen(true);
                     }}
                     className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold transition-colors cursor-pointer border-0"
-                    title="Seçimi Kaldır"
+                    title="Kazanan Seçimini Sıfırla"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Sıfırla</span>
@@ -517,7 +567,7 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
               )}
             </div>
 
-            {/* 3. FİYAT İSTENEN İSTEKLİ FİRMALAR (UX Katlanabilir / Göster-Gizle Çubuğu) */}
+            {/* 3. FİYAT İSTENEN İSTEKLİ FİRMALAR (UX Katlanabilir / Sakin ve Düzenli Çubuk) */}
             <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 shadow-xs overflow-hidden transition-all">
               <div
                 onClick={(): void => setIsFirmsExpanded((prev) => !prev)}
@@ -539,30 +589,48 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
                       {/* Kazanan veya En Uygun İstekli Rozeti */}
                       {activeWinnerFirma
                         ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 flex items-center gap-1 shadow-2xs">
-                            <Trophy className="w-3 h-3 text-amber-600" />
-                            <span>Kazanan: {activeWinnerFirma.unvan}</span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1 shadow-2xs">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>
+                              Değerlendirme Tamamlandı:{" "}
+                              {activeWinnerFirma.unvan}
+                            </span>
                           </span>
                         )
                         : lowestBidFirm
                         ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1 shadow-2xs">
-                            <Trophy className="w-3 h-3 text-emerald-600" />
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 flex items-center gap-1 shadow-2xs">
+                            <Trophy className="w-3 h-3 text-amber-600" />
                             <span>En Uygun: {lowestBidFirm.unvan}</span>
                           </span>
                         )
                         : null}
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {hasPricesEntered
+                      {activeWinnerFirma
+                        ? "İstekli firmaların teklifleri değerlendirildi ve kazanan firma belirlendi. İstekli listesini veya teklif mektubu katılımcılarını incelemek için genişletebilirsiniz."
+                        : hasPricesEntered
                         ? "İstekli firmalar ve teklifleri kayıtlı. Firma listesini düzenlemek veya yeni istekli eklemek için tıklayın."
                         : "Teklif toplanacak istekli firmaları ekleyin ve yönetin."}
                     </p>
                   </div>
                 </div>
 
-                {/* Göster / Gizle Butonu */}
+                {/* Sağ Aksiyon: Hızlı Ekle veya Göster / Gizle Butonu */}
                 <div className="flex items-center gap-2">
+                  {invitedFirms.length === 0 && (
+                    <button
+                      type="button"
+                      onClick={(e): void => {
+                        e.stopPropagation();
+                        if (setIsFirmModalOpen) setIsFirmModalOpen(true);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all cursor-pointer shadow-2xs border-0"
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>Firma Ekle</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={(e): void => {
@@ -807,6 +875,70 @@ export function PiyasaFiyatArastirmasi(): React.JSX.Element {
                     >
                       <Unlock className="w-3.5 h-3.5" />
                       <span>Onayı Kaldır ve Düzenle</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* KAZANAN FİRMA SIFIRLAMA GÜVENLİK VE RESMÎ BELGE ETKİ UYARI MODALI */}
+            {isResetConfirmOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+                <div className="w-full max-w-md p-6 bg-white dark:bg-slate-900 rounded-3xl border border-amber-300 dark:border-amber-800 shadow-2xl flex flex-col gap-4">
+                  <div className="flex items-start gap-3.5">
+                    <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                      <AlertTriangle className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100">
+                        Kazanan Firma Seçimi Sıfırlansın Mı?
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
+                        Seçili kazanan firmanın sıfırlanması;{" "}
+                        <strong>Piyasa Fiyat Araştırması Tutanağı</strong>,{" "}
+                        <strong>Yaklaşık Maliyet Hesap Cetveli</strong>{" "}
+                        ve ilgili resmî karar belgelerindeki kazanan istekli ve
+                        onaylanan teklif tutarı atamalarını doğrudan
+                        etkileyecektir.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-200 space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Belge Güvenliği Hatırlatması</span>
+                    </div>
+                    <p>
+                      Teklif matrisindeki birim fiyat verileriniz silinmez;
+                      yalnızca belirlenen kazanan firma seçimi kaldırılarak
+                      dosya &quot;Taslak / İncelemede&quot; durumuna geri
+                      alınır.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2.5 mt-2">
+                    <button
+                      type="button"
+                      onClick={(): void => setIsResetConfirmOpen(false)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
+                    >
+                      Vazgeç
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(): void => {
+                        handleProtectedAction(() => {
+                          if (handleSetWinnerFirma) {
+                            handleSetWinnerFirma(null);
+                          }
+                        });
+                        setIsResetConfirmOpen(false);
+                      }}
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Evet, Sıfırla</span>
                     </button>
                   </div>
                 </div>
