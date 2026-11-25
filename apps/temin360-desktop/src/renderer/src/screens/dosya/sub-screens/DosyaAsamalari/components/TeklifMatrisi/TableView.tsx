@@ -207,37 +207,47 @@ export function TableView({
                                   : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-805'
                       }`}
                     >
-                      <div className="relative flex items-center w-full h-full">
-                        <span
-                          className={`absolute left-2 text-[10px] font-bold select-none ${
-                            isCellFocused
-                              ? 'text-blue-700 dark:text-blue-300'
-                              : isColActive || isRowActive
-                                ? 'text-blue-500 dark:text-blue-400'
-                                : 'text-slate-400'
-                          }`}
-                        >
-                          ₺
-                        </span>
-                        <BidPriceInput
-                          inputRef={(el) => {
-                            if (el) inputRefs.current.set(`${kIdx}_${fIdx}`, el)
-                            else inputRefs.current.delete(`${kIdx}_${fIdx}`)
-                          }}
-                          initialValue={val}
-                          onChange={(newVal) => handlePriceChange(kalem.id, firma.id, newVal)}
-                          onKeyDown={(e) => handleKeyDown(e, kIdx, fIdx)}
-                          onFocus={() => {
-                            setActiveColIndex(fIdx)
-                            setActiveRowIndex(kIdx)
-                            setActiveCellKey(`${kIdx}_${fIdx}`)
-                          }}
-                          onBlur={() => {
-                            setActiveCellKey(null)
-                          }}
-                          isLowest={isLowest}
-                          isExcelStyle={true}
-                        />
+                      <div className="relative flex flex-col justify-center w-full h-full py-0.5">
+                        <div className="relative flex items-center w-full">
+                          <span
+                            className={`absolute left-2 text-[10px] font-bold select-none ${
+                              isCellFocused
+                                ? 'text-blue-700 dark:text-blue-300'
+                                : isColActive || isRowActive
+                                  ? 'text-blue-500 dark:text-blue-400'
+                                  : 'text-slate-400'
+                            }`}
+                          >
+                            ₺
+                          </span>
+                          <BidPriceInput
+                            inputRef={(el) => {
+                              if (el) inputRefs.current.set(`${kIdx}_${fIdx}`, el)
+                              else inputRefs.current.delete(`${kIdx}_${fIdx}`)
+                            }}
+                            initialValue={val}
+                            onChange={(newVal) => handlePriceChange(kalem.id, firma.id, newVal)}
+                            onKeyDown={(e) => handleKeyDown(e, kIdx, fIdx)}
+                            onFocus={() => {
+                              setActiveColIndex(fIdx)
+                              setActiveRowIndex(kIdx)
+                              setActiveCellKey(`${kIdx}_${fIdx}`)
+                            }}
+                            onBlur={() => {
+                              setActiveCellKey(null)
+                            }}
+                            isLowest={isLowest}
+                            isExcelStyle={true}
+                          />
+                        </div>
+                        {val > 0 && (
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono text-right pr-2 select-none -mt-0.5">
+                            Toplam: {(val * kalem.miktar).toLocaleString('tr-TR', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })} ₺
+                          </span>
+                        )}
                       </div>
                     </td>
                   )
@@ -249,12 +259,22 @@ export function TableView({
                       : 'border-slate-200 dark:border-slate-805 text-slate-700 dark:text-slate-300 bg-slate-100/10 dark:bg-slate-950/10'
                   }`}
                 >
-                  {avgPrice > 0
-                    ? `${avgPrice.toLocaleString('tr-TR', {
+                  <div>
+                    {avgPrice > 0
+                      ? `${avgPrice.toLocaleString('tr-TR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2
+                        })} ₺`
+                      : '-'}
+                  </div>
+                  {avgPrice > 0 && kalem.miktar > 1 && (
+                    <div className="text-[9px] text-slate-400 font-normal mt-0.5">
+                      Toplam: {(avgPrice * kalem.miktar).toLocaleString('tr-TR', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
-                      })} ₺`
-                    : '-'}
+                      })} ₺
+                    </div>
+                  )}
                 </td>
                 <td
                   className={`p-3 border text-right font-extrabold font-mono transition-colors ${
@@ -274,6 +294,14 @@ export function TableView({
                         : '-'}
                     </span>
                   </div>
+                  {lowest.price > 0 && kalem.miktar > 1 && (
+                    <div className="text-[9px] text-emerald-600/70 dark:text-emerald-400/70 font-normal mt-0.5">
+                      Toplam: {(lowest.price * kalem.miktar).toLocaleString('tr-TR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })} ₺
+                    </div>
+                  )}
                 </td>
               </tr>
             )
@@ -304,7 +332,7 @@ export function TableView({
                 </td>
               )
             })}
-            <td className="p-3.5 border border-slate-200 dark:border-slate-800 bg-slate-100/10 dark:bg-slate-950/10 text-right font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+            <td className="p-3.5 border border-slate-200 dark:border-slate-800 bg-emerald-50/40 dark:bg-emerald-950/20 text-right font-extrabold text-emerald-700 dark:text-emerald-400 font-mono">
               {getEstimatedCostTotal() > 0
                 ? `${getEstimatedCostTotal().toLocaleString('tr-TR', {
                     minimumFractionDigits: 2,

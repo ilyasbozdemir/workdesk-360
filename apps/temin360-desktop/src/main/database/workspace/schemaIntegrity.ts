@@ -410,7 +410,12 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     { name: 'piyasa_fiyat_onay_durumu', def: "TEXT DEFAULT 'taslak'" },
     { name: 'piyasa_fiyat_onay_tarihi', def: 'DATETIME' },
     { name: 'piyasa_fiyat_onay_kullanici', def: 'TEXT' },
-    { name: 'maliyet_cetveli_tarihi', def: 'DATE' }
+    { name: 'maliyet_cetveli_tarihi', def: 'DATE' },
+    { name: 'arsiv_lokasyon', def: 'TEXT' },
+    { name: 'klasor_no', def: 'TEXT' },
+    { name: 'raf_no', def: 'TEXT' },
+    { name: 'klasor_checklist', def: 'TEXT' },
+    { name: 'dosya_kapali_mi', def: 'INTEGER DEFAULT 0' }
   ]
   for (const c of teminDosyasiColumns) {
     safeAddColumn(db, 'DATA_TeminDosyasi', c.name, c.def)

@@ -12,8 +12,8 @@ export default {
     "devlet-ihale-2886-desktop": "1.0.0-beta.1"
   },
   schema_min: 1,
-  schema_max: 48,
-  release_date: "2026-11-20",
+  schema_max: 49,
+  release_date: "2026-11-25",
   changes: [
     {
       schema: 46,

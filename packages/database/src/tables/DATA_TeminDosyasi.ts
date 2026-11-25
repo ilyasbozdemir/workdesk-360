@@ -327,6 +327,32 @@ export const DATA_TeminDosyasi = {
       description: "Piyasa Fiyat Araştırmasını Onaylayan Kullanıcı",
     },
     {
+      name: "arsiv_lokasyon",
+      type: "TEXT",
+      description: "Fiziksel Arşiv Lokasyonu / Dolap",
+    },
+    {
+      name: "klasor_no",
+      type: "TEXT",
+      description: "Fiziksel Klasör / Sıra Numarası",
+    },
+    {
+      name: "raf_no",
+      type: "TEXT",
+      description: "Fiziksel Raf Numarası",
+    },
+    {
+      name: "klasor_checklist",
+      type: "TEXT",
+      description: "Fiziksel Klasör Kontrol Listesi Durumu (JSON)",
+    },
+    {
+      name: "dosya_kapali_mi",
+      type: "INTEGER",
+      default: 0,
+      description: "Fiziksel Dosya Kapatılıp Arşivlendi mi?",
+    },
+    {
       name: "created_at",
       type: "DATETIME",
       default: "CURRENT_TIMESTAMP",
