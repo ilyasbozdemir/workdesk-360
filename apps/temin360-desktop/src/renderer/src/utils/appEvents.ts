@@ -197,6 +197,41 @@ export function emitAppEvent(type: AppEventType, payload?: AppEventPayload): voi
 }
 
 /**
+ * Direct subscription function for real-time app events (imperative or outside React components).
+ * Returns an unsubscribe function.
+ */
+export function onAppEvent(
+  eventTypes: AppEventType | AppEventType[] | '*',
+  callback: (event: AppEventMessage) => void
+): () => void {
+  getBroadcastChannel()
+
+  const handler = (e: Event): void => {
+    const customEvent = e as CustomEvent<AppEventMessage>
+    const msg = customEvent.detail
+    if (!msg) return
+
+    if (eventTypes === '*') {
+      callback(msg)
+    } else if (Array.isArray(eventTypes)) {
+      if (eventTypes.includes(msg.type)) {
+        callback(msg)
+      }
+    } else if (msg.type === eventTypes) {
+      callback(msg)
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener(CUSTOM_EVENT_NAME, handler)
+    return () => {
+      window.removeEventListener(CUSTOM_EVENT_NAME, handler)
+    }
+  }
+  return () => {}
+}
+
+/**
  * React hook to listen for real-time app events.
  */
 export function useAppEventListener(
