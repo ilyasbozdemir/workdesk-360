@@ -22,8 +22,8 @@ export const TableRowSplitDivider: React.FC<TableRowSplitDividerProps> = ({
       ? Number(contextLimit)
       : null;
 
-  // If not editing, don't show the interactive hover line
-  if (!isEditing && !activeSplitIndex) return null;
+  // If not editing, NEVER show interactive split controls or markers in preview/print
+  if (!isEditing) return null;
 
   const isCurrentSplit = activeSplitIndex === rowIndex;
 

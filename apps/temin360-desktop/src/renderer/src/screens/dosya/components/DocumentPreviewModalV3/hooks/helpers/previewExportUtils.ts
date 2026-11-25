@@ -215,11 +215,21 @@ export async function saveDocumentToDb({
     const explicitEvrakSayisi = formData.evrakSayisi ? String(formData.evrakSayisi).replace(/^E-/i, '').trim() : null
     if (explicitEvrakSayisi && !explicitEvrakSayisi.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(explicitEvrakSayisi)) {
       try {
-        await window.electron.ipcRenderer.invoke(
-          'db:query',
-          'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-          [explicitEvrakSayisi, activeDosyaId]
-        )
+        let updateSql = 'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+        const params: any[] = [explicitEvrakSayisi, activeDosyaId]
+
+        const match = explicitEvrakSayisi.match(/-(\d+)$/)
+        if (match) {
+          const evrakSeq = parseInt(match[1], 10)
+          if (!isNaN(evrakSeq) && evrakSeq > 0 && evrakSeq < 100000) {
+            const fileYear = new Date().getFullYear()
+            const newTeminNo = `${fileYear}/${evrakSeq}`
+            updateSql = 'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ?, temin_no = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+            params.splice(1, 0, newTeminNo)
+          }
+        }
+
+        await window.electron.ipcRenderer.invoke('db:query', updateSql, params)
         InstitutionalHeaderProvider.clearCache(activeDosyaId)
       } catch (e) {
         console.warn('[saveDocumentToDb] Dosya evrak_sayisi güncelleme hatası:', e)

@@ -194,7 +194,22 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
             }
             const isSeqMismatch = dosyaSeq !== null && evrakSeq !== null && dosyaSeq !== evrakSeq
 
-            if (!curEvrak || curEvrak.includes('/') || !/^\d+-\d+\.\d+-\d+$/.test(curEvrak) || isSeqMismatch) {
+            // Kamu idaresinde doğrudan temin dosya sayısı, resmi belgeye verilen sayıdır (evrak sayısıdır).
+            // Eğer dosyada geçerli resmi evrak sayısı varsa (örn: 56383307-934.01-0020) ve temin_no ile uyumsuzsa,
+            // temin_no'yu belge sayısıyla senkronize et!
+            if (evrakSeq !== null && isSeqMismatch) {
+              const fileYear = new Date().getFullYear()
+              const syncedTeminNo = `${fileYear}/${evrakSeq}`
+              try {
+                await queryExecutor(
+                  'UPDATE DATA_TeminDosyasi SET temin_no = ? WHERE id = ?',
+                  [syncedTeminNo, id]
+                )
+                InstitutionalHeaderProvider.clearCache(id)
+              } catch (err) {
+                console.warn('[workspaceStore] temin_no sync failed on setActiveDosyaId:', err)
+              }
+            } else if (!curEvrak || curEvrak.includes('/') || !/^\d+-\d+\.\d+-\d+$/.test(curEvrak)) {
               try {
                 const officialSayi = await resolveEvrakSayisi(id, queryExecutor)
                 if (officialSayi) {

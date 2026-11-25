@@ -29,20 +29,19 @@ describe('Document Templates - mappingResolver Modular Helpers', () => {
     expect(evrakSayisi).toBe('0000000-934.02-0042');
   });
 
-  it('resolveEvrakSayisi re-resolves and aligns when existing evrak_sayisi has sequence mismatch with temin_no', async () => {
+  it('resolveEvrakSayisi preserves existing official evrak_sayisi given to the document', async () => {
     const mockExecutor = async (sql: string, _params: any[]) => {
       if (sql.includes('TANIM_Kurum')) {
         return [{ detsis_kodu: '56383307' }];
       }
       if (sql.includes('DATA_TeminDosyasi') && sql.includes('WHERE id = ?')) {
-        // Cloned file with temin_no = 2026/52 but stale evrak_sayisi = 56383307-934.01-0020
         return [{ temin_no: '2026/52', evrak_sayisi: '56383307-934.01-0020', tur: 'mal', butce_yili: 2026 }];
       }
       return [];
     };
 
     const evrakSayisi = await resolveEvrakSayisi(348, mockExecutor);
-    expect(evrakSayisi).toBe('56383307-934.01-0052');
+    expect(evrakSayisi).toBe('56383307-934.01-0020');
   });
 
   it('resolveAntetSatirlari returns parsed JSON lines when available', async () => {

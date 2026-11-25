@@ -153,10 +153,8 @@ export async function resolveEvrakSayisi(
       }
     }
 
-    const isSeqMismatch = teminSeq !== null && existingSeq !== null && teminSeq !== existingSeq;
-
-    // Eğer dosyadaki evrak sayısı resmi formattaysa VE temin_no sıra numarasıyla çelişmiyorsa koru
-    if (existingEvrak && !existingEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(existingEvrak) && !isSeqMismatch) {
+    // Eğer dosyadaki evrak sayısı resmi formattaysa koru; resmi belgeye verilen sayı esastır
+    if (existingEvrak && !existingEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(existingEvrak)) {
       return existingEvrak;
     }
 
