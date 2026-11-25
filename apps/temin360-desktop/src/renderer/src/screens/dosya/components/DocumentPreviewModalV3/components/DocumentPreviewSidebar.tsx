@@ -755,6 +755,49 @@ export function DocumentPreviewSidebar({
               )
             })()}
 
+            {/* Tablo Font Boyutu / Yoğunluk */}
+            <div className="p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  Tablo Font Boyutu / Yoğunluk
+                </span>
+                <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400">
+                  {(formData as any).tableFontSize || '10pt (Standart)'}
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-slate-900 rounded-lg">
+                {[
+                  { label: '8pt', val: '8pt', title: '8pt Çok Kompakt / Sıkışık' },
+                  { label: '9pt', val: '9pt', title: '9pt Kompakt' },
+                  { label: '10pt', val: '10pt', title: '10pt Standart (Varsayılan)' },
+                  { label: '11pt', val: '11pt', title: '11pt Geniş / Rahat' },
+                ].map((opt) => {
+                  const currentFont = (formData as any).tableFontSize || '10pt'
+                  const isSelected = currentFont === opt.val
+                  return (
+                    <button
+                      key={opt.val}
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev: any) => ({
+                          ...prev,
+                          tableFontSize: opt.val,
+                        }))
+                      }
+                      className={`px-1.5 py-1.5 rounded-md text-[10px] font-bold transition-all text-center cursor-pointer ${
+                        isSelected
+                          ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-2xs font-extrabold ring-1 ring-blue-500/20'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                      }`}
+                      title={opt.title}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* OLUR Bloğu Toggle */}
             {(supportsOlur || typeof (formData as any).olurYazisi === 'boolean') && (
               <label className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl cursor-pointer hover:border-slate-300 transition-colors">

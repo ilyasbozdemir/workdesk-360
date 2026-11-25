@@ -103,13 +103,22 @@ export const PersonelInlineSelect: React.FC<PersonelInlineSelectProps> = ({
           onChange={(e) => {
             const val = e.target.value;
             const p = personelList.find(
-              (item: any) => String(item.id || item.ad_soyad) === val,
+              (item: any) =>
+                String(item.id || item.ad_soyad) === val ||
+                cleanPersonelName(item.ad_soyad).toLowerCase() ===
+                  cleanPersonelName(val).toLowerCase(),
             );
             if (p && onFieldChange) {
               const cleanName = cleanPersonelName(p.ad_soyad);
+              const resolvedUnvan =
+                p.unvan ||
+                (p as any).gorev ||
+                (p as any).kadro_unvani ||
+                (p as any).gorevi ||
+                "";
               onFieldChange(nameField, cleanName);
               if (unvanField) {
-                onFieldChange(unvanField, p.unvan || "");
+                onFieldChange(unvanField, resolvedUnvan);
               }
             } else if (onFieldChange && val === "") {
               onFieldChange(nameField, "");

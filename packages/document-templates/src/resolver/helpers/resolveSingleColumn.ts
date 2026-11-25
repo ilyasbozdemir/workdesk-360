@@ -98,8 +98,16 @@ export async function resolveSingleColumn(
     let params: any[] = [];
 
     if (effectiveRule.iliskiliTablo && effectiveRule.iliskiliSutun) {
-      query =
-        `SELECT p.${effectiveRule.iliskiliSutun} AS res_val FROM ${effectiveRule.tablo} d LEFT JOIN ${effectiveRule.iliskiliTablo} p ON d.${effectiveRule.sutun} = p.id WHERE d.id = ? LIMIT 1`;
+      if (
+        effectiveRule.iliskiliTablo === "TANIM_Personel" &&
+        effectiveRule.iliskiliSutun === "unvan"
+      ) {
+        query =
+          `SELECT COALESCE(NULLIF(p.unvan, ''), NULLIF(p.gorev, ''), '') AS res_val FROM ${effectiveRule.tablo} d LEFT JOIN ${effectiveRule.iliskiliTablo} p ON d.${effectiveRule.sutun} = p.id WHERE d.id = ? LIMIT 1`;
+      } else {
+        query =
+          `SELECT p.${effectiveRule.iliskiliSutun} AS res_val FROM ${effectiveRule.tablo} d LEFT JOIN ${effectiveRule.iliskiliTablo} p ON d.${effectiveRule.sutun} = p.id WHERE d.id = ? LIMIT 1`;
+      }
       params = [activeDosyaId];
     } else if (effectiveRule.iliskili_id) {
       query =
