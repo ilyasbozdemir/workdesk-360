@@ -60,7 +60,7 @@ export const StepGuardModal: React.FC<StepGuardModalProps> = ({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-xs select-none animate-in fade-in duration-150"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -91,15 +91,6 @@ export const StepGuardModal: React.FC<StepGuardModalProps> = ({
               </h2>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Kapat (Esc)"
-          >
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
         {/* İçerik & Kural Listesi */}
@@ -124,7 +115,7 @@ export const StepGuardModal: React.FC<StepGuardModalProps> = ({
               <div className="space-y-2">
                 {missingMandatoryRules.map(({ rule }) => {
                   const reqStep = STEPS.find(
-                    (s) => s.id === rule.requiredStageId
+                    (s) => s.id === rule.requiredStageId,
                   );
                   return (
                     <div
