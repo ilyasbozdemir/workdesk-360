@@ -8,11 +8,11 @@ let activeWorkspace: DtmWorkspace | null = null
 let debouncedSaveTimer: NodeJS.Timeout | null = null
 
 export const workspaceManager = {
-  create: (filePath: string, institutionName: string) => {
+  create: (filePath: string, institutionName: string, adminUsername?: string) => {
     workspaceManager.flushSave()
     if (activeWorkspace) activeWorkspace.closeWorkspace()
     activeWorkspace = new DtmWorkspace()
-    return activeWorkspace.createWorkspace(filePath, institutionName)
+    return activeWorkspace.createWorkspace(filePath, institutionName, adminUsername)
   },
   open: (filePath: string, allowMigration: boolean = false) => {
     workspaceManager.flushSave()
@@ -201,6 +201,74 @@ export const workspaceManager = {
     activeWorkspace.recordMutation()
     activeWorkspace.saveWorkspace()
     return { fileName: safeName, relativePath: `attachments/${safeName}`, mirroredPath }
+  },
+  uploadAttachmentBuffer: (
+    buffer: Buffer,
+    fileName: string,
+    options?: { teminNo?: string; mirrorToProjectDir?: boolean }
+  ) => {
+    if (!activeWorkspace) throw new Error('Açık bir çalışma dosyası yok.')
+    if (!buffer || buffer.length === 0) {
+      throw new Error('Dosya içeriği boş veya geçersiz.')
+    }
+    const tempDir = (activeWorkspace as any).tempDir
+    if (!tempDir) throw new Error('Geçici çalışma dizini bulunamadı.')
+
+    const attachmentsDir = path.join(tempDir, 'attachments')
+    if (!fs.existsSync(attachmentsDir)) {
+      fs.mkdirSync(attachmentsDir, { recursive: true })
+    }
+
+    const fileExt = path.extname(fileName) || '.pdf'
+    const baseName = path.basename(fileName, fileExt)
+    const safeName = `${baseName}_${Date.now()}${fileExt}`.replace(/[^a-zA-Z0-9_.-]/g, '_')
+    const destPath = path.join(attachmentsDir, safeName)
+
+    fs.writeFileSync(destPath, buffer)
+
+    let mirroredPath: string | null = null
+    const currentFilePath = activeWorkspace.getCurrentFilePath()
+    if (currentFilePath && options?.mirrorToProjectDir !== false) {
+      try {
+        const projectDir = path.dirname(currentFilePath)
+        const projectBaseName = path.basename(currentFilePath, path.extname(currentFilePath))
+        const folderName = options?.teminNo
+          ? `${options.teminNo.replace(/[/\\:*?"<>|]/g, '_')}_Belgeler`
+          : `${projectBaseName}_Belgeler`
+        const localDocDir = path.join(projectDir, folderName)
+        if (!fs.existsSync(localDocDir)) {
+          fs.mkdirSync(localDocDir, { recursive: true })
+        }
+        mirroredPath = path.join(localDocDir, `${baseName}${fileExt}`)
+        fs.writeFileSync(mirroredPath, buffer)
+      } catch (mirrorErr) {
+        console.warn('[workspaceManager] Yerel dizine belge aynalama uyarısı:', mirrorErr)
+      }
+    }
+
+    activeWorkspace.recordMutation('DATA_TeminBelge', 'INSERT')
+    activeWorkspace.saveWorkspace()
+    return { fileName: safeName, relativePath: `attachments/${safeName}`, mirroredPath }
+  },
+  deleteAttachment: (relativePath: string) => {
+    if (!activeWorkspace) throw new Error('Açık bir çalışma dosyası yok.')
+    const tempDir = (activeWorkspace as any).tempDir
+    if (!tempDir) throw new Error('Geçici çalışma dizini bulunamadı.')
+    const resolvedTemp = path.resolve(tempDir)
+    const fullPath = path.resolve(tempDir, relativePath)
+    if (fullPath !== resolvedTemp && !fullPath.startsWith(resolvedTemp + path.sep)) {
+      throw new Error('Geçersiz dosya yolu.')
+    }
+    if (fs.existsSync(fullPath)) {
+      try {
+        fs.unlinkSync(fullPath)
+      } catch (unlinkErr) {
+        console.warn('[workspaceManager] Ek dosya silinirken hata:', unlinkErr)
+      }
+    }
+    activeWorkspace.recordMutation('DATA_TeminBelge', 'DELETE')
+    activeWorkspace.saveWorkspace()
+    return { success: true }
   },
   exportAttachmentsZip: async (targetPath?: string, teminNo?: string) => {
     if (!activeWorkspace) throw new Error('Açık bir çalışma dosyası yok.')

@@ -10,6 +10,9 @@ interface PiyasaFiyatArastirmasiMatrixTabProps {
   getLowestBidInfo: (itemId: number) => any
   getAverageBid: (itemId: number) => number
   handlePriceChange: (kalemId: number, teminFirmaId: number, priceStr: string) => Promise<void>
+  hesaplamaEsasi?: string
+  onSetHesaplamaEsasi?: (val: string) => void
+  handleSaveToDosya?: (docType?: 'maliyet' | 'tutanak' | 'save_only') => void
 }
 
 export function PiyasaFiyatArastirmasiMatrixTab({
@@ -19,7 +22,10 @@ export function PiyasaFiyatArastirmasiMatrixTab({
   getEstimatedCostTotal,
   getLowestBidInfo,
   getAverageBid,
-  handlePriceChange
+  handlePriceChange,
+  hesaplamaEsasi,
+  onSetHesaplamaEsasi,
+  handleSaveToDosya
 }: PiyasaFiyatArastirmasiMatrixTabProps): React.JSX.Element {
   return (
     <div className="animate-in fade-in duration-200">
@@ -60,6 +66,9 @@ export function PiyasaFiyatArastirmasiMatrixTab({
             getLowestBidInfo={getLowestBidInfo}
             getAverageBid={getAverageBid}
             handlePriceChange={handlePriceChange}
+            hesaplamaEsasi={hesaplamaEsasi}
+            onSetHesaplamaEsasi={onSetHesaplamaEsasi}
+            handleSaveToDosya={handleSaveToDosya}
           />
         </div>
       ) : invitedFirms.length > 0 && items.length === 0 ? (

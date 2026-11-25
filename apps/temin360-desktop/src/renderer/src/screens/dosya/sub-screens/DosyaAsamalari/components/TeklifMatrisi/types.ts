@@ -20,6 +20,10 @@ export interface TeklifMatrisiProps {
   getLowestBidInfo: (kalemId: number) => { price: number; firmaId: number | null }
   getAverageBid: (kalemId: number) => number
   handlePriceChange: (kalemId: number, firmaId: number, val: string) => Promise<void>
+  hesaplamaEsasi?: string
+  onSetHesaplamaEsasi?: (val: string) => void
+  handleSaveToDosya?: (docType?: 'maliyet' | 'tutanak' | 'save_only') => void
+  showSaveButton?: boolean
 }
 
 export interface TableViewProps {
@@ -30,6 +34,7 @@ export interface TableViewProps {
   getLowestBidInfo: (kalemId: number) => { price: number; firmaId: number | null }
   getAverageBid: (kalemId: number) => number
   handlePriceChange: (kalemId: number, firmaId: number, val: string) => Promise<void>
+  hesaplamaEsasi?: string
 }
 
 export interface FirmBasedEntryViewProps {
@@ -47,4 +52,10 @@ export interface BidPriceInputProps {
   onChange: (val: string) => void
   isLowest: boolean
   isExcelStyle?: boolean
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void
+  onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void
+  inputRef?: React.Ref<HTMLInputElement>
+  'data-item-index'?: number
+  'data-firm-index'?: number
 }

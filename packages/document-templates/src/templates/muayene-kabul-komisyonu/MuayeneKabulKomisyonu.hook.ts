@@ -308,6 +308,15 @@ export function useMuayeneKabulKomisyonu(
         return fromPool;
       }
 
+      // 4. Veritabanında (TANIM_Personel) personelin unvanı NULL girilmişse:
+      // Belediyelerde kadro unvanı boş olan personeller mevzuat gereği "Bld. Personeli" kabul edilir
+      const isBelediye =
+        String((data as any)?.kurumumuz || (data as any)?.kurumAdi || (data as any)?.baskanlik || (data as any)?.kurum || "").toLowerCase().includes("belediye") ||
+        mergedPersonelList.some((p: any) => String(p?.unvan || "").includes("Bld. Personeli"));
+      if (isBelediye) {
+        return "Bld. Personeli";
+      }
+
       return "";
     };
 

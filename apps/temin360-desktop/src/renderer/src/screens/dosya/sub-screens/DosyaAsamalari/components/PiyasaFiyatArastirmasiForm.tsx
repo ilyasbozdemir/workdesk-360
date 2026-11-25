@@ -139,6 +139,9 @@ export function PiyasaFiyatArastirmasiForm({
             getLowestBidInfo={getLowestBidInfo}
             getAverageBid={getAverageBid}
             handlePriceChange={handlePriceChange}
+            hesaplamaEsasi={hesaplamaEsasi}
+            onSetHesaplamaEsasi={setHesaplamaEsasi}
+            handleSaveToDosya={handleSaveToDosya}
           />
         )}
       </div>

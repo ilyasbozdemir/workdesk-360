@@ -138,6 +138,7 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
         kayit_sayisi INTEGER DEFAULT 0,
         durum TEXT NOT NULL DEFAULT 'bekliyor',
         ozet_bilgi TEXT,
+        detay_json TEXT,
         eklenen_detay TEXT,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
@@ -204,6 +205,8 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     'Temel Tablolar ve İhtiyaç Raporu Kurulumu'
   )
 
+  safeAddColumn(db, 'SYS_KurulumTakip', 'detay_json', 'TEXT DEFAULT NULL')
+  safeAddColumn(db, 'SYS_KurulumTakip', 'eklenen_detay', 'TEXT DEFAULT NULL')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'talep_eden_unvan', 'TEXT')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'evrak_sayisi', 'TEXT')
   safeAddColumn(db, 'DATA_IhtiyacRaporu', 'belge_snapshot_json', 'TEXT')
@@ -403,7 +406,16 @@ export function ensureSchemaIntegrity(db: Database.Database): void {
     { name: 'lock_reason', def: 'TEXT' },
     { name: 'kayit_kaynagi', def: "TEXT DEFAULT 'yeni'" },
     { name: 'aktarim_grubu_id', def: 'TEXT' },
-    { name: 'kaynak_kayit_id', def: 'TEXT' }
+    { name: 'kaynak_kayit_id', def: 'TEXT' },
+    { name: 'piyasa_fiyat_onay_durumu', def: "TEXT DEFAULT 'taslak'" },
+    { name: 'piyasa_fiyat_onay_tarihi', def: 'DATETIME' },
+    { name: 'piyasa_fiyat_onay_kullanici', def: 'TEXT' },
+    { name: 'maliyet_cetveli_tarihi', def: 'DATE' },
+    { name: 'arsiv_lokasyon', def: 'TEXT' },
+    { name: 'klasor_no', def: 'TEXT' },
+    { name: 'raf_no', def: 'TEXT' },
+    { name: 'klasor_checklist', def: 'TEXT' },
+    { name: 'dosya_kapali_mi', def: 'INTEGER DEFAULT 0' }
   ]
   for (const c of teminDosyasiColumns) {
     safeAddColumn(db, 'DATA_TeminDosyasi', c.name, c.def)

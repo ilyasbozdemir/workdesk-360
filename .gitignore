@@ -11,6 +11,7 @@ pb_data/
 
 # Test & E2E Reports
 test-results/
+!apps/core-playground/components/test-results/
 e2e-report/
 e2e-screenshots/*.png
 **/e2e-screenshots/*.png
@@ -37,3 +38,5 @@ yedek/
 *.arsiv
 *.arsiv360
 arsiv360.db
+.active-playground-db.json
+.temin_workspaces/

@@ -13,15 +13,25 @@ export { getDeviceInfo }
 export function registerWorkspaceIpcHandlers(closeAllSecondaryWindows: () => void): void {
   ipcMain.handle('workspace:get-device-info', () => getDeviceInfo())
 
-  ipcMain.handle('workspace:create', async (_, filePath: string, institutionName: string) => {
-    try {
-      const meta = workspaceManager.create(filePath, institutionName)
-      return { success: true, meta, newFilePath: workspaceManager.getCurrentFilePath() }
-    } catch (error: any) {
-      console.error('Create workspace error:', error)
-      return { success: false, error: error.message }
+  ipcMain.handle(
+    'workspace:create',
+    async (
+      _,
+      filePath: string,
+      institutionName: string,
+      _eButceKodu?: string,
+      adminUsername?: string,
+      _adminPassword?: string
+    ) => {
+      try {
+        const meta = workspaceManager.create(filePath, institutionName, adminUsername)
+        return { success: true, meta, newFilePath: workspaceManager.getCurrentFilePath() }
+      } catch (error: any) {
+        console.error('Create workspace error:', error)
+        return { success: false, error: error.message }
+      }
     }
-  })
+  )
 
   ipcMain.handle('workspace:open', async (_, filePath: string, allowMigration: boolean = false) => {
     try {
@@ -255,6 +265,33 @@ export function registerWorkspaceIpcHandlers(closeAllSecondaryWindows: () => voi
       }
     }
   )
+
+  ipcMain.handle(
+    'workspace:upload-file-buffer',
+    async (
+      _,
+      args: { fileName: string; bufferBase64: string; teminNo?: string; mirrorToProjectDir?: boolean }
+    ) => {
+      try {
+        const buf = Buffer.from(args.bufferBase64, 'base64')
+        const result = workspaceManager.uploadAttachmentBuffer(buf, args.fileName, args)
+        return { success: true, ...result }
+      } catch (error: any) {
+        console.error('Upload buffer attachment error:', error)
+        return { success: false, error: error.message }
+      }
+    }
+  )
+
+  ipcMain.handle('workspace:delete-attachment', async (_, relativePath: string) => {
+    try {
+      const result = workspaceManager.deleteAttachment(relativePath)
+      return result
+    } catch (error: any) {
+      console.error('Delete attachment error:', error)
+      return { success: false, error: error.message }
+    }
+  })
 
   ipcMain.handle(
     'workspace:export-attachments-zip',

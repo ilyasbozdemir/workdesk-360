@@ -16,8 +16,8 @@ describe("Uygulama Bazlı Şema Manifestleri (Multi-Desktop Architecture)", () =
     expect(manifest.app).toBe("temin360-desktop");
     expect(manifest.target_scope).toBe("dogrudan-temin");
     expect(manifest.version).toBe(pkg.version);
-    expect(manifest.schema_max).toBe(47);
-    expect(getAppSchemaMax("temin360-desktop")).toBe(47);
+    expect(manifest.schema_max).toBe(49);
+    expect(getAppSchemaMax("temin360-desktop")).toBe(49);
 
     const v46Change = manifest.changes.find((c) => c.schema === 46);
     expect(v46Change).toBeDefined();

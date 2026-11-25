@@ -1,0 +1,8 @@
+{
+  "id": "arastirma-mektubu",
+  "title": "Fiyat Araştırma İsteme Mektubu",
+  "category": "piyasa-arastirmasi",
+  "version": "1.0.0",
+  "layout": "official-document",
+  "schema": "./schema.ts"
+}

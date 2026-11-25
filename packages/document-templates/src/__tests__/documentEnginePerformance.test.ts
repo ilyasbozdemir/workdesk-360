@@ -191,7 +191,7 @@ describe('Document Engine Performans ve Aşama Analizi', () => {
       }
     }
 
-    const reportsDir = path.resolve(process.cwd(), '../../reports')
+    const reportsDir = path.resolve(process.cwd(), 'reports')
     if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir, { recursive: true })
     const outPath = path.join(reportsDir, 'document-engine-benchmarks.json')
     fs.writeFileSync(outPath, JSON.stringify(benchmarkReport, null, 2), 'utf-8')

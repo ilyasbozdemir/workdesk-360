@@ -114,13 +114,13 @@ export function useIstekliFirmalarLogic() {
     try {
       await window.electron.ipcRenderer.invoke(
         'db:run',
-        'DELETE FROM DATA_TeminKalemTeklif WHERE temin_firma_id = ?',
-        [teminFirmaId]
+        'DELETE FROM DATA_TeminKalemTeklif WHERE temin_firma_id = ? AND temin_dosya_id = ?',
+        [teminFirmaId, activeDosyaId]
       )
       const res = await window.electron.ipcRenderer.invoke(
         'db:run',
-        'DELETE FROM DATA_TeminFirma WHERE id = ?',
-        [teminFirmaId]
+        'DELETE FROM DATA_TeminFirma WHERE id = ? AND temin_dosya_id = ?',
+        [teminFirmaId, activeDosyaId]
       )
       if (res.success) loadFirms()
     } catch (err: any) {

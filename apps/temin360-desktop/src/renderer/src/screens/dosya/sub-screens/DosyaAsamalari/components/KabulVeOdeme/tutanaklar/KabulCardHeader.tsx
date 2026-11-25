@@ -49,7 +49,7 @@ export function KabulCardHeader({
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">
-              Muayene Kabul ve Tespit Komisyonu Tutanakları ({kayitSayisi})
+              Bu İhaleye Ait Kabul Tutanakları ({kayitSayisi})
             </h3>
             <span
               className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${

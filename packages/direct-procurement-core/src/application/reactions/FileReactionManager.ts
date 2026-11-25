@@ -5,7 +5,7 @@ import {
   WinnerSelected,
 } from "../../domain/file/events";
 
-import type { InProcessEventBus } from "../events/InProcessEventBus";
+import type { InProcessEventBus } from "@worksuite-360/core";
 import { AuditLogPort, DocumentStatusPort, StageProgressPort } from "../ports";
 
 /**

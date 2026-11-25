@@ -1,7 +1,7 @@
 import type { NeedItem } from "../file/NeedItem";
 import type { QuoteMatrix } from "../file/QuoteMatrix";
 import { Money } from "../money";
-import { lineTotal } from "../shared/numeric";
+import { lineTotal } from "../numeric";
 import type { PricingBasis } from "./PricingBasis";
 
 /**

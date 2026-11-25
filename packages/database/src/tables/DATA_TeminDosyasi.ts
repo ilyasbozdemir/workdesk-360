@@ -10,7 +10,11 @@ export const DATA_TeminDosyasi = {
       description: "Kayıt Numarası",
     },
     { name: "temin_no", type: "TEXT", description: "Kurum İçi Dosya Numarası" }, // Kurum içi numara (Örn: 2026/DT-001)
-    { name: "evrak_sayisi", type: "TEXT", description: "Resmî EBYS / E-DETSİS Evrak Sayısı" },
+    {
+      name: "evrak_sayisi",
+      type: "TEXT",
+      description: "Resmî EBYS / E-DETSİS Evrak Sayısı",
+    },
     {
       name: "dosya_acilis_tarihi",
       type: "DATE",
@@ -38,7 +42,8 @@ export const DATA_TeminDosyasi = {
       name: "antet_birim_gosterilsin",
       type: "INTEGER",
       default: 1,
-      description: "Antette Birim Satırı Gösterilsin mi (1: Evet, 0: Hayır - Sadece Üst Kurum)",
+      description:
+        "Antette Birim Satırı Gösterilsin mi (1: Evet, 0: Hayır - Sadece Üst Kurum)",
     },
     { name: "sunulacak_makam", type: "TEXT", description: "Sunulacak Makam" },
     { name: "ihtiyac_yeri", type: "TEXT", description: "Ihtiyac Yeri" },
@@ -208,6 +213,11 @@ export const DATA_TeminDosyasi = {
     },
     { name: "butce_kodu", type: "TEXT", description: "Butce Kodu" },
     { name: "temin_tarihi", type: "DATE", description: "Temin Tarihi" },
+    {
+      name: "maliyet_cetveli_tarihi",
+      type: "DATE",
+      description: "Yaklaşık Maliyet Cetveli Düzenleme Tarihi",
+    },
     { name: "firma_id", type: "INTEGER", description: "Firma ID" }, // Seçilen kazanan firma
     {
       name: "onay_personel_id",
@@ -291,12 +301,56 @@ export const DATA_TeminDosyasi = {
       name: "is_locked",
       type: "INTEGER",
       default: 0,
-      description: "Dosya Kilitli mi? (1: Kilitli/İmzalı/Değiştirilemez, 0: Düzenlenebilir)",
+      description:
+        "Dosya Kilitli mi? (1: Kilitli/İmzalı/Değiştirilemez, 0: Düzenlenebilir)",
     },
     {
       name: "lock_reason",
       type: "TEXT",
-      description: "Kilitleme nedeni (eski_aktarim_imzali, ekap_gonderildi, manuel_kilit vb.)",
+      description:
+        "Kilitleme nedeni (eski_aktarim_imzali, ekap_gonderildi, manuel_kilit vb.)",
+    },
+    {
+      name: "piyasa_fiyat_onay_durumu",
+      type: "TEXT",
+      default: "'taslak'",
+      description: "Piyasa Fiyat Araştırması Onay Durumu (taslak, onaylandi)",
+    },
+    {
+      name: "piyasa_fiyat_onay_tarihi",
+      type: "DATETIME",
+      description: "Piyasa Fiyat Araştırması Onay Tarihi",
+    },
+    {
+      name: "piyasa_fiyat_onay_kullanici",
+      type: "TEXT",
+      description: "Piyasa Fiyat Araştırmasını Onaylayan Kullanıcı",
+    },
+    {
+      name: "arsiv_lokasyon",
+      type: "TEXT",
+      description: "Fiziksel Arşiv Lokasyonu / Dolap",
+    },
+    {
+      name: "klasor_no",
+      type: "TEXT",
+      description: "Fiziksel Klasör / Sıra Numarası",
+    },
+    {
+      name: "raf_no",
+      type: "TEXT",
+      description: "Fiziksel Raf Numarası",
+    },
+    {
+      name: "klasor_checklist",
+      type: "TEXT",
+      description: "Fiziksel Klasör Kontrol Listesi Durumu (JSON)",
+    },
+    {
+      name: "dosya_kapali_mi",
+      type: "INTEGER",
+      default: 0,
+      description: "Fiziksel Dosya Kapatılıp Arşivlendi mi?",
     },
     {
       name: "created_at",

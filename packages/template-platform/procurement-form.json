@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "temin.request",
+  "title": "Doğrudan Temin İhtiyaç Formu",
+  "description": "Talep bilgilerini toplar.",
+  "fields": [
+    { "id": "f1", "type": "text", "name": "requester", "label": "Talep sahibi", "required": true },
+    { "id": "f2", "type": "text", "name": "description", "label": "İhtiyaç açıklaması", "required": true },
+    { "id": "f3", "type": "number", "name": "estimatedTotal", "label": "Yaklaşık tutar" },
+    { "id": "f4", "type": "select", "name": "purchaseType", "label": "Alım türü", "options": [
+      { "label": "Mal alımı", "value": "goods" },
+      { "label": "Hizmet alımı", "value": "service" }
+    ] }
+  ]
+}

@@ -45,7 +45,7 @@ async function queryRows(sql: string, params: unknown[] = []): Promise<any[]> {
 async function loadDosyaLists(dosyaId: number) {
   const [personel, birim, firma, komisyonRows] = await Promise.all([
     queryRows(
-      "SELECT id, ad_soyad, unvan, telefon, eposta, birim, birim_id, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' ORDER BY ad_soyad ASC"
+      "SELECT id, ad_soyad, COALESCE(NULLIF(unvan, ''), NULLIF(gorev, ''), '') AS unvan, gorev, telefon, eposta, birim, birim_id, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' ORDER BY ad_soyad ASC"
     ),
     queryRows(
       'SELECT id, ad, birim_adi, kisa_ad, sunum_makami, antet_ek_satir, harcama_yetkilisi_id, harcama_yetkilisi_unvan FROM TANIM_Birim WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY birim_adi ASC'
@@ -242,7 +242,7 @@ export const ihtiyacRaporuResolver: DocumentResolver = {
       ihtiyacRaporuService.getRaporKalemleri(source.raporId),
       kurumService.getKurumInfo(),
       queryRows(
-        "SELECT id, ad_soyad, unvan, telefon, eposta, birim, birim_id, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' ORDER BY ad_soyad ASC"
+        "SELECT id, ad_soyad, COALESCE(NULLIF(unvan, ''), NULLIF(gorev, ''), '') AS unvan, gorev, telefon, eposta, birim, birim_id, sicil_no FROM TANIM_Personel WHERE COALESCE(aktif_mi, 1) = 1 OR aktif_mi = '1' OR aktif_mi = 'true' ORDER BY ad_soyad ASC"
       ),
       queryRows(
         'SELECT id, ad, birim_adi, kisa_ad, sunum_makami, antet_ek_satir, harcama_yetkilisi_id, harcama_yetkilisi_unvan FROM TANIM_Birim WHERE COALESCE(aktif_mi, 1) = 1 ORDER BY birim_adi ASC'

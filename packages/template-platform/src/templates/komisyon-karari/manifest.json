@@ -1,0 +1,8 @@
+{
+  "id": "komisyon-karari",
+  "title": "Muayene ve Kabul Komisyonu Tutanağı",
+  "category": "muayene-kabul",
+  "version": "1.0.0",
+  "layout": "official-document",
+  "schema": "./schema.ts"
+}

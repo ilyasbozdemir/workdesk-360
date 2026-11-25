@@ -1,6 +1,7 @@
 import React from "react";
 import { GLOBAL_THEME } from "../theme.config";
 import { TableRowSplitDivider } from "./TableRowSplitDivider";
+import { useTemplateEdit } from "./TemplateEditContext";
 import {
   ColumnDef,
   getTemplateTableColumns,
@@ -27,6 +28,7 @@ export interface DocumentTableProps<T = any> {
   startIndex?: number;
   currentSplitIndex?: number | null;
   footer?: React.ReactNode;
+  fontSize?: string;
 }
 
 export const DocumentTable = React.forwardRef<
@@ -43,9 +45,13 @@ export const DocumentTable = React.forwardRef<
       startIndex = 0,
       currentSplitIndex,
       footer,
+      fontSize,
     },
     ref,
   ) => {
+    const { data: contextData } = useTemplateEdit();
+    const effectiveFontSize =
+      fontSize || contextData?.tableFontSize || GLOBAL_THEME.table.fontSize;
     const borderColor = GLOBAL_THEME.colors.border;
     const headerBg = GLOBAL_THEME.colors.headerBg;
     const activeColumns = columns && columns.length > 0
@@ -60,7 +66,7 @@ export const DocumentTable = React.forwardRef<
           borderCollapse: "collapse",
           marginTop: "20px",
           marginBottom: "30px",
-          fontSize: GLOBAL_THEME.table.fontSize,
+          fontSize: effectiveFontSize,
           pageBreakInside: "avoid",
         }}
       >

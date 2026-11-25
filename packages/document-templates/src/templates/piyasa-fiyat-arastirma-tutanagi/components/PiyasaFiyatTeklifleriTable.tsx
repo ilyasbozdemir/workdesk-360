@@ -59,7 +59,7 @@ export const PiyasaFiyatTeklifleriTable: React.FC<PiyasaFiyatTeklifleriTableProp
           tableLayout: "fixed",
           borderCollapse: "collapse",
           marginBottom: "8px",
-          fontSize: firmCount >= 4 ? "7.5pt" : firmCount === 3 ? "8pt" : "8.5pt",
+          fontSize: data?.tableFontSize || (firmCount >= 4 ? "7.5pt" : firmCount === 3 ? "8pt" : "8.5pt"),
           wordBreak: "break-word",
           overflowWrap: "anywhere",
           boxSizing: "border-box",

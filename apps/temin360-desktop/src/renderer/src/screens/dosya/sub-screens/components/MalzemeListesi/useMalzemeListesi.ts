@@ -316,6 +316,12 @@ export function useMalzemeListesi(
     }
     if (!confirm('Bu kalemi silmek istediğinize emin misiniz?')) return
     try {
+      // İlgili kalem silinirken tekliflerini de dosya bazlı temizle
+      await (window as any).electron.ipcRenderer.invoke(
+        'db:run',
+        'DELETE FROM DATA_TeminKalemTeklif WHERE temin_kalem_id = ? AND temin_dosya_id = ?',
+        [id, activeDosyaId]
+      )
       const res = await (window as any).electron.ipcRenderer.invoke(
         'db:run',
         'DELETE FROM DATA_TeminKalem WHERE id = ? AND temin_dosya_id = ?',

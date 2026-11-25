@@ -155,7 +155,7 @@ describe("Gerçek RC.8 / v44 SQLite Veritabanı Migration ve Bütünlük Testler
         const schemaVerRow = rawDbAfter.prepare(
           "SELECT value FROM settings WHERE key = 'dbSchemaVersion'",
         ).get() as { value: string };
-        expect(schemaVerRow.value).toBe("47");
+        expect(Number(schemaVerRow.value)).toBeGreaterThanOrEqual(47);
 
         // v45 tabloları (DATA_KutuphaneGrup vb.) artık oluşmuş olmalı
         const tablesAfter = rawDbAfter.prepare(

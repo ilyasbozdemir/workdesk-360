@@ -18,6 +18,8 @@ export function FiyatArastirmaMektubu({
   orientation = "portrait",
 }: FiyatArastirmaMektubuProps) {
   const items = data.ihtiyacKalemleri || [];
+  const tableFontSize = data.tableFontSize || "9.5pt";
+
   const komisyonRaw = (data.komisyonUyeleri && data.komisyonUyeleri.length > 0)
     ? data.komisyonUyeleri
     : (data.komisyon && data.komisyon.length > 0)
@@ -122,616 +124,598 @@ export function FiyatArastirmaMektubu({
     displayTeklifGecerlilikTarihi = "……/……/20……";
   }
 
-  return (
-    <DocumentLayout
-      data={data as any}
-      hideHeader={true}
-      hideFooter={false}
-      pageSize={pageSize}
-      orientation={orientation}
-      pageNumber={1}
-      totalPages={1}
-    >
+  const renderHeaderSection = () => (
+    <>
+      {/* BÖLÜM 1: FİYAT ARAŞTIRMA MEKTUBU */}
       <div
         style={{
-          width: "100%",
-          fontSize: "10.5pt",
-          color: "#000",
-          fontFamily: "'Times New Roman', Times, serif",
-          lineHeight: 1.4,
+          textAlign: "center",
+          fontWeight: "bold",
+          fontSize: "12pt",
+          marginBottom: "8px",
+          textTransform: "uppercase",
         }}
       >
-        {/* BÖLÜM 1: FİYAT ARAŞTIRMA MEKTUBU */}
-        <div
-          style={{
-            textAlign: "center",
-            fontWeight: "bold",
-            fontSize: "12pt",
-            marginBottom: "8px",
-            textTransform: "uppercase",
-          }}
-        >
-          <EditableField
-            name="sunulacakMakam"
-            value={mainHeaderTitle}
-            placeholder="SUNULACAK MAKAM ADI"
-          />
-        </div>
+        <EditableField
+          name="sunulacakMakam"
+          value={mainHeaderTitle}
+          placeholder="SUNULACAK MAKAM ADI"
+        />
+      </div>
 
-        <div
-          style={{
-            textAlign: "center",
-            fontWeight: "bold",
-            fontSize: "11.5pt",
-            margin: "8px 0",
-            textTransform: "uppercase",
-          }}
-        >
-          FİYAT ARAŞTIRMA MEKTUBU
-        </div>
+      <div
+        style={{
+          textAlign: "center",
+          fontWeight: "bold",
+          fontSize: "11.5pt",
+          margin: "8px 0",
+          textTransform: "uppercase",
+        }}
+      >
+        FİYAT ARAŞTIRMA MEKTUBU
+      </div>
 
-        <div
-          style={{
-            textIndent: "30px",
-            textAlign: "justify",
-            marginBottom: "12px",
-          }}
-        >
-          <EditableField
-            name="idareHitapMetni"
-            value={data.idareHitapMetni || data.idareAdi || "Kurumumuza ait"}
-            placeholder="Kurumumuza ait / İdare Adı"
-          />,{" "}
-          <EditableField
-            name="isinAdi"
-            value={data.isinAdi}
-            placeholder="İşin Adı"
-          />{" "}
-          için fiyat araştırması yapılmaktadır. Birim fiyatlarını KDV hariç
-          olarak{" "}
-          <EditableField
-            name="gunSayisi"
-            value={displayGunSayisi}
-            placeholder="..."
-          />{" "}
-          (
-          <EditableField
-            name="gunSayisiYazi"
-            value={displayGunSayisiYazi}
-            placeholder="..."
-          />) gün içinde bildirmenizi rica ederim.
-        </div>
+      <div
+        style={{
+          textIndent: "30px",
+          textAlign: "justify",
+          marginBottom: "12px",
+        }}
+      >
+        <EditableField
+          name="idareHitapMetni"
+          value={data.idareHitapMetni || data.idareAdi || "Kurumumuza ait"}
+          placeholder="Kurumumuza ait / İdare Adı"
+        />,{" "}
+        <EditableField
+          name="isinAdi"
+          value={data.isinAdi}
+          placeholder="İşin Adı"
+        />{" "}
+        için fiyat araştırması yapılmaktadır. Birim fiyatlarını KDV hariç
+        olarak{" "}
+        <EditableField
+          name="gunSayisi"
+          value={displayGunSayisi}
+          placeholder="..."
+        />{" "}
+        (
+        <EditableField
+          name="gunSayisiYazi"
+          value={displayGunSayisiYazi}
+          placeholder="..."
+        />) gün içinde bildirmenizi rica ederim.
+      </div>
 
-        {/* KOMİSYON ÜYELERİ */}
-        {komisyon.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "space-around",
-              alignItems: "flex-start",
-              gap: "12px 16px",
-              margin: "14px 0",
-              textAlign: "center",
-              pageBreakInside: "avoid",
-            }}
-          >
-            {komisyon.map((uye: any, idx: number) => {
-              const gorevBaslik =
-                uye.komisyonGorevi ||
-                uye.gorevi ||
-                uye.gorev ||
-                uye.rol ||
-                "Üye";
-
-              const count = komisyon.length;
-              const flexWidth =
-                count === 1
-                  ? "280px"
-                  : count === 2
-                  ? "45%"
-                  : count === 3
-                  ? "30%"
-                  : count === 4
-                  ? "22%"
-                  : "28%";
-
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    flex: `0 1 ${flexWidth}`,
-                    minWidth: "160px",
-                    maxWidth: count <= 2 ? "320px" : "100%",
-                    fontSize: "9.5pt",
-                    padding: "4px 6px",
-                    lineHeight: 1.35,
-                    boxSizing: "border-box",
-                  }}
-                >
-                  {gorevBaslik && (
-                    <div style={{ fontWeight: "bold", marginBottom: "2px" }}>
-                      {gorevBaslik}
-                    </div>
-                  )}
-                  <div>
-                    {uye.adSoyad || uye.ad_soyad || ""}
-                  </div>
-                  <div style={{ fontSize: "9pt", color: "#111" }}>
-                    {uye.unvan || ""}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* BÖLÜM 2: FİYAT ARAŞTIRMA VE BİRİM FİYAT TEKLİF MEKTUBU */}
-
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginBottom: "10px",
-            fontSize: "9.5pt",
-          }}
-        >
-          <tbody>
-            <tr>
-              <td
-                colSpan={2}
-                style={{
-                  border: "1px solid #000",
-                  padding: "4px 8px",
-                  fontWeight: "bold",
-                  width: "45%",
-                }}
-              >
-                <div
-                  style={{
-                    textAlign: "center",
-                    fontWeight: "bold",
-                    margin: "8px 0",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  FİYAT ARAŞTIRMA VE BİRİM FİYAT TEKLİF MEKTUBU
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td
-                colSpan={2}
-                style={{
-                  border: "1px solid #000",
-                  padding: "4px 4px",
-                  fontWeight: "bold",
-                }}
-              >
-                <div
-                  style={{
-                    textAlign: "center",
-                    fontWeight: "bold",
-                    fontSize: "10.5pt",
-                    marginBottom: "8px",
-                  }}
-                >
-                  <EditableField
-                    name="idareAdi"
-                    value={data.idareAdi || data.kurumAdi}
-                    placeholder="KURUM / İDARE ADI"
-                  />
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td
-                style={{
-                  border: "1px solid #000",
-                  padding: "4px 8px",
-                  fontWeight: "bold",
-                  width: "45%",
-                }}
-              >
-                Teklif Sahibinin Adı Soyadı / Ticaret Ünvanı
-              </td>
-              <td
-                style={{
-                  border: "1px solid #000",
-                  padding: "4px 8px",
-                  width: "55%",
-                }}
-              >
-                <EditableField
-                  name="teklifSahibi"
-                  value={data.teklifSahibi}
-                  placeholder="Firma Ünvanı"
-                />
-              </td>
-            </tr>
-            <tr>
-              <td
-                style={{
-                  border: "1px solid #000",
-                  padding: "4px 8px",
-                  fontWeight: "bold",
-                }}
-              >
-                Açık Tebligat Adresi
-              </td>
-              <td style={{ border: "1px solid #000", padding: "4px 8px" }}>
-                <EditableField
-                  name="tebligatAdresi"
-                  value={data.tebligatAdresi}
-                  placeholder="Adres"
-                />
-              </td>
-            </tr>
-            <tr>
-              <td
-                style={{
-                  border: "1px solid #000",
-                  padding: "4px 8px",
-                  fontWeight: "bold",
-                }}
-              >
-                Bağlı Olduğu Vergi Dairesi ve Numarası
-              </td>
-              <td style={{ border: "1px solid #000", padding: "4px 8px" }}>
-                <EditableField
-                  name="vergiNo"
-                  value={data.vergiNo}
-                  placeholder="Vergi Dairesi / No"
-                />
-              </td>
-            </tr>
-            <tr>
-              <td
-                style={{
-                  border: "1px solid #000",
-                  padding: "4px 8px",
-                  fontWeight: "bold",
-                }}
-              >
-                Telefon ve Faks Numarası
-              </td>
-              <td style={{ border: "1px solid #000", padding: "4px 8px" }}>
-                <EditableField
-                  name="telefonFaks"
-                  value={data.telefonFaks}
-                  placeholder="Telefon / Faks"
-                />
-              </td>
-            </tr>
-            <tr>
-              <td
-                style={{
-                  border: "1px solid #000",
-                  padding: "4px 8px",
-                  fontWeight: "bold",
-                }}
-              >
-                Elektronik Posta Adresi (varsa)
-              </td>
-              <td style={{ border: "1px solid #000", padding: "4px 8px" }}>
-                <EditableField
-                  name="eposta"
-                  value={data.eposta}
-                  placeholder="E-Posta"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        {/* AÇIKLAMA / TAAHHÜT METNİ */}
-        <div
-          style={{
-            border: "1px solid #000",
-            padding: "8px 12px",
-            fontSize: "9pt",
-            lineHeight: 1.35,
-            marginTop: "8px",
-          }}
-        >
-          {data.aciklama
-            ? (
-              <div style={{ whiteSpace: "pre-wrap", textAlign: "justify" }}>
-                {data.aciklama}
-              </div>
-            )
-            : (
-              <ol
-                style={{
-                  margin: 0,
-                  paddingLeft: "22px",
-                  listStyleType: "decimal",
-                }}
-              >
-                <li style={{ marginBottom: "3px", textAlign: "justify" }}>
-                  Teklifimiz {displayTeklifGecerlilikTarihi}{" "}
-                  tarihine kadar geçerlidir.
-                </li>
-                <li style={{ marginBottom: "3px", textAlign: "justify" }}>
-                  Teklifimize Damga Vergisi, Resim Harç, Pul ve Ulaştırma
-                  Giderleri dahildir.
-                </li>
-                <li style={{ marginBottom: "3px", textAlign: "justify" }}>
-                  İhale konusu iş için sermayesinin %50'sinden fazlasına sahip
-                  olduğumuz başka bir tüzel kişinin bu işe ayrı bir teklif
-                  vermediğini beyan ediyoruz.
-                </li>
-                <li style={{ marginBottom: "3px", textAlign: "justify" }}>
-                  Aldığınız herhangi bir teklifi veya en düşük teklifi seçmek
-                  zorunda olmadığınızı kabul ediyoruz.
-                </li>
-                <li style={{ marginBottom: "3px", textAlign: "justify" }}>
-                  İhale konusu işle ilgili olmak üzere idarenizce
-                  yapılacak/yaptırılacak diğer işlerde idarenizin çıkarlarına
-                  aykırı düşecek hiçbir eylem ve oluşum içerisinde
-                  olmayacağımızı taahhüt ediyoruz.
-                </li>
-                <li style={{ marginBottom: "3px", textAlign: "justify" }}>
-                  4734 Sayılı Kamu İhale Kanununun 4. maddesindeki "Yerli
-                  İstekli" tanımı gereğince yerli istekli durumundayız.
-                </li>
-                <li style={{ textAlign: "justify" }}>
-                  İhale konusu işin tamamını Teklif Mektubumuzun ekindeki Birim
-                  Fiyat Teklif Cetvelinde belirtilen her bir iş kalemi için
-                  teklif ettiğimiz birim fiyatları üzerinden{" "}
-                  <strong>KDV HARİÇ</strong> toplam (rakamla){" "}
-                  <span
-                    style={{
-                      display: "inline-block",
-                      borderBottom: "1px dotted #000",
-                      width: "130px",
-                      minHeight: "14px",
-                      verticalAlign: "bottom",
-                      margin: "0 3px",
-                    }}
-                  >
-                    <EditableField
-                      name="teklifRakamla"
-                      value={data.teklifRakamla}
-                      placeholder=" "
-                    />
-                  </span>{" "}
-                  TL (yazı ile){" "}
-                  <span
-                    style={{
-                      display: "inline-block",
-                      borderBottom: "1px dotted #000",
-                      width: "200px",
-                      minHeight: "14px",
-                      verticalAlign: "bottom",
-                      margin: "0 3px",
-                    }}
-                  >
-                    <EditableField
-                      name="teklifYaziyla"
-                      value={data.teklifYaziyla}
-                      placeholder=" "
-                    />
-                  </span>{" "}
-                  TL bedel karşılığında kabul ve taahhüt ederiz.
-                </li>
-              </ol>
-            )}
-        </div>
-
-        {/* KAŞE VE İMZA */}
+      {/* KOMİSYON ÜYELERİ */}
+      {komisyon.length > 0 && (
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
+            flexWrap: "wrap",
+            justifyContent: "space-around",
             alignItems: "flex-start",
-            marginTop: "12px",
-            marginBottom: "12px",
+            gap: "12px 16px",
+            margin: "14px 0",
+            textAlign: "center",
+            pageBreakInside: "avoid",
           }}
         >
-          <div style={{ fontStyle: "italic", color: "#333", fontSize: "10pt" }}>
-            Para Birimi: Türk Lirası (TL)
-          </div>
-          <div
+          {komisyon.map((uye: any, idx: number) => {
+            const gorevBaslik =
+              uye.komisyonGorevi ||
+              uye.gorevi ||
+              uye.gorev ||
+              uye.rol ||
+              "Üye";
+
+            const count = komisyon.length;
+            const flexWidth =
+              count === 1
+                ? "280px"
+                : count === 2
+                ? "45%"
+                : count === 3
+                ? "30%"
+                : count === 4
+                ? "22%"
+                : "28%";
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  flex: `0 1 ${flexWidth}`,
+                  minWidth: "160px",
+                  maxWidth: count <= 2 ? "320px" : "100%",
+                  fontSize: "9.5pt",
+                  padding: "4px 6px",
+                  lineHeight: 1.35,
+                  boxSizing: "border-box",
+                }}
+              >
+                {gorevBaslik && (
+                  <div style={{ fontWeight: "bold", marginBottom: "2px" }}>
+                    {gorevBaslik}
+                  </div>
+                )}
+                <div>
+                  {uye.adSoyad || uye.ad_soyad || ""}
+                </div>
+                <div style={{ fontSize: "9pt", color: "#111" }}>
+                  {uye.unvan || ""}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+
+  const renderFormBolum2 = () => (
+    <>
+      {/* BÖLÜM 2: FİYAT ARAŞTIRMA VE BİRİM FİYAT TEKLİF MEKTUBU */}
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          marginBottom: "10px",
+          fontSize: "9.5pt",
+        }}
+      >
+        <tbody>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                border: "1px solid #000",
+                padding: "4px 8px",
+                fontWeight: "bold",
+                width: "45%",
+              }}
+            >
+              <div
+                style={{
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  margin: "8px 0",
+                  textTransform: "uppercase",
+                }}
+              >
+                FİYAT ARAŞTIRMA VE BİRİM FİYAT TEKLİF MEKTUBU
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                border: "1px solid #000",
+                padding: "4px 4px",
+                fontWeight: "bold",
+              }}
+            >
+              <div
+                style={{
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  fontSize: "10.5pt",
+                  marginBottom: "8px",
+                }}
+              >
+                <EditableField
+                  name="idareAdi"
+                  value={data.idareAdi || data.kurumAdi}
+                  placeholder="KURUM / İDARE ADI"
+                />
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td
+              style={{
+                border: "1px solid #000",
+                padding: "4px 8px",
+                fontWeight: "bold",
+                width: "45%",
+              }}
+            >
+              Teklif Sahibinin Adı Soyadı / Ticaret Ünvanı
+            </td>
+            <td
+              style={{
+                border: "1px solid #000",
+                padding: "4px 8px",
+                width: "55%",
+              }}
+            >
+              <EditableField
+                name="teklifSahibi"
+                value={data.teklifSahibi}
+                placeholder="Firma Ünvanı"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td
+              style={{
+                border: "1px solid #000",
+                padding: "4px 8px",
+                fontWeight: "bold",
+              }}
+            >
+              Açık Tebligat Adresi
+            </td>
+            <td style={{ border: "1px solid #000", padding: "4px 8px" }}>
+              <EditableField
+                name="tebligatAdresi"
+                value={data.tebligatAdresi}
+                placeholder="Adres"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td
+              style={{
+                border: "1px solid #000",
+                padding: "4px 8px",
+                fontWeight: "bold",
+              }}
+            >
+              Bağlı Olduğu Vergi Dairesi ve Numarası
+            </td>
+            <td style={{ border: "1px solid #000", padding: "4px 8px" }}>
+              <EditableField
+                name="vergiNo"
+                value={data.vergiNo}
+                placeholder="Vergi Dairesi / No"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td
+              style={{
+                border: "1px solid #000",
+                padding: "4px 8px",
+                fontWeight: "bold",
+              }}
+            >
+              Telefon ve Faks Numarası
+            </td>
+            <td style={{ border: "1px solid #000", padding: "4px 8px" }}>
+              <EditableField
+                name="telefonFaks"
+                value={data.telefonFaks}
+                placeholder="Telefon / Faks"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td
+              style={{
+                border: "1px solid #000",
+                padding: "4px 8px",
+                fontWeight: "bold",
+              }}
+            >
+              Elektronik Posta Adresi (varsa)
+            </td>
+            <td style={{ border: "1px solid #000", padding: "4px 8px" }}>
+              <EditableField
+                name="eposta"
+                value={data.eposta}
+                placeholder="E-Posta"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* AÇIKLAMA / TAAHHÜT METNİ */}
+      <div
+        style={{
+          border: "1px solid #000",
+          padding: "8px 12px",
+          fontSize: "9pt",
+          lineHeight: 1.35,
+          marginTop: "8px",
+        }}
+      >
+        {data.aciklama
+          ? (
+            <div style={{ whiteSpace: "pre-wrap", textAlign: "justify" }}>
+              {data.aciklama}
+            </div>
+          )
+          : (
+            <ol
+              style={{
+                margin: 0,
+                paddingLeft: "22px",
+                listStyleType: "decimal",
+              }}
+            >
+              <li style={{ marginBottom: "2px" }}>
+                Teklifimize Damga Vergisi, Resim Harç, Pul ve Ulaştırma
+                Giderleri dahildir.
+              </li>
+              <li style={{ marginBottom: "2px" }}>
+                Teklifimiz {displayTeklifGecerlilikTarihi} tarihine kadar geçerlidir.
+              </li>
+              <li style={{ marginBottom: "2px" }}>
+                İhale konusu iş için sermayesinin %50 sinden fazlasına sahip
+                olduğumuz başka bir tüzel kişinin bu işe ayrı bir teklif
+                vermediğini beyan ediyoruz.
+              </li>
+              <li style={{ marginBottom: "2px" }}>
+                Aldığınız herhangi bir teklifi veya en düşük teklifi seçmek
+                zorunda olmadığınızı kabul ediyoruz.
+              </li>
+              <li style={{ marginBottom: "2px" }}>
+                İhale konusu işle ilgili olmak üzere idarenizce
+                yapılacak/yaptırılacak diğer işlerde idarenizin çıkarlarına
+                aykırı düşecek hiçbir eylem ve oluşum içerisinde
+                olmayacağımızı taahhüt ediyoruz.
+              </li>
+              <li style={{ marginBottom: "2px" }}>
+                Bu alıma ilişkin malzeme kalemlerine kısmi
+                teklif{"    ............"}
+              </li>
+              <li style={{ marginBottom: "2px" }}>
+                4734 Sayılı Kamu İhale Kanununun 4.maddesindeki "Yerli İstekli"
+                tanımı gereğince yerli istekli durumundayız.
+              </li>
+              <li>
+                İhale konusu işin tamamını Teklif Mektubumuzun ekindeki Birim
+                Fiyat Teklif Cetvelinde belirtilen her bir iş kalemi için teklif
+                ettiğimiz birim fiyatları üzerinden{" "}
+                <strong>KDV HARİÇ</strong> toplam (rakamla){" "}
+                <span
+                  style={{
+                    display: "inline-block",
+                    borderBottom: "1px dotted #000",
+                    minWidth: "120px",
+                  }}
+                >
+                  <EditableField
+                    name="teklifRakamla"
+                    value={data.teklifRakamla}
+                    placeholder=" "
+                  />
+                </span>{" "}
+                TL (yazı ile){" "}
+                <span
+                  style={{
+                    display: "inline-block",
+                    borderBottom: "1px dotted #000",
+                    minWidth: "200px",
+                  }}
+                >
+                  <EditableField
+                    name="teklifYaziyla"
+                    value={data.teklifYaziyla}
+                    placeholder=" "
+                  />
+                </span>{" "}
+                TL bedel karşılığında kabul ve taahhüt ederiz.
+              </li>
+            </ol>
+          )}
+      </div>
+
+      {/* KAŞE VE İMZA */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginTop: "12px",
+          marginBottom: "12px",
+        }}
+      >
+        <div style={{ fontStyle: "italic", color: "#333", fontSize: "10pt" }}>
+          Para Birimi: Türk Lirası (TL)
+        </div>
+        <div
+          style={{
+            textAlign: "center",
+            width: "220px",
+            fontSize: "10.5pt",
+            lineHeight: 1.4,
+            marginLeft: "auto",
+          }}
+        >
+          <DateEditableField
+            name="tarih"
+            value={data.tarih || data.dosyaTarihi}
+            placeholder="……/……/20…"
+          />
+          <br />
+          <br />
+          Kaşe ve İmza
+        </div>
+      </div>
+    </>
+  );
+
+  const renderTable = (tableItems: typeof items, startIndex = 0, showTotals = true) => (
+    <table
+      style={{
+        width: "100%",
+        borderCollapse: "collapse",
+        marginTop: "8px",
+        fontSize: tableFontSize,
+      }}
+    >
+      <thead>
+        <tr>
+          <th
             style={{
+              border: "1px solid #000",
+              padding: "5px",
+              width: "5%",
               textAlign: "center",
-              width: "220px",
-              fontSize: "10.5pt",
-              lineHeight: 1.4,
-              marginLeft: "auto",
+              fontWeight: "bold",
             }}
           >
-            <DateEditableField
-              name="tarih"
-              value={data.tarih || data.dosyaTarihi}
-              placeholder="……/……/20…"
-            />
-            <br />
-            <br />
-            Kaşe ve İmza
-          </div>
-        </div>
-
-        {/* BİRİM FİYAT TEKLİF CETVELİ TABLOSU */}
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "8px",
-            fontSize: "9.5pt",
-          }}
-        >
-          <thead>
-            <tr>
-              <th
-                style={{
-                  border: "1px solid #000",
-                  padding: "5px",
-                  width: "5%",
-                  textAlign: "center",
-                  fontWeight: "bold",
-                }}
-              >
-                Sıra
-              </th>
-              <th
-                style={{
-                  border: "1px solid #000",
-                  padding: "5px",
-                  width: "32%",
-                  textAlign: "left",
-                  fontWeight: "bold",
-                }}
-              >
-                Malzeme/Hizmet Adı
-              </th>
-              <th
-                style={{
-                  border: "1px solid #000",
-                  padding: "5px",
-                  width: "17%",
-                  textAlign: "left",
-                  fontWeight: "bold",
-                }}
-              >
-                Özelliği
-              </th>
-              <th
-                style={{
-                  border: "1px solid #000",
-                  padding: "5px",
-                  width: "9%",
-                  textAlign: "center",
-                  fontWeight: "bold",
-                }}
-              >
-                Birimi
-              </th>
-              <th
-                style={{
-                  border: "1px solid #000",
-                  padding: "5px",
-                  width: "9%",
-                  textAlign: "center",
-                  fontWeight: "bold",
-                }}
-              >
-                Miktar
-              </th>
-              <th
-                style={{
-                  border: "1px solid #000",
-                  padding: "5px",
-                  width: "14%",
-                  textAlign: "center",
-                  fontWeight: "bold",
-                }}
-              >
-                Birim Fiyatı
-              </th>
-              <th
-                style={{
-                  border: "1px solid #000",
-                  padding: "5px",
-                  width: "14%",
-                  textAlign: "center",
-                  fontWeight: "bold",
-                }}
-              >
-                Tutarı
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length > 0
-              ? (
-                items.map((item, idx) => {
-                  const rowNum = idx + 1;
-                  return (
-                    <React.Fragment key={idx}>
-                      <tr>
-                        <td
-                          style={{
-                            border: "1px solid #000",
-                            padding: "5px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {item.siraNo || rowNum}
-                        </td>
-                        <td
-                          style={{ border: "1px solid #000", padding: "5px" }}
-                        >
-                          {item.malzemeAdi}
-                        </td>
-                        <td
-                          style={{ border: "1px solid #000", padding: "5px" }}
-                        >
-                          {item.ozelligi || "-"}
-                        </td>
-                        <td
-                          style={{
-                            border: "1px solid #000",
-                            padding: "5px",
-                            textAlign: "center",
-                          }}
-                        >
-                          {item.birimi || "-"}
-                        </td>
-                        <td
-                          style={{
-                            border: "1px solid #000",
-                            padding: "5px",
-                            textAlign: "right",
-                          }}
-                        >
-                          {item.miktar}
-                        </td>
-                        <td
-                          style={{
-                            border: "1px solid #000",
-                            padding: "5px",
-                            textAlign: "right",
-                          }}
-                        >
-                          {item.birimFiyat ? `${item.birimFiyat} ₺` : ""}
-                        </td>
-                        <td
-                          style={{
-                            border: "1px solid #000",
-                            padding: "5px",
-                            textAlign: "right",
-                          }}
-                        >
-                          {item.tutar ? `${item.tutar} ₺` : ""}
-                        </td>
-                      </tr>
-                      <TableRowSplitDivider
-                        rowIndex={rowNum}
-                        colSpan={7}
-                        currentSplitIndex={data.firstPageLimit
-                          ? Number(data.firstPageLimit)
-                          : null}
-                      />
-                    </React.Fragment>
-                  );
-                })
-              )
-              : (
+            Sıra No
+          </th>
+          <th
+            style={{
+              border: "1px solid #000",
+              padding: "5px",
+              width: "37%",
+              textAlign: "left",
+              fontWeight: "bold",
+            }}
+          >
+            Mal/Hizmet Kaleminin Adı ve Kısa Açıklaması
+          </th>
+          <th
+            style={{
+              border: "1px solid #000",
+              padding: "5px",
+              width: "17%",
+              textAlign: "left",
+              fontWeight: "bold",
+            }}
+          >
+            Özelliği
+          </th>
+          <th
+            style={{
+              border: "1px solid #000",
+              padding: "5px",
+              width: "9%",
+              textAlign: "center",
+              fontWeight: "bold",
+            }}
+          >
+            Birimi
+          </th>
+          <th
+            style={{
+              border: "1px solid #000",
+              padding: "5px",
+              width: "9%",
+              textAlign: "center",
+              fontWeight: "bold",
+            }}
+          >
+            Miktar
+          </th>
+          <th
+            style={{
+              border: "1px solid #000",
+              padding: "5px",
+              width: "14%",
+              textAlign: "center",
+              fontWeight: "bold",
+            }}
+          >
+            Birim Fiyatı
+          </th>
+          <th
+            style={{
+              border: "1px solid #000",
+              padding: "5px",
+              width: "14%",
+              textAlign: "center",
+              fontWeight: "bold",
+            }}
+          >
+            Tutarı
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {tableItems.length > 0 ? (
+          tableItems.map((item, idx) => {
+            const rowNum = startIndex + idx + 1;
+            return (
+              <React.Fragment key={idx}>
                 <tr>
                   <td
-                    colSpan={7}
                     style={{
                       border: "1px solid #000",
-                      padding: "8px",
+                      padding: "5px",
                       textAlign: "center",
-                      fontStyle: "italic",
                     }}
                   >
-                    Kalem bulunamadı
+                    {item.siraNo || rowNum}
+                  </td>
+                  <td style={{ border: "1px solid #000", padding: "5px" }}>
+                    {item.malzemeAdi}
+                  </td>
+                  <td style={{ border: "1px solid #000", padding: "5px" }}>
+                    {item.ozelligi || "-"}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #000",
+                      padding: "5px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {item.birimi || "-"}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #000",
+                      padding: "5px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {item.miktar}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #000",
+                      padding: "5px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {item.birimFiyat ? `${item.birimFiyat} ₺` : ""}
+                  </td>
+                  <td
+                    style={{
+                      border: "1px solid #000",
+                      padding: "5px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {item.tutar ? `${item.tutar} ₺` : ""}
                   </td>
                 </tr>
-              )}
+                <TableRowSplitDivider
+                  rowIndex={rowNum}
+                  colSpan={7}
+                  currentSplitIndex={
+                    data.firstPageLimit ? Number(data.firstPageLimit) : null
+                  }
+                />
+              </React.Fragment>
+            );
+          })
+        ) : (
+          <tr>
+            <td
+              colSpan={7}
+              style={{
+                border: "1px solid #000",
+                padding: "8px",
+                textAlign: "center",
+                fontStyle: "italic",
+              }}
+            >
+              Kalem bulunamadı
+            </td>
+          </tr>
+        )}
+
+        {showTotals && (
+          <>
             <tr>
               <td colSpan={5} style={{ border: "none" }} />
               <td
@@ -792,9 +776,136 @@ export function FiyatArastirmaMektubu({
                 }}
               />
             </tr>
-          </tbody>
-        </table>
-      </div>
-    </DocumentLayout>
+          </>
+        )}
+      </tbody>
+    </table>
+  );
+
+  const firstPageLimit = data.firstPageLimit ? Number(data.firstPageLimit) : undefined;
+  const isMultiPage = Boolean(firstPageLimit && items.length > firstPageLimit);
+  const page1Items = isMultiPage && firstPageLimit ? items.slice(0, firstPageLimit) : items;
+  const page2Items = isMultiPage && firstPageLimit ? items.slice(firstPageLimit) : [];
+
+  if (!isMultiPage) {
+    return (
+      <DocumentLayout
+        data={data as any}
+        hideHeader={true}
+        hideFooter={false}
+        pageSize={pageSize}
+        orientation={orientation}
+        pageNumber={1}
+        totalPages={1}
+      >
+        <div
+          style={{
+            width: "100%",
+            fontSize: "10.5pt",
+            color: "#000",
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1.4,
+          }}
+        >
+          {renderHeaderSection()}
+          {renderFormBolum2()}
+          {renderTable(items, 0, true)}
+        </div>
+      </DocumentLayout>
+    );
+  }
+
+  return (
+    <>
+      {/* 1. SAYFA */}
+      <DocumentLayout
+        data={data as any}
+        hideHeader={true}
+        hideFooter={false}
+        pageSize={pageSize}
+        orientation={orientation}
+        pageNumber={1}
+        totalPages={2}
+      >
+        <div
+          style={{
+            width: "100%",
+            fontSize: "10.5pt",
+            color: "#000",
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1.4,
+          }}
+        >
+          {renderHeaderSection()}
+          {renderFormBolum2()}
+          {renderTable(page1Items, 0, false)}
+          <div
+            style={{
+              textAlign: "right",
+              fontSize: "8.5pt",
+              fontStyle: "italic",
+              marginTop: "8px",
+              color: "#555",
+            }}
+          >
+            Tablo devamı ve genel toplam 2. sayfadadır...
+          </div>
+        </div>
+      </DocumentLayout>
+
+      {/* 2. SAYFA */}
+      <DocumentLayout
+        data={data as any}
+        hideHeader={true}
+        hideFooter={false}
+        pageSize={pageSize}
+        orientation={orientation}
+        pageNumber={2}
+        totalPages={2}
+      >
+        <div
+          style={{
+            width: "100%",
+            fontSize: "10.5pt",
+            color: "#000",
+            fontFamily: "'Times New Roman', Times, serif",
+            lineHeight: 1.4,
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              fontWeight: "bold",
+              fontSize: "11pt",
+              margin: "4px 0 10px 0",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            FİYAT ARAŞTIRMA VE BİRİM FİYAT TEKLİF MEKTUBU (DEVAMI)
+          </div>
+          {renderTable(page2Items, firstPageLimit, true)}
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "24px" }}>
+            <div
+              style={{
+                textAlign: "center",
+                width: "220px",
+                fontSize: "10.5pt",
+                lineHeight: 1.4,
+              }}
+            >
+              <DateEditableField
+                name="tarih"
+                value={data.tarih || data.dosyaTarihi}
+                placeholder="……/……/20…"
+              />
+              <br />
+              <br />
+              Kaşe ve İmza
+            </div>
+          </div>
+        </div>
+      </DocumentLayout>
+    </>
   );
 }

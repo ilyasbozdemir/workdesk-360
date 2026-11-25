@@ -937,8 +937,31 @@ export class InstitutionalHeaderProvider
     // 4. Dosya Evrak Sayısı Çözümlenmesi & PRESERVE (Tüm belgelere tek kaynaktan kalıcı kalıtım)
     let detsisEvrakSayisi = ''
     const currentEvrak = String(dosyaRow?.evrak_sayisi || '').replace(/^E-/i, '').trim()
+
+    // Temin_no'dan dosya sıra numarasını çıkar (Örn: "2026/52" -> 52, "20" -> 20)
+    const dosyaTeminNo = String(dosyaRow?.temin_no || '').trim()
+    let dosyaSeq: number | null = null
+    if (dosyaTeminNo) {
+      const parts = dosyaTeminNo.split(/[/_ -]+/)
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const n = parseInt(parts[i], 10)
+        if (!isNaN(n) && n > 0 && n < 100000 && n !== dosyaRow?.butce_yili) {
+          dosyaSeq = n
+          break
+        }
+      }
+    }
+
+    let evrakSeq: number | null = null
+    if (currentEvrak) {
+      const match = currentEvrak.match(/-(\d+)$/)
+      if (match) {
+        evrakSeq = parseInt(match[1], 10)
+      }
+    }
+
     if (currentEvrak && !currentEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(currentEvrak)) {
-      // Dosyada zaten resmi DETSİS formatında sayı varsa doğrudan miras/kalıtım al!
+      // Dosyada zaten resmi DETSİS formatında sayı varsa (resmi evrak sayısı esastır) doğrudan miras/kalıtım al!
       detsisEvrakSayisi = currentEvrak
     } else if (dosyaId && this.evrakSayisiResolver) {
       try {
@@ -948,10 +971,18 @@ export class InstitutionalHeaderProvider
         // tek bir sabit sayıyı kullanır, asla birbirinden farklılaşmaz!
         if (detsisEvrakSayisi) {
           try {
-            await execQuery(
-              'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
-              [detsisEvrakSayisi, dosyaId]
-            )
+            if (typeof window !== 'undefined' && (window as any).electron?.ipcRenderer?.invoke) {
+              await (window as any).electron.ipcRenderer.invoke(
+                'db:run',
+                'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
+                [detsisEvrakSayisi, dosyaId]
+              )
+            } else {
+              await execQuery(
+                'UPDATE DATA_TeminDosyasi SET evrak_sayisi = ? WHERE id = ?',
+                [detsisEvrakSayisi, dosyaId]
+              )
+            }
             if (dosyaRow) {
               dosyaRow.evrak_sayisi = detsisEvrakSayisi
             }

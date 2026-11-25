@@ -463,10 +463,13 @@ export function buildMergedPersonelList(
 
     const docPersonelFields = [
       { a: data.hazirlayanPersonelAdi, u: data.hazirlayanPersonelUnvan, r: "Hazırlayan" },
+      { a: data.talepEdenPersonelAdi, u: data.talepEdenPersonelUnvan, r: "Talep Eden" },
       { a: data.onaylayanPersonelAdi, u: data.onaylayanPersonelUnvan, r: "Harcama Yetkilisi" },
+      { a: data.harcamaYetkilisiAdi, u: data.harcamaYetkilisiUnvan, r: "Harcama Yetkilisi" },
+      { a: data.baskanAdi, u: data.baskanUnvan, r: "Baskan" },
       {
         a: data.gerceklestirmeGorevlisiAdi,
-        u: data.gerceklestirmeGorevlisiUnvani,
+        u: data.gerceklestirmeGorevlisiUnvan || data.gerceklestirmeGorevlisiUnvani,
         r: "Gerçekleştirme Görevlisi",
       },
       { a: data.kontrolPersonelAdi, u: data.kontrolPersonelUnvan, r: "Kontrol Görevlisi" },
@@ -508,9 +511,16 @@ export function buildMergedPersonelList(
       .trim();
     const unvan = String(
       rawObj.unvan ||
-        rawObj.u ||
+        rawObj.unvani ||
+        rawObj.gorev ||
         rawObj.gorevi ||
+        rawObj.kadro ||
+        rawObj.kadro_unvani ||
+        rawObj.u ||
         rawObj.rol ||
+        item.unvan ||
+        item.unvani ||
+        item.gorev ||
         item.gorevi ||
         item.rol ||
         "",
@@ -616,22 +626,29 @@ export function buildMergedPersonelList(
   let personelList = Array.from(seenMap.values());
 
   const cleanCurrent = cleanPersonelName(currentAdSoyad);
-  if (
-    cleanCurrent &&
-    !personelList.some(
+  if (cleanCurrent) {
+    const existingCurrent = personelList.find(
       (p) =>
         p.ad_soyad.toLocaleLowerCase("tr-TR") ===
         cleanCurrent.toLocaleLowerCase("tr-TR"),
-    )
-  ) {
+    );
     const u = String(currentUnvan || "").trim();
-    personelList.unshift({
-      id: `custom_${cleanCurrent}`,
-      ad_soyad: cleanCurrent,
-      unvan: u,
-      label: u ? `${cleanCurrent} (${u})` : cleanCurrent,
-      aktif_mi: 1,
-    });
+    if (existingCurrent) {
+      if ((!existingCurrent.unvan || existingCurrent.unvan.trim() === "") && u) {
+        existingCurrent.unvan = u;
+        const pPassive = !isPersonelActive(existingCurrent);
+        const bLabel = `${existingCurrent.ad_soyad} (${u})`;
+        existingCurrent.label = pPassive ? `${bLabel} [Pasif]` : bLabel;
+      }
+    } else {
+      personelList.unshift({
+        id: `custom_${cleanCurrent}`,
+        ad_soyad: cleanCurrent,
+        unvan: u,
+        label: u ? `${cleanCurrent} (${u})` : cleanCurrent,
+        aktif_mi: 1,
+      });
+    }
   }
 
   // Pasif personelleri (mevcut seçili olan hariç) varsayılan listeden süz

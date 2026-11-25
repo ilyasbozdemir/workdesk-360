@@ -7,15 +7,26 @@ import { schema } from '@dt/database'
 let repairInFlight: Promise<void> | null = null
 
 const knownColumns = new Set<string>()
-try {
-  schema.tables.forEach((t: any) => {
-    t.columns.forEach((c: any) => {
-      if (c && c.name) {
-        knownColumns.add(String(c.name).toLowerCase())
-      }
+
+function refreshKnownColumns(): void {
+  try {
+    schema.tables.forEach((t: any) => {
+      t.columns.forEach((c: any) => {
+        if (c && c.name) {
+          knownColumns.add(String(c.name).toLowerCase())
+        }
+      })
     })
-  })
-} catch {}
+  } catch {}
+  // Temin 360 dinamik ve son eklenen kolonları
+  knownColumns.add('maliyet_cetveli_tarihi')
+  knownColumns.add('piyasa_fiyat_onay_durumu')
+  knownColumns.add('piyasa_fiyat_onay_tarihi')
+  knownColumns.add('piyasa_fiyat_onay_kullanici')
+  knownColumns.add('antet_birim_gosterilsin')
+}
+
+refreshKnownColumns()
 
 function extractMissingColumn(error: any): string | null {
   const msg = String(error?.message || error || '')
@@ -54,7 +65,11 @@ export async function withSchemaRetry<T>(
     }
 
     const col = extractMissingColumn(error)
-    if (col && knownColumns && !knownColumns.has(col)) {
+    const lowerCol = col ? col.toLowerCase() : null
+    if (lowerCol && !knownColumns.has(lowerCol)) {
+      refreshKnownColumns()
+    }
+    if (lowerCol && knownColumns && !knownColumns.has(lowerCol)) {
       console.error(
         `\x1b[1;41;37m [KOD HATASI] \x1b[0m Sutun semada tanimli degil: "${col}"\n` +
           `>> SQL: ${sqlQuery || 'Bilinmiyor'}\n` +

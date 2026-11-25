@@ -7,8 +7,10 @@ import {
   Filter,
   MapPin,
   MessageSquareText,
+  PackageCheck,
   Plus,
   Receipt,
+  Trash2,
   Truck,
   UserCheck
 } from 'lucide-react'
@@ -212,18 +214,7 @@ export function KabulTableView({
 
                   <td className="py-3.5 px-4 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-1.5 relative">
-                      {onToggleApproveTutanak && tut.onaylandi === false && (
-                        <Button
-                          onClick={() => onToggleApproveTutanak(tut.id)}
-                          size="sm"
-                          className="h-8 px-2.5 text-xs font-bold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer"
-                          title="Tutanağı Onayla ve İşleme Al (Stok/Teslimat Düşümü Yap)"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Onayla &amp; İşle</span>
-                        </Button>
-                      )}
-
+                      {/* Tutanağı Görüntüle / Aç */}
                       <Button
                         onClick={() => onOpenPreview?.(primarySablonKey, tut)}
                         variant="outline"
@@ -235,6 +226,50 @@ export function KabulTableView({
                         <span>Tutanağı Aç</span>
                       </Button>
 
+                      {/* Ambara Aktar (Mal Alımı için TİF) */}
+                      {isMal && onOpenTifModal && (
+                        <Button
+                          onClick={onOpenTifModal}
+                          size="sm"
+                          className="h-8 px-2.5 text-xs font-bold gap-1 bg-blue-600 hover:bg-blue-700 text-white shadow-xs cursor-pointer"
+                          title="Taşınır İşlem Fişi (TİF) ile Ambara Aktar"
+                        >
+                          <PackageCheck className="w-3.5 h-3.5" />
+                          <span>Ambara Aktar</span>
+                        </Button>
+                      )}
+
+                      {/* Ödeme Yazısı */}
+                      {onOpenPreview && (
+                        <Button
+                          onClick={() => onOpenPreview('odeme-yazisi', tut)}
+                          size="sm"
+                          className="h-8 px-2.5 text-xs font-bold gap-1 bg-sky-600 hover:bg-sky-700 text-white shadow-xs cursor-pointer"
+                          title="Bu Tutanak İçin Ödeme Yazısı Çıkar"
+                        >
+                          <Receipt className="w-3.5 h-3.5" />
+                          <span>Ödeme Yazısı</span>
+                        </Button>
+                      )}
+
+                      {/* Sil Butonu */}
+                      {onDeleteTutanak && (
+                        <Button
+                          onClick={() => {
+                            if (window.confirm(`${tut.tutanakNo || 'Bu tutanağı'} silmek istediğinize emin misiniz?`)) {
+                              onDeleteTutanak(tut.id)
+                            }
+                          }}
+                          size="sm"
+                          className="h-8 px-2.5 text-xs font-bold gap-1 bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer"
+                          title="Tutanağı Sil"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Sil</span>
+                        </Button>
+                      )}
+
+                      {/* Ek İşlemler Menüsü */}
                       <TutanakRowActionsMenu
                         tut={tut}
                         primarySablonKey={primarySablonKey}

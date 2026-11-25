@@ -121,14 +121,42 @@ export async function resolveEvrakSayisi(
 
     const row = dosyaRes?.[0];
 
-    // Eğer dosyada önceden girilmiş resmi formatta bir evrak sayısı varsa koru
+    const dosyaSayisi = String(row?.temin_no || '').trim();
+    const rawTur = String(row?.tur || 'mal').toLowerCase();
+
+    // Yıla göre sıra numarası hesaplama (Her yıl 0001'den başlar)
+    const fileYear =
+      row?.butce_yili ||
+      (row?.dosya_acilis_tarihi ? new Date(row.dosya_acilis_tarihi).getFullYear() : null) ||
+      (row?.created_at ? new Date(row.created_at).getFullYear() : null) ||
+      new Date().getFullYear();
+
+    let teminSeq: number | null = null;
+    if (dosyaSayisi) {
+      const parts = dosyaSayisi.split(/[/_ -]+/);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const num = parseInt(parts[i], 10);
+        if (!isNaN(num) && num !== fileYear && num > 0 && num < 100000) {
+          teminSeq = num;
+          break;
+        }
+      }
+    }
+
+    // Eğer dosyada önceden girilmiş resmi formatta bir evrak sayısı varsa kontrol et
     const existingEvrak = String(row?.evrak_sayisi || '').replace(/^E-/i, '').trim();
+    let existingSeq: number | null = null;
+    if (existingEvrak) {
+      const match = existingEvrak.match(/-(\d+)$/);
+      if (match) {
+        existingSeq = parseInt(match[1], 10);
+      }
+    }
+
+    // Eğer dosyadaki evrak sayısı resmi formattaysa koru; resmi belgeye verilen sayı esastır
     if (existingEvrak && !existingEvrak.includes('/') && /^\d+-\d+\.\d+-\d+$/.test(existingEvrak)) {
       return existingEvrak;
     }
-
-    const dosyaSayisi = String(row?.temin_no || '').trim();
-    const rawTur = String(row?.tur || 'mal').toLowerCase();
 
     // SDP Standart Dosya Planı Kodu: 934.01 (Mal Alımı), 934.02 (Hizmet/Danışmanlık), 934.03 (Yapım İşi)
     let sdpAltKodu = '01';
@@ -141,25 +169,7 @@ export async function resolveEvrakSayisi(
     }
     const sdpKodu = `934.${sdpAltKodu}`;
 
-    // Yıla göre sıra numarası hesaplama (Her yıl 0001'den başlar)
-    const fileYear =
-      row?.butce_yili ||
-      (row?.dosya_acilis_tarihi ? new Date(row.dosya_acilis_tarihi).getFullYear() : null) ||
-      (row?.created_at ? new Date(row.created_at).getFullYear() : null) ||
-      new Date().getFullYear();
-
-    let seqNumber: number | null = null;
-
-    if (dosyaSayisi) {
-      const parts = dosyaSayisi.split(/[/_ -]+/);
-      for (let i = parts.length - 1; i >= 0; i--) {
-        const num = parseInt(parts[i], 10);
-        if (!isNaN(num) && num !== fileYear && num > 0) {
-          seqNumber = num;
-          break;
-        }
-      }
-    }
+    let seqNumber: number | null = teminSeq;
 
     // Eğer temin_no içinden yıl sırası çıkarılamadıysa, o yılın dosyaları arasındaki sırasını bul
     if (!seqNumber || seqNumber <= 0) {

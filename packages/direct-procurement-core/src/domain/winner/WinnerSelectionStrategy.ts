@@ -2,8 +2,8 @@ import type { Bidder } from "../file/Bidder";
 import type { NeedItem } from "../file/NeedItem";
 import type { QuoteMatrix } from "../file/QuoteMatrix";
 import { Money } from "../money";
-import { DomainError } from "../shared/DomainError";
-import { lineTotal } from "../shared/numeric";
+import { DomainError } from "@worksuite-360/core";
+import { lineTotal } from "../numeric";
 
 /**
  * Kazanan seçimi sonucu.

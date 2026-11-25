@@ -182,51 +182,47 @@ export function IhtiyacRaporuDetailView({
 
   return (
     <div className="w-full max-w-462.5 mx-auto p-3 sm:p-5 space-y-4 animate-in fade-in duration-200">
-      {/* 1. ÜST BİLGİ & AKSİYON BARI (Kompakt, Modern ve Yer Tasarruflu) */}
-      <header className="bg-white dark:bg-slate-900 px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* Sol Taraf: Geri Dönüş, Breadcrumb, Rapor No, Başlık ve Durum */}
-        <div className="flex items-center gap-3 min-w-0 flex-wrap sm:flex-nowrap">
-          <button
-            onClick={onBack}
-            className="p-2 sm:px-3 sm:py-2 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-300 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-            title="Listeye Dön"
-          >
-            <ArrowLeft size={15} />
-            <span className="text-xs font-bold hidden sm:inline">Listeye Dön</span>
-          </button>
+      {/* 1. ÜST BİLGİ & AKSİYON BARI (2 Kademeli, Tamamen Responsive ve Ferah) */}
+      <header className="bg-white dark:bg-slate-900 px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2.5">
+        {/* Üst Satır: Navigasyon (Listeye Dön), Breadcrumb, Meta Rozetleri ve Tahmini Bedel */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* Sol: Geri Butonu + Breadcrumb + Rozetler */}
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <button
+              type="button"
+              onClick={onBack}
+              className="group inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/90 dark:bg-slate-800 dark:hover:bg-slate-700/90 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 border border-slate-200/70 dark:border-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs cursor-pointer shrink-0"
+              title="İhtiyaç Raporları Listesine Dön"
+            >
+              <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
+              <span>Listeye Dön</span>
+            </button>
 
-          <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block shrink-0" />
+            <span className="text-slate-300 dark:text-slate-700 font-light select-none">/</span>
 
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="px-2.5 py-0.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-mono text-xs font-extrabold border border-blue-400/30 shrink-0">
+            <span className="px-2.5 py-1 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-mono text-xs font-extrabold border border-blue-400/30 shrink-0">
               {rapor.rapor_no}
             </span>
 
             {getStatusBadge(rapor.durum)}
 
-            <span className="text-xs text-slate-500 dark:text-slate-400 hidden xl:flex items-center gap-1 font-medium shrink-0">
-              <Calendar size={13} className="text-slate-400" />
-              {formatDate(rapor.tarih)}
-            </span>
-
             {(rapor.evrak_sayisi || rapor.dosya_evrak_sayisi) && (
               <span
-                className="hidden md:inline-flex px-2 py-0.5 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-mono text-[11px] font-bold border border-purple-400/30 shrink-0"
+                className="inline-flex px-2 py-0.5 rounded-lg bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-mono text-[11px] font-bold border border-purple-400/30 shrink-0"
                 title="Resmî EBYS Evrak Sayısı"
               >
                 EBYS: {rapor.evrak_sayisi || rapor.dosya_evrak_sayisi}
               </span>
             )}
 
-            <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
-              {rapor.baslik}
-            </h1>
+            <span className="text-xs text-slate-500 dark:text-slate-400 inline-flex items-center gap-1 font-medium shrink-0">
+              <Calendar size={13} className="text-slate-400" />
+              {formatDate(rapor.tarih)}
+            </span>
           </div>
-        </div>
 
-        {/* Sağ Taraf: Tahmini Bedel Özeti ve Aksiyon Butonları */}
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap justify-between sm:justify-end">
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/60">
+          {/* Sağ: Tahmini Bedel Özeti */}
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/60 shrink-0">
             <span className="text-[10px] font-bold uppercase text-slate-400">Tahmini Bedel:</span>
             <span className="text-sm font-mono font-black text-cyan-700 dark:text-cyan-400">
               {formatCurrency(totals.genelToplam)}
@@ -240,11 +236,24 @@ export function IhtiyacRaporuDetailView({
               </span>
             )}
           </div>
+        </div>
 
-          <div className="flex items-center gap-1.5">
+        {/* Alt Satır: Rapor Başlığı ve Aksiyon Butonları */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+          {/* Başlık */}
+          <h1
+            className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate min-w-0"
+            title={rapor.baslik}
+          >
+            {rapor.baslik}
+          </h1>
+
+          {/* Aksiyon Butonları */}
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
             <button
+              type="button"
               onClick={() => setIsYiUfeModalOpen(true)}
-              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
               title="TÜİK Yİ-ÜFE Endeksleri ile Birim Fiyatları Güncelle / Eskale Et"
             >
               <TrendingUp size={13} className="text-emerald-600 dark:text-emerald-400" />
@@ -252,8 +261,9 @@ export function IhtiyacRaporuDetailView({
             </button>
 
             <button
+              type="button"
               onClick={() => onDuplicate(rapor.id)}
-              className="px-3 py-1.5 bg-white hover:bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
               title="Raporu Kopyala"
             >
               <Copy size={13} className="text-slate-500" />
@@ -262,6 +272,7 @@ export function IhtiyacRaporuDetailView({
 
             {rapor.temin_dosya_id ? (
               <button
+                type="button"
                 onClick={() => {
                   setActiveDosyaId(rapor.temin_dosya_id!)
                   navigate({ to: APP_ROUTES.HAZIRLIK_VE_IHTIYAC })
@@ -281,16 +292,18 @@ export function IhtiyacRaporuDetailView({
 
             {!rapor.temin_dosya_id ? (
               <button
+                type="button"
                 onClick={() => onOpenLinkModal(rapor)}
-                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
               >
                 <Link2 size={13} />
                 <span>Dosyaya Bağla</span>
               </button>
             ) : (
               <button
+                type="button"
                 onClick={() => onOpenLinkModal(rapor)}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
                 title="Dosya Bağlantısını Değiştir / Kaldır"
               >
                 <Link2 size={13} />
@@ -299,8 +312,9 @@ export function IhtiyacRaporuDetailView({
             )}
 
             <button
+              type="button"
               onClick={() => onEdit(rapor.id)}
-              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
             >
               <Edit size={13} />
               <span>Düzenle</span>

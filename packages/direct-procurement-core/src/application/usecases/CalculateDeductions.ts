@@ -1,7 +1,7 @@
 import type { FileRepository, RateProvider } from "../ports";
 import type { DeductionLine } from "../../domain/profile/DeductionRule";
 import { DeductionCalculator } from "../../domain/services/DeductionCalculator";
-import { DomainError } from "../../domain/shared/DomainError";
+import { DomainError } from "@worksuite-360/core";
 
 /**
  * Bir doğrudan temin dosyasında kazanan firmanın teklifi ve ilgili mevzuat oranları üzerinden

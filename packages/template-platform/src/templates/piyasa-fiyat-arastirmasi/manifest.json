@@ -1,0 +1,8 @@
+{
+  "id": "piyasa-fiyat-arastirmasi",
+  "title": "Piyasa Fiyat Araştırması Tutanağı",
+  "category": "piyasa-arastirmasi",
+  "version": "1.0.0",
+  "layout": "official-document",
+  "schema": "./schema.ts"
+}

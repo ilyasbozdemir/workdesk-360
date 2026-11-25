@@ -72,7 +72,12 @@ export default function LockScreen(): React.JSX.Element {
         const settings = await window.electron.ipcRenderer.invoke('db:get-settings').catch(() => ({}))
         const preferDesktop = settings?.useDesktopUserAsDefault === 'true'
 
-        if (fileName) {
+        // 1. Veritabanı settings tablosunda kayıtlı Beni Hatırla kontrolü
+        if (res?.rememberMe) {
+          setRememberMe(true)
+          setUsername(res.rememberedUser || 'admin')
+          setPassword(res.rememberedPass || '')
+        } else if (fileName) {
           const isRemembered = localStorage.getItem(`rememberMe_${fileName}`) === 'true'
           setRememberMe(isRemembered)
           if (isRemembered) {
@@ -122,6 +127,19 @@ export default function LockScreen(): React.JSX.Element {
       localStorage.removeItem(`rememberedUser_${fileName}`)
       localStorage.removeItem(`rememberedPass_${fileName}`)
     }
+
+    // Veritabanı settings tablosunda Beni Hatırla bilgilerini sakla veya temizle
+    try {
+      await window.electron.ipcRenderer.invoke(
+        'db:set-remember-me',
+        userToSave,
+        passToSave,
+        rememberMe
+      )
+    } catch (e) {
+      console.warn('Failed to sync rememberMe to database settings:', e)
+    }
+
     setIsAuthenticated(true)
     await loadSettings()
   }
@@ -147,7 +165,13 @@ export default function LockScreen(): React.JSX.Element {
         }
       } else {
         // Login with existing credentials
-        const res = await window.electron.ipcRenderer.invoke('db:login', '', username, password)
+        const res = await window.electron.ipcRenderer.invoke(
+          'db:login',
+          '',
+          username,
+          password,
+          rememberMe
+        )
         if (res.success) {
           await handleAuthSuccess(res.username || username, password)
         } else {

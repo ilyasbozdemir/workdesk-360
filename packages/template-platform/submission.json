@@ -1,0 +1,11 @@
+{
+  "requester": "Fen İşleri Müdürlüğü",
+  "description": "Parke taşı temini",
+  "documentDate": "24.11.2026",
+  "institution": "Örnek Belediyesi",
+  "items": [
+    { "name": "Beton parke taşı", "quantity": 1000, "total": 85000 },
+    { "name": "Bordür taşı", "quantity": 200, "total": 12000 }
+  ],
+  "grandTotal": 97000
+}
