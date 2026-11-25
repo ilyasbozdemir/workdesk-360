@@ -1,0 +1,36 @@
+# Global Search Ignore File (.ignore)
+# Hem VSCode hem genel CLI araçları tarafından okunur.
+
+node_modules/
+**/node_modules/
+.pnpm/
+**/.pnpm/
+.pnpm-store/
+**/.pnpm-store/
+
+.next/
+**/.next/
+.turbo/
+**/.turbo/
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+release/
+**/release/
+coverage/
+**/coverage/
+.cache/
+**/.cache/
+.vite/
+**/.vite/
+
+pnpm-lock.yaml
+*.tsbuildinfo
+**/*.tsbuildinfo
+*.log
+**/*.log
+.git/
+**/.git/

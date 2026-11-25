@@ -25,6 +25,7 @@ import {
 } from './types'
 import { ensureSchemaIntegrity } from './schemaIntegrity'
 import { seedTemplates } from './templateSeeder'
+import { registerSqliteTextFunctions } from '@temin360/direct-procurement-core'
 
 /**
  * Atomically replaces destPath with sourcePath with Windows retry and safety backup.
@@ -407,6 +408,7 @@ export class DtmWorkspace {
         const dbFileName = meta.active_db_file || 'database.sqlite'
         const dbPath = path.join(this.tempDir, dbFileName)
         this.db = new Database(dbPath)
+        registerSqliteTextFunctions(this.db)
         const previousUserMutationAt = meta.last_user_mutation_at
         const previousUpdatedAt = meta.updated_at
         runMigrations(this.db, fromVersion, schema, { appId: 'temin360-desktop' })
@@ -422,6 +424,7 @@ export class DtmWorkspace {
         const dbFileName = meta.active_db_file || 'database.sqlite'
         const dbPath = path.join(this.tempDir, dbFileName)
         this.db = new Database(dbPath)
+        registerSqliteTextFunctions(this.db)
 
         // Eski projelerde projectId kalıcılığı (migration):
         // Dosyada önceden açıkça project_id yoksa, deterministik türetilen kimliği
@@ -603,7 +606,11 @@ export class DtmWorkspace {
     }
   }
 
-  public createWorkspace(filePath: string, institutionName: string): WorkspaceMeta {
+  public createWorkspace(
+    filePath: string,
+    institutionName: string,
+    adminUsername?: string
+  ): WorkspaceMeta {
     const ext = path.extname(filePath).toLowerCase().replace(/^\./, '')
     if (!ext || !allExtensions.includes(ext)) {
       const base = ext ? filePath.substring(0, filePath.length - (ext.length + 1)) : filePath
@@ -617,8 +624,19 @@ export class DtmWorkspace {
       this.ensureTempDir()
       const dbPath = path.join(this.tempDir, 'database.sqlite')
       this.db = new Database(dbPath)
+      registerSqliteTextFunctions(this.db)
       initializeDatabase(this.db, institutionName)
       ensureSchemaIntegrity(this.db)
+
+      if (adminUsername && adminUsername.trim()) {
+        try {
+          this.db
+            .prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('adminUsername', ?)")
+            .run(adminUsername.trim())
+        } catch {
+          /* ignore */
+        }
+      }
 
       try {
         const insertStmt = this.db.prepare(`
@@ -935,6 +953,7 @@ export class DtmWorkspace {
     fs.copyFileSync(sourceSqlitePath, dbPath)
     this.meta.active_db_file = newDbName
     this.db = new Database(dbPath)
+    registerSqliteTextFunctions(this.db)
     this.db.pragma('journal_mode = WAL')
     this.db.pragma('foreign_keys = ON')
     ensureSchemaIntegrity(this.db)

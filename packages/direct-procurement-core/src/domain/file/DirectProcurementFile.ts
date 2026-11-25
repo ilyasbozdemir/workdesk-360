@@ -1,6 +1,5 @@
-import { AggregateRoot } from "../shared/AggregateRoot";
-import { DomainError } from "../shared/DomainError";
-import { lineTotal, roundQty, withKdv } from "../shared/numeric";
+import { AggregateRoot, DomainError } from "@worksuite-360/core";
+import { lineTotal, roundQty, withKdv } from "../numeric";
 import { DIRECT_PROCUREMENT_PROFILE } from "../profile/profiles";
 import type { ProcurementProfile } from "../profile/ProcurementProfile";
 import {

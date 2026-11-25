@@ -125,10 +125,6 @@ export default function LauncherScreen(): React.ReactNode {
         onInstitutionNameChange={setInstitutionName}
         username={username}
         onUsernameChange={setUsername}
-        password={password}
-        onPasswordChange={setPassword}
-        showPassword={showPassword}
-        onToggleShowPassword={() => setShowPassword(!showPassword)}
         creating={creating}
         onSubmit={handleModalSubmit}
       />

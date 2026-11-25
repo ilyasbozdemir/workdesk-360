@@ -26,6 +26,8 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
   const [isFirmModalOpen, setIsFirmModalOpen] = useState(false)
   const [selectedFirmIds, setSelectedFirmIds] = useState<number[]>([])
   const [modalSearchQuery, setModalSearchQuery] = useState('')
+  const [piyasaFiyatOnayDurumu, setPiyasaFiyatOnayDurumu] = useState<'taslak' | 'onaylandi'>('taslak')
+  const [piyasaFiyatOnayTarihi, setPiyasaFiyatOnayTarihi] = useState<string | null>(null)
 
   const loadData = useCallback(async (): Promise<void> => {
     if (!activeDosyaId) return
@@ -73,7 +75,7 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
 
       const resDosya = await window.electron.ipcRenderer.invoke(
         'db:query',
-        'SELECT dosya_acilis_tarihi, temin_no, evrak_sayisi, hesaplama_esasi, komisyon_takdiri, temin_tarihi, firma_id FROM DATA_TeminDosyasi WHERE id = ?',
+        'SELECT dosya_acilis_tarihi, temin_no, evrak_sayisi, hesaplama_esasi, komisyon_takdiri, temin_tarihi, firma_id, piyasa_fiyat_onay_durumu, piyasa_fiyat_onay_tarihi, maliyet_cetveli_tarihi FROM DATA_TeminDosyasi WHERE id = ?',
         [activeDosyaId]
       )
 
@@ -120,6 +122,23 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
           }
         }
         setDosyaDefaultDate(defaultDate)
+
+        // Maliyet Cetveli Tarihi: Varsa veritabanındaki özel kolondan, yoksa varsayılan tarihten al
+        const rawMaliyetTarihi = resDosya.data[0].maliyet_cetveli_tarihi
+        if (rawMaliyetTarihi) {
+          const cleanMaliyet = String(rawMaliyetTarihi).trim()
+          if (/^\d{4}-\d{2}-\d{2}/.test(cleanMaliyet)) {
+            setMaliyetCetveliTarihi(cleanMaliyet.split(' ')[0])
+          } else if (/^\d{2}\.\d{2}\.\d{4}/.test(cleanMaliyet)) {
+            const [d, m, y] = cleanMaliyet.split('.')
+            setMaliyetCetveliTarihi(`${y}-${m}-${d}`)
+          } else {
+            setMaliyetCetveliTarihi(cleanMaliyet)
+          }
+        } else if (defaultDate) {
+          setMaliyetCetveliTarihi(defaultDate)
+        }
+
         setHesaplamaEsasiState(resDosya.data[0].hesaplama_esasi || 'Ortalama fiyat esasına göre')
         setKomisyonTakdiri(
           resDosya.data[0].komisyon_takdiri || 'Sadece araştırma fiyatları dikkate alınacak'
@@ -129,6 +148,10 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
         } else {
           setManualWinnerFirmaId(null)
         }
+        setPiyasaFiyatOnayDurumu(
+          resDosya.data[0].piyasa_fiyat_onay_durumu === 'onaylandi' ? 'onaylandi' : 'taslak'
+        )
+        setPiyasaFiyatOnayTarihi(resDosya.data[0].piyasa_fiyat_onay_tarihi || null)
       }
 
       const resBelgeler = await window.electron.ipcRenderer.invoke(
@@ -371,13 +394,13 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     try {
       await window.electron.ipcRenderer.invoke(
         'db:run',
-        'DELETE FROM DATA_TeminKalemTeklif WHERE temin_firma_id = ?',
-        [teminFirmaId]
+        'DELETE FROM DATA_TeminKalemTeklif WHERE temin_firma_id = ? AND temin_dosya_id = ?',
+        [teminFirmaId, activeDosyaId]
       )
       const res = await window.electron.ipcRenderer.invoke(
         'db:run',
-        'DELETE FROM DATA_TeminFirma WHERE id = ?',
-        [teminFirmaId]
+        'DELETE FROM DATA_TeminFirma WHERE id = ? AND temin_dosya_id = ?',
+        [teminFirmaId, activeDosyaId]
       )
       if (res.success) {
         await loadData()
@@ -455,6 +478,39 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     }
   }
 
+  const updateMaliyetCetveliTarihi = useCallback(
+    async (newVal: string): Promise<void> => {
+      setMaliyetCetveliTarihi(newVal)
+      if (activeDosyaId) {
+        try {
+          await window.electron.ipcRenderer.invoke(
+            'db:run',
+            'UPDATE DATA_TeminDosyasi SET maliyet_cetveli_tarihi = ? WHERE id = ?',
+            [newVal || null, activeDosyaId]
+          )
+        } catch (err) {
+          console.error('Failed to update maliyet_cetveli_tarihi in DB:', err)
+        }
+      }
+    },
+    [activeDosyaId]
+  )
+
+  const togglePiyasaFiyatOnay = useCallback(async (): Promise<'taslak' | 'onaylandi'> => {
+    if (!activeDosyaId) return 'taslak'
+    const nextDurum = piyasaFiyatOnayDurumu === 'onaylandi' ? 'taslak' : 'onaylandi'
+    const nextTarih = nextDurum === 'onaylandi' ? new Date().toISOString() : null
+
+    await window.electron.ipcRenderer.invoke(
+      'db:query',
+      'UPDATE DATA_TeminDosyasi SET piyasa_fiyat_onay_durumu = ?, piyasa_fiyat_onay_tarihi = ? WHERE id = ?',
+      [nextDurum, nextTarih, activeDosyaId]
+    )
+    setPiyasaFiyatOnayDurumu(nextDurum)
+    setPiyasaFiyatOnayTarihi(nextTarih)
+    return nextDurum
+  }, [activeDosyaId, piyasaFiyatOnayDurumu])
+
   return {
     invitedFirms,
     setInvitedFirms,
@@ -474,7 +530,7 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     isEditingFirms,
     setIsEditingFirms,
     maliyetCetveliTarihi,
-    setMaliyetCetveliTarihi,
+    setMaliyetCetveliTarihi: updateMaliyetCetveliTarihi,
     tutanakTarihi,
     setTutanakTarihi,
     dosyaDefaultDate,
@@ -488,6 +544,10 @@ export function usePiyasaFiyatData(activeDosyaId: number | null, activeTabPath: 
     setSelectedFirmIds,
     modalSearchQuery,
     setModalSearchQuery,
+    piyasaFiyatOnayDurumu,
+    setPiyasaFiyatOnayDurumu,
+    piyasaFiyatOnayTarihi,
+    togglePiyasaFiyatOnay,
     loadData,
     handleBulkAddFirms,
     handleCreateNewFirm,

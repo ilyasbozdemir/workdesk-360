@@ -167,7 +167,7 @@ export const AdminCredentialsCard: React.FC<AdminCredentialsCardProps> = ({
                   type={showPassword ? 'text' : 'password'}
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="En az 6 karakter"
                   className="bg-slate-50/50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 pr-10"
                 />
                 <button
@@ -178,6 +178,15 @@ export const AdminCredentialsCard: React.FC<AdminCredentialsCardProps> = ({
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {adminPassword && adminPassword.length > 0 && adminPassword.length < 6 ? (
+                <p className="text-[11px] text-rose-500 font-medium mt-1">
+                  ⚠️ Parola en az 6 karakter olmalıdır (Şu an: {adminPassword.length} karakter).
+                </p>
+              ) : (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  En az 6 karakter. Parola koruması için Ayarlar &gt; E-Posta (SMTP) yapılandırması zorunludur.
+                </p>
+              )}
             </div>
           </div>
 

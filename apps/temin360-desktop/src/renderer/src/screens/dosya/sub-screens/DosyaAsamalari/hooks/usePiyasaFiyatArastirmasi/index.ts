@@ -131,6 +131,10 @@ export function usePiyasaFiyatArastirmasiLogic() {
     belgeleriKaydet: docHook.belgeleriKaydet,
     setBelgeleriKaydet: docHook.setBelgeleriKaydet,
     handleUpdateDocumentDate: docHook.handleUpdateDocumentDate,
-    handleDeleteDocument: docHook.handleDeleteDocument
+    handleDeleteDocument: docHook.handleDeleteDocument,
+    piyasaFiyatOnayDurumu: dataHook.piyasaFiyatOnayDurumu,
+    setPiyasaFiyatOnayDurumu: dataHook.setPiyasaFiyatOnayDurumu,
+    piyasaFiyatOnayTarihi: dataHook.piyasaFiyatOnayTarihi,
+    togglePiyasaFiyatOnay: dataHook.togglePiyasaFiyatOnay
   }
 }

@@ -43,8 +43,10 @@ jobs:
         env:
           npm_config_msvs_version: "2022"
 
-      - name: Build Database Package
-        run: pnpm --filter @dt/database build
+      - name: Build Core & Database Packages
+        run: |
+          pnpm --filter @worksuite-360/core build
+          pnpm --filter @dt/database build
 
       - name: Pre-release Checks
         run: |

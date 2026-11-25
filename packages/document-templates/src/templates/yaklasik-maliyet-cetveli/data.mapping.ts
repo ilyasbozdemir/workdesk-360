@@ -26,10 +26,15 @@ export const dataMapping: ProcessMapping = {
     sutun: 'konu',
     aciklama: 'İşin Adı'
   },
+  maliyetCetveliTarihi: {
+    tablo: 'DATA_TeminDosyasi',
+    sutun: 'maliyet_cetveli_tarihi',
+    aciklama: 'Maliyet Cetveli Düzenleme Tarihi'
+  },
   tarih: {
     tablo: 'DATA_TeminDosyasi',
-    sutun: 'temin_tarihi',
-    aciklama: 'Onay Tarihi'
+    sutun: 'maliyet_cetveli_tarihi',
+    aciklama: 'Maliyet Cetveli Düzenleme Tarihi'
   },
   dosyaTarihi: {
     tablo: 'DATA_TeminDosyasi',

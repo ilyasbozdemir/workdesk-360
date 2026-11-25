@@ -1,5 +1,5 @@
 import type { Money } from '@temin360/domain'
-import { perMilleToFraction } from '../shared/numeric'
+import { perMilleToFraction } from '../numeric'
 
 /**
  * Mevzuattaki binde oranları anlık görüntüsü (TANIM_Mevzuat tablosundan beslenir).

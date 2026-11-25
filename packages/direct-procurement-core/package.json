@@ -7,20 +7,33 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./hooks": "./src/presentation/hooks/index.ts",
+    "./text": "./src/shared/text/index.ts"
   },
   "scripts": {
     "build": "tsc",
-    "test": "vitest run",
+    "test": "node ../../apps/temin360-desktop/scripts/test-electron.js run",
+    "test:node": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
   "dependencies": {
-    "@temin360/domain": "workspace:*"
+    "@temin360/domain": "workspace:*",
+    "@worksuite-360/core": "workspace:*"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.1",
+    "@types/react": "^19.0.0",
     "better-sqlite3": "^12.10.0",
     "js-yaml": "^4.1.0",
     "typescript": "^5.6.3",

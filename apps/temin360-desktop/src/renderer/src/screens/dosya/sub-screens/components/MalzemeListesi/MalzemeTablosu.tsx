@@ -125,7 +125,7 @@ export function MalzemeTablosu({
   const isHizmet = activeDosya?.tur === 'hizmet'
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm flex flex-col min-h-[400px]">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xs flex flex-col flex-1 gap-3.5">
       <MalzemeTablosuToolbar
         items={items}
         isYapim={isYapim}

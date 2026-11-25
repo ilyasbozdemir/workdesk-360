@@ -141,8 +141,8 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
             ? (
               gorevlendirilenler.map((g, idx) => (
                 <React.Fragment key={idx}>
-                  <strong>{g.adSoyad}</strong>{" "}
-                  {g.unvan ? formatUnvan(g.unvan) : ""}
+                  <strong>{g.adSoyad}</strong>
+                  {g.unvan ? ` ${formatUnvan(g.unvan)}` : ""}
                   {idx < gorevlendirilenler.length - 1 ? ", " : " "}
                 </React.Fragment>
               ))
@@ -196,7 +196,7 @@ export const MuayeneKabulKomisyonu: React.FC<Props> = ({
             >
               {dagitimListesi.map((d, idx) => (
                 <li key={idx}>
-                  - {d.adSoyad} {d.unvan ? formatUnvan(d.unvan) : ""}
+                  - {d.adSoyad}{d.unvan ? ` ${formatUnvan(d.unvan)}` : ""}
                 </li>
               ))}
             </ul>

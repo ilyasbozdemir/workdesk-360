@@ -1,0 +1,8 @@
+{
+  "id": "ihtiyac-oluru",
+  "title": "İhtiyaç ve Harcama Onayı Belgesi",
+  "category": "onay",
+  "version": "1.0.0",
+  "layout": "official-document",
+  "schema": "./schema.ts"
+}

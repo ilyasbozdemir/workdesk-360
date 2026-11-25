@@ -13,15 +13,25 @@ export { getDeviceInfo }
 export function registerWorkspaceIpcHandlers(closeAllSecondaryWindows: () => void): void {
   ipcMain.handle('workspace:get-device-info', () => getDeviceInfo())
 
-  ipcMain.handle('workspace:create', async (_, filePath: string, institutionName: string) => {
-    try {
-      const meta = workspaceManager.create(filePath, institutionName)
-      return { success: true, meta, newFilePath: workspaceManager.getCurrentFilePath() }
-    } catch (error: any) {
-      console.error('Create workspace error:', error)
-      return { success: false, error: error.message }
+  ipcMain.handle(
+    'workspace:create',
+    async (
+      _,
+      filePath: string,
+      institutionName: string,
+      _eButceKodu?: string,
+      adminUsername?: string,
+      _adminPassword?: string
+    ) => {
+      try {
+        const meta = workspaceManager.create(filePath, institutionName, adminUsername)
+        return { success: true, meta, newFilePath: workspaceManager.getCurrentFilePath() }
+      } catch (error: any) {
+        console.error('Create workspace error:', error)
+        return { success: false, error: error.message }
+      }
     }
-  })
+  )
 
   ipcMain.handle('workspace:open', async (_, filePath: string, allowMigration: boolean = false) => {
     try {

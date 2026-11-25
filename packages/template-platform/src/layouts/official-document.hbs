@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="../styles/index.css">
+</head>
+<body class="a4-portrait official-doc">
+  <div class="page">
+    {{> institution/institution-header}}
+    <main class="content">
+      {{{body}}}
+    </main>
+    {{> signatures/commission-signatures}}
+    {{> shared/page-number}}
+  </div>
+</body>
+</html>

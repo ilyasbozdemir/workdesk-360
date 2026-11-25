@@ -1,0 +1,11 @@
+{{#> layouts/official-document title="İhtiyaç ve Harcama Onay Belgesi"}}
+  {{> common/metadata metadata=procurementMeta}}
+
+  <div class="justification text-xs my-3 leading-relaxed">
+    {{justificationText}}
+  </div>
+
+  {{> tables/item-table items=items}}
+
+  {{> signatures/approval-signature approver=harcamaYetkilisi approvalDate=document.date}}
+{{/layouts/official-document}}
